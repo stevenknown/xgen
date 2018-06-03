@@ -1,0 +1,24 @@
+XGEN_OBJS +=\
+../xgen/cl_region_mgr.o\
+../xgen/ir2or.o\
+../xgen/autopar.o\
+../xgen/cg.o\
+../xgen/cg_mgr.o\
+../xgen/emit_asm.o\
+../xgen/or.o\
+../xgen/or_bb.o\
+../xgen/or_cfg.o\
+../xgen/or_ddg.o\
+../xgen/or_gra.o\
+../xgen/or_lis.o\
+../xgen/or_lra.o\
+../xgen/or_sim.o\
+../xgen/or_util.o\
+../xgen/parallel_part_mgr.o\
+../xgen/ramgr.o\
+../xgen/reg.o\
+../xgen/section.o\
+../xgen/sr.o\
+../xgen/xgenoption.o\
+../xgen/regfilegroup.o\
+../xgen/targ_interface.o

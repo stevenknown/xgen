@@ -1,0 +1,33 @@
+The standard 32-bit ARM calling convention allocates the 15
+general-purpose registers as:
+  r14 is the link register. (The BL instruction, used in a subroutine
+  call, stores the return address in this register).
+  r13 is the stack pointer. (The Push/Pop instructions in "Thumb"
+  operating mode use this register only).
+  r12 is the Intra-Procedure-call scratch register.
+  r4 to r11: used to hold local variables.
+  r0 to r3: used to hold argument values passed to a subroutine,
+  and also hold results returned from a subroutine.
+
+Condition codes
+	The instructions that can be conditional have an optional condition code, shown in syntax
+	descriptions as  {cond} . Table 3-2 shows the condition codes that you can use
+
+	Suffix Meaning
+	EQ     Equal
+	NE     Not equal
+	CS     Carry set (identical to HS)
+	HS     Unsigned higher or same (identical to CS)
+	CC      Carry clear (identical to LO)
+	LO     Unsigned lower (identical to CC)
+	MI     Minus or negative result
+	PL     Positive or zero result
+	VS     Overflow
+	VC     No overflow
+	HI     Unsigned higher
+	LS     Unsigned lower or same
+	GE     Signed greater than or equal
+	LT     Signed less than
+	GT     Signed greater than
+	LE     Signed less than or equal
+	AL     Always (this is the default)

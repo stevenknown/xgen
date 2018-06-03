@@ -1,0 +1,1 @@
+make TARGET=FOR_ARM CFLAGS="-O0 -g2"
