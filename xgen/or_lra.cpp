@@ -3127,7 +3127,7 @@ LRA::LRA(ORBB * bb, RaMgr * ra_mgr)
     m_ru = ra_mgr->getRegion();
     ASSERT0(m_ru);
 
-    m_cg = ra_mgr->get_cg();
+    m_cg = ra_mgr->getCG();
     ASSERT0(m_cg);
 
     ASSERT0(m_cg);
@@ -3259,7 +3259,7 @@ bool LRA::assignRegister(
     RegSet const* regfile_usable_reg_set = tmMapRegFile2RegSet(regfile);
     usable->intersect(*regfile_usable_reg_set);
 
-    if (m_ramgr != NULL && !(RAMGR_can_alloc_callee(m_ramgr))) {
+    if (m_ramgr != NULL && !RAMGR_can_alloc_callee(m_ramgr)) {
         usable->diff(*tmGetRegSetOfCalleeSaved());
     }
 
@@ -3437,7 +3437,7 @@ void LRA::genSpill(
             }
         }
 
-        m_cg->appendSpill(m_bb, *sors); //Generate opidx
+        m_cg->prependSpill(m_bb, *sors); //Generate opidx
 
         //There is not any generated memory operations for spill sometime.
         //Substituting the recalculation of SR value for the memory operation.
@@ -3636,7 +3636,7 @@ void LRA::spillGSR(LifeTime * lt, LifeTimeMgr & mgr)
     xoc::VAR * spill_var = m_cg->genSpillVar(LT_sr(lt));
     ASSERT(spill_var, ("Not any spill loc."));
 
-    //Prepend spill code tor of bb
+    //Prepend spill code top of bb
     if (LT_pos(lt)->is_contain(LT_FIRST_POS)) { //lifetime live in bb
         genSpill(lt, LT_sr(lt), LT_FIRST_POS, spill_var, mgr, true, NULL);
     }
@@ -3651,8 +3651,7 @@ void LRA::spillGSR(LifeTime * lt, LifeTimeMgr & mgr)
     //for case of the o that has same result with operand.
     SR * same_with_result_sr = NULL;
     for (INT i = first_pos == LT_FIRST_POS ? LT_FIRST_POS + 1 : first_pos;
-        i >= 0;
-        i = LT_desc(lt).get_next(i)) {
+         i >= 0; i = LT_desc(lt).get_next(i)) {
         PosInfo * pi;
 
         //CASE: livein gsr
@@ -3703,7 +3702,6 @@ void LRA::spillGSR(LifeTime * lt, LifeTimeMgr & mgr)
                     //    since the original sr upon 'lt' has not over there.
                     same_with_result_sr = newsr;
                 }
-
             }
             //CASE: In order to increase optimizing opportunity,
             //    all spill codes of 't1' should be executed under
@@ -5395,7 +5393,7 @@ LifeTime * LRA::computeBestSpillCand(
 
     //Calculates the benefits if 'ni' is deal with as 'action' descriptive.
     List<LifeTime*> ni_list; //neighbor list of 'lt'
-
+    
     //Inspecting all of neighbors of 'lt' even itself.
     ig.getNeighborList(ni_list, lt);
     if (try_self) {
@@ -5432,8 +5430,7 @@ LifeTime * LRA::computeBestSpillCand(
 
     //Selecting policy.
     //2. Choosing the best one as split-candidate that
-    //     constains the most life times
-    //   which unallocated register till now.
+    //   constains the most life times which unallocated register till now.
     INT most = 0, most_idx = -1;
     INT minor = 0, minor_idx = -1;
     i = 0;
@@ -5475,7 +5472,7 @@ LifeTime * LRA::computeBestSpillCand(
             minor = residein_lts.get_elem_count();
         }
     }
-    if (best == NULL && better != NULL) {//The alternative choose.
+    if (best == NULL && better != NULL) { //The alternative choose.
         best = better;
     }
     if (best != NULL) {
@@ -7815,7 +7812,7 @@ bool LRA::allocatePrioList(
             //RemoveGSRLivein(bb, sr);
             //RemoveGSRLiveout(bb, sr);
         }
-
+        
         if (!assignRegister(lt, ig, mgr, rfg)) {
             //No enough register assign to 'lt'.
             all_assigned = false;
@@ -8994,8 +8991,7 @@ bool LRA::perform()
         interwarn("During LRA: Length of ORBB%d is larger "
                   "than %d, optimizations are disabled!",
                   ORBB_id(m_bb), MAX_OR_BB_OPT_BB_LEN);
-    }
-
+    }    
     preLRA();
     elimRedundantCopy(m_cg->isGRAEnable());
     renameSR();
@@ -9146,7 +9142,7 @@ bool LRA::perform()
     rfg->init();
     rfg->setBB(m_bb);
     rfg->computeGroup();
-
+    
     show_phase("Start to alloca life time");
     if (!allocatePrioList(prio_list, uncolored_list, *ig, *mgr, rfg)) {
         for (LifeTime * lt = uncolored_list.get_head(); lt != NULL;

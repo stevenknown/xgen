@@ -823,7 +823,7 @@ static bool Loop_Peeling(IN ORBB * bb,
     ORBB * bb3 = Gen_BB();
     ORBB * bb5 = Gen_BB();
 
-    PACDDG ddg;
+    DataDepGraph ddg;
     ddg.set_param(NO_PHY_REG,
                   NO_MEM_READ,
                   INC_MEM_FLOW,

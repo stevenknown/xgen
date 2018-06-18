@@ -8,9 +8,12 @@ Contribution and License Agreement. If you contribute code to this project, you 
 
 usage:
  1. clone xoc project
- 2. copy com, reader, opt xpoly into xgen directory
+ 2. copy com, reader, and opt into xgen directory
+    cd xgen
     cp -rf ../xoc/com ../xoc/opt ../xoc/reader .
  3. clone xocfe project
  4. copy xocfe/src/cfe into xgen directory
- 5. cd xgen/arm directory
- 6. make -f Make.xocc
+    cd xgen
+    cp -rf ../xocfe/src/cfe .
+ 5. cd xgen/arm directory     
+ 6. make -f Make.xocc  

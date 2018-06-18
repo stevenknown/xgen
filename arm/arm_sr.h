@@ -40,6 +40,7 @@ public:
     COPY_CONSTRUCTOR(ARMSR);
 
     virtual CHAR const* get_name(StrBuf & buf, CG * cg) const;
+    virtual CHAR const* getAsmName(StrBuf & buf, CG * cg);
 };
 //END ARMSR
 

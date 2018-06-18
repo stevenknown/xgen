@@ -380,9 +380,7 @@ OR * ORMgr::gen_or(OR_TYPE ort, CG * cg)
         }
         set(OR_id(o), o);
     }
-
     OR_code(o) = ort;
-
     if (HAS_PREDICATE_REGISTER) {
         ASSERT0(cg);
         o->set_pred(cg->genTruePred());

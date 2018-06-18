@@ -118,11 +118,12 @@ public:
 
     virtual SR * genSP();
     virtual SR * genFP();
-    virtual SR * genGP();
+    virtual SR * genGP();    
     SR * gen_r0();
     SR * gen_r1();
     SR * gen_r2();
     SR * gen_r3();
+    SR * gen_r12();
     virtual SR * genReturnAddr();
     virtual SR * genRflag();
     virtual SR * genTruePred();

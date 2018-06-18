@@ -1734,8 +1734,9 @@ bool CG::isValidImmOpnd(OR_TYPE ot, UINT idx, HOST_INT imm) const
     SRDescGroup<> const* sdg = OTD_srd_group(otd);
     SRDesc const* sr_desc = sdg->get_opnd(idx);
     ASSERT0(sr_desc && SRD_is_imm(sr_desc));
-    HOST_INT mask = (((HOST_INT)1) << SRD_bitsize(sr_desc)) - 1;
-    return (mask & imm) == imm;
+    HOST_UINT pimm = abs(imm);
+    HOST_UINT mask = (((HOST_UINT)1) << SRD_bitsize(sr_desc)) - 1;
+    return (mask & pimm) == pimm;
 }
 
 
@@ -2241,11 +2242,13 @@ REGFILE CG::getPredicateRegfile() const
 //Set predicate register of each operation in 'ops' same as 'o'.
 void CG::setORListWithSamePredicate(IN OUT ORList & ops, IN OR * o)
 {
+    if (!HAS_PREDICATE_REGISTER) {
+        return;
+    }
     SR * pd = o->get_pred();
     if (pd == NULL) {
         pd = genTruePred();
     }
-
     for (OR * tmpor = ops.get_head(); tmpor != NULL; tmpor = ops.get_next()) {
         tmpor->set_pred(pd);
     }
@@ -2262,9 +2265,10 @@ void CG::setSpadjustOffset(OR * spadj, INT size)
 
 
 //Prepend spilling operation at the tail of OR list.
-void CG::appendSpill(ORBB * bb, ORList & ors)
+void CG::prependSpill(ORBB * bb, ORList & ors)
 {
-    ASSERT0(!ORBB_is_entry(bb));
+    //postBuild() may insert spill code at Entry-BB.
+    //ASSERT0(!ORBB_is_entry(bb));
     ORBB_orlist(bb)->append_head(ors);
 }
 
@@ -2272,7 +2276,8 @@ void CG::appendSpill(ORBB * bb, ORList & ors)
 //Append reload operation at the tail of OR list.
 void CG::appendReload(ORBB * bb, ORList & ors)
 {
-    ASSERT0(!ORBB_is_exit(bb));
+    //postBuild() may insert reload code at Exit-BB.
+    //ASSERT0(!ORBB_is_exit(bb));
     ORBB_orlist(bb)->append_tail(ors);
 }
 
@@ -2978,6 +2983,13 @@ RaMgr * CG::performRA()
 {
     RaMgr * lm = allocRaMgr(getORBBList(), m_ru->is_function());
     lm->setParallelPartMgrVec(getParallelPartMgrVec());
+    #ifdef _DEBUG_
+    if (tmGetRegSetOfCallerSaved()->is_empty()) {
+        xoc::interwarn("Caller Register Set is empty!"
+                       "There might lack of allocable registers "
+                       "if RAMGR_can_alloc_callee is disabled");
+    }
+    #endif
     if (isGRAEnable()) {
         lm->performGRA();
     }
@@ -3373,25 +3385,28 @@ bool CG::verify()
             for (UINT i = 0; i < o->result_num(); i++) {
                 SR * sr = o->get_result(i);
                 ASSERT0(sr);
-                if (!SR_is_reg(sr)) { continue; }
-
-                ASSERT(SR_phy_regid(sr) != REG_UNDEF,
-                       ("SR is not assigned physical register"));
-
-                ASSERT(SR_regfile(sr) != RF_UNDEF,
-                       ("SR is not assigned register file"));
+                if (SR_is_reg(sr)) {
+                    ASSERT(SR_phy_regid(sr) != REG_UNDEF,
+                        ("SR is not assigned physical register"));
+                    ASSERT(SR_regfile(sr) != RF_UNDEF,
+                        ("SR is not assigned register file"));
+                }
+                if (SR_is_int_imm(sr)) {
+                    ASSERT0(isValidImmOpnd(OR_code(o), SR_int_imm(sr)));
+                }
             }
-
             for (UINT i = 0; i < o->opnd_num(); i++) {
                 SR * sr = o->get_opnd(i);
                 ASSERT0(sr);
-                if (!SR_is_reg(sr)) { continue; }
-
-                ASSERT(SR_phy_regid(sr) != REG_UNDEF,
-                       ("SR is not assigned physical register"));
-
-                ASSERT(SR_regfile(sr) != RF_UNDEF,
-                       ("SR is not assigned register file"));
+                if (SR_is_reg(sr)) {
+                    ASSERT(SR_phy_regid(sr) != REG_UNDEF,
+                        ("SR is not assigned physical register"));
+                    ASSERT(SR_regfile(sr) != RF_UNDEF,
+                        ("SR is not assigned register file"));
+                }
+                if (SR_is_int_imm(sr)) {
+                    ASSERT0(isValidImmOpnd(OR_code(o), i, SR_int_imm(sr)));
+                }
             }
         }
     }
@@ -3465,10 +3480,8 @@ bool CG::perform()
 
     if (!isGRAEnable()) { localize(); }
 
-    RaMgr * ra_mgr = performRA();
-    if (m_ru->isRegionName("qsort")) {
-        dumpORBBList(m_or_bb_list);
-    }
+    dumpORBBList(m_or_bb_list);
+    RaMgr * ra_mgr = performRA();    
 
     bool change;
     do {
@@ -3494,7 +3507,7 @@ bool CG::perform()
     Vector<BBSimulator*> simvec;
     performIS(simvec, ra_mgr);
 
-    computeStackVarImmOffset();
+    computeStackVarImmOffset();    
 
     //if (m_ru->isRegionName("bar")) {
     //    getParamSection()->dump(this);

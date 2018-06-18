@@ -246,6 +246,7 @@ typedef enum _REGFILE {
 #define REG_R1                       2
 #define REG_R2                       3
 #define REG_R3                       4
+#define REG_R12                      13
 #define REG_SP                       14
 #define REG_RFLAG_REGISTER           97
 #define REG_EQ_PRED                  98
@@ -366,7 +367,7 @@ typedef enum _OR_TYPE {
 
     //Direct load
     OR_ldm, //load multiple words.
-    OR_ldr, //load word
+    OR_ldr, //load 4 byte
     OR_ldrb, //load 1 byte, zero extend to 32 bits.
     OR_ldrsb, //load 1 byte, sign extend to 32 bits.
     OR_ldrh, //load 2 bytes, zero extend to 32 bits.
@@ -375,16 +376,16 @@ typedef enum _OR_TYPE {
 
     //Indirect load via base-register + immdediate-offset.
     OR_ldrd_i32, //load 8 bytes. load double word. 32bit offset.
-    OR_ldr_i13, //load word
-    OR_ldrb_i13,
-    OR_ldrsb_i9,
-    OR_ldrh_i9,
-    OR_ldrsh_i9,
-    OR_ldrd_i9,
+    OR_ldr_i12, //load word
+    OR_ldrb_i12,
+    OR_ldrsb_i12,
+    OR_ldrh_i12,
+    OR_ldrsh_i12,
+    OR_ldrd_i10,
 
     //Direct store
     OR_stm, //store multiple words.
-    OR_str, //store word
+    OR_str, //store 4 byte
     OR_strb, //store 1 byte, zero extend to 32 bits.
     OR_strsb, //store 1 byte, sign extend to 32 bits.
     OR_strh, //store 2 bytes, zero extend to 32 bits.
@@ -392,12 +393,10 @@ typedef enum _OR_TYPE {
     OR_strd, //store double word to memory.
 
     //Indirect load via base-register + immdediate-offset.
-    OR_str_i13,
-    OR_strb_i13,
-    OR_strsb_i9,
-    OR_strh_i9,
-    OR_strsh_i9,
-    OR_strd_i9,
+    OR_str_i12,
+    OR_strb_i12,
+    OR_strh_i12,
+    OR_strd_i10,
 
     OR_ret,
     OR_ret1,

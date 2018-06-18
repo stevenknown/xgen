@@ -161,12 +161,12 @@ static ORTypeDesc g_or_type_desc [] = {
 
     //Indirect load via base-register + immdediate-offset.
     {OR_ldrd_i32,  "ldrd_i32",   }, // (px)ldrd Rd, Rd2, [Rn, Imm32]
-    {OR_ldr_i13,   "ldr_i13",    }, // (px)ldr Rd, [Rn, Imm13]
-    {OR_ldrb_i13,  "ldrb_i13",   }, // (px)ldr Rd, [Rn, Imm13]
-    {OR_ldrsb_i9,  "ldrsb_i9",   }, // (px)ldr Rd, [Rn, Imm9]
-    {OR_ldrh_i9,   "ldrh_i9",    }, // (px)ldr Rd, [Rn, Imm9]
-    {OR_ldrsh_i9,  "ldrsh_i9",   }, // (px)ldr Rd, [Rn, Imm9]
-    {OR_ldrd_i9,   "ldrd_i9",    }, // (px)ldr Rd, Rd2, [Rn, Imm9]
+    {OR_ldr_i12,   "ldr_i12",    }, // (px)ldr Rd, [Rn, Imm12]
+    {OR_ldrb_i12,  "ldrb_i12",   }, // (px)ldr Rd, [Rn, Imm12]
+    {OR_ldrsb_i12, "ldrsb_i12",  }, // (px)ldr Rd, [Rn, Imm12]
+    {OR_ldrh_i12,  "ldrh_i12",   }, // (px)ldr Rd, [Rn, Imm12]
+    {OR_ldrsh_i12, "ldrsh_i12",  }, // (px)ldr Rd, [Rn, Imm12]
+    {OR_ldrd_i10,  "ldrd_i10",   }, // (px)ldr Rd, Rd2, [Rn, Imm10]
 
     //Symbol store
     {OR_stm,       "stm",        }, // (px)stm Rn, {Rx,Ry,...}
@@ -178,12 +178,10 @@ static ORTypeDesc g_or_type_desc [] = {
     {OR_strd,      "strd",       }, // (px)strd Rt, Rt2, label
 
     //Indirect load via base-register + immdediate-offset.
-    {OR_str_i13,   "str_i13",    }, // (px)str Rt, [Rn, Imm13]
-    {OR_strb_i13,  "strb_i13",   }, // (px)str Rt, [Rn, Imm13]
-    {OR_strsb_i9,  "strsb_i9",   }, // (px)str Rt, [Rn, Imm9]
-    {OR_strh_i9,   "strh_i9",    }, // (px)str Rt, [Rn, Imm9]
-    {OR_strsh_i9,  "strsh_i9",   }, // (px)str Rt, [Rn, Imm9]
-    {OR_strd_i9,   "strd_i9",    }, // (px)str Rt, Rt2, [Rn, Imm9]
+    {OR_str_i12,   "str_i12",    }, // (px)str Rt, [Rn, Imm12]
+    {OR_strb_i12,  "strb_i12",   }, // (px)str Rt, [Rn, Imm12]
+    {OR_strh_i12,  "strh_i12",   }, // (px)str Rt, [Rn, Imm12]
+    {OR_strd_i10,  "strd_i10",   }, // (px)str Rt, Rt2, [Rn, Imm10]
 
     //simulated operation.
     {OR_ret,       "ret",        }, // (px)ret Lr
@@ -328,9 +326,11 @@ static void initAndPrtRegister(OUT xcom::BitSet & allocable)
 
     //The standard 32-bit ARM calling convention allocates the 15
     //general-purpose registers as:
-    //  r14 is the link register. (The BL instruction, used in a subroutine
+    //  r16 is CPSR(CurrentProgram Status Register).
+    //  r15 is the PC.
+    //  r14 is the link register LR. (The BL instruction, used in a subroutine
     //  call, stores the return address in this register).
-    //  r13 is the stack pointer. (The Push/Pop instructions in "Thumb"
+    //  r13 is the stack pointer SP. (The Push/Pop instructions in "Thumb"
     //  operating mode use this register only).
     //  r12 is the Intra-Procedure-call scratch register.
     //  r4 to r11: used to hold local variables.
@@ -348,6 +348,10 @@ static void initAndPrtRegister(OUT xcom::BitSet & allocable)
     ////////////////////////////////////////
     //Initialize regset caller-saved.
     ////////////////////////////////////////
+    //R0~R3
+    for (REG reg = 1; reg <= 4; reg++) {
+        caller_saved.bunion(reg);
+    }    
 
     ////////////////////////////////////////
     //Initialize regset callee-saved.
@@ -361,8 +365,8 @@ static void initAndPrtRegister(OUT xcom::BitSet & allocable)
     //Initialize regset allocable.
     ////////////////////////////////////////
     //R4~R11
-    //for (REG reg = 5; reg <= 12; reg++) {
-    for (REG reg = 5; reg <= 7; reg++) {
+    for (REG reg = 5; reg <= 12; reg++) {
+    //for (REG reg = 5; reg <= 7; reg++) {
         allocable.bunion(reg);
     }
 
@@ -662,6 +666,12 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     SRD_bitsize(sr_12b_unsig_imm) = 12;
     SRD_is_signed(sr_12b_unsig_imm) = 0;
 
+    //Indicates 1024 byte of address space.
+    SRDesc * sr_10b_unsig_imm = newSRDesc();
+    SRD_is_imm(sr_10b_unsig_imm) = 1;
+    SRD_bitsize(sr_10b_unsig_imm) = 10;
+    SRD_is_signed(sr_10b_unsig_imm) = 0;
+
     //Indicates 512 byte of address space.
     SRDesc * sr_9b_unsig_imm = newSRDesc();
     SRD_is_imm(sr_9b_unsig_imm) = 1;
@@ -698,11 +708,11 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     SRD_bitsize(sr_2b_unsig_imm) = 2;
     SRD_is_signed(sr_2b_unsig_imm) = 0;
 
-    //Indicates 4 byte of address space.
-    SRDesc * sr_1b_unsig_imm = newSRDesc();
-    SRD_is_imm(sr_1b_unsig_imm) = 1;
-    SRD_bitsize(sr_1b_unsig_imm) = 1;
-    SRD_is_signed(sr_1b_unsig_imm) = 0;
+    //Indicates 0 byte of address space.
+    SRDesc * sr_0b_unsig_imm = newSRDesc();
+    SRD_is_imm(sr_0b_unsig_imm) = 1;
+    SRD_bitsize(sr_0b_unsig_imm) = 1;
+    SRD_is_signed(sr_0b_unsig_imm) = 0;
 
     /////////////////////////////////////////////////////
     //Create SR Descriptor of related RegFileSet, RegSet.
@@ -780,17 +790,6 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_cmp_i, sda);
     setSRDescGroup(OR_cmn_i, sda);
 
-    //0 res, 4 opnd:-- <- p(pred), r(base), 1b_unsig_imm(offset), r(store_val)
-    sda = newSRDescGroup(0, 4);
-    //opnd
-    sda->set_opnd(0, sr_p);
-    sda->set_opnd(1, sr_r); //base
-    sda->set_opnd(2, sr_1b_unsig_imm); //offset
-    sda->set_opnd(3, sr_r);
-    setSRDescGroup(OR_str, sda);
-    setSRDescGroup(OR_strb, sda);
-    setSRDescGroup(OR_strh, sda);
-
     //0 res, 4 opnd:-- <- p, r, r, r
     sda = newSRDescGroup(0, 4);
     //opnd
@@ -805,32 +804,30 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     //opnd
     sda->set_opnd(0, sr_p);
     sda->set_opnd(1, sr_r); //base
-    sda->set_opnd(2, sr_13b_unsig_imm); //offset
+    sda->set_opnd(2, sr_12b_unsig_imm); //offset
     sda->set_opnd(3, sr_r);
-    setSRDescGroup(OR_str_i13, sda);
-    setSRDescGroup(OR_strb_i13, sda);
+    setSRDescGroup(OR_str_i12, sda);
+    setSRDescGroup(OR_strb_i12, sda);
 
     //0 res, 4 opnd:-- <- p(pred), r(base), 9b_unsig_imm(offset), r(store_val)
     sda = newSRDescGroup(0, 4);
     //opnd
     sda->set_opnd(0, sr_p);
     sda->set_opnd(1, sr_r); //base
-    sda->set_opnd(2, sr_9b_unsig_imm); //offset
+    sda->set_opnd(2, sr_12b_unsig_imm); //offset
     sda->set_opnd(3, sr_r);
-    setSRDescGroup(OR_strsb_i9, sda);
-    setSRDescGroup(OR_strh_i9, sda);
-    setSRDescGroup(OR_strsh_i9, sda);
+    setSRDescGroup(OR_strh_i12, sda);
 
-    //double store
-    //0 res, 5 opnd: <- p, r(base), sr_1b_unsig_imm, r(store_val1), r(store_val2)
-    sda = newSRDescGroup(0, 5);
+    //0 res, 4 opnd:-- <- p(pred), r(base), 1b_unsig_imm(offset), r(store_val)
+    sda = newSRDescGroup(0, 4);
     //opnd
     sda->set_opnd(0, sr_p);
     sda->set_opnd(1, sr_r); //base
-    sda->set_opnd(2, sr_1b_unsig_imm); //offset
-    sda->set_opnd(3, sr_r); // Rs1 store to [base]+
-    sda->set_opnd(4, sr_r); // Rs2 store to [base]+4
-    setSRDescGroup(OR_strd, sda);
+    sda->set_opnd(2, sr_32b_unsig_imm); //offset
+    sda->set_opnd(3, sr_r); //store_val
+    setSRDescGroup(OR_str, sda);
+    setSRDescGroup(OR_strb, sda);
+    setSRDescGroup(OR_strh, sda);
 
     //0 res, 5 opnd: <- p, r, r, r, r
     sda = newSRDescGroup(0, 5);
@@ -851,7 +848,18 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     sda->set_opnd(2, sr_9b_unsig_imm); //offset
     sda->set_opnd(3, sr_r); // Rs1 store to [base]+offset
     sda->set_opnd(4, sr_r); // Rs2 store to [base]+offset+4
-    setSRDescGroup(OR_strd_i9, sda);
+    setSRDescGroup(OR_strd_i10, sda);
+
+    //double store
+    //0 res, 6 opnd: <- p, r(base), sr_0b_unsig_imm, r(store_val1), r(store_val2)
+    sda = newSRDescGroup(0, 5);
+    //opnd
+    sda->set_opnd(0, sr_p);
+    sda->set_opnd(1, sr_r); //base
+    sda->set_opnd(2, sr_32b_unsig_imm); //offset
+    sda->set_opnd(3, sr_r); // Rs1 store to [base]+
+    sda->set_opnd(4, sr_r); // Rs2 store to [base]+4
+    setSRDescGroup(OR_strd, sda);
 
     //0 res, 6 opnd: <- p, r, r, r, r, r
     sda = newSRDescGroup(0, 6);
@@ -937,7 +945,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_cmn, sda);
     setSRDescGroup(OR_teq, sda);
 
-    //1 res, 3 opnd: cpsr <- p, r, Imm32
+    //1 res, 3 opnd: cpsr <- p, r, Imm
     sda = newSRDescGroup(1, 3);
     //res
     sda->set_res(0, sr_cpsr);
@@ -969,7 +977,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_asl, sda);
     setSRDescGroup(OR_ror, sda);
 
-    //1 res, 3 opnd: r <- p, r, Imm12
+    //1 res, 3 opnd: r <- p, r, Imm
     sda = newSRDescGroup(1, 3);
     //res
     sda->set_res(0, sr_r);
@@ -984,25 +992,16 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_orr_i, sda);
     setSRDescGroup(OR_eor_i, sda);
 
-    //1 res, 3 opnd: r <- p, r, Imm13
+    //1 res, 3 opnd: r <- p, r, Imm
     sda = newSRDescGroup(1, 3);
     //res
     sda->set_res(0, sr_r);
     //opnd
     sda->set_opnd(0, sr_p);
     sda->set_opnd(1, sr_r); //base
-    sda->set_opnd(2, sr_13b_unsig_imm); //offset
+    sda->set_opnd(2, sr_32b_unsig_imm); //offset
     setSRDescGroup(OR_ldr, sda);
     setSRDescGroup(OR_ldrb, sda);
-
-    //1 res, 3 opnd: r <- p, r, Imm9
-    sda = newSRDescGroup(1, 3);
-    //res
-    sda->set_res(0, sr_r);
-    //opnd
-    sda->set_opnd(0, sr_p);
-    sda->set_opnd(1, sr_r); //base
-    sda->set_opnd(2, sr_9b_unsig_imm); //offset
     setSRDescGroup(OR_ldrsb, sda);
     setSRDescGroup(OR_ldrh, sda);
     setSRDescGroup(OR_ldrsh, sda);
@@ -1020,7 +1019,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_sbc, sda);
     setSRDescGroup(OR_rsc, sda);
 
-    //1 res, 4 opnd: r <- p, r, r, Imm5
+    //1 res, 4 opnd: r <- p, r, r, Imm
     sda = newSRDescGroup(1, 4);
     //res
     sda->set_res(0, sr_r);
@@ -1055,7 +1054,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_subs, sda);
     setSRDescGroup(OR_rsbs, sda);
 
-    //2 res, 3 opnd: r, cpsr <- p, r, Imm8
+    //2 res, 3 opnd: r, cpsr <- p, r, Imm
     sda = newSRDescGroup(2, 3);
     //res
     sda->set_res(0, sr_r);
@@ -1068,7 +1067,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_subs_i, sda);
     setSRDescGroup(OR_rsbs_i, sda);
 
-    //2 res, 3 opnd: r, r <- p, r, Imm9
+    //2 res, 3 opnd: r, r <- p, r, Imm
     sda = newSRDescGroup(2, 3);
     //res
     sda->set_res(0, sr_r);
@@ -1076,8 +1075,8 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     //opnd
     sda->set_opnd(0, sr_p);
     sda->set_opnd(1, sr_r);
-    sda->set_opnd(2, sr_9b_unsig_imm);
-    setSRDescGroup(OR_ldrd_i9, sda);
+    sda->set_opnd(2, sr_10b_unsig_imm);
+    setSRDescGroup(OR_ldrd_i10, sda);
 
     //2 res, 3 opnd: r, r <- p, r, imm32
     sda = newSRDescGroup(2, 3);
@@ -1104,7 +1103,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_sbcs, sda);
     setSRDescGroup(OR_rscs, sda);
 
-    //2 res, 4 opnd: r, cpsr <- p, r, Imm32, cpsr
+    //2 res, 4 opnd: r, cpsr <- p, r, Imm, cpsr
     sda = newSRDescGroup(2, 4);
     //res
     sda->set_res(0, sr_r);
@@ -1119,10 +1118,11 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_rscs_i, sda);
 
     //spadjust
-    //1 res, 3 opnd: sp <- p, sp, 32bit-ofst
-    sda = newSRDescGroup(1, 3);
+    //2 res, 3 opnd: sp, r <- p, sp, 32bit-ofst
+    sda = newSRDescGroup(2, 3);
     //res
     sda->set_res(0, sr_r); //sp
+    sda->set_res(1, sr_r); //tmp
     //opnd
     sda->set_opnd(0, sr_p); //true pred
     sda->set_opnd(1, sr_r); //sp
@@ -1213,7 +1213,6 @@ static void initORProperty()
 {
     ORTypeDesc * od;
 
-    //All PAC instruction are predicable.
     for (INT i = OR_UNDEF + 1; i < OR_NUM; i++) {
         od = &g_or_type_desc[i];
         OTD_is_predicated(od) = 1;
@@ -1243,12 +1242,12 @@ static void initORProperty()
         OR_ldrh,
         OR_ldrsh,
         OR_ldrd,
-        OR_ldr_i13,
-        OR_ldrb_i13,
-        OR_ldrsb_i9,
-        OR_ldrh_i9,
-        OR_ldrsh_i9,
-        OR_ldrd_i9,
+        OR_ldr_i12,
+        OR_ldrb_i12,
+        OR_ldrsb_i12,
+        OR_ldrh_i12,
+        OR_ldrsh_i12,
+        OR_ldrd_i10,
     };
     for (UINT i = 0; i < sizeof(load) / sizeof(load[0]); i++) {
         od = &g_or_type_desc[load[i]];
@@ -1267,12 +1266,10 @@ static void initORProperty()
         OR_strh,
         OR_strsh,
         OR_strd,
-        OR_str_i13,
-        OR_strb_i13,
-        OR_strsb_i9,
-        OR_strh_i9,
-        OR_strsh_i9,
-        OR_strd_i9,
+        OR_str_i12,
+        OR_strb_i12,
+        OR_strh_i12,
+        OR_strd_i10,
     };
     for (UINT i = 0; i < sizeof(store) / sizeof(store[0]); i++) {
         od = &g_or_type_desc[store[i]];
@@ -1837,12 +1834,12 @@ static void initAndPrtScheInfoImpl(OR_TYPE ot)
     case OR_ldrsh:
     case OR_ldrd:
     case OR_ldrd_i32:
-    case OR_ldr_i13:
-    case OR_ldrb_i13:
-    case OR_ldrsb_i9:
-    case OR_ldrh_i9:
-    case OR_ldrsh_i9:
-    case OR_ldrd_i9: {
+    case OR_ldr_i12:
+    case OR_ldrb_i12:
+    case OR_ldrsb_i12:
+    case OR_ldrh_i12:
+    case OR_ldrsh_i12:
+    case OR_ldrd_i10: {
         for (UINT i = 0; i < sdg->get_res_num(); i++) {
             //Optimistic load latency.
             ORSI_reg_result_avail_cyc(si, i) = 3;
@@ -1858,12 +1855,10 @@ static void initAndPrtScheInfoImpl(OR_TYPE ot)
     case OR_strh:
     case OR_strsh:
     case OR_strd:
-    case OR_str_i13:
-    case OR_strb_i13:
-    case OR_strsb_i9:
-    case OR_strh_i9:
-    case OR_strsh_i9:
-    case OR_strd_i9: {
+    case OR_str_i12:
+    case OR_strb_i12:
+    case OR_strh_i12:
+    case OR_strd_i10: {
         for (UINT i = 0; i < sdg->get_res_num(); i++) {
             //Optimistic write latency.
             ORSI_reg_result_avail_cyc(si, i) = 1;

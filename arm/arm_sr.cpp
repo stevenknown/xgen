@@ -39,13 +39,36 @@ author: Su Zhenyu
 //
 //START ARMSR
 //
+//Return SR name during print assembly file.
+CHAR const* ARMSR::getAsmName(StrBuf & buf, CG * cg)
+{
+    switch (SR_type(this)) {
+    case SR_INT_IMM:
+        buf.strcat("#");
+        return SR::getAsmName(buf, cg);
+    case SR_VAR:
+        if (SR_var_ofst(this) != 0) {
+            buf.strcat("%s+%d", SYM_name(SR_var(this)->get_name()),
+                SR_var_ofst(this));
+            return buf.buf;
+        } else {
+            buf.strcat("%s", SYM_name(SR_var(this)->get_name()));
+            return buf.buf;
+        }
+    default:
+        return SR::getAsmName(buf, cg);
+    }
+    return NULL;
+}
+
+
 //Return symbol register name and info, used by tracing routines.
 //'buf': output string buffer.
 CHAR const* ARMSR::get_name(StrBuf & buf, CG * cg) const
 {
     switch (SR_type(this)) {
     case SR_REG: {
-        return SR::get_name(buf, (ARMCG*)cg);
+        return SR::get_name(buf, cg);
 
         //Print physical register id and register file.
         if (SR_phy_regid(this) != REG_UNDEF) {

@@ -186,7 +186,6 @@ public:
 
     void addBBLevelNewVar(IN xoc::VAR * var);
     void addFuncLevelNewVar(IN xoc::VAR * var);
-    void appendSpill(ORBB * bb, ORList & ors);
     void appendReload(ORBB * bb, ORList & ors);
     inline xoc::VAR * addBuiltinVar(CHAR const* buildin_name)
     {
@@ -208,6 +207,10 @@ public:
             bool is_log = true);
     virtual DataDepGraph * allocDDG(bool is_log = true);
     void assembleSRVec(SRVec * srvec, SR * sr1, SR * sr2);
+    virtual IR2OR * allocIR2OR() = 0;
+    virtual OR_CFG * allocORCFG();
+    virtual IssuePackage * allocIssuePackage();
+    virtual RaMgr * allocRaMgr(List<ORBB*> * bblist, bool is_func);
 
     //OR Builder
     //Build pseduo instruction that indicate LabelInfo.
@@ -928,11 +931,6 @@ public:
     virtual CLUST mapSR2Cluster(OR *, SR const*)
     { ASSERT(0, ("Target Dependent Code")); return CLUST_UNDEF; }
 
-    virtual IR2OR * allocIR2OR() = 0;
-    virtual OR_CFG * allocORCFG();
-    virtual IssuePackage * allocIssuePackage();
-    virtual RaMgr * allocRaMgr(List<ORBB*> * bblist, bool is_func);
-
     void renameResult(
             OR * o,
             SR * oldsr,
@@ -991,6 +989,7 @@ public:
 
     bool verify();
 
+    void prependSpill(ORBB * bb, ORList & ors);
     virtual void preLS(
             IN ORBB * bb,
             IN RaMgr * ra_mgr,

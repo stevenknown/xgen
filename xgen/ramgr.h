@@ -44,8 +44,6 @@ protected:
     Vector<ParallelPartMgr*> * m_ppm_vec;
     //Supply callee-saved regs usage information for LRA.
     RegSet m_lra_used_callee_saved_reg[RF_NUM];
-    //Set true if callee-register is allocable.
-    bool m_can_alloc_callee;
     List<ORBB*> * m_bb_list;
     GRA * m_gra;
 
@@ -60,6 +58,9 @@ protected:
 
 public:
     VAR2OR m_var2or_map;
+    
+    //Set true if callee-register is allocable.
+    bool m_can_alloc_callee;
 
 public:
     RaMgr(List<ORBB*> * bbs, bool is_func, CG * cg);
@@ -80,7 +81,7 @@ public:
     List<ORBB*> * getBBList() { return m_bb_list; }
     Vector<ParallelPartMgr*> * getParallelPartMgrVec() { return m_ppm_vec; }
     Region * getRegion() { return m_ru; }
-    CG * get_cg() { return m_cg; }
+    CG * getCG() { return m_cg; }
 
     virtual void init(List<ORBB*> * bbs, bool is_func, CG * cg);
 
@@ -116,23 +117,27 @@ public:
                     TMap<REG, VAR*> const& reg2var);
     virtual void saveCalleeIntRegisterAtEntry(
                     REGFILE regfile,
-                    IN ORBB * entry,
+                    IN ORBB * entry,                    
                     IN RegSet used_callee_regs[],
+                    OUT List<ORBB*> & bblist,
                     OUT TMap<REG, VAR*> & reg2var);
     virtual void saveCalleeIntRegisterAtExit(
                     REGFILE regfile,
                     IN ORBB * exit,
                     IN RegSet used_callee_regs[],
+                    OUT List<ORBB*> & bblist,
                     TMap<REG, VAR*> const& reg2var);
     virtual void saveCalleeFPRegisterAtEntry(
                     REGFILE regfile,
                     IN ORBB * entry,
                     IN RegSet used_callee_regs[],
+                    OUT List<ORBB*> & bblist,
                     OUT TMap<REG, VAR*> & reg2var);
     virtual void saveCalleeFPRegisterAtExit(
                     REGFILE regfile,
                     IN ORBB * exit,
                     IN RegSet used_callee_regs[],
+                    OUT List<ORBB*> & bblist,
                     TMap<REG, VAR*> const& reg2var);
     virtual void saveCallee(IN RegSet used_callee_regs[]);
     virtual void updateAsmClobberCallee(REGFILE regfile, REG reg);

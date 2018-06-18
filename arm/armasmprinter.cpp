@@ -61,16 +61,30 @@ static UINT computeAlignIsPowerOf2(VAR const* v)
 CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
 {
     StrBuf tbuf(8);
-    buf.strcat("%s", OR_code_name(o));
+    switch (OR_code(o)) {
+    case OR_ret1:
+    case OR_ret2:
+    case OR_ret3:
+    case OR_ret4:
+        buf.strcat("bx");
+        break;
+    default:
+        buf.strcat("%s", OR_code_name(o));
+        break;
+    }    
+
     UINT i = 0;
     for (; buf.buf[i] != '_' && buf.buf[i] != 0; i++) {
     }
     if (buf.buf[i] == '_') {
         buf.buf[i] = 0;
     }
+
+    //Print predicated register
     if (o->get_pred() != m_cg->genTruePred()) {
         buf.strcat("%s", o->get_pred()->getAsmName(tbuf, m_cg));
-    }
+    }    
+    
     buf.strcat(" ");
     switch (OR_code(o)) {
     case OR_orr_lsr_i:
@@ -80,7 +94,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
         buf.strcat("%s, ", o->get_opnd(2)->getAsmName(tbuf, m_cg));
         buf.strcat("lsr, ");
         buf.strcat("%s, ", o->get_opnd(3)->getAsmName(tbuf, m_cg));
-        break;
+        return buf.buf;
     case OR_orr_lsl_i:
         //orr Rd, Rs1, Rs2, lsr, #imm
         buf.strcat("%s, ", o->get_result(0)->getAsmName(tbuf, m_cg));
@@ -88,24 +102,110 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
         buf.strcat("%s, ", o->get_opnd(2)->getAsmName(tbuf, m_cg));
         buf.strcat("lsl, ");
         buf.strcat("%s, ", o->get_opnd(3)->getAsmName(tbuf, m_cg));
+        return buf.buf;
+    case OR_ldrb:
+    case OR_ldrb_i12:
+    case OR_ldrsb_i12:
+    case OR_ldrh:
+    case OR_ldrsh:
+    case OR_ldrh_i12:
+    case OR_ldrsh_i12:
+    case OR_ldr:
+    case OR_ldr_i12:
+        buf.strcat("%s, ", o->get_load_val(0)->getAsmName(tbuf, m_cg));
+        buf.strcat("[%s, ", o->get_load_base()->getAsmName(tbuf, m_cg));
+        buf.strcat("%s]", o->get_load_ofst()->getAsmName(tbuf, m_cg));
+        return buf.buf;
+    case OR_strb:
+    case OR_strb_i12:
+    case OR_strh:
+    case OR_strsh:
+    case OR_strh_i12:
+    case OR_str:
+    case OR_str_i12:
+        buf.strcat("%s, ", o->get_store_val()->getAsmName(tbuf, m_cg));
+        buf.strcat("[%s, ", o->get_store_base()->getAsmName(tbuf, m_cg));
+        buf.strcat("%s]", o->get_store_ofst()->getAsmName(tbuf, m_cg));
+        return buf.buf;
+    case OR_ldrd:
+    case OR_ldrd_i10:
+    case OR_ldrd_i32:
+        buf.strcat("%s, ", o->get_load_val(0)->getAsmName(tbuf, m_cg));
+        buf.strcat("%s, ", o->get_load_val(1)->getAsmName(tbuf, m_cg));
+        buf.strcat("[%s, ", o->get_load_base()->getAsmName(tbuf, m_cg));
+        buf.strcat("%s]", o->get_load_ofst()->getAsmName(tbuf, m_cg));
+        return buf.buf;
+    case OR_strd:
+    case OR_strd_i10:
+        buf.strcat("%s, ", o->get_store_val(0)->getAsmName(tbuf, m_cg));
+        buf.strcat("%s, ", o->get_store_val(1)->getAsmName(tbuf, m_cg));
+        buf.strcat("[%s, ", o->get_store_base()->getAsmName(tbuf, m_cg));
+        buf.strcat("%s]", o->get_store_ofst()->getAsmName(tbuf, m_cg));
+        return buf.buf;
+    case OR_movw_i: {
+        SR * v = o->get_mov_from();
+        ASSERT0(v);
+        if (SR_type(v) == SR_VAR) {
+            for (UINT i = 0; i < o->result_num(); i++) {
+                if (i != 0) {
+                    buf.strcat(", ");
+                }
+                buf.strcat("%s", o->get_result(i)->getAsmName(tbuf, m_cg));
+            }
+            if (o->result_num() != 0) {
+                buf.strcat(", ");
+            }
+            buf.strcat("#:lower16:%s", SYM_name(SR_var(v)->get_name()));
+            return buf.buf;
+        }        
         break;
-    default: {
-        for (UINT i = 0; i < o->result_num(); i++) {
-            if (i != 0) {
-                buf.strcat(", ");
-            }
-            buf.strcat("%s", o->get_result(i)->getAsmName(tbuf, m_cg));
-        }
-        for (UINT i = 0; i < o->opnd_num(); i++) {
-            if (i == 0 && HAS_PREDICATE_REGISTER) {
-                //nothing to do
-            }
-            if (i != 0) {
-                buf.strcat(", ");
-            }
-            buf.strcat("%s", o->get_opnd(i)->getAsmName(tbuf, m_cg));
-        }
     }
+    case OR_movt_i: {
+        SR * v = o->get_mov_from();
+        ASSERT0(v);
+        if (SR_type(v) == SR_VAR) {
+            for (UINT i = 0; i < o->result_num(); i++) {
+                if (i != 0) {
+                    buf.strcat(", ");
+                }
+                buf.strcat("%s", o->get_result(i)->getAsmName(tbuf, m_cg));
+            }
+            if (o->result_num() != 0) {
+                buf.strcat(", ");
+            }
+            buf.strcat("#:upper16:%s", SYM_name(SR_var(v)->get_name()));
+            return buf.buf;
+        }        
+        break;
+    }
+    case OR_ret1:
+    case OR_ret2:
+    case OR_ret3:
+    case OR_ret4:
+    case OR_bl:        
+        buf.strcat("%s", o->get_opnd(1)->getAsmName(tbuf, m_cg));
+        return buf.buf;
+    default: {}
+    }
+    
+    for (UINT i = 0; i < o->result_num(); i++) {
+        if (i != 0) {
+            buf.strcat(", ");
+        }
+        buf.strcat("%s", o->get_result(i)->getAsmName(tbuf, m_cg));
+    }
+    if (o->result_num() != 0) {
+        buf.strcat(", ");
+    }
+    for (UINT i = 0; i < o->opnd_num(); i++) {
+        if (i == 0 && HAS_PREDICATE_REGISTER) {
+            //nothing to do
+            continue;
+        }
+        if (i != 1) {
+            buf.strcat(", ");
+        }
+        buf.strcat("%s", o->get_opnd(i)->getAsmName(tbuf, m_cg));
     }
     return buf.buf;
 }
@@ -164,7 +264,8 @@ void ARMAsmPrinter::printData(FILE * asmh, Section & sect)
 
             //Always align string in 1 byte.
             //fprintf(asmh, "\n.align %d", computeAlignIsPowerOf2(v));
-            fprintf(asmh, "\n.align 0 ;2^0 bit");
+            fprintf(asmh, "\n#2^0 bit");
+            fprintf(asmh, "\n.align 0");
 
             fprintf(asmh, "\n.byte ");
             while (*p != 0) {
@@ -237,8 +338,6 @@ void ARMAsmPrinter::printCodeSequentially(
 }
 
 
-
-
 void ARMAsmPrinter::printCode(FILE * asmh)
 {
     StrBuf buf(128);
@@ -247,11 +346,10 @@ void ARMAsmPrinter::printCode(FILE * asmh)
         m_cg->getRegion()->getRegionVar()->get_name());
     ASSERT0(func_name);
     fprintf(asmh, "\n\n\n\n.section .text, \"ax\", \"progbits\"");
-    fprintf(asmh, "\n.align 4");
-    fprintf(asmh, "\n.proc %s#", func_name);
-    fprintf(asmh, "\n.type %s#, @function", func_name);
-    fprintf(asmh, "\n.global %s#", func_name);
-    fprintf(asmh, "\n%s#:", func_name);
+    fprintf(asmh, "\n.align 2");
+    fprintf(asmh, "\n.type %s, %%function", func_name);
+    fprintf(asmh, "\n.global %s", func_name);
+    fprintf(asmh, "\n%s:", func_name);
     fprintf(asmh, "\n");
     fflush(asmh);
 
@@ -261,7 +359,7 @@ void ARMAsmPrinter::printCode(FILE * asmh)
     ASSERT0(bblst);
     for (ORBB * bb = bblst->get_head(); bb != NULL; bb = bblst->get_next()) {
         //Print BB info
-        fprintf(asmh, "\n;START BB(%d)", ORBB_id(bb));
+        fprintf(asmh, "\n#START BB(%d)", ORBB_id(bb));
         if (ORBB_is_entry(bb)) {
             fprintf(asmh, ", entry");
         }
@@ -284,5 +382,5 @@ void ARMAsmPrinter::printCode(FILE * asmh)
         buf.clean();
         printCodeSequentially(iplvec->get(ORBB_id(bb)), buf, asmh);
     }
-    fprintf(asmh, "\n.endp %s#\n", func_name);
+    fprintf(asmh, "\n.size %s, .-%s\n", func_name, func_name);
 }

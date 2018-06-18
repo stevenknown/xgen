@@ -38,7 +38,6 @@ class ARMOR : public OR {
 public:
     virtual LabelInfo const* getLabel() const;
     virtual void set_pred(SR * v);
-
 };
 //END ARMOR
 
