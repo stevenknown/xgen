@@ -117,7 +117,7 @@ public:
     virtual bool fillIssueSlot(DataDepGraph & stepddg);
 
     //Return the Branch Operation.
-    OR * get_br() const { return m_bb->get_branch_or(); }
+    OR * get_br() const { return m_bb->getBranchOR(); }
     //Get simulated machine
     BBSimulator const* get_simm() const { return m_sim; }
 

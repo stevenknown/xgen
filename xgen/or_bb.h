@@ -158,20 +158,20 @@ public:
 
     void cleanLabelInfoList() { getLabelList().clean(); }
 
-    OR * get_branch_or();
+    OR * getBranchOR();
     List<LabelInfo const*> & getLabelList() { return m_lab_list; }
 
     UINT id() const { return ORBB_id(this); }
-    bool is_down_boundary(OR * o);
+    bool isDownBoundary(OR * o);
     bool is_bb_exit() const { return ORBB_is_exit(this); }
     bool hasLabel(LabelInfo const* o);
     inline bool is_boundary(OR * o)
-    { return (is_up_boundary(o) || is_down_boundary(o)); }
-    bool is_up_boundary(OR * o) { return o->is_label_or(); }
+    { return (isUpperBoundary(o) || isDownBoundary(o)); }
+    bool isUpperBoundary(OR * o) { return o->is_label_or(); }
     bool hasCall();
-    bool is_live_in(SR * sr);
-    bool is_live_out(SR * sr);
-    bool is_live_out_result(OR * o);
+    bool isLiveIn(SR * sr);
+    bool isLiveOut(SR * sr);
+    bool isLiveOutResult(OR * o);
     inline bool isExceptionHandler() const
     {
         ORBB * pthis = const_cast<ORBB*>(this);
@@ -196,8 +196,8 @@ public:
         return false;
     }
 
-    void set_live_out(SR * sr);
-    void set_live_in(SR * sr);
+    void setLiveOut(SR * sr);
+    void setLiveIn(SR * sr);
     void mergeLabeInfoList(ORBB * from);
     void dump();
 

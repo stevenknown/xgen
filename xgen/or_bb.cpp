@@ -482,7 +482,7 @@ bool ORBB::hasLabel(LabelInfo const* lab)
 }
 
 
-void ORBB::set_live_out(SR * sr)
+void ORBB::setLiveOut(SR * sr)
 {
     ASSERT0(SR_is_reg(sr));
     SR_is_global(sr) = 1;
@@ -490,7 +490,7 @@ void ORBB::set_live_out(SR * sr)
 }
 
 
-void ORBB::set_live_in(SR * sr)
+void ORBB::setLiveIn(SR * sr)
 {
     ASSERT0(SR_is_reg(sr));
     SR_is_global(sr) = 1;
@@ -498,7 +498,7 @@ void ORBB::set_live_in(SR * sr)
 }
 
 
-bool ORBB::is_live_in(SR * sr)
+bool ORBB::isLiveIn(SR * sr)
 {
     ASSERT0(SR_is_reg(sr));
     if (SR_is_global(sr) &&
@@ -509,7 +509,7 @@ bool ORBB::is_live_in(SR * sr)
 }
 
 
-bool ORBB::is_live_out(SR * sr)
+bool ORBB::isLiveOut(SR * sr)
 {
     if (SR_is_global(sr) &&
         (ORBB_liveout(this).is_contain(SR_sregid(sr)))) {
@@ -523,10 +523,10 @@ bool ORBB::is_live_out(SR * sr)
 //We can get the info from LifeTimeMgr, but
 //corresponding life-time of the o's results need
 //to be processed respectively, that is costly operation.
-bool ORBB::is_live_out_result(OR * o)
+bool ORBB::isLiveOutResult(OR * o)
 {
     for (UINT i = 0; i < o->result_num(); i++) {
-        if (is_live_out(o->get_result(i))) {
+        if (isLiveOut(o->get_result(i))) {
             return true;
         }
     }
@@ -536,7 +536,7 @@ bool ORBB::is_live_out_result(OR * o)
 
 //The last OR at ORBB may not be branch if current
 //pass pay attention to delay slot.
-OR * ORBB::get_branch_or()
+OR * ORBB::getBranchOR()
 {
     for (OR * o = ORBB_orlist(this)->get_tail();
          o != NULL; o = ORBB_orlist(this)->get_prev()) {
@@ -598,7 +598,7 @@ void ORBB::dump()
 }
 
 
-bool ORBB::is_down_boundary(OR * o)
+bool ORBB::isDownBoundary(OR * o)
 {
     return (OR_is_call(o) ||
             OR_is_cond_br(o) ||

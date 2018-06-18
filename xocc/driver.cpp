@@ -667,67 +667,67 @@ static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr, FILE * asmh)
 
 static CLRegionMgr * initRegionMgr()
 {
-	CLRegionMgr * rm = allocRegionMgr();
-	rm->initVarMgr();
+    CLRegionMgr * rm = allocRegionMgr();
+    rm->initVarMgr();
 
-	//g_opt_level = OPT_LEVEL0;
-	//Retain CFG, DU info for IPA used.
-	g_retain_pass_mgr_for_region = true;
-	g_compute_region_imported_defuse_md = true;
-	g_compute_du_chain = false;
-	g_do_refine = true;
-	g_do_rp = false;
-	g_do_dce = false;
-	g_do_call_graph = true;
-	g_do_ipa = true;
+    //g_opt_level = OPT_LEVEL0;
+    //Retain CFG, DU info for IPA used.
+    g_retain_pass_mgr_for_region = true;
+    g_compute_region_imported_defuse_md = true;
+    g_compute_du_chain = false;
+    g_do_refine = true;
+    g_do_rp = false;
+    g_do_dce = false;
+    g_do_call_graph = true;
+    g_do_ipa = true;
 
-	g_is_support_dynamic_type = true;
+    g_is_support_dynamic_type = true;
 
-	g_do_rp = false;
-	g_do_cp = false;
-	g_do_rce = false;
-	g_do_licm = false;
-	g_do_loop_convert = false;
-	g_do_cdg = false;
-	g_do_expr_tab = false;
-	g_compute_region_imported_defuse_md = true;
-	g_do_lis = false;
-	g_do_gra = false;
-	g_is_opt_float = true;
-	g_do_dce = false;
-	g_do_pr_ssa = false;
-	g_show_pass_info = false;
-	g_do_ivr = false;
-	g_prt_asm_horizontal = true;
-	g_do_refine_auto_insert_cvt = false;
-	g_is_dump_mdset_hash = true;
-	g_is_dump_du_chain = true;
-	return rm;
+    g_do_rp = false;
+    g_do_cp = false;
+    g_do_rce = false;
+    g_do_licm = false;
+    g_do_loop_convert = false;
+    g_do_cdg = false;
+    g_do_expr_tab = false;
+    g_compute_region_imported_defuse_md = true;
+    g_do_lis = false;
+    g_do_gra = false;
+    g_is_opt_float = true;
+    g_do_dce = false;
+    g_do_pr_ssa = false;
+    g_show_pass_info = false;
+    g_do_ivr = false;
+    g_prt_asm_horizontal = true;
+    g_do_refine_auto_insert_cvt = false;
+    g_is_dump_mdset_hash = true;
+    g_is_dump_du_chain = true;
+    return rm;
 }
 
 
 static void dumpRegionMgrGR(RegionMgr * rm, CHAR * srcname)
 {
-	ASSERT0(rm);
-	for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
-		Region * r = rm->getRegion(i);
-		if (r == NULL) { continue; }
-		if (r->is_program()) {
-			g_indent = 0;
-			//r->dump(true);
-			ASSERT0(srcname);
-			xcom::StrBuf b(64);
-			b.strcat(srcname);
-			b.strcat(".gr");
-			UNLINK(b.buf);
-			FILE * gr = fopen(b.buf, "a");
-			FILE * oldvalue = g_tfile;
-			g_tfile = gr;
-			r->dumpGR(true);
-			fclose(gr);
-			g_tfile = oldvalue;
-		}
-	}
+    ASSERT0(rm);
+    for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
+        Region * r = rm->getRegion(i);
+        if (r == NULL) { continue; }
+        if (r->is_program()) {
+            g_indent = 0;
+            //r->dump(true);
+            ASSERT0(srcname);
+            xcom::StrBuf b(64);
+            b.strcat(srcname);
+            b.strcat(".gr");
+            UNLINK(b.buf);
+            FILE * gr = fopen(b.buf, "a");
+            FILE * oldvalue = g_tfile;
+            g_tfile = gr;
+            r->dumpGR(true);
+            fclose(gr);
+            g_tfile = oldvalue;
+        }
+    }
 }
 
 
@@ -769,68 +769,68 @@ static void finiCompile(
 
 bool compileGRFile(CHAR * gr_file_name)
 {
-	bool res = true;
-	ASSERT0(gr_file_name);
+    bool res = true;
+    ASSERT0(gr_file_name);
     TargInfo * ti = NULL;
-	CLRegionMgr * rm = NULL;
+    CLRegionMgr * rm = NULL;
     CGMgr * cgmgr = NULL;
     FILE * asmh = NULL;
     START_TIMER(t, "Compile GR File");
     initCompile(&rm, &asmh, &cgmgr, &ti);
-	xoc::initdump("tmp.log", true);
-	bool succ = xoc::readGRAndConstructRegion(rm, gr_file_name);
-	if (!succ) {
-		res = false;
-		goto FIN;
-	}
+    xoc::initdump("tmp.log", true);
+    bool succ = xoc::readGRAndConstructRegion(rm, gr_file_name);
+    if (!succ) {
+        res = false;
+        goto FIN;
+    }
 
-	if (g_is_dumpgr) {
-		dumpRegionMgrGR(rm, gr_file_name);
-	}
+    if (g_is_dumpgr) {
+    	dumpRegionMgrGR(rm, gr_file_name);
+    }
 
-	//Dump and clean
-	compileRegionSet(rm, cgmgr, asmh);
-	for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
-		Region * r = rm->getRegion(i);
-		if (r == NULL) { continue; }
-		if (r->getPassMgr() != NULL) {
-			xoc::PRSSAMgr * ssamgr = (PRSSAMgr*)r->
-				getPassMgr()->queryPass(PASS_PR_SSA_MGR);
-			if (ssamgr != NULL && ssamgr->isSSAConstructed()) {
-				ssamgr->destruction();
-			}
-		}
-	}
+    //Dump and clean
+    compileRegionSet(rm, cgmgr, asmh);
+    for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
+    	Region * r = rm->getRegion(i);
+    	if (r == NULL) { continue; }
+    	if (r->getPassMgr() != NULL) {
+            xoc::PRSSAMgr * ssamgr = (PRSSAMgr*)r->
+            	getPassMgr()->queryPass(PASS_PR_SSA_MGR);
+            if (ssamgr != NULL && ssamgr->isSSAConstructed()) {
+            	ssamgr->destruction();
+            }
+    	}
+    }
 FIN:
     END_TIMER_FMT(t, ("Total Time To Compile '%s'", gr_file_name));
     finiCompile(rm, asmh, cgmgr, ti);
-	xoc::finidump();
-	return res;
+    xoc::finidump();
+    return res;
 }
 
 
 bool compileCFile()
 {
-	bool res = true;
-	TargInfo * ti = NULL;
-	CLRegionMgr * rm = NULL;
+    bool res = true;
+    TargInfo * ti = NULL;
+    CLRegionMgr * rm = NULL;
     CGMgr * cgmgr = NULL;
     FILE * asmh = NULL;
     START_TIMER(t, "Compile C File");
     initParser();
     initCompile(&rm, &asmh, &cgmgr, &ti);
-	g_fe_sym_tab = rm->getSymTab();
+    g_fe_sym_tab = rm->getSymTab();
     g_dbx_mgr = new CLDbxMgr();
     if (FrontEnd() != ST_SUCC) {
-		res = false;
-		goto FIN;
-	}
+        res = false;
+        goto FIN;
+    }
     scanAndInitVar(get_global_scope(), rm->getVarMgr(), rm->getTypeMgr());
     if (generateRegion(rm)) {
         compileRegionSet(rm, cgmgr, asmh);
     }
     if (g_is_dumpgr) {
-		dumpRegionMgrGR(rm, g_c_file_name);
+        dumpRegionMgrGR(rm, g_c_file_name);
     }
 FIN:
     if (g_dbx_mgr != NULL) {

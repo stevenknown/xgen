@@ -260,7 +260,7 @@ bool ParallelPartMgr::hasPDomOcc(ORBB * bb, SR * gsr)
     ASSERT0(occ);
     if (occ->get_elem_count() > 1) {
         xcom::BitSet * pdom = ORBB_cg(bb)->getORCfg()->get_pdom_set(ORBB_id(bb));
-        ASSERT0((pdom != NULL && !pdom->is_empty()) || !bb->is_live_out(gsr));
+        ASSERT0((pdom != NULL && !pdom->is_empty()) || !bb->isLiveOut(gsr));
         for (UINT bbid = occ->get_first();
              bbid != 0; bbid = occ->get_next(bbid)) {
             if (bbid == ORBB_id(bb)) {
@@ -295,8 +295,8 @@ void ParallelPartMgr::genReductionRestore(SR * red_var)
         dest_tn.append_tail(tmp);
         genBusCopy(m_epilog, getCluster(i),
             dest_clust, dupsr, dest_tn);
-        m_bb->set_live_out(dupsr);
-        m_epilog->set_live_in(dupsr);
+        m_bb->setLiveOut(dupsr);
+        m_epilog->setLiveIn(dupsr);
 
         //Generate accumulating operation.
         OR * red_or = m_red_mgr.get(red_var);
@@ -330,7 +330,7 @@ bool ParallelPartMgr::verifyReductionOR()
         for (UINT i = 0; i < o->result_num(); i++) {
             SR * sr = o->get_result(i);
             if (SR_is_global(sr)) {
-                if (m_bb->is_live_out(sr) &&
+                if (m_bb->isLiveOut(sr) &&
                     hasPDomOcc(m_bb, sr) &&
                     ORBB_liveout(m_bb).is_contain(SR_sregid(sr))) {
                     if (!m_cg->isReductionOR(o)) {

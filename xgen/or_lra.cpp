@@ -1633,7 +1633,7 @@ void LifeTimeMgr::reviseLifeTime(List<LifeTime*> & lts)
     if (m_bb->is_bb_exit()) {
         for (LifeTime * lt = lts.get_head();
              lt != NULL; lt = lts.get_next()) {
-            if (!m_bb->is_live_in(LT_sr(lt)) && getOccCount(lt) == 0) {
+            if (!m_bb->isLiveIn(LT_sr(lt)) && getOccCount(lt) == 0) {
                 removeLifeTime(lt);
             }
         }
@@ -1712,7 +1712,7 @@ void LifeTimeMgr::processFuncExitBB(
         liveout_exitbb_lts.append_tail(lt);
         if (m_cg->isGRAEnable()) {
             setGRAUsedReg(ret);
-            m_bb->set_live_out(ret);
+            m_bb->setLiveOut(ret);
         }
     }
 }
@@ -6773,8 +6773,8 @@ bool LRA::elimRedundantCopy(bool gra_enable)
             if (m_cg->isSREqual(cp_to_sr, cp_from_sr)) {
                 if (gra_enable) {
                     if (SR_is_global(cp_to_sr) &&
-                        m_bb->is_live_out(cp_to_sr)) {
-                        m_bb->set_live_out(cp_from_sr);
+                        m_bb->isLiveOut(cp_to_sr)) {
+                        m_bb->setLiveOut(cp_from_sr);
                     }
                 }
                 doit = true;
@@ -7012,7 +7012,7 @@ FIN:
                 //     So the o cannot be removed!
                 //  ## And similarly for dedicated sr.
                 if (second_def[i] == NULL &&
-                    (m_bb->is_live_out(o->get_result(i)) ||
+                    (m_bb->isLiveOut(o->get_result(i)) ||
                     SR_is_dedicated(o->get_result(i)))) {
                     doit = false;
                     break;
@@ -7038,7 +7038,7 @@ FIN:
               //may be reserved in local stack
               //memory at the beginning of func.
               SR_is_global(o->get_result(0)) &&
-              !m_bb->is_live_out(o->get_result(0))))) {
+              !m_bb->isLiveOut(o->get_result(0))))) {
 
             //'o' is redundant even if return-address
             //register is result register, since it was

@@ -2923,7 +2923,7 @@ void CG::constructORBBList(IN ORList & or_list)
             cur_bb = allocBB();
         }
 
-        if (cur_bb->is_down_boundary(o)) {
+        if (cur_bb->isDownBoundary(o)) {
             ORBB_orlist(cur_bb)->append_tail(o);
             if (OR_is_uncond_br(o)) {
                 //We have no knowledge about whether target BB of GOTO will be
@@ -2939,7 +2939,7 @@ void CG::constructORBBList(IN ORList & or_list)
             //Generate new BB
             m_or_bb_list.append_tail(cur_bb);
             cur_bb = allocBB();
-        } else if (cur_bb->is_up_boundary(o)) {
+        } else if (cur_bb->isUpperBoundary(o)) {
             ORBB_is_target(cur_bb) = true;
             m_or_bb_list.append_tail(cur_bb);
 
