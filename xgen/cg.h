@@ -63,17 +63,73 @@ public:
 
 class ArgDesc {
 public:
-    SR * param;
+    Vector<SR*> param_vec;
+    SR * param_start_addr;
     xoc::Dbx const* param_dbx;
     UINT is_record_addr:1;
-    UINT param_byte_size:31;
+    UINT is_record_regvec : 1;
+    UINT param_byte_size:30; //stack byte size to be passed.
+    UINT param_byte_ofst; //stack byte offset to the base SR.
 
 public:
+    ArgDesc() { init(); }
+
     void init()
     {
+        param_start_addr = NULL;
         is_record_addr = false;
+        is_record_regvec = false;
         param_dbx = NULL;
+        param_byte_size = 0;
+        param_byte_ofst = 0;
     }
+};
+
+
+#define ARGDESCMGR_passed_arg_byte_size(s) ((s)->m_passed_arg_byte_size)
+#define ARGDESCMGR_total_byte_size(s) ((s)->m_total_byte_size)
+class ArgDescMgr {
+protected:
+    Vector<ArgDesc*> m_arg_desc;
+    List<ArgDesc*> m_arg_list;
+
+public:
+    //Record the byte size of argument that have been passed.
+    UINT m_passed_arg_byte_size;
+
+    //Record the total byte size of argument that to be passed.
+    UINT m_total_byte_size;
+
+public:
+    ArgDescMgr() 
+    {
+        m_passed_arg_byte_size = 0;
+        m_total_byte_size = 0;
+    }
+    ~ArgDescMgr()
+    {
+        for (INT i = 0; i <= m_arg_desc.get_last_idx(); i++) {
+            ArgDesc * desc = m_arg_desc.get(i);
+            delete desc;
+        }
+        m_arg_desc.clean();
+    }
+
+    //Add arg-desc to the tail of argument-list.
+    ArgDesc * addDesc()
+    {
+        ArgDesc * desc = new ArgDesc();
+        m_arg_desc.set(m_arg_desc.get_last_idx() < 0 ?
+            0 : m_arg_desc.get_last_idx() + 1, desc);
+        m_arg_list.append_tail(desc);
+        return desc;
+    }
+
+    ArgDesc * pulloutDesc() { return m_arg_list.remove_head(); }
+    ArgDesc * getCurrentDesc() { return m_arg_list.get_head(); }
+
+    void incPassedArgByteSize(UINT bytesize)
+    { m_passed_arg_byte_size += (INT)ceil_align(bytesize, STACK_ALIGNMENT); }
 };
 
 
@@ -737,10 +793,13 @@ public:
         return SR_phy_regid(sr) != REG_UNDEF &&
                tmGetRegSetOfReturnValue()->is_contain(SR_phy_regid(sr));
     }
-
+    bool isArgumentSR(SR const* sr) const
+    {
+        return SR_phy_regid(sr) != REG_UNDEF &&
+               tmGetRegSetOfArgument()->is_contain(SR_phy_regid(sr));
+    }
     bool isDedicatedSR(SR const* sr) const
-    { return SR_is_dedicated(sr) || isReturnValueSR(sr); }
-
+    { return SR_is_dedicated(sr) || isReturnValueSR(sr); }    
     bool isSREqual(SR const* sr1, SR const* sr2) const;
 
     //Return true if SR is integer register.
@@ -967,9 +1026,7 @@ public:
     virtual void reviseFormalParamAccess(UINT lv_size);
 
     virtual void storeParamToStack(
-            ArgDesc const* argdesc,
-            UINT num,
-            INT param_byte_ofst,
+            ArgDescMgr * argdesc,
             OUT ORList & ors,
             IN IOC *);
     void setMapPR2SR(UINT prno, SR * sr) { m_pr2sr_map.set(prno, sr); }

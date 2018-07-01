@@ -162,33 +162,35 @@ void CG::buildMemcpy(
     SR * immreg = genReg();
     buildMove(immreg, genIntImm((HOST_INT)bytesize, false), ors, cont);
 
-    ArgDesc * argdesc = (ArgDesc*)ALLOCA(sizeof(ArgDesc) * 3);
-    argdesc[0].init();
-    argdesc[0].param = immreg;
-    argdesc[0].param_byte_size = immreg->getByteSize();
+    ArgDescMgr argdescmgr;
+    ArgDesc * argdesc = argdescmgr.addDesc();
+    argdesc->param_start_addr = immreg;
+    argdesc->param_byte_size = immreg->getByteSize();
     UINT ofst = (UINT)ceil_align(immreg->getByteSize(), STACK_ALIGNMENT);
 
     //The second right most parameter: const void *src
-    argdesc[1].init();
-    argdesc[1].param = src;
-    argdesc[1].param_byte_size = src->getByteSize();
+    argdesc = argdescmgr.addDesc();
+    argdesc->param_start_addr = src;
+    argdesc->param_byte_size = src->getByteSize();
     ASSERT0(m_tm->get_pointer_bytesize() == src->getByteSize());
     ofst += (UINT)ceil_align(src->getByteSize(), STACK_ALIGNMENT);
 
     //The left most parameter: void *dest
-    argdesc[2].init();
-    argdesc[2].param = tgt;
-    argdesc[2].param_byte_size = tgt->getByteSize();
+    argdesc = argdescmgr.addDesc();
+    argdesc->param_start_addr = tgt;
+    argdesc->param_byte_size = tgt->getByteSize();
     ASSERT0(m_tm->get_pointer_bytesize() == tgt->getByteSize());
     ofst += (UINT)ceil_align(tgt->getByteSize(), STACK_ALIGNMENT);
+    ARGDESCMGR_total_byte_size(&argdescmgr) = ofst;
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-djust operation afterwards.
-    ASSERT0(ofst < MAX_STACK_SPACE);
-    CG_max_real_param_size(this) = MAX(CG_max_real_param_size(this), ofst);
+    ASSERT0(ARGDESCMGR_total_byte_size(&argdescmgr) < MAX_STACK_SPACE);
+    CG_max_real_param_size(this) = MAX(CG_max_real_param_size(this),
+        (UINT)ARGDESCMGR_total_byte_size(&argdescmgr));
 
     //Generate code to push parameters.
-    storeParamToStack(argdesc, 3, ofst, ors, cont);
+    storeParamToStack(&argdescmgr, ors, cont);
 
     //Copy the value from src to tgt.
     ASSERT0(m_builtin_memcpy);
@@ -1879,55 +1881,56 @@ void CG::fixCluster(IN OUT ORList & spill_ors, CLUST clust)
 
 
 //Generate code to store SR on top of stack.
-//param_sr: SR vector recorded SRs to store.
-//param_dbx: Dbx vector recorded debug info of each SR.
-//num: recorded the number of elements in SR vector.
-//param_byte_ofst: byte offset from the top of stack.
+//argdescmgr: record the parameter which tend to store on the stack.
 void CG::storeParamToStack(
-        ArgDesc const* argdesc,
-        UINT num,
-        INT param_byte_ofst,
+        ArgDescMgr * argdescmgr,
         OUT ORList & ors,
         IN IOC *)
 {
-    ASSERT0(argdesc);
-    IOC tmp_cont;
+    //param_sr: SR vector recorded SRs to store.
+    //param_dbx: Dbx vector recorded debug info of each SR.
+
+    ASSERT0(argdescmgr);
+    IOC tc;
     ORList tors;
-    for (UINT i = 0; i < num; i++) {
+    for (ArgDesc const* desc = argdescmgr->pulloutDesc();
+         desc != NULL; desc = argdescmgr->pulloutDesc()) {
         tors.clean();
-        if (argdesc[i].is_record_addr) {
-            //stack is down growth.
-            param_byte_ofst -= (INT)ceil_align(
-                argdesc[i].param_byte_size, STACK_ALIGNMENT);
-            IOC tc;
+        //Compute the address of parameter.
+        //Build: tgt = sp + callee_param_section_byte_ofst;
+        UINT param_sect_ofst = ARGDESCMGR_passed_arg_byte_size(argdescmgr);
 
-            //Compute the address of parameter.
+        if (desc->is_record_addr) {
+            //stack is down growth.
+            tc.clean();
             buildAdd(genSP(),
-                genIntImm((HOST_INT)param_byte_ofst, false),
-                argdesc[i].param->getByteSize(), false, tors, &tc);
-            SR * tgt = tc.get_reg(0);
+                genIntImm((HOST_INT)param_sect_ofst, false),
+                desc->param_start_addr->getByteSize(), false, tors, &tc);
 
+            SR * tgt = tc.get_reg(0);
             ASSERT0(tgt && SR_is_reg(tgt));
-            buildMemcpyInternal(tgt, argdesc[i].param,
-                argdesc[i].param_byte_size, tors, &tc);
+            buildMemcpyInternal(tgt, desc->param_start_addr,
+                desc->param_byte_size, tors, &tc);
+            argdescmgr->incPassedArgByteSize(desc->param_byte_size);
         } else {
-            ASSERT(argdesc[i].param_byte_size <= 8, ("TODO"));
+            ASSERT(desc->param_byte_size <= 8, ("TODO"));
             //stack is down growth.
-            param_byte_ofst -= (INT)ceil_align(
-                argdesc[i].param_byte_size, STACK_ALIGNMENT);
-            tmp_cont.clean();
-            IOC_mem_byte_size(&tmp_cont) = argdesc[i].param_byte_size;
-            buildStore(argdesc[i].param, genSP(),
-                genIntImm((HOST_INT)param_byte_ofst, false),
-                tors, &tmp_cont);
+            tc.clean();
+            IOC_mem_byte_size(&tc) = desc->param_byte_size;
+            buildStore(desc->param_start_addr, genSP(),
+                genIntImm((HOST_INT)param_sect_ofst, false),
+                tors, &tc);
+            argdescmgr->incPassedArgByteSize(desc->param_byte_size);
         }
-        if (argdesc[i].param_dbx != NULL) {
-            tors.copyDbx(argdesc[i].param_dbx);
+        if (desc->param_dbx != NULL) {
+            tors.copyDbx(desc->param_dbx);
         }
         ors.append_tail(tors);
     }
 
-    ASSERT0(param_byte_ofst == 0);
+    //There is still some other parameters need to pass.
+    //ASSERT0(ARGDESCMGR_total_byte_size(argdescmgr) ==
+    //    ARGDESCMGR_passed_arg_byte_size(argdescmgr);
 }
 
 

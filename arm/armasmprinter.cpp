@@ -86,20 +86,27 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     }    
     
     buf.strcat(" ");
+    tbuf.clean();
     switch (OR_code(o)) {
     case OR_orr_lsr_i:
         //orr Rd, Rs1, Rs2, lsr, #imm
         buf.strcat("%s, ", o->get_result(0)->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("%s, ", o->get_opnd(1)->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("%s, ", o->get_opnd(2)->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("lsr, ");
         buf.strcat("%s, ", o->get_opnd(3)->getAsmName(tbuf, m_cg));
         return buf.buf;
     case OR_orr_lsl_i:
         //orr Rd, Rs1, Rs2, lsr, #imm
         buf.strcat("%s, ", o->get_result(0)->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("%s, ", o->get_opnd(1)->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("%s, ", o->get_opnd(2)->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("lsl, ");
         buf.strcat("%s, ", o->get_opnd(3)->getAsmName(tbuf, m_cg));
         return buf.buf;
@@ -113,7 +120,9 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     case OR_ldr:
     case OR_ldr_i12:
         buf.strcat("%s, ", o->get_load_val(0)->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("[%s, ", o->get_load_base()->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("%s]", o->get_load_ofst()->getAsmName(tbuf, m_cg));
         return buf.buf;
     case OR_strb:
@@ -124,22 +133,30 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     case OR_str:
     case OR_str_i12:
         buf.strcat("%s, ", o->get_store_val()->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("[%s, ", o->get_store_base()->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("%s]", o->get_store_ofst()->getAsmName(tbuf, m_cg));
         return buf.buf;
     case OR_ldrd:
     case OR_ldrd_i10:
     case OR_ldrd_i32:
         buf.strcat("%s, ", o->get_load_val(0)->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("%s, ", o->get_load_val(1)->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("[%s, ", o->get_load_base()->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("%s]", o->get_load_ofst()->getAsmName(tbuf, m_cg));
         return buf.buf;
     case OR_strd:
     case OR_strd_i10:
         buf.strcat("%s, ", o->get_store_val(0)->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("%s, ", o->get_store_val(1)->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("[%s, ", o->get_store_base()->getAsmName(tbuf, m_cg));
+        tbuf.clean();
         buf.strcat("%s]", o->get_store_ofst()->getAsmName(tbuf, m_cg));
         return buf.buf;
     case OR_movw_i: {
@@ -150,6 +167,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
                 if (i != 0) {
                     buf.strcat(", ");
                 }
+                tbuf.clean();
                 buf.strcat("%s", o->get_result(i)->getAsmName(tbuf, m_cg));
             }
             if (o->result_num() != 0) {
@@ -168,6 +186,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
                 if (i != 0) {
                     buf.strcat(", ");
                 }
+                tbuf.clean();
                 buf.strcat("%s", o->get_result(i)->getAsmName(tbuf, m_cg));
             }
             if (o->result_num() != 0) {
@@ -182,7 +201,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     case OR_ret2:
     case OR_ret3:
     case OR_ret4:
-    case OR_bl:        
+    case OR_bl:
         buf.strcat("%s", o->get_opnd(1)->getAsmName(tbuf, m_cg));
         return buf.buf;
     default: {}
@@ -192,6 +211,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
         if (i != 0) {
             buf.strcat(", ");
         }
+        tbuf.clean();
         buf.strcat("%s", o->get_result(i)->getAsmName(tbuf, m_cg));
     }
     if (o->result_num() != 0) {
@@ -205,6 +225,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
         if (i != 1) {
             buf.strcat(", ");
         }
+        tbuf.clean();
         buf.strcat("%s", o->get_opnd(i)->getAsmName(tbuf, m_cg));
     }
     return buf.buf;

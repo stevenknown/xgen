@@ -320,6 +320,7 @@ static void initAndPrtRegister(OUT xcom::BitSet & allocable)
 {
     fprintf(g_output, "\n//Map regfile to allocable register set.\n");
 
+    xcom::BitSet argument;
     xcom::BitSet return_value;
     xcom::BitSet caller_saved;
     xcom::BitSet callee_saved;
@@ -338,6 +339,14 @@ static void initAndPrtRegister(OUT xcom::BitSet & allocable)
     //  and also hold results returned from a subroutine.
     ////////////////////////////////////////
     //Initialize dedicated regset
+    //Initializing argument registers.
+    ////////////////////////////////////////
+    argument.bunion(1); //r0
+    argument.bunion(2); //r1
+    argument.bunion(3); //r2
+    argument.bunion(4); //r3
+
+    ////////////////////////////////////////
     //Initializing function unit return value registers.
     ////////////////////////////////////////
     return_value.bunion(1); //r0
@@ -360,6 +369,8 @@ static void initAndPrtRegister(OUT xcom::BitSet & allocable)
     for (REG reg = 5; reg <= 12; reg++) {
         callee_saved.bunion(reg);
     }
+    //R14(LR)
+    callee_saved.bunion(REG_RETURN_ADDRESS_REGISTER);
 
     ////////////////////////////////////////
     //Initialize regset allocable.
@@ -369,25 +380,33 @@ static void initAndPrtRegister(OUT xcom::BitSet & allocable)
     //for (REG reg = 5; reg <= 7; reg++) {
         allocable.bunion(reg);
     }
+    //R14(LR), note R14 should be saved at prolog of current function.
+    allocable.bunion(REG_RETURN_ADDRESS_REGISTER);
 
     CHAR const* set1 = "return_value_regset";
-    CHAR const* set2 = "caller_saved_regset";
-    CHAR const* set3 = "callee_saved_regset";
-    CHAR const* set4 = "allocable_regset";
-
     prtBitSet(return_value, set1, true);
-    prtBitSet(caller_saved, set2, true);
-    prtBitSet(callee_saved, set3, true);
-    prtBitSet(allocable, set4, true);
-
     fprintf(g_output, "static ROBitSet g_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
             set1, set1, set1, set1);
+
+    CHAR const* set2 = "caller_saved_regset";
+    prtBitSet(caller_saved, set2, true);
     fprintf(g_output, "static ROBitSet g_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
             set2, set2, set2, set2);
+
+    CHAR const* set3 = "callee_saved_regset";
+    prtBitSet(callee_saved, set3, true);
     fprintf(g_output, "static ROBitSet g_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
             set3, set3, set3, set3);
+
+    CHAR const* set4 = "allocable_regset";
+    prtBitSet(allocable, set4, true);
     fprintf(g_output, "static ROBitSet g_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
             set4, set4, set4, set4);
+
+    CHAR const* set5 = "argument_regset";
+    prtBitSet(argument, set5, true);
+    fprintf(g_output, "static ROBitSet g_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
+            set5, set5, set5, set5);
 }
 
 
@@ -1280,7 +1299,18 @@ static void initORProperty()
     OTD_is_call(od) = 1;
 
     od = &g_or_type_desc[OR_ret];
-    OTD_is_fake(od) = 1;
+    OTD_is_return(od) = 1;
+
+    od = &g_or_type_desc[OR_ret1];
+    OTD_is_return(od) = 1;
+
+    od = &g_or_type_desc[OR_ret2];
+    OTD_is_return(od) = 1;
+
+    od = &g_or_type_desc[OR_ret3];
+    OTD_is_return(od) = 1;
+
+    od = &g_or_type_desc[OR_ret4];
     OTD_is_return(od) = 1;
 
     od = &g_or_type_desc[OR_b];

@@ -570,17 +570,9 @@ void ORBB::dump()
         note("\nLABEL:");
     }
 
+    StrBuf buf(32);
     for (; li != NULL; li = getLabelList().get_next()) {
-        switch (LABEL_INFO_type(li)) {
-        case L_CLABEL:
-            note(CLABEL_STR_FORMAT " ", CLABEL_CONT(li));
-            break;
-        case L_ILABEL:
-            note(ILABEL_STR_FORMAT " ", ILABEL_CONT(li));
-            break;
-        default:
-            ASSERT(0, ("unknown label type"));
-        } //end switch
+        note("%s ", m_cg->formatLabelName(li, buf));        
     }
 
     //Attributes

@@ -106,6 +106,9 @@ RegSet const* tmMapRegFile2Allocable(REGFILE);
 //Get return-value used register set.
 RegSet const* tmGetRegSetOfReturnValue();
 
+//Get argument passing used register set.
+RegSet const* tmGetRegSetOfArgument();
+
 //Get caller-saved register set.
 RegSet const* tmGetRegSetOfCallerSaved();
 

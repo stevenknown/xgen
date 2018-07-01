@@ -32,11 +32,16 @@ author: Su Zhenyu
 #define _ARM_RAMGR_H_
 
 class ARMRaMgr : public RaMgr {
+protected:
+    void setUseLR();
+    
 public:
     ARMRaMgr(List<ORBB*> * bbs, bool is_func, CG * cg) :
              RaMgr(bbs, is_func, cg) {}
 
     virtual LifeTimeMgr * allocLifeTimeMgr();
+
+    virtual void postBuild();
 
     virtual void saveCalleePredicateAtEntry(
                     REGFILE regfile,

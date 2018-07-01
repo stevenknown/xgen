@@ -95,3 +95,35 @@ LifeTimeMgr * ARMRaMgr::allocLifeTimeMgr()
 {
     return (LifeTimeMgr*)new ARMLifeTimeMgr(m_cg);
 }
+
+
+void ARMRaMgr::setUseLR()
+{
+    RegSet * regset = getLRAUsedCalleeSavedRegSet(RF_R);
+    regset->bunion(REG_RETURN_ADDRESS_REGISTER);
+}
+
+
+void ARMRaMgr::postBuild()
+{
+    //The code saving-LR has been generated at generateFuncUnitDedicatedCode()
+    //List<ORBB*> * bblst = m_cg->getORBBList();
+    //bool has_call = false;
+    //for (ORBB * bb = bblst->get_head();
+    //     bblst != NULL; bb = bblst->get_next()) {
+    //    if (has_call) {
+    //        break;
+    //    }
+    //    for (OR * o = ORBB_orlist(bb)->get_head();
+    //         o != NULL; o = ORBB_orlist(bb)->get_next()) {
+    //        if (OR_is_call(o)) {
+    //            has_call = true;
+    //            break;
+    //        }
+    //    }
+    //}
+    //if (has_call) {
+    //    setUseLR();
+    //}
+    RaMgr::postBuild();
+}

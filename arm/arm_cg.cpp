@@ -414,7 +414,8 @@ void ARMCG::buildStore(
     if (SR_is_var(base)) {
         SR * sr_base;
         v = SR_var(base);
-        computeVarBaseOffset(SR_var(base), SR_int_imm(ofst), &sr_base, &sr_ofst);
+        computeVarBaseOffset(SR_var(base), SR_int_imm(ofst),
+            &sr_base, &sr_ofst);
         if (VAR_is_global(v) && !SR_is_reg(sr_base)) {
             //ARM does not support load value from memory label directly.
             SR_var_ofst(base) += SR_var_ofst(ofst);
@@ -669,9 +670,11 @@ void ARMCG::buildMemcpyInternal(
     buildMove(srt2, tc.get_reg(0), ors, &tc);
 
     tc.clean_bottomup();
-    buildCompare(OR_teq_i, true, srt2, zero, ors, &tc);
-    ASSERT0(ors.get_elem_count() == 1);
-    ors.get_tail()->set_pred(genNEPred());
+    ORList tors;
+    buildCompare(OR_teq_i, true, srt2, zero, tors, &tc);
+    ASSERT0(tors.get_elem_count() == 1);
+    tors.get_tail()->set_pred(genNEPred());
+    ors.append_tail(tors);
 
     cont->set_pred(genNEPred());
     buildCondBr(loop_start_lab, ors, cont);
@@ -1988,10 +1991,8 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
         ORList ors;
         IOC cont;
 
-        o->dump(this);
-        //{nop, sp,t = sp - SIZEOFSTACK, ...nop, nop}
+        //{sp,t = sp - SIZEOFSTACK}
         buildAdd(genSP(), ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
-        ors.dump(this); //FIXME
         if (ors.get_elem_count() == 2) {
             //movw_i sr65 <--tp(AL)(RF_P), #108
             //add sr66 <--tp(AL)(RF_P), sp(r13)(RF_R), sr65
@@ -2008,9 +2009,6 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
             OR * add = ors.get_head_nth(1);
             renameOpnd(add, res, o->get_result(1), false);
             add->set_result(0, genSP());
-
-            ors.dump(this);
-
         } else if (ors.get_elem_count() == 3) {
             //[id:101] movw_i sr57 <--tp(AL)(RF_P), #65428
             //[id:102] movt_i sr57 <--tp(AL)(RF_P), #65535
@@ -2031,8 +2029,6 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
             OR * add = ors.get_head_nth(2);
             renameOpnd(add, res, o->get_result(1), false);
             add->set_result(0, genSP());
-
-            ors.dump(this);
         } else {
             UNREACHABLE();
         }
@@ -2059,7 +2055,6 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
         ORList ors;
         IOC cont;
         buildAdd(sr3, ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
-        ors.dump(this); //FIXME
         ASSERT0(ors.get_elem_count() == 2);
         OR * last = ors.get_tail();
         last->set_result(0, sr1); //replace result-register with sr1.
@@ -2071,7 +2066,6 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
 
         OR * ldrd = buildOR(OR_ldrd_i10, 2, 3, sr1, sr2,
             o->get_pred(), sr1, genIntImm(0, true));
-        ldrd->dump(this); //FIXME
         IssuePackage * ip = allocIssuePackage();
         ip->set(SLOT_G, ldrd);
         ipl->append_tail(ip);

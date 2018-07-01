@@ -188,6 +188,12 @@ RegSet const* xgen::tmGetRegSetAllocable()
 }
 
 
+RegSet const* xgen::tmGetRegSetOfArgument()
+{
+    return (RegSet const*)&g_argument_regset;
+}
+
+
 RegSet const* xgen::tmGetRegSetOfReturnValue()
 {
     return (RegSet const*)&g_return_value_regset;

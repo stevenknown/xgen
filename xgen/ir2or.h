@@ -31,6 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace xgen {
 
+class ArgDescMgr;
+
 //
 //START IOC
 //
@@ -364,6 +366,8 @@ public:
 
     void convertIRBBListToORList(OUT ORList & or_list);
 
+    virtual bool isPassArgumentThroughRegister() = 0;
+
     //Map from IR type to OR type.
     //Target may apply comparing instruction to calculate boolean value.
     //e.g:
@@ -380,6 +384,27 @@ public:
     //Register local variable that will be allocated in memory.
     VAR * registerLocalVar(IR const* pr);
 
+    //Return true if whole ir has been passed through registers, otherwise
+    //return false.
+    bool passArgThroughRegister(
+            IR const* ir,
+            UINT * irsize,
+            UINT * num_arg_reg,
+            INT * phy_reg,
+            RegSet const* regs,
+            ArgDescMgr * argdesc,
+            OUT ORList & ors,
+            IN IOC * cont);
+    void passArgThroughStack(
+            IR const* ir,
+            ArgDescMgr * argdesc,
+            OUT ORList & ors,
+            IN IOC * cont);
+    void processRealParamsThroughRegister(
+            IR const* ir,
+            ArgDescMgr * argdesc,
+            OUT ORList & ors,
+            IN IOC * cont);
     void processRealParams(IR const* ir, OUT ORList & ors, IN IOC * cont);
 };
 

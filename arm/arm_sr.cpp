@@ -55,6 +55,12 @@ CHAR const* ARMSR::getAsmName(StrBuf & buf, CG * cg)
             buf.strcat("%s", SYM_name(SR_var(this)->get_name()));
             return buf.buf;
         }
+    case SR_REG:
+        if (SR_is_sp(this)) {
+            buf.strcat("sp");
+            return buf.buf;
+        }
+        //fall through
     default:
         return SR::getAsmName(buf, cg);
     }
