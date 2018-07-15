@@ -62,6 +62,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
 {
     StrBuf tbuf(8);
     switch (OR_code(o)) {
+    case OR_ret:
     case OR_ret1:
     case OR_ret2:
     case OR_ret3:
@@ -71,7 +72,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     default:
         buf.strcat("%s", OR_code_name(o));
         break;
-    }    
+    }
 
     UINT i = 0;
     for (; buf.buf[i] != '_' && buf.buf[i] != 0; i++) {
@@ -83,8 +84,8 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     //Print predicated register
     if (o->get_pred() != m_cg->genTruePred()) {
         buf.strcat("%s", o->get_pred()->getAsmName(tbuf, m_cg));
-    }    
-    
+    }
+
     buf.strcat(" ");
     tbuf.clean();
     switch (OR_code(o)) {
@@ -175,7 +176,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
             }
             buf.strcat("#:lower16:%s", SYM_name(SR_var(v)->get_name()));
             return buf.buf;
-        }        
+        }
         break;
     }
     case OR_movt_i: {
@@ -194,7 +195,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
             }
             buf.strcat("#:upper16:%s", SYM_name(SR_var(v)->get_name()));
             return buf.buf;
-        }        
+        }
         break;
     }
     case OR_ret1:
@@ -204,9 +205,26 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     case OR_bl:
         buf.strcat("%s", o->get_opnd(1)->getAsmName(tbuf, m_cg));
         return buf.buf;
+    case OR_cmn:
+    case OR_cmp:
+    case OR_tst:
+    case OR_teq:
+    case OR_teq_i:
+        for (UINT i = 0; i < o->opnd_num(); i++) {
+            if (i == 0 && HAS_PREDICATE_REGISTER) {
+                //nothing to do
+                continue;
+            }
+            if (i != 1) {
+                buf.strcat(", ");
+            }
+            tbuf.clean();
+            buf.strcat("%s", o->get_opnd(i)->getAsmName(tbuf, m_cg));
+        }
+        return buf.buf;
     default: {}
     }
-    
+
     for (UINT i = 0; i < o->result_num(); i++) {
         if (i != 0) {
             buf.strcat(", ");
@@ -247,8 +265,8 @@ void ARMAsmPrinter::printBss(FILE * asmh, Section & sect)
 
         CHAR const* p = SYM_name(v->get_name());
         buf.clean();
-        fprintf(asmh, "\n;;%s", v->dump(buf, m_tm));
-        fprintf(asmh, "\n.common %s#, %d, %d",
+        fprintf(asmh, "\n#%s", v->dump(buf, m_tm));
+        fprintf(asmh, "\n.common %s, %d, %d",
                 p, v->getByteSize(m_tm), VAR_align(v));
     }
 
@@ -307,7 +325,7 @@ void ARMAsmPrinter::printData(FILE * asmh, Section & sect)
             fprintf(asmh, "\n");
         } else {
             buf.clean();
-            fprintf(asmh, "\n;;%s", v->dump(buf, m_tm));
+            fprintf(asmh, "\n#%s", v->dump(buf, m_tm));
             fprintf(asmh, "\n%s:", name);
             fprintf(asmh, "\n.align %d", computeAlignIsPowerOf2(v));
             fprintf(asmh, "\n.byte ");

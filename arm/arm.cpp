@@ -132,7 +132,7 @@ CHAR const* xgen::tmGetORTypeName(OR_TYPE ort)
 ORTypeDesc const* xgen::tmGetORTypeDesc(OR_TYPE ot)
 {
     ORTypeDesc const* od = &g_or_type_desc[ot];
-    ASSERT(od, ("miss ORTypeDesc of '%s'", tmGetORTypeName(ot)));
+    ASSERTN(od, ("miss ORTypeDesc of '%s'", tmGetORTypeName(ot)));
     return od;
 }
 
@@ -149,7 +149,7 @@ UINT xgen::tmGetOpndNum(OR_TYPE ortype)
 {
     ORTypeDesc const* otd = tmGetORTypeDesc(ortype);
     SRDescGroup<> const* sdg  = OTD_srd_group(otd);
-    ASSERT(sdg, ("miss SRD group info of '%s'", tmGetORTypeName(ortype)));
+    ASSERTN(sdg, ("miss SRD group info of '%s'", tmGetORTypeName(ortype)));
     return sdg->get_opnd_num();
 }
 
@@ -159,7 +159,7 @@ UINT xgen::tmGetResultNum(OR_TYPE ortype)
 {
     ORTypeDesc const* otd = tmGetORTypeDesc(ortype);
     SRDescGroup<> const* sdg  = OTD_srd_group(otd);
-    ASSERT(sdg, ("miss SRD group info of '%s'", tmGetORTypeName(ortype)));
+    ASSERTN(sdg, ("miss SRD group info of '%s'", tmGetORTypeName(ortype)));
     return sdg->get_res_num();
 }
 
@@ -168,7 +168,7 @@ UINT xgen::tmGetResultNum(OR_TYPE ortype)
 EquORTypes const* xgen::tmGetEqualORType(OR_TYPE ot)
 {
     ORTypeDesc const* od = tmGetORTypeDesc(ot);
-    ASSERT(od, ("miss ORTypeDesc info of '%s'", tmGetORTypeName(ot)));
+    ASSERTN(od, ("miss ORTypeDesc info of '%s'", tmGetORTypeName(ot)));
     return OTD_equ_or_types(od);
 }
 
@@ -177,7 +177,7 @@ EquORTypes const* xgen::tmGetEqualORType(OR_TYPE ot)
 UINT xgen::tmGetNumOfEqualORType(OR_TYPE ot)
 {
     ORTypeDesc const* od = tmGetORTypeDesc(ot);
-    ASSERT(od, ("miss ORTypeDesc info of '%s'", tmGetORTypeName(ot)));
+    ASSERTN(od, ("miss ORTypeDesc info of '%s'", tmGetORTypeName(ot)));
     return EQUORTY_num_equortype(OTD_equ_or_types(od));
 }
 

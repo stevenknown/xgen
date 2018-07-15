@@ -177,7 +177,7 @@ static ORTypeDesc g_or_type_desc [] = {
     {OR_strsh,     "strsh",      }, // (px)str Rt, label
     {OR_strd,      "strd",       }, // (px)strd Rt, Rt2, label
 
-    //Indirect load via base-register + immdediate-offset.
+    //Indirect store via base-register + immdediate-offset.
     {OR_str_i12,   "str_i12",    }, // (px)str Rt, [Rn, Imm12]
     {OR_strb_i12,  "strb_i12",   }, // (px)str Rt, [Rn, Imm12]
     {OR_strh_i12,  "strh_i12",   }, // (px)str Rt, [Rn, Imm12]
@@ -276,7 +276,7 @@ static SRDesc * newSRDesc()
 
 inline static void setSRDescGroup(OR_TYPE ort, SRDescGroup<> * srdg)
 {
-    ASSERT(OTD_srd_group(&g_or_type_desc[ort]) == NULL, ("has been set"));
+    ASSERTN(OTD_srd_group(&g_or_type_desc[ort]) == NULL, ("has been set"));
     OTD_srd_group(&g_or_type_desc[ort]) = srdg;
 }
 
@@ -360,7 +360,7 @@ static void initAndPrtRegister(OUT xcom::BitSet & allocable)
     //R0~R3
     for (REG reg = 1; reg <= 4; reg++) {
         caller_saved.bunion(reg);
-    }    
+    }
 
     ////////////////////////////////////////
     //Initialize regset callee-saved.
@@ -604,7 +604,7 @@ static void initAndPrtReg2RegFile(xcom::BitSet const regfile2regset[])
                 break;
             }
         }
-        ASSERT(find, ("register %d does not belong to any regfile.", reg));
+        ASSERTN(find, ("register %d does not belong to any regfile.", reg));
         DUMMYUSE(find);
     }
 
@@ -788,7 +788,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     sda = newSRDescGroup(0, 2);
     //opnd
     sda->set_opnd(0, sr_p);
-    sda->set_opnd(1, sr_r);
+    sda->set_opnd(1, sr_r); //LR
     setSRDescGroup(OR_bx, sda);
     setSRDescGroup(OR_ret, sda);
 
@@ -796,7 +796,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     sda = newSRDescGroup(0, 3);
     //opnd
     sda->set_opnd(0, sr_p);
-    sda->set_opnd(1, sr_r);
+    sda->set_opnd(1, sr_r); //LR
     sda->set_opnd(2, sr_r);
     setSRDescGroup(OR_ret1, sda);
 
@@ -813,7 +813,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     sda = newSRDescGroup(0, 4);
     //opnd
     sda->set_opnd(0, sr_p);
-    sda->set_opnd(1, sr_r);
+    sda->set_opnd(1, sr_r); //LR
     sda->set_opnd(2, sr_r);
     sda->set_opnd(3, sr_r);
     setSRDescGroup(OR_ret2, sda);
@@ -852,7 +852,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     sda = newSRDescGroup(0, 5);
     //opnd
     sda->set_opnd(0, sr_p);
-    sda->set_opnd(1, sr_r);
+    sda->set_opnd(1, sr_r); //LR
     sda->set_opnd(2, sr_r);
     sda->set_opnd(3, sr_r);
     sda->set_opnd(4, sr_r);
@@ -884,7 +884,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     sda = newSRDescGroup(0, 6);
     //opnd
     sda->set_opnd(0, sr_p);
-    sda->set_opnd(1, sr_r);
+    sda->set_opnd(1, sr_r); //LR
     sda->set_opnd(2, sr_r);
     sda->set_opnd(3, sr_r);
     sda->set_opnd(4, sr_r);
@@ -1189,24 +1189,24 @@ static void initAndPrtRegisterName()
         } else {
             //predicate register
             switch (reg) {
-            case REG_EQ_PRED: buf.sprint("EQ"); break;
-            case REG_NE_PRED: buf.sprint("NE"); break;
-            case REG_CS_PRED: buf.sprint("CS"); break;
-            case REG_HS_PRED: buf.sprint("HS"); break;
-            case REG_CC_PRED: buf.sprint("CC"); break;
-            case REG_LO_PRED: buf.sprint("LO"); break;
-            case REG_MI_PRED: buf.sprint("MI"); break;
-            case REG_PL_PRED: buf.sprint("PL"); break;
-            case REG_VS_PRED: buf.sprint("VS"); break;
-            case REG_VC_PRED: buf.sprint("VC"); break;
-            case REG_HI_PRED: buf.sprint("HI"); break;
-            case REG_LS_PRED: buf.sprint("LS"); break;
-            case REG_GE_PRED: buf.sprint("GE"); break;
-            case REG_LT_PRED: buf.sprint("LT"); break;
-            case REG_GT_PRED: buf.sprint("GT"); break;
-            case REG_LE_PRED: buf.sprint("LE"); break;
-            case REG_TRUE_PRED: buf.sprint("AL"); break;
-            default: ASSERT(0, ("unknown physic register"));
+            case REG_EQ_PRED: buf.sprint("eq"); break;
+            case REG_NE_PRED: buf.sprint("ne"); break;
+            case REG_CS_PRED: buf.sprint("cs"); break;
+            case REG_HS_PRED: buf.sprint("hs"); break;
+            case REG_CC_PRED: buf.sprint("cc"); break;
+            case REG_LO_PRED: buf.sprint("lo"); break;
+            case REG_MI_PRED: buf.sprint("mi"); break;
+            case REG_PL_PRED: buf.sprint("pl"); break;
+            case REG_VS_PRED: buf.sprint("vs"); break;
+            case REG_VC_PRED: buf.sprint("vc"); break;
+            case REG_HI_PRED: buf.sprint("hi"); break;
+            case REG_LS_PRED: buf.sprint("ls"); break;
+            case REG_GE_PRED: buf.sprint("ge"); break;
+            case REG_LT_PRED: buf.sprint("lt"); break;
+            case REG_GT_PRED: buf.sprint("gt"); break;
+            case REG_LE_PRED: buf.sprint("le"); break;
+            case REG_TRUE_PRED: buf.sprint("al"); break;
+            default: ASSERTN(0, ("unknown physic register"));
             }
         }
         fprintf(g_output, "\"%s\",", buf.buf);
@@ -1314,7 +1314,7 @@ static void initORProperty()
     OTD_is_return(od) = 1;
 
     od = &g_or_type_desc[OR_b];
-    OTD_is_uncond_br(od) = 1;
+    OTD_is_cond_br(od) = 1;
 
     od = &g_or_type_desc[OR_bx];
     OTD_is_uncond_br(od) = 1;
@@ -1334,6 +1334,7 @@ static void initORProperty()
 
     od = &g_or_type_desc[OR_mov32_i];
     OTD_is_movi(od) = 1;
+    OTD_is_fake(od) = 1;
 
     od = &g_or_type_desc[OR_movw_i];
     OTD_is_movi(od) = 1;
@@ -1917,7 +1918,7 @@ static void initAndPrtScheInfoImpl(OR_TYPE ot)
         break;
     }
     case OR_label: break;
-    default: ASSERT(0, ("unknown tor code"));
+    default: ASSERTN(0, ("unknown tor code"));
     }
 
     //Print cycle buffer.

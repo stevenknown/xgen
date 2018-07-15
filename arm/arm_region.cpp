@@ -78,7 +78,7 @@ IR * ARMRegion::insertCvtForFloat(IR * parent, IR * kid, bool & change)
                 build = true;
             }
         } else {
-            ASSERT(0, ("incompatible types in convertion"));
+            ASSERTN(0, ("incompatible types in convertion"));
         }
     } else {
         if (parent->getType()->is_int()) {
@@ -88,7 +88,7 @@ IR * ARMRegion::insertCvtForFloat(IR * parent, IR * kid, bool & change)
                 build = true;
             }
         } else {
-            ASSERT(0, ("incompatible types in convertion"));
+            ASSERTN(0, ("incompatible types in convertion"));
         }
     }
 
@@ -237,7 +237,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     //Finial refine to insert CVT if necessary when compile C/C++.
     //Insert int32->int64, int32<->f32, int32<->f64, int64<->f32, int64<->f64
     g_do_refine_auto_insert_cvt = true;
-    ASSERT(g_do_refine, ("inserting CVT is expected"));
+    ASSERTN(g_do_refine, ("inserting CVT is expected"));
 
     RefineCtx rf;
     RC_insert_cvt(rf) = g_do_refine_auto_insert_cvt;
@@ -282,7 +282,7 @@ bool ARMRegion::ARMMiddleProcess(OptCtx & oc)
     if (SIMP_need_recon_bblist(&simp) &&
         g_cst_bb_list &&
         reconstructBBlist(oc)) {
-        ASSERT(g_do_cfg, ("construct BB list need CFG"));
+        ASSERTN(g_do_cfg, ("construct BB list need CFG"));
         IR_CFG * cfg = getCFG();
         ASSERT0(cfg);
         cfg->rebuild(oc);

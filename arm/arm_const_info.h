@@ -67,6 +67,10 @@ author: Su Zhenyu
 #define HOST_BIT_PER_BYTE    8
 #define HOST_BYTE_PER_INT    8
 
+//Defined result SR index of multiple-words-load.
+#define PAIR_LOW_RES_IDX     0
+#define PAIR_HIGH_RES_IDX    1
+
 //Describe the maximum byte size that can be allocated on host machine stack.
 //The threshold often used in allocating memory via ALLOCA.
 #define HOST_STACK_MAX_USABLE_MEMORY_BYTE_SIZE    65536
