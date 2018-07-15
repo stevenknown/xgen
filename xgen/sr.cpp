@@ -95,7 +95,10 @@ void SR::clean()
     //There is virtual table.
     type = SR_UNDEF;
     u2.bitflags = 0;
-    u1.u2 = {0};
+    u1.u2.symbol_regid = 0;
+    u1.u2.regfile = RF_UNDEF;
+    u1.u2.phy_regid = 0;
+    u1.u2.spill_var = NULL;
     m_sr_vec = NULL; //vec will be dropped to pool. TODO: recycle it.
     m_sr_vec_idx = -1;
 }
