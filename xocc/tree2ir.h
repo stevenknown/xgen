@@ -120,8 +120,8 @@ protected:
 protected:
     void * xmalloc(INT size)
     {
-        ASSERT(size > 0, ("xmalloc: size less zero!"));
-        ASSERT(m_pool != NULL, ("need pool!!"));
+        ASSERTN(size > 0, ("xmalloc: size less zero!"));
+        ASSERTN(m_pool != NULL, ("need pool!!"));
         void * p = smpoolMalloc(size, m_pool);
         ASSERT0(p);
         ::memset(p, 0, size);

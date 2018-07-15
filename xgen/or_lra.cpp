@@ -44,7 +44,7 @@ void Dumpf_Svec(void * vec, UINT ty, CHAR * name, bool is_del)
     }
     static INT g_count = 0;
     FILE * h = fopen(name, "a+");
-    ASSERT(h, ("%s create failed!!!", name));
+    ASSERTN(h, ("%s create failed!!!", name));
     fprintf(h, "\nSVECOTR dump id:%d\n", g_count++);
 
     ///
@@ -69,7 +69,7 @@ void Dumpf_Svec(void * vec, UINT ty, CHAR * name, bool is_del)
         }
         break;
     }
-    default: ASSERT(0, ("illegal ty"));
+    default: ASSERTN(0, ("illegal ty"));
     }
 
     fprintf(h, "\n");
@@ -163,8 +163,8 @@ ACTION::~ACTION()
 
 void * ACTION::xmalloc(INT size)
 {
-    ASSERT(size > 0, ("xmalloc: size less zero!"));
-    ASSERT(m_pool != NULL, ("need graph pool!!"));
+    ASSERTN(size > 0, ("xmalloc: size less zero!"));
+    ASSERTN(m_pool != NULL, ("need graph pool!!"));
     void * p = smpoolMalloc(size, m_pool);
     if (p == NULL) return NULL;
     ::memset(p, 0, size);
@@ -218,9 +218,9 @@ ORMap::~ORMap()
 
 void * ORMap::xmalloc(INT size)
 {
-    ASSERT(m_is_init, ("xcom::Graph must be initialized before clone."));
-    ASSERT(size > 0, ("xmalloc: size less zero!"));
-    ASSERT(m_pool != NULL,("need graph pool!!"));
+    ASSERTN(m_is_init, ("xcom::Graph must be initialized before clone."));
+    ASSERTN(size > 0, ("xmalloc: size less zero!"));
+    ASSERTN(m_pool != NULL,("need graph pool!!"));
     void * p = smpoolMalloc(size, m_pool);
     if (p == NULL) return NULL;
     ::memset(p,0,size);
@@ -259,15 +259,15 @@ void ORMap::destroy()
 
 ORList * ORMap::get_ors()
 {
-    ASSERT(m_is_init, ("List not yet initialized."));
+    ASSERTN(m_is_init, ("List not yet initialized."));
     return &m_or_list;
 }
 
 
 List<OR*> * ORMap::get_or_ors(OR * o)
 {
-    ASSERT(o != NULL, ("o is NULL."));
-    ASSERT(m_is_init, ("List not yet initialized."));
+    ASSERTN(o != NULL, ("o is NULL."));
+    ASSERTN(m_is_init, ("List not yet initialized."));
     return m_or2orlist_map.get(OR_id(o));
 }
 
@@ -276,14 +276,14 @@ void ORMap::add_or(OR * o, OR * mapped)
 {
     DUMMYUSE(mapped);
 
-    ASSERT(m_is_init, ("List not yet initialized."));
+    ASSERTN(m_is_init, ("List not yet initialized."));
     List<OR*> * orlist = m_or2orlist_map.get(OR_id(o));
     if (orlist == NULL) {
         orlist = (List<OR*>*)xmalloc(sizeof(List<OR*>));
         orlist->init();
         m_or2orlist_map.set(OR_id(o), orlist);
     }
-    ASSERT(false == orlist->find(mapped), ("o layered already!"));
+    ASSERTN(false == orlist->find(mapped), ("o layered already!"));
     orlist->append_tail(o);
     m_idx2or_map.set(OR_id(o), o);
     m_or_list.append_tail(o);
@@ -292,7 +292,7 @@ void ORMap::add_or(OR * o, OR * mapped)
 
 void ORMap::add_ors(OR * o, ORList * mapped)
 {
-    ASSERT(m_is_init, ("List not yet initialized."));
+    ASSERTN(m_is_init, ("List not yet initialized."));
     List<OR*> * orlist = m_or2orlist_map.get(OR_id(o));
     if (orlist == NULL) {
         orlist = (List<OR*>*)xmalloc(sizeof(List<OR*>));
@@ -300,7 +300,7 @@ void ORMap::add_ors(OR * o, ORList * mapped)
         m_or2orlist_map.set(OR_id(o), orlist);
     }
     for (OR * m = mapped->get_head(); m; m = mapped->get_next()) {
-        ASSERT(false == orlist->find(m), ("o layered already!"));
+        ASSERTN(false == orlist->find(m), ("o layered already!"));
         orlist->append_tail(m);
     }
     m_idx2or_map.set(OR_id(o), o);
@@ -314,7 +314,7 @@ void ORMap::add_ors(OR * o, ORList * mapped)
 //
 ORBBUnit * RefORBBList::get_bu(ORBB * bb)
 {
-    ASSERT(m_pool, ("List not yet initialized."));
+    ASSERTN(m_pool, ("List not yet initialized."));
     for (ORBBUnit * bu = get_head(); bu != NULL; bu = get_next()) {
         if (OR_BBUNIT_bb(bu) == bb) {
             return bu;
@@ -326,7 +326,7 @@ ORBBUnit * RefORBBList::get_bu(ORBB * bb)
 
 ORBBUnit * RefORBBList::add_bb(ORBB * bb)
 {
-    ASSERT(m_pool, ("List not yet initialized."));
+    ASSERTN(m_pool, ("List not yet initialized."));
     //Keep bu unique.
     ORBBUnit * bu = get_bu(bb);
     if (bu != NULL) {
@@ -343,7 +343,7 @@ ORBBUnit * RefORBBList::add_bb(ORBB * bb)
 
 OR * RefORBBList::add_or(ORBB * bb, OR * o)
 {
-    ASSERT(m_pool, ("List not yet initialized."));
+    ASSERTN(m_pool, ("List not yet initialized."));
     ORBBUnit * bu = add_bb(bb);
     List<OR*> * or_list = OR_BBUNIT_or_list(bu);
     for (OR * tor = or_list->get_head(); tor != NULL; tor = or_list->get_next()) {
@@ -358,7 +358,7 @@ OR * RefORBBList::add_or(ORBB * bb, OR * o)
 
 List<OR*> * RefORBBList::get_or_list(ORBB * bb)
 {
-    ASSERT(m_pool, ("List not yet initialized."));
+    ASSERTN(m_pool, ("List not yet initialized."));
     ORBBUnit * bu = get_bu(bb);
     if (bu != NULL) {
         return OR_BBUNIT_or_list(bu);
@@ -369,7 +369,7 @@ List<OR*> * RefORBBList::get_or_list(ORBB * bb)
 
 OR * RefORBBList::removeOR(ORBB * bb, OR * o)
 {
-    ASSERT(m_pool, ("List not yet initialized."));
+    ASSERTN(m_pool, ("List not yet initialized."));
     ORBBUnit * bu = get_bu(bb);
     if (bu != NULL) {
         return OR_BBUNIT_or_list(bu)->remove(o);
@@ -382,7 +382,7 @@ OR * RefORBBList::removeOR(ORBB * bb, OR * o)
 //Return NULL when not found.
 ORBB * RefORBBList::remove_bb(ORBB * bb)
 {
-    ASSERT(m_pool, ("List not yet initialized."));
+    ASSERTN(m_pool, ("List not yet initialized."));
     ORBBUnit * bu;
 
     //Keep bu unique.
@@ -473,14 +473,14 @@ void RegFileAffinityGraph::destroy()
 
 ORBB * RegFileAffinityGraph::bb()
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     return m_bb;
 }
 
 
 void * RegFileAffinityGraph::cloneEdgeInfo(xcom::Edge * e)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     RDG_EDGE_INFO * ei =(RDG_EDGE_INFO*)xmalloc(sizeof(RDG_EDGE_INFO));
     ::memcpy(ei, EDGE_info(e), sizeof(RDG_EDGE_INFO));
     return (void*)ei;
@@ -489,7 +489,7 @@ void * RegFileAffinityGraph::cloneEdgeInfo(xcom::Edge * e)
 
 void * RegFileAffinityGraph::cloneVertexInfo(xcom::Vertex * v)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     RDG_VERTEX_INFO *vi = (RDG_VERTEX_INFO*)xmalloc(sizeof(RDG_VERTEX_INFO));
     ::memcpy(vi, VERTEX_info(v), sizeof(RDG_VERTEX_INFO));
     return (void*)vi;
@@ -498,7 +498,7 @@ void * RegFileAffinityGraph::cloneVertexInfo(xcom::Vertex * v)
 
 void RegFileAffinityGraph::clone(RegFileAffinityGraph & rdg)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     m_bb = rdg.bb();
     m_id2lt.copy(rdg.m_id2lt);
     xcom::Graph::clone((xcom::Graph&)rdg);
@@ -510,7 +510,7 @@ xcom::Edge * RegFileAffinityGraph::clustering(
         SR * sr2,
         LifeTimeMgr & mgr)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     LifeTime * lt1 = mgr.getLifeTime(sr1);
     LifeTime * lt2 = mgr.getLifeTime(sr2);
     m_id2lt.set(LT_id(lt1), lt1);
@@ -521,7 +521,7 @@ xcom::Edge * RegFileAffinityGraph::clustering(
 
 RDG_EDGE_INFO * RegFileAffinityGraph::getEdgeInfo(UINT start, UINT end)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     xcom::Edge *e = get_edge(start, end);
     if (e) {
         return (RDG_EDGE_INFO*)EDGE_info(e);
@@ -533,18 +533,18 @@ RDG_EDGE_INFO * RegFileAffinityGraph::getEdgeInfo(UINT start, UINT end)
 //Contructing register-file affinity graph.
 void RegFileAffinityGraph::build(LifeTimeMgr &, DataDepGraph &)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
 }
 
 
 void RegFileAffinityGraph::dump()
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     #undef INF_RF_NAME
     #define INF_RF_NAME "zRF_AFFINI_GRAPH.vcg"
     UNLINK(INF_RF_NAME);
     FILE * h = fopen(INF_RF_NAME,"a+");
-    ASSERT(h, ("%s create failed!!!", INF_RF_NAME));
+    ASSERTN(h, ("%s create failed!!!", INF_RF_NAME));
     fprintf(h, "\n/*\n");
 
     StrBuf tmp(64);
@@ -606,7 +606,7 @@ void RegFileAffinityGraph::dump()
     //Print edges
     for(xcom::Edge * e = m_edges.get_first(c); e != NULL;
         e = m_edges.get_next(c)){
-        ASSERT(EDGE_info(e) != NULL, ("Lost edge information"));
+        ASSERTN(EDGE_info(e) != NULL, ("Lost edge information"));
         fprintf(h,
                 "\nedge: { sourcename:\"%d\" targetname:\"%d\" %s label:\"%d\"}",
                 VERTEX_id(EDGE_from(e)), VERTEX_id(EDGE_to(e)),
@@ -668,7 +668,7 @@ void InterfGraph::destroy()
 
 void InterfGraph::clone(InterfGraph & ig)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     m_bb = ig.bb();
     m_clustering = ig.m_clustering;
     m_is_estimate = ig.m_is_estimate;
@@ -678,7 +678,7 @@ void InterfGraph::clone(InterfGraph & ig)
 
 ORBB * InterfGraph::bb()
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     return m_bb;
 }
 
@@ -699,7 +699,7 @@ bool InterfGraph::isGraphNode(LifeTime * lt)
 //Similarly it also could be handled in If-Conversion.
 bool InterfGraph::isInterferred(LifeTime * lt1, LifeTime * lt2)
 {
-    ASSERT(SR_is_reg(LT_sr(lt1)) && SR_is_reg(LT_sr(lt2)), ("sr is not register"));
+    ASSERTN(SR_is_reg(LT_sr(lt1)) && SR_is_reg(LT_sr(lt2)), ("sr is not register"));
     if (LT_id(lt1) == LT_id(lt2) || !LT_pos(lt1)->is_intersect(*LT_pos(lt2))) {
         return false;
     }
@@ -741,7 +741,7 @@ bool InterfGraph::isInterferred(LifeTime * lt1, LifeTime * lt2)
 
 void InterfGraph::rebuild()
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     if(ORBB_ornum(m_bb) == 0) return;
     //Recheck interference
     LifeTime *lt1 = NULL, *lt2 = NULL;
@@ -764,18 +764,18 @@ void InterfGraph::rebuild()
 
 void InterfGraph::build(LifeTimeMgr & mgr)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
-    ASSERT(mgr.getMaxLifeTimeLen() > 0, ("Need to create life time at first"));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(mgr.getMaxLifeTimeLen() > 0, ("Need to create life time at first"));
     if (ORBB_ornum(m_bb) == 0) return;
     m_lt_mgr = &mgr;
     //Check interference
     INT c;
     for (LifeTime * lt1 = mgr.getFirstLifeTime(c);
          lt1 != NULL; lt1 = mgr.getNextLifeTime(c)) {
-        ASSERT(LT_cluster(lt1) != CLUST_UNDEF || !m_clustering,
+        ASSERTN(LT_cluster(lt1) != CLUST_UNDEF || !m_clustering,
            ("Life time cluster is illegal."));
         m_lt_rf_group[SR_regfile(LT_sr(lt1))].append_tail(lt1);
-        ASSERT(LT_cluster(lt1) >= CLUST_UNDEF, ("?? cluster"));
+        ASSERTN(LT_cluster(lt1) >= CLUST_UNDEF, ("?? cluster"));
         m_lt_cl_group[LT_cluster(lt1)].append_tail(lt1);
     }
 
@@ -810,7 +810,7 @@ void InterfGraph::getLifeTimeList(
     List<LifeTime*> & lt_group,
     REGFILE regfile)
 {
-    ASSERT(regfile != RF_UNDEF, ("Unknown regfile."));
+    ASSERTN(regfile != RF_UNDEF, ("Unknown regfile."));
     for (LifeTime * lt = m_lt_rf_group[regfile].get_tail();
          lt != NULL;
          lt = m_lt_rf_group[regfile].get_prev()) {
@@ -827,7 +827,7 @@ void InterfGraph::getLifeTimeList(
 {
     DUMMYUSE(start);
     DUMMYUSE(end);
-    ASSERT(regfile != RF_UNDEF, ("Unknown regfile."));
+    ASSERTN(regfile != RF_UNDEF, ("Unknown regfile."));
     for (LifeTime *lt = m_lt_rf_group[regfile].get_tail();
          lt != NULL;
          lt = m_lt_rf_group[regfile].get_prev()) {
@@ -844,9 +844,9 @@ void InterfGraph::moveLifeTime(
         CLUST to_clust,
         INT to_regfile)
 {
-    ASSERT(from_clust >= CLUST_UNDEF && to_clust >= CLUST_UNDEF,
+    ASSERTN(from_clust >= CLUST_UNDEF && to_clust >= CLUST_UNDEF,
             ("Illegal info"));
-    ASSERT(from_regfile >= RF_UNDEF && to_regfile >= RF_UNDEF,
+    ASSERTN(from_regfile >= RF_UNDEF && to_regfile >= RF_UNDEF,
             ("Illegal info"));
     m_lt_rf_group[from_regfile].remove(lt);
     m_lt_rf_group[to_regfile].append_tail(lt);
@@ -859,12 +859,12 @@ void InterfGraph::moveLifeTime(
 //'prio_regfile' : Prior regfile of 'lt'
 void InterfGraph::updateLifeTimeInterf(LifeTime * lt, INT prio_regfile)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
-    ASSERT(prio_regfile > RF_UNDEF && prio_regfile < RF_NUM,
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(prio_regfile > RF_UNDEF && prio_regfile < RF_NUM,
             ("Unknown regfile."));
-    ASSERT(lt && SR_regfile(LT_sr(lt)) != RF_UNDEF, ("Unknown regfile."));
-    ASSERT(m_lt_rf_group[prio_regfile].find(lt), ("Unmatch regfile"));
-    ASSERT(!m_lt_rf_group[SR_regfile(LT_sr(lt))].find(lt),
+    ASSERTN(lt && SR_regfile(LT_sr(lt)) != RF_UNDEF, ("Unknown regfile."));
+    ASSERTN(m_lt_rf_group[prio_regfile].find(lt), ("Unmatch regfile"));
+    ASSERTN(!m_lt_rf_group[SR_regfile(LT_sr(lt))].find(lt),
             ("Unmatch regfile"));
 
     INT new_regfile = SR_regfile(LT_sr(lt));
@@ -895,14 +895,14 @@ UINT InterfGraph::getInterfDegree(LifeTime * lt)
 void InterfGraph::getNeighborList(IN OUT List<LifeTime*> & ni_list,
                                   LifeTime * lt)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     List<UINT> int_ni_list;
     xcom::Graph::getNeighborList(int_ni_list, LT_id(lt));
     UINT n = int_ni_list.get_elem_count();
     UINT vid = int_ni_list.get_head();
     for (UINT i = 0; i < n; i++, vid = int_ni_list.get_next()) {
         LifeTime * ni = m_lt_mgr->getLifeTime(vid);
-        ASSERT(ni, ("Negighbor(%d) does not corresponding to life time %d",
+        ASSERTN(ni, ("Negighbor(%d) does not corresponding to life time %d",
                     vid, LT_id(lt)));
         ni_list.append_head(ni);
     }
@@ -911,14 +911,14 @@ void InterfGraph::getNeighborList(IN OUT List<LifeTime*> & ni_list,
 
 void InterfGraph::dump()
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
 
     #undef INF_IG_NAME
     #define INF_IG_NAME "zif_graph.vcg"
     UNLINK(INF_IG_NAME);
 
     FILE * h = fopen(INF_IG_NAME, "a+");
-    ASSERT(h, ("%s create failed!!!",INF_IG_NAME));
+    ASSERTN(h, ("%s create failed!!!",INF_IG_NAME));
 
     fprintf(h, "\n/*\n");
     List<LifeTime*> lt_list[RF_NUM];
@@ -926,7 +926,7 @@ void InterfGraph::dump()
     for (LifeTime * lt = m_lt_mgr->getFirstLifeTime(c);
          lt != NULL; lt = m_lt_mgr->getNextLifeTime(c)) {
         REGFILE regfile = SR_regfile(LT_sr(lt));
-        ASSERT(regfile >= RF_UNDEF && regfile < RF_NUM, ("Illegal regfile"));
+        ASSERTN(regfile >= RF_UNDEF && regfile < RF_NUM, ("Illegal regfile"));
         lt_list[regfile].append_tail(lt);
     }
 
@@ -1037,7 +1037,7 @@ LifeTimeMgr::LifeTimeMgr(CG * cg)
 
 OR * LifeTimeMgr::getOR(UINT pos)
 {
-    ASSERT(((INT)pos) >= 0 && ((INT)pos) <= m_pos2or_map.get_last_idx(),
+    ASSERTN(((INT)pos) >= 0 && ((INT)pos) <= m_pos2or_map.get_last_idx(),
            ("position overrange"));
     return m_pos2or_map.get(pos);
 }
@@ -1045,7 +1045,7 @@ OR * LifeTimeMgr::getOR(UINT pos)
 
 OR * LifeTimeMgr::getORByIdx(INT opidx)
 {
-    ASSERT(opidx >= 0 &&
+    ASSERTN(opidx >= 0 &&
             opidx <= m_oridx2or_map.get_last_idx(),
             ("position overrange"));
     return m_oridx2or_map.get(opidx);
@@ -1054,12 +1054,12 @@ OR * LifeTimeMgr::getORByIdx(INT opidx)
 
 INT LifeTimeMgr::getPos(OR * o, bool is_result)
 {
-    ASSERT(o != NULL && m_or2pos_map.get(OR_id(o)) > 0, ("o is illegal"));
+    ASSERTN(o != NULL && m_or2pos_map.get(OR_id(o)) > 0, ("o is illegal"));
     if (is_result) {
-        ASSERT(m_or2pos_map.get(OR_id(o)) > 1, ("o is illegal"));
+        ASSERTN(m_or2pos_map.get(OR_id(o)) > 1, ("o is illegal"));
         return m_or2pos_map.get(OR_id(o));
     } else {
-        ASSERT(m_or2pos_map.get(OR_id(o)) > 0, ("o is illegal"));
+        ASSERTN(m_or2pos_map.get(OR_id(o)) > 0, ("o is illegal"));
         return m_or2pos_map.get(OR_id(o)) - 1;
     }
 }
@@ -1127,14 +1127,14 @@ void LifeTimeMgr::computeLifeTimeCluster(LifeTime * lt, OR * o)
     if (m_cg->isBusSR(sr)) {
         if (m_is_verify) {
             if (LT_cluster(lt) != CLUST_UNDEF) {
-                ASSERT(m_cg->isBusCluster(LT_cluster(lt)), ("Unmatch cluster"));
+                ASSERTN(m_cg->isBusCluster(LT_cluster(lt)), ("Unmatch cluster"));
             }
         }
         LT_cluster(lt) = m_cg->computeClusterOfBusOR(o);
         return;
     } else if (m_cg->isDedicatedSR(sr)) {
         LT_cluster(lt) = m_cg->mapSR2Cluster(o, sr);
-        ASSERT(LT_cluster(lt) != CLUST_UNDEF, ("No info of dedicated sr."));
+        ASSERTN(LT_cluster(lt) != CLUST_UNDEF, ("No info of dedicated sr."));
         return;
     } else if (LT_has_allocated(lt)) {
         clust = m_cg->mapReg2Cluster(SR_phy_regid(sr));
@@ -1146,7 +1146,7 @@ void LifeTimeMgr::computeLifeTimeCluster(LifeTime * lt, OR * o)
             if (!m_cg->isBusCluster(clust) &&
                 !m_cg->isBusCluster(LT_cluster(lt))) {
                 //Bus-operation cross multi-clusters.
-                ASSERT(LT_cluster(lt) == clust, ("Unmatch cluster"));
+                ASSERTN(LT_cluster(lt) == clust, ("Unmatch cluster"));
             }
         } else {
             //Omit regfile which can cross bus.
@@ -1167,7 +1167,7 @@ void LifeTimeMgr::computeLifeTimeCluster(LifeTime * lt, OR * o)
             if (!m_cg->isBusCluster(clust) &&
                 !m_cg->isBusCluster(LT_cluster(lt))) {
                 //Bus-operation cross multi-clusters.
-                ASSERT(LT_cluster(lt) == clust, ("Unmatch cluster"));
+                ASSERTN(LT_cluster(lt) == clust, ("Unmatch cluster"));
             }
         } else {
             //Omit regfile which can cross bus.
@@ -1181,11 +1181,11 @@ void LifeTimeMgr::computeLifeTimeCluster(LifeTime * lt, OR * o)
         if (m_cg->isBusCluster(clust)) {
             clust = m_cg->mapSR2Cluster(o, sr);
         }
-        ASSERT(!m_cg->isBusCluster(clust),
+        ASSERTN(!m_cg->isBusCluster(clust),
                 ("life time live on bus should not be here"));
         if (m_is_verify) {
             if (LT_cluster(lt) != CLUST_UNDEF && clust != CLUST_UNDEF) {
-                ASSERT(LT_cluster(lt) == clust, ("Unmatch cluster"));
+                ASSERTN(LT_cluster(lt) == clust, ("Unmatch cluster"));
                 return;
             }
         }
@@ -1203,8 +1203,8 @@ void LifeTimeMgr::computeLifeTimeCluster(LifeTime * lt, OR * o)
 //the only time to record cluster information is the first meeting with sr.
 LifeTime * LifeTimeMgr::allocLifeTime(SR * sr, OR * o)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
-    ASSERT(m_max_lt_len > 0, ("Life time length is overrange."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_max_lt_len > 0, ("Life time length is overrange."));
     LifeTime * lt = (LifeTime*)xmalloc(sizeof(LifeTime));
     LT_pos(lt) = m_ru->getBitSetMgr()->create();
     LT_desc(lt).init();
@@ -1219,8 +1219,8 @@ LifeTime * LifeTimeMgr::allocLifeTime(SR * sr, OR * o)
 
 LifeTime * LifeTimeMgr::clone_lifetime(LifeTime * lt)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
-    ASSERT(lt, ("Life time is NULL."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(lt, ("Life time is NULL."));
 
     LifeTime *newlt = (LifeTime*)xmalloc(sizeof(LifeTime));
     LT_pos(newlt)->copy(*LT_pos(lt));
@@ -1245,7 +1245,7 @@ LifeTime * LifeTimeMgr::clone_lifetime(LifeTime * lt)
 
 void LifeTimeMgr::freeLifeTime(LifeTime * lt)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     LT_desc(lt).destroy();//Destory vector
     LT_pos(lt) = NULL;
 }
@@ -1253,7 +1253,7 @@ void LifeTimeMgr::freeLifeTime(LifeTime * lt)
 
 void LifeTimeMgr::freeAllLifeTime()
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     INT c;
     for (LifeTime * lt = m_lt_tab.get_first(c);
          lt != NULL; lt = m_lt_tab.get_next(c)) {
@@ -1264,14 +1264,14 @@ void LifeTimeMgr::freeAllLifeTime()
 
 UINT LifeTimeMgr::getLiftTimeCount() const
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     return m_lt_tab.get_elem_count();
 }
 
 
 void LifeTimeMgr::removeLifeTime(LifeTime * lt)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     m_lt_tab.removed(lt);
     m_lt2usable_reg_set_map.setAlways(lt, NULL);
     m_lt2antici_reg_set_map.setAlways(lt, NULL);
@@ -1283,28 +1283,28 @@ void LifeTimeMgr::removeLifeTime(LifeTime * lt)
 
 LifeTime * LifeTimeMgr::getLifeTime(UINT id)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     return m_lt_tab.find((OBJTY)(size_t)id);
 }
 
 
 LifeTime * LifeTimeMgr::getLifeTime(SR * sr)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     return m_sr2lt_map.get(sr);
 }
 
 
 LifeTime * LifeTimeMgr::getNextLifeTime(INT & cur)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     return m_lt_tab.get_next(cur);
 }
 
 
 LifeTime * LifeTimeMgr::getFirstLifeTime(INT & cur)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     return m_lt_tab.get_first(cur);
 }
 
@@ -1312,7 +1312,7 @@ LifeTime * LifeTimeMgr::getFirstLifeTime(INT & cur)
 //Must call init() before invoke this function.
 bool LifeTimeMgr::clone(LifeTimeMgr & mgr)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     m_max_lt_len = mgr.getMaxLifeTimeLen();
     m_lt_count = mgr.getLiftTimeCount();
     m_gra_used.copy(mgr.m_gra_used);
@@ -1362,19 +1362,19 @@ bool LifeTimeMgr::clone(LifeTimeMgr & mgr)
 //Verfication to LifeTime and cluster information.
 bool LifeTimeMgr::verifyLifeTime()
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     INT c;
     for (LifeTime * lt = getFirstLifeTime(c); lt != NULL; lt = getNextLifeTime(c)) {
-        ASSERT(LT_sr(lt), ("Not any SR binding to LifeTime."));
-        ASSERT(LT_cluster(lt) != CLUST_UNDEF, ("Miss cluster info"));
+        ASSERTN(LT_sr(lt), ("Not any SR binding to LifeTime."));
+        ASSERTN(LT_cluster(lt) != CLUST_UNDEF, ("Miss cluster info"));
 
         if (m_cg->isBusSR(LT_sr(lt))) {
-            ASSERT(m_cg->isBusCluster(LT_cluster(lt)), ("Unmatch cluster infor"));
+            ASSERTN(m_cg->isBusCluster(LT_cluster(lt)), ("Unmatch cluster infor"));
             continue; //Do not need to check occurrence.
         }
 
-        ASSERT(LT_desc(lt).get(0) == NULL, ("Position 0 is in-exposed use"));
-        ASSERT(LT_desc(lt).get(m_max_lt_len - 1) == NULL,
+        ASSERTN(LT_desc(lt).get(0) == NULL, ("Position 0 is in-exposed use"));
+        ASSERTN(LT_desc(lt).get(m_max_lt_len - 1) == NULL,
                ("Position %d is out-exposed use, last_idx is %d",
                 m_max_lt_len - 1, LT_desc(lt).get_last_idx()));
 
@@ -1389,12 +1389,12 @@ bool LifeTimeMgr::verifyLifeTime()
                 //do not belong to any life time.
                 //Therefore we do not verify Bus Operation liked operations.
 
-                //ASSERT(m_cg->isBusCluster(LT_cluster(lt)),
+                //ASSERTN(m_cg->isBusCluster(LT_cluster(lt)),
                 //        ("Unmatch cluster infor"));
             } else {
                 //For target without, all instructions are belong to
                 //identical cluster.
-                ASSERT(m_cg->computeORCluster(o) == LT_cluster(lt),
+                ASSERTN(m_cg->computeORCluster(o) == LT_cluster(lt),
                        ("Unmatch cluster"));
             }
         }
@@ -1405,7 +1405,7 @@ bool LifeTimeMgr::verifyLifeTime()
 
 UINT LifeTimeMgr::getOccCount(LifeTime * lt)
 {
-    ASSERT(lt, ("getOccCount:lt is NULL"));
+    ASSERTN(lt, ("getOccCount:lt is NULL"));
     INT count = 0;
     for (INT i = LT_pos(lt)->get_first();
          i >= 0; i = LT_desc(lt).get_next(i)) {
@@ -1440,8 +1440,8 @@ void LifeTimeMgr::getOccInRange(
         IN LifeTime * lt,
         IN OUT List<INT> &occs)
 {
-    ASSERT(start <= end && start >= 0 && end >= 0, ("out of range"));
-    ASSERT(start >= LT_FIRST_POS && end <= (INT)(getMaxLifeTimeLen() - 1),
+    ASSERTN(start <= end && start >= 0 && end >= 0, ("out of range"));
+    ASSERTN(start >= LT_FIRST_POS && end <= (INT)(getMaxLifeTimeLen() - 1),
            ("out of range"));
     start = MAX(start, LT_pos(lt)->get_first());
     end = MIN(end, LT_pos(lt)->get_last());
@@ -1469,7 +1469,7 @@ INT LifeTimeMgr::getBackwardOcc(
         return -1;
     }
     //Find the DEF of pos1.
-    ASSERT(pos >= LT_FIRST_POS && pos <= (INT)(getMaxLifeTimeLen() - 1),
+    ASSERTN(pos >= LT_FIRST_POS && pos <= (INT)(getMaxLifeTimeLen() - 1),
             ("Illegal position"));
     INT i;
     //Get first pos of current life time.
@@ -1505,7 +1505,7 @@ INT LifeTimeMgr::getForwardOcc(
         IN OUT bool * is_def)
 {
     INT forwpos = -1;
-    ASSERT(pos >= LT_FIRST_POS && pos <= (INT)(getMaxLifeTimeLen() - 1),
+    ASSERTN(pos >= LT_FIRST_POS && pos <= (INT)(getMaxLifeTimeLen() - 1),
             ("Illegal position"));
     if (pos >= (INT)(getMaxLifeTimeLen() - 1)) {
         return -1;
@@ -1589,7 +1589,7 @@ void LifeTimeMgr::reviseLTCase1(LifeTime * lt)
 {
     bool is_def = false;
     INT first_occ = getForwardOcc(LT_pos(lt)->get_first(), lt, &is_def);
-    ASSERT(first_occ > LT_FIRST_POS, ("empty life tiem, have no any occ!"));
+    ASSERTN(first_occ > LT_FIRST_POS, ("empty life tiem, have no any occ!"));
 
     #ifdef _DEBUG_
     if (is_def) {
@@ -1597,7 +1597,7 @@ void LifeTimeMgr::reviseLTCase1(LifeTime * lt)
         //but this may incur position be recorded by life time.
         //Here we check it whether a Cond-Exec operation.
         OR * t = getOR(first_occ);
-        ASSERT(m_cg->isCondExecOR(t), ("Illegal life time"));
+        ASSERTN(m_cg->isCondExecOR(t), ("Illegal life time"));
     }
     #endif
 
@@ -1661,16 +1661,16 @@ BSVec<SR*> * LifeTimeMgr::getGSRLiveoutReload()
 //Operation 2. is the spill operation for gsr2. And similar for reload.
 void LifeTimeMgr::setGRALiveinSpill(OR * o, SR * sr)
 {
-    ASSERT(m_is_init, ("not initialize"));
-    ASSERT(SR_is_global(sr) && OR_is_store(o), ("illegal o"));
+    ASSERTN(m_is_init, ("not initialize"));
+    ASSERTN(SR_is_global(sr) && OR_is_store(o), ("illegal o"));
     m_oridx2sr_livein_gsr_spill_pos.set(OR_id(o), sr);
 }
 
 
 void LifeTimeMgr::setGRALiveoutReload(OR * o, SR * sr)
 {
-    ASSERT(m_is_init, ("not initialize"));
-    ASSERT(SR_is_global(sr) && OR_is_load(o), ("illegal o"));
+    ASSERTN(m_is_init, ("not initialize"));
+    ASSERTN(SR_is_global(sr) && OR_is_load(o), ("illegal o"));
     m_oridx2sr_liveout_gsr_reload_pos.set(OR_id(o), sr);
 }
 
@@ -1678,7 +1678,7 @@ void LifeTimeMgr::setGRALiveoutReload(OR * o, SR * sr)
 //Recreate life times, but leave some available info for use.
 INT LifeTimeMgr::recreate(ORBB * bb, bool is_verify, bool clustering)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     BSVec<SR*> livein_spill, liveout_reload;
     livein_spill.copy(m_oridx2sr_livein_gsr_spill_pos);
     liveout_reload.copy(m_oridx2sr_liveout_gsr_reload_pos);
@@ -1811,7 +1811,7 @@ void LifeTimeMgr::recordPhysicalRegOcc(
 //    Live out sr would be regarded as last point.
 INT LifeTimeMgr::create()
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     ASSERT0(m_ru);
     if (ORBB_ornum(m_bb) <= 0) {
         return 0;
@@ -1941,7 +1941,7 @@ INT LifeTimeMgr::create()
         handlePreferenceReg(o);
     }
 
-    ASSERT(pos == 0, ("First live position number must be zero"));
+    ASSERTN(pos == 0, ("First live position number must be zero"));
     //Looking up for exposing live-in sr.
     if (m_cg->isGRAEnable()) {
         processLiveInSR(live_lt_list);
@@ -1963,9 +1963,9 @@ INT LifeTimeMgr::create()
             //Phase might generate redundant SR reference.
             //While lt's SR has been assigned a physical register, the life
             //time should be able to represent that register.
-            //ASSERT(LT_pos(lt)->get_first() > LT_FIRST_POS,
+            //ASSERTN(LT_pos(lt)->get_first() > LT_FIRST_POS,
             //    ("Local life time has not live in point"));
-            ASSERT(LT_pos(lt)->get_first() < (INT)(getMaxLifeTimeLen() - 1),
+            ASSERTN(LT_pos(lt)->get_first() < (INT)(getMaxLifeTimeLen() - 1),
                     ("Local life time has not live in point"));
         }
     }
@@ -1978,13 +1978,13 @@ INT LifeTimeMgr::create()
 //Enumerate and collect function units that 'lt' traversed.
 void LifeTimeMgr::enumTraversedUnits(LifeTime const* lt, OUT UnitSet & us)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     //Check all instructions corresponded with life time's postition.
     for (INT i = LT_pos(lt)->get_first();
          i >= 0; i = LT_desc(lt).get_next(i)) {
         if (LT_desc(lt).get(i)) {
             OR * o = m_pos2or_map.get(i);
-            ASSERT(o, ("Position:%d has not any o mapped",i));
+            ASSERTN(o, ("Position:%d has not any o mapped",i));
 
             UINT unit;
             if (OR_is_bus(o)) {
@@ -2011,7 +2011,7 @@ bool LifeTimeMgr::isRecalcSR(SR * sr)
     for (INT i = LT_pos(lt)->get_first(); i >= 0; i = LT_desc(lt).get_next(i)) {
         if (LT_desc(lt).get(i)) {
             OR * o = m_pos2or_map.get(i);
-            ASSERT(o, ("Position:%d has not any o mapped",i));
+            ASSERTN(o, ("Position:%d has not any o mapped",i));
             if (!m_cg->isRecalcOR(o)) {
                 return false;
             }
@@ -2029,7 +2029,7 @@ bool LifeTimeMgr::isContainOR(
         OR_TYPE ortype,
         OUT List<OR*> * orlst)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
 
     //Traversing
     bool find = false;
@@ -2037,7 +2037,7 @@ bool LifeTimeMgr::isContainOR(
             i = LT_desc(lt).get_next(i)) {
         if (LT_desc(lt).get(i)) {
             OR * o = m_pos2or_map.get(i);
-            ASSERT(o, ("Position:%d has not any o mapped",i));
+            ASSERTN(o, ("Position:%d has not any o mapped",i));
             if (OR_code(o) == ortype) {
                 find = true;
                 if (orlst) {
@@ -2052,7 +2052,7 @@ bool LifeTimeMgr::isContainOR(
 
 RegSet * LifeTimeMgr::getUsableRegSet(LifeTime * lt) const
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     RegSet * rs = const_cast<LifeTimeMgr*>(this)->
         m_lt2usable_reg_set_map.get(lt);
     ASSERT0(rs);
@@ -2062,14 +2062,14 @@ RegSet * LifeTimeMgr::getUsableRegSet(LifeTime * lt) const
 
 REG LifeTimeMgr::getPreferenceReg(LifeTime * lt)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     return m_lt2preference_reg_map.get(lt);
 }
 
 
 void LifeTimeMgr::setPreferenceReg(LifeTime * lt, REG reg)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     m_lt2preference_reg_map.setAlways(lt, reg);
 }
 
@@ -2077,7 +2077,7 @@ void LifeTimeMgr::setPreferenceReg(LifeTime * lt, REG reg)
 //Append anticipated register
 void LifeTimeMgr::addAnticiReg(LifeTime const* lt, REG reg)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     RegSet * rs = m_lt2antici_reg_set_map.get(lt);
     if (rs == NULL) {
         rs = m_cg->allocRegSet();
@@ -2092,7 +2092,7 @@ void LifeTimeMgr::addAnticiReg(LifeTime const* lt, REG reg)
 //Reset anticipated register set
 void LifeTimeMgr::setAnticiReg(LifeTime const* lt, RegSet * rset)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     RegSet * rs = m_lt2antici_reg_set_map.get(lt);
     if (rs == NULL) {
         rs = m_cg->allocRegSet();
@@ -2108,7 +2108,7 @@ void LifeTimeMgr::setAnticiReg(LifeTime const* lt, RegSet * rset)
 
 RegSet * LifeTimeMgr::getAnticiRegs(LifeTime * lt)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     RegSet * rs = m_lt2antici_reg_set_map.get(lt);
     if (rs == NULL) {
         rs = m_cg->allocRegSet();
@@ -2121,9 +2121,10 @@ RegSet * LifeTimeMgr::getAnticiRegs(LifeTime * lt)
 //Computes register sets which can be allocated for every life times.
 void LifeTimeMgr::computeUsableRegs()
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     INT c;
-    for (LifeTime * lt = getFirstLifeTime(c); lt != NULL; lt = getNextLifeTime(c)) {
+    for (LifeTime * lt = getFirstLifeTime(c);
+         lt != NULL; lt = getNextLifeTime(c)) {
         setAnticiReg(lt, NULL); //Clean anticipate set.
         RegSet * rs = m_lt2usable_reg_set_map.get(lt);
         if (rs == NULL) {
@@ -2138,7 +2139,7 @@ void LifeTimeMgr::computeUsableRegs()
 //Recompute usable register-set of life time.
 void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     SR * sr  = LT_sr(lt);
     REGFILE rf = SR_regfile(sr);
     ASSERT0(rf >= RF_UNDEF && rf < RF_NUM);
@@ -2169,7 +2170,7 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
         //implicitly. Check them at point.
         OR * asm_or = getOR(occ); //occ may be 0
         if (asm_or && OR_is_asm(asm_or)) {
-            ASSERT(0, ("XOC does not support inline-assembly"));
+            ASSERTN(0, ("XOC does not support inline-assembly"));
             //Deduct clobber registers from 'usable_regs'
             //ORAsmInfo * asm_info = m_cg->getAsmInfo(asm_or);
 
@@ -2181,7 +2182,7 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
 
         if (pi != NULL) {
             OR * o = m_pos2or_map.get(occ);
-            ASSERT(o, ("'pos' to 'o' mapping is illegal, not any content!"));
+            ASSERTN(o, ("'pos' to 'o' mapping is illegal, not any content!"));
             considerSpecialConstrains(o, sr, *usable_rs);
 
             //Deduct clobbered registers from 'usable_regs'.
@@ -2204,7 +2205,7 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
                     SR * copy_src = o->get_opnd(opndidx);
                     if (SR_regfile(copy_src) == SR_regfile(sr) &&
                         SR_regfile(sr) != RF_UNDEF) {
-                        ASSERT(SR_is_reg(copy_src),
+                        ASSERTN(SR_is_reg(copy_src),
                                ("invalid copy operation, "
                                 "operand is not a register"));
                         addAnticiReg(lt, SR_phy_regid(copy_src));
@@ -2225,7 +2226,7 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
                     SR * copy_tgt = o->get_copy_to();
                     if (SR_regfile(copy_tgt) == SR_regfile(sr) &&
                         SR_regfile(sr) != RF_UNDEF) {
-                        ASSERT(SR_is_reg(copy_tgt),
+                        ASSERTN(SR_is_reg(copy_tgt),
                             ("invalid copy operation, "
                              "operand is not a register"));
                         addAnticiReg(lt, SR_phy_regid(copy_tgt));
@@ -2249,7 +2250,7 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
 //     special register.
 void LifeTimeMgr::computeLifeTimeUsableRegs(LifeTime * lt, RegSet * usable_rs)
 {
-    ASSERT(m_is_init, ("Life time manager should initialized first."));
+    ASSERTN(m_is_init, ("Life time manager should initialized first."));
     ASSERT0(usable_rs);
     if (LT_has_allocated(lt)) {
         ASSERT0(SR_phy_regid(LT_sr(lt)) <= REG_LAST);
@@ -2267,7 +2268,7 @@ void LifeTimeMgr::dump(UINT flag)
     #define INF_LT_NAME "zmgr.tmp"
     UNLINK(INF_LT_NAME);
     FILE * h = fopen(INF_LT_NAME, "a+");
-    ASSERT(h, ("%s create failed!!!", INF_LT_NAME));
+    ASSERTN(h, ("%s create failed!!!", INF_LT_NAME));
 
     fprintf(h, "\n==---- DUMP BB%d LOCAL LIFE TIME ----==", m_bb->id());
 
@@ -2327,7 +2328,7 @@ void LifeTimeMgr::dump(UINT flag)
             INT elt;
             for (elt = LT_pos(lt1)->get_first();
                  elt >= 0; elt = LT_pos(lt1)->get_next(elt)) {
-                ASSERT(elt < maxlen, ("Need bigger space"));
+                ASSERTN(elt < maxlen, ("Need bigger space"));
                 pos_marker[elt] = 1;
             }
             for (elt = 0; elt < maxlen; elt++) {
@@ -2353,7 +2354,7 @@ void LifeTimeMgr::dump(UINT flag)
             INT last_idx = LT_desc(lt1).get_last_idx();
             DUMMYUSE(last_idx);
 
-            ASSERT(last_idx == -1 || last_idx < maxlen,
+            ASSERTN(last_idx == -1 || last_idx < maxlen,
                 ("Depiction of life time long than the finial position"));
 
             for (INT i2 = LT_FIRST_POS; i2 < maxlen; i2++) {
@@ -2444,7 +2445,7 @@ void LifeTimeMgr::dump(UINT flag)
         INT elt;
         for (elt = LT_pos(lt1)->get_first();
              elt >= 0; elt = LT_pos(lt1)->get_next(elt)) {
-            ASSERT(elt < maxlen, ("Need bigger space"));
+            ASSERTN(elt < maxlen, ("Need bigger space"));
             pos_marker[elt] = 1;
         }
 
@@ -2464,7 +2465,7 @@ void LifeTimeMgr::dump(UINT flag)
         fprintf(h, "\n    LT(%3d):", LT_id(lt1));
         //Collects position info
         PosInfo * pi;
-        ASSERT(LT_desc(lt1).get_last_idx() == -1 ||
+        ASSERTN(LT_desc(lt1).get_last_idx() == -1 ||
                LT_desc(lt1).get_last_idx() < maxlen,
                ("Depiction of life time long than the finial position"));
         for (INT i2 = LT_FIRST_POS; i2 < maxlen; i2++) {
@@ -2552,9 +2553,9 @@ GroupMgr::~GroupMgr()
 
 void * GroupMgr::xmalloc(INT size)
 {
-    ASSERT(m_is_init, ("xcom::Graph must be initialized before clone."));
-    ASSERT(size > 0, ("xmalloc: size less zero!"));
-    ASSERT(m_pool != 0,("need graph pool!!"));
+    ASSERTN(m_is_init, ("xcom::Graph must be initialized before clone."));
+    ASSERTN(size > 0, ("xmalloc: size less zero!"));
+    ASSERTN(m_pool != 0,("need graph pool!!"));
     void * p = smpoolMalloc(size, m_pool);
     if (p == NULL) return NULL;
     ::memset(p,0,size);
@@ -2599,7 +2600,7 @@ INT GroupMgr::get_last_group() const
 
 INT GroupMgr::get_groups() const
 {
-    ASSERT(m_is_init, ("not yet initialized."));
+    ASSERTN(m_is_init, ("not yet initialized."));
     INT count = 0;
     for (INT i = 0; i <= m_groupidx2ors_map.get_last_idx(); i++) {
         if (m_groupidx2ors_map.get(i) != NULL) {
@@ -2612,25 +2613,25 @@ INT GroupMgr::get_groups() const
 
 INT GroupMgr::get_or_group(OR * o)
 {
-    ASSERT(o, ("o is NULL."));
-    ASSERT(m_is_init, ("not yet initialized."));
+    ASSERTN(o, ("o is NULL."));
+    ASSERTN(m_is_init, ("not yet initialized."));
     return m_oridx2group_map.get(OR_id(o));
 }
 
 
 List<OR*> * GroupMgr::get_orlist_in_group(INT i)
 {
-    ASSERT(i >= 0, ("idx must be positive."));
-    ASSERT(m_is_init, ("not yet initialized."));
+    ASSERTN(i >= 0, ("idx must be positive."));
+    ASSERTN(m_is_init, ("not yet initialized."));
     return m_groupidx2ors_map.get(i);
 }
 
 
 void GroupMgr::add_ors(ORList & ors, INT group)
 {
-    ASSERT(m_is_init, ("not yet initialized."));
+    ASSERTN(m_is_init, ("not yet initialized."));
     if (ors.get_elem_count() <= 0) return;
-    ASSERT(group >= 1, ("Illegal info"));
+    ASSERTN(group >= 1, ("Illegal info"));
     List<OR*> * orlist = m_groupidx2ors_map.get(group);
     if (orlist == NULL) {
         orlist = (List<OR*>*)xmalloc(sizeof(List<OR*>));
@@ -2638,7 +2639,7 @@ void GroupMgr::add_ors(ORList & ors, INT group)
         m_groupidx2ors_map.set(group, orlist);
     }
     for (OR * o = ors.get_head(); o != NULL; ors.get_next()) {
-        ASSERT(false == orlist->find(o), ("o grouped already!"));
+        ASSERTN(false == orlist->find(o), ("o grouped already!"));
         orlist->append_tail(o);
         m_oridx2group_map.set(OR_id(o), group);
     }
@@ -2647,15 +2648,15 @@ void GroupMgr::add_ors(ORList & ors, INT group)
 
 void GroupMgr::add_or(OR * o, INT group)
 {
-    ASSERT(m_is_init, ("not yet initialized."));
-    ASSERT(o && group >= 1, ("Illegal info"));
+    ASSERTN(m_is_init, ("not yet initialized."));
+    ASSERTN(o && group >= 1, ("Illegal info"));
     List<OR*> * orlist = m_groupidx2ors_map.get(group);
     if (orlist == NULL) {
         orlist = (List<OR*>*)xmalloc(sizeof(List<OR*>));
         orlist->init();
         m_groupidx2ors_map.set(group, orlist);
     }
-    ASSERT(false == orlist->find(o), ("o grouped already!"));
+    ASSERTN(false == orlist->find(o), ("o grouped already!"));
     orlist->append_tail(o);
     m_oridx2group_map.set(OR_id(o), group);
 }
@@ -2664,8 +2665,8 @@ void GroupMgr::add_or(OR * o, INT group)
 //Union group 'src' into group 'tgt'.
 void GroupMgr::union_group(INT tgt, INT src)
 {
-    ASSERT(m_is_init, ("not yet initialized."));
-    ASSERT(src >= 1 && tgt >= 1, ("Illegal info"));
+    ASSERTN(m_is_init, ("not yet initialized."));
+    ASSERTN(src >= 1 && tgt >= 1, ("Illegal info"));
     if (src == tgt) return;
     List<OR*> * src_oplist = m_groupidx2ors_map.get(src);
     List<OR*> * tgt_oplist = m_groupidx2ors_map.get(tgt);
@@ -2729,7 +2730,7 @@ void InstructionPartition<Mat, T>::formulateTargetFunction(
 {
     DUMMYUSE(num_ops);
 
-    ASSERT(num_cst == 1, ("multi-const terms are unsupport till now"));
+    ASSERTN(num_cst == 1, ("multi-const terms are unsupport till now"));
     INT rhs_idx = num_vars;
     tgtf.reinit(1, num_vars + num_cst);
     for (INT c = 0; c < (INT)num_cycs; c++) {
@@ -2755,7 +2756,7 @@ void InstructionPartition<Mat, T>::formulateMustScheduleConstrains(
 {
     DUMMYUSE(num_ops);
 
-    ASSERT(num_cst == 1, ("multi-const terms are unsupport till now"));
+    ASSERTN(num_cst == 1, ("multi-const terms are unsupport till now"));
     INT rhs_idx = num_vars;
 
     for (OR * o = ORBB_first_or(bb); o != NULL;
@@ -2983,7 +2984,7 @@ void InstructionPartition<Mat, T>::format(
             for (UINT i = 0; i < vm.get_clust_num() * vm.get_clust_num();
                  i++) {
                 if (sol.get(0, ofst + i) != 0) {
-                    ASSERT(cut == -1,
+                    ASSERTN(cut == -1,
                         ("more than one variable own value, in 0-1 pragram"));
                     cut = i;
                 }
@@ -3178,7 +3179,7 @@ REG LRA::chooseByRegFileGroup(
     if (regs.get_elem_count() <= 1) {
         return REG_UNDEF;
     }
-    ASSERT(!LT_has_allocated(lt) &&
+    ASSERTN(!LT_has_allocated(lt) &&
            !SR_is_dedicated(LT_sr(lt)) &&
            !SR_is_global(LT_sr(lt)),
            ("Assign register for dedicated"));
@@ -3250,7 +3251,7 @@ bool LRA::assignRegister(
 {
     SR * sr = LT_sr(lt);
     REGFILE regfile = SR_regfile(sr);
-    ASSERT(regfile != RF_UNDEF, ("Regfile undefined."));
+    ASSERTN(regfile != RF_UNDEF, ("Regfile undefined."));
     REG reg = REG_UNDEF;
     RegSet * usable = mgr.getUsableRegSet(lt);
     RegSet * antici = mgr.getAnticiRegs(lt);
@@ -3313,12 +3314,12 @@ bool LRA::assignRegister(
                 usable->get_elem_count()) {
                 usable->diff(*ni_rset);
             }
-            ASSERT(usable->get_elem_count() > 0,
+            ASSERTN(usable->get_elem_count() > 0,
                     ("At least one available resgister left."));
         }
     }
 
-    ASSERT(usable->get_elem_count() > 0,
+    ASSERTN(usable->get_elem_count() > 0,
             ("At least one available resgister left."));
 
     if (antici->is_intersect(*usable)) {
@@ -3352,7 +3353,7 @@ FIN:
     //We need dealing with its sibling.
     LifeTime * sib = LT_sibling(lt);
     if (sib != NULL && !LT_has_allocated(sib)) {
-        ASSERT(SR_regfile(LT_sr(lt)) == SR_regfile(LT_sr(sib)),
+        ASSERTN(SR_regfile(LT_sr(lt)) == SR_regfile(LT_sr(sib)),
                 ("Unmatch regfile"));
         if (LT_is_low(lt)) {
             mgr.setPreferenceReg(sib, reg+1);
@@ -3364,10 +3365,10 @@ FIN:
     #ifdef _DEBUG_
     if (sib != NULL && LT_has_allocated(sib)) {
         if (LT_is_low(lt)) {
-            ASSERT(reg + 1 == SR_phy_regid(LT_sr(sib)),
+            ASSERTN(reg + 1 == SR_phy_regid(LT_sr(sib)),
                     ("Unmatch register pair."));
         } else {
-            ASSERT(reg == SR_phy_regid(LT_sr(sib)) + 1,
+            ASSERTN(reg == SR_phy_regid(LT_sr(sib)) + 1,
                     ("Unmatch register pair."));
         }
     }
@@ -3430,7 +3431,7 @@ void LRA::genSpill(
         for (OR * tmp = sors->get_head();
              tmp != NULL; tmp = sors->get_next()) {
             if (OR_is_store(tmp)) {
-                ASSERT(sw_or == NULL, ("multi stores in spill?"));
+                ASSERTN(sw_or == NULL, ("multi stores in spill?"));
                 sw_or = tmp;
                 //Do not break! Continuing the loop and assertion
                 //if there are two store.
@@ -3448,8 +3449,8 @@ void LRA::genSpill(
         m_spilled_live_in_gsr.set(SR_sregid(oldsr), true);
     } else if (is_rename) {
         OR * o = mgr.getOR(pos);
-        ASSERT(o, ("OR is NULL"));
-        ASSERT(pos > (INT)LT_FIRST_POS && pos < (INT)LT_LAST_POS,
+        ASSERTN(o, ("OR is NULL"));
+        ASSERTN(pos > (INT)LT_FIRST_POS && pos < (INT)LT_LAST_POS,
                ("pos is out of boundary"));
         SR * newsr = NULL;
         INT opndnum, resnum;
@@ -3470,8 +3471,8 @@ void LRA::genSpill(
         ORBB_orlist(m_bb)->insert_after(*sors, o);
     } else {
         OR * o = mgr.getOR(pos);
-        ASSERT(o, ("OR is NULL"));
-        ASSERT(pos > (INT)LT_FIRST_POS && pos < (INT)LT_LAST_POS,
+        ASSERTN(o, ("OR is NULL"));
+        ASSERTN(pos > (INT)LT_FIRST_POS && pos < (INT)LT_LAST_POS,
                ("pos is out of boundary"));
         if (!SR_is_global(oldsr) &&  !SR_is_dedicated(oldsr)) {
             //Expect to choose a new register.
@@ -3499,7 +3500,7 @@ SR * LRA::genNewReloadSR(SR * oldsr, xoc::VAR * spill_var)
         SR_regfile(newsr) = SR_regfile(oldsr);
         SR_spill_var(newsr) = spill_var;
     }
-    ASSERT(newsr, ("Miss info"));
+    ASSERTN(newsr, ("Miss info"));
     return newsr;
 }
 
@@ -3559,7 +3560,7 @@ SR * LRA::genReload(
         OR * ld_op = NULL;
         for (OR * tmp = ors->get_head(); tmp != NULL; tmp = ors->get_next()) {
             if (OR_is_load(tmp)) {
-                ASSERT(ld_op == NULL, ("multi loads in reload?"));
+                ASSERTN(ld_op == NULL, ("multi loads in reload?"));
                 ld_op = tmp;
             }
         }
@@ -3575,7 +3576,7 @@ SR * LRA::genReload(
         newsr = oldsr;
     } else { //Reloading and Renaming
         OR * o = mgr.getOR(pos);
-        ASSERT(o, ("OR is NULL"));
+        ASSERTN(o, ("OR is NULL"));
         newsr = genNewReloadSR(oldsr, spill_var);
         INT opndnum, resnum;
         if (m_cg->isOpndSameWithResult(oldsr, o, &opndnum, &resnum)) {
@@ -3601,11 +3602,11 @@ SR * LRA::genReload(
 //Spilling global SR that passed through the basic block.
 void LRA::spillPassthroughGSR(LifeTime * lt, LifeTimeMgr & mgr)
 {
-    ASSERT(SR_is_global(LT_sr(lt)), ("Spilling local register."));
+    ASSERTN(SR_is_global(LT_sr(lt)), ("Spilling local register."));
 
     //Get temporary memory from stack.
     xoc::VAR * spill_var = m_cg->genSpillVar(LT_sr(lt));
-    ASSERT(spill_var, ("Not any spill loc."));
+    ASSERTN(spill_var, ("Not any spill loc."));
 
     //Prepend store tor of bb
     genSpill(lt, LT_sr(lt), 0, spill_var, mgr, true, NULL);
@@ -3625,7 +3626,7 @@ void LRA::spillPassthroughGSR(LifeTime * lt, LifeTimeMgr & mgr)
 //    That will supply the opportunity for following Load/Store optimization.
 void LRA::spillGSR(LifeTime * lt, LifeTimeMgr & mgr)
 {
-    ASSERT(lt, ("getOccCount:lt is NULL"));
+    ASSERTN(lt, ("getOccCount:lt is NULL"));
     //Handling pass through global sr.
     if (mgr.getOccCount(lt) == 0) {
         spillPassthroughGSR(lt, mgr);
@@ -3634,7 +3635,7 @@ void LRA::spillGSR(LifeTime * lt, LifeTimeMgr & mgr)
 
     //Get temporary memory from stack.
     xoc::VAR * spill_var = m_cg->genSpillVar(LT_sr(lt));
-    ASSERT(spill_var, ("Not any spill loc."));
+    ASSERTN(spill_var, ("Not any spill loc."));
 
     //Prepend spill code top of bb
     if (LT_pos(lt)->is_contain(LT_FIRST_POS)) { //lifetime live in bb
@@ -3724,12 +3725,12 @@ void LRA::spillGSR(LifeTime * lt, LifeTimeMgr & mgr)
 //    Load/Store optimizations.
 void LRA::spillLSR(LifeTime * lt, LifeTimeMgr & mgr)
 {
-    ASSERT(lt, ("getOccCount:lt is NULL"));
-    ASSERT(mgr.getOccCount(lt), ("Empty life time."));
+    ASSERTN(lt, ("getOccCount:lt is NULL"));
+    ASSERTN(mgr.getOccCount(lt), ("Empty life time."));
     //Get temporary memory from stack.
     xoc::VAR * spill_var = m_cg->genSpillVar(LT_sr(lt));
-    ASSERT(spill_var, ("Not any spill loc."));
-    ASSERT(LT_pos(lt)->get_first() != LT_FIRST_POS,
+    ASSERTN(spill_var, ("Not any spill loc."));
+    ASSERTN(LT_pos(lt)->get_first() != LT_FIRST_POS,
             ("Illegal local sr life time."));
 
     //for case of the o that has same result with operand.
@@ -3757,7 +3758,7 @@ void LRA::spillLSR(LifeTime * lt, LifeTimeMgr & mgr)
             ORList ors;
             if (first_occ) {
                 first_occ = false;
-                ASSERT(POSINFO_is_def(pi),
+                ASSERTN(POSINFO_is_def(pi),
                         ("First occurrence must be DEF for local life time"));
             }
             if (POSINFO_is_def(pi)) {
@@ -3801,7 +3802,7 @@ bool LRA::processORSpill(
         LifeTimeMgr & mgr,
         List<LifeTime*> & uncolored_list)
 {
-    ASSERT(OR_is_store(sw), ("need store"));
+    ASSERTN(OR_is_store(sw), ("need store"));
     SR * base = sw->get_store_base();
     if (SR_phy_regid(base) == REG_UNDEF) {
         ORCt * ct;
@@ -3810,7 +3811,7 @@ bool LRA::processORSpill(
         OR * calc_base_or = ORBB_orlist(m_bb)->get_prev(&ct);
         SR * stack_pointer = NULL;
         SR * lit = NULL;
-        ASSERT(calc_base_or != NULL &&
+        ASSERTN(calc_base_or != NULL &&
                 calc_base_or->get_result(0) == base,
                 ("unknown case"));
         if (OR_is_addi(calc_base_or) ||
@@ -3820,14 +3821,14 @@ bool LRA::processORSpill(
             lit = calc_base_or->get_opnd(HAS_PREDICATE_REGISTER + 1);
             SR_int_imm(lit) = -SR_int_imm(lit);
         } else {
-            ASSERT(0, ("unknown base compute"));
+            ASSERTN(0, ("unknown base compute"));
         }
         m_cg->renameResult(calc_base_or, base, stack_pointer, false);
         m_cg->renameOpnd(sw, base, stack_pointer, false);
 
         SR * pd = calc_base_or->get_pred();
         if (pd != NULL) {
-            ASSERT(pd == sw->get_pred(), ("illegal predicated sr"));
+            ASSERTN(pd == sw->get_pred(), ("illegal predicated sr"));
         }
         ORList ors;
         IOC tmp;
@@ -3922,11 +3923,11 @@ bool LRA::canBeSpilled(LifeTime * lt, LifeTimeMgr & mgr)
                 } else if (pos2 == -1) {
                     pos2 = i;
                 } else {
-                    ASSERT(0, ("More than 2"));
+                    ASSERTN(0, ("More than 2"));
                 }
             }
         }
-        ASSERT(pos1 != -1 && pos2 != -1, ("???"));
+        ASSERTN(pos1 != -1 && pos2 != -1, ("???"));
         if (pos2 == pos1 + 1) { //We canot benefit from spilling this lifetime.
             return false;
         }
@@ -3963,7 +3964,7 @@ void LRA::reassignRegFileForNewSR(
     for (LifeTime * lt = mgr.getFirstLifeTime(c);
          lt != NULL; lt = mgr.getNextLifeTime(c)) {
         SR * sr = LT_sr(lt);
-        ASSERT(SR_is_reg(sr), ("sr is not a register"));
+        ASSERTN(SR_is_reg(sr), ("sr is not a register"));
         if (LT_has_allocated(lt) || SR_regfile(sr) != RF_UNDEF) {
             is_regfile_unique.set(SR_sregid(sr), true);
         }
@@ -4011,11 +4012,11 @@ void LRA::renameOpndInRange(
         LifeTime * lt,
         LifeTimeMgr & mgr)
 {
-    ASSERT(start <= end, ("Ivalid range"));
+    ASSERTN(start <= end, ("Ivalid range"));
     PosInfo * pi = NULL;
     end = MIN(end, LT_desc(lt).get_last_idx());
     for (INT i = start; i <= end; i = LT_desc(lt).get_next(i)) {
-        ASSERT(i >= 0, ("out of boundary"));
+        ASSERTN(i >= 0, ("out of boundary"));
         if ((pi = LT_desc(lt).get(i)) != NULL) {
             OR * o = mgr.getOR(i);
             if (POSINFO_is_def(pi)) {
@@ -4076,7 +4077,7 @@ void LRA::reallocateLifeTime(
 
 void LRA::pure_spill(LifeTime * lt, LifeTimeMgr & mgr)
 {
-    ASSERT(canBeSpilled(lt, mgr), ("Spilling is forbiddend"));
+    ASSERTN(canBeSpilled(lt, mgr), ("Spilling is forbiddend"));
     SR * sr = LT_sr(lt);
     if (SR_is_global(sr)) {
         spillGSR(lt, mgr);
@@ -4146,15 +4147,15 @@ void LRA::splitLTAt(INT start,
                     LifeTime * lt,
                     LifeTimeMgr & mgr)
 {
-    ASSERT(lt, ("lt is NULL"));
+    ASSERTN(lt, ("lt is NULL"));
     SR * sr = LT_sr(lt);
     #ifdef _DEBUG_
     if (!SR_is_global(sr) && !SR_is_dedicated(sr)) {
-        ASSERT(start != LT_FIRST_POS || LT_desc(lt).get(start) != NULL,
+        ASSERTN(start != LT_FIRST_POS || LT_desc(lt).get(start) != NULL,
                 ("Miss pos-info"));
-        ASSERT(end != (INT)LT_LAST_POS || LT_desc(lt).get(end) != NULL,
+        ASSERTN(end != (INT)LT_LAST_POS || LT_desc(lt).get(end) != NULL,
                 ("Miss pos-info"));
-        ASSERT(mgr.getOccCount(lt),
+        ASSERTN(mgr.getOccCount(lt),
                 ("Empty life time."));
     }
     #endif
@@ -4162,16 +4163,16 @@ void LRA::splitLTAt(INT start,
 
     //spill var is gra_spill_var if sr is global reg.
     xoc::VAR * spill_var = m_cg->genSpillVar(sr);
-    ASSERT(spill_var, ("Not any spill loc."));
+    ASSERTN(spill_var, ("Not any spill loc."));
     if (start != -1) {
         if (start == LT_FIRST_POS) {
             genSpill(lt, sr, start, spill_var, mgr, false, NULL);
         } else {
-            ASSERT(mgr.getOR(start), ("Illegal o mapping."));
+            ASSERTN(mgr.getOR(start), ("Illegal o mapping."));
             if (is_start_spill) { //Store to memory
                 genSpill(lt, sr, start, spill_var, mgr, false, NULL);
             } else { //Reload from memory
-                ASSERT(0, ("Reload at the start position "
+                ASSERTN(0, ("Reload at the start position "
                             "of Hole? Performance Gap!"));
                 //genReload(lt, sr, start, SR_spill_var(sr), mgr, NULL);
             }
@@ -4182,14 +4183,14 @@ void LRA::splitLTAt(INT start,
         if (end == (INT)LT_LAST_POS) {
             SR * newsr = genReload(lt, sr, end, spill_var, mgr, NULL);
             DUMMYUSE(newsr);
-            ASSERT(newsr == sr,
+            ASSERTN(newsr == sr,
                 ("Should not rename global register, since that "
                  "global information needs update."));
         } else {
-            ASSERT(mgr.getOR(end), ("Illegal o mapping."));
+            ASSERTN(mgr.getOR(end), ("Illegal o mapping."));
             if (is_end_spill) { //Store to memory
                 //I think hereon that operations should be reloading!
-                ASSERT(0,
+                ASSERTN(0,
                     ("Store at the end position of Hole? Performance Gap!"));
                 //genSpill(lt, sr, end, spill_var, mgr, false, NULL);
             } else { //Reload from memory
@@ -4201,7 +4202,7 @@ void LRA::splitLTAt(INT start,
                     //May be same result as operand.
                     if (forward_def != -1 && forward_def == (end+1)) {
                         OR * occ_or = mgr.getOR(end);
-                        ASSERT(mgr.getOR(forward_def) == occ_or,
+                        ASSERTN(mgr.getOR(forward_def) == occ_or,
                                 ("o should be same result and operand."));
                         if (!m_cg->isOpndSameWithResult(NULL,
                                                 occ_or, NULL, NULL)) {
@@ -4265,14 +4266,14 @@ bool LRA::splitTwoLTContained(
     for (UINT i = 0; i < occs.get_elem_count();
          pos = occs.get_next(), i++) {
         if (pos == (INT)LT_FIRST_POS) {
-            ASSERT(SR_is_global(sr), ("Only global reg permit"));
+            ASSERTN(SR_is_global(sr), ("Only global reg permit"));
             is_def = true;
         } else if (pos == (INT)LT_LAST_POS) {
-            ASSERT(SR_is_global(sr), ("Only global reg permit"));
+            ASSERTN(SR_is_global(sr), ("Only global reg permit"));
             is_def = false;
         } else {
             PosInfo * pi = LT_desc(lt1).get(pos);
-            ASSERT(pi, ("Missing info"));
+            ASSERTN(pi, ("Missing info"));
             if (POSINFO_is_def(pi)) {
                 is_def = true;
             } else {
@@ -4282,10 +4283,10 @@ bool LRA::splitTwoLTContained(
 
         //spill var is gra_spill_var if sr is global reg.
         xoc::VAR * spill_var = m_cg->genSpillVar(sr);
-        ASSERT(spill_var, ("Not any spill loc."));
+        ASSERTN(spill_var, ("Not any spill loc."));
         if (is_def) {
             if (pos != LT_FIRST_POS) {
-                ASSERT(m_cg->mayDef(mgr.getOR(pos), sr),
+                ASSERTN(m_cg->mayDef(mgr.getOR(pos), sr),
                     ("Illegal OR mapping."));
             }
             genSpill(lt1, sr, pos, spill_var, mgr, true, NULL);
@@ -4348,10 +4349,10 @@ bool LRA::splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
          i < occs.get_elem_count();
          pos = occs.get_next(), i++) {
         if (pos == (INT)LT_FIRST_POS) {
-            ASSERT(SR_is_global(sr), ("Only global reg permit"));
+            ASSERTN(SR_is_global(sr), ("Only global reg permit"));
             is_def = true;
         } else if (pos == (UINT)LT_LAST_POS) {
-            ASSERT(SR_is_global(sr), ("Only global reg permit"));
+            ASSERTN(SR_is_global(sr), ("Only global reg permit"));
             is_def = false;
         } else {
             PosInfo *pi = LT_desc(lt1).get(pos);
@@ -4364,12 +4365,12 @@ bool LRA::splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
 
         //spill var is gra_spill_var if sr is global reg.
         xoc::VAR * spill_var = m_cg->genSpillVar(sr);
-        ASSERT(spill_var, ("Not any spill loc."));
+        ASSERTN(spill_var, ("Not any spill loc."));
         if (is_def) {
             if (pos != LT_FIRST_POS) {
                 OR * o = mgr.getOR(pos);
                 CHECK_DUMMYUSE(o);
-                ASSERT(m_cg->mayDef(o, sr), ("Illegal o mapping."));
+                ASSERTN(m_cg->mayDef(o, sr), ("Illegal o mapping."));
             }
             genSpill(lt1, sr, pos, spill_var, mgr, true, NULL);
         } else {
@@ -4390,10 +4391,10 @@ bool LRA::splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
          i < occs.get_elem_count();
          pos = occs.get_next(), i++) {
         if (pos == (INT)LT_FIRST_POS) {
-            ASSERT(SR_is_global(sr), ("Only global reg permit"));
+            ASSERTN(SR_is_global(sr), ("Only global reg permit"));
             is_def = true;
         } else if (pos == (UINT)LT_LAST_POS) {
-            ASSERT(SR_is_global(sr), ("Only global reg permit"));
+            ASSERTN(SR_is_global(sr), ("Only global reg permit"));
             is_def = false;
         } else {
             PosInfo *pi = LT_desc(lt2).get(pos);
@@ -4406,12 +4407,12 @@ bool LRA::splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
 
         //spill var is gra_spill_var if sr is global reg.
         xoc::VAR * spill_var = m_cg->genSpillVar(sr);
-        ASSERT(spill_var, ("Not any spill loc."));
+        ASSERTN(spill_var, ("Not any spill loc."));
         if (is_def) {
             if (pos != LT_FIRST_POS) {
                 OR * o = mgr.getOR(pos);
                 CHECK_DUMMYUSE(o);
-                ASSERT(m_cg->mayDef(o, sr), ("Illegal o mapping."));
+                ASSERTN(m_cg->mayDef(o, sr), ("Illegal o mapping."));
             }
             //Each of DEFs will be new-sr.
             genSpill(lt2, sr, pos, spill_var, mgr, true, NULL);
@@ -4462,18 +4463,18 @@ bool LRA::spillFirstDef(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
             break;
         }
     } while (defpos > LT_pos(lt2)->get_first());
-    ASSERT(defpos >= (INT)LT_FIRST_POS && defpos < (INT)LT_LAST_POS,
+    ASSERTN(defpos >= (INT)LT_FIRST_POS && defpos < (INT)LT_LAST_POS,
         ("Illegal start position"));
 
     //Op on 'pos' must be DEF of 'sr'
     if (defpos != LT_FIRST_POS) {
         OR * o = mgr.getOR(defpos);
         CHECK_DUMMYUSE(o);
-        ASSERT(m_cg->mayDef(o, LT_sr(lt1)), ("Illegal o mapping."));
+        ASSERTN(m_cg->mayDef(o, LT_sr(lt1)), ("Illegal o mapping."));
     }
     //spill var is gra_spill_var if sr is global reg.
     xoc::VAR * spill_var = m_cg->genSpillVar(LT_sr(lt1));
-    ASSERT(spill_var, ("Not any spill loc."));
+    ASSERTN(spill_var, ("Not any spill loc."));
 
     genSpill(lt1, LT_sr(lt1), defpos, spill_var, mgr, false, NULL);
     return true;
@@ -4495,7 +4496,7 @@ bool LRA::splitTwoLT(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
         lt2 = tmp;
     }
 
-    ASSERT(!(LT_has_allocated(lt1) && LT_has_allocated(lt2)),
+    ASSERTN(!(LT_has_allocated(lt1) && LT_has_allocated(lt2)),
         ("Both have allocated"));
 
     //TODO: make sure spilling is necessary here!!
@@ -4512,7 +4513,7 @@ bool LRA::splitTwoLT(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
         //lt2:    D............U
         splitTwoLTCross(lt1, lt2, mgr);
     } else {
-        ASSERT(0, ("Unsupport"));
+        ASSERTN(0, ("Unsupport"));
     }
     return true;
 }
@@ -4538,7 +4539,7 @@ void LRA::selectReasonableSplitPos(
         LifeTime * lt,
         LifeTimeMgr & mgr)
 {
-    ASSERT(lt && *pos1 >= 0 && *pos2 > 0 && *pos1 < *pos2,
+    ASSERTN(lt && *pos1 >= 0 && *pos2 > 0 && *pos1 < *pos2,
         ("Illegal position"));
     SR * sr = LT_sr(lt);
     CHECK_DUMMYUSE(sr);
@@ -4548,10 +4549,10 @@ void LRA::selectReasonableSplitPos(
 
     #ifdef _DEBUG_
     if (!SR_is_global(sr) && !SR_is_dedicated(sr)) {
-        ASSERT(mgr.getOccCount(lt), ("Empty life time."));
-        ASSERT(p1 != (INT)LT_FIRST_POS ||
+        ASSERTN(mgr.getOccCount(lt), ("Empty life time."));
+        ASSERTN(p1 != (INT)LT_FIRST_POS ||
                LT_desc(lt).get(p1) != NULL, ("Miss pos-info"));
-        ASSERT(p2 != (INT)LT_LAST_POS ||
+        ASSERTN(p2 != (INT)LT_LAST_POS ||
                LT_desc(lt).get(p2) != NULL, ("Miss pos-info"));
     }
     #endif
@@ -4672,11 +4673,11 @@ void LRA::selectReasonableSplitPos(
             *pos1 = p1;
             *is_pos1_spill = true;
         } else {
-            ASSERT(0, ("local use without DEF, dead use?"));
+            ASSERTN(0, ("local use without DEF, dead use?"));
         }
         return;
     }
-    ASSERT(0, ("Should we here?"));
+    ASSERTN(0, ("Should we here?"));
 }
 
 
@@ -4693,12 +4694,12 @@ bool LRA::mergeRedundantStoreLoad(
         xoc::VAR const* spill_var,
         DataDepGraph & ddg)
 {
-    ASSERT(OR_is_store(o) &&
+    ASSERTN(OR_is_store(o) &&
            OR_is_load(succ) &&
            m_cg->computeSpillVar(o) == m_cg->computeSpillVar(succ),
            ("Illegal pattern"));
 
-    if ((!m_cg->isSameCondExec(o, succ, *ORBB_orlist(bb)) &&
+    if ((!m_cg->isSameCondExec(o, succ, ORBB_orlist(bb)) &&
          !m_cg->isSafeToOptimize(o, succ)) || //'o' and 'succ' must
                                     //be in same conditional execute path.
         !m_cg->isSameCluster(o, succ) ||
@@ -4745,14 +4746,14 @@ bool LRA::mergeRedundantStoreLoad(
     }
 
     //'o' does not can be removed if it is the dominator of 'succ'.
-    if (!m_cg->isSameCondExec(o, succ, *ORBB_orlist(bb))) {
+    if (!m_cg->isSameCondExec(o, succ, ORBB_orlist(bb))) {
         or_can_be_removed = false;
     }
 
     //Build copy register operation.
     ORList ors;
     SR * pd = succ->get_pred(); //Must use pred-sr of 'succ'
-    ASSERT(pd, ("No predicated sr"));
+    ASSERTN(pd, ("No predicated sr"));
     //TODO: Support usage of 'OR_Find_Operand_Use(OR_code(succ), OU_result0)'
     INT result_idx = 0;
     UNIT succ_unit = m_cg->computeORUnit(succ)->checkAndGet();
@@ -4818,7 +4819,7 @@ bool LRA::removeRedundantStoreLoadAfterLoad(
             if (!has_def &&
                 !OR_is_volatile(succ) &&
                 m_cg->isSameCluster(o, succ) &&
-                m_cg->isSameCondExec(o, succ, *ORBB_orlist(bb))) {
+                m_cg->isSameCondExec(o, succ, ORBB_orlist(bb))) {
 
                 //CASE 1:
                 //t1    = [xxx]
@@ -4843,7 +4844,7 @@ bool LRA::removeRedundantStoreLoadAfterLoad(
                    !has_store &&
                    !OR_is_volatile(succ) &&
                    m_cg->isSameCluster(o, succ) &&
-                   m_cg->isSameCondExec(o, succ, *ORBB_orlist(bb)) &&
+                   m_cg->isSameCondExec(o, succ, ORBB_orlist(bb)) &&
                    HAVE_FLAG(m_cur_phase, PHASE_CA_DONE)) {
             //In some case, DEF has been placed at end of BB,
             //The operation can reduce life time actually,
@@ -4857,7 +4858,7 @@ bool LRA::removeRedundantStoreLoadAfterLoad(
             // ...
             //        = t2(r1)
             SR * succ_res = succ->get_result(0);
-            ASSERT(succ_res && SR_is_reg(succ_res), ("Illegal o"));
+            ASSERTN(succ_res && SR_is_reg(succ_res), ("Illegal o"));
             if (m_cg->isSREqual(op_ld_res, succ_res)) {
                 ddg.chainPredAndSucc(succ);
                 ORBB_orlist(m_bb)->remove(succ);
@@ -4870,7 +4871,7 @@ bool LRA::removeRedundantStoreLoadAfterLoad(
 //#define USE_EDGE_INFO
 #ifdef USE_EDGE_INFO
         xcom::Edge * e = ddg.get_edge(OR_id(o), OR_id(succ));
-        ASSERT(e, ("absent edge."));
+        ASSERTN(e, ("absent edge."));
         if (DDGEI_deptype(EDGE_info(e)) & DEP_REG_FLOW) {
             has_use = true;
         }
@@ -4924,7 +4925,7 @@ bool LRA::elimRedundantStoreLoad(DataDepGraph & ddg)
             xoc::VAR const* ld_spill_loc = m_cg->computeSpillVar(o);
             if (ld_spill_loc != NULL) { //o is a spilling.
                 bool case_succ = false;
-                ASSERT(o->get_result(0) && SR_is_reg(o->get_result(0)),
+                ASSERTN(o->get_result(0) && SR_is_reg(o->get_result(0)),
                        ("Illegal load"));
                 ddg.getSuccsByOrder(succs, o);
                 case_succ = removeRedundantStoreLoadAfterLoad(
@@ -5100,7 +5101,7 @@ bool LRA::elimRedundantStoreLoad(DataDepGraph & ddg)
 
                 if (OR_is_store(succ)) {
                     if (m_cg->isSameSpillLoc(st_spill_loc, o, succ)) {
-                        if (m_cg->isSameCondExec(o, succ, *ORBB_orlist(m_bb)) &&
+                        if (m_cg->isSameCondExec(o, succ, ORBB_orlist(m_bb)) &&
                             m_cg->isSameCluster(o, succ) &&
                             !OR_is_volatile(o)) {
 
@@ -5129,7 +5130,7 @@ bool LRA::elimRedundantStoreLoad(DataDepGraph & ddg)
                             }
 
                             //May be all of them have not DEFs sometime.
-                            //ASSERT(op_has_pred || succ_has_pred,
+                            //ASSERTN(op_has_pred || succ_has_pred,
                             //            ("stoveval has not any preds"));
 
                             if (!op_has_pred) {
@@ -5327,7 +5328,7 @@ bool LRA::getMaxHole(
                     }
                     break;
                 }
-                default: ASSERT(0, ("Unknown"));
+                default: ASSERTN(0, ("Unknown"));
                 }
             }
             start = i;
@@ -5353,9 +5354,9 @@ void LRA::computeLTResideInHole(
     getMaxHole(&hole_startpos, &hole_endpos, lt, ig, mgr, HOLE_LENGTH);
     xcom::BitSet * hole = LT_pos(lt)->get_subset_in_range(hole_startpos,
         hole_endpos, *m_ru->getBitSetMgr()->create());
-    ASSERT(hole, ("What's wrong with memory pool?"));
+    ASSERTN(hole, ("What's wrong with memory pool?"));
     List<LifeTime*> lt_group;
-    ASSERT(SR_regfile(LT_sr(lt)),("regfile undefined"));
+    ASSERTN(SR_regfile(LT_sr(lt)),("regfile undefined"));
     ig.getLifeTimeList(lt_group, SR_regfile(LT_sr(lt)));
     INT count = 0;
     for (LifeTime * tmp = lt_group.get_head(); tmp != NULL;
@@ -5393,7 +5394,7 @@ LifeTime * LRA::computeBestSpillCand(
 
     //Calculates the benefits if 'ni' is deal with as 'action' descriptive.
     List<LifeTime*> ni_list; //neighbor list of 'lt'
-    
+
     //Inspecting all of neighbors of 'lt' even itself.
     ig.getNeighborList(ni_list, lt);
     if (try_self) {
@@ -5517,7 +5518,7 @@ LifeTime * LRA::computeBestSpillCand(
             best = ni;
         }
     }
-    ASSERT(best, ("Not any spill candidate."));
+    ASSERTN(best, ("Not any spill candidate."));
     return best;
 }
 
@@ -5652,7 +5653,7 @@ bool LRA::solveConflictRecursive(
         spill(lt, prio_list, uncolored_list, mgr, ddg, rfg, ig,
             spill_location, action, cri);
         return true;
-    default: ASSERT(0, ("ACTION_NON!"));
+    default: ASSERTN(0, ("ACTION_NON!"));
     }
     return false;
 }
@@ -5674,7 +5675,7 @@ bool LRA::solveConflict(
         bool succ = solveConflictRecursive(lt, uncolored_list,
             prio_list, cri, is_regfile_unique, ig, mgr, ddg, rfg, action);
         DUMMYUSE(succ);
-        ASSERT(succ, ("Unsolved conflict!!"));
+        ASSERTN(succ, ("Unsolved conflict!!"));
     }
     return true;
 }
@@ -5771,7 +5772,7 @@ void LRA::assignPreferAnticipation(
                 assignDesignatedRegFile(lt, better_rf, cri);
             }
         } else {
-            ASSERT(expv_1 >= 0 && expv_2 >= 0, ("disable far edge"));
+            ASSERTN(expv_1 >= 0 && expv_2 >= 0, ("disable far edge"));
             if (expv_1 > expv_2) {
                 assignDesignatedRegFile(lt, best_rf, cri);
             } else {
@@ -5790,7 +5791,7 @@ bool LRA::assignUniqueRegFile(SR * sr, OR *, bool is_result)
     ASSERT0(SR_is_reg(sr));
     if (SR_phy_regid(sr) != REG_UNDEF) {
         SR_regfile(sr) = tmMapReg2RegFile(SR_phy_regid(sr));
-        ASSERT(SR_regfile(sr) != RF_UNDEF, ("Unknown regfile"));
+        ASSERTN(SR_regfile(sr) != RF_UNDEF, ("Unknown regfile"));
         return true;
     }
     if (SR_is_global(sr)) {
@@ -5860,14 +5861,14 @@ void LRA::computeUniqueRegFile(IN OUT Vector<bool> & is_regfile_unique)
         for (i = ORBB_liveout(m_bb).get_first();
              i != -1; i = ORBB_liveout(m_bb).get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
-            ASSERT(SR_is_reg(sr) && SR_phy_regid(sr) != REG_UNDEF,
+            ASSERTN(SR_is_reg(sr) && SR_phy_regid(sr) != REG_UNDEF,
                    ("GSR without register"));
             is_regfile_unique.set(SR_sregid(sr), true);
         }
         for (i = ORBB_livein(m_bb).get_first();
              i != -1; i = ORBB_livein(m_bb).get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
-            ASSERT(SR_is_reg(sr) &&
+            ASSERTN(SR_is_reg(sr) &&
                     SR_phy_regid(sr) != REG_UNDEF, ("GSR without register"));
             is_regfile_unique.set(SR_sregid(sr), true);
         }
@@ -5926,11 +5927,11 @@ void LRA::chooseBestRegFileFromMultipleCand(
          i++, id = ni_list.get_next()) {
         LifeTime * ni = mgr.getLifeTime(id);
         ASSERT0(ni);
-        ASSERT(LT_cluster(ni) == LT_cluster(lt),
+        ASSERTN(LT_cluster(ni) == LT_cluster(lt),
                ("Not in same cluster"));
         SR * nisr = LT_sr(ni);
         RDG_EDGE_INFO * ei = rdg.getEdgeInfo(LT_id(lt), LT_id(ni));
-        ASSERT(ei, ("xcom::Edge info is empty"));
+        ASSERTN(ei, ("xcom::Edge info is empty"));
 
         //Does the strategy aware of the furthest clustering.
         if (RDGEI_exp_val(ei) < 0 && !rdg.isEnableFarEdge()) {
@@ -6058,7 +6059,7 @@ void LRA::assignRegFile(IN OUT ClustRegInfo cri[CLUST_NUM],
     for (LifeTime * lt = mgr.getFirstLifeTime(c);
          lt != NULL; lt = mgr.getNextLifeTime(c)) {
         SR * sr = LT_sr(lt);
-        ASSERT(SR_is_reg(sr), ("sr is not a register"));
+        ASSERTN(SR_is_reg(sr), ("sr is not a register"));
         if (is_regfile_unique.get(SR_sregid(sr))) {
             continue;
         }
@@ -6085,13 +6086,13 @@ void LRA::assignRegFile(IN OUT ClustRegInfo cri[CLUST_NUM],
         for (i = 0; i < o->result_num(); i++) {
             SR * sr = o->get_result(i);
             if (SR_is_reg(sr) && SR_regfile(sr) == RF_UNDEF) {
-                ASSERT(0, ("assignRegFile: No regfile assigned"));
+                ASSERTN(0, ("assignRegFile: No regfile assigned"));
             }
         }
         for (i = 0; i < o->opnd_num(); i++) {
             SR * sr = o->get_opnd(i);
             if (SR_is_reg(sr) && SR_regfile(sr) == RF_UNDEF) {
-                ASSERT(0, ("assignRegFile: No regfile assigned"));
+                ASSERTN(0, ("assignRegFile: No regfile assigned"));
             }
         }
     }
@@ -6185,7 +6186,7 @@ float LRA::computePrority(
     //The density is higher, the priority is higher.
     //Calculating the density.
     if (occ != 0) {
-        ASSERT(LT_pos(lt)->get_elem_count() > 0,
+        ASSERTN(LT_pos(lt)->get_elem_count() > 0,
                ("Not any position of life time %d", LT_id(lt)));
         float denom = (float)LT_pos(lt)->get_elem_count();
         prio *= ((float)occ + EPSILON) / (denom + EPSILON);
@@ -6221,7 +6222,7 @@ void LRA::buildPriorityList(
         IN LifeTimeMgr & mgr,
         DataDepGraph & ddg)
 {
-    ASSERT(prio_list.get_elem_count() == 0,
+    ASSERTN(prio_list.get_elem_count() == 0,
            ("Priority list has been built already."));
     INT c;
     for (LifeTime * lt = mgr.getFirstLifeTime(c);
@@ -6235,7 +6236,7 @@ void LRA::buildPriorityList(
             continue;
         }
         LT_prio(lt) = computePrority(REG_UNDEF, lt, mgr, ddg);
-        ASSERT(LT_prio(lt) > 0.0, ("No any saving?"));
+        ASSERTN(LT_prio(lt) > 0.0, ("No any saving?"));
 
         //Searching for appropriate position to place
         LifeTime * t;
@@ -6330,7 +6331,7 @@ bool LRA::coalescing(DataDepGraph & ddg, bool cp_any)
             //    = tgt
             SR * src = o->get_opnd(m_cg->computeCopyOpndIdx(o));
             SR * tgt = o->get_result(o->get_result_idx(o->get_copy_to()));
-            ASSERT(src != NULL && tgt != NULL &&
+            ASSERTN(src != NULL && tgt != NULL &&
                    SR_is_reg(src) && SR_is_reg(tgt), ("not a register"));
             ORList succs;
             ddg.getSuccsByOrder(succs, o);
@@ -6365,7 +6366,7 @@ bool LRA::coalescing(DataDepGraph & ddg, bool cp_any)
                 //So we should determine the condition via 'SameLike' but
                 //is not 'Same'.
                 if (m_cg->isSameLikeCluster(o, succ) &&
-                    (m_cg->isSameCondExec(o, succ, *ORBB_orlist(m_bb)) ||
+                    (m_cg->isSameCondExec(o, succ, ORBB_orlist(m_bb)) ||
                      m_cg->isSafeToOptimize(o, succ))) {
                     if (m_cg->mustUse(succ, tgt)) {
                         bool doit = false;
@@ -6472,7 +6473,7 @@ bool LRA::coalescing(DataDepGraph & ddg, bool cp_any)
             //  succ_tgt = lit
             bool terminate = false, is_remove_op = false;
             SR * tgt = o->get_result(0);
-            ASSERT(tgt != NULL && SR_is_reg(tgt), ("sr is not a register"));
+            ASSERTN(tgt != NULL && SR_is_reg(tgt), ("sr is not a register"));
             ORList succs;
             ddg.getSuccsByOrder(succs, o);
             for (OR * succ = succs.get_head();
@@ -6482,7 +6483,7 @@ bool LRA::coalescing(DataDepGraph & ddg, bool cp_any)
                 }
                 if (m_cg->isSameCluster(o, succ) &&
                     m_cg->computeORCluster(o) != CLUST_UNDEF &&
-                    (m_cg->isSameCondExec(o, succ, *ORBB_orlist(m_bb)) ||
+                    (m_cg->isSameCondExec(o, succ, ORBB_orlist(m_bb)) ||
                      m_cg->isSafeToOptimize(o, succ)) &&
                     m_cg->isCopyOR(succ)) {
 
@@ -6497,7 +6498,7 @@ bool LRA::coalescing(DataDepGraph & ddg, bool cp_any)
                             //Operand 1 of 'o' must be literal.
                             SR * lit = o->get_imm_sr();
                             SR * pd = succ->get_pred();
-                            ASSERT(pd && SR_is_constant(lit),
+                            ASSERTN(pd && SR_is_constant(lit),
                                 ("Operand 1 of Movi must be literal"));
 
                             SR * succ_src =succ->get_opnd(
@@ -6508,7 +6509,7 @@ bool LRA::coalescing(DataDepGraph & ddg, bool cp_any)
                                 succ->get_result_idx(succ->get_copy_to()));
                             DUMMYUSE(succ_tgt);
 
-                            ASSERT(m_cg->isSREqual(succ_src, tgt),
+                            ASSERTN(m_cg->isSREqual(succ_src, tgt),
                                 ("copy what?"));
 
                             UNIT succ_unit = m_cg->computeORUnit(succ)->
@@ -6522,7 +6523,7 @@ bool LRA::coalescing(DataDepGraph & ddg, bool cp_any)
                             } else {
                                 new_opc = OR_code(o);
                             }
-                            ASSERT(new_opc != OR_UNDEF, ("illegal ortype"));
+                            ASSERTN(new_opc != OR_UNDEF, ("illegal ortype"));
                             ors.append_tail(m_cg->buildOR(new_opc,
                                 1, 2, succ_tgt, pd, lit));
                             if (ors.get_head() != NULL) {
@@ -6544,7 +6545,7 @@ bool LRA::coalescing(DataDepGraph & ddg, bool cp_any)
                                 ddg.removeOR(succ);
 
                                 //Union all old edges to new o 'new_mov'.
-                                ASSERT(ors.get_elem_count() == 1,
+                                ASSERTN(ors.get_elem_count() == 1,
                                    ("illegal literal move"));
                                 OR * new_mov = ors.get_head();
                                 ddg.appendOR(new_mov);
@@ -6620,7 +6621,7 @@ bool LRA::cse(IN OUT DataDepGraph & ddg, IN OUT Vector<bool> & handled)
             //            //o, has been removed!
             SR * op_src = o->get_opnd(m_cg->computeCopyOpndIdx(o));
             SR * op_tgt = o->get_result(o->get_result_idx(o->get_copy_to()));
-            ASSERT(op_src != NULL && op_tgt != NULL &&
+            ASSERTN(op_src != NULL && op_tgt != NULL &&
                    SR_is_reg(op_src) && SR_is_reg(op_tgt),
                    ("sr is not a register"));
             preds.clean();
@@ -6676,7 +6677,7 @@ bool LRA::cse(IN OUT DataDepGraph & ddg, IN OUT Vector<bool> & handled)
             //    SR238(d2)[D1] , :- bus_m2_to_m1 SR232(A4)[A2]
             //So we should ensure the condition via 'SameLike' but is not 'Same'
             if (!m_cg->isSameLikeCluster(o, cand) ||
-                !m_cg->isSameCondExec(cand, o, *ORBB_orlist(m_bb))) {
+                !m_cg->isSameCondExec(cand, o, ORBB_orlist(m_bb))) {
                 continue;
             }
 
@@ -6895,10 +6896,10 @@ bool LRA::elimRedundantUse(LifeTimeMgr & mgr)
                 i >= 0; i = LT_desc(lt).get_next(i)){
                 PosInfo *pi = LT_desc(lt).get(i);
                 if(pi != NULL){
-                    ASSERT(!POSINFO_is_def(pi),
+                    ASSERTN(!POSINFO_is_def(pi),
                         ("Life time does not have any DEF."));
                     OR * o = mgr.getOR(i);
-                    ASSERT(!hasSideEffect(o),
+                    ASSERTN(!hasSideEffect(o),
                         ("Undefined value was refered by side effect o."));
                     ORBB_orlist(m_bb)->remove(o);
                     resched = true;
@@ -6997,7 +6998,7 @@ FIN:
                 //    d11 = ... (p2)
                 if (second_def[i] != NULL &&
                     !(m_cg->isSameCondExec(o, second_def.get(i),
-                          *ORBB_orlist(m_bb)) &&
+                          ORBB_orlist(m_bb)) &&
                       m_cg->isSameCluster(o, second_def.get(i)))) {
                     doit = false;
                     break;
@@ -7104,7 +7105,7 @@ CLUST LRA::findOpndMustBeCluster(IN OR * o, bool reassign_regfile)
             CLUST cur_clust = m_cg->mapReg2Cluster(SR_phy_regid(sr));
             if (cur_clust != CLUST_UNDEF && opnd_clust != CLUST_UNDEF) {
                 if (!canOpndCrossCluster(o)) {
-                    ASSERT(opnd_clust == cur_clust,
+                    ASSERTN(opnd_clust == cur_clust,
                        ("Operands cross multi clusters"));
                 }
             }
@@ -7115,7 +7116,7 @@ CLUST LRA::findOpndMustBeCluster(IN OR * o, bool reassign_regfile)
             CLUST cur_clust = m_cg->mapRegFile2Cluster(SR_regfile(sr), sr);
             if (cur_clust != CLUST_UNDEF && opnd_clust != CLUST_UNDEF) {
                 if (!canOpndCrossCluster(o)) {
-                    ASSERT(opnd_clust == cur_clust,
+                    ASSERTN(opnd_clust == cur_clust,
                        ("Operands cross multi clusters"));
                 }
             }
@@ -7155,7 +7156,7 @@ CLUST LRA::findResultMustBeCluster(IN OR * o, bool reassign_regfile)
             CLUST cur_clust = m_cg->mapReg2Cluster(SR_phy_regid(sr));
             if (cur_clust != CLUST_UNDEF && result_clust != CLUST_UNDEF) {
                 if (!canResultCrossCluster(o)) {
-                    ASSERT(result_clust == cur_clust,
+                    ASSERTN(result_clust == cur_clust,
                         ("Operands cross multi clusters"));
                 }
             }
@@ -7166,7 +7167,7 @@ CLUST LRA::findResultMustBeCluster(IN OR * o, bool reassign_regfile)
             CLUST cur_clust = m_cg->mapRegFile2Cluster(SR_regfile(sr), sr);
             if (cur_clust != CLUST_UNDEF && result_clust != CLUST_UNDEF) {
                 if (!canResultCrossCluster(o)) {
-                    ASSERT(result_clust == cur_clust,
+                    ASSERTN(result_clust == cur_clust,
                         ("Operands cross multi clusters"));
                 }
             }
@@ -7323,7 +7324,7 @@ bool LRA::tryAssignCluster(
         Vector<bool> & is_regfile_unique,
         ORList ors[CLUST_NUM])
 {
-    ASSERT(orlist, ("group is empty"));
+    ASSERTN(orlist, ("group is empty"));
     OR * o;
     for (o = orlist->get_head(); o != NULL; o = orlist->get_next()) {
         if (!m_cg->changeORCluster(o, exp_clust, is_regfile_unique, true)) {
@@ -7334,7 +7335,7 @@ bool LRA::tryAssignCluster(
     //Actually perform change.
     for (o = orlist->get_head(); o != NULL; o = orlist->get_next()) {
         if (!m_cg->changeORCluster(o, exp_clust, is_regfile_unique, false)) {
-            ASSERT(0, ("Change failed"));
+            ASSERTN(0, ("Change failed"));
         }
 
         ors[exp_clust].append_tail(o);
@@ -7439,9 +7440,9 @@ bool LRA::partitionGroup(
     //Firstly, find all completely indepent groups.
     while (proclist.get_elem_count() > 0) {
         OR * o = proclist.remove_head();
-        ASSERT(gm.get_or_group(o) != 0, ("o has not yet grouped"));
+        ASSERTN(gm.get_or_group(o) != 0, ("o has not yet grouped"));
         xcom::Vertex * v = tmpddg->get_vertex(OR_id(o));
-        ASSERT(v, ("o is not node of graph"));
+        ASSERTN(v, ("o is not node of graph"));
 
         //Process all preds.
         xcom::EdgeC * el = VERTEX_in_list(v);
@@ -7461,7 +7462,7 @@ bool LRA::partitionGroup(
             el = EC_next(el);
         }
     }
-    ASSERT (gm.get_groups() > 0, ("not any group"));
+    ASSERTN (gm.get_groups() > 0, ("not any group"));
 
     ORList ors[CLUST_NUM];
 
@@ -7514,7 +7515,7 @@ bool LRA::partitionGroup(
                          o = orlist->get_next()) {
                         if (!m_cg->changeORCluster(o, must_clust,
                                 is_regfile_unique, false)) {
-                            ASSERT(0, ("Change failed"));
+                            ASSERTN(0, ("Change failed"));
                         }
                         ors[must_clust].append_tail(o);
                     }
@@ -7536,7 +7537,7 @@ bool LRA::partitionGroup(
             continue;
         }
         List<OR*> * orlist = gm.get_orlist_in_group(i);
-        ASSERT(orlist, ("group is empty"));
+        ASSERTN(orlist, ("group is empty"));
         if ((((float)orlist->get_elem_count()) /
              ((float)tmpddg->get_vertex_num())) > GROUP_DIFF_THRESHOLD) {
             continue; //Ununiform group partitioning.
@@ -7568,7 +7569,7 @@ bool LRA::partitionGroup(
             ordered_groups.append_tail(tors);
             ordered_groups_idx.append_tail(tors_idx);
         } else {
-            ASSERT(point_idx > 0, ("Illegal group idx"));
+            ASSERTN(point_idx > 0, ("Illegal group idx"));
             ordered_groups.insert_before(tors, point);
             ordered_groups_idx.insert_before(tors_idx, point_idx);
         }
@@ -7596,12 +7597,12 @@ bool LRA::partitionGroup(
     ORList * split_ors = split_op_map.get_ors();
     for (OR * splor = split_ors->get_head();
          splor != NULL; splor = split_ors->get_next()) {
-        ASSERT(0, ("TODO: Find a Pattern for inter-cluster o generation!"));
+        ASSERTN(0, ("TODO: Find a Pattern for inter-cluster o generation!"));
         if (m_cg->computeORCluster(splor) == CLUST_UNDEF) {
             ORCt * next_orct;
             is_resch |= PureAssignCluster(splor,
                 &next_orct, ddg, is_regfile_unique);
-            ASSERT(m_cg->computeORCluster(splor) != CLUST_UNDEF,
+            ASSERTN(m_cg->computeORCluster(splor) != CLUST_UNDEF,
                   ("Illegal info"));
         }
 
@@ -7627,7 +7628,7 @@ bool LRA::partitionGroup(
             }
         }
 
-        ASSERT(used_srs.get_elem_count() == 1,
+        ASSERTN(used_srs.get_elem_count() == 1,
             ("Only support one to one copy."));
 
         SR * used_sr = used_srs.get_head();
@@ -7709,7 +7710,7 @@ bool LRA::preOpt(IN OUT DataDepGraph & ddg)
         count++;
     } while (again && count < 100);
 
-    ASSERT(!again, ("Unexpected exit."));
+    ASSERTN(!again, ("Unexpected exit."));
 
     return done;
 }
@@ -7726,7 +7727,7 @@ bool LRA::optimal_partition(
     }
     CHAR * name = "zsimpddg.vcg";
     FILE * h = fopen(name, "a+");
-    ASSERT(h, ("%s create failed!!!", name));
+    ASSERTN(h, ("%s create failed!!!", name));
     fprintf(h, "\nPU:%s,ORBB:%d,len:%d\n",
         m_ru->getRegionName(), m_bb->id(), ORBB_ornum(m_bb));
     fclose(h);
@@ -7758,7 +7759,7 @@ void LRA::assignCluster(
     assignDedicatedCluster();
     if (partitioning && m_cg->isAssignClust(m_bb)) {
         partitionGroup(ddg, is_regfile_unique);
-        ASSERT(ddg.get_param()->reg_anti_dep, ("at least reg-anti must be set"));
+        ASSERTN(ddg.get_param()->reg_anti_dep, ("at least reg-anti must be set"));
     }
 
     ORCt * next_orct;
@@ -7780,7 +7781,7 @@ void LRA::assignCluster(
     #ifdef _DEBUG_
     for (OR * o = ORBB_first_or(m_bb); o != NULL; o = ORBB_next_or(m_bb)) {
         if (OR_clust(o) == CLUST_UNDEF) {
-            ASSERT(0, ("o:%d is unclusted", OR_id(o)));
+            ASSERTN(0, ("o:%d is unclusted", OR_id(o)));
         }
     }
     #endif
@@ -7803,7 +7804,7 @@ bool LRA::allocatePrioList(
 
         if (SR_is_global(LT_sr(lt))) {
             //GSR may not assign physical register sometimes.
-            //ASSERT(LT_has_allocated(lt),
+            //ASSERTN(LT_has_allocated(lt),
             //       ("Global register has not allocated"));
             continue;
 
@@ -7812,7 +7813,7 @@ bool LRA::allocatePrioList(
             //RemoveGSRLivein(bb, sr);
             //RemoveGSRLiveout(bb, sr);
         }
-        
+
         if (!assignRegister(lt, ig, mgr, rfg)) {
             //No enough register assign to 'lt'.
             all_assigned = false;
@@ -7834,7 +7835,7 @@ bool LRA::verifyUsableRegSet(LifeTimeMgr & mgr)
         RegSet const* usable_reg_set = mgr.getUsableRegSet(lt);
         ASSERT0(usable_reg_set);
         if (usable_reg_set->get_elem_count() == 0) {
-            ASSERT(0, ("Empty usable register set for LT:%d!", LT_id(lt)));
+            ASSERTN(0, ("Empty usable register set for LT:%d!", LT_id(lt)));
         }
     }
     return true;
@@ -7850,7 +7851,7 @@ void LRA::verifyRegFileForOpnd(OR * o, INT opnd, bool is_result)
     if (!SR_is_reg(sr)) {
         return;
     }
-    ASSERT(m_cg->isValidRegFile(OR_code(o), opnd, SR_regfile(sr), is_result),
+    ASSERTN(m_cg->isValidRegFile(OR_code(o), opnd, SR_regfile(sr), is_result),
            ("illegal regfile for No.%d %s of OR(%s)",
            opnd, is_result ? "result" : "operand", OR_code_name(o)));
 }
@@ -7874,7 +7875,7 @@ void LRA::verifyRegFile()
 bool LRA::verifyCluster()
 {
     for (OR * o = ORBB_first_or(m_bb); o != NULL; o = ORBB_next_or(m_bb)) {
-        ASSERT(OR_clust(o) != CLUST_UNDEF,
+        ASSERTN(OR_clust(o) != CLUST_UNDEF,
                ("OR[%d]%s's cluster info is none", OR_id(o), OR_code_name(o)));
     }
     return true;
@@ -7926,13 +7927,13 @@ bool LRA::verify(LifeTimeMgr & mgr, InterfGraph & ig)
 
     OR * tor;
     DUMMYUSE(tor);
-    ASSERT(isAllAllocated(&tor), ("SR without register assigned!"));
+    ASSERTN(isAllAllocated(&tor), ("SR without register assigned!"));
 
     for (OR * o = ORBB_first_or(m_bb); o != NULL;
          o = ORBB_next_or(m_bb)) {
-        ASSERT(OR_bb(o) == m_bb,
+        ASSERTN(OR_bb(o) == m_bb,
                ("OR[%d]%s not in bb", OR_id(o), OR_code_name(o)));
-        ASSERT(OR_clust(o) != CLUST_UNDEF,
+        ASSERTN(OR_clust(o) != CLUST_UNDEF,
                ("OR[%d]%s's cluster info is none", OR_id(o), OR_code_name(o)));
     }
     verifyRegFile();
@@ -8134,7 +8135,7 @@ RegSet & LRA::computeUnusedRegSet(
         IN InterfGraph & ig,
         OUT RegSet & rs)
 {
-    ASSERT(regfile != RF_UNDEF, ("Undefined regfile"));
+    ASSERTN(regfile != RF_UNDEF, ("Undefined regfile"));
 
     //Information should have been initialized in target machine info.
     rs.copy(*tmMapRegFile2RegSetAllocable(regfile));
@@ -8142,7 +8143,7 @@ RegSet & LRA::computeUnusedRegSet(
     List<LifeTime*> lt_lst;
     ig.getLifeTimeList(lt_lst, regfile, start, end);
     for (LifeTime * lt = lt_lst.get_head(); lt != NULL; lt = lt_lst.get_next()) {
-        ASSERT(LT_has_allocated(lt), ("Life time without register assigned"));
+        ASSERTN(LT_has_allocated(lt), ("Life time without register assigned"));
         rs.diff(SR_phy_regid(LT_sr(lt)));
     }
     return rs;
@@ -8234,7 +8235,7 @@ void LRA::findFollowedLoad(
         if (OR_is_load(succ)) {
             if (m_cg->isSameSpillLoc(spill_loc, o, succ)) {
                 //Access same spill memory location.
-                if (m_cg->isSameCondExec(o, succ, *ORBB_orlist(m_bb)) &&
+                if (m_cg->isSameCondExec(o, succ, ORBB_orlist(m_bb)) &&
                     m_cg->isSameCluster(o, succ) &&
                     !OR_is_volatile(succ)) {
                     followed_lds.append_tail(succ);
@@ -8353,12 +8354,12 @@ bool LRA::hoistSpillLocForStore(
     }
 
     //Build copy operation.
-    ASSERT(followed_lds.get_elem_count() > 0, ("what's going on?"));
+    ASSERTN(followed_lds.get_elem_count() > 0, ("what's going on?"));
     CLUST cp_clust = m_cg->computeORCluster(o);
     UNIT cp_unit = m_cg->computeORUnit(o)->checkAndGet();
     SR * pd = o->get_pred();
     SR * or_storeval = o->get_store_val();
-    ASSERT(pd != NULL || !HAS_PREDICATE_REGISTER, ("No predicated sr"));
+    ASSERTN(pd != NULL || !HAS_PREDICATE_REGISTER, ("No predicated sr"));
     ORList ors;
     genCopyOR(cp_clust, cp_unit, or_storeval, spill_loc_sr, pd, ors);
     ASSERT0(ors.get_elem_count() == 1);
@@ -8398,10 +8399,10 @@ bool LRA::hoistSpillLocForStore(
     //Replace reload to copy-or.
     for (OR * f = followed_lds.get_head();
          f != NULL; f = followed_lds.get_next()) {
-        ASSERT(OR_is_load(f), ("Illegal reload o"));
-        ASSERT(m_cg->computeORCluster(f) == cp_clust,
+        ASSERTN(OR_is_load(f), ("Illegal reload o"));
+        ASSERTN(m_cg->computeORCluster(f) == cp_clust,
                 ("Placed in different cluster"));
-        ASSERT(f->get_pred() == pd, ("Use different predication"));
+        ASSERTN(f->get_pred() == pd, ("Use different predication"));
 
         //Gen copy-or and insert into BB after 'f'.
         SR * ldval = f->get_result(0);
@@ -8617,7 +8618,7 @@ void LRA::middleLRAOpt(
             }
             count++;
         } while (again && count < 128);
-        ASSERT(!again, ("Unexpected exit."));
+        ASSERTN(!again, ("Unexpected exit."));
 
         if (change_ddg_param) {
             ddg.popParam();
@@ -8730,10 +8731,10 @@ void LRA::renameSR()
                 if (ORBB_orlist(m_bb)->get_next(&tmp) != o) {
                     ORCt * tmp_ct = ct;
                     tmp = prev_def_ct;
-                    m_cg->renameOpndResultInRange(sr, newsr,
+                    m_cg->renameOpndAndResultInRange(sr, newsr,
                         ORBB_orlist(m_bb)->get_next(&tmp),
                         ORBB_orlist(m_bb)->get_prev(&tmp_ct),
-                        *ORBB_orlist(m_bb));
+                        ORBB_orlist(m_bb));
                 }
                 m_cg->renameOpnd(o, sr, newsr, false);
                 sr2or.set(SR_sregid(sr), o);
@@ -8741,14 +8742,14 @@ void LRA::renameSR()
             }
 
             //local sr
-            ASSERT(SR_phy_regid(sr) == REG_UNDEF, ("invalid sr"));
+            ASSERTN(SR_phy_regid(sr) == REG_UNDEF, ("invalid sr"));
             SR * newsr = m_cg->genReg();
             m_cg->renameResult(o, sr, newsr, false);
 
             ORCt * tmp_orct = ct;
             OR * next_or = ORBB_orlist(m_bb)->get_next(&tmp_orct);
-            m_cg->renameOpndResultFollowed(sr, newsr,
-                next_or, *ORBB_orlist(m_bb));
+            m_cg->renameOpndAndResultFollowed(sr, newsr,
+                next_or, ORBB_orlist(m_bb));
             sr2or.set(SR_sregid(newsr), o);
         }
     }
@@ -8758,7 +8759,7 @@ void LRA::renameSR()
 void LRA::finalLRAOpt(LifeTimeMgr * mgr, InterfGraph * ig, DataDepGraph * ddg)
 {
     if (HAVE_FLAG(m_opt_phase, LRA_OPT_FINAL_OPT)) {
-        ASSERT(ddg, ("Post opt need DDG"));
+        ASSERTN(ddg, ("Post opt need DDG"));
 
         show_phase("Alloca life time completely, start to post optimizations");
         //Data dependence need update while physical registers
@@ -8816,7 +8817,7 @@ void LRA::finalLRAOpt(LifeTimeMgr * mgr, InterfGraph * ig, DataDepGraph * ddg)
             count++;
         } while (again && count < 128);
 
-        ASSERT(!again, ("Unexpected termination"));
+        ASSERTN(!again, ("Unexpected termination"));
     }
 
     UINT old = m_opt_phase;
@@ -8966,7 +8967,7 @@ bool LRA::verifyRegSR()
         for (UINT i = 0; i < o->result_num(); i++) {
             SR const* sr = o->get_result(i);
             if (!SR_is_reg(sr) || SR_phy_regid(sr) == REG_UNDEF) { continue; }
-            ASSERT(SR_is_dedicated(sr) || SR_is_global(sr),
+            ASSERTN(SR_is_dedicated(sr) || SR_is_global(sr),
                    ("local SR has been assigned register before LRA"));
         }
 
@@ -8974,7 +8975,7 @@ bool LRA::verifyRegSR()
             SR const* sr = o->get_opnd(j);
             if (!SR_is_reg(sr) || SR_phy_regid(sr) == REG_UNDEF) { continue; }
 
-            ASSERT(SR_is_dedicated(sr) || SR_is_global(sr),
+            ASSERTN(SR_is_dedicated(sr) || SR_is_global(sr),
                 ("local SR has been assigned register "
                  "before LRA, it should be localized."));
         }
@@ -8991,7 +8992,7 @@ bool LRA::perform()
         interwarn("During LRA: Length of ORBB%d is larger "
                   "than %d, optimizations are disabled!",
                   ORBB_id(m_bb), MAX_OR_BB_OPT_BB_LEN);
-    }    
+    }
     preLRA();
     elimRedundantCopy(m_cg->isGRAEnable());
     renameSR();
@@ -9142,7 +9143,7 @@ bool LRA::perform()
     rfg->init();
     rfg->setBB(m_bb);
     rfg->computeGroup();
-    
+
     show_phase("Start to alloca life time");
     if (!allocatePrioList(prio_list, uncolored_list, *ig, *mgr, rfg)) {
         for (LifeTime * lt = uncolored_list.get_head(); lt != NULL;

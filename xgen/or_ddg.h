@@ -272,7 +272,7 @@ public:
 
     //Should be removed from the basic class.
     virtual void predigest()
-    { ASSERT(0, ("Target Dependent Code")); }
+    { ASSERTN(0, ("Target Dependent Code")); }
 };
 
 } //namespace xgen

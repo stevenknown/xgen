@@ -57,8 +57,8 @@ protected:
 protected:
     inline void * xmalloc(INT size)
     {
-        ASSERT(size > 0, ("xmalloc: size less zero!"));
-        ASSERT(m_pool != 0,("need graph pool!!"));
+        ASSERTN(size > 0, ("xmalloc: size less zero!"));
+        ASSERTN(m_pool != 0,("need graph pool!!"));
         void * p = smpoolMalloc(size, m_pool);
         ASSERT0(p);
         ::memset(p,0,size);
@@ -93,7 +93,7 @@ public:
     //Return true if success.
     virtual bool changeSlot(OR *, SLOT to_slot)
     {
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         DUMMYUSE(to_slot);
         return false;
     }
@@ -135,7 +135,7 @@ public:
             OR * issue_ors[SLOT_NUM],
             OR * conflict_ors[SLOT_NUM])
     {
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         DUMMYUSE(slot);
         DUMMYUSE(issue_ors);
         DUMMYUSE(conflict_ors);

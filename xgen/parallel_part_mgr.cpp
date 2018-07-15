@@ -48,7 +48,7 @@ bool ParallelPartMgr::findMainIV(
     DUMMYUSE(red_or);
     DUMMYUSE(cmp_or);
     DUMMYUSE(iv);
-    ASSERT(0, ("Target Dependent Code"));
+    ASSERTN(0, ("Target Dependent Code"));
     return false;
 }
 
@@ -98,7 +98,7 @@ void ParallelPartMgr::destroy()
 
     ///
     if (m_para_part_orlst.get_elem_count() != 0) {
-        ASSERT(m_sr2sr_dmap_lst.get_elem_count() ==
+        ASSERTN(m_sr2sr_dmap_lst.get_elem_count() ==
                 m_para_part_orlst.get_elem_count(), ("unmatch info"));
         List<OR*> * or_lst;
         for (or_lst = m_para_part_orlst.get_head(); or_lst != NULL;
@@ -164,7 +164,7 @@ void ParallelPartMgr::renameSR(IN OUT OR * o, IN SR2SR_DMAP & dmap)
             if (!SR_is_dedicated(opnd)) {
                 SR * newtn = dmap.get(opnd);
                 if (newtn == NULL) {
-                    ASSERT(SR_is_global(opnd),    ("local sr must have DEF"));
+                    ASSERTN(SR_is_global(opnd),    ("local sr must have DEF"));
                     newtn = m_cg->dupSR(opnd);
                     m_gsr.append(opnd);
                     dmap.setAlways(opnd, newtn);
@@ -191,7 +191,7 @@ List<OR*> * ParallelPartMgr::getClusterParallelPart(
         UINT n,
         OUT xcom::BitSet ** oridx_lst)
 {
-    ASSERT(m_pool, ("not yet initialize."));
+    ASSERTN(m_pool, ("not yet initialize."));
     if (n >= m_para_part_oridx_lst.get_elem_count()) {
         if (oridx_lst) {
             *oridx_lst = NULL;
@@ -207,7 +207,7 @@ List<OR*> * ParallelPartMgr::getClusterParallelPart(
 
 SR2SR_DMAP * ParallelPartMgr::getClusterDMap(UINT n)
 {
-    ASSERT(m_pool, ("not yet initialize."));
+    ASSERTN(m_pool, ("not yet initialize."));
     if (n >= m_sr2sr_dmap_lst.get_elem_count()) {
         return NULL;
     }
@@ -224,7 +224,7 @@ void ParallelPartMgr::genBusCopy(
         IN List<SR*> & to_sr_lst)
 {
     DUMMYUSE(bb);
-    ASSERT(m_pool, ("not yet initialize."));
+    ASSERTN(m_pool, ("not yet initialize."));
     ASSERT0(to_clust_lst.get_elem_count() == 1);
 
     //copy to scalar o cluster-2 unit
@@ -255,7 +255,7 @@ bool ParallelPartMgr::hasParallelPart(CLUST clust) const
 //post-dominate 'bb'.
 bool ParallelPartMgr::hasPDomOcc(ORBB * bb, SR * gsr)
 {
-    ASSERT(m_pool, ("not yet initialize."));
+    ASSERTN(m_pool, ("not yet initialize."));
     xcom::BitSet * occ = g_sr2bbset_map.get(gsr);
     ASSERT0(occ);
     if (occ->get_elem_count() > 1) {
@@ -313,7 +313,7 @@ void ParallelPartMgr::genReductionRestore(SR * red_var)
 //'iv': induction variable
 void ParallelPartMgr::genPrologAndEpilog()
 {
-    ASSERT(0, ("Target Dependent Code"));
+    ASSERTN(0, ("Target Dependent Code"));
 }
 
 
@@ -351,7 +351,7 @@ bool ParallelPartMgr::verifyReductionOR()
 //do some preparation of distribution.
 bool ParallelPartMgr::prepare_distribute(OR * red_or, OR * cmp_or, SR * iv)
 {
-    ASSERT(m_pool, ("not yet initialize."));
+    ASSERTN(m_pool, ("not yet initialize."));
     if (numOfParallelPart() == 0) {
         return false;
     }
@@ -389,7 +389,7 @@ bool ParallelPartMgr::prepare_distribute(OR * red_or, OR * cmp_or, SR * iv)
 //    2.Recognizing reduction operations.
 void ParallelPartMgr::dupORForParallelPart()
 {
-    ASSERT(m_pool, ("not yet initialize."));
+    ASSERTN(m_pool, ("not yet initialize."));
     ASSERT0(m_main_red_or && m_cmp_or);
     UINT i;
     for (i = 0; i < numOfParallelPart(); i++) {
@@ -455,7 +455,7 @@ void ParallelPartMgr::dupORForParallelPart()
 //Distribute OPs into parallel part of 'n'.
 bool ParallelPartMgr::distributeToCluster(UINT n)
 {
-    ASSERT(m_pool, ("not yet initialize."));
+    ASSERTN(m_pool, ("not yet initialize."));
     ASSERT0(n < m_num_cluster);
     xcom::BitSet * oridx_lst = NULL;
     List<OR*> * or_lst = getClusterParallelPart(n, &oridx_lst);
@@ -484,7 +484,7 @@ bool ParallelPartMgr::distributeToCluster(UINT n)
 
 CLUST ParallelPartMgr::getCluster(UINT n) const
 {
-    ASSERT(n == CLUST_FIRST, ("Target Dependent Code"));
+    ASSERTN(n == CLUST_FIRST, ("Target Dependent Code"));
     return (CLUST)n;
 }
 
@@ -498,7 +498,7 @@ UINT ParallelPartMgr::getFirstClusterIdx() const
 
 INT ParallelPartMgr::getClusterIdx(CLUST clt) const
 {
-    ASSERT(clt == CLUST_FIRST, ("Target Dependent Code"));
+    ASSERTN(clt == CLUST_FIRST, ("Target Dependent Code"));
     return 0;
 }
 
@@ -506,7 +506,7 @@ INT ParallelPartMgr::getClusterIdx(CLUST clt) const
 //Distribute OPs into parallel part.
 bool ParallelPartMgr::distribute()
 {
-    ASSERT(m_pool, ("not yet initialize."));
+    ASSERTN(m_pool, ("not yet initialize."));
     ASSERT0(numOfParallelPart() > 0);
     if (m_num_cluster > 0) {
         for (UINT i = 0; i < m_num_cluster; i++) {
@@ -527,7 +527,7 @@ void ParallelPartMgr::computeUniqueRegFile(
         OR * o,
         Vector<bool> & is_regfile_unique)
 {
-    ASSERT(m_pool, ("not yet initialize."));
+    ASSERTN(m_pool, ("not yet initialize."));
     UINT i;
     for (i = 0; i < o->result_num(); i++) {
         SR * sr = o->get_result(i);
@@ -539,7 +539,7 @@ void ParallelPartMgr::computeUniqueRegFile(
         }
         if (SR_phy_regid(sr) != REG_UNDEF) {
             SR_regfile(sr) = tmMapReg2RegFile(SR_phy_regid(sr));
-            ASSERT(SR_regfile(sr) != RF_UNDEF, ("Unknown regfile"));
+            ASSERTN(SR_regfile(sr) != RF_UNDEF, ("Unknown regfile"));
             is_regfile_unique.set(SR_sregid(sr), true);
             continue;
         }
@@ -583,7 +583,7 @@ void ParallelPartMgr::computeUniqueRegFile(
         }
         if (SR_phy_regid(sr) != REG_UNDEF) {
             SR_regfile(sr) = tmMapReg2RegFile(SR_phy_regid(sr));
-            ASSERT(SR_regfile(sr) != RF_UNDEF,
+            ASSERTN(SR_regfile(sr) != RF_UNDEF,
                     ("Unknown regfile"));
             is_regfile_unique.set(SR_sregid(sr), true);
             continue;
@@ -613,7 +613,7 @@ void ParallelPartMgr::computeUniqueRegFile(
 //Determine the number of clusters in which code can be distributed.
 void ParallelPartMgr::computeNumOfParallelPart()
 {
-    ASSERT(m_pool, ("not yet initialize."));
+    ASSERTN(m_pool, ("not yet initialize."));
     ASSERT_DUMMYUSE(CLUST_FIRST + 1 == CLUST_NUM, ("Target Dependent Code"));
     m_num_cluster = CLUST_NUM;
 }
@@ -627,7 +627,7 @@ void ParallelPartMgr::computeNumOfParallelPart()
 //'mul': is a multiple of step-sr
 bool ParallelPartMgr::modifyReductionOR(OR * o, INT mul)
 {
-    ASSERT(m_cg->isReductionOR(o), ("o is not reducible"));
+    ASSERTN(m_cg->isReductionOR(o), ("o is not reducible"));
     SR * step = o->get_opnd(2);
     ASSERT0(step && SR_is_imm(step));
     //TODO: Support multiply when step is variant.
@@ -673,8 +673,8 @@ SR * ParallelPartMgr::findIV(OR * o)
 //        b main_loop_start
 bool ParallelPartMgr::modifyReductionOR()
 {
-    ASSERT(m_pool, ("not yet initialize."));
-    ASSERT(m_num_cluster > 0, ("Not any para part"));
+    ASSERTN(m_pool, ("not yet initialize."));
+    ASSERTN(m_num_cluster > 0, ("Not any para part"));
     for (UINT i = 0; i < m_num_cluster; i++) {
         List<OR*> * red_or_lst = getClusterReductionOR(i);
         ASSERT0(red_or_lst);

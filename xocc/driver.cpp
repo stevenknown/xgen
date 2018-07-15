@@ -99,7 +99,7 @@ void CLDbxMgr::printSrcLine(Dbx const* dbx)
     }
 
     if (g_hsrc != NULL) {
-        ASSERT(m_cur_lineno < OFST_TAB_LINE_SIZE, ("unexpected src line"));
+        ASSERTN(m_cur_lineno < OFST_TAB_LINE_SIZE, ("unexpected src line"));
         fseek(g_hsrc, g_ofst_tab[m_cur_lineno], SEEK_SET);
         if (fgets(g_cur_line, g_cur_line_len, g_hsrc) != NULL) {
             fprintf(g_tfile, "\n\n[%u]%s", m_cur_lineno, g_cur_line);
@@ -331,7 +331,7 @@ Decl * mapVAR2Decl(VAR * var)
 //'decl': variable declaration in front end.
 static VAR * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
 {
-    ASSERT(DECL_dt(decl) == DCL_DECLARATION, ("unsupported"));
+    ASSERTN(DECL_dt(decl) == DCL_DECLARATION, ("unsupported"));
     UINT flag = 0;
     if (is_global_variable(decl)) {
         ASSERT0(!is_local_variable(decl));
@@ -374,7 +374,7 @@ static VAR * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
 
         //Note: If pointer_base_size is 0, then the pointer can not
         //do any operation, such as pointer arithmetic.
-        //ASSERT(basesize > 0, ("meet incomplete type."));
+        //ASSERTN(basesize > 0, ("meet incomplete type."));
 
         type = dm->getPointerType(basesize);
     } else if (IS_MC(data_type)) {

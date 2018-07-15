@@ -55,12 +55,12 @@ static bool FindMainIV(ORBB * bb, DataDepGraph & ddg,
     //If BB last OR is not branch operation, instruction scheduling
     //might have been performed.
     OR * branch = bb->getBranchOR();
-    ASSERT(branch, ("ORBB is not in loop end"));
+    ASSERTN(branch, ("ORBB is not in loop end"));
     SR * predict_sr = branch->get_pred();
-    ASSERT(predict_sr != m_cg->genTruePred(), ("illegal control flow"));
+    ASSERTN(predict_sr != m_cg->genTruePred(), ("illegal control flow"));
     List<OR*> preds;
 
-    //Find compare operation. 
+    //Find compare operation.
     OR * cmp;
     ddg.getPredsByOrder(preds, branch);
     for (cmp = preds.get_tail(); cmp; cmp = preds.get_prev()) {
@@ -70,7 +70,7 @@ static bool FindMainIV(ORBB * bb, DataDepGraph & ddg,
             break;
         }
     }
-    ASSERT(cmp, ("Not innermost loop"));
+    ASSERTN(cmp, ("Not innermost loop"));
     *cmp_or = cmp;
 
     //'cmp_or' may not refer 'trip_count_sr' alwayys.
@@ -82,7 +82,7 @@ static bool FindMainIV(ORBB * bb, DataDepGraph & ddg,
     //[   4: 12]| GSR258 , :- copy_i SR97(p0)[P1] SR294
     //...
     //[   6: 16]| SR270 , SR268 , SR269 , :- seq_m SR97(p0)[P1] GSR247 GSR231
-    //ASSERT(TRUE == mustReferSR(*cmp_or, trip_count_sr),
+    //ASSERTN(TRUE == mustReferSR(*cmp_or, trip_count_sr),
     //       ("Not innermost loop"));
 
     //Find reduce operation, such as : a = a + N
@@ -137,7 +137,7 @@ static void fillBB1(OUT ORBB * bb1, //early exit from loop
     if (SR_is_const(trip_count_sr)) {
         //new_upperb = lowb + trip_count % num_para_part
         INT new_trip_count_val = SR_int_imm(trip_count_sr) % num_para_part;
-        ASSERT(new_trip_count_val > 0,
+        ASSERTN(new_trip_count_val > 0,
                ("unroll_make_remainder_loop: trip count is negative o zero"));
         branch_cond = V_BR_I4GE;
         if (SR_is_const(lb_sr)) {
@@ -212,7 +212,7 @@ static bool fullyUnrollBB(ORBB * bb, DataDepGraph & ddg)
     OR * red_or = NULL, * cmp_or = NULL;
     SR * iv = NULL;
     FindMainIV(bb, ddg, &red_or, &cmp_or, &iv);
-    ASSERT(red_or && iv && SR_is_global(iv), ("Cannot find iv"));
+    ASSERTN(red_or && iv && SR_is_global(iv), ("Cannot find iv"));
     OR * br_or = BB_xfer_op(bb);
     ORBB_orlist(bb).remove(br_or);
     ORBB_orlist(bb).remove(cmp_or);
@@ -283,9 +283,9 @@ static void modifyBB2(IN OUT ORBB * bb2, ORBB const* orig_bb,
         OR * red_or = NULL, * cmp_or = NULL;
         SR * iv = NULL;
         FindMainIV(bb2, ddg, &red_or, &cmp_or, &iv);
-        ASSERT(red_or && iv && SR_is_global(iv),
+        ASSERTN(red_or && iv && SR_is_global(iv),
                ("Cannot find iv"));
-        ASSERT(cmp_or && m_cg->isCompareOR(cmp_or),
+        ASSERTN(cmp_or && m_cg->isCompareOR(cmp_or),
                ("Not innermost loop"));
         ASSERT0(cmp_or->get_opnd( 0) == m_cg->genTruePred());
         OR * br_or = BB_xfer_op(bb2);
@@ -308,7 +308,7 @@ static void modifyBB2(IN OUT ORBB * bb2, ORBB const* orig_bb,
             }
             cmp_or->set_opnd(2, rem_count_sr);
         } else { //The comparation should be UB > iv
-            ASSERT(cmp_or->get_opnd( 2) == iv, ("illegal condition o"));
+            ASSERTN(cmp_or->get_opnd( 2) == iv, ("illegal condition o"));
             ASSERT0(!m_cg->is_lt(cmp_or));
             if (!m_cg->is_gt(cmp_or)) {
                 //Revise comparing opcode.
@@ -361,7 +361,7 @@ void replaceBranchCond(OR * br_or, SR * cond)
         br_or->set_pred(cond);
         break;
     default:
-        ;ASSERT(0, ("unknown branch operation"));
+        ;ASSERTN(0, ("unknown branch operation"));
     }
 }
 
@@ -373,7 +373,7 @@ void replaceBranchLabel(OR * br_or, SR * label_sr)
         br_or->set_opnd(1, label_sr);
         break;
     default:
-        ;ASSERT(0, ("unknown branch operation"));
+        ;ASSERTN(0, ("unknown branch operation"));
     }
 }
 
@@ -487,7 +487,7 @@ static SR * genUpperBound(IN SR * iv, IN OR * cmp_or, IN OUT ORBB * bb)
         } else if (cmp_or->get_opnd( 2) == iv) {
             val_sr = cmp_or->get_opnd( 1);
         } else {
-            ASSERT(0, ("Incomplete o"));
+            ASSERTN(0, ("Incomplete o"));
         }
         IOC tmp;
         m_cg->buildSub(val_sr,
@@ -513,7 +513,7 @@ static SR * genUpperBound(IN SR * iv, IN OR * cmp_or, IN OUT ORBB * bb)
         } else if (cmp_or->get_opnd( 2) == iv) {
             val_sr = cmp_or->get_opnd( 1);
         } else {
-            ASSERT(0, ("Incomplete o"));
+            ASSERTN(0, ("Incomplete o"));
         }
         IOC tmp;
         m_cg->buildSub(
@@ -558,10 +558,10 @@ static SR * genUpperBound(IN SR * iv, IN OR * cmp_or, IN OUT ORBB * bb)
             ub_sr = tmp.get_reg(0);
             bb->append(&ors);
         } else {
-            ASSERT(0, ("Incomplete o"));
+            ASSERTN(0, ("Incomplete o"));
         }
     } else {
-        ASSERT(0, ("Unsupport!"));
+        ASSERTN(0, ("Unsupport!"));
     }
     return ub_sr;
 }
@@ -594,7 +594,7 @@ static SR * genLowBound(SR * iv, ORBB * bb, ORBB * imm_pred)
         lb_sr = dupSR(def_iv->get_opnd( 1));
         ASSERT0(SR_is_const(lb_sr));
         if ((UINT)SR_int_imm(lb_sr) > (UINT)0x7fffFFFF) {
-            ASSERT(0, ("Low bound is too large!"));
+            ASSERTN(0, ("Low bound is too large!"));
         }
     } else if (m_cg->isCopyOR(def_iv)) {
         INT i = m_cg->computeCopyOpndIdx(def_iv);
@@ -740,7 +740,7 @@ static bool LoopPeeling(IN ORBB * bb,
     ddg.init(bb);
     ddg.build();
     FindMainIV(bb, ddg, red_or, cmp_or, iv);
-    ASSERT(*red_or && *iv && *cmp_or && SR_is_global(*iv),
+    ASSERTN(*red_or && *iv && *cmp_or && SR_is_global(*iv),
             ("Cannot find iv"));
     ddg.destroy();
 
@@ -969,7 +969,7 @@ static bool parallelBB(ORBB * bb, ParallelPartMgrVec & ppm_vec)
 //Return the unique predecessor and successor for natural loop with single ORBB.
 bool getLoopUniquePredSucc(ORBB * bb, ORBB ** pred, ORBB ** succ)
 {
-    ASSERT(BB_loop_head(bb) == bb, ("bb must be loop with single ORBB"));
+    ASSERTN(BB_loop_head(bb) == bb, ("bb must be loop with single ORBB"));
     INT count = 0;
     ORBB * orig_pred = NULL, * orig_succ = NULL;
     for (ORBB * pred = bb->getPreds()->get_head();
@@ -1040,7 +1040,7 @@ ORBB * dupBB(ORBB * bb, bool rename_lcl_sr)
                     !SR_is_dedicated(opnd) &&
                     !SR_is_global(opnd)) {
                     SR * newsr = dmap.get(opnd);
-                    ASSERT(newsr, ("local sr must have DEF"));
+                    ASSERTN(newsr, ("local sr must have DEF"));
                     //Rename operand sr of o for parallel part.
                     new_or->set_opnd(i, newsr);
                 }

@@ -39,7 +39,7 @@ void ORList::append_tail(OR * o)
 {
     #ifdef _DEBUG_
     for (OR * t = get_head(); t != NULL; t = get_next()) {
-        ASSERT(t != o, ("already in list."));
+        ASSERTN(t != o, ("already in list."));
     }
     #endif
     List<OR*>::append_tail(o);
@@ -51,7 +51,7 @@ void ORList::append_tail(ORList & ors)
     #ifdef _DEBUG_
     for (OR * o = get_head(); o != NULL; o = get_next()) {
         for (OR * oo = ors.get_head(); oo != NULL; oo = ors.get_next()) {
-            ASSERT(o != oo, ("already in list."));
+            ASSERTN(o != oo, ("already in list."));
         }
     }
     #endif
@@ -118,7 +118,7 @@ SR * OR::get_imm_sr()
 {
     //Normally, operand 1 of 'mov imm to reg OR' should be literal.
     SR * sr = get_opnd(HAS_PREDICATE_REGISTER + 0);
-    ASSERT(SR_is_constant(sr), ("operand of movi must be literal"));
+    ASSERTN(SR_is_constant(sr), ("operand of movi must be literal"));
     return sr;
 }
 
@@ -205,7 +205,7 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
 
         //The value to be stored.
         for (UINT i = 0; i < get_num_store_val(); i++) {
-            ASSERT(pthis->get_store_val(i), ("miss operand"));
+            ASSERTN(pthis->get_store_val(i), ("miss operand"));
             pthis->get_store_val(i)->get_name(buf, cg);
             if (i < get_num_store_val() - 1) {
                 buf.strcat(", ");
@@ -215,7 +215,7 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
         //reg <- predicate_register, [base + ofst]
         //load value
         for (UINT i = 0; i < get_num_load_val(); i++) {
-            ASSERT(pthis->get_load_val(i) != NULL, ("miss result"));
+            ASSERTN(pthis->get_load_val(i) != NULL, ("miss result"));
             pthis->get_load_val(i)->get_name(buf, cg);
             if (i < get_num_load_val() - 1) {
                 buf.strcat(", ");

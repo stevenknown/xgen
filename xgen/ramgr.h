@@ -58,7 +58,7 @@ protected:
 
 public:
     VAR2OR m_var2or_map;
-    
+
     //Set true if callee-register is allocable.
     bool m_can_alloc_callee;
 
@@ -81,7 +81,7 @@ public:
     List<ORBB*> * getBBList() { return m_bb_list; }
     Vector<ParallelPartMgr*> * getParallelPartMgrVec() { return m_ppm_vec; }
     Region * getRegion() { return m_ru; }
-    CG * getCG() { return m_cg; }    
+    CG * getCG() { return m_cg; }
     RegSet * getLRAUsedCalleeSavedRegSet(REGFILE rf)
     {
         ASSERT0(rf < RF_NUM);
@@ -122,7 +122,7 @@ public:
                     TMap<REG, VAR*> const& reg2var);
     virtual void saveCalleeIntRegisterAtEntry(
                     REGFILE regfile,
-                    IN ORBB * entry,                    
+                    IN ORBB * entry,
                     IN RegSet used_callee_regs[],
                     OUT List<ORBB*> & bblist,
                     OUT TMap<REG, VAR*> & reg2var);

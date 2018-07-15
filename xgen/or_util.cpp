@@ -43,7 +43,7 @@ UnitSet::UnitSet(UnitSet const& src)
 
 UNIT UnitSet::checkAndGet() const
 {
-    ASSERT(get_elem_count() == 1, ("expect just one unit in this set."));
+    ASSERTN(get_elem_count() == 1, ("expect just one unit in this set."));
     return (UNIT)get_first();
 }
 //END UnitSet

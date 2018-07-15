@@ -89,7 +89,7 @@ OR_CFG::OR_CFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
         }
         break;
     }
-    default: ASSERT(0, ("strang shape of CFG"));
+    default: ASSERTN(0, ("strang shape of CFG"));
     }
 }
 
@@ -163,7 +163,7 @@ void OR_CFG::get_succs(IN OUT List<ORBB*> & succs, ORBB const* bb)
     if (el == NULL) return;
     while (el != NULL) {
         ORBB * succ = getBB(VERTEX_id(EDGE_to(EC_edge(el))));
-        ASSERT(succ, ("without bb corresponded"));
+        ASSERTN(succ, ("without bb corresponded"));
         succs.append_tail(succ);
         el = EC_next(el);
     }
@@ -179,7 +179,7 @@ void OR_CFG::get_preds(IN OUT List<ORBB*> & preds, ORBB const* bb)
     if (!el) return;
     while (el) {
         ORBB * pred = getBB(VERTEX_id(EDGE_from(EC_edge(el))));
-        ASSERT(pred, ("without bb corresponded"));
+        ASSERTN(pred, ("without bb corresponded"));
         preds.append_tail(pred);
         el = EC_next(el);
     }
@@ -189,7 +189,7 @@ void OR_CFG::get_preds(IN OUT List<ORBB*> & preds, ORBB const* bb)
 //Control flow optimization
 void OR_CFG::cf_opt()
 {
-    ASSERT(0, ("TODO"));
+    ASSERTN(0, ("TODO"));
     bool change = true;
     while (change) {
         change = false;
@@ -232,7 +232,7 @@ void OR_CFG::dump_node(FILE * h, bool detail)
     for (ORBB * bb = m_bb_list->get_head();
          bb != NULL; bb = m_bb_list->get_next()) {
         xcom::Vertex * v = get_vertex(bb->id());
-        ASSERT(v, ("bb is not in cfg"));
+        ASSERTN(v, ("bb is not in cfg"));
 
         CHAR const* shape = "box";
         CHAR const* font = "courB";
@@ -327,7 +327,7 @@ void OR_CFG::dumpVCG(CHAR const* name, bool detail)
     }
     UNLINK(name);
     FILE * h = fopen(name, "a+");
-    ASSERT(h != NULL, ("%s create failed!!!",name));
+    ASSERTN(h != NULL, ("%s create failed!!!",name));
 
     //Print comment
     fprintf(h, "\n/*");

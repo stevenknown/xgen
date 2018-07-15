@@ -37,10 +37,6 @@ namespace xgen {
 #define LT_LAST_POS          (mgr.getMaxLifeTimeLen() - 1)
 #define HOLE_LENGTH          1 //Length of hole
 #define HOLE_INTERF_LT_NUM   2 //Number of life times interferefering mutually .
-#define PAIR_LOW_RES_IDX     0
-#define PAIR_HIGH_RES_IDX    1
-#define PAIR_LOW_ORND_IDX    1
-#define PAIR_HIGH_ORND_IDX   2
 #define UNNUMBERED_ORS       4
 
 //Options to passes.
@@ -257,8 +253,8 @@ class RefORBBList : public List<ORBBUnit*> {
 
     void * xmalloc(INT size)
     {
-        ASSERT(m_pool, ("xcom::Graph must be initialized before clone."));
-        ASSERT(size > 0, ("xmalloc: size less zero!"));
+        ASSERTN(m_pool, ("xcom::Graph must be initialized before clone."));
+        ASSERTN(size > 0, ("xmalloc: size less zero!"));
         void * p = smpoolMalloc(size, m_pool);
         ASSERT0(p);
         ::memset(p, 0, size);
@@ -348,9 +344,9 @@ protected:
             IN PosInfo * pi);
     void * xmalloc(INT size)
     {
-        ASSERT(m_is_init, ("Life time manager should initialized first."));
-        ASSERT(size > 0, ("xmalloc: size less zero!"));
-        ASSERT(m_pool != NULL,("need graph pool!!"));
+        ASSERTN(m_is_init, ("Life time manager should initialized first."));
+        ASSERTN(size > 0, ("xmalloc: size less zero!"));
+        ASSERTN(m_pool != NULL,("need graph pool!!"));
         void * p = smpoolMalloc(size, m_pool);
         ASSERT0(p);
         ::memset(p, 0, size);
@@ -420,7 +416,7 @@ public:
     {
         //Use assert instead of abstract-interface to enable allocating
         //the object of LifeTimeMgr.
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
     }
 
     void init(ORBB * bb,
@@ -491,8 +487,8 @@ protected:
 
     void * xmalloc(UINT size)
     {
-        ASSERT(m_is_init, ("xcom::Graph must be initialized before clone."));
-        ASSERT(size > 0, ("xmalloc: size less zero!"));
+        ASSERTN(m_is_init, ("xcom::Graph must be initialized before clone."));
+        ASSERTN(size > 0, ("xmalloc: size less zero!"));
         void * p = smpoolMalloc(size, m_pool);
         ASSERT0(p);
         ::memset(p, 0, size);
@@ -1063,7 +1059,7 @@ public:
             IN BBSimulator *)
        {
         DUMMYUSE(regfile_unique);
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         return false;
     }
     virtual void resetClustRegInfo(ClustRegInfo * cri, UINT num);

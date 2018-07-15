@@ -34,6 +34,7 @@ author: Su Zhenyu
 namespace xgen {
 
 class CG;
+class SR;
 class SRVec;
 
 typedef enum _SR_TYPE {
@@ -46,30 +47,52 @@ typedef enum _SR_TYPE {
     SR_LAB,
 }  SR_TYPE;
 
+#define MAX_SR_NAME_BUF_LEN      1024
+
+#ifdef _DEBUG_
+SR const* checkSRVAR(SR const* ir);
+SR const* checkSRLAB(SR const* ir);
+SR const* checkSRREG(SR const* ir);
+SR const* checkSRSTR(SR const* ir);
+SR const* checkSRIMM(SR const* ir);
+
+#define CK_SR_VAR(sr)  (const_cast<SR*>(checkSRVAR(sr)))
+#define CK_SR_LAB(sr)  (const_cast<SR*>(checkSRLAB(sr)))
+#define CK_SR_IMM(sr)  (const_cast<SR*>(checkSRIMM(sr)))
+#define CK_SR_STR(sr)  (const_cast<SR*>(checkSRSTR(sr)))
+#define CK_SR_REG(sr)  (const_cast<SR*>(checkSRREG(sr)))
+#else
+#define CK_SR_VAR(sr)  (sr)
+#define CK_SR_LAB(sr)  (sr)
+#define CK_SR_IMM(sr)  (sr)
+#define CK_SR_STR(sr)  (sr)
+#define CK_SR_REG(sr)  (sr)
+#endif
+
 //Symbol Register
 #define SR_type(sr)              (sr)->type
 #define SR_id(sr)                (sr)->id //unique id for each SRs
-#define SR_sregid(sr)            (sr)->u1.u2.symbol_regid //symbol register id.
-#define SR_regfile(sr)           (sr)->u1.u2.regfile
-#define SR_phy_regid(sr)         (sr)->u1.u2.phy_regid //physical register id, start at 1.
-#define SR_int_imm(sr)           (sr)->u1.u3.u4.int_imm
-#define SR_fp_imm(sr)            (sr)->u1.u3.u4.fp_imm
-#define SR_imm_size(sr)          (sr)->u1.u3.size
-#define SR_str(sr)               (sr)->u1.str
-#define SR_var(sr)               (sr)->u1.u4.var
-#define SR_memory_block_size(sr) (sr)->u1.u4.memory_block_size
-#define SR_var_ofst(sr)          (sr)->u1.u4.ofst
-#define SR_spill_var(sr)         (sr)->u1.u2.spill_var
-#define SR_var_ir(sr)            (sr)->u1.u4.ir
-#define SR_label(sr)             (sr)->u1.label
-#define SR_label_ofst(sr)        (0) //Reserved
+#define SR_sregid(sr)            (CK_SR_REG(sr))->u1.u2.symbol_regid //symbol register id.
+#define SR_regfile(sr)           (CK_SR_REG(sr))->u1.u2.regfile
+#define SR_phy_regid(sr)         (CK_SR_REG(sr))->u1.u2.phy_regid //physical register id, start at 1.
+#define SR_int_imm(sr)           (CK_SR_IMM(sr))->u1.u3.u4.int_imm
+#define SR_fp_imm(sr)            (CK_SR_IMM(sr))->u1.u3.u4.fp_imm
+#define SR_imm_size(sr)          (CK_SR_IMM(sr))->u1.u3.size
+#define SR_str(sr)               (CK_SR_STR(sr))->u1.str
+#define SR_var(sr)               (CK_SR_VAR(sr))->u1.u4.var
+#define SR_var_ofst(sr)          (CK_SR_VAR(sr))->u1.u4.ofst
+#define SR_spill_var(sr)         (CK_SR_REG(sr))->u1.u2.spill_var
+#define SR_var_ir(sr)            (CK_SR_VAR(sr))->u1.u4.ir
+#define SR_label(sr)             (CK_SR_LAB(sr))->u1.label
+#define SR_label_ofst(sr)        (CK_SR_LAB(sr)) //Reserved
 
 //If sr belong to a sr-vector, record the vector.
-#define SR_vec(sr)               ((sr)->m_sr_vec)
+#define SR_vec(sr)               ((CK_SR_REG(sr))->m_sr_vec)
 
 //Record the sr's position in the vector, start at 0.
-#define SR_vec_idx(sr)           ((sr)->m_sr_vec_idx)
+#define SR_vec_idx(sr)           ((CK_SR_REG(sr))->m_sr_vec_idx)
 #define SR_is_vec(sr)            (SR_vec(sr) != NULL)
+#define SR_is_str(sr)            (SR_type(sr) == SR_STR)
 #define SR_is_label(sr)          (SR_type(sr) == SR_LAB)
 #define SR_is_var(sr)            (SR_type(sr) == SR_VAR)
 #define SR_is_sp(sr)             (sr)->u2.s2.isSP

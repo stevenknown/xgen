@@ -101,7 +101,7 @@ public:
     UINT m_total_byte_size;
 
 public:
-    ArgDescMgr() 
+    ArgDescMgr()
     {
         m_passed_arg_byte_size = 0;
         m_total_byte_size = 0;
@@ -209,9 +209,9 @@ protected:
 
     void * xmalloc(INT size)
     {
-        ASSERT(size > 0, ("xmalloc: size less zero!"));
+        ASSERTN(size > 0, ("xmalloc: size less zero!"));
         //return MEM_POOL_Alloc(&m_mempool, size);
-        ASSERT(m_pool != NULL, ("need graph pool!!"));
+        ASSERTN(m_pool != NULL, ("need graph pool!!"));
         void * p = smpoolMalloc(size, m_pool);
         if (p == NULL) return NULL;
         ::memset(p, 0, size);
@@ -302,7 +302,7 @@ public:
         DUMMYUSE(src1);
         DUMMYUSE(src2);
         DUMMYUSE(sr_size);
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
     }
 
     //'sr_size': The number of integral multiple of byte-size of single SR.
@@ -318,7 +318,7 @@ public:
         DUMMYUSE(src1);
         DUMMYUSE(src2);
         DUMMYUSE(sr_size);
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
     }
 
     //'sr_size': The number of integral multiple of byte-size of single SR.
@@ -551,14 +551,14 @@ public:
 
     //Return the index of copied source operand.
     virtual INT computeCopyOpndIdx(OR *)
-    { ASSERT(0, ("Target Dependent Code")); return -1; }
+    { ASSERTN(0, ("Target Dependent Code")); return -1; }
 
     //Compute the byte size of memory which will be loaded/stored.
     virtual INT computeMemByteSize(OR * o)
     {
         CHECK_DUMMYUSE(o);
-        ASSERT(OR_is_mem(o), ("Need memory operation"));
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(OR_is_mem(o), ("Need memory operation"));
+        ASSERTN(0, ("Target Dependent Code"));
         return -1;
     }
 
@@ -570,7 +570,7 @@ public:
             CLUST to_clust)
     {
         DUMMYUSE(to_clust);
-        ASSERT(tmGetEqualORType(from), ("miss EquORTypes information"));
+        ASSERTN(tmGetEqualORType(from), ("miss EquORTypes information"));
         return EQUORTY_unit2ortype(tmGetEqualORType(from), to_unit);
     }
 
@@ -580,7 +580,7 @@ public:
     {
         DUMMYUSE(from);
         DUMMYUSE(to_clust);
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         return UNIT_UNDEF;
     }
 
@@ -632,7 +632,7 @@ public:
     virtual void expandSpadjust(OR * o, OUT IssuePackageList * ipl);
 
     //Expand pseudo operation to real target AddInteger instruction.
-    //Note this function is target dependent.    
+    //Note this function is target dependent.
     virtual void expandFakeOR(OR * o, OUT IssuePackageList * ipl);
 
     //Format label name string in 'buf'.
@@ -646,7 +646,7 @@ public:
         } else if (LABEL_INFO_type(lab) == L_CLABEL) {
             buf.strcat(CLABEL_STR_FORMAT, CLABEL_CONT(lab));
         } else {
-            ASSERT(0, ("unknown label type"));
+            ASSERTN(0, ("unknown label type"));
         }
         return buf.buf;
     }
@@ -720,7 +720,7 @@ public:
     { return m_params; }
     virtual ORAsmInfo * getAsmInfo(OR const*) const
     {
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         return NULL;
     }
 
@@ -783,7 +783,7 @@ public:
     virtual bool isSPUnit(UNIT unit)
     {
         DUMMYUSE(unit);
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         return false;
     }
 
@@ -799,7 +799,7 @@ public:
                tmGetRegSetOfArgument()->is_contain(SR_phy_regid(sr));
     }
     bool isDedicatedSR(SR const* sr) const
-    { return SR_is_dedicated(sr) || isReturnValueSR(sr); }    
+    { return SR_is_dedicated(sr) || isReturnValueSR(sr); }
     bool isSREqual(SR const* sr1, SR const* sr2) const;
 
     //Return true if SR is integer register.
@@ -807,7 +807,7 @@ public:
     {
         DUMMYUSE(idx);
         DUMMYUSE(is_result);
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         return false;
     }
 
@@ -840,7 +840,7 @@ public:
     bool isSameSpillLoc(OR const* or1, OR const* or2);
     bool isSameSpillLoc(xoc::VAR const* or1loc, OR const* or1, OR const* or2);
     virtual bool isReduction(OR * o);
-    virtual bool isSameCondExec(OR * prev, OR * next, BBORList & or_list);
+    virtual bool isSameCondExec(OR * prev, OR * next, BBORList const* or_list);
 
     //Return true if both slot1 and slot2 belong to same cluster.
     virtual bool isSameCluster(OR const* or1, OR const* or2) const;
@@ -884,13 +884,13 @@ public:
     {
         DUMMYUSE(base1);
         DUMMYUSE(base2);
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         return false;
     }
 
     virtual OR_TYPE invertORType(OR_TYPE)
     {
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         return OR_UNDEF;
     }
 
@@ -919,7 +919,7 @@ public:
             OUT List<REGFILE> & regfiles)
     {
         DUMMYUSE(clust);
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         return regfiles;
     }
 
@@ -931,7 +931,7 @@ public:
     {
         DUMMYUSE(us);
         DUMMYUSE(regfiles);
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         regfiles.clean();
         return regfiles;
     }
@@ -941,7 +941,7 @@ public:
     {
         DUMMYUSE(unit);
         DUMMYUSE(clst);
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         return FIRST_SLOT;
     }
 
@@ -950,7 +950,7 @@ public:
     virtual UNIT mapSlot2Unit(SLOT slot)
     {
         DUMMYUSE(slot);
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         return UNIT_UNDEF;
     }
 
@@ -959,7 +959,7 @@ public:
     {
         DUMMYUSE(regfile);
         DUMMYUSE(sr);
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         CLUST clust = CLUST_UNDEF;
         return clust;
     }
@@ -967,7 +967,7 @@ public:
     //Return the cluster which owns 'reg'
     virtual CLUST mapReg2Cluster(REG)
     {
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         CLUST clust = CLUST_UNDEF;
         return clust;
     }
@@ -982,13 +982,13 @@ public:
         DUMMYUSE(regfile);
         DUMMYUSE(sr);
         DUMMYUSE(us);
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         return us;
     }
 
     //Return the cluster which owns 'sr'
     virtual CLUST mapSR2Cluster(OR *, SR const*)
-    { ASSERT(0, ("Target Dependent Code")); return CLUST_UNDEF; }
+    { ASSERTN(0, ("Target Dependent Code")); return CLUST_UNDEF; }
 
     void renameResult(
             OR * o,
@@ -1000,28 +1000,28 @@ public:
             SR * oldsr,
             SR * newsr,
             bool match_phy_reg);
-    void renameOpndResultFollowed(
+    void renameOpndAndResultFollowed(
             SR * oldsr,
             SR * newsr,
             ORCt * start,
-            BBORList & ors);
-    void renameOpndResultFollowed(
+            BBORList * ors);
+    void renameOpndAndResultFollowed(
             SR * oldsr,
             SR * newsr,
             OR * start,
-            BBORList & ors);
-    void renameOpndResultInRange(
+            BBORList * ors);
+    void renameOpndAndResultInRange(
             SR * oldsr,
             SR * newsr,
             ORCt * start,
             ORCt * end,
-            BBORList & orlist);
-    void renameOpndResultInRange(
+            BBORList * orlist);
+    void renameOpndAndResultInRange(
             SR * oldsr,
             SR * newsr,
             OR * start,
             OR * end,
-            BBORList & orlist);
+            BBORList * orlist);
     virtual void reviseFormalParameterAndSpadjust();
     virtual void reviseFormalParamAccess(UINT lv_size);
 

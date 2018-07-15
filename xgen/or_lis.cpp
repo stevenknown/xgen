@@ -40,7 +40,7 @@ void LIS::init(ORBB * bb,
                bool change_cluster)
 {
     if (m_pool != NULL) return;
-    ASSERT(bb && sim, ("invalid parameter"));
+    ASSERTN(bb && sim, ("invalid parameter"));
     m_pool = smpoolCreate(256, MEM_COMM);
     m_is_regfile_unique = NULL;
     m_ddg = &ddg;
@@ -90,7 +90,7 @@ void LIS::computeReadyList(
         IN OUT Vector<bool> & visited,
         bool topdown)
 {
-    ASSERT(m_pool, ("uninitialized"));
+    ASSERTN(m_pool, ("uninitialized"));
     ORList nop_list;
     bool redo = false;
 COMP_REDO:
@@ -136,7 +136,7 @@ COMP_REDO:
 
 bool LIS::isIssueCand(OR * o)
 {
-    ASSERT(m_pool, ("uninitialized"));
+    ASSERTN(m_pool, ("uninitialized"));
     SLOT or_slot = m_cg->computeORSlot(o);
 
     //Schedule the branch delay slot at first.
@@ -252,7 +252,7 @@ bool LIS::selectIssueOR(
         OUT OR * issue_ors[SLOT_NUM],
         bool change_slot)
 {
-    ASSERT(m_pool, ("uninitialized"));
+    ASSERTN(m_pool, ("uninitialized"));
     OR_HASH valid_cands;
     OR * cflct_ors[SLOT_NUM] = {0}; //record conflict ors.
     for (OR * o = cand_list.get_head();
@@ -313,7 +313,7 @@ SLOT LIS::rollBackORs(
             if (!changeSlot(issue_ors[i], to_slot)) {
                 continue;
             }
-            ASSERT(i != (UINT)to_slot, ("illegal!"));
+            ASSERTN(i != (UINT)to_slot, ("illegal!"));
             m_or_changed = true;
             issue_ors[to_slot] = issue_ors[i];
             issue_ors[i] = NULL;
@@ -329,7 +329,7 @@ SLOT LIS::rollBackORs(
 //Return true if the candidate has been found.
 bool LIS::selectIssueORs(IN ORList & cand_list, OUT OR * issue_ors[SLOT_NUM])
 {
-    ASSERT(m_pool, ("uninitialized"));
+    ASSERTN(m_pool, ("uninitialized"));
     bool find = true; //Find at least one slot can be issued.
     bool be_changed[SLOT_NUM] = {false};
     SLOT next_slot;
@@ -364,7 +364,7 @@ bool LIS::selectIssueORs(IN ORList & cand_list, OUT OR * issue_ors[SLOT_NUM])
 //    restrict further code motion.
 bool LIS::fillIssueSlot(DataDepGraph & stepddg)
 {
-    ASSERT(m_pool, ("uninitialized"));
+    ASSERTN(m_pool, ("uninitialized"));
     ORList cand_list;
 
     //Find ors can be issued at current cycle.
@@ -428,7 +428,7 @@ OR * LIS::selectBestORByPriority(OR_HASH & cand_hash)
         float prio = 1.0;
 
         //Consider execute shadow.
-        ASSERT(m_sim->getShadow(o) >= 0,("illegal info"));
+        ASSERTN(m_sim->getShadow(o) >= 0,("illegal info"));
         prio += m_sim->getShadow(o) * 5 +
                 dcache_miss_rate(o) * dcache_miss_penalty(o);
 
@@ -491,7 +491,7 @@ void LIS::serialize()
 //Return true if some instructions changed their register file.
 bool LIS::schedule()
 {
-    ASSERT(m_pool, ("uninitialized"));
+    ASSERTN(m_pool, ("uninitialized"));
     DataDepGraph * stepddg = m_cg->allocDDG(false);
     stepddg->init(m_bb);
     stepddg->clone(*m_ddg);

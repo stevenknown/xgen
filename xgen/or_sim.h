@@ -68,15 +68,15 @@ protected:
     //Allocate ordesc container
     void freeordesc(ORDesc * ord)
     {
-        ASSERT(m_pool, ("not yet initialized."));
+        ASSERTN(m_pool, ("not yet initialized."));
         ORDESC_next(ord) = ORDESC_prev(ord) = NULL;
         m_free_list.add_free_elem(ord);
     }
 
     void * xmalloc(INT size)
     {
-        ASSERT(m_pool, ("not yet initialized."));
-        ASSERT(size > 0, ("xmalloc: size less zero!"));
+        ASSERTN(m_pool, ("not yet initialized."));
+        ASSERTN(size > 0, ("xmalloc: size less zero!"));
         void * p = smpoolMalloc(size, m_pool);
         ASSERT0(p);
         ::memset(p, 0, size);
@@ -122,7 +122,7 @@ public:
 
     virtual UINT numOfMemResult(OR const*) const
     {
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         return 0;
     }
 

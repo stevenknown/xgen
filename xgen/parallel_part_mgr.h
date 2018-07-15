@@ -69,8 +69,8 @@ protected:
 
     void * xmalloc(INT size)
     {
-        ASSERT(m_pool, ("Graph must be initialized before clone."));
-        ASSERT(size > 0, ("xmalloc: size less zero!"));
+        ASSERTN(m_pool, ("Graph must be initialized before clone."));
+        ASSERTN(size > 0, ("xmalloc: size less zero!"));
         void * p = smpoolMalloc(size, m_pool);
         ASSERT0(p);
         ::memset(p,0,size);
@@ -128,7 +128,7 @@ public:
 
     inline UINT numOfParallelPart() const
     {
-        ASSERT(m_pool, ("not yet initialize."));
+        ASSERTN(m_pool, ("not yet initialize."));
         return m_num_cluster;
     }
 
@@ -143,7 +143,7 @@ public:
     //    next one is CLUS2_PART_IDX, and so on.
     void setCluster(OR * o, CLUST clst)
     {
-        ASSERT(m_pool, ("not yet initialize."));
+        ASSERTN(m_pool, ("not yet initialize."));
         OR_clust(o) = clst;
     }
 

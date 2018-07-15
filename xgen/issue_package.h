@@ -45,7 +45,7 @@ public:
     {
         #ifdef _DEBUG_
         for (IssuePackage * ip = get_head(); ip != NULL; ip = get_next()) {
-            ASSERT(ip != i, ("already in list."));
+            ASSERTN(ip != i, ("already in list."));
         }
         #endif
         List<IssuePackage*>::append_tail(i);
@@ -57,7 +57,7 @@ public:
         for (IssuePackage * ip = get_head(); ip != NULL; ip = get_next()) {
             for (IssuePackage * ipp = ipl.get_head();
                  ipp != NULL; ipp = ipl.get_next()) {
-                ASSERT(ip != ipp, ("already in list."));
+                ASSERTN(ip != ipp, ("already in list."));
             }
         }
         #endif

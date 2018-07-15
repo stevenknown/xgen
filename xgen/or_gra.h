@@ -91,7 +91,7 @@ protected:
 protected:
     void * xmalloc(UINT size)
     {
-        ASSERT(m_pool != NULL,("need graph pool!!"));
+        ASSERTN(m_pool != NULL,("need graph pool!!"));
         void * p = smpoolMalloc(size, m_pool);
         ASSERT0(p != NULL);
         ::memset(p, 0, size);

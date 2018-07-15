@@ -50,7 +50,7 @@ public:
 
     virtual CHAR * printOR(OR * o, xcom::StrBuf & buf)
     {
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         DUMMYUSE(o);
         DUMMYUSE(buf);
         return NULL;
@@ -58,7 +58,7 @@ public:
 
     virtual void printData(FILE * h)
     {
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
         DUMMYUSE(h);
     }
 

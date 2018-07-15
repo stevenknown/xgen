@@ -74,8 +74,8 @@ void RaMgr::destroy()
 
 void * RaMgr::xmalloc(INT size)
 {
-    ASSERT(size > 0, ("xmalloc: size less zero!"));
-    ASSERT(m_pool != NULL, ("need graph pool!!"));
+    ASSERTN(size > 0, ("xmalloc: size less zero!"));
+    ASSERTN(m_pool != NULL, ("need graph pool!!"));
     void * p = smpoolMalloc(size, m_pool);
     if (p == NULL) return NULL;
     ::memset(p, 0, size);
@@ -151,7 +151,7 @@ void RaMgr::postBuild()
 
 void RaMgr::updateAsmClobberCallee(REGFILE regfile, REG reg)
 {
-    ASSERT(regfile != RF_UNDEF && reg != REG_UNDEF,
+    ASSERTN(regfile != RF_UNDEF && reg != REG_UNDEF,
            ("Illegal regfile and reg"));
     if (tmGetRegSetOfCalleeSaved()->is_contain(reg)) {
         m_need_save_asm_effect = true;
@@ -162,10 +162,10 @@ void RaMgr::updateAsmClobberCallee(REGFILE regfile, REG reg)
 
 void RaMgr::updateCallee(REGFILE regfile, REG reg)
 {
-    ASSERT(regfile != RF_UNDEF && reg != REG_UNDEF,
+    ASSERTN(regfile != RF_UNDEF && reg != REG_UNDEF,
            ("Illegal regfile and reg"));
     if (tmGetRegSetOfCalleeSaved()->is_contain(reg)) {
-        ASSERT(RAMGR_can_alloc_callee(this), ("Callee register is forbidden."));
+        ASSERTN(RAMGR_can_alloc_callee(this), ("Callee register is forbidden."));
         m_lra_used_callee_saved_reg[regfile].bunion(reg);
     }
 }
@@ -187,14 +187,14 @@ void RaMgr::dumpGlobalVAR2OR()
         fprintf(h, "\n\t\t%s", var->dump(buf, m_ru->getTypeMgr()));
 
         RefORBBList * ref_bb_list = m_var2or_map.get(var);
-        ASSERT(ref_bb_list, ("Miss info"));
+        ASSERTN(ref_bb_list, ("Miss info"));
         for (ORBBUnit * bu = ref_bb_list->get_head(); bu;
              bu = ref_bb_list->get_next()) {
             ORBB * bb = OR_BBUNIT_bb(bu);
             fprintf(h, "\n\t\tBB%d:", ORBB_id(bb));
             for (OR * o = OR_BBUNIT_or_list(bu)->get_head(); o != NULL;
                  o = OR_BBUNIT_or_list(bu)->get_next()) {
-                ASSERT(o, ("Miss info"));
+                ASSERTN(o, ("Miss info"));
                 fprintf(h, "\n\t\t\t");
                 fprintf(h, "%s", o->dump(buf, m_cg));
             }
@@ -262,11 +262,11 @@ void RaMgr::saveCalleePredicateAtEntry(
 {
     DUMMYUSE(bblist);
     DUMMYUSE(regfile);
-    DUMMYUSE(used_callee_regs);    
+    DUMMYUSE(used_callee_regs);
     //Generate code to save callee predicate registers.
-    //Record in ors.    
+    //Record in ors.
     if (HAS_PREDICATE_REGISTER) {
-        ASSERT(0, ("Target Dependent Code"));
+        ASSERTN(0, ("Target Dependent Code"));
     }
     OR * sp_adj = ORBB_entry_spadjust(entry);
     ASSERT0(sp_adj == NULL || OR_code(sp_adj) == OR_spadjust);
@@ -325,7 +325,7 @@ void RaMgr::saveCalleeFPRegisterAtEntry(
         m_cg->fixCluster(ors, clust);
 
         //Need one/two memory operation by default.
-        ASSERT (ors.get_elem_count() == 1 || //[sp + literal(<=24bits)] = t1
+        ASSERTN (ors.get_elem_count() == 1 || //[sp + literal(<=24bits)] = t1
                 ors.get_elem_count() == 2, //t2=sp+literal(>24bits),[t2]=t1
                 ("Too many spill code"));
 
@@ -399,10 +399,10 @@ void RaMgr::saveCalleeFPRegisterAtExit(
         m_cg->fixCluster(ors, clust);
 
         //Need one memory operation by default.
-        ASSERT(ors.get_elem_count() == 1, ("Too many spill code"));
+        ASSERTN(ors.get_elem_count() == 1, ("Too many spill code"));
         addVARRefList(exit, ors.get_head(), v);
 
-        ASSERT (ors.get_elem_count() == 1 || // t1 = [sp + literal(<=24bits)]
+        ASSERTN (ors.get_elem_count() == 1 || // t1 = [sp + literal(<=24bits)]
 
                 // t2 = sp + literal(>24bits), t1 = [t2]
                 ors.get_elem_count() == 2,
@@ -474,7 +474,7 @@ void RaMgr::saveCalleeIntRegisterAtEntry(
         m_cg->fixCluster(ors, clust);
 
         //Need one/two memory operation by default.
-        ASSERT (ors.get_elem_count() == 1 || //[sp + literal(<=24bits)] = t1
+        ASSERTN (ors.get_elem_count() == 1 || //[sp + literal(<=24bits)] = t1
                 ors.get_elem_count() == 2, //t2=sp+literal(>24bits),[t2]=t1
                 ("Too many spill code"));
         ORCt * orct = NULL;
@@ -591,10 +591,10 @@ void RaMgr::saveCalleeIntRegisterAtExit(
         m_cg->fixCluster(ors, clust);
 
         //There should be just one memory operation on most target.
-        ASSERT(ors.get_elem_count() == 1, ("Too many spill code"));
+        ASSERTN(ors.get_elem_count() == 1, ("Too many spill code"));
         addVARRefList(exit, ors.get_head(), v);
 
-        ASSERT (ors.get_elem_count() == 1 || //t1=[sp + literal(<=24bits)]
+        ASSERTN (ors.get_elem_count() == 1 || //t1=[sp + literal(<=24bits)]
                 ors.get_elem_count() == 2, // t2=sp + literal(>24bits), t1=[t2]
                 ("Too many spilling code"));
 
@@ -638,12 +638,12 @@ void RaMgr::saveCalleePredicateAtExit(
 
     //Generate code to save callee predicate registers.
     //Record in ors.
-    ASSERT(0, ("Target Dependent Code"));
-    
+    ASSERTN(0, ("Target Dependent Code"));
+
     OR * sp_adj = ORBB_exit_spadjust(exit);
     ASSERT0(sp_adj == NULL || OR_code(sp_adj) == OR_spadjust);
     if (m_ru->is_function()) { ASSERT0(sp_adj); }
-    
+
     ORList ors;
     if (sp_adj != NULL) {
         ORBB_orlist(exit)->insert_after(ors, sp_adj);
@@ -667,7 +667,7 @@ void RaMgr::saveCallee(RegSet used_callee_regs[])
     xcom::TMap<REG, xoc::VAR*> reg2var;
     for (ORBB * bb = entry_bbs.get_head();
          bb != NULL; bb = entry_bbs.get_next()) {
-        ASSERT(ORBB_is_entry(bb) , ("not an entry BB"));
+        ASSERTN(ORBB_is_entry(bb) , ("not an entry BB"));
         for(INT regfile = RF_UNDEF + 1; regfile < RF_NUM; regfile++) {
             saveCalleeRegFileAtEntry((REGFILE)regfile,
                 bb, used_callee_regs, bblist, reg2var);
@@ -676,7 +676,7 @@ void RaMgr::saveCallee(RegSet used_callee_regs[])
 
     for (ORBB * bb = exit_bbs.get_head();
          bb != NULL; bb = exit_bbs.get_next()) {
-        ASSERT(ORBB_is_exit(bb), ("not an exit BB"));
+        ASSERTN(ORBB_is_exit(bb), ("not an exit BB"));
         for(INT regfile = RF_UNDEF + 1; regfile < RF_NUM; regfile++) {
             saveCalleeRegFileAtExit((REGFILE)regfile,
                 bb, used_callee_regs, bblist, reg2var);
@@ -689,7 +689,7 @@ void RaMgr::saveCallee(RegSet used_callee_regs[])
         if (m_ppm_vec != NULL) {
             ppm = m_ppm_vec->get(ORBB_id(bb));
         }
-        LRA * lra = allocLRA(bb, ppm, this);        
+        LRA * lra = allocLRA(bb, ppm, this);
         lra->perform();
         delete lra;
     }

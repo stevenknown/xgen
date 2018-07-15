@@ -204,7 +204,7 @@ ORCt * BBORList::insert_before(OR * o, OR * marker)
 ORCt * BBORList::insert_before(OR * o, ORCt * marker)
 {
     ORCt * c = newc();
-    ASSERT(c, ("newc return NULL"));
+    ASSERTN(c, ("newc return NULL"));
     C_val(c) = o;
     insert_before(c, marker);
     return c;
@@ -313,7 +313,7 @@ ORCt * BBORList::insert_after(OR * o, OR * marker)
 ORCt * BBORList::insert_after(OR * o, ORCt * marker)
 {
     ORCt * c = newc();
-    ASSERT(c, ("newc return NULL"));
+    ASSERTN(c, ("newc return NULL"));
     C_val(c) = o;
     insert_after(c, marker);
     return c;
@@ -420,7 +420,7 @@ void BBORList::dump(CG * cg)
         ASSERT0(OR_bb(o) == m_bb);
         bool b = xcom::EList<OR*, OR2Holder>::find(o, &cm);
         CHECK_DUMMYUSE(b);
-        ASSERT(cm, ("cannot find OR in list"));
+        ASSERTN(cm, ("cannot find OR in list"));
 
         buf.clean();
         o->dump(buf, cg);
@@ -572,7 +572,7 @@ void ORBB::dump()
 
     StrBuf buf(32);
     for (; li != NULL; li = getLabelList().get_next()) {
-        note("%s ", m_cg->formatLabelName(li, buf));        
+        note("%s ", m_cg->formatLabelName(li, buf));
     }
 
     //Attributes

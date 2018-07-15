@@ -175,7 +175,7 @@ void OR_DF_MGR::computeGlobalLiveness()
         }
         count++;
     } while (change && count < 256);
-    ASSERT(!change, ("result of equation is convergent slowly"));
+    ASSERTN(!change, ("result of equation is convergent slowly"));
 }
 
 
@@ -397,7 +397,7 @@ void G_INTERF_GRAPH::dump(IN CHAR * name)
     }
     UNLINK(name);
     FILE * h = fopen(name, "a+");
-    ASSERT(h, ("%s create failed!!!",name));
+    ASSERTN(h, ("%s create failed!!!",name));
     fprintf(h, "graph: {"
               "title: \"Graph\"\n"
               "shrink:  15\n"
@@ -462,7 +462,7 @@ bool G_INTERF_GRAPH::isInterferred(
         IN G_LIFE_TIME * glt1,
         IN G_LIFE_TIME * glt2)
 {
-    ASSERT(SR_is_reg(GLT_sr(glt1)) && SR_is_reg(GLT_sr(glt2)),
+    ASSERTN(SR_is_reg(GLT_sr(glt1)) && SR_is_reg(GLT_sr(glt2)),
         ("sr is not register"));
     if (GLT_id(glt1) == GLT_id(glt2)) return true;
     if (!GLT_livebbs(glt1)->is_intersect(*GLT_livebbs(glt2))) return false;

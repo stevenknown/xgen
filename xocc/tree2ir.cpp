@@ -48,7 +48,7 @@ IR * CTree2IR::buildId(IN Decl * id)
 //Calculate the byte-size of identifier.
 IR * CTree2IR::buildId(IN Tree * t)
 {
-    ASSERT(TREE_type(t)==TR_ID, ("illegal tree node , expected TR_ID"));
+    ASSERTN(TREE_type(t)==TR_ID, ("illegal tree node , expected TR_ID"));
     Decl * decl = TREE_id_decl(t);
     //TREE_result_type is useless for C,
     //but keep it for another langages used.
@@ -58,7 +58,7 @@ IR * CTree2IR::buildId(IN Tree * t)
 
 IR * CTree2IR::buildLoad(IN Tree * t)
 {
-    ASSERT(TREE_type(t) == TR_ID, ("illegal tree node , expected TR_ID"));
+    ASSERTN(TREE_type(t) == TR_ID, ("illegal tree node , expected TR_ID"));
     Decl * decl = TREE_id_decl(t);
     ASSERT0(decl);
     VAR * var_info = mapDecl2VAR(decl);
@@ -90,7 +90,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     CONT_epilogirlist(cont) = &epilog_ir_list;
     IR * l = convert(TREE_lchild(t), cont);
     bool is_ild_array_case = false;
-    ASSERT(l != NULL && l->is_single(),
+    ASSERTN(l != NULL && l->is_single(),
            ("Lchild cannot be NULL and must be single"));
     if (l->is_ild()) {
         //'lchild' is dereference, such as '*p', and
@@ -150,7 +150,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
                 if (is_ild_array_case) {
                     IR * tmpir = m_ru->buildStorePR(ist_mem_addr->getType(),
                         ist_mem_addr);
-                    ASSERT(tmpir->is_ptr(),
+                    ASSERTN(tmpir->is_ptr(),
                            ("I think tmpir should already be set to"
                             "pointer in buildStore()"));
                     set_lineno(tmpir, lineno, m_ru);
@@ -181,7 +181,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
                 ARR_sub_list(l) = NULL;
                 ir->setOffset(ARR_ofst(l));
             } else {
-                ASSERT(0, ("unsupport lhs IR type."));
+                ASSERTN(0, ("unsupport lhs IR type."));
             }
 
             m_ru->freeIRTree(l); //l is useless.
@@ -265,7 +265,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
                     r);
                 ir->setOffset(ARR_ofst(l));
             } else {
-                ASSERT(0, ("unsupport lhs IR type."));
+                ASSERTN(0, ("unsupport lhs IR type."));
             }
         }
         break;
@@ -298,7 +298,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
                     r);
                 ir->setOffset(ARR_ofst(l));
             } else {
-                ASSERT(0, ("unsupport lhs IR type."));
+                ASSERTN(0, ("unsupport lhs IR type."));
             }
         }
         break;
@@ -331,7 +331,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
                     r);
                 ir->setOffset(ARR_ofst(l));
             } else {
-                ASSERT(0, ("unsupport lhs IR type."));
+                ASSERTN(0, ("unsupport lhs IR type."));
             }
         }
         break;
@@ -364,7 +364,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
                     r);
                 ir->setOffset(ARR_ofst(l));
             } else {
-                ASSERT(0, ("unsupport lhs IR type."));
+                ASSERTN(0, ("unsupport lhs IR type."));
             }
         }
         break;
@@ -397,16 +397,16 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
                     r);
                 ir->setOffset(ARR_ofst(l));
             } else {
-                ASSERT(0, ("unsupport lhs IR type."));
+                ASSERTN(0, ("unsupport lhs IR type."));
             }
         }
         break;
     case T_RSHIFTEQU:
         {
-            ASSERT(!l->is_fp() && !r->is_fp(),
+            ASSERTN(!l->is_fp() && !r->is_fp(),
                    ("illegal shift operation of float point"));
             Type const* type = NULL;
-            ASSERT(r->is_int(), ("type of shift-right should be integer"));
+            ASSERTN(r->is_int(), ("type of shift-right should be integer"));
             if (r->is_signed()) {
                 IR_dt(r) = m_tm->getSimplexTypeEx(
                     m_tm->get_int_dtype(
@@ -441,7 +441,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
                     r);
                 ir->setOffset(ARR_ofst(l));
             } else {
-                ASSERT(0, ("unsupport lhs IR type."));
+                ASSERTN(0, ("unsupport lhs IR type."));
             }
         }
         break;
@@ -474,7 +474,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
                     r);
                 ir->setOffset(ARR_ofst(l));
             } else {
-                ASSERT(0, ("unsupport lhs IR type."));
+                ASSERTN(0, ("unsupport lhs IR type."));
             }
         }
         break;
@@ -508,7 +508,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
                     r);
                 ir->setOffset(ARR_ofst(l));
             } else {
-                ASSERT(0, ("unsupport lhs IR type."));
+                ASSERTN(0, ("unsupport lhs IR type."));
             }
         }
         break;
@@ -749,7 +749,7 @@ IR * CTree2IR::convert_array(Tree * t, INT lineno, IN T2IRCtx * cont)
 IR * CTree2IR::convert_pragma(IN Tree *, INT lineno, IN T2IRCtx *)
 {
     DUMMYUSE(lineno);
-    //ASSERT(0, ("TODO"));
+    //ASSERTN(0, ("TODO"));
     return NULL;
 }
 
@@ -823,7 +823,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             }
             real_callee = CVT_exp(real_callee);
         } else {
-            ASSERT(0, ("illegal IR expression"));
+            ASSERTN(0, ("illegal IR expression"));
         }
     }
 
@@ -842,7 +842,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     if (!callee->is_id()) {
         if (callee->is_ptr()) {
             is_direct = false; //Current call is indirect function call.
-            ASSERT(callee->is_ld() || callee->is_lda() || callee->is_cvt(),
+            ASSERTN(callee->is_ld() || callee->is_lda() || callee->is_cvt(),
                 ("enable more case"));
         } else if (callee->is_const() && callee->is_int()) {
             is_direct = false; //Current call is indirect function call.
@@ -1079,7 +1079,7 @@ IR * CTree2IR::convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx *)
     for (CaseValue * casev = case_list.get_head();
          casev != NULL; casev = case_list.get_next()) {
         if (CASEV_is_def(casev)) {
-            ASSERT(!find_default_lab, ("redefined DEFAULT in SWITCH"));
+            ASSERTN(!find_default_lab, ("redefined DEFAULT in SWITCH"));
 
             #ifdef _DEBUG_
             find_default_lab = true;
@@ -1108,8 +1108,8 @@ IR * CTree2IR::convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx *)
 IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
 {
     Decl * base_decl = TREE_result_type(TREE_base_region(t));
-    ASSERT(is_struct(base_decl) || is_union(base_decl), ("illegal base type"));
-    ASSERT(TREE_type(TREE_field(t)) == TR_ID, ("illegal offset type"));
+    ASSERTN(is_struct(base_decl) || is_union(base_decl), ("illegal base type"));
+    ASSERTN(TREE_type(TREE_field(t)) == TR_ID, ("illegal offset type"));
 
     Decl * field_decl = TREE_result_type(TREE_field(t));
 
@@ -1121,7 +1121,7 @@ IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
 
     //Compute 'byte ofst' of 'ir' accroding to field at structured type.
     UINT field_ofst = 0; //All field of union start at offset 0.
-    ASSERT(TREE_type(TREE_field(t)) == TR_ID, ("illegal struct/union exp"));
+    ASSERTN(TREE_type(TREE_field(t)) == TR_ID, ("illegal struct/union exp"));
     if (is_struct(base_decl)) {
         Struct * st = TYPE_struct_type(DECL_spec(base_decl));
         field_ofst = get_struct_field_ofst(st, SYM_name(TREE_id(TREE_field(t))));
@@ -1178,9 +1178,9 @@ IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
 IR * CTree2IR::convertInDirectMemAccess(Tree * t, INT lineno, IN T2IRCtx * cont)
 {
     Decl * base_decl = TREE_result_type(TREE_base_region(t));
-    ASSERT(is_struct(base_decl) || is_union(base_decl), ("illegal base type"));
-    ASSERT(TREE_type(TREE_field(t)) == TR_ID, ("illegal offset type"));
-    ASSERT(is_pointer(base_decl), ("'->' node must be pointer type"));
+    ASSERTN(is_struct(base_decl) || is_union(base_decl), ("illegal base type"));
+    ASSERTN(TREE_type(TREE_field(t)) == TR_ID, ("illegal offset type"));
+    ASSERTN(is_pointer(base_decl), ("'->' node must be pointer type"));
 
     //Compute 'field_offst' accroding to 'field' of struct.
     UINT field_ofst = 0; //All Field of union start at offset 0.
@@ -1194,7 +1194,7 @@ IR * CTree2IR::convertInDirectMemAccess(Tree * t, INT lineno, IN T2IRCtx * cont)
     DATA_TYPE dt = D_UNDEF;
     IR * ir = NULL;
     IR * base = convert(TREE_base_region(t), NULL);
-    ASSERT(base->is_ptr(), ("base of indirect memory access must be pointer."));
+    ASSERTN(base->is_ptr(), ("base of indirect memory access must be pointer."));
 
     if (is_pointer(field_decl)) {
         Type const* type = m_tm->getPointerType(get_pointer_base_size(field_decl));
@@ -1425,7 +1425,7 @@ IR * CTree2IR::convertReturn(Tree * t, INT lineno, T2IRCtx * cont)
 {
     IR * ir = m_ru->buildReturn(convert(TREE_ret_exp(t), cont));
     if (RET_exp(ir) != NULL) {
-        ASSERT(IR_next(RET_exp(ir)) == NULL, ("unsupport"));
+        ASSERTN(IR_next(RET_exp(ir)) == NULL, ("unsupport"));
         ir->setParentPointer(false);
         xoc::Type const* cvttype = checkAndGenCVTType(
             m_return_type, TREE_result_type(TREE_ret_exp(t)));
@@ -1564,7 +1564,7 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
         IR * array_id = buildId(t);
         ASSERT0(array_id->is_id());
         ASSERT0(VAR_is_array(ID_info(array_id)));
-        ASSERT(!VAR_is_formal_param(ID_info(array_id)),
+        ASSERTN(!VAR_is_formal_param(ID_info(array_id)),
                ("array parameter should be transformed "
                 "to pointer type at FrontEnd's compound_stmt()"));
 
@@ -2148,7 +2148,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         case TR_PRAGMA:
             ir = convert_pragma(t, lineno, cont);
             break;
-        default: ASSERT(0, ("unknown tree type:%d", TREE_type(t)));
+        default: ASSERTN(0, ("unknown tree type:%d", TREE_type(t)));
         } //end switch
 
         t = TREE_nsib(t);
@@ -2177,7 +2177,7 @@ static void scanScopeDeclList(SCOPE * s, OUT Region * rg, bool scan_sib)
             continue;
         }
         VAR * v = mapDecl2VAR(decl);
-        ASSERT(v, ("NULL variable correspond to"));
+        ASSERTN(v, ("NULL variable correspond to"));
         if (VAR_is_global(v)) {
             Region * topru = rg->getTopRegion();
             ASSERT0(topru);
@@ -2226,7 +2226,7 @@ DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, TypeMgr * tm)
     ASSERT0(decl && tm);
     DATA_TYPE dtype = D_UNDEF;
     *size = 0;
-    ASSERT(DECL_dt(decl) == DCL_DECLARATION ||
+    ASSERTN(DECL_dt(decl) == DCL_DECLARATION ||
            DECL_dt(decl) == DCL_TYPE_NAME, ("TODO"));
 
     TypeSpec * ty = DECL_spec(decl);
@@ -2249,7 +2249,7 @@ DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, TypeMgr * tm)
         is_signed = true;
     }
 
-    ASSERT(ty, ("Type-SPEC in DCRLARATION cannot be NULL"));
+    ASSERTN(ty, ("Type-SPEC in DCRLARATION cannot be NULL"));
     *size = getSimplyTypeSize(ty);
     if (IS_TYPE(ty, T_SPEC_VOID) ||
         IS_TYPE(ty, T_SPEC_CHAR) ||
@@ -2271,12 +2271,12 @@ DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, TypeMgr * tm)
         ty = get_pure_type_spec(ty);
 
         //USER Type should NOT be here.
-        ASSERT(0, ("You should factorize the type specification "
+        ASSERTN(0, ("You should factorize the type specification "
                    "into pure type during declaration()"));
 
         //dtype = get_decl_dtype(USER_TYPE_decl(TYPE_user_type(ty)), size);
     } else {
-        ASSERT(0, ("failed in DATA_TYPE converting"));
+        ASSERTN(0, ("failed in DATA_TYPE converting"));
     }
     return dtype;
 }
@@ -2295,7 +2295,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     //Generate region for function.
     Region * r = rumgr->newRegion(REGION_FUNC);
     r->setRegionVar(mapDecl2VAR(dcl));
-    ASSERT(r->getRegionVar(), ("Region miss var"));
+    ASSERTN(r->getRegionVar(), ("Region miss var"));
 
     REGION_is_expect_inline(r) = is_inline(dcl);
     rumgr->addToRegionTab(r);

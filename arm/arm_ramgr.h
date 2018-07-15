@@ -34,7 +34,7 @@ author: Su Zhenyu
 class ARMRaMgr : public RaMgr {
 protected:
     void setUseLR();
-    
+
 public:
     ARMRaMgr(List<ORBB*> * bbs, bool is_func, CG * cg) :
              RaMgr(bbs, is_func, cg) {}

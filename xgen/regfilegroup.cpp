@@ -34,9 +34,9 @@ namespace xgen {
 
 void * RegFileGroup::xmalloc(INT size)
 {
-    ASSERT(m_is_init, ("must be initialized before clone."));
-    ASSERT(size > 0, ("xmalloc: size less zero!"));
-    ASSERT(m_pool,("need graph pool!!"));
+    ASSERTN(m_is_init, ("must be initialized before clone."));
+    ASSERTN(size > 0, ("xmalloc: size less zero!"));
+    ASSERTN(m_pool,("need graph pool!!"));
     void * p = smpoolMalloc(size, m_pool);
     ASSERT0(p);
     ::memset(p,0,size);
@@ -75,30 +75,30 @@ void RegFileGroup::destroy()
 
 INT RegFileGroup::getNumOfGroup() const
 {
-    ASSERT(m_is_init, ("List not yet initialized."));
+    ASSERTN(m_is_init, ("List not yet initialized."));
     return m_group2orlist_map.get_last_idx() + 1;
 }
 
 
 INT RegFileGroup::getORGroup(OR const* o) const
 {
-    ASSERT(o, ("o is NULL."));
-    ASSERT(m_is_init, ("List not yet initialized."));
+    ASSERTN(o, ("o is NULL."));
+    ASSERTN(m_is_init, ("List not yet initialized."));
     return m_oridx2group_map.get(OR_id(o));
 }
 
 
 List<OR*> * RegFileGroup::getORListInGroup(INT i)
 {
-    ASSERT(i >= 0, ("layer idx must be positive."));
-    ASSERT(m_is_init, ("List not yet initialized."));
+    ASSERTN(i >= 0, ("layer idx must be positive."));
+    ASSERTN(m_is_init, ("List not yet initialized."));
     return m_group2orlist_map.get(i);
 }
 
 
 void RegFileGroup::clone(RegFileGroup & group)
 {
-    ASSERT(m_is_init, ("List not yet initialized."));
+    ASSERTN(m_is_init, ("List not yet initialized."));
     m_bb = group.m_bb;
 
     //clone group info
@@ -124,8 +124,8 @@ void RegFileGroup::clone(RegFileGroup & group)
 
 void RegFileGroup::addOR(OR * o, INT layer)
 {
-    ASSERT(m_is_init, ("List not yet initialized."));
-    ASSERT(o && layer >= 0 && layer < MAX_LAYER, ("Illegal info"));
+    ASSERTN(m_is_init, ("List not yet initialized."));
+    ASSERTN(o && layer >= 0 && layer < MAX_LAYER, ("Illegal info"));
     List<OR*> * orlist = m_group2orlist_map.get(layer);
     if (orlist == NULL) {
         orlist = (List<OR*>*)xmalloc(sizeof(List<OR*>));

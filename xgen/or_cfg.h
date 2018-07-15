@@ -77,9 +77,9 @@ public:
     virtual void findTargetBBOfMulticondBranch(
         OR const*,
         OUT List<ORBB*>&)
-    { ASSERT(0, ("TODO")); }
+    { ASSERTN(0, ("TODO")); }
     virtual void findTargetBBOfIndirectBranch(OR const*, OUT List<ORBB*>&)
-    { ASSERT(0, ("TODO")); }
+    { ASSERTN(0, ("TODO")); }
 
     virtual ORBB * getBB(UINT id) const;
     virtual INT getNumOfBB();

@@ -40,9 +40,9 @@ author: Su Zhenyu
 //operands and one result.
 void ARMIR2OR::convertBinaryOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
-    ASSERT(ir->isBinaryOp() && BIN_opnd0(ir) && BIN_opnd1(ir),
+    ASSERTN(ir->isBinaryOp() && BIN_opnd0(ir) && BIN_opnd1(ir),
            ("missing operand"));
-    ASSERT(!ir->is_vec(), ("TODO"));
+    ASSERTN(!ir->is_vec(), ("TODO"));
 
     if (!ir->is_add() && !ir->is_sub()) {
         IR2OR::convertBinaryOp(ir, ors, cont);
@@ -142,7 +142,7 @@ void ARMIR2OR::convertLda(IR const* ir, OUT ORList & ors, IN IOC * cont)
     ASSERT0(ir->is_lda());
     VAR * v = LDA_idinfo(ir);
     ASSERT0(v);
-    ASSERT(!VAR_is_unallocable(v), ("var must be allocable during CG"));
+    ASSERTN(!VAR_is_unallocable(v), ("var must be allocable during CG"));
     convertLda(v, LDA_ofst(ir), ::get_dbx(ir), ors, cont);
 }
 
@@ -150,7 +150,7 @@ void ARMIR2OR::convertLda(IR const* ir, OUT ORList & ors, IN IOC * cont)
 void ARMIR2OR::convertReturnValue(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
     if (ir == NULL) { return; }
-    ASSERT(ir->get_next() == NULL, ("ARM only support C language."));
+    ASSERTN(ir->get_next() == NULL, ("ARM only support C language."));
     ASSERT0(ir->isCallStmt());
     IOC tmp_cont;
     SR * retv = NULL;
@@ -165,7 +165,7 @@ void ARMIR2OR::convertReturnValue(IR const* ir, OUT ORList & ors, IN IOC * cont)
         VAR const* v = getCG()->get_param_vars().get(0);
         ASSERT0(v);
         DUMMYUSE(v);
-        ASSERT(!g_gen_code_for_big_return_value, ("TODO"));
+        ASSERTN(!g_gen_code_for_big_return_value, ("TODO"));
         return;
     }
     convertCopyPR(ir, retv, ors, cont);
@@ -174,7 +174,7 @@ void ARMIR2OR::convertReturnValue(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
 void ARMIR2OR::convertCall(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
-    ASSERT(ir->isCallStmt(), ("illegal ir"));
+    ASSERTN(ir->isCallStmt(), ("illegal ir"));
     processRealParams(CALL_param_list(ir), ors, cont);
 
     //Collect the maximum parameters size during code generation.
@@ -188,7 +188,7 @@ void ARMIR2OR::convertCall(IR const* ir, OUT ORList & ors, IN IOC * cont)
         //do this job.
     }
 
-    ASSERT(!CALL_is_intrinsic(ir), ("TODO"));
+    ASSERTN(!CALL_is_intrinsic(ir), ("TODO"));
 
     ORList tors;
     UINT retv_sz = GENERAL_REGISTER_SIZE;
@@ -217,14 +217,14 @@ void ARMIR2OR::convertCall(IR const* ir, OUT ORList & ors, IN IOC * cont)
     tors.copyDbx(ir);
     ors.append_tail(tors);
 
-    convertReturnValue(ir, ors, cont);
+    convertReturnValue(ir, ors, cont);    
 }
 
 
 void ARMIR2OR::convertRem(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
-    ASSERT(ir->is_rem(), ("illegal ir"));
-    ASSERT(BIN_opnd0(ir) != NULL && BIN_opnd1(ir) != NULL, ("missing operand"));
+    ASSERTN(ir->is_rem(), ("illegal ir"));
+    ASSERTN(BIN_opnd0(ir) != NULL && BIN_opnd1(ir) != NULL, ("missing operand"));
     ASSERT0(!BIN_opnd0(ir)->is_vec() && !BIN_opnd1(ir)->is_vec());
     ASSERT0(BIN_opnd0(ir)->getTypeSize(m_tm) ==
             BIN_opnd1(ir)->getTypeSize(m_tm));
@@ -277,7 +277,7 @@ void ARMIR2OR::convertRem(IR const* ir, OUT ORList & ors, IN IOC * cont)
         builtin = getCG()->m_builtin_uimod;
     } else if (retv_sz <= 8) {
         builtin = getCG()->m_builtin_moddi3;
-    } else { ASSERT(0, ("Not support")); }
+    } else { ASSERTN(0, ("Not support")); }
 
     getCG()->buildCall(builtin, retv_sz, tors, cont);
 
@@ -288,11 +288,11 @@ void ARMIR2OR::convertRem(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
 void ARMIR2OR::convertAddSubFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
-    ASSERT((ir->is_add() || ir->is_sub()) && ir->is_fp(), ("illegal ir"));
+    ASSERTN((ir->is_add() || ir->is_sub()) && ir->is_fp(), ("illegal ir"));
     IR * op0 = BIN_opnd0(ir);
     IR * op1 = BIN_opnd1(ir);
 
-    ASSERT(op0 && op1, ("missing operand"));
+    ASSERTN(op0 && op1, ("missing operand"));
     ASSERT0(!op0->is_vec() && !op1->is_vec());
     ASSERT0(op0->getTypeSize(m_tm) == op1->getTypeSize(m_tm));
 
@@ -362,11 +362,11 @@ void ARMIR2OR::convertAddSubFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
 void ARMIR2OR::convertDiv(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
-    ASSERT(ir->is_div(), ("illegal ir"));
+    ASSERTN(ir->is_div(), ("illegal ir"));
     IR * op0 = BIN_opnd0(ir);
     IR * op1 = BIN_opnd1(ir);
 
-    ASSERT(op0 && op1, ("missing operand"));
+    ASSERTN(op0 && op1, ("missing operand"));
     ASSERT0(!op0->is_vec() && !op1->is_vec());
     ASSERT0(op0->getTypeSize(m_tm) == op1->getTypeSize(m_tm));
 
@@ -592,7 +592,7 @@ void ARMIR2OR::convertMulofFloat(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
 void ARMIR2OR::convertMul(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
-    ASSERT(ir->is_mul(), ("illegal ir"));
+    ASSERTN(ir->is_mul(), ("illegal ir"));
     IR * op0 = BIN_opnd0(ir);
     IR * or1 = BIN_opnd1(ir);
     CHECK_DUMMYUSE(or1);
@@ -612,14 +612,14 @@ void ARMIR2OR::convertMul(IR const* ir, OUT ORList & ors, IN IOC * cont)
             convertMulofFloat(ir, ors, cont);
         }
     } else {
-        ASSERT(0, ("unsupport"));
+        ASSERTN(0, ("unsupport"));
     }
 }
 
 
 void ARMIR2OR::convertNeg(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
-    ASSERT(ir->is_neg(), ("illegal ir"));
+    ASSERTN(ir->is_neg(), ("illegal ir"));
     IR * opnd = UNA_opnd(ir);
     if (opnd->is_const()) {
         ASSERT0(opnd->is_const() && opnd->is_int());
@@ -681,7 +681,7 @@ void ARMIR2OR::invertBoolValue(Dbx * dbx, SR * val, OUT ORList & ors)
     SR * one = getCG()->genIntImm(1, false);
     OR_TYPE orty = mapIRType2ORType(IR_XOR,
         m_tm->get_dtype_bytesize(D_B), val, one, false);
-    ASSERT(orty != OR_UNDEF,
+    ASSERTN(orty != OR_UNDEF,
         ("mapIRType2ORType() can not find proper operation"));
 
     OR * o;
@@ -1235,7 +1235,7 @@ VAR const* ARMIR2OR::fp2fp(IR const* tgt, IR const* src)
     UINT tgtsz = tgt->getTypeSize(m_tm);
     UINT srcsz = src->getTypeSize(m_tm);
     DUMMYUSE(srcsz);
-    ASSERT(tgtsz != srcsz, ("CVT is redundant"));
+    ASSERTN(tgtsz != srcsz, ("CVT is redundant"));
 
     if (tgtsz == GENERAL_REGISTER_SIZE) {
         ASSERT0(srcsz == GENERAL_REGISTER_SIZE * 2);
@@ -1256,7 +1256,7 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
         return;
     }
 
-    ASSERT(!ir->is_void() && !CVT_exp(ir)->is_void(), ("TODO"));
+    ASSERTN(!ir->is_void() && !CVT_exp(ir)->is_void(), ("TODO"));
 
     ORList tors;
     IOC tmp;
@@ -1371,7 +1371,7 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT ORList & ors, IN IOC * cont)
             o = getCG()->buildOR(OR_ret1, 0, 3,
                 getCG()->genTruePred(), getCG()->genReturnAddr(), r0);
         } else {
-            ASSERT(SR_vec(retv) && SR_vec_idx(retv) == 0,
+            ASSERTN(SR_vec(retv) && SR_vec_idx(retv) == 0,
                 ("it should be the first SR in vector"));
             SR * retv_2 = SR_vec(retv)->get(1);
             SR * r1 = getCG()->gen_r1();
@@ -1501,7 +1501,7 @@ OR_TYPE ARMIR2OR::mapIRType2ORType(
     case IR_GOTO:
         orty = OR_b;
         break;
-    default: ASSERT(0, ("unsupport"));
+    default: ASSERTN(0, ("unsupport"));
     }
     return orty;
 }

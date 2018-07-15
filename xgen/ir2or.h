@@ -139,6 +139,7 @@ protected:
 
 protected:
     void convertLoadConst(IR const* ir, OUT ORList & ors, IN IOC * cont);
+    void spreadSRVec(IOC * cont, Vector<SR*> * vec);
 
 public:
     IR2OR(CG * cg);
@@ -225,38 +226,38 @@ public:
                     IN IOC * cont);
     virtual void convertAdd(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_add(), ("illegal ir"));
+        ASSERTN(ir->is_add(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
 
     virtual void convertSub(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_sub(), ("illegal ir"));
+        ASSERTN(ir->is_sub(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
 
     virtual void convertDiv(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_div(), ("illegal ir"));
+        ASSERTN(ir->is_div(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
 
     virtual void convertMul(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_mul(), ("illegal ir"));
+        ASSERTN(ir->is_mul(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
 
 
     virtual void convertRem(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_rem(), ("illegal ir"));
+        ASSERTN(ir->is_rem(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
 
     virtual void convertMod(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_mod(), ("illegal ir"));
+        ASSERTN(ir->is_mod(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
 
@@ -266,34 +267,34 @@ public:
             OUT ORList & ors,
             IN IOC * cont)
     {
-        ASSERT(ir->is_land(), ("illegal ir"));
+        ASSERTN(ir->is_land(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
 
     //Logical OR
     virtual void convertLogicalOr(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_lor(), ("illegal ir"));
+        ASSERTN(ir->is_lor(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
 
     //Bitwise AND
     virtual void convertBitAnd(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_band(), ("illegal ir"));
+        ASSERTN(ir->is_band(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
 
     //Bitwise OR
     virtual void convertBitOr(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_bor(), ("illegal ir"));
+        ASSERTN(ir->is_bor(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
 
     virtual void convertXOR(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_xor(), ("illegal ir"));
+        ASSERTN(ir->is_xor(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
 
@@ -301,7 +302,7 @@ public:
     //e.g BNOT(0x0001) = 0xFFFE
     virtual void convertBitNot(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_bnot(), ("illegal ir"));
+        ASSERTN(ir->is_bnot(), ("illegal ir"));
         convertUnaryOp(ir, ors, cont);
     }
 
@@ -312,49 +313,49 @@ public:
             OUT ORList & ors,
             IN IOC * cont)
     {
-        ASSERT(ir->is_lnot(), ("illegal ir"));
+        ASSERTN(ir->is_lnot(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
 
     virtual void convertNeg(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_neg(), ("illegal ir"));
+        ASSERTN(ir->is_neg(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
 
     virtual void convertLT(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_lt(), ("illegal ir"));
+        ASSERTN(ir->is_lt(), ("illegal ir"));
         convertRelationOp(ir, ors, cont);
     }
 
     virtual void convertLE(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_le(), ("illegal ir"));
+        ASSERTN(ir->is_le(), ("illegal ir"));
         convertRelationOp(ir, ors, cont);
     }
 
     virtual void convertGT(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_gt(), ("illegal ir"));
+        ASSERTN(ir->is_gt(), ("illegal ir"));
         convertRelationOp(ir, ors, cont);
     }
 
     virtual void convertGE(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_ge(), ("illegal ir"));
+        ASSERTN(ir->is_ge(), ("illegal ir"));
         convertRelationOp(ir, ors, cont);
     }
 
     virtual void convertEQ(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir->is_eq(), ("illegal ir"));
+        ASSERTN(ir->is_eq(), ("illegal ir"));
         convertRelationOp(ir, ors, cont);
     }
 
     virtual void convertNE(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
-        ASSERT(ir && ir->is_ne(), ("illegal ir"));
+        ASSERTN(ir && ir->is_ne(), ("illegal ir"));
         convertRelationOp(ir, ors, cont);
     }
 

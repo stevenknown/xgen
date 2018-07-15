@@ -118,7 +118,7 @@ public:
 
     virtual SR * genSP();
     virtual SR * genFP();
-    virtual SR * genGP();    
+    virtual SR * genGP();
     SR * gen_r0();
     SR * gen_r1();
     SR * gen_r2();
@@ -308,7 +308,7 @@ public:
     virtual bool isStackPointerValueEqu(SR const* base1, SR const* base2);
     virtual bool isSP(SR const* sr) const;
     virtual bool isReduction(OR * o);
-    virtual bool is_even_reg(REG reg) const;
+    virtual bool isEvenReg(REG reg) const;
     virtual OR_TYPE invertORType(OR_TYPE ot)
     {
         switch (ot) {

@@ -44,16 +44,10 @@ OR * ARMORMgr::allocOR()
     return new ARMOR();
 }
 
-CG * g_cg = NULL; //FIXME
 void ARMOR::set_pred(SR * v)
 {
     ASSERT_DUMMYUSE(HAS_PREDICATE_REGISTER, ("target not support"));
-
-    //FIXME
-    //Set predicate register to TRUE-prediate always to avoid validataion assert.
-    //This hack code intends to pass compiling ARM target.
-    ASSERT0(g_cg);
-    set_opnd(0, g_cg->genTruePred());
+    set_opnd(0, v);
 }
 //END ARMORMgr
 

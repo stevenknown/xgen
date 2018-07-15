@@ -32,6 +32,43 @@ author: Su Zhenyu
 
 namespace xgen {
 
+#ifdef _DEBUG_
+SR const* checkSRVAR(SR const* sr)
+{
+    ASSERT0(SR_is_var(sr));
+    return sr;
+}
+
+
+SR const* checkSRLAB(SR const* sr)
+{
+    ASSERT0(SR_is_label(sr));
+    return sr;
+}
+
+
+SR const* checkSRREG(SR const* sr)
+{
+    ASSERT0(SR_is_reg(sr));
+    return sr;
+}
+
+
+SR const* checkSRSTR(SR const* sr)
+{
+    ASSERT0(SR_is_str(sr));
+    return sr;
+}
+
+
+SR const* checkSRIMM(SR const* sr)
+{
+    ASSERT0(SR_is_imm(sr));
+    return sr;
+}
+#endif
+
+
 //
 //START SR
 //
@@ -39,11 +76,7 @@ void SR::copy(SR const* sr, bool is_clone_vec, IN CG * cg)
 {
     type = sr->type;
     u2.bitflags = sr->u2.bitflags;
-
-    //field 'u4' is the most largest for the union.
-    SR_int_imm(this) = SR_int_imm(sr);
-    SR_imm_size(this) = SR_imm_size(sr);
-    SR_spill_var(this) = SR_spill_var(sr);
+    u1 = sr->u1;
     if (is_clone_vec && SR_is_vec(sr)) {
         ASSERT0(cg);
         List<SR*> l;
@@ -59,16 +92,12 @@ void SR::copy(SR const* sr, bool is_clone_vec, IN CG * cg)
 
 void SR::clean()
 {
+    //There is virtual table.
     type = SR_UNDEF;
     u2.bitflags = 0;
-
-    //field 'u3' is the most largest for the union.
-    SR_int_imm(this) = 0;
-    SR_imm_size(this) = 0;
-
-    SR_spill_var(this) = NULL;
-    SR_vec(this) = NULL; //vec will be dropped to pool. TODO: recycle it.
-    SR_vec_idx(this) = -1;
+    u1.u2 = {0};
+    m_sr_vec = NULL; //vec will be dropped to pool. TODO: recycle it.
+    m_sr_vec_idx = -1;
 }
 
 
@@ -197,7 +226,7 @@ CHAR const* SR::get_name(StrBuf & buf, CG * cg) const
         break;
     case SR_STR: {
         CHAR * s = SYM_name(SR_str(this));
-        buf.nstrcat(MAX_BUF_LEN, "\"%s\"", s);
+        buf.nstrcat(MAX_SR_NAME_BUF_LEN, "\"%s\"", s);
         break;
     }
     case SR_LAB:

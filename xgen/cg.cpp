@@ -34,7 +34,7 @@ namespace xgen {
 
 CG::CG(xoc::Region * rg, CGMgr * cgmgr)
 {
-    ASSERT(rg, ("Code generation need region info."));
+    ASSERTN(rg, ("Code generation need region info."));
     ASSERT0(cgmgr);
     m_ru = rg;
     m_cgmgr = cgmgr;
@@ -110,7 +110,7 @@ OR * CG::buildOR(OR_TYPE orty, UINT resnum, UINT opndnum, ...)
     while (i < opndnum) {
         SR * sr = va_arg(ptr, SR*);
         if (i == 0 && HAS_PREDICATE_REGISTER) {
-            ASSERT(SR_is_pred(sr), ("first operand must be predicate SR"));
+            ASSERTN(SR_is_pred(sr), ("first operand must be predicate SR"));
         }
         o->set_opnd(i, sr);
         i++;
@@ -327,7 +327,7 @@ void CG::buildSub(
         return;
     } else {
         //May be the VAR is an offset that will be computed lazy.
-        ASSERT(!SR_is_var(src2), ("subtract VAR is unsupport"));
+        ASSERTN(!SR_is_var(src2), ("subtract VAR is unsupport"));
     }
     buildAddRegReg(false, src1, src2, sr_size, is_sign, ors, cont);
 }
@@ -347,14 +347,14 @@ void CG::buildMod(
     DUMMYUSE(is_sign);
     DUMMYUSE(sr_size);
     OR_TYPE orty = OR_UNDEF;
-    ASSERT(0, ("Target Dependent Code"));
+    ASSERTN(0, ("Target Dependent Code"));
     if (SR_is_int_imm(src1) && SR_is_int_imm(src2)) {
         *result = genIntImm((HOST_INT)(SR_int_imm(src1) % SR_int_imm(src2)),
             true);
         return;
     }
 
-    ASSERT(!SR_is_int_imm(*result), ("Not allocate result sr"));
+    ASSERTN(!SR_is_int_imm(*result), ("Not allocate result sr"));
     OR * o = buildOR(orty, 1, 3, *result, genTruePred(), src1, src2);
     OR_clust(o) = clust;
     ors.append_tail(o);
@@ -382,7 +382,7 @@ void CG::buildTypeCvt(
         OUT ORList & ors,
         IN OUT IOC * cont)
 {
-    ASSERT(!tgt->is_vec() && !src->is_vec(), ("TODO"));
+    ASSERTN(!tgt->is_vec() && !src->is_vec(), ("TODO"));
     UINT tgt_size = tgt->getTypeSize(m_tm);
     UINT src_size = src->getTypeSize(m_tm);
     if (tgt_size <= src_size || tgt_size <= GENERAL_REGISTER_SIZE) {
@@ -423,7 +423,7 @@ void CG::buildTypeCvt(
             ASSERT0(src_low->getByteSize() == 8);
         }
     } else {
-        ASSERT(0, ("TODO"));
+        ASSERTN(0, ("TODO"));
     }
 }
 
@@ -506,7 +506,7 @@ void CG::buildGeneralLoad(
         SR * addr;
         switch (IOC_mem_byte_size(cont)) {
         case 0:
-            ASSERT(0, ("invalid mem size"));
+            ASSERTN(0, ("invalid mem size"));
             break;
         case 1: //1byte
         case 2:
@@ -521,7 +521,7 @@ void CG::buildGeneralLoad(
             } else if (GENERAL_REGISTER_SIZE == 8) {
                 break;
             }
-            ASSERT(0, ("unsupport"));
+            ASSERTN(0, ("unsupport"));
             break;
         default:
             addr = NULL;
@@ -562,7 +562,7 @@ void CG::buildAccumulate(
     DUMMYUSE(red_var);
     DUMMYUSE(restore_val);
     DUMMYUSE(ors);
-    ASSERT(0, ("Target Dependent Code"));
+    ASSERTN(0, ("Target Dependent Code"));
 }
 
 
@@ -879,16 +879,16 @@ void CG::computeVarBaseOffset(
     if (VAR_is_local(var)) {
         computeAndUpdateStackVarLayout(var, base, ofst);
         if (m_is_compute_sect_offset) {
-            ASSERT(SR_is_int_imm(*ofst), ("offset must be imm"));
+            ASSERTN(SR_is_int_imm(*ofst), ("offset must be imm"));
             SR_int_imm(*ofst) += (HOST_INT)var_ofst;
         } else {
-            ASSERT(SR_is_var(*ofst), ("offset must be var"));
+            ASSERTN(SR_is_var(*ofst), ("offset must be var"));
             SR_var_ofst(*ofst) += (UINT)var_ofst;
         }
     } else if (VAR_is_global(var)) {
         computeAndUpdateGlobalVarLayout(var, base, ofst);
     } else {
-        ASSERT(0, ("Unsupported"));
+        ASSERTN(0, ("Unsupported"));
     }
 }
 
@@ -1153,7 +1153,7 @@ bool CG::mapRegSet2RegFile(
         RegSet const* regs)
 {
     for (INT reg = regs->get_first(); reg != -1; reg = regs->get_next(reg)) {
-        ASSERT(reg > 0, ("First register number starts from zero at least."));
+        ASSERTN(reg > 0, ("First register number starts from zero at least."));
         REGFILE regfile = tmMapReg2RegFile(reg);
         INT count = regfilev.get(regfile);
         regfilev.set(regfile, ++count);
@@ -1191,7 +1191,7 @@ bool CG::changeORUnit(
         Vector<bool> const& regfile_unique,
         bool is_test)
 {
-    ASSERT(o && to_unit != 0 && to_clust != CLUST_UNDEF, ("o is NULL"));
+    ASSERTN(o && to_unit != 0 && to_clust != CLUST_UNDEF, ("o is NULL"));
 
     //Get corresponding opcode.
     OR_TYPE new_opc = computeEquivalentORType(OR_code(o), to_unit, to_clust);
@@ -1218,7 +1218,7 @@ bool CG::changeORUnit(
                 //but some of them still have chance to change to other
                 //function unit when the new function unit could also
                 //use the regfile of 'sr'.
-                ASSERT(SR_regfile(sr) != RF_UNDEF, ("illegal unique regfile"));
+                ASSERTN(SR_regfile(sr) != RF_UNDEF, ("illegal unique regfile"));
                 //First handle the specical case.
                 if (sr == genSP()) {
                     if (!isSPUnit(to_unit))  {
@@ -1244,7 +1244,7 @@ bool CG::changeORUnit(
                 continue;
             }
             if (SR_is_reg(sr) && regfile_unique.get(SR_sregid(sr))) {
-                ASSERT(SR_regfile(sr) != RF_UNDEF,
+                ASSERTN(SR_regfile(sr) != RF_UNDEF,
                         ("Regfile unique sr should alloated regfile"));
                 //First handle the specical case.
                 if (sr == genSP()) {
@@ -1271,7 +1271,7 @@ bool CG::changeORUnit(
     }
 
     if (!changeORType(o, new_opc, from_clust, to_clust, regfile_unique)) {
-        ASSERT(0, ("OR_TYPE(%s) has NO alternative on the given unit!",
+        ASSERTN(0, ("OR_TYPE(%s) has NO alternative on the given unit!",
                 OR_code_name(o)));
         return false;
     }
@@ -1310,7 +1310,7 @@ bool CG::changeORType(
         Vector<bool> const& regfile_unique)
 {
     DUMMYUSE(src);
-    ASSERT(tgt != CLUST_UNDEF, ("need cluster info"));
+    ASSERTN(tgt != CLUST_UNDEF, ("need cluster info"));
     UINT i;
     //Performing verification and substitution certainly.
     for (i = 0; i < o->result_num(); i++) {
@@ -1322,14 +1322,14 @@ bool CG::changeORType(
 
             //Handle dedicated SR.
             if (SR_is_dedicated(sr)) {
-                ASSERT(0, ("TODO"));
+                ASSERTN(0, ("TODO"));
                 continue;
             }
 
             //Handle general SR.
             if (SR_phy_regid(sr) != REG_UNDEF) {
-                ASSERT(SR_regfile(sr) != RF_UNDEF, ("Loss regfile info"));
-                ASSERT(tgt == mapReg2Cluster(SR_phy_regid(sr)), ("Unmatch info"));
+                ASSERTN(SR_regfile(sr) != RF_UNDEF, ("Loss regfile info"));
+                ASSERTN(tgt == mapReg2Cluster(SR_phy_regid(sr)), ("Unmatch info"));
             } else {
                 if (!regfile_unique.get(SR_sregid(sr))) {
                     SR_phy_regid(sr) = REG_UNDEF;
@@ -1348,17 +1348,17 @@ bool CG::changeORType(
 
             //Handle dedicated sr.
             if (SR_is_dedicated(sr)) {
-                ASSERT(0, ("TODO"));
+                ASSERTN(0, ("TODO"));
                 continue;
             }
 
             //Handle general sr.
             if (SR_phy_regid(sr) != REG_UNDEF) {
-                ASSERT(SR_regfile(sr) != RF_UNDEF, ("Loss regfile info"));
+                ASSERTN(SR_regfile(sr) != RF_UNDEF, ("Loss regfile info"));
 
                 //When 'sr' has been assigned register, the 'tgt' cluster
                 //must be as same as the cluster which 'sr' correlated to.
-                //ASSERT(tgt == mapReg2Cluster(SR_phy_regid(sr)),
+                //ASSERTN(tgt == mapReg2Cluster(SR_phy_regid(sr)),
                 //       ("Unmatch info"));
                 if (tgt != mapReg2Cluster(SR_phy_regid(sr))) {
                     interwarn("Unmatch info, may generate redundant copy.");
@@ -1462,7 +1462,7 @@ bool CG::isCondExecOR(OR * o)
 //TODO: support integer multiplication, logical operation, etc.
 bool CG::isReductionOR(OR * o)
 {
-    ASSERT(0, ("Target Dependent Code"));
+    ASSERTN(0, ("Target Dependent Code"));
     DUMMYUSE(o);
     return false;
 }
@@ -1556,7 +1556,7 @@ bool CG::isSameSpillLoc(xoc::VAR const* or1loc, OR const* or1, OR const* or2)
 //'prev' must be ordered prior to 'next' in ORBB.
 //The same predicate register also should not be defined
 //between 'prev' and 'next'.
-bool CG::isSameCondExec(OR * prev, OR * next, BBORList & or_list)
+bool CG::isSameCondExec(OR * prev, OR * next, BBORList const* or_list)
 {
     SR * p1 = prev->get_pred();
     SR * p2 = next->get_pred();
@@ -1575,12 +1575,13 @@ bool CG::isSameCondExec(OR * prev, OR * next, BBORList & or_list)
     //  prev and next are not same cond-exec.
 
     ORCt * ct = NULL;
-    or_list.find(prev, &ct);
+    BBORList * torlst = const_cast<BBORList*>(or_list);
+    torlst->find(prev, &ct);
     if (isSREqual(p1, p2)) {
         SR * pd = p1;
         OR * test;
-        for (test = or_list.get_next(&ct); test;
-             test = or_list.get_next(&ct)) {
+        for (test = torlst->get_next(&ct);
+             test != NULL; test = torlst->get_next(&ct)) {
             if (test == next) {
                 break;
             }
@@ -1588,7 +1589,7 @@ bool CG::isSameCondExec(OR * prev, OR * next, BBORList & or_list)
                 return false;
             }
         }
-        ASSERT(test != NULL, ("next-o does not placed behind prev-o"));
+        ASSERTN(test, ("next-o does not placed behind prev-o"));
         return true;
     }
     return false;
@@ -1619,7 +1620,7 @@ bool CG::isValidOpndRegfile(
         return false;
     }
     RegFileSet const* rfs = getValidRegfileSet(ortype, opndnum, false);
-    ASSERT(rfs != NULL, ("miss target machine info"));
+    ASSERTN(rfs != NULL, ("miss target machine info"));
     if (rfs->is_contain(regfile)) {
         return true;
     }
@@ -1637,7 +1638,7 @@ bool CG::isValidRegInSRVec(OR *, SR * sr, UINT idx, bool is_result)
 {
     DUMMYUSE(is_result);
     DUMMYUSE(idx);
-    ASSERT(0, ("Target Dependent Code"));
+    ASSERTN(0, ("Target Dependent Code"));
     if (SR_vec(sr) != NULL) {
         //Do some verification.
         return true;
@@ -1655,7 +1656,7 @@ bool CG::isValidResultRegfile(OR_TYPE ortype, INT resnum, REGFILE regfile) const
         return false;
     }
     RegFileSet const* rfs = getValidRegfileSet(ortype, resnum, true);
-    ASSERT(rfs, ("absence of target machine info"));
+    ASSERTN(rfs, ("absence of target machine info"));
     return rfs->is_contain(regfile);
 }
 
@@ -1685,7 +1686,7 @@ bool CG::isReduction(OR * o)
     if (reduct_opnd == 0) { return false; }
 
     //Determining the OR-type of reduction-operation.
-    ASSERT(0, ("Target Dependent Code"));
+    ASSERTN(0, ("Target Dependent Code"));
     return false;
 }
 
@@ -1791,7 +1792,7 @@ CLUST CG::computeAsmCluster(IN OR * o)
                     res_clust = cur;
                 } else if (cur != CLUST_UNDEF && cur != res_clust) {
                     //Asm operation cross multiple clusters.
-                    ASSERT(0, ("Target Dependent Code"));
+                    ASSERTN(0, ("Target Dependent Code"));
                 }
             }
         }
@@ -1820,7 +1821,7 @@ CLUST CG::computeAsmCluster(IN OR * o)
                     opnd_clust = cur;
                 } else if (cur != CLUST_UNDEF && cur != res_clust) {
                     //Asm operation cross multiple clusters.
-                    ASSERT(0, ("Target Dependent Code"));
+                    ASSERTN(0, ("Target Dependent Code"));
                 }
             }
         }
@@ -1830,7 +1831,7 @@ CLUST CG::computeAsmCluster(IN OR * o)
     if (res_clust != CLUST_UNDEF && opnd_clust != CLUST_UNDEF) {
         if (res_clust != opnd_clust) {
             //Asm operation cross multiple clusters.
-            ASSERT(0, ("Target Dependent Code"));
+            ASSERTN(0, ("Target Dependent Code"));
         } else {
             clust = res_clust;
         }
@@ -1846,7 +1847,7 @@ CLUST CG::computeAsmCluster(IN OR * o)
 //Return cluster of bus operation.
 CLUST CG::computeClusterOfBusOR(IN OR *)
 {
-    ASSERT(0, ("Target Dependent Code"));
+    ASSERTN(0, ("Target Dependent Code"));
     return CLUST_UNDEF;
 }
 
@@ -1866,7 +1867,7 @@ CLUST CG::computeORCluster(OR const* o) const
 SLOT CG::computeORSlot(OR const*)
 {
     SLOT slot = FIRST_SLOT;
-    ASSERT(0, ("Target Dependent Code"));
+    ASSERTN(0, ("Target Dependent Code"));
     return slot;
 }
 
@@ -1887,9 +1888,6 @@ void CG::storeParamToStack(
         OUT ORList & ors,
         IN IOC *)
 {
-    //param_sr: SR vector recorded SRs to store.
-    //param_dbx: Dbx vector recorded debug info of each SR.
-
     ASSERT0(argdescmgr);
     IOC tc;
     ORList tors;
@@ -1901,7 +1899,8 @@ void CG::storeParamToStack(
         UINT param_sect_ofst = ARGDESCMGR_passed_arg_byte_size(argdescmgr);
 
         if (desc->is_record_addr) {
-            //stack is down growth.
+            //x = sp + param_sect_ofst;
+            //copy(x, parameter_start_addr, copy_size);
             tc.clean();
             buildAdd(genSP(),
                 genIntImm((HOST_INT)param_sect_ofst, false),
@@ -1913,8 +1912,8 @@ void CG::storeParamToStack(
                 desc->param_byte_size, tors, &tc);
             argdescmgr->incPassedArgByteSize(desc->param_byte_size);
         } else {
-            ASSERT(desc->param_byte_size <= 8, ("TODO"));
-            //stack is down growth.
+            //[x] = [sp + param_sect_ofst];
+            ASSERTN(desc->param_byte_size <= 8, ("TODO"));
             tc.clean();
             IOC_mem_byte_size(&tc) = desc->param_byte_size;
             buildStore(desc->param_start_addr, genSP(),
@@ -1962,7 +1961,7 @@ void CG::expandFakeOR(OR * o, OUT IssuePackageList * ipl)
     case OR_spadjust:
         expandSpadjust(o, ipl);
         break;
-    default: ASSERT(0, ("Target Dependent Code"));
+    default: ASSERTN(0, ("Target Dependent Code"));
     }
 }
 
@@ -2001,35 +2000,35 @@ void CG::package(Vector<BBSimulator*> & simvec)
 //Generate TRUE predicate register.
 SR * CG::genTruePred()
 {
-    ASSERT(0, ("Target dependent"));
+    ASSERTN(0, ("Target dependent"));
     return NULL;
 }
 
 
 SR * CG::genRflag()
 {
-    ASSERT(0, ("Target dependent"));
+    ASSERTN(0, ("Target dependent"));
     return NULL;
 }
 
 
 SR * CG::genSP()
 {
-    ASSERT(0, ("Target dependent"));
+    ASSERTN(0, ("Target dependent"));
     return NULL;
 }
 
 
 SR * CG::genFP()
 {
-    ASSERT(0, ("Target dependent"));
+    ASSERTN(0, ("Target dependent"));
     return NULL;
 }
 
 
 SR * CG::genGP()
 {
-    ASSERT(0, ("Target dependent"));
+    ASSERTN(0, ("Target dependent"));
     return NULL;
 }
 
@@ -2097,7 +2096,7 @@ SR * CG::genDedicatedReg(REG phy_reg)
     if (sr == NULL) {
         sr = genReg();
         SR_regfile(sr) = tmMapReg2RegFile(phy_reg);
-        ASSERT(SR_regfile(sr) != RF_UNDEF, ("incomplete target info"));
+        ASSERTN(SR_regfile(sr) != RF_UNDEF, ("incomplete target info"));
         SR_phy_regid(sr) = phy_reg;
         SR_is_dedicated(sr) = true;
         SR_is_global(sr) = true;
@@ -2237,7 +2236,7 @@ SR * CG::getDedicatedSRForPhyReg(REG reg)
 REGFILE CG::getPredicateRegfile() const
 {
     ASSERT0_DUMMYUSE(HAS_PREDICATE_REGISTER);
-    ASSERT(0, ("Target Dependent Code"));
+    ASSERTN(0, ("Target Dependent Code"));
     return RF_UNDEF;
 }
 
@@ -2263,7 +2262,7 @@ void CG::setSpadjustOffset(OR * spadj, INT size)
     DUMMYUSE(spadj);
     DUMMYUSE(size);
     ASSERT0(spadj && OR_code(spadj) == OR_spadjust);
-    ASSERT(0, ("Target Dependent Code"));
+    ASSERTN(0, ("Target Dependent Code"));
 }
 
 
@@ -2328,13 +2327,14 @@ void CG::renameOpnd(OR * o, SR * oldsr, SR * newsr, bool match_phy_reg)
 //Rename opnd and result of OR from oldsr to newsr in range
 //between 'start' and the end OR of BB.
 //The renaming process does not consider physical register if SR assigned.
-void CG::renameOpndResultFollowed(
+void CG::renameOpndAndResultFollowed(
         SR * oldsr,
         SR * newsr,
         ORCt * start,
-        BBORList & ors)
+        BBORList * ors)
 {
-    for (OR * o = start->val(); start != ors.end(); o = ors.get_next(&start)) {
+    for (OR * o = start->val(); start != ors->end();
+         o = ors->get_next(&start)) {
         ASSERT0(o);
         renameOpnd(o, oldsr, newsr, false);
         renameResult(o, oldsr, newsr, false);
@@ -2345,57 +2345,58 @@ void CG::renameOpndResultFollowed(
 //Rename opnd and result of OR from oldsr to newsr in range
 //between 'start' and the end OR of BB.
 //The renaming process does not consider physical register if SR assigned.
-void CG::renameOpndResultFollowed(
+void CG::renameOpndAndResultFollowed(
         SR * oldsr,
         SR * newsr,
         OR * start,
-        BBORList & ors)
+        BBORList * ors)
 {
     ORCt * ct = NULL;
-    bool is = ors.find(start, &ct);
+    bool is = ors->find(start, &ct);
     CHECK_DUMMYUSE(is);
-    renameOpndResultFollowed(oldsr, newsr, ct, ors);
+    renameOpndAndResultFollowed(oldsr, newsr, ct, ors);
 }
 
 
 //Rename opnd and result of OR from 'oldsr' to 'newsr' in between
 //'start' and 'end'.
 //Note that 'start' will be renamed, but 'end' is not.
-void CG::renameOpndResultInRange(
+void CG::renameOpndAndResultInRange(
         SR * oldsr,
         SR * newsr,
         ORCt * start,
         ORCt * end,
-        BBORList & orlist)
+        BBORList * orlist)
 {
-    ASSERT(start && end, ("not in list"));
+    ASSERTN(start && end && oldsr != newsr, ("not in list"));
     for (OR * o = start->val();
          o != NULL && start != end;
-         o = orlist.get_next(&start)) {
+         o = orlist->get_next(&start)) {
         renameOpnd(o, oldsr, newsr, false);
         renameResult(o, oldsr, newsr, false);
     }
-    ASSERT(start == end, ("out of given range"));
+    ASSERTN(start == end, ("out of given range"));
 }
 
 
 //Rename opnd and result of OR from 'oldsr' to 'newsr' in between
 //'start' and 'end'.
 //Note that 'start' will be renamed, but 'end' is not.
-void CG::renameOpndResultInRange(
+void CG::renameOpndAndResultInRange(
         SR * oldsr,
         SR * newsr,
         OR * start,
         OR * end,
-        BBORList & orlist)
+        BBORList * orlist)
 {
     if (start == NULL) { return; }
+    ASSERT0(oldsr != newsr);
     bool in_range = false;
     ORCt * ct = NULL;
-    orlist.find(start, &ct);
+    orlist->find(start, &ct);
 
-    ASSERT(ct, ("not in list"));
-    for (OR * o = start; o != NULL; o = orlist.get_next(&ct)) {
+    ASSERTN(ct, ("not in list"));
+    for (OR * o = start; o != NULL; o = orlist->get_next(&ct)) {
         renameOpnd(o, oldsr, newsr, false);
         renameResult(o, oldsr, newsr, false);
         if (o == end) {
@@ -2405,7 +2406,7 @@ void CG::renameOpndResultInRange(
     }
 
     DUMMYUSE(in_range);
-    ASSERT(in_range, ("out of given range"));
+    ASSERTN(in_range, ("out of given range"));
 }
 
 
@@ -2442,15 +2443,15 @@ bool CG::isRegoutDep(OR * from, OR * to)
 //Check asm-o clobber set.
 bool CG::mustAsmDef(OR const* o, SR const* sr) const
 {
-    ASSERT(OR_is_asm(o), ("expect asm-o"));
-    ASSERT(SR_is_reg(sr), ("sr is not register"));
+    ASSERTN(OR_is_asm(o), ("expect asm-o"));
+    ASSERTN(SR_is_reg(sr), ("sr is not register"));
     if (SR_phy_regid(sr) == REG_UNDEF) {
         return false;
     }
 
     ORAsmInfo * asm_info = getAsmInfo(o);
     if (asm_info == NULL) {
-        ASSERT(0, ("asm info for o is NULL?"));
+        ASSERTN(0, ("asm info for o is NULL?"));
         return false;
     }
     //Check DEF register set.
@@ -2656,7 +2657,7 @@ void CG::generateFuncUnitDedicatedCode()
         ors.clean();
         IOC_int_imm(&cont) = 0;
         buildSpadjust(ors, &cont);
-        ASSERT(ors.get_elem_count() == 1, ("at most one spadjust operation."));
+        ASSERTN(ors.get_elem_count() == 1, ("at most one spadjust operation."));
         ORBB_orlist(bb)->append_head(ors);
         ORBB_entry_spadjust(bb) = ors.get_head();
     }
@@ -2690,7 +2691,7 @@ void CG::generateFuncUnitDedicatedCode()
         ors.clean();
         IOC_int_imm(&cont) = 0;
         buildSpadjust(ors, &cont);
-        ASSERT(ors.get_elem_count() == 1, ("at most one spadjust operation."));
+        ASSERTN(ors.get_elem_count() == 1, ("at most one spadjust operation."));
         if (last_or != NULL &&
             (OR_is_call(last_or) ||
              OR_is_cond_br(last_or) ||
@@ -2707,7 +2708,7 @@ void CG::generateFuncUnitDedicatedCode()
 
 void CG::setCluster(ORList & ors, CLUST clust)
 {
-    ASSERT(clust != CLUST_UNDEF, ("Undef cluster"));
+    ASSERTN(clust != CLUST_UNDEF, ("Undef cluster"));
     for (OR * o = ors.get_head(); o; o = ors.get_next()) {
         OR_clust(o) = clust;
     }
@@ -2796,10 +2797,10 @@ void CG::reviseFormalParameterAndSpadjust()
     INT size = (INT)SECT_size(getStackSection()) + CG_max_real_param_size(this);
 
     //Adjust size by stack alignment.
-    ASSERT(isPowerOf2(STACK_ALIGNMENT),
+    ASSERTN(isPowerOf2(STACK_ALIGNMENT),
            ("For the convenience of generating double load/store"));
     UINT mask = STACK_ALIGNMENT - 1; //get the mask.
-    ASSERT(mask <= 0xFFFF, ("Stack alignment is too big"));
+    ASSERTN(mask <= 0xFFFF, ("Stack alignment is too big"));
     size = (size + mask) & ~mask; //size is not less than stack alignment.
 
     if (!g_is_enable_fp &&
@@ -3210,15 +3211,26 @@ void CG::preLS(IN ORBB * bb,
 }
 
 
+//This function does not handling SRs in bewteen stmt1 and stmt2,
+//which include stmt1, not include stmt2.
+//e.g:
+// ... <- first_use
+// ...
+// first_def <- ... //stmt1
+// ... <- not_first_use
+// last_def <- ... //stmt2
+// ...
+// ... <- use
 void CG::localizeBB(SR * sr, ORBB * bb)
 {
+    ASSERT0(SR_is_reg(sr));
+    ASSERTN(!SR_is_dedicated(sr),
+        ("rename dedicated register may incur illegal instruction format"));
     ASSERT0(sr && bb);
     xcom::C<OR*> * orct = NULL;
-    xcom::C<OR*> * insert_reload_ct = NULL;
+    xcom::C<OR*> * first_usestmt_ct = NULL;
     xcom::C<OR*> * first_defstmt_ct = NULL;
     xcom::C<OR*> * last_defstmt_ct = NULL;
-    bool has_def = false;
-    bool has_exposed_use = false;
 
     for (ORBB_orlist(bb)->get_head(&orct);
          orct != ORBB_orlist(bb)->end();
@@ -3226,15 +3238,11 @@ void CG::localizeBB(SR * sr, ORBB * bb)
         OR * o = orct->val();
         ASSERT0(o);
 
-        if (!has_exposed_use) {
-            //There may have several exposed-use, only record the
-            //foremost one.
+        if (first_usestmt_ct == NULL && first_defstmt_ct == NULL) {
             for (UINT i = 0; i < o->opnd_num(); i++) {
                 SR const* tsr = o->get_opnd(i);
                 if (tsr != sr) { continue; }
-
-                has_exposed_use = true;
-                insert_reload_ct = orct;
+                first_usestmt_ct = orct;
                 break;
             }
         }
@@ -3242,7 +3250,6 @@ void CG::localizeBB(SR * sr, ORBB * bb)
         for (UINT i = 0; i < o->result_num(); i++) {
             SR const* tsr = o->get_result(i);
             if (tsr != sr) { continue; }
-            has_def = true;
             if (first_defstmt_ct == NULL) {
                 first_defstmt_ct = orct;
             }
@@ -3250,35 +3257,49 @@ void CG::localizeBB(SR * sr, ORBB * bb)
         }
     }
 
-    ASSERT0(has_def || has_exposed_use);
+    ASSERT0(first_defstmt_ct || first_usestmt_ct);
     if (SR_spill_var(sr) == NULL) {
         genSpillVar(sr);
     }
+    IOC toc;
     ASSERT0(SR_spill_var(sr));
-
-    IOC tmp;
-    IOC_mem_byte_size(&tmp) = sr->getByteSize();
+    IOC_mem_byte_size(&toc) = GENERAL_REGISTER_SIZE; // sr->getByteSize();
     ORList ors;
-
-    if (has_exposed_use) {
+    if (first_usestmt_ct != NULL) {
+        //Handle upward exposed use.
+        toc.clean_bottomup();
         SR * newsr = genReg();
-        buildLoad(newsr, SR_spill_var(sr), 0, ors, &tmp);
-        ASSERT0(insert_reload_ct != ORBB_orlist(bb)->end());
-        ORBB_orlist(bb)->insert_before(ors, insert_reload_ct);
-        if (first_defstmt_ct != NULL) {
-            renameOpndResultInRange(sr, newsr,
-                insert_reload_ct, first_defstmt_ct, *ORBB_orlist(bb));
+        buildLoad(newsr, SR_spill_var(sr), 0, ors, &toc);
+        ASSERT0(first_usestmt_ct != ORBB_orlist(bb)->end());
+        ORBB_orlist(bb)->insert_before(ors, first_usestmt_ct);
+
+        ASSERT0(first_usestmt_ct == first_defstmt_ct ||
+            ORBB_orlist(bb)->is_or_precedes(
+                first_usestmt_ct->val(), first_defstmt_ct->val()));
+
+        if (first_usestmt_ct == first_defstmt_ct) {
+            renameOpnd(first_usestmt_ct->val(), sr, newsr, false);
+        } else if (ORBB_orlist(bb)->is_or_precedes(
+                       first_usestmt_ct->val(), first_defstmt_ct->val())) {
+            renameOpndAndResultInRange(sr, newsr,
+                first_usestmt_ct, first_defstmt_ct, ORBB_orlist(bb));
         } else {
-            renameOpndResultFollowed(sr, newsr,
-                insert_reload_ct, *ORBB_orlist(bb));
+            //USE live through BB.
+            // <-use
+            // ...
+            // <-use
+            renameOpndAndResultFollowed(sr, newsr,
+                first_usestmt_ct, ORBB_orlist(bb));
         }
     }
 
-    if (has_def) {
+    if (first_defstmt_ct) {
+        //Handle downward exposed use.
+        toc.clean_bottomup();
         ors.clean();
-        SR * newsr = genReg();
-        buildStore(newsr, SR_spill_var(sr), 0, ors, &tmp);
 
+        SR * newsr = genReg();
+        buildStore(newsr, SR_spill_var(sr), 0, ors, &toc);
         if (HAS_PREDICATE_REGISTER) {
             SR * pd = last_defstmt_ct->val()->get_pred();
             if (pd != NULL) {
@@ -3287,7 +3308,8 @@ void CG::localizeBB(SR * sr, ORBB * bb)
         }
 
         ORBB_orlist(bb)->append_tail_ex(ors);
-        renameOpndResultFollowed(sr, newsr, last_defstmt_ct, *ORBB_orlist(bb));
+        renameOpndAndResultFollowed(sr, newsr,
+            last_defstmt_ct, ORBB_orlist(bb));
     }
 }
 
@@ -3389,9 +3411,9 @@ bool CG::verify()
                 SR * sr = o->get_result(i);
                 ASSERT0(sr);
                 if (SR_is_reg(sr)) {
-                    ASSERT(SR_phy_regid(sr) != REG_UNDEF,
+                    ASSERTN(SR_phy_regid(sr) != REG_UNDEF,
                         ("SR is not assigned physical register"));
-                    ASSERT(SR_regfile(sr) != RF_UNDEF,
+                    ASSERTN(SR_regfile(sr) != RF_UNDEF,
                         ("SR is not assigned register file"));
                 }
                 if (SR_is_int_imm(sr)) {
@@ -3402,9 +3424,9 @@ bool CG::verify()
                 SR * sr = o->get_opnd(i);
                 ASSERT0(sr);
                 if (SR_is_reg(sr)) {
-                    ASSERT(SR_phy_regid(sr) != REG_UNDEF,
+                    ASSERTN(SR_phy_regid(sr) != REG_UNDEF,
                         ("SR is not assigned physical register"));
-                    ASSERT(SR_regfile(sr) != RF_UNDEF,
+                    ASSERTN(SR_regfile(sr) != RF_UNDEF,
                         ("SR is not assigned register file"));
                 }
                 if (SR_is_int_imm(sr)) {
@@ -3420,7 +3442,7 @@ bool CG::verify()
 
 bool CG::perform()
 {
-    ASSERT(isPowerOf2(STACK_ALIGNMENT),
+    ASSERTN(isPowerOf2(STACK_ALIGNMENT),
            ("Stack alignment should be power of 2"));
 
     if (m_ru->getIRList() == NULL &&
@@ -3442,7 +3464,7 @@ bool CG::perform()
     //FILE * h = fopen("cg.log","a");
     //FILE * x = xoc::g_tfile;
     //xoc::g_tfile = h;
-    if (m_ru->isRegionName("fun9"))
+    if (m_ru->isRegionName("main"))
     {
         m_ru->dump(false);
         //dumpBBList(m_ru->getBBList(), m_ru);
@@ -3456,7 +3478,7 @@ bool CG::perform()
 
     constructORBBList(or_list);
 
-    //if (m_ru->isRegionName("foo9"))
+    if (m_ru->isRegionName("main"))
     {
         dumpBBList(m_ru->getBBList(), m_ru);
         dumpORBBList(m_or_bb_list);
@@ -3469,22 +3491,26 @@ bool CG::perform()
     OptCtx oc;
     m_or_cfg->removeEmptyBB(oc);
     m_or_cfg->build(oc);
-    //m_or_cfg->dump_vcg("graph_or_cfg.vcg");
 
+    m_or_cfg->dump_vcg("graph_or_cfg.vcg");
+    dumpORBBList(m_or_bb_list);
     m_or_cfg->removeEmptyBB(oc);
+    dumpORBBList(m_or_bb_list);
     m_or_cfg->computeExitList();
     if (m_or_cfg->removeUnreachBB()) {
         m_or_cfg->computeExitList();
     }
+    dumpORBBList(m_or_bb_list);
 
     if (m_ru->is_function()) {
         generateFuncUnitDedicatedCode();
     }
 
+    dumpORBBList(m_or_bb_list);
     if (!isGRAEnable()) { localize(); }
 
     dumpORBBList(m_or_bb_list);
-    RaMgr * ra_mgr = performRA();    
+    RaMgr * ra_mgr = performRA();
 
     bool change;
     do {
@@ -3510,14 +3536,14 @@ bool CG::perform()
     Vector<BBSimulator*> simvec;
     performIS(simvec, ra_mgr);
 
-    computeStackVarImmOffset();    
+    computeStackVarImmOffset();
 
     //if (m_ru->isRegionName("bar")) {
     //    getParamSection()->dump(this);
     //    getStackSection()->dump(this);
     //    dumpORBBList(m_or_bb_list);
     //}
-
+    dumpORBBList(m_or_bb_list);
     ASSERT0(verify());
 
     delete ra_mgr;

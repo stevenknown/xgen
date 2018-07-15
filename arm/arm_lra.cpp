@@ -36,3 +36,40 @@ author: Su Zhenyu
 #include "../cfe/cfexport.h"
 #include "../opt/util.h"
 
+
+void ARMLifeTimeMgr::considerSpecialConstrains(
+        IN OR * o,
+        SR const* sr,
+        OUT RegSet & usable_regs)
+{
+    ASSERTN(o && sr, ("NULL input"));
+    ARMCG * armcg = (ARMCG*)m_cg;
+    switch (OR_code(o)) {
+    case OR_ldrd:
+    case OR_ldrd_i32:
+    case OR_ldrd_i10: {
+         //First Rd must be even number register.
+        SR * low = o->get_result(PAIR_LOW_RES_IDX);
+        SR * high = o->get_result(PAIR_HIGH_RES_IDX);
+        if (sr == low) {
+             for (REG tmpr = usable_regs.get_first();
+                 ((INT)tmpr) != -1;
+                 tmpr = usable_regs.get_next(tmpr)) {
+                if (!armcg->isEvenReg(tmpr)) {
+                    usable_regs.diff(tmpr);
+                }
+            }
+        } else if (sr == high) {
+            for (REG tmpr = usable_regs.get_first();
+                 ((INT)tmpr) != -1; tmpr = usable_regs.get_next(tmpr)) {
+                if (armcg->isEvenReg(tmpr)) {
+                    usable_regs.diff(tmpr);
+                }
+            }
+        }
+    }
+    break;
+    default:;
+    }
+
+}

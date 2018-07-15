@@ -99,7 +99,7 @@ bool BBSimulator::done()
 //Allocate ordesc container
 ORDesc * BBSimulator::allocORDesc()
 {
-    ASSERT(m_pool, ("not yet initialized."));
+    ASSERTN(m_pool, ("not yet initialized."));
     ORDesc * c = m_free_list.get_free_elem();
     if (c == NULL) {
         c = (ORDesc*)xmalloc(sizeof(ORDesc));
@@ -112,9 +112,9 @@ ORDesc * BBSimulator::allocORDesc()
 bool BBSimulator::issue(OR * o, SLOT slot)
 {
     DUMMYUSE(slot);
-    ASSERT(m_pool, ("not yet initialized."));
-    ASSERT(slot >= FIRST_SLOT && slot <= LAST_SLOT, ("Unknown slot"));
-    ASSERT(m_exec_tab[slot].get(m_cyc_counter) == NULL,
+    ASSERTN(m_pool, ("not yet initialized."));
+    ASSERTN(slot >= FIRST_SLOT && slot <= LAST_SLOT, ("Unknown slot"));
+    ASSERTN(m_exec_tab[slot].get(m_cyc_counter) == NULL,
         ("slot has been occupied by other candidate-OR"));
 
     //result-available-cycle o execution-cycle should start
@@ -170,7 +170,7 @@ UINT BBSimulator::getExecCycle(OR const* o)
     //CASE: Although asm("Just_a_Label:") is not executable,
     //but the asm-o also participated scheduling as a real opertion.
     //The correct format of this case should be asm("Just_a_Label:":::"memory");
-    ASSERT(cyc >= 1, ("at least execute one cycle"));
+    ASSERTN(cyc >= 1, ("at least execute one cycle"));
     return cyc;
 }
 
@@ -190,7 +190,7 @@ UINT BBSimulator::getMinLatency(OR * o)
 //And if that is true, we say the current cycle is in-shadow.
 bool BBSimulator::isInShadow(ORDesc const* ord) const
 {
-    ASSERT(m_pool, ("not yet initialized."));
+    ASSERTN(m_pool, ("not yet initialized."));
     if (m_cyc_counter > ORDESC_start_cyc(ord)) {
         return true;
     }
@@ -304,9 +304,9 @@ bool BBSimulator::isResourceConflict(
 bool BBSimulator::canBeIssued(OR const* o, SLOT slot, DataDepGraph & ddg)
 {
     DUMMYUSE(slot);
-    ASSERT(m_pool, ("not yet initialized."));
-    ASSERT(slot >= FIRST_SLOT && slot <= LAST_SLOT, ("Unknown slot"));
-    ASSERT(m_exec_tab[slot].get(m_cyc_counter) == NULL, ("slot has issued o"));
+    ASSERTN(m_pool, ("not yet initialized."));
+    ASSERTN(slot >= FIRST_SLOT && slot <= LAST_SLOT, ("Unknown slot"));
+    ASSERTN(m_exec_tab[slot].get(m_cyc_counter) == NULL, ("slot has issued o"));
 
     for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {
         for (ORDesc * ord = m_slot_lst[i].get_head(); ord != NULL;
@@ -336,7 +336,7 @@ bool BBSimulator::canBeIssued(OR const* o, SLOT slot, DataDepGraph & ddg)
 
 void BBSimulator::runOneCycle(IN OUT ORList * finished_ors)
 {
-    ASSERT(m_pool, ("not yet initialized."));
+    ASSERTN(m_pool, ("not yet initialized."));
     m_cyc_counter++;
     for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {
         ORDesc * next;
@@ -376,7 +376,7 @@ void BBSimulator::dump(CHAR * name, bool is_del, bool dump_exec_detail)
     }
 
     FILE * h = fopen(name,"a+");
-    ASSERT(h, ("%s create failed!!!", name));
+    ASSERTN(h, ("%s create failed!!!", name));
 
     //cyc may be zero
     INT cyc_counter = getCurCycle();

@@ -85,7 +85,7 @@ IR * Canon::handle_lda(IR * ir, bool & change, CanonCtx * cc)
     //    SimpCtx tc;
     //    SIMP_array(&tc) = true;
     //    ir = m_ru->simplifyArrayAddrExp(LDA_base(ir), &tc);
-    //    ASSERT(SIMP_stmtlist(&tc) == NULL, ("TODO: handle this case"));
+    //    ASSERTN(SIMP_stmtlist(&tc) == NULL, ("TODO: handle this case"));
     //    if (cc != NULL) {
     //        add_next(&cc->new_stmts, SIMP_stmtlist(&tc));
     //    }

@@ -70,9 +70,9 @@ void DataDepGraph::setParallelPartMgr(ParallelPartMgr * ppm)
 
 void * DataDepGraph::xmalloc(UINT size)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     if (size == 0) return NULL;
-    ASSERT(m_pool != 0, ("need graph pool!!"));
+    ASSERTN(m_pool != 0, ("need graph pool!!"));
     void * p = smpoolMalloc(size, m_pool);
     if (p == NULL) return NULL;
     ::memset(p, 0, size);
@@ -226,8 +226,8 @@ void DataDepGraph::chainPredAndSucc(OR * o)
 void DataDepGraph::reschedul()
 {
     if (!m_is_init) return;
-    ASSERT(m_bb, ("xcom::Graph still not yet initialize."));
-    ASSERT(!m_is_clonal,
+    ASSERTN(m_bb, ("xcom::Graph still not yet initialize."));
+    ASSERTN(!m_is_clonal,
     ("Since the limitation of compiler, "
      "clonal DDG does not allow rescheduling."));
 
@@ -259,8 +259,8 @@ void DataDepGraph::reschedul()
 void DataDepGraph::rebuild()
 {
     if(!m_is_init) return;
-    ASSERT(m_bb, ("xcom::Graph still not yet initialize."));
-    ASSERT(!m_is_clonal,
+    ASSERTN(m_bb, ("xcom::Graph still not yet initialize."));
+    ASSERTN(!m_is_clonal,
           ("Since the limitation of some compiler, "
            "clonal DDG does not allow rescheduling."));
 
@@ -280,7 +280,7 @@ void DataDepGraph::rebuild()
 //Compute the slack range by lstart - estart.
 INT DataDepGraph::get_slack(OR * o)
 {
-    ASSERT(m_is_init && o, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init && o, ("xcom::Graph still not yet initialize."));
     ASSERT0(m_lstart_vec.get(OR_id(o)) >= m_estart_vec.get(OR_id(o)));
     return m_lstart_vec.get(OR_id(o)) - m_estart_vec.get(OR_id(o));
 }
@@ -289,14 +289,14 @@ INT DataDepGraph::get_slack(OR * o)
 //Return true if OR is on the critical path.
 bool DataDepGraph::isOnCriticalPath(OR * o)
 {
-    ASSERT(m_is_init && o, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init && o, ("xcom::Graph still not yet initialize."));
     return m_estart_vec.get(OR_id(o)) == m_lstart_vec.get(OR_id(o));
 }
 
 
 UINT DataDepGraph::computeCriticalPathLen(BBSimulator & sim)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     UINT max = 0;
     ORCt * ct;
     for (OR * o = ORBB_orlist(m_bb)->get_head(&ct); o;
@@ -316,7 +316,7 @@ UINT DataDepGraph::computeCriticalPathLen(BBSimulator & sim)
 
 ORBB * DataDepGraph::bb() const
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     return m_bb;
 }
 
@@ -324,7 +324,7 @@ ORBB * DataDepGraph::bb() const
 //Return true if there is a data dependence between o1 and o2.
 bool DataDepGraph::is_dependent(OR const* o1, OR const* o2)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
 #define METHOD1
 #ifdef METHOD1
     if(get_edge(OR_id(o1), OR_id(o2))) {
@@ -340,7 +340,7 @@ bool DataDepGraph::is_dependent(OR const* o1, OR const* o2)
 //Return true if actually add new edge.
 bool DataDepGraph::appendEdge(ULONG deptype, OR const* from, OR const* to)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     if (!m_ddg_param.reg_read_read_dep && deptype == DEP_REG_READ) {
         //Omit RAR dep.
         return false;
@@ -356,14 +356,14 @@ bool DataDepGraph::appendEdge(ULONG deptype, OR const* from, OR const* to)
 
 void DataDepGraph::removeEdge(OR * from, OR * to)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     removeEdge(OR_id(from), OR_id(to));
 }
 
 
 void DataDepGraph::removeEdge(UINT from, UINT to)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     xcom::Graph::removeEdge(get_edge(from, to));
 }
 
@@ -388,7 +388,7 @@ void DataDepGraph::traverse()
 //Return true if o1 is independent with o2.
 bool DataDepGraph::is_independent(OR * o1, OR * o2)
 {
-    ASSERT(m_is_init && m_ppm, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init && m_ppm, ("xcom::Graph still not yet initialize."));
     CLUST clst1 = m_cg->computeORCluster(o1);
     CLUST clst2 = m_cg->computeORCluster(o2);
     if (clst1 == clst2 || clst1 == CLUST_UNDEF || clst2 == CLUST_UNDEF) {
@@ -417,7 +417,7 @@ bool DataDepGraph::is_independent(OR * o1, OR * o2)
 
 bool DataDepGraph::must_def_sp_reg(OR *)
 {
-    ASSERT(0, ("TODO"));
+    ASSERTN(0, ("TODO"));
     return false;
 }
 
@@ -669,7 +669,7 @@ void DataDepGraph::handle_opnds(
 
 void DataDepGraph::buildRegDep()
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     if (ORBB_ornum(m_bb) == 0) { return; }
 
     Reg2ORList map_reg2defors;
@@ -699,9 +699,9 @@ void DataDepGraph::getORListWhichAccessSameMem(
         OUT ORList & mem_ors,
         OR const* o)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     mem_ors.clean();
-    ASSERT(o, ("Node:%d is not on DDG.", OR_id(o)));
+    ASSERTN(o, ("Node:%d is not on DDG.", OR_id(o)));
     xcom::Vertex * v = get_vertex(OR_id(o));
     if (v == NULL) { return; }
 
@@ -783,7 +783,7 @@ void DataDepGraph::getORListWhichAccessSameMem(
             }
         }
 
-        ASSERT(false == mem_ors.find(succ), ("Repetitive o"));
+        ASSERTN(false == mem_ors.find(succ), ("Repetitive o"));
 
         if (tmp != NULL) {
             mem_ors.insert_before(succ, tmp);
@@ -866,7 +866,7 @@ void DataDepGraph::handle_store(
 #ifdef MEM_DEP_HAS_CONSTRUCTED
 void DataDepGraph::buildMemDep()
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     if (ORBB_ornum(m_bb) == 0) return;
 
     UINT2ORList map_memloc2defors;
@@ -987,7 +987,7 @@ void DataDepGraph::buildMemFlowDep(OR * from, OR * to)
 
 void DataDepGraph::buildMemInDep(OR *, OR *, VAR const*)
 {
-    ASSERT(0, ("TODO"));
+    ASSERTN(0, ("TODO"));
 }
 
 
@@ -999,7 +999,7 @@ void DataDepGraph::buildMemVolatileDep(OR * from, OR * to)
 
 void DataDepGraph::build()
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     if (ORBB_ornum(m_bb) == 0) return;
     preBuild();
     buildRegDep();
@@ -1010,7 +1010,7 @@ void DataDepGraph::build()
 
 void * DataDepGraph::cloneEdgeInfo(xcom::Edge * e)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     if(!EDGE_info(e)) return NULL;
     DDGEdgeInfo * dei =(DDGEdgeInfo*)xmalloc(sizeof(DDGEdgeInfo));
     ::memcpy(dei, EDGE_info(e), sizeof(DDGEdgeInfo));
@@ -1020,7 +1020,7 @@ void * DataDepGraph::cloneEdgeInfo(xcom::Edge * e)
 
 void * DataDepGraph::cloneVertexInfo(xcom::Vertex * v)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     if(!VERTEX_info(v)) return NULL;
     DDGNodeInfo *vi = (DDGNodeInfo*)xmalloc(sizeof(DDGNodeInfo));
     ::memcpy(vi, VERTEX_info(v), sizeof(DDGNodeInfo));
@@ -1030,7 +1030,7 @@ void * DataDepGraph::cloneVertexInfo(xcom::Vertex * v)
 
 void DataDepGraph::clone(DataDepGraph & ddg)
 {
-    ASSERT(m_is_init, ("xcom::Graph already initialized."));
+    ASSERTN(m_is_init, ("xcom::Graph already initialized."));
     m_bb = ddg.bb();
     m_ppm = ddg.m_ppm;
     m_ddg_param = ddg.m_ddg_param;
@@ -1048,7 +1048,7 @@ void DataDepGraph::clone(DataDepGraph & ddg)
 //Append node on graph.
 void DataDepGraph::appendOR(OR * o)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     if (o == NULL) return;
     addVertex(OR_id(o));
     m_mapidx2or_map.set(OR_id(o), o);
@@ -1058,7 +1058,7 @@ void DataDepGraph::appendOR(OR * o)
 //Remove node on graph.
 void DataDepGraph::removeORIdx(UINT oridx)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     OR * o = getOR(oridx);
     removeOR(o);
 }
@@ -1067,7 +1067,7 @@ void DataDepGraph::removeORIdx(UINT oridx)
 //Remove node on graph.
 void DataDepGraph::removeOR(OR * o)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     if (o == NULL) return;
     if (removeVertex(OR_id(o)) == NULL) {
         return;
@@ -1079,7 +1079,7 @@ void DataDepGraph::removeOR(OR * o)
 //Get first node on graph.
 OR * DataDepGraph::getFirstOR(INT & cur)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     return getOR(VERTEX_id(m_vertices.get_first(cur)));
 }
 
@@ -1087,7 +1087,7 @@ OR * DataDepGraph::getFirstOR(INT & cur)
 //Get next node on graph.
 OR * DataDepGraph::getNextOR(INT & cur)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     return getOR(VERTEX_id(m_vertices.get_next(cur)));
 }
 
@@ -1095,7 +1095,7 @@ OR * DataDepGraph::getNextOR(INT & cur)
 //Return all predecessors with ordered lexicographicly.
 void DataDepGraph::getPredsByOrder(IN OUT ORList & preds, IN OR * o)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     preds.clean();
 
     xcom::Vertex * v = get_vertex(OR_id(o));
@@ -1125,8 +1125,8 @@ void DataDepGraph::getPredsByOrder(IN OUT ORList & preds, IN OR * o)
 //Return all successors with ordered lexicographicly.
 void DataDepGraph::getSuccsByOrder(IN OUT ORList & succs, IN OR * o)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
-    ASSERT(o != NULL, ("Node:%d is not on DDG.", OR_id(o)));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(o != NULL, ("Node:%d is not on DDG.", OR_id(o)));
     succs.clean();
 
     xcom::Vertex * v = get_vertex(OR_id(o));
@@ -1134,7 +1134,7 @@ void DataDepGraph::getSuccsByOrder(IN OUT ORList & succs, IN OR * o)
 
     for (xcom::EdgeC * el = VERTEX_out_list(v); el != NULL; el = EC_next(el)) {
         OR * succ = getOR(VERTEX_id(EDGE_to(EC_edge(el))));
-        ASSERT(succ, ("DDG is invalid."));
+        ASSERTN(succ, ("DDG is invalid."));
         OR * marker;
         for (marker = succs.get_head(); marker; marker = succs.get_next()) {
             if (ORBB_orlist(m_bb)->is_or_precedes(succ, marker)) {
@@ -1156,8 +1156,8 @@ void DataDepGraph::getPredsByOrderTraverseNode(
         IN OUT ORList & preds,
         OR const* o)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
-    ASSERT(o != NULL, ("Node:%d is not on DDG.", OR_id(o)));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(o != NULL, ("Node:%d is not on DDG.", OR_id(o)));
     preds.clean();
 
     xcom::Vertex * v = get_vertex(OR_id(o));
@@ -1184,7 +1184,7 @@ void DataDepGraph::getPredsByOrderTraverseNode(
             continue;
         } else {
             OR * svor = getOR(VERTEX_id(sv));
-            ASSERT(svor != NULL, ("o not in ddg"));
+            ASSERTN(svor != NULL, ("o not in ddg"));
             tmpbuf.append(svor);
         }
     }
@@ -1199,7 +1199,7 @@ void DataDepGraph::getPredsByOrderTraverseNode(
                 break;
             }
         }
-        ASSERT(!preds.find(pred), ("Repetitive o"));
+        ASSERTN(!preds.find(pred), ("Repetitive o"));
         if (tmp != NULL) {
             preds.insert_before(pred, tmp);
         } else {
@@ -1214,8 +1214,8 @@ void DataDepGraph::getSuccsByOrderTraverseNode(
         IN OUT ORList & succs,
         OR const* o)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
-    ASSERT(o != NULL, ("Node:%d is not on DDG.", OR_id(o)));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(o != NULL, ("Node:%d is not on DDG.", OR_id(o)));
     succs.clean();
 
     xcom::Vertex * v = get_vertex(OR_id(o));
@@ -1242,7 +1242,7 @@ void DataDepGraph::getSuccsByOrderTraverseNode(
             continue;
         } else {
             OR * svor = getOR(VERTEX_id(sv));
-            ASSERT(svor != NULL, ("o not in ddg"));
+            ASSERTN(svor != NULL, ("o not in ddg"));
             tmpbuf.append(svor);
         }
     }
@@ -1257,7 +1257,7 @@ void DataDepGraph::getSuccsByOrderTraverseNode(
                 break;
             }
         }
-        ASSERT(!succs.find(succ), ("Repetitive o"));
+        ASSERTN(!succs.find(succ), ("Repetitive o"));
         if (tmp != NULL) {
             succs.insert_before(succ, tmp);
         } else {
@@ -1270,7 +1270,7 @@ void DataDepGraph::getSuccsByOrderTraverseNode(
 //Return all successors.
 void DataDepGraph::get_succs(IN OUT ORList & succs, OR const* o)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     succs.clean();
     xcom::Vertex * v = get_vertex(OR_id(o));
     if (v == NULL) return;
@@ -1279,7 +1279,7 @@ void DataDepGraph::get_succs(IN OUT ORList & succs, OR const* o)
 
     while (el != NULL) {
         OR * succ = getOR(VERTEX_id(EDGE_to(EC_edge(el))));
-        ASSERT(succ != NULL, ("Illegal o list"));
+        ASSERTN(succ != NULL, ("Illegal o list"));
         succs.append_tail(succ);
         el = EC_next(el);
     }
@@ -1289,7 +1289,7 @@ void DataDepGraph::get_succs(IN OUT ORList & succs, OR const* o)
 //Return all predecessors.
 void DataDepGraph::get_preds(IN OUT List<xcom::Vertex*> & preds, IN xcom::Vertex * v)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     preds.clean();
     if (v == NULL) return;
     xcom::EdgeC * el = VERTEX_in_list(v);
@@ -1304,7 +1304,7 @@ void DataDepGraph::get_preds(IN OUT List<xcom::Vertex*> & preds, IN xcom::Vertex
 //Return all predecessors.
 void DataDepGraph::get_preds(IN OUT ORList & preds, OR const* o)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     preds.clean();
 
     xcom::Vertex * v = get_vertex(OR_id(o));
@@ -1314,7 +1314,7 @@ void DataDepGraph::get_preds(IN OUT ORList & preds, OR const* o)
 
     while (el != NULL) {
         OR * pred = getOR(VERTEX_id(EDGE_from(EC_edge(el))));
-        ASSERT(pred != NULL, ("Illegal o list"));
+        ASSERTN(pred != NULL, ("Illegal o list"));
         preds.append_tail(pred);
         el = EC_next(el);
     }
@@ -1323,14 +1323,14 @@ void DataDepGraph::get_preds(IN OUT ORList & preds, OR const* o)
 
 void DataDepGraph::get_neighbors(IN OUT ORList & nis, OR const* o)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     xcom::Vertex * v = get_vertex(OR_id(o));
     if (v == NULL) return;
     xcom::EdgeC * el = VERTEX_out_list(v);
     if (el == NULL) return;
     while (el != NULL) {
         OR * succ = getOR(VERTEX_id(EDGE_to(EC_edge(el))));
-        ASSERT(succ, ("Illegal o list"));
+        ASSERTN(succ, ("Illegal o list"));
         nis.append_tail(succ);
         el = EC_next(el);
     }
@@ -1339,7 +1339,7 @@ void DataDepGraph::get_neighbors(IN OUT ORList & nis, OR const* o)
     if (el == NULL) return;
     while (el != NULL) {
         OR * pred = getOR(VERTEX_id(EDGE_from(EC_edge(el))));
-        ASSERT(pred != NULL, ("Illegal o list"));
+        ASSERTN(pred != NULL, ("Illegal o list"));
         nis.append_tail(pred);
         el = EC_next(el);
     }
@@ -1361,7 +1361,7 @@ void DataDepGraph::getEstartAndLstart(
 //'fin_op': record the o with the maximum path length.
 UINT DataDepGraph::computeEstartAndLstart(IN BBSimulator & sim, OUT OR ** fin_or)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     m_estart_vec.clean();
     m_lstart_vec.clean();
     List<xcom::Vertex*> worklst;
@@ -1387,13 +1387,13 @@ UINT DataDepGraph::computeEstartAndLstart(IN BBSimulator & sim, OUT OR ** fin_or
 
     while (worklst.get_elem_count() > 0) {
         xcom::Vertex * v = worklst.remove_head();
-        ASSERT(!visited.get(VERTEX_id(v)), ("circuit exists in graph"));
+        ASSERTN(!visited.get(VERTEX_id(v)), ("circuit exists in graph"));
         INT estart = 0;
         //Scan pred nodes.
         xcom::EdgeC * el = VERTEX_in_list(v);
         while (el != NULL) {
             xcom::Vertex * from = EDGE_from(EC_edge(el));
-            ASSERT(visited.get(VERTEX_id(from)), ("illegal path in the graph"));
+            ASSERTN(visited.get(VERTEX_id(from)), ("illegal path in the graph"));
             OR * o = getOR(VERTEX_id(from));
             estart = MAX(estart,
                         (INT)m_estart_vec.get(VERTEX_id(from)) +
@@ -1487,7 +1487,7 @@ UINT DataDepGraph::computeEstartAndLstart(IN BBSimulator & sim, OUT OR ** fin_or
 //'vex_vec': record nodes with topological sort.
 void DataDepGraph::sortInTopological(OUT Vector<UINT> & vex_vec)
 {
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     if (get_vertex_num() == 0) {
         return;
     }
@@ -1593,7 +1593,7 @@ void DataDepGraph::simplifyGraph()
 void DataDepGraph::dump(INT flag, INT rootoridx, CHAR * name)
 {
     DUMMYUSE(rootoridx);
-    ASSERT(m_is_init, ("xcom::Graph still not yet initialize."));
+    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     #undef INF_DDG_NAME
     #define INF_DDG_NAME "zddgraph.vcg"
     if (name == NULL) {
@@ -1603,7 +1603,7 @@ void DataDepGraph::dump(INT flag, INT rootoridx, CHAR * name)
         UNLINK(name);
     }
     FILE * h = fopen(name, "a+");
-    ASSERT(h, ("%s create failed!!!",name));
+    ASSERTN(h, ("%s create failed!!!",name));
     fprintf(h, "\n/*\n");
 
     StrBuf misc(64);

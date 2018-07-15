@@ -39,6 +39,12 @@ public:
     ARMLifeTimeMgr(CG * cg) : LifeTimeMgr(cg) {}
     virtual ~ARMLifeTimeMgr() {}
     virtual void handlePreferenceReg(OR const*) {};
+
+    virtual void considerSpecialConstrains(
+            IN OR *,
+            SR const*,
+            OUT RegSet & usable_regs);
+
 };
 //END ARMLifeTimeMgr
 
