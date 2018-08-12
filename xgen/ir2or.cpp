@@ -38,6 +38,7 @@ IR2OR::IR2OR(CG * cg)
     m_ru = cg->getRegion();
     ASSERT0(m_ru);
     m_tm = m_ru->getTypeMgr();
+    m_pass_through_stack_always = true;
 }
 
 
@@ -669,27 +670,18 @@ void IR2OR::passArgThroughStack(
         OUT ORList & ors,
         IN IOC * cont)
 {
-    //Load the parameter values into a list of SR.
-    Vector<SR*> param_sr;
-    Vector<Dbx const*> param_dbx;
-
+    ASSERT0(argdescmgr);    
     //Prepare the SR vector and Dbx vector.
     IOC tmp_cont;
-    ArgDesc * desc = argdescmgr->addDesc();
-    ASSERT0(desc);
     if (ir->getTypeSize(m_tm) <= 8) {
         convertGeneralLoad(ir, ors, &tmp_cont);
 
         //This SR will be stored to stack to transfer parameter value.
         SR * arg_val = tmp_cont.get_reg(0);
-        ASSERT0(arg_val &&
-                (arg_val->getByteSize() >= ir->getTypeSize(m_tm)));
+        ASSERT0(arg_val && (arg_val->getByteSize() >= ir->getTypeSize(m_tm)));
 
-        desc->is_record_addr = false;
-        desc->param_start_addr = arg_val;
-        desc->param_dbx = ::get_dbx(ir);
-        desc->param_byte_size = ir->getTypeSize(m_tm);
-        desc->param_byte_ofst = 0;
+        argdescmgr->addValueDesc(arg_val,
+            ::get_dbx(ir), ir->getTypeSize(m_tm), 0);
     } else {
         //Memory block duplication.
         convertGeneralLoad(ir, ors, &tmp_cont);
@@ -697,18 +689,14 @@ void IR2OR::passArgThroughStack(
         //This SR will be stored to stack to transfer parameter value.
         SR * arg_val_addr = tmp_cont.get_addr();
         ASSERT0(arg_val_addr);
-        desc->is_record_addr = true;
-        desc->param_start_addr = arg_val_addr;
-        desc->param_dbx = ::get_dbx(ir);
-        desc->param_byte_size = ir->getTypeSize(m_tm);
-        desc->param_byte_ofst = 0;
-    }
-
-    m_cg->storeParamToStack(argdescmgr, ors, cont);
+        argdescmgr->addAddrDesc(arg_val_addr,
+            ::get_dbx(ir), ir->getTypeSize(m_tm), 0);
+    }    
+    m_cg->storeArgToStack(argdescmgr, ors, cont);
 }
 
 
-void IR2OR::spreadSRVec(IOC * cont, Vector<SR*> * vec)
+void IR2OR::spreadSRVec(IOC const* cont, Vector<SR*> * vec)
 {
     ASSERT0(cont && vec);
     UINT vec_count = 0;
@@ -730,96 +718,131 @@ void IR2OR::spreadSRVec(IOC * cont, Vector<SR*> * vec)
 }
 
 
+//param_offset: the offset to SP which indicates the parameter section.
+void IR2OR::copyArgToStack(
+        SR * value,
+        UINT value_size,
+        UINT param_offset,
+        IR const* ir,
+        OUT ORList & ors)
+{
+    ArgDescMgr targdescmgr;
+    IOC tc;
+    ArgDesc * desc = targdescmgr.addValueDesc(
+        value, ::get_dbx(ir), value_size, 0);
+    targdescmgr.addArgInArgSection(desc->arg_size);
+    desc->tgt_ofst = param_offset;
+    m_cg->storeArgToStack(&targdescmgr, ors, &tc);
+}
+
+
 //Return true if whole ir has been passed through registers, otherwise
 //return false.
-bool IR2OR::passArgThroughRegister(
-        IR const* ir,
+bool IR2OR::passArgInMemory(
+        IR const*,
         UINT * irsize,
-        UINT * num_arg_reg,
-        INT * phy_reg,
-        RegSet const* regs,
         OUT ArgDescMgr * argdescmgr,
-        OUT ORList & ors,
-        IN IOC *)
+        IOC const* load_cont,
+        OUT ORList & ors)
 {
-    IOC tmp_cont;
     UINT total_irsize = *irsize;
-    convertGeneralLoad(ir, ors, &tmp_cont);
-    if (tmp_cont.get_addr() != NULL) {
-        //CG compute the ADDR for data rather than generate load operation.
-        SR * start_addr = tmp_cont.get_addr();
-        //Get the address of LoadValue.
+    IOC tmp_cont;
+    
+    //CG compute the ADDR for data rather than generate load operation.
+    //Get the address of LoadValue.    
+    ASSERT0(load_cont && load_cont->get_addr());
+    SR * start_addr = load_cont->get_addr();
 
-        UINT i = 0;
-
-        //Try to pass data through argument-register.
-        for (i = 0; (*irsize) > 0 && (*num_arg_reg) != 0; i++) {
-            ASSERT0(*phy_reg != -1);
-            SR * arg = m_cg->genDedicatedReg(*phy_reg);
-            tmp_cont.clean();
-            IOC_mem_byte_size(&tmp_cont) = GENERAL_REGISTER_SIZE;
-            m_cg->buildLoad(arg, start_addr,
-                m_cg->genIntImm(i * GENERAL_REGISTER_SIZE, false),
-                ors, &tmp_cont);
-            (*num_arg_reg)--;
-            (*irsize) -= GENERAL_REGISTER_SIZE;
-            argdescmgr->incPassedArgByteSize(GENERAL_REGISTER_SIZE);
-            *phy_reg = regs->get_next(*phy_reg);
+    //Try to pass data through argument-register.
+    //Transfer data in single register size.
+    UINT transfer_size = GENERAL_REGISTER_SIZE;
+    for (UINT i = 0;; i++) {
+        SR * argreg = NULL;
+        if ((*irsize) > 0) {
+            argreg = argdescmgr->allocArgRegister(m_cg);
         }
-
-        //There is still remaining data have to be passed through stack.
-        if (*irsize > 0) {
-            tmp_cont.clean_bottomup();
-
-            //Compute the start_addr of source.
-            m_cg->buildAdd(start_addr,
-                m_cg->genIntImm(i * GENERAL_REGISTER_SIZE, false),
-                GENERAL_REGISTER_SIZE, false, ors, &tmp_cont);
-            SR * copy_start = tmp_cont.get_reg(0);
-            ASSERTN(copy_start && SR_is_reg(copy_start),
-                ("address should be recorded in a register"));
-            
-            ArgDesc * desc = argdescmgr->addDesc();
-            desc->is_record_addr = true;
-            desc->param_start_addr = copy_start;
-            desc->param_byte_ofst = total_irsize - *irsize;
-            desc->param_byte_size = *irsize;
-            return false;
+        if (argreg == NULL) {
+            break;
+        }        
+        tmp_cont.clean();
+        IOC_mem_byte_size(&tmp_cont) = transfer_size;
+        m_cg->buildLoad(argreg, start_addr,
+            m_cg->genIntImm(i * transfer_size, false),
+            ors, &tmp_cont);        
+        (*irsize) -= transfer_size;
+        if (m_pass_through_stack_always) {
+            //Should generate code before ArgDescMgr info upate.
+            //copyArgToStack(arg, transfer_size, 
+            //    argdescmgr->getArgStartAddrOnStack(), ir, ors);
         }
-        return true;
+        argdescmgr->updatePassedArgInRegister(transfer_size);
     }
 
+    //There is still remaining data have to be passed through stack.
+    if (*irsize > 0) {
+        argdescmgr->addAddrDesc(start_addr,
+            NULL, *irsize, total_irsize - *irsize);            
+        return false;
+    }
+    return true;
+}
+
+
+//Return true if whole ir has been passed through registers, otherwise
+//return false.
+bool IR2OR::passArgInRegister(
+        IR const* ir,
+        UINT * irsize,
+        OUT ArgDescMgr * argdescmgr,
+        IOC const* load_cont,
+        OUT ORList & ors)
+{
+    if (*irsize == 0) { return true; }
+    
     //Get the LoadValue and spread them into vector.
     //e.g: return value is {r1, <r4, r5>, r7}
     //     spread to: {r1, r4, r5, r7}
-    UINT i = 0;
+    UINT i = 0;    
     Vector<SR*> vec;
-    spreadSRVec(&tmp_cont, &vec);
+    ASSERT0(load_cont);
+    spreadSRVec(load_cont, &vec);
 
+    IOC tmp_cont;
     //Try to pass data through argument-register.
-    for (; (*irsize) > 0 && *num_arg_reg > 0; i++) {
+    //Transfer data in single register size.
+    UINT transfer_size = GENERAL_REGISTER_SIZE;
+    for (;; i++) {
+        SR * argreg = NULL;
+        if ((*irsize) > 0) {
+            argreg = argdescmgr->allocArgRegister(m_cg);
+        }
+        if (argreg == NULL) {
+            break;
+        }
         SR * arg_val = vec.get(i);
         //ASSERT0(arg_val && arg_val->getByteSize() == GENERAL_REGISTER_SIZE);
         //Only move register size data for each time.
         ASSERT0(arg_val);
 
-        SR * arg = m_cg->genDedicatedReg(*phy_reg);
         tmp_cont.clean();
-        m_cg->buildMove(arg, arg_val, ors, &tmp_cont);
-        (*num_arg_reg)--;
-        *irsize -= GENERAL_REGISTER_SIZE;
-        *phy_reg = regs->get_next(*phy_reg);
-        argdescmgr->incPassedArgByteSize(GENERAL_REGISTER_SIZE);
+        m_cg->buildMove(argreg, arg_val, ors, &tmp_cont);        
+        *irsize -= transfer_size;
+        
+        if (m_pass_through_stack_always) {
+            //copyArgToStack(arg, transfer_size, 
+            //    argdescmgr->getArgStartAddrOnStack(), ir, ors);
+        }       
+        argdescmgr->updatePassedArgInRegister(transfer_size);        
     }
 
-    if (*irsize > 0) {
-        //There is still remaining data have to be passed through stack.
-        ArgDesc * desc = argdescmgr->addDesc();
-        desc->is_record_addr = false;
-        desc->is_record_regvec = true;
-        desc->param_byte_size = *irsize;
-        for (UINT j = 0; (*irsize) > 0; i++, j++) {
-            desc->param_vec.set(j, tmp_cont.get_reg(i));
+    if (*irsize > 0) {        
+        //There is still remaining data have to be passed through stack.        
+        INT remaining_irsize = *irsize;
+        for (UINT j = 0; remaining_irsize > 0; i++, j++) {
+            SR * arg = vec.get(i);
+            ASSERT0(arg);
+            argdescmgr->addValueDesc(arg, ::get_dbx(ir), transfer_size, 0);
+            remaining_irsize -= transfer_size;
         }
         return false;
     }
@@ -827,6 +850,27 @@ bool IR2OR::passArgThroughRegister(
 }
 
 
+//Return true if whole ir has been passed through registers, otherwise
+//return false.
+bool IR2OR::tryPassArgThroughRegister(
+        IR const* ir,
+        IN OUT UINT * irsize,
+        OUT ArgDescMgr * argdescmgr,
+        OUT ORList & ors,
+        IOC *)
+{
+    IOC tcont;
+    convertGeneralLoad(ir, ors, &tcont);
+    if (tcont.get_addr() != NULL) {
+        //Not all parameters holded in register.
+        return passArgInMemory(ir, irsize, argdescmgr, &tcont, ors);
+    }
+    return passArgInRegister(ir, irsize, argdescmgr, &tcont, ors);
+}
+
+
+//This function try to pass all arguments through registers.
+//Otherwise pass remaingin arguments through stack memory.
 //'ir': the first parameter of CALL.
 void IR2OR::processRealParamsThroughRegister(
         IR const* ir,
@@ -834,18 +878,16 @@ void IR2OR::processRealParamsThroughRegister(
         OUT ORList & ors,
         IN IOC * cont)
 {
-    RegSet const* regs = tmGetRegSetOfArgument();
-    ASSERT0(regs && regs->get_elem_count() != 0);
+    ASSERT0(tmGetRegSetOfArgument() &&
+        tmGetRegSetOfArgument()->get_elem_count() != 0);
 
     //Prepare the SR vector and Dbx vector.
-    UINT i = 0;
-    INT phy_reg = regs->get_first();
-    UINT num_arg_reg = regs->get_elem_count();
     for (; ir != NULL; ir = ir->get_next()) {
         UINT irsize = ir->getTypeSize(m_tm);
+        argdescmgr->addArgInArgSection(irsize);
         //Try to pass ir through register.
-        if (!passArgThroughRegister(ir, &irsize,
-                &num_arg_reg, &phy_reg, regs, argdescmgr, ors, cont)) {
+        if (!tryPassArgThroughRegister(ir, &irsize,
+                argdescmgr, ors, cont)) {
             //Fail to pass argument through registers.
             ASSERT0(irsize != 0);
             break;
@@ -854,7 +896,7 @@ void IR2OR::processRealParamsThroughRegister(
     if (argdescmgr->getCurrentDesc() != NULL) {
         //Pass remainging ir through stack.
         ASSERT0(ir);
-        m_cg->storeParamToStack(argdescmgr, ors, cont);        
+        m_cg->storeArgToStack(argdescmgr, ors, cont);
         ir = ir->get_next();
     }
 
@@ -863,8 +905,9 @@ void IR2OR::processRealParamsThroughRegister(
         passArgThroughStack(ir, argdescmgr, ors, cont);
     }
     
-    ASSERT0(ARGDESCMGR_passed_arg_byte_size(argdescmgr) ==
-        ARGDESCMGR_total_byte_size(argdescmgr));
+    //ArgSectionSize may be 0 if all arguments passed through register.
+    //ASSERT0(argdescmgr->getArgSectionSize() ==
+    //    argdescmgr->getPassedArgByteSize());
 }
 
 
@@ -878,22 +921,18 @@ void IR2OR::processRealParams(IR const* ir, OUT ORList & ors, IN IOC * cont)
     }
 
     ArgDescMgr argdescmgr;
-    UINT total_byte_size = 0;
-    for (IR const* pir = ir; pir != NULL; pir = pir->get_next()) {
-        total_byte_size += (INT)ceil_align(
-            pir->getTypeSize(m_tm), STACK_ALIGNMENT);
-    }
-    ARGDESCMGR_total_byte_size(&argdescmgr) = total_byte_size;
-    IOC_param_size(cont) = total_byte_size;
-    if (isPassArgumentThroughRegister()) {
+    if (m_cg->isPassArgumentThroughRegister()) {
         processRealParamsThroughRegister(ir, &argdescmgr, ors, cont);
+
+        //Record the size as return-value.
+        IOC_param_size(cont) = argdescmgr.getArgSectionSize();
         return;
     }
 
     ASSERT_DUMMYUSE(PUSH_PARAM_FROM_RIGHT_TO_LEFT, ("Not yet support"));
     //Find the most rightside parameter in order to coincide with
     //accessing order of the calling convention of stack varaible.
-    //e.g:
+    //e.g:1
     //    f(a, b, c)
     //    {
     //      int i;
@@ -936,23 +975,21 @@ void IR2OR::processRealParams(IR const* ir, OUT ORList & ors, IN IOC * cont)
     //            -----
     //            | i |
     //            -----
-    INT param_byte_ofst = 0;
     if (g_is_enable_fp) {
         //FP will record the frame start address.
         //Caller is not responsible for pulling the SP down,
         //and callee should do it.
-        param_byte_ofst = 0;
-    } else {
-        param_byte_ofst = ARGDESCMGR_total_byte_size(&argdescmgr);
+        ASSERTN(0, ("TODO"));
     }
 
     //Load the parameter values into a list of SR.
     Vector<SR*> param_sr;
-    Vector<Dbx const*> param_dbx;
+    Vector<Dbx const*> arg_dbx;
 
     //Prepare the SR vector and Dbx vector.
     for (; ir != NULL; ir = ir->get_next()) {
         IOC tmp_cont;
+        argdescmgr.addArgInArgSection(ir->getTypeSize(m_tm));
         if (ir->getTypeSize(m_tm) <= 8) {
             convertGeneralLoad(ir, ors, &tmp_cont);
 
@@ -960,11 +997,8 @@ void IR2OR::processRealParams(IR const* ir, OUT ORList & ors, IN IOC * cont)
             SR * arg_val = tmp_cont.get_reg(0);
             ASSERT0(arg_val &&
                 (arg_val->getByteSize() >= ir->getTypeSize(m_tm)));
-            ArgDesc * desc = argdescmgr.addDesc();
-            desc->param_start_addr = arg_val;
-            desc->param_dbx = ::get_dbx(ir);
-            desc->is_record_addr = false;
-            desc->param_byte_size = ir->getTypeSize(m_tm);
+            argdescmgr.addValueDesc(arg_val,
+                ::get_dbx(ir), ir->getTypeSize(m_tm), 0);
         } else {
             //Memory block duplication.
             convertGeneralLoad(ir, ors, &tmp_cont);
@@ -972,15 +1006,15 @@ void IR2OR::processRealParams(IR const* ir, OUT ORList & ors, IN IOC * cont)
             //This SR will be stored to stack to transfer parameter value.
             SR * arg_val_addr = tmp_cont.get_addr();
             ASSERT0(arg_val_addr);
-            ArgDesc * desc = argdescmgr.addDesc();
-            desc->param_start_addr = arg_val_addr;
-            desc->param_dbx = ::get_dbx(ir);
-            desc->is_record_addr = true;
-            desc->param_byte_size = ir->getTypeSize(m_tm);
+            argdescmgr.addAddrDesc(arg_val_addr,
+                ::get_dbx(ir), ir->getTypeSize(m_tm), 0);
         }
     }
 
-    m_cg->storeParamToStack(&argdescmgr, ors, cont);
+    m_cg->storeArgToStack(&argdescmgr, ors, cont);
+
+    //Record the size as return-value.
+    IOC_param_size(cont) = argdescmgr.getArgSectionSize();
 }
 
 

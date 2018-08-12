@@ -70,6 +70,8 @@ author: Su Zhenyu
 //Defined result SR index of multiple-words-load.
 #define PAIR_LOW_RES_IDX     0
 #define PAIR_HIGH_RES_IDX    1
+#define PAIR_LOW_OPND_IDX    1
+#define PAIR_HIGH_OPND_IDX   2
 
 //Describe the maximum byte size that can be allocated on host machine stack.
 //The threshold often used in allocating memory via ALLOCA.

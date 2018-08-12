@@ -1611,7 +1611,7 @@ bool ARMCG::isValidRegInSRVec(OR *, SR * sr, UINT idx, bool is_result)
 {
     CHECK_DUMMYUSE(is_result);
     CHECK_DUMMYUSE(sr);
-    ASSERT0(SR_vec(sr) != NULL);
+    ASSERT0(SR_vec(sr));
     if (idx == 0) {
         ASSERTN(isEvenReg(SR_phy_regid(sr)),
             ("Must be even number register."));

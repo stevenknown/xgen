@@ -166,6 +166,9 @@ public:
         xoc::LabelInfo const* label; //present Internal-Label or Custom-Label
     } u1;
 
+    //Note SR which has composed SRVec can not make up another SRVec.
+    //The relationship between SR and SRVec is unique.
+    //SRs in SRVec do not have to be consecutive.    
     SRVec * m_sr_vec;
     INT m_sr_vec_idx;
 

@@ -63,47 +63,72 @@ public:
 
 class ArgDesc {
 public:
-    Vector<SR*> param_vec;
-    SR * param_start_addr;
-    xoc::Dbx const* param_dbx;
+    //If is_record_addr is true, src_value records
+    //the start address to copy. Otherwise it records the value
+    //that to be passed.
+    union {
+        SR * src_value;
+        SR * src_startaddr;
+    };
+    
+    xoc::Dbx const* arg_dbx;
     UINT is_record_addr:1;
-    UINT is_record_regvec : 1;
-    UINT param_byte_size:30; //stack byte size to be passed.
-    UINT param_byte_ofst; //stack byte offset to the base SR.
+    UINT arg_size:30; //stack byte size to be passed.
+
+    //byte offset to the base SR record in 
+    //src_startaddr if is_record_addr is true.
+    UINT src_ofst;
+
+    //byte offset to SP.
+    UINT tgt_ofst;
 
 public:
     ArgDesc() { init(); }
 
     void init()
     {
-        param_start_addr = NULL;
+        src_value = NULL;
+        src_startaddr = NULL;
         is_record_addr = false;
-        is_record_regvec = false;
-        param_dbx = NULL;
-        param_byte_size = 0;
-        param_byte_ofst = 0;
+        arg_dbx = NULL;
+        arg_size = 0;
+        src_ofst = 0;
+        tgt_ofst = 0;
     }
 };
 
 
-#define ARGDESCMGR_passed_arg_byte_size(s) ((s)->m_passed_arg_byte_size)
 #define ARGDESCMGR_total_byte_size(s) ((s)->m_total_byte_size)
 class ArgDescMgr {
 protected:
     Vector<ArgDesc*> m_arg_desc;
     List<ArgDesc*> m_arg_list;
+    RegSet m_argregs;
+
+protected:
+    List<ArgDesc*> * getArgList() { return &m_arg_list; }
 
 public:
-    //Record the byte size of argument that have been passed.
-    UINT m_passed_arg_byte_size;
+    //A counter that record byte size of argument that have been passed.
+    //User should update the value when one argument passed.
+    UINT m_passed_arg_in_register_byte_size;
 
-    //Record the total byte size of argument that to be passed.
+    //A counter that record byte size of argument that have been passed.
+    //User should update the value when one argument passed.
+    UINT m_passed_arg_in_stack_byte_size;
+
+    //Record the total byte size of argument section that to be passed.
     UINT m_total_byte_size;
 
 public:
     ArgDescMgr()
     {
-        m_passed_arg_byte_size = 0;
+        RegSet const* regs = tmGetRegSetOfArgument();
+        if (regs != NULL && regs->get_elem_count() != 0) {
+            m_argregs.copy(*regs);
+        }
+        m_passed_arg_in_register_byte_size = 0;
+        m_passed_arg_in_stack_byte_size = 0;
         m_total_byte_size = 0;
     }
     ~ArgDescMgr()
@@ -125,11 +150,85 @@ public:
         return desc;
     }
 
-    ArgDesc * pulloutDesc() { return m_arg_list.remove_head(); }
+    ArgDesc * addDesc(bool is_record_addr,
+                      SR * value_or_addr,
+                      xoc::Dbx const* dbx,
+                      UINT arg_size,
+                      UINT src_ofst)
+    {
+        ArgDesc * desc = addDesc();
+        desc->is_record_addr = is_record_addr;
+        if (is_record_addr) {
+            desc->src_startaddr = value_or_addr;
+        } else {
+            desc->src_value = value_or_addr;
+        }
+        desc->arg_dbx = dbx;
+        desc->arg_size = arg_size;
+        desc->src_ofst = src_ofst;
+        desc->tgt_ofst = getArgStartAddrOnStack(); //getArgSectionSize();
+        updatePassedArgInStack(arg_size);
+        return desc;
+    }
+
+    ArgDesc * addValueDesc(
+            SR * src_value,
+            xoc::Dbx const* dbx,
+            UINT arg_size,
+            UINT src_ofst)
+    { return addDesc(false, src_value, dbx, arg_size, src_ofst); }
+
+    ArgDesc * addAddrDesc(
+            SR * src_addr,
+            xoc::Dbx const* dbx,
+            UINT arg_size,
+            UINT src_ofst)
+    { return addDesc(true, src_addr, dbx, arg_size, src_ofst); }
+
+    //This function will increase the size of parameter section
+    //accroding to 'desc'.
+    void addArgInArgSection(UINT bytesize)
+    {
+        ARGDESCMGR_total_byte_size(this) += (INT)xcom::ceil_align(
+            bytesize, STACK_ALIGNMENT);
+    }
+
+    //Allocate dedicated argument register.
+    SR * allocArgRegister(CG * cg);
+
+    ArgDesc * pullOutDesc() { return m_arg_list.remove_head(); }
+
+    //Get the total bytesize of current parameter section.
+    UINT getArgSectionSize() const { return ARGDESCMGR_total_byte_size(this); }
     ArgDesc * getCurrentDesc() { return m_arg_list.get_head(); }
 
-    void incPassedArgByteSize(UINT bytesize)
-    { m_passed_arg_byte_size += (INT)ceil_align(bytesize, STACK_ALIGNMENT); }
+    UINT getPassedRegisterArgSize() const
+    { return m_passed_arg_in_register_byte_size; }
+    UINT getPassedStackArgSize() const
+    { return m_passed_arg_in_stack_byte_size; }
+    UINT getArgStartAddrOnStack() const { return getPassedStackArgSize(); }
+
+    //This function should be invoked after passing one argument through register.
+    //Decrease tgt_ofst for each desc by the bytesize.
+    //e.g: pass 2 argument:
+    //  %r0 = arg1;
+    //  mgr.updatePassedArgInRegister(GNENERAL_REGISTER_SIZE);
+    //  %r1 = arg2;
+    //  mgr.updatePassedArgInRegister(arg2.bytesize);
+    void updatePassedArgInRegister(UINT bytesize);
+
+    //This function should be invoked after passing one argument to arg-
+    //section. The argument may be passed through register or stack memory.
+    //e.g: pass 2 argument:
+    //  %r0 = arg1;
+    //  mgr.updatePassedArgInStack(GNENERAL_REGISTER_SIZE);
+    //  [sp+0] = arg2;
+    //  mgr.updatePassedArgInfo(arg2.bytesize);
+    void updatePassedArgInStack(UINT bytesize)
+    {
+        m_passed_arg_in_stack_byte_size += (INT)xcom::ceil_align(
+            bytesize, STACK_ALIGNMENT);
+    }    
 };
 
 
@@ -157,11 +256,11 @@ public:
 // management of register tuples and complex software pipelining
 // in case of clustered architectures tricks to reduce code size
 // or enhance code compressibility.
-#define CG_or2memaddr_map(r)                ((r)->m_or2memaddr_map)
-#define CG_max_real_param_size(r)           ((r)->m_max_real_param_size)
-#define CG_bb_level_internal_var_list(r)    ((r)->m_bb_level_internal_var_list)
-#define CG_func_level_internal_var_list(r)  ((r)->m_func_level_internal_var_list)
-#define CG_builtin_memcpy(r)                ((r)->m_builtin_memcpy)
+#define CG_or2memaddr_map(r)               ((r)->m_or2memaddr_map)
+#define CG_max_real_arg_size(r)            ((r)->m_max_real_arg_size)
+#define CG_bb_level_internal_var_list(r)   ((r)->m_bb_level_internal_var_list)
+#define CG_func_level_internal_var_list(r) ((r)->m_func_level_internal_var_list)
+#define CG_builtin_memcpy(r)               ((r)->m_builtin_memcpy)
 class CG {
 protected:
     xoc::Region * m_ru;
@@ -201,11 +300,15 @@ protected:
 
     //True if compute the section offset for global/local variable.
     bool m_is_compute_sect_offset;
+
+    //Record the max bytesize for callee argument section.
+    UINT m_max_real_arg_size;
+    
 protected:
     void addSerialDependence(ORBB * bb, DataDepGraph * ddg);
 
     UINT compute_pad();
-    inline SR * computeAndUpdateImmOfst(SR * sr, HOST_UINT frame_size);
+    SR * computeAndUpdateImmOfst(SR * sr, HOST_UINT frame_size);
 
     void * xmalloc(INT size)
     {
@@ -224,9 +327,8 @@ protected:
 
     void localizeBB(SR * sr, ORBB * bb);
     void localizeBBTab(SR * sr, xcom::TTab<ORBB*> * orbbtab);
+    
 public:
-    UINT m_max_real_param_size;
-
     //Mapping from STORE/LOAD operation to the target address.
     xcom::TMap<OR*, xoc::VAR const*> m_or2memaddr_map;
 
@@ -235,6 +337,7 @@ public:
 
     //Builtin function should be initialized in initBuiltin().
     xoc::VAR const* m_builtin_memcpy;
+    
 public:
     CG(xoc::Region * rg, CGMgr * cgmgr);
     COPY_CONSTRUCTOR(CG);
@@ -705,6 +808,7 @@ public:
 
     //Construct a name for VAR that will lived in Region.
     CHAR const* genFuncLevelNewVarName(OUT xcom::StrBuf & name);
+    UINT getMaxArgSectionSize() const { return CG_max_real_arg_size(this); }
     xoc::VAR * genTempVar(xoc::Type const* type, UINT align, bool func_level);
     OR * getOR(UINT id);
     OR * genOR(OR_TYPE ort) { return m_cgmgr->getORMgr()->gen_or(ort, this); }
@@ -743,6 +847,7 @@ public:
 
     virtual void initFuncUnit();
     virtual void initBuiltin();
+    virtual bool isPassArgumentThroughRegister() = 0;
     void initGlobalVar(VarMgr * vm);
     bool isComputeStackOffset() const { return m_is_compute_sect_offset; }
     bool isAlloca(IR const* ir);
@@ -1025,7 +1130,7 @@ public:
     virtual void reviseFormalParameterAndSpadjust();
     virtual void reviseFormalParamAccess(UINT lv_size);
 
-    virtual void storeParamToStack(
+    virtual void storeArgToStack(
             ArgDescMgr * argdesc,
             OUT ORList & ors,
             IN IOC *);
@@ -1035,6 +1140,10 @@ public:
 
     void setCluster(ORList & ors, CLUST clust);
     void setComputeSectOffset(bool doit) { m_is_compute_sect_offset = doit; }
+    void storeParameterAfterSpadjust(
+            UINT regparamoffset,
+            UINT regparamsize,
+            List<ORBB*> * entry_lst);
 
     virtual void package(Vector<BBSimulator*> & simvec);
 
@@ -1046,6 +1155,19 @@ public:
 
     bool verify();
 
+    void updateMaxCalleeArgSize(UINT maxsize)
+    {        
+        ASSERT0(maxsize < MAX_STACK_SPACE);
+        UINT sz = CG_max_real_arg_size(this);
+        sz = MAX(sz, maxsize);
+        sz = MAX(sz, (UINT)xcom::ceil_align(sz, STACK_ALIGNMENT));
+        CG_max_real_arg_size(this) = sz;
+    }
+
+    bool passArgThroughRegister(
+            OUT ArgDescMgr * argdescmgr,
+            OUT ORList & ors,
+            IOC * cont);
     void prependSpill(ORBB * bb, ORList & ors);
     virtual void preLS(
             IN ORBB * bb,

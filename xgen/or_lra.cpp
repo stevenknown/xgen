@@ -3350,29 +3350,27 @@ bool LRA::assignRegister(
     }
 
 FIN:
-    //We need dealing with its sibling.
-    LifeTime * sib = LT_sibling(lt);
-    if (sib != NULL && !LT_has_allocated(sib)) {
+    //We need deal with its sibling.
+    LifeTime * sib = NULL;
+    REG treg = reg;
+    for (sib = lt; LT_sib_prev(sib) != NULL; sib = LT_sib_prev(sib)) {        
+        treg--;
+        if (treg == REG_UNDEF) {
+            //Current assignment will incur lt's sibling allcation always fail.
+            return false;
+        }
+    }
+    
+    for (; sib != NULL; sib = LT_sib_next(sib), treg++) {
+        if (sib == lt) { continue; }
+        if (LT_has_allocated(sib)) {
+            ASSERTN(treg == SR_phy_regid(LT_sr(sib)), ("Unmatch register"));
+            continue;
+        }
         ASSERTN(SR_regfile(LT_sr(lt)) == SR_regfile(LT_sr(sib)),
                 ("Unmatch regfile"));
-        if (LT_is_low(lt)) {
-            mgr.setPreferenceReg(sib, reg+1);
-        } else {
-            mgr.setPreferenceReg(sib, reg-1);
-        }
+        mgr.setPreferenceReg(sib, treg);
     }
-
-    #ifdef _DEBUG_
-    if (sib != NULL && LT_has_allocated(sib)) {
-        if (LT_is_low(lt)) {
-            ASSERTN(reg + 1 == SR_phy_regid(LT_sr(sib)),
-                    ("Unmatch register pair."));
-        } else {
-            ASSERTN(reg == SR_phy_regid(LT_sr(sib)) + 1,
-                    ("Unmatch register pair."));
-        }
-    }
-    #endif
 
     SR_phy_regid(sr) = reg;
     if (m_ramgr != NULL) {
@@ -3527,6 +3525,7 @@ SR * LRA::genReload(
         IN LifeTimeMgr & mgr,
         OUT ORList * ors)
 {
+    oldsr->dump(m_cg); //fuck
     ASSERT0(spill_var && VAR_is_spill(spill_var));
     SR * newsr = NULL;
     ORList spill_ors;
@@ -3771,8 +3770,7 @@ void LRA::spillLSR(LifeTime * lt, LifeTimeMgr & mgr)
             } else {
                 SR * newsr = genReload(lt, LT_sr(lt), i, spill_var, mgr, &ors);
                 if (m_cg->isOpndSameWithResult(newsr,
-                                                mgr.getOR(i),
-                                                NULL, NULL)) {
+                        mgr.getOR(i), NULL, NULL)) {
                     //CASE: same operand with the result sr
                     //SR10841 :- fmacuu_i SR97(p0) SR4452(d12) GSR445(d13) SR10841
                     //    The sr belong to 'lt' is SR10841, after the reloading,
@@ -4355,7 +4353,7 @@ bool LRA::splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
             ASSERTN(SR_is_global(sr), ("Only global reg permit"));
             is_def = false;
         } else {
-            PosInfo *pi = LT_desc(lt1).get(pos);
+            PosInfo * pi = LT_desc(lt1).get(pos);
             if (POSINFO_is_def(pi)) {
                 is_def = true;
             } else {
@@ -4397,7 +4395,7 @@ bool LRA::splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
             ASSERTN(SR_is_global(sr), ("Only global reg permit"));
             is_def = false;
         } else {
-            PosInfo *pi = LT_desc(lt2).get(pos);
+            PosInfo * pi = LT_desc(lt2).get(pos);
             if (POSINFO_is_def(pi)) {
                 is_def = true;
             } else {
@@ -4448,7 +4446,7 @@ bool LRA::splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
 }
 
 
-//TODO: deprecated code, remove it.
+//Spill the closest DEF to lt2.
 bool LRA::spillFirstDef(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
 {
     //Spill
@@ -4499,8 +4497,17 @@ bool LRA::splitTwoLT(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
     ASSERTN(!(LT_has_allocated(lt1) && LT_has_allocated(lt2)),
         ("Both have allocated"));
 
-    //TODO: make sure spilling is necessary here!!
-    //spillFirstDef(lt1, lt2, mgr);
+    //Spilling is necessary here!!
+    //CASE: param.c:BB1
+    //    sr12 =
+    //    ...
+    //      sr13 =
+    //      ...
+    //           = sr12
+    //      ...
+    //           = sr13
+    //  Spill sr12 is necessary.
+    spillFirstDef(lt1, lt2, mgr);
 
     //Processing reload.
     if (LT_pos(lt1)->is_contained_in_range(LT_pos(lt2)->get_first(),
@@ -6065,9 +6072,18 @@ void LRA::assignRegFile(IN OUT ClustRegInfo cri[CLUST_NUM],
         }
 
         //Check for sibling life time
-        if (LT_sibling(lt) != NULL &&
-            SR_regfile(LT_sr(LT_sibling(lt))) != RF_UNDEF) {
-            assignDesignatedRegFile(lt, SR_regfile(LT_sr(LT_sibling(lt))), cri);
+        if (LT_sib_prev(lt) != NULL &&
+            SR_regfile(LT_sr(LT_sib_prev(lt))) != RF_UNDEF) {
+            assignDesignatedRegFile(lt,
+                SR_regfile(LT_sr(LT_sib_prev(lt))), cri);
+            continue;
+        }
+
+        //Check for sibling life time
+        if (LT_sib_next(lt) != NULL &&
+            SR_regfile(LT_sr(LT_sib_next(lt))) != RF_UNDEF) {
+            assignDesignatedRegFile(lt,
+                SR_regfile(LT_sr(LT_sib_next(lt))), cri);
             continue;
         }
 
@@ -6107,6 +6123,9 @@ bool LRA::isAlwaysColored(
         LifeTimeMgr & mgr)
 {
     RegSet * allowed_reg_set = mgr.getUsableRegSet(lt);
+    if (allowed_reg_set == NULL) {
+        return false;
+    }
     UINT degree = ig.get_degree(LT_id(lt));
 
     //lt is allocable
@@ -6199,8 +6218,11 @@ float LRA::computePrority(
     //The usable registers are fewer, the priority is higher.
     //Spill cost is inverse to the number of usable registers.
     prio /= (float)(mgr.getUsableRegSet(lt)->get_elem_count() + EPSILON);
-    if (LT_sibling(lt) != NULL) {
-        prio *= 2;
+
+    LifeTime const* h = xcom::get_first(lt);
+    UINT cnt = xcom::cnt_list(h);
+    if (cnt > 1) {
+        prio *= cnt * 2.0;
     }
     return (float)prio;
 }
@@ -7759,7 +7781,8 @@ void LRA::assignCluster(
     assignDedicatedCluster();
     if (partitioning && m_cg->isAssignClust(m_bb)) {
         partitionGroup(ddg, is_regfile_unique);
-        ASSERTN(ddg.get_param()->reg_anti_dep, ("at least reg-anti must be set"));
+        ASSERTN(ddg.get_param()->reg_anti_dep,
+            ("at least reg-anti must be set"));
     }
 
     ORCt * next_orct;

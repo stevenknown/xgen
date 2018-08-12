@@ -83,7 +83,7 @@ void StackSection::dump(CG const* cg)
     xoc::TypeMgr const* tm = cg->getTypeMgr();
     xcom::StrBuf buf(64);
     fprintf(xoc::g_tfile, "\nSection:size:%d,",
-        (UINT)SECT_size(this) + CG_max_real_param_size(cg));
+        (UINT)SECT_size(this) + cg->getMaxArgSectionSize());
     fprintf(xoc::g_tfile, "%s", sect_var->dump(buf, tm));
 
     fprintf(xoc::g_tfile, "\n  VarLayOut:");
@@ -115,10 +115,10 @@ void StackSection::dump(CG const* cg)
         VarDesc * vd = var2vdesc_map.get(v);
         ASSERTN(vd, ("No VarDesc correspond to xoc::VAR"));
         fprintf(xoc::g_tfile, "\n  (%u)%s",
-            (UINT)VD_ofst(vd) + CG_max_real_param_size(cg), v->dump(buf, tm));
+            (UINT)VD_ofst(vd) + cg->getMaxArgSectionSize(), v->dump(buf, tm));
     }
 
-    if (CG_max_real_param_size(cg) > 0) {
+    if (cg->getMaxArgSectionSize() > 0) {
         fprintf(xoc::g_tfile, "\n  (%u)%s", 0, "real-param");
     }
 

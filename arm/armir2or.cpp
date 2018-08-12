@@ -178,12 +178,10 @@ void ARMIR2OR::convertCall(IR const* ir, OUT ORList & ors, IN IOC * cont)
     processRealParams(CALL_param_list(ir), ors, cont);
 
     //Collect the maximum parameters size during code generation.
-    //And revise spadjust operation afterwards.
-    UINT param_size = IOC_param_size(cont);
-    ASSERT0(param_size < MAX_STACK_SPACE);
-    CG_max_real_param_size(getCG()) =
-        MAX(CG_max_real_param_size(getCG()), param_size);
-    if (param_size > 0) {
+    //And revise spadjust operation afterwards.    
+    m_cg->updateMaxCalleeArgSize(IOC_param_size(cont));
+    
+    if (IOC_param_size(cont) > 0) {
         //DO not adjust SP here for parameters, callee will
         //do this job.
     }
@@ -224,7 +222,8 @@ void ARMIR2OR::convertCall(IR const* ir, OUT ORList & ors, IN IOC * cont)
 void ARMIR2OR::convertRem(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
     ASSERTN(ir->is_rem(), ("illegal ir"));
-    ASSERTN(BIN_opnd0(ir) != NULL && BIN_opnd1(ir) != NULL, ("missing operand"));
+    ASSERTN(BIN_opnd0(ir) != NULL && BIN_opnd1(ir) != NULL,
+            ("missing operand"));
     ASSERT0(!BIN_opnd0(ir)->is_vec() && !BIN_opnd1(ir)->is_vec());
     ASSERT0(BIN_opnd0(ir)->getTypeSize(m_tm) ==
             BIN_opnd1(ir)->getTypeSize(m_tm));
@@ -245,28 +244,22 @@ void ARMIR2OR::convertRem(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    ArgDesc * desc = argdescmgr.addDesc();
-    desc->param_start_addr = opnd1;
-    desc->param_byte_size = opnd1->getByteSize();
-    desc->param_dbx = ::get_dbx(op1);
-    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
-
-    desc = argdescmgr.addDesc();
-    desc->param_start_addr = opnd0;
-    desc->param_byte_size = opnd0->getByteSize();
-    desc->param_dbx = ::get_dbx(op0);
+    ArgDesc * desc = NULL;
+    desc = argdescmgr.addValueDesc(
+        opnd0, ::get_dbx(op0), opnd0->getByteSize(), 0);
+    argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
 
-    UINT ofst = (UINT)ceil_align(op0->getTypeSize(m_tm), STACK_ALIGNMENT);
-    ofst += (UINT)ceil_align(op1->getTypeSize(m_tm), STACK_ALIGNMENT);
-    ARGDESCMGR_total_byte_size(&argdescmgr) = ofst;
+    desc = argdescmgr.addValueDesc(
+        opnd1, ::get_dbx(op1), opnd1->getByteSize(), 0);
+    argdescmgr.addArgInArgSection(desc->arg_size);
+    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-djust operation afterwards.
-    ASSERT0(ofst < MAX_STACK_SPACE);
-    CG_max_real_param_size(getCG()) = MAX(CG_max_real_param_size(getCG()), ofst);
+    m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
-    getCG()->storeParamToStack(&argdescmgr, ors, cont);
+    getCG()->passArgThroughRegister(&argdescmgr, ors, cont);
 
     ORList tors;
 
@@ -312,29 +305,23 @@ void ARMIR2OR::convertAddSubFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    ArgDesc * desc = argdescmgr.addDesc();
-    desc->param_start_addr = opnd1;
-    desc->param_byte_size = opnd1->getByteSize();
-    desc->param_dbx = ::get_dbx(op1);
-    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
-
-    desc = argdescmgr.addDesc();
-    desc->param_start_addr = opnd0;
-    desc->param_byte_size = opnd0->getByteSize();
-    desc->param_dbx = ::get_dbx(op0);
+    ArgDesc * desc = NULL;
+    desc = argdescmgr.addValueDesc(
+        opnd0, ::get_dbx(op0), opnd0->getByteSize(), 0);    
+    argdescmgr.addArgInArgSection(desc->arg_size);    
     ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
 
-    UINT ofst = (UINT)ceil_align(op0->getTypeSize(m_tm), STACK_ALIGNMENT);
-    ofst += (UINT)ceil_align(op1->getTypeSize(m_tm), STACK_ALIGNMENT);
-    ARGDESCMGR_total_byte_size(&argdescmgr) = ofst;
+    desc = argdescmgr.addValueDesc(
+        opnd1, ::get_dbx(op1), opnd1->getByteSize(), 0);
+    argdescmgr.addArgInArgSection(desc->arg_size);
+    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-adjust operation afterwards.
-    ASSERT0(ofst < MAX_STACK_SPACE);
-    CG_max_real_param_size(getCG()) = MAX(CG_max_real_param_size(getCG()), ofst);
+    m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
     //Push parameters to stack.
-    getCG()->storeParamToStack(&argdescmgr, ors, cont);
+    getCG()->passArgThroughRegister(&argdescmgr, ors, cont);
 
     //Intrinsic Call.
     UINT retv_sz = ir->getTypeSize(m_tm);
@@ -384,29 +371,23 @@ void ARMIR2OR::convertDiv(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    ArgDesc * desc = argdescmgr.addDesc();
-    desc->param_start_addr = opnd1;
-    desc->param_byte_size = opnd1->getByteSize();
-    desc->param_dbx = ::get_dbx(op1);
-    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
-
-    desc = argdescmgr.addDesc();
-    desc->param_start_addr = opnd0;
-    desc->param_byte_size = opnd0->getByteSize();
-    desc->param_dbx = ::get_dbx(op0);
+    ArgDesc * desc = NULL;
+    desc = argdescmgr.addValueDesc(
+        opnd0, ::get_dbx(op0), opnd0->getByteSize(), 0);
+    argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
 
-    UINT ofst = (UINT)ceil_align(op0->getTypeSize(m_tm), STACK_ALIGNMENT);
-    ofst += (UINT)ceil_align(op1->getTypeSize(m_tm), STACK_ALIGNMENT);
-    ARGDESCMGR_total_byte_size(&argdescmgr) = ofst;
+    desc = argdescmgr.addValueDesc(
+        opnd1, ::get_dbx(op1), opnd1->getByteSize(), 0);
+    argdescmgr.addArgInArgSection(desc->arg_size);
+    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-adjust operation afterwards.
-    ASSERT0(ofst < MAX_STACK_SPACE);
-    CG_max_real_param_size(getCG()) = MAX(CG_max_real_param_size(getCG()), ofst);
+    m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
-    //Push parameters to stack.
-    getCG()->storeParamToStack(&argdescmgr, ors, cont);
+    //Push parameters to stack.    
+    getCG()->passArgThroughRegister(&argdescmgr, ors, cont);
 
     //Intrinsic Call.
     UINT retv_sz = ir->getTypeSize(m_tm);
@@ -484,28 +465,22 @@ void ARMIR2OR::convertMulofLongLong(
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    ArgDesc * desc = argdescmgr.addDesc();
-    desc->param_start_addr = opnd1;
-    desc->param_byte_size = opnd1->getByteSize();
-    desc->param_dbx = ::get_dbx(op1);
-    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
-
-    desc = argdescmgr.addDesc();
-    desc->param_start_addr = opnd0;
-    desc->param_byte_size = opnd0->getByteSize();
-    desc->param_dbx = ::get_dbx(op0);
+    ArgDesc * desc = NULL;
+    desc = argdescmgr.addValueDesc(
+        opnd0, ::get_dbx(op0), opnd0->getByteSize(), 0);    
+    argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
 
-    UINT ofst = (UINT)ceil_align(op0->getTypeSize(m_tm), STACK_ALIGNMENT);
-    ofst += (INT)ceil_align(op1->getTypeSize(m_tm), STACK_ALIGNMENT);
-    ARGDESCMGR_total_byte_size(&argdescmgr) = ofst;
-
+    desc = argdescmgr.addValueDesc(
+        opnd1, ::get_dbx(op1), opnd1->getByteSize(), 0);
+    argdescmgr.addArgInArgSection(desc->arg_size);
+    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
+ 
     //Collect the maximum parameters size during code generation.
     //And revise SP-djust operation afterwards.
-    ASSERT0(ofst < MAX_STACK_SPACE);
-    CG_max_real_param_size(getCG()) = MAX(CG_max_real_param_size(getCG()), ofst);
+    m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
-    getCG()->storeParamToStack(&argdescmgr, ors, cont);
+    getCG()->passArgThroughRegister(&argdescmgr, ors, cont);
 
     //Intrinsic Call.
     ORList tors;
@@ -552,28 +527,22 @@ void ARMIR2OR::convertMulofFloat(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    ArgDesc * desc = argdescmgr.addDesc();
-    desc->param_start_addr = opnd1;
-    desc->param_byte_size = opnd1->getByteSize();
-    desc->param_dbx = ::get_dbx(op1);
-    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
-
-    desc = argdescmgr.addDesc();
-    desc->param_start_addr = opnd0;
-    desc->param_byte_size = opnd0->getByteSize();
-    desc->param_dbx = ::get_dbx(op0);
+    ArgDesc * desc = NULL;
+    desc = argdescmgr.addValueDesc(
+        opnd0, ::get_dbx(op0), opnd0->getByteSize(), 0);
+    argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
 
-    UINT ofst = (UINT)ceil_align(op0->getTypeSize(m_tm), STACK_ALIGNMENT);
-    ofst += (UINT)ceil_align(op1->getTypeSize(m_tm), STACK_ALIGNMENT);
-    ARGDESCMGR_total_byte_size(&argdescmgr) = ofst;
-
+    desc = argdescmgr.addValueDesc(
+        opnd1, ::get_dbx(op1), opnd1->getByteSize(), 0);
+    argdescmgr.addArgInArgSection(desc->arg_size);
+    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
+ 
     //Collect the maximum parameters size during code generation.
     //And revise SP-djust operation afterwards.
-    ASSERT0(ofst < MAX_STACK_SPACE);
-    CG_max_real_param_size(getCG()) = MAX(CG_max_real_param_size(getCG()), ofst);
+    m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
-    getCG()->storeParamToStack(&argdescmgr, ors, cont);
+    getCG()->passArgThroughRegister(&argdescmgr, ors, cont);
 
     //Intrinsic Call.
     VAR const* builtin;
@@ -1010,29 +979,23 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors, IN IOC * cont
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    ArgDesc * desc = argdescmgr.addDesc();
-    desc->param_start_addr = opnd1;
-    desc->param_byte_size = opnd1->getByteSize();
-    desc->param_dbx = ::get_dbx(op1);
-    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
-
-    desc = argdescmgr.addDesc();
-    desc->param_start_addr = opnd0;
-    desc->param_byte_size = opnd0->getByteSize();
-    desc->param_dbx = ::get_dbx(op0);
+    ArgDesc * desc = NULL;
+    desc = argdescmgr.addValueDesc(
+        opnd0, ::get_dbx(op0), opnd0->getByteSize(), 0);
+    argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
 
-    UINT ofst = (UINT)ceil_align(opnd0->getByteSize(), STACK_ALIGNMENT);
-    ofst += (UINT)ceil_align(opnd1->getByteSize(), STACK_ALIGNMENT);
-    ARGDESCMGR_total_byte_size(&argdescmgr) = ofst;
-
+    desc = argdescmgr.addValueDesc(
+        opnd1, ::get_dbx(op1), opnd1->getByteSize(), 0);
+    argdescmgr.addArgInArgSection(desc->arg_size);
+    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
+   
     //Collect the maximum parameters size during code generation.
     //And revise SP-adjust operation afterwards.
-    ASSERT0(ofst < MAX_STACK_SPACE);
-    CG_max_real_param_size(getCG()) = MAX(CG_max_real_param_size(getCG()), ofst);
+    m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
     //Push parameters to stack.
-    getCG()->storeParamToStack(&argdescmgr, tors, cont);
+    getCG()->passArgThroughRegister(&argdescmgr, ors, cont);    
 
     VAR const* builtin = NULL;
     if (opnd0->getByteSize() == GENERAL_REGISTER_SIZE) {
@@ -1267,22 +1230,18 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    ArgDesc * desc = argdescmgr.addDesc();
-    desc->param_start_addr = opnd;
-    desc->param_byte_size = opnd->getByteSize();
-    desc->param_dbx = ::get_dbx(CVT_exp(ir));
+    ArgDesc * desc = NULL;
+    desc = argdescmgr.addValueDesc(
+        opnd, ::get_dbx(CVT_exp(ir)), opnd->getByteSize(), 0);
+    argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd->getByteSize() >= CVT_exp(ir)->getTypeSize(m_tm));
-
-    UINT ofst = (UINT)ceil_align(opnd->getByteSize(), STACK_ALIGNMENT);
-    ARGDESCMGR_total_byte_size(&argdescmgr) = ofst;
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-adjust operation afterwards.
-    ASSERT0(ofst < MAX_STACK_SPACE);
-    CG_max_real_param_size(getCG()) = MAX(CG_max_real_param_size(getCG()), ofst);
+    m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
     //Push parameters to stack.
-    getCG()->storeParamToStack(&argdescmgr, tors, cont);
+    getCG()->passArgThroughRegister(&argdescmgr, ors, cont);
 
     VAR const* builtin = NULL;
     if (ir->is_int()) {

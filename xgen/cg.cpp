@@ -32,6 +32,42 @@ author: Su Zhenyu
 
 namespace xgen {
 
+//
+//START ArgDescMgr
+//
+SR * ArgDescMgr::allocArgRegister(CG * cg)
+{
+    INT phyreg = m_argregs.get_first();
+    if (phyreg == -1) {
+        return NULL;
+    }
+    m_argregs.diff(phyreg);
+    return cg->genDedicatedReg(phyreg);
+}
+
+
+//This function should be invoked after passing one argument through register.
+//Decrease tgt_ofst for each desc by the bytesize.
+//e.g: pass 2 argument:
+//  %r0 = arg1;
+//  mgr.updatePassedArgInRegister(GNENERAL_REGISTER_SIZE);
+//  %r1 = arg2;
+//  mgr.updatePassedArgInRegister(arg2.bytesize);
+void ArgDescMgr::updatePassedArgInRegister(UINT bytesize)
+{
+    m_passed_arg_in_register_byte_size += (INT)xcom::ceil_align(
+        bytesize, STACK_ALIGNMENT);
+    for (ArgDesc * desc = getArgList()->get_head();
+         desc != NULL; desc = getArgList()->get_next()) {
+        desc->tgt_ofst -= bytesize;
+    }
+}
+//END ArgDescMgr
+
+
+//
+//START CG
+//
 CG::CG(xoc::Region * rg, CGMgr * cgmgr)
 {
     ASSERTN(rg, ("Code generation need region info."));
@@ -44,7 +80,7 @@ CG::CG(xoc::Region * rg, CGMgr * cgmgr)
     m_or_mgr = cgmgr->getORMgr();
     m_or_cfg = NULL;
     m_ppm_vec = NULL;
-    m_max_real_param_size = 0;
+    m_max_real_arg_size = 0;
     m_pr2sr_map.init(MAX(4, getNearestPowerOf2(rg->getPRCount())));
 
     //TODO: To ensure alignment for performance gain.
@@ -152,45 +188,44 @@ void CG::buildMemcpy(
 {
     ASSERT0(tgt && src && cont);
     //Push parameter on stack.
-    //Prepare the SR vector and Dbx vector.
     //::memcpy(void *dest, const void *src, int n);
-
-    Vector<SR*> param_sr;
-    Vector<Dbx const*> param_dbx;
-
-    //The right most parameter: int n
     SR * immreg = genReg();
     buildMove(immreg, genIntImm((HOST_INT)bytesize, false), ors, cont);
 
     ArgDescMgr argdescmgr;
-    ArgDesc * argdesc = argdescmgr.addDesc();
-    argdesc->param_start_addr = immreg;
-    argdesc->param_byte_size = immreg->getByteSize();
-    UINT ofst = (UINT)ceil_align(immreg->getByteSize(), STACK_ALIGNMENT);
-
-    //The second right most parameter: const void *src
-    argdesc = argdescmgr.addDesc();
-    argdesc->param_start_addr = src;
-    argdesc->param_byte_size = src->getByteSize();
-    ASSERT0(m_tm->get_pointer_bytesize() == src->getByteSize());
-    ofst += (UINT)ceil_align(src->getByteSize(), STACK_ALIGNMENT);
+    ArgDesc * desc = NULL;
 
     //The left most parameter: void *dest
-    argdesc = argdescmgr.addDesc();
-    argdesc->param_start_addr = tgt;
-    argdesc->param_byte_size = tgt->getByteSize();
-    ASSERT0(m_tm->get_pointer_bytesize() == tgt->getByteSize());
-    ofst += (UINT)ceil_align(tgt->getByteSize(), STACK_ALIGNMENT);
-    ARGDESCMGR_total_byte_size(&argdescmgr) = ofst;
+    desc = argdescmgr.addValueDesc(tgt, NULL, tgt->getByteSize(), 0);
+    argdescmgr.addArgInArgSection(desc->arg_size);
+    ASSERT0(m_tm->get_pointer_bytesize() == tgt->getByteSize());   
+
+    //The second right most parameter: const void *src
+    desc = argdescmgr.addValueDesc(src, NULL, src->getByteSize(), 0);
+    argdescmgr.addArgInArgSection(desc->arg_size);
+    ASSERT0(m_tm->get_pointer_bytesize() == src->getByteSize());
+
+    //The right most parameter: int n
+    desc = argdescmgr.addValueDesc(immreg, NULL, immreg->getByteSize(), 0);
+    argdescmgr.addArgInArgSection(desc->arg_size);
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-djust operation afterwards.
-    ASSERT0(ARGDESCMGR_total_byte_size(&argdescmgr) < MAX_STACK_SPACE);
-    CG_max_real_param_size(this) = MAX(CG_max_real_param_size(this),
-        (UINT)ARGDESCMGR_total_byte_size(&argdescmgr));
+    updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
-    //Generate code to push parameters.
-    storeParamToStack(&argdescmgr, ors, cont);
+    if (isPassArgumentThroughRegister()) {
+        //Try to pass ir through register.
+        if (!passArgThroughRegister(&argdescmgr, ors, cont)) {
+            //Fail to pass all argument through registers.
+            //Generate code to push remaining parameters.
+            storeArgToStack(&argdescmgr, ors, cont);
+        }        
+    } else {
+        //Generate code to push parameters.
+        storeArgToStack(&argdescmgr, ors, cont);
+    }
+
+    ASSERT0(argdescmgr.getCurrentDesc() == NULL);
 
     //Copy the value from src to tgt.
     ASSERT0(m_builtin_memcpy);
@@ -810,7 +845,7 @@ SR * CG::computeAndUpdateImmOfst(SR * sr, HOST_UINT frame_size)
 
     VarDesc * vd = SECT_var2vdesc_map(&m_stack_sect).get(var);
     ASSERT0(vd);
-    HOST_UINT x = (HOST_UINT)CG_max_real_param_size(this) +
+    HOST_UINT x = (HOST_UINT)getMaxArgSectionSize() +
         (HOST_UINT)VD_ofst(vd) + (HOST_UINT)SR_var_ofst(sr);
     return genIntImm((HOST_INT)x, false);
 }
@@ -821,7 +856,7 @@ SR * CG::computeAndUpdateImmOfst(SR * sr, HOST_UINT frame_size)
 void CG::computeStackVarImmOffset()
 {
     HOST_UINT const frame_size = (HOST_UINT)SECT_size(&m_stack_sect) +
-        CG_max_real_param_size(this);
+        getMaxArgSectionSize();
 
     List<ORBB*> * bblist = getORBBList();
     for (ORBB * bb = bblist->get_head();
@@ -1881,9 +1916,38 @@ void CG::fixCluster(IN OUT ORList & spill_ors, CLUST clust)
 }
 
 
+//Return true if all args has been passed through registers, otherwise
+//return false.
+bool CG::passArgThroughRegister(
+        OUT ArgDescMgr * argdescmgr,
+        OUT ORList & ors,
+        IOC *)
+{
+    IOC tcont;
+    for (; argdescmgr->getCurrentDesc() != NULL;) {
+        SR * argreg = argdescmgr->allocArgRegister(this);
+        if (argreg == NULL) {
+            return false;
+        }
+        ArgDesc const* desc = argdescmgr->pullOutDesc();
+        ASSERT0(!desc->is_record_addr);
+        SR * arg_val = desc->src_value;
+        //ASSERT0(arg_val && arg_val->getByteSize() == GENERAL_REGISTER_SIZE);
+        //Only move register size data for each time.
+        ASSERT0(arg_val);   
+
+        tcont.clean();
+        buildMove(argreg, arg_val, ors, &tcont);
+        ASSERT0(arg_val->getByteSize() == GENERAL_REGISTER_SIZE);
+        argdescmgr->updatePassedArgInRegister(GENERAL_REGISTER_SIZE);
+    }
+    return true;
+}
+
+
 //Generate code to store SR on top of stack.
 //argdescmgr: record the parameter which tend to store on the stack.
-void CG::storeParamToStack(
+void CG::storeArgToStack(
         ArgDescMgr * argdescmgr,
         OUT ORList & ors,
         IN IOC *)
@@ -1891,45 +1955,68 @@ void CG::storeParamToStack(
     ASSERT0(argdescmgr);
     IOC tc;
     ORList tors;
-    for (ArgDesc const* desc = argdescmgr->pulloutDesc();
-         desc != NULL; desc = argdescmgr->pulloutDesc()) {
+    for (ArgDesc const* desc = argdescmgr->pullOutDesc();
+         desc != NULL; desc = argdescmgr->pullOutDesc()) {
         tors.clean();
-        //Compute the address of parameter.
-        //Build: tgt = sp + callee_param_section_byte_ofst;
-        UINT param_sect_ofst = ARGDESCMGR_passed_arg_byte_size(argdescmgr);
-
+        //Compute the address of parameter should be computed base
+        //on SP.
+        //e.g: tgt = src + callee_param_section_byte_ofst;
         if (desc->is_record_addr) {
-            //x = sp + param_sect_ofst;
-            //copy(x, parameter_start_addr, copy_size);
             tc.clean();
-            buildAdd(genSP(),
-                genIntImm((HOST_INT)param_sect_ofst, false),
-                desc->param_start_addr->getByteSize(), false, tors, &tc);
+            SR * tgt = genSP();
+            SR * src = desc->src_startaddr;
+            if (desc->src_ofst != 0) {
+                //src = src_addr + src_ofst;
+                if (src == genSP()) {
+                    //Do not modify SP.
+                    tc.clean();
+                    SR * res = genReg();
+                    buildMove(res, src, tors, &tc);
+                    tc.clean();
+                }
+                buildAdd(src,
+                    genIntImm((HOST_INT)desc->src_ofst, false),
+                    GENERAL_REGISTER_SIZE,
+                    false, tors, &tc);
+                src = tc.get_reg(0);
+            }
+            
+            tc.clean();
+            if (desc->tgt_ofst != 0) {            
+                //tgt = SP + tgt_ofst;
+                buildAdd(tgt,
+                    genIntImm((HOST_INT)desc->tgt_ofst, false),
+                    GENERAL_REGISTER_SIZE,
+                    false, tors, &tc);
+                tgt = tc.get_reg(0);
+            } else {
+                //Do not modify SP.
+                //tgt = SP;
+                SR * res = genReg();
+                buildMove(res, tgt, tors, &tc);
+                tgt = res;
+            }
 
-            SR * tgt = tc.get_reg(0);
-            ASSERT0(tgt && SR_is_reg(tgt));
-            buildMemcpyInternal(tgt, desc->param_start_addr,
-                desc->param_byte_size, tors, &tc);
-            argdescmgr->incPassedArgByteSize(desc->param_byte_size);
-        } else {
-            //[x] = [sp + param_sect_ofst];
-            ASSERTN(desc->param_byte_size <= 8, ("TODO"));
+            //copy(x, parameter_start_addr, copy_size);            
+            ASSERT0(src && tgt && SR_is_reg(tgt) && SR_is_reg(src));
             tc.clean();
-            IOC_mem_byte_size(&tc) = desc->param_byte_size;
-            buildStore(desc->param_start_addr, genSP(),
-                genIntImm((HOST_INT)param_sect_ofst, false),
+            buildMemcpyInternal(tgt, src,
+                desc->arg_size, tors, &tc);
+        } else {
+            //[sp + tgt_ofst] = %rx;
+            ASSERTN(desc->arg_size <= 8, ("TODO"));
+            ASSERT0(desc->src_value);
+            tc.clean();
+            IOC_mem_byte_size(&tc) = desc->arg_size;
+            buildStore(desc->src_value, genSP(),
+                genIntImm((HOST_INT)desc->tgt_ofst, false),
                 tors, &tc);
-            argdescmgr->incPassedArgByteSize(desc->param_byte_size);
         }
-        if (desc->param_dbx != NULL) {
-            tors.copyDbx(desc->param_dbx);
+        if (desc->arg_dbx != NULL) {
+            tors.copyDbx(desc->arg_dbx);
         }
         ors.append_tail(tors);
     }
-
-    //There is still some other parameters need to pass.
-    //ASSERT0(ARGDESCMGR_total_byte_size(argdescmgr) ==
-    //    ARGDESCMGR_passed_arg_byte_size(argdescmgr);
 }
 
 
@@ -2791,20 +2878,65 @@ void CG::reviseFormalParamAccess(UINT lv_size)
 }
 
 
+void CG::storeParameterAfterSpadjust(
+        UINT regparamoffset,
+        UINT regparamsize,
+        List<ORBB*> * entry_lst)
+{
+    ASSERT0(entry_lst);
+    RegSet const* phyregset = tmGetRegSetOfArgument();
+    ASSERT0(phyregset);
+    INT phyreg = -1;
+    ORList ors;
+    IOC tc;
+
+    for (ORBB * bb = entry_lst->get_head();
+        bb != NULL; bb = entry_lst->get_next()) {
+        OR * spadj = ORBB_entry_spadjust(bb);
+        if (spadj == NULL) { continue; }
+        ORCt * orct = NULL;
+        ORBB_orlist(bb)->find(spadj, &orct);
+        ASSERTN(orct, ("not find spadjust in BB"));
+ 
+        ors.clean();
+        tc.clean();
+        for (UINT regsz = 0; regsz < regparamsize;
+            regsz += GENERAL_REGISTER_SIZE) {
+            if (regsz == 0) {
+                phyreg = phyregset->get_first();
+            } else {
+                phyreg = phyregset->get_next(phyreg);
+            }
+            ASSERT0(phyreg >= 0);
+            SR * store_val = genDedicatedReg(phyreg);
+            ASSERT0(store_val);
+
+            IOC_mem_byte_size(&tc) = GENERAL_REGISTER_SIZE;
+            buildStore(store_val, genSP(),
+                genIntImm((HOST_INT)(regparamoffset + regsz), false),
+                ors, &tc);
+        }
+
+        ORBB_orlist(bb)->insert_after(ors, orct);
+    }
+}
+
+
 void CG::reviseFormalParameterAndSpadjust()
 {
-    //size of (local variable + temporary variable + callee parameter size).
-    INT size = (INT)SECT_size(getStackSection()) + CG_max_real_param_size(this);
+    //size of (register caller parameter size + local variable + 
+    //         temporary variable + callee parameter size).
+    INT size = (INT)SECT_size(getStackSection()) + getMaxArgSectionSize();
 
     //Adjust size by stack alignment.
     ASSERTN(isPowerOf2(STACK_ALIGNMENT),
-           ("For the convenience of generating double load/store"));
+            ("For the convenience of generating double load/store"));
     UINT mask = STACK_ALIGNMENT - 1; //get the mask.
     ASSERTN(mask <= 0xFFFF, ("Stack alignment is too big"));
     size = (size + mask) & ~mask; //size is not less than stack alignment.
 
     if (!g_is_enable_fp &&
-        (CG_max_real_param_size(this) > 0 &&
+        (getMaxArgSectionSize() > 0 &&
          SECT_size(getParamSection()) > 0)) {
         reviseFormalParamAccess(size);
     }
@@ -2812,6 +2944,16 @@ void CG::reviseFormalParameterAndSpadjust()
     List<ORBB*> entry_lst;
     List<ORBB*> exit_lst;
     computeEntryAndExit(*m_or_cfg, entry_lst, exit_lst);
+
+    if (isPassArgumentThroughRegister()) {
+        ASSERT0(tmGetRegSetOfArgument());
+        UINT regsize = GENERAL_REGISTER_SIZE *
+            tmGetRegSetOfArgument()->get_elem_count();
+        UINT regparamsize = MIN((UINT)SECT_size(getParamSection()), regsize);
+        storeParameterAfterSpadjust(size, regparamsize, &entry_lst);
+        size += (INT)regparamsize;
+    }
+        
     for (ORBB * bb = entry_lst.get_head();
          bb != NULL; bb = entry_lst.get_next()) {
         OR * spadj = ORBB_entry_spadjust(bb);
@@ -3081,21 +3223,14 @@ void CG::computeMaxRealParamSpace()
         for (xoc::IR * ir = BB_irlist(bb).get_head(&ct); ir != NULL;
              ir = BB_irlist(bb).get_next(&ct)) {
             if (!ir->isCallStmt()) { continue; }
-
-            CG_max_real_param_size(this) = (UINT)ceil_align(
-                MAX(CG_max_real_param_size(this),
-                    computeTotalParameterStackSize(ir)), STACK_ALIGNMENT);
-
+            updateMaxCalleeArgSize(computeTotalParameterStackSize(ir));
             if (isAlloca(ir)) {
                 m_is_use_fp = true;
             }
         }
     }
-
-    if (CG_max_real_param_size(this) > 0) {
-        ASSERT0(ceil_align(CG_max_real_param_size(this), STACK_ALIGNMENT) ==
-                CG_max_real_param_size(this));
-        SECT_size(getStackSection()) += CG_max_real_param_size(this);
+    if (getMaxArgSectionSize() > 0) {
+        SECT_size(getStackSection()) += getMaxArgSectionSize();
     }
 }
 
@@ -3272,14 +3407,17 @@ void CG::localizeBB(SR * sr, ORBB * bb)
         buildLoad(newsr, SR_spill_var(sr), 0, ors, &toc);
         ASSERT0(first_usestmt_ct != ORBB_orlist(bb)->end());
         ORBB_orlist(bb)->insert_before(ors, first_usestmt_ct);
-
-        ASSERT0(first_usestmt_ct == first_defstmt_ct ||
-            ORBB_orlist(bb)->is_or_precedes(
-                first_usestmt_ct->val(), first_defstmt_ct->val()));
+                
+        if (first_defstmt_ct != NULL) {
+            ASSERT0(first_usestmt_ct == first_defstmt_ct ||
+                ORBB_orlist(bb)->is_or_precedes(
+                    first_usestmt_ct->val(), first_defstmt_ct->val()));
+        }
 
         if (first_usestmt_ct == first_defstmt_ct) {
             renameOpnd(first_usestmt_ct->val(), sr, newsr, false);
-        } else if (ORBB_orlist(bb)->is_or_precedes(
+        } else if (first_defstmt_ct != NULL &&
+                   ORBB_orlist(bb)->is_or_precedes(
                        first_usestmt_ct->val(), first_defstmt_ct->val())) {
             renameOpndAndResultInRange(sr, newsr,
                 first_usestmt_ct, first_defstmt_ct, ORBB_orlist(bb));
@@ -3293,7 +3431,7 @@ void CG::localizeBB(SR * sr, ORBB * bb)
         }
     }
 
-    if (first_defstmt_ct) {
+    if (first_defstmt_ct != NULL) {
         //Handle downward exposed use.
         toc.clean_bottomup();
         ors.clean();

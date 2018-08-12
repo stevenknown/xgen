@@ -84,8 +84,6 @@ public:
     virtual void convertReturn(IR const* ir, OUT ORList & ors, IN IOC * cont);
     virtual void convertTruebr(IR const* ir, OUT ORList & ors, IN IOC * cont);
 
-    virtual bool isPassArgumentThroughRegister() { return true; }
-
     virtual OR_TYPE mapIRType2ORType(
             IR_TYPE ir_type,
             UINT ir_opnd_size,

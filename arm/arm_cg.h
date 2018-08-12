@@ -279,6 +279,7 @@ public:
 
     void expandFakeOR(IN OR * o, OUT IssuePackageList * ipl);
 
+    virtual bool isPassArgumentThroughRegister() { return true; }
     virtual bool isValidRegInSRVec(OR * o, SR * sr, UINT idx, bool is_result);
     virtual bool isValidResultRegfile(
             OR_TYPE ortype,

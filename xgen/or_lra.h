@@ -106,9 +106,8 @@ public:
 #define LT_cluster(c)         (c)->cluster
 #define LT_has_allocated(c)   (SR_phy_regid(LT_sr(c)) != REG_UNDEF)
 #define LT_prio(c)            (c)->priority
-#define LT_sibling(c)         (c)->sibling
-#define LT_is_low(c)          (c)->is_low_part
-#define LT_is_high(c)         (!LT_is_low(c))
+#define LT_sib_next(c)        (c)->next
+#define LT_sib_prev(c)        (c)->prev
 #define LT_has_may_def(c)     (c)->has_may_def_point
 #define LT_has_may_use(c)     (c)->has_may_use_point
 class LifeTime {
@@ -119,8 +118,16 @@ public:
     xcom::BSVec<PosInfo*> desc;
     SR * sr;
     CLUST cluster;
-    LifeTime * sibling;
-    bool is_low_part; //Whether current life time is low part of one pair.
+
+    //Note LifeTime which has been sibling of some LT can not
+    //be another lifetimes' sibling meanwhile.
+    //The relationship between lifetime and it's sibling is unique.
+    //The physical registers of lt and it's sibling shoud be consecutive.
+    //The physical register of next-lt should greater than current lt.
+    //The physical register of prev-lt should less than current lt.
+    LifeTime * next; //next sibling lifetime, e.g: lt(r1)<->next_lt(r2)
+    LifeTime * prev; //prev sibling lifetime, e.g: prev_lt(r1)<->lt(r2)
+    
     bool has_may_def_point;
     bool has_may_use_point;
 
@@ -280,11 +287,13 @@ public:
 };
 
 
-typedef xcom::HMap<xoc::VAR const*, RefORBBList*> VAR2OR;
-typedef xcom::HMap<LifeTime*, SR*> LifeTime2SR;
-typedef xcom::HMap<SR*, LifeTime*> SR2LifeTime;
-typedef xcom::HMap<LifeTime const*, RegSet*> LifeTime2RegSet;
-typedef xcom::HMap<LifeTime*, REG> LifeTime2Reg;
+typedef xcom::TMapIter<xoc::VAR const*, RefORBBList*> VAR2ORIter;
+typedef xcom::TMap<xoc::VAR const*, RefORBBList*> VAR2OR;
+typedef xcom::TMap<xoc::VAR const*, RefORBBList*> VAR2OR;
+typedef xcom::TMap<LifeTime*, SR*> LifeTime2SR;
+typedef xcom::TMap<SR*, LifeTime*> SR2LifeTime;
+typedef xcom::TMap<LifeTime const*, RegSet*> LifeTime2RegSet;
+typedef xcom::TMap<LifeTime*, REG> LifeTime2Reg;
 
 
 //Life Time Manager

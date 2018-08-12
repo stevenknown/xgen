@@ -136,10 +136,17 @@ protected:
     Region * m_ru; //Current region.
     TypeMgr * m_tm; //Data manager.
     CG * m_cg; //Code generator.
+    bool m_pass_through_stack_always;
 
 protected:
     void convertLoadConst(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    void spreadSRVec(IOC * cont, Vector<SR*> * vec);
+    void copyArgToStack(
+            SR * value,
+            UINT value_size,
+            UINT param_offset,
+            IR const* ir,
+            OUT ORList & ors);
+    void spreadSRVec(IOC const* cont, Vector<SR*> * vec);
 
 public:
     IR2OR(CG * cg);
@@ -367,8 +374,6 @@ public:
 
     void convertIRBBListToORList(OUT ORList & or_list);
 
-    virtual bool isPassArgumentThroughRegister() = 0;
-
     //Map from IR type to OR type.
     //Target may apply comparing instruction to calculate boolean value.
     //e.g:
@@ -387,12 +392,9 @@ public:
 
     //Return true if whole ir has been passed through registers, otherwise
     //return false.
-    bool passArgThroughRegister(
+    bool tryPassArgThroughRegister(
             IR const* ir,
             UINT * irsize,
-            UINT * num_arg_reg,
-            INT * phy_reg,
-            RegSet const* regs,
             ArgDescMgr * argdesc,
             OUT ORList & ors,
             IN IOC * cont);
@@ -401,6 +403,24 @@ public:
             ArgDescMgr * argdesc,
             OUT ORList & ors,
             IN IOC * cont);
+    
+    //Return true if whole ir has been passed through registers, otherwise
+    //return false.
+    bool passArgInMemory(
+            IR const* ir,
+            UINT * irsize,
+            OUT ArgDescMgr * argdescmgr,
+            IOC const* load_cont,
+            OUT ORList & ors);
+    
+    //Return true if whole ir has been passed through registers, otherwise
+    //return false.
+    bool passArgInRegister(
+            IR const* ir,
+            UINT * irsize,            
+            OUT ArgDescMgr * argdescmgr,
+            IOC const* load_cont,
+            OUT ORList & ors);
     void processRealParamsThroughRegister(
             IR const* ir,
             ArgDescMgr * argdesc,

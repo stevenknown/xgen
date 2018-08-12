@@ -140,10 +140,11 @@ void RaMgr::postBuild()
     }
 
     //Finializing the SYMBOL list.
-    INT c;
-    for (xoc::VAR const* sym = m_var2or_map.get_first(c);
-         sym != NULL; sym = m_var2or_map.get_next(c)) {
-        RefORBBList * ref_bb_list = m_var2or_map.get(sym);
+    VAR2ORIter iter;
+    RefORBBList * ref_bb_list = NULL;
+    for (xoc::VAR const* sym = m_var2or_map.get_first(iter, &ref_bb_list);
+         sym != NULL; sym = m_var2or_map.get_next(iter)) {
+        ASSERT0(ref_bb_list);
         ref_bb_list->destroy();
     }
 }
@@ -180,13 +181,13 @@ void RaMgr::dumpGlobalVAR2OR()
         m_ru->getRegionName());
     INT i = 0;
     xcom::StrBuf buf(64);
-    INT c;
-    for (xoc::VAR const* var = m_var2or_map.get_first(c);
-         var != NULL; var = m_var2or_map.get_next(c)) {
+    VAR2ORIter iter;
+    RefORBBList * ref_bb_list = NULL;
+    for (xoc::VAR const* var = m_var2or_map.get_first(iter, &ref_bb_list);
+         var != NULL; var = m_var2or_map.get_next(iter, &ref_bb_list)) {
         fprintf(h, "\n\tVAR%d", i++);
         fprintf(h, "\n\t\t%s", var->dump(buf, m_ru->getTypeMgr()));
 
-        RefORBBList * ref_bb_list = m_var2or_map.get(var);
         ASSERTN(ref_bb_list, ("Miss info"));
         for (ORBBUnit * bu = ref_bb_list->get_head(); bu;
              bu = ref_bb_list->get_next()) {
