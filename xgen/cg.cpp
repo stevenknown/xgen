@@ -46,6 +46,17 @@ SR * ArgDescMgr::allocArgRegister(CG * cg)
 }
 
 
+//Abandon the first argument phy-register.
+//The allocation will start at the next register.
+void ArgDescMgr::dropArgRegister()
+{
+    INT phyreg = m_argregs.get_first();
+    if (phyreg != -1) {
+        m_argregs.diff(phyreg);
+    }    
+}
+
+
 //This function should be invoked after passing one argument through register.
 //Decrease tgt_ofst for each desc by the bytesize.
 //e.g: pass 2 argument:
@@ -627,7 +638,7 @@ void CG::freeORBBList()
 }
 
 
-bool CG::isGRAEnable()
+bool CG::isGRAEnable() const
 {
     return g_opt_level >= OPT_LEVEL2 && g_do_gra;
 }
@@ -740,7 +751,7 @@ void CG::computeAndUpdateStackVarLayout(
     ASSERT0(var && base && base_ofst);
     ASSERT0(VAR_is_local(var));
     if (VAR_is_formal_param(var)) {
-        computeParamterLayout(var, base, base_ofst);
+        computeParamLayout(var, base, base_ofst);
         return;
     }
 
@@ -789,7 +800,7 @@ void CG::computeAndUpdateStackVarLayout(
 
 
 //Compute and append parameter into PARAM-Section.
-void CG::computeParamterLayout(
+void CG::computeParamLayout(
         xoc::VAR const* var,
         OUT SR ** base,
         OUT SR ** ofst)
@@ -831,14 +842,16 @@ void CG::computeParamterLayout(
 }
 
 
-SR * CG::computeAndUpdateImmOfst(SR * sr, HOST_UINT frame_size)
+SR * CG::computeAndUpdateOffset(SR * sr)
 {
     ASSERT0(sr);
     xoc::VAR const* var = SR_var(sr);
 
     if (VAR_is_formal_param(var)) {
+        ASSERTN(m_param_sect_start_offset != -1,
+            ("should have been computed at reviseFormalParameterAndSpadjust"));
         VarDesc const* vd = SECT_var2vdesc_map(&m_param_sect).get(var);
-        HOST_UINT l = frame_size + (HOST_UINT)VD_ofst(vd) +
+        HOST_UINT l = m_param_sect_start_offset + (HOST_UINT)VD_ofst(vd) +
             (HOST_UINT)SR_var_ofst(sr);
         return genIntImm((HOST_INT)l, false);
     }
@@ -851,13 +864,10 @@ SR * CG::computeAndUpdateImmOfst(SR * sr, HOST_UINT frame_size)
 }
 
 
-//Compute the immediate offset for stack variable and
+//Compute the offset for stack variable and
 //supersede the symbol variable with the offset.
-void CG::computeStackVarImmOffset()
+void CG::relocateStackVarOffset()
 {
-    HOST_UINT const frame_size = (HOST_UINT)SECT_size(&m_stack_sect) +
-        getMaxArgSectionSize();
-
     List<ORBB*> * bblist = getORBBList();
     for (ORBB * bb = bblist->get_head();
          bb != NULL; bb = bblist->get_next()) {
@@ -871,28 +881,28 @@ void CG::computeStackVarImmOffset()
                 ASSERT0(ofst);
                 if (!SR_is_var(ofst)) { continue; }
 
-                o->set_load_ofst(computeAndUpdateImmOfst(ofst, frame_size));
+                o->set_load_ofst(computeAndUpdateOffset(ofst));
                 OR_is_need_compute_var_ofst(o) = false;
             } else if (OR_is_store(o)) {
                 SR * ofst = o->get_store_ofst();
                 ASSERT0(ofst);
                 if (!SR_is_var(ofst)) { continue; }
 
-                o->set_store_ofst(computeAndUpdateImmOfst(ofst, frame_size));
+                o->set_store_ofst(computeAndUpdateOffset(ofst));
                 OR_is_need_compute_var_ofst(o) = false;
             } else if (o->isNeedComputeVAROfst()) {
                 for (UINT i = 0; i < o->result_num(); i++) {
                     SR * res = o->get_result(i);
                     if (!SR_is_var(res)) { continue; }
 
-                    o->set_result(i, computeAndUpdateImmOfst(res, frame_size));
+                    o->set_result(i, computeAndUpdateOffset(res));
                 }
 
                 for (UINT i = 0; i < o->opnd_num(); i++) {
                     SR * opnd = o->get_opnd(i);
                     if (!SR_is_var(opnd)) { continue; }
 
-                    o->set_opnd(i, computeAndUpdateImmOfst(opnd, frame_size));
+                    o->set_opnd(i, computeAndUpdateOffset(opnd));
                 }
 
                 OR_is_need_compute_var_ofst(o) = false;
@@ -976,9 +986,11 @@ void CG::initFuncUnit()
     for (xoc::VAR const* v = param_list.get_head();
          v != NULL; v = param_list.get_next()) {
          //Append parameter into PARAM-Section in turn.
-         computeParamterLayout(v, NULL, NULL);
+         computeParamLayout(v, NULL, NULL);
          m_params.set(i, v);
     }
+
+    m_param_sect_start_offset = -1;
 }
 
 
@@ -1064,6 +1076,7 @@ void CG::finiFuncUnit()
     m_dedicate_sr_tab.clean();
     m_param_pointer = NULL;
     m_reg_count = 0;
+    m_param_sect_start_offset = -1;
     m_stack_sect.clean();
     m_param_sect.clean();
     freePackage();
@@ -1102,7 +1115,7 @@ UINT CG::compute_pad()
             for (SLOT s = FIRST_SLOT; s <= LAST_SLOT; s = (SLOT)(s + 1)) {
                 OR * o = ip->get(s);
                 if (o == NULL) { continue; }
-                maxpad = MAX(maxpad, strlen(OR_code_name(o)));
+                maxpad = MAX(maxpad, (UINT)strlen(OR_code_name(o)));
             }
         }
     }
@@ -2878,18 +2891,23 @@ void CG::reviseFormalParamAccess(UINT lv_size)
 }
 
 
+//Insert store of register value of parameters
+//after spadjust at each entry BB.
+//regparamoffset: bytesize offset from SP
+//regparamsize: bytesize of total parameter section
+//entry_lst: list of entry BB
+//param_lst: parameter variable which sorted in declaration order
 void CG::storeParameterAfterSpadjust(
-        UINT regparamoffset,
-        UINT regparamsize,
-        List<ORBB*> * entry_lst)
+        UINT param_start,
+        List<ORBB*> * entry_lst,
+        List<VAR const*> * param_lst)
 {
-    ASSERT0(entry_lst);
+    ASSERT0(entry_lst && param_lst);
     RegSet const* phyregset = tmGetRegSetOfArgument();
     ASSERT0(phyregset);
     INT phyreg = -1;
     ORList ors;
     IOC tc;
-
     for (ORBB * bb = entry_lst->get_head();
         bb != NULL; bb = entry_lst->get_next()) {
         OR * spadj = ORBB_entry_spadjust(bb);
@@ -2897,28 +2915,86 @@ void CG::storeParameterAfterSpadjust(
         ORCt * orct = NULL;
         ORBB_orlist(bb)->find(spadj, &orct);
         ASSERTN(orct, ("not find spadjust in BB"));
+
+        VAR const* param = param_lst->get_head();
+        ASSERT0(param);
+        UINT passed_paramsz = 0; //record the bytesize that has been passed.
  
         ors.clean();
         tc.clean();
-        for (UINT regsz = 0; regsz < regparamsize;
-            regsz += GENERAL_REGISTER_SIZE) {
-            if (regsz == 0) {
-                phyreg = phyregset->get_first();
-            } else {
-                phyreg = phyregset->get_next(phyreg);
+        UINT regsz = 0;
+        for (INT phyreg = phyregset->get_first();
+             phyreg >= 0 && param != NULL;
+             phyreg = phyregset->get_next(phyreg)) {
+            if (passed_paramsz == 0 && //only check if whole
+                                       //value can be passed via reg
+                skipArgRegister(param, phyregset, phyreg)) {
+                continue;
             }
             ASSERT0(phyreg >= 0);
             SR * store_val = genDedicatedReg(phyreg);
             ASSERT0(store_val);
-
             IOC_mem_byte_size(&tc) = GENERAL_REGISTER_SIZE;
             buildStore(store_val, genSP(),
-                genIntImm((HOST_INT)(regparamoffset + regsz), false),
+                genIntImm((HOST_INT)(param_start + regsz), false),
                 ors, &tc);
+            regsz += GENERAL_REGISTER_SIZE;
+            passed_paramsz += GENERAL_REGISTER_SIZE;
+            if (passed_paramsz == param->getByteSize(m_tm)) {
+                param = param_lst->get_next();
+                passed_paramsz = 0;
+            }
         }
 
         ORBB_orlist(bb)->insert_after(ors, orct);
     }
+}
+
+
+UINT CG::calcSizeOfParameterPassedViaRegister(
+        List<VAR const*> const* param_lst) const
+{
+    RegSet const* phyregset = tmGetRegSetOfArgument();
+    ASSERT0(phyregset);
+    INT phyreg = -1;
+    C<VAR const*> * ct = NULL;
+    param_lst->get_head(&ct);
+    if (ct == NULL) {
+        return 0;
+    }
+    UINT passed_paramsz = 0; //record the bytesize that has been passed.
+    UINT size = 0;
+    for (INT phyreg = phyregset->get_first();
+         phyreg >= 0 && ct != NULL;
+         phyreg = phyregset->get_next(phyreg)) {
+        if (passed_paramsz == 0 && //only check if whole
+                                   //value can be passed via reg
+            skipArgRegister(ct->val(), phyregset, phyreg)) {
+            continue;
+        }
+        ASSERT0(phyreg >= 0);
+        size += GENERAL_REGISTER_SIZE;
+        passed_paramsz += GENERAL_REGISTER_SIZE;
+        if (passed_paramsz == ct->val()->getByteSize(m_tm)) {
+            ct = param_lst->get_next(ct);
+            passed_paramsz = 0;
+        }
+    }
+    return size;
+}
+
+
+void CG::storeRegisterParameterBackToStack(
+        List<ORBB*> * entry_lst,
+        UINT param_start)
+{
+    if (SECT_size(getParamSection()) == 0) {
+        return;
+    }
+    ASSERT0(tmGetRegSetOfArgument());
+    List<VAR const*> param_list;
+    m_ru->findFormalParam(param_list, true);    
+    storeParameterAfterSpadjust(param_start, entry_lst, &param_list);
 }
 
 
@@ -2930,10 +3006,12 @@ void CG::reviseFormalParameterAndSpadjust()
 
     //Adjust size by stack alignment.
     ASSERTN(isPowerOf2(STACK_ALIGNMENT),
-            ("For the convenience of generating double load/store"));
-    UINT mask = STACK_ALIGNMENT - 1; //get the mask.
-    ASSERTN(mask <= 0xFFFF, ("Stack alignment is too big"));
-    size = (size + mask) & ~mask; //size is not less than stack alignment.
+        ("For the convenience of generating double load/store"));
+    ASSERTN(isPowerOf2(SPADJUST_ALIGNMENT),
+        ("For the convenience of generating double load/store"));
+    ASSERTN(SPADJUST_ALIGNMENT - 1 <= 0xFFFF, ("Stack alignment is too big"));
+
+    size = (INT)xcom::ceil_align(size, SPADJUST_ALIGNMENT);
 
     if (!g_is_enable_fp &&
         (getMaxArgSectionSize() > 0 &&
@@ -2945,15 +3023,33 @@ void CG::reviseFormalParameterAndSpadjust()
     List<ORBB*> exit_lst;
     computeEntryAndExit(*m_or_cfg, entry_lst, exit_lst);
 
+    //Update the parameter section start.
+    ASSERTN(m_param_sect_start_offset == -1, ("already set"));
+    m_param_sect_start_offset = size;
+
     if (isPassArgumentThroughRegister()) {
-        ASSERT0(tmGetRegSetOfArgument());
-        UINT regsize = GENERAL_REGISTER_SIZE *
-            tmGetRegSetOfArgument()->get_elem_count();
-        UINT regparamsize = MIN((UINT)SECT_size(getParamSection()), regsize);
-        storeParameterAfterSpadjust(size, regparamsize, &entry_lst);
-        size += (INT)regparamsize;
-    }
+        RegSet const* phyregset = tmGetRegSetOfArgument();
+        ASSERT0(phyregset);
+        List<VAR const*> param_list;
+        m_ru->findFormalParam(param_list, true);
+        UINT bytesize_of_arg_passed_via_reg =
+            calcSizeOfParameterPassedViaRegister(&param_list);
+        if (bytesize_of_arg_passed_via_reg % SPADJUST_ALIGNMENT != 0) {
+            UINT alignsize = (UINT)xcom::ceil_align(
+                bytesize_of_arg_passed_via_reg, SPADJUST_ALIGNMENT);
+            ASSERT0(alignsize > bytesize_of_arg_passed_via_reg);
+            size += alignsize - bytesize_of_arg_passed_via_reg;
+        }
         
+        //Update the parameter section start.
+        m_param_sect_start_offset = size;
+        storeRegisterParameterBackToStack(&entry_lst, size);
+        size += bytesize_of_arg_passed_via_reg;
+    }
+
+    //size must align in SPADJUST_ALIGNMENT.
+    ASSERT0(size == xcom::ceil_align(size, SPADJUST_ALIGNMENT));
+    
     for (ORBB * bb = entry_lst.get_head();
          bb != NULL; bb = entry_lst.get_next()) {
         OR * spadj = ORBB_entry_spadjust(bb);
@@ -3200,7 +3296,7 @@ RaMgr * CG::allocRaMgr(List<ORBB*> * bblist, bool is_func)
 
 
 //Return true if ir is ALLOCA.
-bool CG::isAlloca(xoc::IR const* ir)
+bool CG::isAlloca(xoc::IR const* ir) const
 {
     if (!ir->is_call()) { return false; }
 
@@ -3599,16 +3695,6 @@ bool CG::perform()
     IR2OR * ir2or = allocIR2OR();
     ASSERT0(ir2or);
 
-    //FILE * h = fopen("cg.log","a");
-    //FILE * x = xoc::g_tfile;
-    //xoc::g_tfile = h;
-    if (m_ru->isRegionName("main"))
-    {
-        m_ru->dump(false);
-        //dumpBBList(m_ru->getBBList(), m_ru);
-    }
-    //xoc::g_tfile = x;
-    //fclose(h);
 
     CHAR const* varname = SYM_name(m_ru->getRegionVar()->get_name());
     DUMMYUSE(varname);
@@ -3616,11 +3702,6 @@ bool CG::perform()
 
     constructORBBList(or_list);
 
-    if (m_ru->isRegionName("main"))
-    {
-        dumpBBList(m_ru->getBBList(), m_ru);
-        dumpORBBList(m_or_bb_list);
-    }
 
     //Build CFG
     ASSERT0(m_or_cfg == NULL);
@@ -3630,24 +3711,18 @@ bool CG::perform()
     m_or_cfg->removeEmptyBB(oc);
     m_or_cfg->build(oc);
 
-    m_or_cfg->dump_vcg("graph_or_cfg.vcg");
-    dumpORBBList(m_or_bb_list);
     m_or_cfg->removeEmptyBB(oc);
-    dumpORBBList(m_or_bb_list);
     m_or_cfg->computeExitList();
     if (m_or_cfg->removeUnreachBB()) {
         m_or_cfg->computeExitList();
     }
-    dumpORBBList(m_or_bb_list);
 
     if (m_ru->is_function()) {
         generateFuncUnitDedicatedCode();
     }
 
-    dumpORBBList(m_or_bb_list);
     if (!isGRAEnable()) { localize(); }
 
-    dumpORBBList(m_or_bb_list);
     RaMgr * ra_mgr = performRA();
 
     bool change;
@@ -3674,14 +3749,8 @@ bool CG::perform()
     Vector<BBSimulator*> simvec;
     performIS(simvec, ra_mgr);
 
-    computeStackVarImmOffset();
+    relocateStackVarOffset();
 
-    //if (m_ru->isRegionName("bar")) {
-    //    getParamSection()->dump(this);
-    //    getStackSection()->dump(this);
-    //    dumpORBBList(m_or_bb_list);
-    //}
-    dumpORBBList(m_or_bb_list);
     ASSERT0(verify());
 
     delete ra_mgr;
@@ -3689,7 +3758,6 @@ bool CG::perform()
     freeLisList();
 
     package(simvec);
-    dumpPackage();
 
     freeSimmList(); //Free BBSimulator list here.
     return true;

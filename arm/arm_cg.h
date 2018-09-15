@@ -350,6 +350,12 @@ public:
     RaMgr * allocRaMgr(List<ORBB*> * bblist, bool is_func);
 
     virtual void setSpadjustOffset(OR * spadj, INT size);
+
+    //True if current argument register should be bypassed.
+    virtual bool skipArgRegister(
+            VAR const* param,
+            RegSet const* regset,
+            REG reg) const;
 };
 //END ARMCG
 

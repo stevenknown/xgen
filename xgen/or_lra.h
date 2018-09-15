@@ -67,7 +67,19 @@ namespace xgen {
 class RaMgr;
 class CG;
 class GRA;
+class LifeTime;
 class LifeTimeMgr;
+class RefORBBList;
+
+typedef xcom::TMapIter<xoc::VAR const*, RefORBBList*> VAR2ORIter;
+typedef xcom::TMap<xoc::VAR const*, RefORBBList*> VAR2OR;
+typedef xcom::TMap<xoc::VAR const*, RefORBBList*> VAR2OR;
+typedef xcom::TMap<LifeTime*, SR*> LifeTime2SR;
+typedef xcom::TMap<LifeTime*, List<LifeTime*>*> LifeTime2SibList;
+typedef xcom::TMap<SR*, LifeTime*> SR2LifeTime;
+typedef xcom::TMap<LifeTime const*, RegSet*> LifeTime2RegSet;
+typedef xcom::TMap<LifeTime*, REG> LifeTime2Reg;
+typedef xcom::List<LifeTime*> SibList;
 
 class VAR_MAP {
     UINT m_num_or;
@@ -106,10 +118,9 @@ public:
 #define LT_cluster(c)         (c)->cluster
 #define LT_has_allocated(c)   (SR_phy_regid(LT_sr(c)) != REG_UNDEF)
 #define LT_prio(c)            (c)->priority
-#define LT_sib_next(c)        (c)->next
-#define LT_sib_prev(c)        (c)->prev
 #define LT_has_may_def(c)     (c)->has_may_def_point
 #define LT_has_may_use(c)     (c)->has_may_use_point
+#define LT_preferred_reg(c)   (c)->preferred_reg
 class LifeTime {
 public:
     UINT id;
@@ -118,16 +129,8 @@ public:
     xcom::BSVec<PosInfo*> desc;
     SR * sr;
     CLUST cluster;
+    REG preferred_reg; //TODO: enable a preferred register set
 
-    //Note LifeTime which has been sibling of some LT can not
-    //be another lifetimes' sibling meanwhile.
-    //The relationship between lifetime and it's sibling is unique.
-    //The physical registers of lt and it's sibling shoud be consecutive.
-    //The physical register of next-lt should greater than current lt.
-    //The physical register of prev-lt should less than current lt.
-    LifeTime * next; //next sibling lifetime, e.g: lt(r1)<->next_lt(r2)
-    LifeTime * prev; //prev sibling lifetime, e.g: prev_lt(r1)<->lt(r2)
-    
     bool has_may_def_point;
     bool has_may_use_point;
 
@@ -287,13 +290,61 @@ public:
 };
 
 
-typedef xcom::TMapIter<xoc::VAR const*, RefORBBList*> VAR2ORIter;
-typedef xcom::TMap<xoc::VAR const*, RefORBBList*> VAR2OR;
-typedef xcom::TMap<xoc::VAR const*, RefORBBList*> VAR2OR;
-typedef xcom::TMap<LifeTime*, SR*> LifeTime2SR;
-typedef xcom::TMap<SR*, LifeTime*> SR2LifeTime;
-typedef xcom::TMap<LifeTime const*, RegSet*> LifeTime2RegSet;
-typedef xcom::TMap<LifeTime*, REG> LifeTime2Reg;
+//Manage the sibling relationship for each lifetime pair.
+//Note LifeTime which has been sibling of some LT can
+//be another lifetimes' sibling meanwhile after LRA spilling.
+//So the relationship between lifetime and it's sibling is not unique.
+//
+//The physical registers of lt and it's sibling shoud be consecutive.
+//The physical register of next-lt should greater than current lt.
+//The physical register of prev-lt should less than current lt.
+//next sibling lifetime, e.g: lt(r1)<->next_lt(r2)
+//prev sibling lifetime, e.g: prev_lt(r1)<->lt(r2)
+class SibMgr {
+protected:
+    LifeTime2SibList m_lt2nextsiblist;
+    LifeTime2SibList m_lt2prevsiblist;
+    List<SibList*> m_ltlist; //record the allocated map
+
+protected:
+    UINT countNumOfNextSib(LifeTime const* lt) const;
+    UINT countNumOfPrevSib(LifeTime const* lt) const;
+
+public:
+    SibMgr() {}
+    ~SibMgr() { destroy(); }
+
+    void destroy();
+
+    SibList * getPrevSibList(LifeTime * lt)
+    { return m_lt2prevsiblist.get(lt); }
+
+    LifeTime * getFirstPrevSib(LifeTime * lt)
+    {
+        SibList * siblist = m_lt2prevsiblist.get(lt);
+        if (siblist != NULL) {
+            return siblist->get_head();
+        }
+        return NULL;
+    }
+
+    SibList * getNextSibList(LifeTime * lt)
+    { return m_lt2nextsiblist.get(lt); }
+
+    LifeTime * getFirstNextSib(LifeTime * lt)
+    {
+        SibList * siblist = m_lt2nextsiblist.get(lt);
+        if (siblist != NULL) {
+            return siblist->get_head();
+        }
+        return NULL;
+    }
+
+    //Set prev and next are sibling lifetimes.
+    void setSib(LifeTime * prev, LifeTime * next);
+
+    UINT countNumOfSib(LifeTime const* lt) const;
+};
 
 
 //Life Time Manager
@@ -333,9 +384,9 @@ protected:
 
     LifeTime2RegSet m_lt2usable_reg_set_map;
     LifeTime2RegSet m_lt2antici_reg_set_map;
-    LifeTime2Reg m_lt2preference_reg_map;
     SMemPool * m_pool;
     RegSet m_gra_used;
+    SibMgr m_sibmgr;
 
 protected:
     void processFuncExitBB(
@@ -392,6 +443,7 @@ public:
     void freeAllLifeTime();
 
     CG * getCG() { return m_cg; }
+    SibMgr * getSibMgr() { return &m_sibmgr; }
     OR * getOR(UINT pos);
     OR * getORByIdx(INT oridx);
     INT getPos(OR * o, bool is_result);
@@ -399,7 +451,6 @@ public:
     UINT getMaxLifeTimeLen() const { return m_max_lt_len; }
     RegSet * getUsableRegSet(LifeTime * lt) const;
     RegSet * getAnticiRegs(LifeTime * lt);
-    REG getPreferenceReg(LifeTime * lt);
     LifeTime * getLifeTime(UINT id);
     LifeTime * getLifeTime(SR * sr);
     UINT getLiftTimeCount() const;
@@ -421,7 +472,7 @@ public:
     virtual RegSet * getGRAUsedReg();
 
     //Record the preference register information at neighbour life time.
-    virtual void handlePreferenceReg(OR const*)
+    virtual void handlePreferredReg(OR const*)
     {
         //Use assert instead of abstract-interface to enable allocating
         //the object of LifeTimeMgr.
@@ -444,7 +495,6 @@ public:
     virtual void setGRAUsedReg(SR * sr);
     virtual void setGRALiveoutReload(OR * o, SR * sr);
     virtual void setGRALiveinSpill(OR * o, SR * sr);
-    void setPreferenceReg(LifeTime * lt, REG reg);
 
     void removeLifeTime(LifeTime * lt);
     virtual void recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs);
@@ -755,6 +805,17 @@ public:
             IN LifeTimeMgr & mgr,
             DataDepGraph & ddg);
 
+    //Return true if registers of all sibling of lt are continuous and valid.
+    bool checkAndAssignPrevSiblingLT(
+            REG treg,
+            LifeTime const* lt,
+            LifeTimeMgr * mgr,
+            RegSet const* usable_rs);
+    bool checkAndAssignNextSiblingLT(
+            REG treg,
+            LifeTime const* lt,
+            LifeTimeMgr * mgr,
+            RegSet const* usable_rs);
     virtual void chooseRegFileCandInLifeTime(
             IN UnitSet & us,
             IN LifeTime * lt,
@@ -767,6 +828,13 @@ public:
             IN DataDepGraph & ddg,
             IN RegFileAffinityGraph & rdg);
     bool cse(IN OUT DataDepGraph & ddg, IN OUT Vector<bool> & handled);
+    void coalesceCopy(OR * o, DataDepGraph & ddg, bool * is_resch);
+    void coalesceMovi(
+            OR * o,
+            DataDepGraph & ddg,
+            bool * is_resch,
+            ORCt * orct,
+            ORCt ** next_orct);
     bool coalescing(DataDepGraph & ddg, bool cp_any);
     virtual bool canOpndCrossCluster(OR * o);
     virtual bool canResultCrossCluster(OR * o);

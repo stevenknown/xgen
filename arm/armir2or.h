@@ -90,5 +90,11 @@ public:
             IN SR * opnd0,
             IN SR * opnd1,
             bool is_signed);
+
+    //True if current argument register should be bypassed.
+    virtual bool skipArgRegister(
+            IR const* ir,
+            OUT ArgDescMgr * argdescmgr,
+            CG const* cg);    
 };
 #endif

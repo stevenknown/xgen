@@ -198,10 +198,15 @@ public:
 
     ArgDesc * pullOutDesc() { return m_arg_list.remove_head(); }
 
+    //Abandon the first argument phy-register.
+    //The allocation will start at the next register.
+    void dropArgRegister();
+
     //Get the total bytesize of current parameter section.
     UINT getArgSectionSize() const { return ARGDESCMGR_total_byte_size(this); }
     ArgDesc * getCurrentDesc() { return m_arg_list.get_head(); }
 
+    RegSet const* getArgRegSet() const { return &m_argregs; }
     UINT getPassedRegisterArgSize() const
     { return m_passed_arg_in_register_byte_size; }
     UINT getPassedStackArgSize() const
@@ -292,8 +297,9 @@ protected:
     Section m_bss_sect;
     StackSection m_stack_sect;
     Section m_param_sect;
+    INT m_param_sect_start_offset; //record the parameter start offset.
     UINT m_mmd_count;
-    Vector<IssuePackageList*> m_ipl_vec; //record IssuePackageList for each ORBB.
+    Vector<IssuePackageList*> m_ipl_vec; //record IssuePackageList for each ORBB
 
     //True if accessing local variable via [FP pointer - Offst].
     bool m_is_use_fp;
@@ -308,7 +314,9 @@ protected:
     void addSerialDependence(ORBB * bb, DataDepGraph * ddg);
 
     UINT compute_pad();
-    SR * computeAndUpdateImmOfst(SR * sr, HOST_UINT frame_size);
+    SR * computeAndUpdateOffset(SR * sr);
+    UINT calcSizeOfParameterPassedViaRegister(
+            List<VAR const*> const* param_lst) const;
 
     void * xmalloc(INT size)
     {
@@ -631,7 +639,6 @@ public:
     INT computeOpndIdx(OR * o, SR const* opnd);
     INT computeResultIdx(OR * o, SR const* res);
     void computeMaxRealParamSpace();
-    void computeStackVarImmOffset();
     virtual void computeAndUpdateGlobalVarLayout(
             xoc::VAR const* var,
             OUT SR ** base,
@@ -640,7 +647,7 @@ public:
             xoc::VAR const* var,
             OUT SR ** sp, //stack pointer
             OUT SR ** sp_ofst);
-    virtual void computeParamterLayout(
+    virtual void computeParamLayout(
             xoc::VAR const* id,
             OUT SR ** base,
             OUT SR ** ofst);
@@ -817,7 +824,7 @@ public:
     Section * getDataSection() { return &m_data_sect; }
     Section * getBssSection() { return &m_bss_sect; }
     Section * getStackSection() { return &m_stack_sect; }
-    Section * getParamSection() { return &m_param_sect; }
+    Section * getParamSection() { return &m_param_sect; }    
     virtual REGFILE getRflagRegfile() const = 0;
     virtual REGFILE getPredicateRegfile() const;
     Vector<xoc::VAR const*> const& get_param_vars() const
@@ -850,10 +857,15 @@ public:
     virtual bool isPassArgumentThroughRegister() = 0;
     void initGlobalVar(VarMgr * vm);
     bool isComputeStackOffset() const { return m_is_compute_sect_offset; }
-    bool isAlloca(IR const* ir);
-    bool isGRAEnable();
+    bool isAlloca(IR const* ir) const;
+    bool isGRAEnable() const;
+    bool isEvenReg(REG reg) const
+    {
+        //register start from '1'. And '0' denotes memory.
+        return (reg % 2) == 1;
+    }
     //Return true if ORBB needs to be assigned cluster.
-    bool isAssignClust(ORBB *) { return true; }
+    bool isAssignClust(ORBB *) const { return true; }
     bool isRegflowDep(OR * from, OR * to);
     bool isRegoutDep(OR * from, OR * to);
     bool isOpndSameWithResult(
@@ -1095,6 +1107,7 @@ public:
     virtual CLUST mapSR2Cluster(OR *, SR const*)
     { ASSERTN(0, ("Target Dependent Code")); return CLUST_UNDEF; }
 
+    void relocateStackVarOffset();
     void renameResult(
             OR * o,
             SR * oldsr,
@@ -1128,7 +1141,7 @@ public:
             OR * end,
             BBORList * orlist);
     virtual void reviseFormalParameterAndSpadjust();
-    virtual void reviseFormalParamAccess(UINT lv_size);
+    virtual void reviseFormalParamAccess(UINT lv_size);    
 
     virtual void storeArgToStack(
             ArgDescMgr * argdesc,
@@ -1141,9 +1154,19 @@ public:
     void setCluster(ORList & ors, CLUST clust);
     void setComputeSectOffset(bool doit) { m_is_compute_sect_offset = doit; }
     void storeParameterAfterSpadjust(
-            UINT regparamoffset,
-            UINT regparamsize,
-            List<ORBB*> * entry_lst);
+            UINT param_start,
+            List<ORBB*> * entry_lst,
+            List<VAR const*> * param_lst);
+    void storeRegisterParameterBackToStack(
+            List<ORBB*> * entry_lst,
+            UINT param_start);
+    
+    //True if current argument register should be bypassed.
+    virtual bool skipArgRegister(
+            VAR const* param,
+            RegSet const* regset,
+            REG reg) const
+    { ASSERTN(0, ("Target Dependent Code")); return false; }
 
     virtual void package(Vector<BBSimulator*> & simvec);
 

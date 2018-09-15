@@ -233,7 +233,7 @@ void GLT_MGR::dump()
 
                 buf.clean();
                 sr->get_name(buf, m_cg);
-                max_name_len = MAX(max_name_len, buf.strlen());
+                max_name_len = MAX(max_name_len, (UINT)buf.strlen());
                 srbs.bunion(SR_sregid(sr));
             }
             for (i = 0; i < o->result_num(); i++) {
@@ -241,7 +241,7 @@ void GLT_MGR::dump()
                 ASSERT0(sr != NULL);
                 if (!SR_is_reg(sr)) { continue; }
                 sr->get_name(buf, m_cg);
-                max_name_len = MAX(max_name_len, buf.strlen());
+                max_name_len = MAX(max_name_len, (UINT)buf.strlen());
                 srbs.bunion(SR_sregid(sr));
             }
         }

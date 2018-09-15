@@ -413,7 +413,7 @@ OR * BBORList::get_prev(OR * marker)
 
 void BBORList::dump(CG * cg)
 {
-    if (xoc::g_tfile == NULL) return;
+    if (xoc::g_tfile == NULL) { return; }
     xcom::StrBuf buf(64);
     ORCt * cm = NULL;
     for (OR * o = get_head(); o != NULL; o = get_next()) {

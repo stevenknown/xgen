@@ -189,9 +189,9 @@ void IR2OR::convertLoadConst(
     tors.copyDbx(ir);
     ors.append_tail(tors);
     cont->set_reg(0, load_val);
-    if (load_val2 != NULL) {
-        cont->set_reg(1, load_val2);
-    }
+    //if (load_val2 != NULL) {
+    //    cont->set_reg(1, load_val2);
+    //}
 }
 
 
@@ -681,7 +681,7 @@ void IR2OR::passArgThroughStack(
         ASSERT0(arg_val && (arg_val->getByteSize() >= ir->getTypeSize(m_tm)));
 
         argdescmgr->addValueDesc(arg_val,
-            ::get_dbx(ir), ir->getTypeSize(m_tm), 0);
+            ::getDbx(ir), ir->getTypeSize(m_tm), 0);
     } else {
         //Memory block duplication.
         convertGeneralLoad(ir, ors, &tmp_cont);
@@ -690,13 +690,13 @@ void IR2OR::passArgThroughStack(
         SR * arg_val_addr = tmp_cont.get_addr();
         ASSERT0(arg_val_addr);
         argdescmgr->addAddrDesc(arg_val_addr,
-            ::get_dbx(ir), ir->getTypeSize(m_tm), 0);
+            ::getDbx(ir), ir->getTypeSize(m_tm), 0);
     }    
     m_cg->storeArgToStack(argdescmgr, ors, cont);
 }
 
 
-void IR2OR::spreadSRVec(IOC const* cont, Vector<SR*> * vec)
+void IR2OR::flattenSRVec(IOC const* cont, Vector<SR*> * vec)
 {
     ASSERT0(cont && vec);
     UINT vec_count = 0;
@@ -729,7 +729,7 @@ void IR2OR::copyArgToStack(
     ArgDescMgr targdescmgr;
     IOC tc;
     ArgDesc * desc = targdescmgr.addValueDesc(
-        value, ::get_dbx(ir), value_size, 0);
+        value, ::getDbx(ir), value_size, 0);
     targdescmgr.addArgInArgSection(desc->arg_size);
     desc->tgt_ofst = param_offset;
     m_cg->storeArgToStack(&targdescmgr, ors, &tc);
@@ -805,7 +805,10 @@ bool IR2OR::passArgInRegister(
     UINT i = 0;    
     Vector<SR*> vec;
     ASSERT0(load_cont);
-    spreadSRVec(load_cont, &vec);
+    flattenSRVec(load_cont, &vec);
+
+    //Target dependent code.
+    skipArgRegister(ir, argdescmgr, m_cg);
 
     IOC tmp_cont;
     //Try to pass data through argument-register.
@@ -841,7 +844,7 @@ bool IR2OR::passArgInRegister(
         for (UINT j = 0; remaining_irsize > 0; i++, j++) {
             SR * arg = vec.get(i);
             ASSERT0(arg);
-            argdescmgr->addValueDesc(arg, ::get_dbx(ir), transfer_size, 0);
+            argdescmgr->addValueDesc(arg, ::getDbx(ir), transfer_size, 0);
             remaining_irsize -= transfer_size;
         }
         return false;
@@ -998,7 +1001,7 @@ void IR2OR::processRealParams(IR const* ir, OUT ORList & ors, IN IOC * cont)
             ASSERT0(arg_val &&
                 (arg_val->getByteSize() >= ir->getTypeSize(m_tm)));
             argdescmgr.addValueDesc(arg_val,
-                ::get_dbx(ir), ir->getTypeSize(m_tm), 0);
+                ::getDbx(ir), ir->getTypeSize(m_tm), 0);
         } else {
             //Memory block duplication.
             convertGeneralLoad(ir, ors, &tmp_cont);
@@ -1007,7 +1010,7 @@ void IR2OR::processRealParams(IR const* ir, OUT ORList & ors, IN IOC * cont)
             SR * arg_val_addr = tmp_cont.get_addr();
             ASSERT0(arg_val_addr);
             argdescmgr.addAddrDesc(arg_val_addr,
-                ::get_dbx(ir), ir->getTypeSize(m_tm), 0);
+                ::getDbx(ir), ir->getTypeSize(m_tm), 0);
         }
     }
 
@@ -1032,9 +1035,14 @@ void IR2OR::convertASR(IR const* ir, OUT ORList & ors, IN IOC * cont)
     SR * sr1 = cont->get_reg(0);
 
     SR * sh_ofst;
-    cont->clean_bottomup();
-    convertGeneralLoad(opnd1, ors, cont);
-    sh_ofst = cont->get_reg(0);
+    if (opnd1->is_const()) {
+        ASSERT0(opnd1->is_int());
+        sh_ofst = m_cg->genIntImm(CONST_int_val(opnd1), false);
+    } else {
+        cont->clean_bottomup();
+        convertGeneralLoad(opnd1, ors, cont);
+        sh_ofst = cont->get_reg(0);
+    }
 
     ORList tors;
     cont->clean_bottomup();

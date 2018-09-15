@@ -72,9 +72,13 @@ SR const* checkSRIMM(SR const* ir);
 //Symbol Register
 #define SR_type(sr)              (sr)->type
 #define SR_id(sr)                (sr)->id //unique id for each SRs
-#define SR_sregid(sr)            (CK_SR_REG(sr))->u1.u2.symbol_regid //symbol register id.
+
+//symbol register id.
+#define SR_sregid(sr)            (CK_SR_REG(sr))->u1.u2.symbol_regid
 #define SR_regfile(sr)           (CK_SR_REG(sr))->u1.u2.regfile
-#define SR_phy_regid(sr)         (CK_SR_REG(sr))->u1.u2.phy_regid //physical register id, start at 1.
+
+//physical register id, start at 1
+#define SR_phy_regid(sr)         (CK_SR_REG(sr))->u1.u2.phy_regid
 #define SR_int_imm(sr)           (CK_SR_IMM(sr))->u1.u3.u4.int_imm
 #define SR_fp_imm(sr)            (CK_SR_IMM(sr))->u1.u3.u4.fp_imm
 #define SR_imm_size(sr)          (CK_SR_IMM(sr))->u1.u3.size
@@ -109,12 +113,14 @@ SR const* checkSRIMM(SR const* ir);
 #define SR_is_fp_imm(sr)         ((sr)->type == SR_FP_IMM)
 #define SR_is_imm(sr)            (SR_is_int_imm(sr) || SR_is_fp_imm(sr))
 #define SR_is_reg(sr)            ((sr)->type == SR_REG)
-#define SR_is_constant(sr)       (SR_is_imm(sr) || SR_is_label(sr) || SR_is_var(sr))
+#define SR_is_constant(sr)       (SR_is_imm(sr) ||  \
+                                 SR_is_label(sr) || \
+                                 SR_is_var(sr))
 class SR {
 public:
     SR_TYPE type;
 
-    size_t id; //unique identifier within a region
+    UINT id; //unique identifier within a region
 
     union {
         UINT bitflags;
@@ -135,7 +141,7 @@ public:
 
     union {
         struct {
-            size_t symbol_regid; //symbol register id, start at 1.
+            UINT symbol_regid; //symbol register id, start at 1.
             REGFILE regfile; //physical register file.
             REG phy_regid; //physical register id, start at 1.
             xoc::VAR * spill_var; //xoc::VAR to hold spilled register.
