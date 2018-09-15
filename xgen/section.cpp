@@ -66,6 +66,7 @@ void Section::dump(CG const* cg)
     for (xoc::VAR const* v = layout.get_tail();
          v != NULL; v = layout.get_prev()) {
         VarDesc * vd = var2vdesc_map.get(v);
+        buf.clean();
         ASSERTN(vd, ("No VarDesc correspond to xoc::VAR"));
         fprintf(xoc::g_tfile, "\n  (%u)%s", (UINT)VD_ofst(vd), v->dump(buf, tm));
     }
@@ -114,6 +115,7 @@ void StackSection::dump(CG const* cg)
          v != NULL; v = layout.get_prev()) {
         VarDesc * vd = var2vdesc_map.get(v);
         ASSERTN(vd, ("No VarDesc correspond to xoc::VAR"));
+        buf.clean();
         fprintf(xoc::g_tfile, "\n  (%u)%s",
             (UINT)VD_ofst(vd) + cg->getMaxArgSectionSize(), v->dump(buf, tm));
     }

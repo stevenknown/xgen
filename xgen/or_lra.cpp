@@ -1021,6 +1021,101 @@ void LifeTime::dump(LifeTimeMgr * mgr)
 }
 //END LifeTime
 
+
+//
+//START SibMgr
+//
+void SibMgr::destroy()
+{
+    for (List<LifeTime*> * ltlist = m_ltlist.get_head();
+        ltlist != NULL; ltlist = m_ltlist.get_next()) {
+        delete ltlist;
+    }
+    m_lt2nextsiblist.clean();
+    m_lt2prevsiblist.clean();
+    m_ltlist.clean();
+}
+
+
+UINT SibMgr::countNumOfPrevSib(LifeTime const* lt) const
+{
+    UINT count = 0; //the number of previous siblings.
+    SibMgr * pthis = const_cast<SibMgr*>(this);
+    SibList const* sibs = pthis->getPrevSibList(const_cast<LifeTime*>(lt));
+    if (sibs != NULL) {
+        C<LifeTime*> * ct;
+        for (sibs->get_head(&ct); ct != sibs->end();
+            ct = sibs->get_next(ct)) {
+            count++;
+            LifeTime const* sib = ct->val();
+            count += countNumOfPrevSib(sib);
+        }
+    }
+    return count;
+}
+
+
+UINT SibMgr::countNumOfNextSib(LifeTime const* lt) const
+{
+    UINT count = 0; //the number of next siblings.
+    SibMgr * pthis = const_cast<SibMgr*>(this);
+    SibList const* sibs = pthis->getNextSibList(const_cast<LifeTime*>(lt));
+    if (sibs != NULL) {
+        C<LifeTime*> * ct;
+        for (sibs->get_head(&ct); ct != sibs->end();
+            ct = sibs->get_next(ct)) {
+            LifeTime const* sib = ct->val();
+            count++;
+            count += countNumOfNextSib(sib);
+        }
+    }
+    return count;
+}
+
+
+UINT SibMgr::countNumOfSib(LifeTime const* lt) const
+{
+    UINT count = countNumOfPrevSib(lt) + countNumOfNextSib(lt);
+    return count;
+}
+
+
+//Set prev and next are sibling lifetimes.
+void SibMgr::setSib(LifeTime * prev, LifeTime * next)
+{
+    #ifdef _DEBUG_
+    if (SR_phy_regid(LT_sr(prev)) != REG_UNDEF &&
+        SR_phy_regid(LT_sr(next)) != REG_UNDEF) {
+        //Sibling lt should be assigned continuous register.
+        int a = SR_phy_regid(LT_sr(prev)) + 1;
+        int b = SR_phy_regid(LT_sr(next));
+        ASSERT0(SR_phy_regid(LT_sr(prev)) + 1 ==
+            SR_phy_regid(LT_sr(next)));
+    }
+    #endif
+    SibList * nextsibs = m_lt2nextsiblist.get(prev);
+    if (nextsibs == NULL) {
+        nextsibs = new SibList();
+        m_lt2nextsiblist.set(prev, nextsibs);
+        m_ltlist.append_head(nextsibs);
+    }
+    if (!nextsibs->find(next)) {
+        nextsibs->append_head(next);
+    }
+
+    SibList * prevsibs = m_lt2prevsiblist.get(next);
+    if (prevsibs == NULL) {
+        prevsibs = new SibList();
+        m_lt2prevsiblist.set(next, prevsibs);
+        m_ltlist.append_head(prevsibs);
+    }
+    if (!prevsibs->find(prev)) {
+        prevsibs->append_head(prev);
+    }
+}
+//END SibMgr
+
+
 //
 //START LifeTimeMgr
 //
@@ -1086,7 +1181,6 @@ void LifeTimeMgr::init(
     m_oridx2sr_liveout_gsr_reload_pos.init();
     m_lt2usable_reg_set_map.init();
     m_lt2antici_reg_set_map.init();
-    m_lt2preference_reg_map.init();
 
     m_is_verify = is_verify;
     m_clustering = clustering;
@@ -1096,7 +1190,7 @@ void LifeTimeMgr::init(
 
 void LifeTimeMgr::destroy()
 {
-    if(!m_is_init) return;
+    if(!m_is_init) { return; }
     freeAllLifeTime();
 
     m_lt_tab.destroy();
@@ -1105,10 +1199,10 @@ void LifeTimeMgr::destroy()
     m_or2pos_map.destroy();
     m_lt2usable_reg_set_map.destroy();
     m_lt2antici_reg_set_map.destroy();
-    m_lt2preference_reg_map.destroy();
     m_oridx2or_map.destroy();
     m_oridx2sr_livein_gsr_spill_pos.destroy();
     m_oridx2sr_liveout_gsr_reload_pos.destroy();
+    m_sibmgr.destroy();
 
     m_bb = NULL;
     m_lt_count = 0;
@@ -1275,7 +1369,6 @@ void LifeTimeMgr::removeLifeTime(LifeTime * lt)
     m_lt_tab.removed(lt);
     m_lt2usable_reg_set_map.setAlways(lt, NULL);
     m_lt2antici_reg_set_map.setAlways(lt, NULL);
-    m_lt2preference_reg_map.setAlways(lt, REG_UNDEF);
     m_sr2lt_map.setAlways(LT_sr(lt), NULL);
     freeLifeTime(lt);
 }
@@ -1345,7 +1438,7 @@ bool LifeTimeMgr::clone(LifeTimeMgr & mgr)
 
         //May override prior life time mapping.
         m_sr2lt_map.set(LT_sr(newLT), newLT);
-        m_lt2preference_reg_map.set(newLT, mgr.getPreferenceReg(lt));
+        LT_preferred_reg(newLT) = LT_preferred_reg(lt);
     }
 
     m_pos2or_map.copy(mgr.m_pos2or_map);
@@ -1684,7 +1777,6 @@ INT LifeTimeMgr::recreate(ORBB * bb, bool is_verify, bool clustering)
     liveout_reload.copy(m_oridx2sr_liveout_gsr_reload_pos);
     destroy();
     init(bb, is_verify, clustering);
-    dump();
     INT num = create();
     m_oridx2sr_livein_gsr_spill_pos.copy(livein_spill);
     m_oridx2sr_liveout_gsr_reload_pos.copy(liveout_reload);
@@ -1938,7 +2030,7 @@ INT LifeTimeMgr::create()
         }
 
         //Handle sibling life time's preference register.
-        handlePreferenceReg(o);
+        handlePreferredReg(o);
     }
 
     ASSERTN(pos == 0, ("First live position number must be zero"));
@@ -2057,20 +2149,6 @@ RegSet * LifeTimeMgr::getUsableRegSet(LifeTime * lt) const
         m_lt2usable_reg_set_map.get(lt);
     ASSERT0(rs);
     return rs;
-}
-
-
-REG LifeTimeMgr::getPreferenceReg(LifeTime * lt)
-{
-    ASSERTN(m_is_init, ("Life time manager should initialized first."));
-    return m_lt2preference_reg_map.get(lt);
-}
-
-
-void LifeTimeMgr::setPreferenceReg(LifeTime * lt, REG reg)
-{
-    ASSERTN(m_is_init, ("Life time manager should initialized first."));
-    m_lt2preference_reg_map.setAlways(lt, reg);
 }
 
 
@@ -2203,7 +2281,8 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
                     //Reserve anticipated register for allocation.
                     UINT opndidx = m_cg->computeCopyOpndIdx(o);
                     SR * copy_src = o->get_opnd(opndidx);
-                    if (SR_regfile(copy_src) == SR_regfile(sr) &&
+                    if (SR_is_reg(copy_src) &&
+                        SR_regfile(copy_src) == SR_regfile(sr) &&
                         SR_regfile(sr) != RF_UNDEF) {
                         ASSERTN(SR_is_reg(copy_src),
                                ("invalid copy operation, "
@@ -2224,7 +2303,8 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
                 if (m_cg->isCopyOR(o)) {
                     //Reserve anticipated register for allocation.
                     SR * copy_tgt = o->get_copy_to();
-                    if (SR_regfile(copy_tgt) == SR_regfile(sr) &&
+                    if (SR_is_reg(copy_tgt) &&
+                        SR_regfile(copy_tgt) == SR_regfile(sr) &&
                         SR_regfile(sr) != RF_UNDEF) {
                         ASSERTN(SR_is_reg(copy_tgt),
                             ("invalid copy operation, "
@@ -3284,8 +3364,8 @@ bool LRA::assignRegister(
     }
 
     //First select preference register.
-    REG pref_reg;
-    if ((pref_reg = mgr.getPreferenceReg(lt)) != REG_UNDEF) {
+    REG pref_reg = LT_preferred_reg(lt);
+    if (pref_reg != REG_UNDEF) {
         if (usable->is_contain(pref_reg)) {
             reg = pref_reg; //Not any choose.
             goto FIN;
@@ -3304,8 +3384,8 @@ bool LRA::assignRegister(
             RegSet * ni_rset = mgr.getUsableRegSet(ni);
 
             //Avoid select the reg which ni preferable.
-            if (mgr.getPreferenceReg(ni) != REG_UNDEF) {
-                ni_rset->bunion(mgr.getPreferenceReg(ni));
+            if (LT_preferred_reg(ni) != REG_UNDEF) {
+                ni_rset->bunion(LT_preferred_reg(ni));
             }
 
             //Only aware of those usable registers which more fewer than
@@ -3351,26 +3431,16 @@ bool LRA::assignRegister(
 
 FIN:
     //We need deal with its sibling.
-    LifeTime * sib = NULL;
-    REG treg = reg;
-    for (sib = lt; LT_sib_prev(sib) != NULL; sib = LT_sib_prev(sib)) {        
-        treg--;
-        if (treg == REG_UNDEF) {
-            //Current assignment will incur lt's sibling allcation always fail.
-            return false;
-        }
+    RegSet const* usable_rs = tmMapRegFile2RegSetAllocable(regfile);
+    if (!checkAndAssignNextSiblingLT(reg, lt, &mgr, usable_rs)) {
+        //Current assignment will incur lt's sibling allcation always fail.
+        return false;
+    }
+    if (!checkAndAssignPrevSiblingLT(reg, lt, &mgr, usable_rs)) {
+        //Current assignment will incur lt's sibling allcation always fail.
+        return false;
     }
     
-    for (; sib != NULL; sib = LT_sib_next(sib), treg++) {
-        if (sib == lt) { continue; }
-        if (LT_has_allocated(sib)) {
-            ASSERTN(treg == SR_phy_regid(LT_sr(sib)), ("Unmatch register"));
-            continue;
-        }
-        ASSERTN(SR_regfile(LT_sr(lt)) == SR_regfile(LT_sr(sib)),
-                ("Unmatch regfile"));
-        mgr.setPreferenceReg(sib, treg);
-    }
 
     SR_phy_regid(sr) = reg;
     if (m_ramgr != NULL) {
@@ -3384,6 +3454,76 @@ FIN:
             continue;
         }
         mgr.getUsableRegSet(ni)->diff(reg);
+    }
+    return true;
+}
+
+
+//Return true if registers of all sibling of lt are continuous and valid.
+bool LRA::checkAndAssignNextSiblingLT(
+        REG treg,
+        LifeTime const* lt,
+        LifeTimeMgr * mgr,
+        RegSet const* usable_rs)
+{
+    SibList * siblist = mgr->getSibMgr()->
+        getNextSibList(const_cast<LifeTime*>(lt));
+    if (siblist == NULL) {
+        return true;
+    }
+    for (LifeTime * sib = siblist->get_head();
+         sib != NULL; sib = siblist->get_next()) {
+        treg++;
+        if (treg > REG_LAST || !usable_rs->is_contain(treg)) {
+            //Current assignment will incur lt's sibling allcation always fail.
+            return false;
+        }
+        if (!checkAndAssignNextSiblingLT(treg, sib, mgr, usable_rs)) {
+            //Current assignment will incur lt's
+            //sibling allcation always fail.
+            return false;
+        }
+        if (LT_has_allocated(sib)) {
+            ASSERTN(treg == SR_phy_regid(LT_sr(sib)),
+                ("Unmatch register"));
+            continue;
+        }
+        LT_preferred_reg(sib) = treg;
+    }
+    return true;
+}
+
+
+//Return true if registers of all sibling of lt are continuous and valid.
+bool LRA::checkAndAssignPrevSiblingLT(
+    REG treg,
+    LifeTime const* lt,
+    LifeTimeMgr * mgr,
+    RegSet const* usable_rs)
+{
+    SibList * siblist = mgr->getSibMgr()->
+        getPrevSibList(const_cast<LifeTime*>(lt));
+    if (siblist == NULL) {
+        return true;
+    }
+    for (LifeTime * sib = siblist->get_head();
+        sib != NULL; sib = siblist->get_next()) {
+        treg--;
+        if (treg == REG_UNDEF || !usable_rs->is_contain(treg)) {
+            //Current assignment will incur lt's sibling allcation always fail.
+            return false;
+        }
+        if (!checkAndAssignPrevSiblingLT(treg, sib, mgr, usable_rs)) {
+            //Current assignment will incur lt's
+            //sibling allcation always fail.
+            return false;
+        }
+        if (LT_has_allocated(sib)) {
+            ASSERTN(treg == SR_phy_regid(LT_sr(sib)),
+                ("Unmatch register"));
+            continue;
+        }
+        LT_preferred_reg(sib) = treg;
     }
     return true;
 }
@@ -3525,7 +3665,6 @@ SR * LRA::genReload(
         IN LifeTimeMgr & mgr,
         OUT ORList * ors)
 {
-    oldsr->dump(m_cg); //fuck
     ASSERT0(spill_var && VAR_is_spill(spill_var));
     SR * newsr = NULL;
     ORList spill_ors;
@@ -5678,7 +5817,7 @@ bool LRA::solveConflict(
         ACTION & action)
 {
     for (;uncolored_list.get_elem_count();) {
-        LifeTime *lt = uncolored_list.get_head();
+        LifeTime * lt = uncolored_list.get_head();
         bool succ = solveConflictRecursive(lt, uncolored_list,
             prio_list, cri, is_regfile_unique, ig, mgr, ddg, rfg, action);
         DUMMYUSE(succ);
@@ -6072,18 +6211,18 @@ void LRA::assignRegFile(IN OUT ClustRegInfo cri[CLUST_NUM],
         }
 
         //Check for sibling life time
-        if (LT_sib_prev(lt) != NULL &&
-            SR_regfile(LT_sr(LT_sib_prev(lt))) != RF_UNDEF) {
+        LifeTime * prev = mgr.getSibMgr()->getFirstPrevSib(lt);
+        if (prev != NULL && SR_regfile(LT_sr(prev)) != RF_UNDEF) {
             assignDesignatedRegFile(lt,
-                SR_regfile(LT_sr(LT_sib_prev(lt))), cri);
+                SR_regfile(LT_sr(prev)), cri);
             continue;
         }
 
         //Check for sibling life time
-        if (LT_sib_next(lt) != NULL &&
-            SR_regfile(LT_sr(LT_sib_next(lt))) != RF_UNDEF) {
+        LifeTime * next = mgr.getSibMgr()->getFirstNextSib(lt);
+        if (next != NULL && SR_regfile(LT_sr(next)) != RF_UNDEF) {
             assignDesignatedRegFile(lt,
-                SR_regfile(LT_sr(LT_sib_next(lt))), cri);
+                SR_regfile(LT_sr(next)), cri);
             continue;
         }
 
@@ -6219,10 +6358,9 @@ float LRA::computePrority(
     //Spill cost is inverse to the number of usable registers.
     prio /= (float)(mgr.getUsableRegSet(lt)->get_elem_count() + EPSILON);
 
-    LifeTime const* h = xcom::get_first(lt);
-    UINT cnt = xcom::cnt_list(h);
-    if (cnt > 1) {
-        prio *= cnt * 2.0;
+    UINT cnt = mgr.getSibMgr()->countNumOfSib(lt);
+    if (cnt > 0) {
+        prio *= (cnt + 1)* 2.0;
     }
     return (float)prio;
 }
@@ -6252,10 +6390,10 @@ void LRA::buildPriorityList(
         if (!ig.isGraphNode(lt)) {
             continue;
         }
-        if (isAlwaysColored(lt, ig, mgr)) {
-            LT_prio(lt) = 0.0;
-            prio_list.append_tail(lt);
-            continue;
+        if (!isAlwaysColored(lt, ig, mgr)) {
+            LT_prio(lt) += 10.0;
+            //prio_list.append_tail(lt);
+            //continue;
         }
         LT_prio(lt) = computePrority(REG_UNDEF, lt, mgr, ddg);
         ASSERTN(LT_prio(lt) > 0.0, ("No any saving?"));
@@ -6318,6 +6456,271 @@ void LRA::resetLifeTimeAllocated(LifeTimeMgr & mgr)
 }
 
 
+void LRA::coalesceCopy(OR * o, DataDepGraph & ddg, bool * is_resch)
+{
+    //For conservative optimizing, o cannot DEF dedicated register.
+    //e.g:
+    //    d5 = d4
+    //    [xxx] = d5
+    //    br r7
+    //=>
+    //    [xxx] = d4
+    //    br r7 //WRONG!! d5 is incorrectly,
+    //    since d5 is returnval register.
+
+    //tgt = src
+    // ...
+    //    = tgt
+    SR * src = o->get_opnd(m_cg->computeCopyOpndIdx(o));
+    SR * tgt = o->get_result(o->get_result_idx(o->get_copy_to()));
+    ASSERTN(src && tgt && SR_is_reg(src) && SR_is_reg(tgt),
+        ("not a register"));
+    ORList succs;
+    ddg.getSuccsByOrder(succs, o);
+
+    //Termination conditions:
+    //Similar as SSA Version, e.g:
+    //1.    X = Y
+    //        ...
+    //2.    Y = X
+    //3.      = Y
+    //Copy value from 1 to 2, transfer Y, after we added version info,
+    //1.    X0 = Y0
+    //        ...
+    //2.    Y1 = X0
+    //3.       = Y1
+    //It is clearly that we can only transfer Y0 to X0,
+    //but is to cross statement 2.
+    bool terminate = false;
+    bool do_copy_value = false;
+    for (OR * succ = succs.get_head();
+         succ != NULL; succ = succs.get_next()) {
+        if (m_cg->mayDef(succ, src) || m_cg->mayDef(succ, tgt)) {
+            terminate = true;
+        }
+
+        //CASE: Handling bus-or
+        //e.g:
+        //  SR238(d2)[D1] :- copy_m SR254(a4)[A1]
+        //  SR232 [A1] :- bus SR238(d2)[D1]
+        //=>
+        //  SR232 [A1] :- bus SR254(a4)[A1]
+        //So we should determine the condition via 'SameLike' but
+        //is not 'Same'.
+        if (m_cg->isSameLikeCluster(o, succ) &&
+            (m_cg->isSameCondExec(o, succ, ORBB_orlist(m_bb)) ||
+                m_cg->isSafeToOptimize(o, succ))) {
+            if (m_cg->mustUse(succ, tgt)) {
+                bool doit = false;
+
+                //Checking for the safe condition of copy-value.
+                if (m_cg->isConsistentRegFileForCopy(
+                    SR_regfile(src), SR_regfile(tgt))) {
+                    doit = true;
+                }
+
+                //CASE: t1(D1) = t2(D1)     (o)
+                //      sw val, t1(D1), 100 (succ)
+                //t1, is the base register of LD/VAR,
+                //and may be assigned illegal regfile during
+                //assignRegFile(), and avoid the
+                //illegal copy. Check it out.
+                if (SR_regfile(src) != RF_UNDEF) {
+                    if (m_cg->isValidRegFile(succ, tgt,
+                        SR_regfile(src), false)) {
+                        doit = true;
+                    }
+                    else {
+                        doit = false;
+                    }
+                }
+
+                //Check OR if it has same result-sr as operand-sr.
+                if (doit &&
+                    m_cg->isOpndSameWithResult(
+                        NULL, succ, NULL, NULL)) {
+                    for (UINT i = 0; i < succ->result_num(); i++) {
+                        for (UINT j = 0; j < succ->opnd_num(); j++) {
+                            if (succ->get_result(i) ==
+                                succ->get_opnd(j)) {
+                                if (m_cg->isSREqual(tgt,
+                                    succ->get_result(i))) {
+                                    doit = false;
+                                    i = succ->result_num();
+                                    j = succ->opnd_num();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (OR_is_asm(succ)) {
+                    //CASE: User may write inline ASM as
+                    //    asm ("" : "=r" (a) : "0" (b));
+                    //then the genereated OR looks like:
+                    //    SR232 :- asm SR232
+                    //whereas the asm would NOT actually be print as
+                    //    sr232 = sr232.
+                    //The stupid asm means that copy 'b' to 'a',
+                    //thus we could not copy value to 'src'.
+                    doit = false;
+                }
+
+                if (doit) { //Actually do copy
+                    m_cg->renameOpnd(succ, tgt, src, true);
+                    //Do not start from the prior one.
+                    //BUG:Need shift all edges of 'o' to 'succ'
+                    //  e.g: 1. t1 = t2
+                    //       2. t3 = t1
+                    //       3. t2 = xxx
+                    //       4.    = t3
+                    //After copy-value: cp t2 to t1
+                    //       1. t1 = t2
+                    //       2. t3 = t2
+                    //       3. t2 = xxx
+                    //       4.    = t3
+                    //There are only dependence between 2 and 4,
+                    //whereas we copy value from 2->4, it
+                    //cross the DEF of t2, which in 3.
+                    //So we must append all edges of 'o'
+                    //to 'succ' if we perform misc transformations
+                    //to keep all of data informations.
+                    ORList tmp;
+                    ddg.get_preds(tmp, o);
+                    ddg.union_edge(tmp, succ);
+                    ddg.get_succs(tmp, o);
+                    ddg.union_edge(tmp, succ);
+
+                    ddg.get_succs(tmp, succ);
+                    ddg.union_edge(tmp, o);
+                    ddg.get_preds(tmp, succ);
+                    ddg.union_edge(tmp, o);
+
+                    do_copy_value = true;
+                }
+            }
+        } //end if
+
+        if (terminate) {
+            break;
+        }
+    } //end for (OR * succ =...
+
+    if (do_copy_value) {
+        *is_resch = true; //need more optimizations processing.
+    }
+}
+
+
+void LRA::coalesceMovi(
+        OR * o,
+        DataDepGraph & ddg,
+        bool * is_resch,
+        ORCt * orct,
+        ORCt ** next_orct)
+{
+    //CASE: tgt = lit32/lit16/ulit32/ulit16
+    //  ...
+    //  succ_tgt = tgt
+    //=>
+    //  succ_tgt = lit
+    bool terminate = false, is_remove_op = false;
+    SR * tgt = o->get_result(0);
+    ASSERTN(tgt != NULL && SR_is_reg(tgt), ("sr is not a register"));
+    ORList succs;
+    ddg.getSuccsByOrder(succs, o);
+    for (OR * succ = succs.get_head();
+        succ != NULL; succ = succs.get_next()) {
+        if (m_cg->mayDef(succ, tgt)) {
+            terminate = true;
+        }
+        if (m_cg->isSameCluster(o, succ) &&
+            m_cg->computeORCluster(o) != CLUST_UNDEF &&
+            (m_cg->isSameCondExec(o, succ, ORBB_orlist(m_bb)) ||
+                m_cg->isSafeToOptimize(o, succ)) &&
+            m_cg->isCopyOR(succ)) {
+
+            if (m_cg->mustUse(succ, tgt)) {
+                //Safe constant-transfer condition checking.
+                ORList ors;
+                //Operand 1 of 'o' must be literal.
+                SR * lit = o->get_imm_sr();
+                SR * pd = succ->get_pred();
+                ASSERTN(pd && SR_is_constant(lit),
+                    ("Operand 1 of Movi must be literal"));
+
+                SR * succ_src = succ->get_opnd(
+                    m_cg->computeCopyOpndIdx(succ));
+                DUMMYUSE(succ_src);
+
+                SR * succ_tgt = succ->get_result(
+                    succ->get_result_idx(succ->get_copy_to()));
+                DUMMYUSE(succ_tgt);
+
+                ASSERTN(m_cg->isSREqual(succ_src, tgt),
+                    ("copy what?"));
+
+                UNIT succ_unit = m_cg->computeORUnit(succ)->
+                    checkAndGet();
+                CLUST succ_clust = m_cg->computeORCluster(succ);
+                UNIT or_unit = m_cg->computeORUnit(o)->checkAndGet();
+                OR_TYPE new_opc = OR_UNDEF;
+                if (or_unit != succ_unit) {
+                    new_opc = m_cg->computeEquivalentORType(
+                        OR_code(o), succ_unit, succ_clust);
+                } else {
+                    new_opc = OR_code(o);
+                }
+                ASSERTN(new_opc != OR_UNDEF, ("illegal ortype"));
+                ors.append_tail(m_cg->buildOR(new_opc,
+                    1, 2, succ_tgt, pd, lit));
+                if (ors.get_head() != NULL) {
+                    is_remove_op = true;
+                    *is_resch = true;
+                    m_cg->setCluster(ors, m_cg->computeORCluster(o));
+
+                    //Get preds,succs info
+                    ORList succ_preds, succ_succs;
+                    ddg.get_succs(succ_succs, succ);
+                    ddg.get_preds(succ_preds, succ);
+
+                    //Insert Movi operation following the point.
+                    ORBB_orlist(m_bb)->insert_after(ors, succ);
+
+                    //Remove the redundant copy operation.
+                    //Does not need holder.
+                    ORBB_orlist(m_bb)->remove(succ);
+                    ddg.removeOR(succ);
+
+                    //Union all old edges to new o 'new_mov'.
+                    ASSERTN(ors.get_elem_count() == 1,
+                        ("illegal literal move"));
+                    OR * new_mov = ors.get_head();
+                    ddg.appendOR(new_mov);
+                    ddg.union_edge(succ_succs, new_mov);
+                    ddg.union_edge(succ_preds, new_mov);
+                }                
+            }
+        } //end if
+
+        if (terminate) {
+            break;
+        }
+    } //end for all succs
+
+    if (is_remove_op) {
+        ORCt * prev_orct = orct;
+        ORBB_orlist(m_bb)->get_prev(&prev_orct);
+        if (prev_orct != NULL) {
+            *next_orct = prev_orct;
+        } else {
+            ORBB_orlist(m_bb)->get_head(next_orct);
+        }
+        *is_resch = true;
+    }
+}
+
+
 //'cp_any': whether do copy-prop for any register,
 //this may increase register pressure.
 bool LRA::coalescing(DataDepGraph & ddg, bool cp_any)
@@ -6334,266 +6737,12 @@ bool LRA::coalescing(DataDepGraph & ddg, bool cp_any)
         ORBB_orlist(m_bb)->get_next(&next_orct);
         OR * o = orct->val();
         if (OR_is_asm(o)) { continue; }
-
         if (m_cg->isCopyOR(o)) {
             if (!cp_any && !m_cg->isRecalcOR(o)) { continue; }
-
-            //For conservative optimizing, o cannot DEF dedicated register.
-            //e.g:
-            //    d5 = d4
-            //    [xxx] = d5
-            //    br r7
-            //=>
-            //    [xxx] = d4
-            //    br r7 //WRONG!! d5 is incorrectly,
-            //    since d5 is returnval register.
-
-            //tgt = src
-            // ...
-            //    = tgt
-            SR * src = o->get_opnd(m_cg->computeCopyOpndIdx(o));
-            SR * tgt = o->get_result(o->get_result_idx(o->get_copy_to()));
-            ASSERTN(src != NULL && tgt != NULL &&
-                   SR_is_reg(src) && SR_is_reg(tgt), ("not a register"));
-            ORList succs;
-            ddg.getSuccsByOrder(succs, o);
-
-            //Termination conditions:
-            //Similar as SSA Version, e.g:
-            //1.    X = Y
-            //        ...
-            //2.    Y = X
-            //3.      = Y
-            //Copy value from 1 to 2, transfer Y, after we added version info,
-            //1.    X0 = Y0
-            //        ...
-            //2.    Y1 = X0
-            //3.       = Y1
-            //It is clearly that we can only transfer Y0 to X0,
-            //but is to cross statement 2.
-            bool terminate = false;
-            bool do_copy_value = false;
-            for (OR * succ = succs.get_head();
-                 succ != NULL; succ = succs.get_next()) {
-                if (m_cg->mayDef(succ, src) || m_cg->mayDef(succ, tgt)) {
-                    terminate = true;
-                }
-
-                //CASE: Handling bus-or
-                //e.g:
-                //  SR238(d2)[D1] :- copy_m SR254(a4)[A1]
-                //  SR232 [A1] :- bus SR238(d2)[D1]
-                //=>
-                //  SR232 [A1] :- bus SR254(a4)[A1]
-                //So we should determine the condition via 'SameLike' but
-                //is not 'Same'.
-                if (m_cg->isSameLikeCluster(o, succ) &&
-                    (m_cg->isSameCondExec(o, succ, ORBB_orlist(m_bb)) ||
-                     m_cg->isSafeToOptimize(o, succ))) {
-                    if (m_cg->mustUse(succ, tgt)) {
-                        bool doit = false;
-
-                        //Checking for the safe condition of copy-value.
-                        if (m_cg->isConsistentRegFileForCopy(
-                            SR_regfile(src), SR_regfile(tgt))) {
-                            doit = true;
-                        }
-
-                        //CASE: t1(D1) = t2(D1)     (o)
-                        //      sw val, t1(D1), 100 (succ)
-                        //t1, is the base register of LD/VAR,
-                        //and may be assigned illegal regfile during
-                        //assignRegFile(), and avoid the
-                        //illegal copy. Check it out.
-                        if (SR_regfile(src) != RF_UNDEF) {
-                            if (m_cg->isValidRegFile(succ, tgt,
-                                SR_regfile(src), false)) {
-                                doit = true;
-                            } else {
-                                doit = false;
-                            }
-                        }
-
-                        //Check OR if it has same result-sr as operand-sr.
-                        if (doit &&
-                            m_cg->isOpndSameWithResult(NULL, succ, NULL, NULL)) {
-                            for (UINT i = 0; i < succ->result_num(); i++) {
-                                for (UINT j = 0; j < succ->opnd_num(); j++) {
-                                    if (succ->get_result(i) ==
-                                        succ->get_opnd(j)) {
-                                        if (m_cg->isSREqual(tgt,
-                                                succ->get_result(i))) {
-                                            doit = false;
-                                            i = succ->result_num();
-                                            j = succ->opnd_num();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        if (OR_is_asm(succ)) {
-                            //CASE: User may write inline ASM as
-                            //    asm ("" : "=r" (a) : "0" (b));
-                            //then the genereated OR looks like:
-                            //    SR232 :- asm SR232
-                            //whereas the asm would NOT actually be print as
-                            //    sr232 = sr232.
-                            //The stupid asm means that copy 'b' to 'a',
-                            //thus we could not copy value to 'src'.
-                            doit = false;
-                        }
-
-                        if (doit) { //Actually do copy
-                            m_cg->renameOpnd(succ, tgt, src, true);
-                            //Do not start from the prior one.
-                            //BUG:Need shift all edges of 'o' to 'succ'
-                            //  e.g: 1. t1 = t2
-                            //       2. t3 = t1
-                            //       3. t2 = xxx
-                            //       4.    = t3
-                            //After copy-value: cp t2 to t1
-                            //       1. t1 = t2
-                            //       2. t3 = t2
-                            //       3. t2 = xxx
-                            //       4.    = t3
-                            //There are only dependence between 2 and 4,
-                            //whereas we copy value from 2->4, it
-                            //cross the DEF of t2, which in 3.
-                            //So we must append all edges of 'o'
-                            //to 'succ' if we perform misc transformations
-                            //to keep all of data informations.
-                            ORList tmp;
-                            ddg.get_preds(tmp, o);
-                            ddg.union_edge(tmp, succ);
-                            ddg.get_succs(tmp, o);
-                            ddg.union_edge(tmp, succ);
-
-                            ddg.get_succs(tmp, succ);
-                            ddg.union_edge(tmp, o);
-                            ddg.get_preds(tmp, succ);
-                            ddg.union_edge(tmp, o);
-
-                            do_copy_value = true;
-                        }
-                    }
-                } //end if
-
-                if (terminate) {
-                    break;
-                }
-            } //end for (OR * succ =...
-
-            if (do_copy_value) {
-                is_resch = true; //need more optimizations processing.
-            }
-        } else if (OR_is_movi(o)) {  //end if(m_cg->isCopyOR(o)...
-            //CASE: tgt = lit32/lit16/ulit32/ulit16
-            //  ...
-            //  succ_tgt = tgt
-            //=>
-            //  succ_tgt = lit
-            bool terminate = false, is_remove_op = false;
-            SR * tgt = o->get_result(0);
-            ASSERTN(tgt != NULL && SR_is_reg(tgt), ("sr is not a register"));
-            ORList succs;
-            ddg.getSuccsByOrder(succs, o);
-            for (OR * succ = succs.get_head();
-                 succ != NULL; succ = succs.get_next()) {
-                if (m_cg->mayDef(succ, tgt)) {
-                    terminate = true;
-                }
-                if (m_cg->isSameCluster(o, succ) &&
-                    m_cg->computeORCluster(o) != CLUST_UNDEF &&
-                    (m_cg->isSameCondExec(o, succ, ORBB_orlist(m_bb)) ||
-                     m_cg->isSafeToOptimize(o, succ)) &&
-                    m_cg->isCopyOR(succ)) {
-
-                    if (m_cg->mustUse(succ, tgt)) {
-                        bool doit = false;
-
-                        //Safe constant-transfer condition checking.
-                        doit = true;
-                        //Nothing to check anything else??
-                        if (doit) { //Actually constant-transfer
-                            ORList ors;
-                            //Operand 1 of 'o' must be literal.
-                            SR * lit = o->get_imm_sr();
-                            SR * pd = succ->get_pred();
-                            ASSERTN(pd && SR_is_constant(lit),
-                                ("Operand 1 of Movi must be literal"));
-
-                            SR * succ_src =succ->get_opnd(
-                                m_cg->computeCopyOpndIdx(succ));
-                            DUMMYUSE(succ_src);
-
-                            SR * succ_tgt = succ->get_result(
-                                succ->get_result_idx(succ->get_copy_to()));
-                            DUMMYUSE(succ_tgt);
-
-                            ASSERTN(m_cg->isSREqual(succ_src, tgt),
-                                ("copy what?"));
-
-                            UNIT succ_unit = m_cg->computeORUnit(succ)->
-                                checkAndGet();
-                            CLUST succ_clust = m_cg->computeORCluster(succ);
-                            UNIT or_unit = m_cg->computeORUnit(o)->checkAndGet();
-                            OR_TYPE new_opc = OR_UNDEF;
-                            if (or_unit != succ_unit) {
-                                new_opc = m_cg->computeEquivalentORType(
-                                    OR_code(o), succ_unit, succ_clust);
-                            } else {
-                                new_opc = OR_code(o);
-                            }
-                            ASSERTN(new_opc != OR_UNDEF, ("illegal ortype"));
-                            ors.append_tail(m_cg->buildOR(new_opc,
-                                1, 2, succ_tgt, pd, lit));
-                            if (ors.get_head() != NULL) {
-                                is_remove_op = true;
-                                is_resch = true;
-                                m_cg->setCluster(ors, m_cg->computeORCluster(o));
-
-                                //Get preds,succs info
-                                ORList succ_preds, succ_succs;
-                                ddg.get_succs(succ_succs, succ);
-                                ddg.get_preds(succ_preds, succ);
-
-                                //Insert Movi operation following the point.
-                                ORBB_orlist(m_bb)->insert_after(ors, succ);
-
-                                //Remove the redundant copy operation.
-                                //Does not need holder.
-                                ORBB_orlist(m_bb)->remove(succ);
-                                ddg.removeOR(succ);
-
-                                //Union all old edges to new o 'new_mov'.
-                                ASSERTN(ors.get_elem_count() == 1,
-                                   ("illegal literal move"));
-                                OR * new_mov = ors.get_head();
-                                ddg.appendOR(new_mov);
-                                ddg.union_edge(succ_succs, new_mov);
-                                ddg.union_edge(succ_preds, new_mov);
-                            }
-                        }
-                    }
-                } //end if
-
-                if (terminate) {
-                    break;
-                }
-            } //end for all succs
-
-            if (is_remove_op) {
-                ORCt * prev_orct = orct;
-                ORBB_orlist(m_bb)->get_prev(&prev_orct);
-                if (prev_orct != NULL) {
-                    next_orct = prev_orct;
-                } else {
-                    ORBB_orlist(m_bb)->get_head(&next_orct);
-                }
-                is_resch = true;
-            }
-        } //end if(m_cg->is_movi)...
+            coalesceCopy(o, ddg, &is_resch);
+        } else if (OR_is_movi(o)) {
+            coalesceMovi(o, ddg, &is_resch, orct, &next_orct);
+        }
     }
     return is_resch;
 }
@@ -9013,8 +9162,8 @@ bool LRA::perform()
     if (ORBB_ornum(m_bb) <= 0) { return true; }
     if (ORBB_ornum(m_bb) > MAX_OR_BB_OPT_BB_LEN) {
         interwarn("During LRA: Length of ORBB%d is larger "
-                  "than %d, optimizations are disabled!",
-                  ORBB_id(m_bb), MAX_OR_BB_OPT_BB_LEN);
+            "than %d, optimizations are disabled!",
+            ORBB_id(m_bb), MAX_OR_BB_OPT_BB_LEN);
     }
     preLRA();
     elimRedundantCopy(m_cg->isGRAEnable());
@@ -9036,14 +9185,14 @@ bool LRA::perform()
     }
 
     ddg->set_param(NO_PHY_REG,
-                   NO_MEM_READ,
-                   include_mem_dep ? INC_MEM_FLOW : NO_MEM_FLOW,
-                   include_mem_dep ? INC_MEM_OUT : NO_MEM_OUT,
-                   NO_CONTROL,
-                   NO_REG_READ,
-                   INC_REG_ANTI,
-                   include_mem_dep ? INC_MEM_ANTI : NO_MEM_ANTI,
-                   INC_SYM_REG);
+        NO_MEM_READ,
+        include_mem_dep ? INC_MEM_FLOW : NO_MEM_FLOW,
+        include_mem_dep ? INC_MEM_OUT : NO_MEM_OUT,
+        NO_CONTROL,
+        NO_REG_READ,
+        INC_REG_ANTI,
+        include_mem_dep ? INC_MEM_ANTI : NO_MEM_ANTI,
+        INC_SYM_REG);
     ddg->init(m_bb);
     ddg->setParallelPartMgr(m_ppm);
     if (isOpt() || isMultiCluster()) {
@@ -9070,23 +9219,23 @@ bool LRA::perform()
     bool Enable_Optimal_Partition = false;
     if (isOpt() && Enable_Optimal_Partition) {
         if (!ddg->is_param_equal(INC_PHY_REG,
-                                 NO_MEM_READ,
-                                 INC_MEM_FLOW,
-                                 INC_MEM_OUT,
-                                 INC_CONTROL,
-                                 NO_REG_READ,
-                                 INC_REG_ANTI,
-                                 INC_MEM_ANTI,
-                                 INC_SYM_REG)) {
+            NO_MEM_READ,
+            INC_MEM_FLOW,
+            INC_MEM_OUT,
+            INC_CONTROL,
+            NO_REG_READ,
+            INC_REG_ANTI,
+            INC_MEM_ANTI,
+            INC_SYM_REG)) {
             ddg->set_param(INC_PHY_REG,
-                           NO_MEM_READ,
-                           INC_MEM_FLOW,
-                           INC_MEM_OUT,
-                           INC_CONTROL,
-                           NO_REG_READ,
-                           INC_REG_ANTI,
-                           INC_MEM_ANTI,
-                           INC_SYM_REG);
+                NO_MEM_READ,
+                INC_MEM_FLOW,
+                INC_MEM_OUT,
+                INC_CONTROL,
+                NO_REG_READ,
+                INC_REG_ANTI,
+                INC_MEM_ANTI,
+                INC_SYM_REG);
             ddg->reschedul();
         }
         optimal_partition(*ddg, is_regfile_unique);
@@ -9094,14 +9243,14 @@ bool LRA::perform()
 
     if (isOpt()) {
         ddg->set_param(INC_PHY_REG,
-                       NO_MEM_READ,
-                       INC_MEM_FLOW,
-                       INC_MEM_OUT,
-                       NO_CONTROL,
-                       NO_REG_READ,
-                       INC_REG_ANTI,
-                       INC_MEM_ANTI,
-                       INC_SYM_REG);
+            NO_MEM_READ,
+            INC_MEM_FLOW,
+            INC_MEM_OUT,
+            NO_CONTROL,
+            NO_REG_READ,
+            INC_REG_ANTI,
+            INC_MEM_ANTI,
+            INC_SYM_REG);
         ddg->reschedul();
     }
 
@@ -9156,9 +9305,7 @@ bool LRA::perform()
     //Calculate the prioirtys.
     List<LifeTime*> prio_list;
     show_phase("Build Priority List");
-
     buildPriorityList(prio_list, *ig, *mgr, *ddg);
-    //dumpPrioList(prio_list);
     ASSERT0(verifyUsableRegSet(*mgr));
 
     show_phase("Compute Layer");
@@ -9170,31 +9317,31 @@ bool LRA::perform()
     show_phase("Start to alloca life time");
     if (!allocatePrioList(prio_list, uncolored_list, *ig, *mgr, rfg)) {
         for (LifeTime * lt = uncolored_list.get_head(); lt != NULL;
-             lt = uncolored_list.get_next()) {
+            lt = uncolored_list.get_next()) {
             action.set_action(lt, ACTION_BFS_REASSIGN_REGFILE);
         }
 
         show_phase("Start to Solve Conflict");
         if (isOpt() &&
             !ddg->is_param_equal(INC_PHY_REG,
-                                 NO_MEM_READ,
-                                 INC_MEM_FLOW,
-                                 INC_MEM_OUT,
-                                 NO_CONTROL,
-                                 NO_REG_READ,
-                                 INC_REG_ANTI,
-                                 INC_MEM_ANTI,
-                                 INC_SYM_REG)) {
+                NO_MEM_READ,
+                INC_MEM_FLOW,
+                INC_MEM_OUT,
+                NO_CONTROL,
+                NO_REG_READ,
+                INC_REG_ANTI,
+                INC_MEM_ANTI,
+                INC_SYM_REG)) {
             //diff in rrd
             ddg->set_param(INC_PHY_REG,
-                           NO_MEM_READ,
-                           INC_MEM_FLOW,
-                           INC_MEM_OUT,
-                           NO_CONTROL,
-                           NO_REG_READ,
-                           INC_REG_ANTI,
-                           INC_MEM_ANTI,
-                           INC_SYM_REG);
+                NO_MEM_READ,
+                INC_MEM_FLOW,
+                INC_MEM_OUT,
+                NO_CONTROL,
+                NO_REG_READ,
+                INC_REG_ANTI,
+                INC_MEM_ANTI,
+                INC_SYM_REG);
             ddg->reschedul();
         }
 
@@ -9207,23 +9354,23 @@ bool LRA::perform()
         m_cur_phase |= PHASE_FINIAL_FIXUP_DONE;
         if (!isAllAllocated(NULL)) {
             show_phase("New srs have been built during fixup "
-                    "while after solve conflict, realloca life time also.");
+                "while after solve conflict, realloca life time also.");
             reallocateLifeTime(prio_list, uncolored_list,
                 *mgr, *ddg, rfg, *ig, cri);
             if (uncolored_list.get_elem_count() > 0) {
                 for (LifeTime * lt = uncolored_list.get_head();
-                     lt != NULL; lt = uncolored_list.get_next()) {
+                    lt != NULL; lt = uncolored_list.get_next()) {
                     action.set_action(lt, ACTION_SPLIT);
                 }
                 show_phase("Fixup after solve conflict, and "
-                           "after realloca life time, do solve conflict");
+                    "after realloca life time, do solve conflict");
                 solveConflict(uncolored_list, prio_list, cri,
                     is_regfile_unique, *ig, *mgr, *ddg, rfg, action);
             }
         }
     }
 
-    m_cur_phase |= PHASE_RA_DONE;
+    m_cur_phase |= PHASE_RA_DONE;    
     finalLRAOpt(mgr, ig, ddg);
     postLRA();
     delete mgr;

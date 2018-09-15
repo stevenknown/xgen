@@ -19,7 +19,7 @@ include ../opt/Makefile.inc
 
 CFLAGS =\
    -D_DEBUG_ \
-   -O0 -g2 \
+   -O2 \
    -D$(TARG) \
    -Wno-write-strings \
    -Wsign-promo \
@@ -30,7 +30,7 @@ CFLAGS =\
    -Wno-multichar \
    -Winit-self \
    -Wswitch \
-   -Wall #-DDEBUG_XOC -fprofile-arcs -ftest-coverage # # 
+   -Wall #-fprofile-arcs -ftest-coverage # # 
 
 #CFLAGS+=\
    -Werror=pointer-to-int-cast \

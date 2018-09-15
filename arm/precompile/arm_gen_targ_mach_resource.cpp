@@ -1025,6 +1025,18 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_ldrh, sda);
     setSRDescGroup(OR_ldrsh, sda);
 
+    //1 res, 3 opnd: r <- p, r, Imm
+    sda = newSRDescGroup(1, 3);
+    //res
+    sda->set_res(0, sr_r);
+    //opnd
+    sda->set_opnd(0, sr_p);
+    sda->set_opnd(1, sr_r);
+    sda->set_opnd(2, sr_5b_unsig_imm);
+    setSRDescGroup(OR_asl_i, sda);
+    setSRDescGroup(OR_asr_i, sda);
+    setSRDescGroup(OR_lsl_i, sda);
+
     //1 res, 4 opnd: r <- p, r, r, cpsr
     sda = newSRDescGroup(1, 4);
     //res

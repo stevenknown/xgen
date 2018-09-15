@@ -146,7 +146,7 @@ protected:
             UINT param_offset,
             IR const* ir,
             OUT ORList & ors);
-    void spreadSRVec(IOC const* cont, Vector<SR*> * vec);
+    void flattenSRVec(IOC const* cont, Vector<SR*> * vec);
 
 public:
     IR2OR(CG * cg);
@@ -368,7 +368,7 @@ public:
 
     void copyDbx(OR * o, IR const* ir)
     {
-        Dbx * d = ::get_dbx(ir);
+        Dbx * d = ::getDbx(ir);
         if (d != NULL) { OR_dbx(o).copy(*d); }
     }
 
@@ -427,6 +427,13 @@ public:
             OUT ORList & ors,
             IN IOC * cont);
     void processRealParams(IR const* ir, OUT ORList & ors, IN IOC * cont);
+
+    //True if current argument register should be bypassed.
+    virtual bool skipArgRegister(
+            IR const* ir,
+            OUT ArgDescMgr * argdescmgr,
+            CG const* cg)
+    { ASSERTN(0, ("Target Dependent Code")); return false; };
 };
 
 } //namespace xgen

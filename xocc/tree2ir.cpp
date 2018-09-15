@@ -153,7 +153,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
                     ASSERTN(tmpir->is_ptr(),
                            ("I think tmpir should already be set to"
                             "pointer in buildStore()"));
-                    set_lineno(tmpir, lineno, m_ru);
+                    setLineNum(tmpir, lineno, m_ru);
                     add_next(CONT_toplirlist(cont), tmpir);
                     ir = m_ru->buildIstore(m_ru->buildPRdedicated(
                         STPR_no(tmpir), tmpir->getType()), r, rtype);
@@ -520,7 +520,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         ir->setPointerType(get_pointer_base_size(TREE_result_type(t)), m_tm);
     }
     CONT_is_record_epilog(cont) = false;
-    set_lineno(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_ru);
     add_next(CONT_toplirlist(cont), ir);
 
     //Record the post side effect operations.
@@ -602,7 +602,7 @@ IR * CTree2IR::convert_inc_dec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 
     //ST is statement, and only can be appended on top level
     //statement list.
-    set_lineno(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_ru);
     add_next(CONT_toplirlist(cont), ir);
     return m_ru->dupIRTree(inc_exp);
 }
@@ -741,7 +741,7 @@ IR * CTree2IR::convert_array(Tree * t, INT lineno, IN T2IRCtx * cont)
         }
         free(elem_nums);
     }
-    set_lineno(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_ru);
     return ir;
 }
 
@@ -915,13 +915,13 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         ir = m_ru->buildIcall(callee, irp, 0, m_tm->getVoid());
     }
     ir->verify(m_ru);
-    set_lineno(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_ru);
     add_next(CONT_toplirlist(cont), ir);
     //----------
 
     //Generate return-exprssion.
     IR * respr = m_ru->buildPR(type);
-    set_lineno(respr, lineno, m_ru);
+    setLineNum(respr, lineno, m_ru);
     CALL_prno(ir) = PR_no(respr);
     IR_dt(ir) = type;
 
@@ -933,7 +933,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     } else {
         ret_exp = respr;
     }
-    set_lineno(ret_exp, lineno, m_ru);
+    setLineNum(ret_exp, lineno, m_ru);
     return ret_exp;
 }
 
@@ -1038,8 +1038,8 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         xincst = m_ru->buildStore(LD_idinfo(inc_exp), addsub);
     }
 
-    set_lineno(xstpr, lineno, m_ru);
-    set_lineno(xincst, lineno, m_ru);
+    setLineNum(xstpr, lineno, m_ru);
+    setLineNum(xincst, lineno, m_ru);
     add_next(CONT_toplirlist(cont), xstpr);
 
     if (CONT_is_record_epilog(cont)) {
@@ -1098,7 +1098,7 @@ IR * CTree2IR::convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx *)
     m_case_list = m_case_list_stack.pop();
 
     IR * ir = m_ru->buildSwitch(vexp, casev_list, body, deflab);
-    set_lineno(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_ru);
 
     return ir;
 }
@@ -1169,7 +1169,7 @@ IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
         }
         ir->setOffset(ir->getOffset() + field_ofst);
     }
-    set_lineno(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_ru);
     return ir;
 }
 
@@ -1239,7 +1239,7 @@ IR * CTree2IR::convertInDirectMemAccess(Tree * t, INT lineno, IN T2IRCtx * cont)
     }
 
     ASSERT0(ir);
-    set_lineno(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_ru);
     return ir;
 }
 
@@ -1278,7 +1278,7 @@ IR * CTree2IR::convertDeref(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         }
         ir = m_ru->buildIload(addr, type);
     }
-    set_lineno(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_ru);
     return ir;
 }
 
@@ -1338,7 +1338,7 @@ IR * CTree2IR::convertSelect(Tree * t, INT lineno, T2IRCtx * cont)
         copyDbx(det, old, m_ru);
     }
     IR * ir = m_ru->buildSelect(det, texp, fexp, type);
-    set_lineno(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_ru);
     return ir;
 }
 
@@ -1435,7 +1435,7 @@ IR * CTree2IR::convertReturn(Tree * t, INT lineno, T2IRCtx * cont)
             ir->setParent(cvt);
         }
     }
-    set_lineno(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_ru);
     genReturnValBuf(ir);
     return ir;
 }
@@ -1517,7 +1517,7 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
     } else {
         UNREACHABLE();
     }
-    set_lineno(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_ru);
     return ir;
 }
 
@@ -1545,7 +1545,7 @@ IR * CTree2IR::convertCVT(Tree * t, INT lineno, T2IRCtx * cont)
         }
         ir = m_ru->buildCvt(convert(TREE_cast_exp(t), cont), type);
     }
-    set_lineno(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_ru);
     return ir;
 }
 
@@ -1611,7 +1611,7 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
         //Normal load.
         ir = buildLoad(t);
     }
-    set_lineno(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_ru);
     return ir;
 }
 
@@ -1675,7 +1675,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 //The maximum integer supported is 64bit.
                 ir = m_ru->buildImmInt(TREE_imm_val(t),
                     m_tm->getSimplexTypeEx(dt));
-                set_lineno(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_ru);
             }
             break;
         case TR_IMML:
@@ -1688,7 +1688,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 //The maximum integer supported is 64bit.
                 ir = m_ru->buildImmInt(TREE_imm_val(t),
                     m_tm->getSimplexTypeEx(dt));
-                set_lineno(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_ru);
             }
             break;
         case TR_FP:
@@ -1712,7 +1712,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 if (mantissa_num > DEFAULT_MANTISSA_NUM) {
                     CONST_fp_mant(ir) = mantissa_num;
                 }
-                set_lineno(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_ru);
             }
             break;
         case TR_ENUM_CONST:
@@ -1722,7 +1722,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 //of target machine
                 ir = m_ru->buildImmInt(v, m_tm->getSimplexTypeEx(
                     m_tm->getDType(WORD_LENGTH_OF_HOST_MACHINE, true)));
-                set_lineno(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_ru);
                 break;
             }
         case TR_STRING:
@@ -1732,19 +1732,19 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 m_ru->getTopRegion() != NULL &&
                 m_ru->getTopRegion()->is_program());
             m_ru->getTopRegion()->addToVarTab(LDA_idinfo(ir));
-            set_lineno(ir, lineno, m_ru);
+            setLineNum(ir, lineno, m_ru);
             break;
         case TR_LOGIC_OR: //logical or        ||
             l = convert(TREE_lchild(t),cont);
             r = convert(TREE_rchild(t),cont);
             ir = m_ru->buildCmp(IR_LOR, l, r);
-            set_lineno(ir, lineno, m_ru);
+            setLineNum(ir, lineno, m_ru);
             break;
         case TR_LOGIC_AND: //logical and      &&
             l = convert(TREE_lchild(t),cont);
             r = convert(TREE_rchild(t),cont);
             ir = m_ru->buildCmp(IR_LAND, l, r);
-            set_lineno(ir, lineno, m_ru);
+            setLineNum(ir, lineno, m_ru);
             break;
         case TR_INCLUSIVE_OR: //inclusive or  |
             {
@@ -1765,7 +1765,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                     }
                 }
                 ir = m_ru->buildBinaryOp(IR_BOR, type, l, r);
-                set_lineno(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_ru);
             }
             break;
         case TR_INCLUSIVE_AND: //inclusive and &
@@ -1787,7 +1787,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                     }
                 }
                 ir = m_ru->buildBinaryOp(IR_BAND, type, l, r);
-                set_lineno(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_ru);
             }
             break;
         case TR_XOR: //exclusive or
@@ -1819,7 +1819,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             } else {
                 ir = m_ru->buildCmp(IR_NE, l, r);
             }
-            set_lineno(ir, lineno, m_ru);
+            setLineNum(ir, lineno, m_ru);
             break;
         case TR_RELATION: // < > >= <=
             l = convert(TREE_lchild(t), cont);
@@ -1839,7 +1839,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 break;
             default: UNREACHABLE();
             }
-            set_lineno(ir, lineno, m_ru);
+            setLineNum(ir, lineno, m_ru);
             break;
         case TR_SHIFT:   // >> <<
             {
@@ -1865,7 +1865,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 } else {
                     ir = m_ru->buildBinaryOp(IR_LSL, type, l, r);
                 }
-                set_lineno(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_ru);
             }
             break;
         case TR_ADDITIVE: // '+' '-'
@@ -1892,7 +1892,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 } else {
                     ir = m_ru->buildBinaryOp(IR_SUB, type, l, r);
                 }
-                set_lineno(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_ru);
             }
             break;
         case TR_MULTI:    // '*' '/' '%'
@@ -1919,7 +1919,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 } else {
                     ir = m_ru->buildBinaryOp(IR_REM, type, l, r);
                 }
-                set_lineno(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_ru);
             }
             break;
         case TR_SCOPE:
@@ -1942,7 +1942,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                     copyDbx(det, old, m_ru);
                 }
                 ir = m_ru->buildIf(det, truebody, falsebody);
-                set_lineno(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_ru);
             }
             break;
         case TR_DO:
@@ -1981,7 +1981,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                     copyDbx(det, old, m_ru);
                 }
                 ir = m_ru->buildDoWhile(det, body);
-                set_lineno(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_ru);
             }
             break;
         case TR_WHILE:
@@ -2019,7 +2019,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 }
 
                 ir = m_ru->buildWhileDo(det, body);
-                set_lineno(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_ru);
             }
             break;
         case TR_FOR:
@@ -2043,7 +2043,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 }
 
                 IR * whiledo = m_ru->buildWhileDo(det, body);
-                set_lineno(whiledo, lineno, m_ru);
+                setLineNum(whiledo, lineno, m_ru);
                 add_next(&init, whiledo);
                 ir = init;
             }
@@ -2053,22 +2053,22 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             break;
         case TR_BREAK:
             ir = m_ru->buildBreak();
-            set_lineno(ir, lineno, m_ru);
+            setLineNum(ir, lineno, m_ru);
             break;
         case TR_CONTINUE:
             ir = m_ru->buildContinue();
-            set_lineno(ir, lineno, m_ru);
+            setLineNum(ir, lineno, m_ru);
             break;
         case TR_RETURN:
             ir = convertReturn(t, lineno, cont);
             break;
         case TR_GOTO:
             ir = m_ru->buildGoto(getUniqueLabel(TREE_lab_info(t)));
-            set_lineno(ir, lineno, m_ru);
+            setLineNum(ir, lineno, m_ru);
             break;
         case TR_LABEL:
             ir = m_ru->buildLabel(getUniqueLabel(TREE_lab_info(t)));
-            set_lineno(ir, lineno, m_ru);
+            setLineNum(ir, lineno, m_ru);
             break;
         case TR_CASE:
             {
@@ -2078,7 +2078,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 CASEV_constv(casev) = TREE_case_value(t);
                 CASEV_is_def(casev) = false;
                 m_case_list->append_tail(casev);
-                set_lineno(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_ru);
                 break;
             }
         case TR_DEFAULT:
@@ -2089,7 +2089,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 CASEV_constv(casev) = 0;
                 CASEV_is_def(casev) = true;
                 m_case_list->append_head(casev);
-                set_lineno(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_ru);
                 break;
             }
         case TR_COND: //formulized log_OR_exp ? exp : cond_exp
@@ -2111,19 +2111,19 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             ir = m_ru->allocIR(IR_NEG);
             UNA_opnd(ir) = convert(TREE_lchild(t), cont);
             IR_dt(ir) = UNA_opnd(ir)->getType();
-            set_lineno(ir, lineno, m_ru);
+            setLineNum(ir, lineno, m_ru);
             ir->setParentPointer(false);
             break;
         case TR_REV:  // Reverse
             {
                 IR * opnd = convert(TREE_lchild(t), cont);
                 ir = m_ru->buildUnaryOp(IR_BNOT, opnd->getType(), opnd);
-                set_lineno(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_ru);
             }
             break;
         case TR_NOT:  // get non-value
             ir = m_ru->buildLogicalNot(convert(TREE_lchild(t), cont));
-            set_lineno(ir, lineno, m_ru);
+            setLineNum(ir, lineno, m_ru);
             break;
         case TR_INC:   //++a
         case TR_DEC:   //--a
@@ -2153,8 +2153,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
 
         t = TREE_nsib(t);
         if (ir != NULL) {
-            if (get_lineno(ir) == 0) {
-                set_lineno(ir, lineno, m_ru);
+            if (getLineNum(ir) == 0) {
+                setLineNum(ir, lineno, m_ru);
             }
             add_next(&ir_list, ir);
         }

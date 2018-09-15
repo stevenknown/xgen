@@ -116,14 +116,14 @@ void ARMIR2OR::convertStoreVar(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Load the address of target VAR into register.
     cont->clean_bottomup();
-    convertLda(ST_idinfo(ir), ST_ofst(ir), ::get_dbx(ir), ors, cont);
+    convertLda(ST_idinfo(ir), ST_ofst(ir), ::getDbx(ir), ors, cont);
     SR * tgt = cont->get_reg(0);
     ASSERT0(tgt && SR_is_reg(tgt));
 
     //Load the address of source VAR into register.
     cont->clean_bottomup();
     convertLda(LD_idinfo(ST_rhs(ir)), LD_ofst(ST_rhs(ir)),
-        ::get_dbx(ST_rhs(ir)), ors, cont);
+        ::getDbx(ST_rhs(ir)), ors, cont);
     SR * src = cont->get_reg(0);
     ASSERT0(src && SR_is_reg(src));
 
@@ -143,7 +143,7 @@ void ARMIR2OR::convertLda(IR const* ir, OUT ORList & ors, IN IOC * cont)
     VAR * v = LDA_idinfo(ir);
     ASSERT0(v);
     ASSERTN(!VAR_is_unallocable(v), ("var must be allocable during CG"));
-    convertLda(v, LDA_ofst(ir), ::get_dbx(ir), ors, cont);
+    convertLda(v, LDA_ofst(ir), ::getDbx(ir), ors, cont);
 }
 
 
@@ -246,12 +246,12 @@ void ARMIR2OR::convertRem(IR const* ir, OUT ORList & ors, IN IOC * cont)
     ArgDescMgr argdescmgr;
     ArgDesc * desc = NULL;
     desc = argdescmgr.addValueDesc(
-        opnd0, ::get_dbx(op0), opnd0->getByteSize(), 0);
+        opnd0, ::getDbx(op0), opnd0->getByteSize(), 0);
     argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
 
     desc = argdescmgr.addValueDesc(
-        opnd1, ::get_dbx(op1), opnd1->getByteSize(), 0);
+        opnd1, ::getDbx(op1), opnd1->getByteSize(), 0);
     argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
 
@@ -307,12 +307,12 @@ void ARMIR2OR::convertAddSubFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     ArgDescMgr argdescmgr;
     ArgDesc * desc = NULL;
     desc = argdescmgr.addValueDesc(
-        opnd0, ::get_dbx(op0), opnd0->getByteSize(), 0);    
+        opnd0, ::getDbx(op0), opnd0->getByteSize(), 0);    
     argdescmgr.addArgInArgSection(desc->arg_size);    
     ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
 
     desc = argdescmgr.addValueDesc(
-        opnd1, ::get_dbx(op1), opnd1->getByteSize(), 0);
+        opnd1, ::getDbx(op1), opnd1->getByteSize(), 0);
     argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
 
@@ -373,12 +373,12 @@ void ARMIR2OR::convertDiv(IR const* ir, OUT ORList & ors, IN IOC * cont)
     ArgDescMgr argdescmgr;
     ArgDesc * desc = NULL;
     desc = argdescmgr.addValueDesc(
-        opnd0, ::get_dbx(op0), opnd0->getByteSize(), 0);
+        opnd0, ::getDbx(op0), opnd0->getByteSize(), 0);
     argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
 
     desc = argdescmgr.addValueDesc(
-        opnd1, ::get_dbx(op1), opnd1->getByteSize(), 0);
+        opnd1, ::getDbx(op1), opnd1->getByteSize(), 0);
     argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
 
@@ -425,7 +425,7 @@ void ARMIR2OR::convertMulofInt(IR const* ir, OUT ORList & ors, IN IOC * cont)
     tmp.clean();
     convertGeneralLoad(BIN_opnd1(ir), ors, &tmp);
     SR * sr2 = tmp.get_reg(0);
-    Dbx * dbx = ::get_dbx(ir);
+    Dbx * dbx = ::getDbx(ir);
     ASSERT0(sr1->getByteSize() == GENERAL_REGISTER_SIZE);
     ASSERT0(sr2->getByteSize() == GENERAL_REGISTER_SIZE);
     ORList tors;
@@ -467,12 +467,12 @@ void ARMIR2OR::convertMulofLongLong(
     ArgDescMgr argdescmgr;
     ArgDesc * desc = NULL;
     desc = argdescmgr.addValueDesc(
-        opnd0, ::get_dbx(op0), opnd0->getByteSize(), 0);    
+        opnd0, ::getDbx(op0), opnd0->getByteSize(), 0);    
     argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
 
     desc = argdescmgr.addValueDesc(
-        opnd1, ::get_dbx(op1), opnd1->getByteSize(), 0);
+        opnd1, ::getDbx(op1), opnd1->getByteSize(), 0);
     argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
  
@@ -529,12 +529,12 @@ void ARMIR2OR::convertMulofFloat(IR const* ir, OUT ORList & ors, IN IOC * cont)
     ArgDescMgr argdescmgr;
     ArgDesc * desc = NULL;
     desc = argdescmgr.addValueDesc(
-        opnd0, ::get_dbx(op0), opnd0->getByteSize(), 0);
+        opnd0, ::getDbx(op0), opnd0->getByteSize(), 0);
     argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
 
     desc = argdescmgr.addValueDesc(
-        opnd1, ::get_dbx(op1), opnd1->getByteSize(), 0);
+        opnd1, ::getDbx(op1), opnd1->getByteSize(), 0);
     argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
  
@@ -604,7 +604,7 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT ORList & ors, IN IOC * cont)
             ASSERT0(cont != NULL);
             getCG()->getSRVecMgr()->genSRVec(2, res, res2);
             cont->set_reg(0, res);
-            cont->set_reg(1, res2);
+            //cont->set_reg(1, res2);
         } else {
             UNREACHABLE();
         }
@@ -636,7 +636,7 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT ORList & ors, IN IOC * cont)
         res = tc.get_reg(0);
         res2 = SR_vec(res)->get(1);
         cont->set_reg(0, res);
-        cont->set_reg(1, res2);
+        //cont->set_reg(1, res2);
     } else {
         UNREACHABLE();
     }
@@ -860,7 +860,7 @@ void ARMIR2OR::convertIgoto(IR const* ir, OUT ORList & ors, IN IOC *)
     ASSERT0(tgt_addr);
 
     OR * o = getCG()->buildOR(OR_bx, 0, 2, getCG()->genTruePred(), tgt_addr);
-    OR_dbx(o).copy(*get_dbx(ir));
+    OR_dbx(o).copy(*getDbx(ir));
     ors.append_tail(o);
 }
 
@@ -981,12 +981,12 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors, IN IOC * cont
     ArgDescMgr argdescmgr;
     ArgDesc * desc = NULL;
     desc = argdescmgr.addValueDesc(
-        opnd0, ::get_dbx(op0), opnd0->getByteSize(), 0);
+        opnd0, ::getDbx(op0), opnd0->getByteSize(), 0);
     argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
 
     desc = argdescmgr.addValueDesc(
-        opnd1, ::get_dbx(op1), opnd1->getByteSize(), 0);
+        opnd1, ::getDbx(op1), opnd1->getByteSize(), 0);
     argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
    
@@ -1232,7 +1232,7 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
     ArgDescMgr argdescmgr;
     ArgDesc * desc = NULL;
     desc = argdescmgr.addValueDesc(
-        opnd, ::get_dbx(CVT_exp(ir)), opnd->getByteSize(), 0);
+        opnd, ::getDbx(CVT_exp(ir)), opnd->getByteSize(), 0);
     argdescmgr.addArgInArgSection(desc->arg_size);
     ASSERT0(opnd->getByteSize() >= CVT_exp(ir)->getTypeSize(m_tm));
 
@@ -1463,4 +1463,32 @@ OR_TYPE ARMIR2OR::mapIRType2ORType(
     default: ASSERTN(0, ("unsupport"));
     }
     return orty;
+}
+
+
+//True if current argument register should be bypassed.
+bool ARMIR2OR::skipArgRegister(
+        IR const* ir,
+        OUT ArgDescMgr * argdescmgr,
+        CG const* cg)
+{
+    ASSERT0(ir && argdescmgr && cg);
+    #ifdef TO_BE_COMPATIBLE_WITH_ARM_LINUX_GNUEABI
+    if (ir->getTypeSize(cg->getTypeMgr()) ==
+            CONTINUOUS_REG_NUM * GENERAL_REGISTER_SIZE &&
+        !ir->is_mc()) {
+        ASSERT0(ir->getDType() == xoc::D_U64 ||
+            ir->getDType() == xoc::D_I64 ||
+            ir->getDType() == xoc::D_F64);
+        RegSet const* rs = argdescmgr->getArgRegSet();
+        REG first_reg = rs->get_first();
+        if (!cg->isEvenReg(first_reg) || //bypass odd register
+            rs->get_elem_count() < CONTINUOUS_REG_NUM) { //not enough
+                                              //continuous arg register            
+            argdescmgr->dropArgRegister();
+            return true;
+        }
+    }
+    #endif
+    return false;
 }

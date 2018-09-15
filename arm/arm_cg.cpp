@@ -1137,14 +1137,15 @@ void ARMCG::buildShiftLeft(
             //t <- lo << (32 - ofst)
             //hi <- hi | t
             //lo <- lo << ofst
-            SR * hi = SR_vec(src)->get(0);
-            SR * lo = SR_vec(src)->get(1);
+            
+            SR * hi = SR_vec(src)->get(1);
+            SR * lo = SR_vec(src)->get(0);
             ASSERT0(hi && lo);
             OR * o = buildOR(OR_lsl_i, 1, 3, hi, genTruePred(),
                 hi, shift_ofst);
             ors.append_tail(o);
             o = buildOR(OR_orr_lsr_i, 1, 4, hi, genTruePred(),
-                hi, lo, 32 - SR_int_imm(shift_ofst));
+                hi, lo, genIntImm(32 - SR_int_imm(shift_ofst), false));
             ors.append_tail(o);
             o = buildOR(OR_lsl_i, 1, 3, lo, genTruePred(),
                 lo, shift_ofst);
@@ -1152,22 +1153,23 @@ void ARMCG::buildShiftLeft(
 
             ASSERT0(cont);
             cont->set_reg(0, lo);
-            cont->set_reg(0, hi);
+            //cont->set_reg(0, hi);
             return;
         } else if (SR_int_imm(shift_ofst) <= 63) {
             //hi <- lo << (ofst - 32)
             //lo <- 0
-            SR * hi = SR_vec(src)->get(0);
-            SR * lo = SR_vec(src)->get(1);
+            
+            SR * hi = SR_vec(src)->get(1);
+            SR * lo = SR_vec(src)->get(0);
             ASSERT0(hi && lo);
             OR * o = buildOR(OR_lsl_i, 1, 3, hi, genTruePred(),
-                lo, SR_int_imm(shift_ofst) - 32);
+                lo, genIntImm(SR_int_imm(shift_ofst) - 32, false));
             ors.append_tail(o);
             o = buildOR(OR_mov_i, 1, 2, lo, genTruePred(),
                 genIntImm((HOST_INT)0, true));
+            ors.append_tail(o);
             ASSERT0(cont);
             cont->set_reg(0, lo);
-            cont->set_reg(0, hi);
             return;
         } else {
             UNREACHABLE();
@@ -1197,7 +1199,7 @@ void ARMCG::buildShiftRight(
             else if (SR_is_imm(shift_ofst)) { ort = OR_lsr_i; }
             else { UNREACHABLE(); }
         }
-        OR * o = buildOR(ort, 1, 3, res, genRflag(),
+        OR * o = buildOR(ort, 1, 3, res,
             genTruePred(), src, shift_ofst);
         ors.append_tail(o);
         ASSERT0(cont);
@@ -1211,8 +1213,9 @@ void ARMCG::buildShiftRight(
             //lo = lo >>(asr) shift_ofst
             //lo = lo | (hi <<(lsl) (32 - shift_ofst))
             //hi = hi >>(asr) shift_ofst
-            SR * hi = SR_vec(src)->get(0);
-            SR * lo = SR_vec(src)->get(1);
+            
+            SR * hi = SR_vec(src)->get(1);
+            SR * lo = SR_vec(src)->get(0);
             ASSERT0(hi && lo);
             OR_TYPE ort = OR_UNDEF;
             if (is_signed) {
@@ -1220,19 +1223,17 @@ void ARMCG::buildShiftRight(
             } else {
                 ort = OR_lsr_i;
             }
-            OR * o = buildOR(ort, 1, 3, lo, genTruePred(),
-                lo, shift_ofst);
+            OR * o = buildOR(ort, 1, 3, lo, genTruePred(), lo, shift_ofst);
             ors.append_tail(o);
             o = buildOR(OR_orr_lsl_i, 1, 4, lo, genTruePred(),
-                lo, hi, 32 - SR_int_imm(shift_ofst));
+                lo, hi, genIntImm(32 - SR_int_imm(shift_ofst), false));
             ors.append_tail(o);
-            o = buildOR(OR_asr_i, 1, 3, hi, genTruePred(),
-                hi, shift_ofst);
+            o = buildOR(OR_asr_i, 1, 3, hi, genTruePred(), hi, shift_ofst);
             ors.append_tail(o);
 
             ASSERT0(cont);
             cont->set_reg(0, lo);
-            cont->set_reg(0, hi);
+            //cont->set_reg(1, hi);
             return;
         } else if (SR_int_imm(shift_ofst) <= 63) {
             //lo <- hi asr (ofst - 32)
@@ -1241,8 +1242,9 @@ void ARMCG::buildShiftRight(
             //} else {
             //    hi <- 0
             //}
-            SR * hi = SR_vec(src)->get(0);
-            SR * lo = SR_vec(src)->get(1);
+            
+            SR * hi = SR_vec(src)->get(1);
+            SR * lo = SR_vec(src)->get(0);
             ASSERT0(hi && lo);
             //Do we need asrs_i here?
             OR * o = buildOR(OR_asr_i, 1, 3, hi, genTruePred(),
@@ -1259,7 +1261,7 @@ void ARMCG::buildShiftRight(
             ors.append_tail(o);
             ASSERT0(cont);
             cont->set_reg(0, lo);
-            cont->set_reg(0, hi);
+            //cont->set_reg(1, hi);
             return;
         } else {
             UNREACHABLE();
@@ -1344,7 +1346,7 @@ void ARMCG::buildAddRegImm(
 
         ASSERT0(cont);
         cont->set_reg(0, res);
-        cont->set_reg(1, res2);
+        //cont->set_reg(1, res2);
     } else {
         ASSERTN(0, ("TODO"));
     }
@@ -1503,7 +1505,7 @@ void ARMCG::buildAddRegReg(
 
         ASSERT0(cont != NULL);
         cont->set_reg(0, res);
-        cont->set_reg(1, res_2);
+        //cont->set_reg(1, res_2);
         assembleSRVec(SR_vec(res), res, res_2);
     } else {
         ASSERTN(0, ("TODO"));
@@ -1609,7 +1611,7 @@ bool ARMCG::isValidOpndRegfile(
 //'is_result': it is true if 'sr' being the result of 'o'.
 bool ARMCG::isValidRegInSRVec(OR *, SR * sr, UINT idx, bool is_result)
 {
-    CHECK_DUMMYUSE(is_result);
+    DUMMYUSE(is_result);
     CHECK_DUMMYUSE(sr);
     ASSERT0(SR_vec(sr));
     if (idx == 0) {
@@ -2170,4 +2172,34 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
     }
     default: UNREACHABLE();
     }
+}
+
+
+bool ARMCG::skipArgRegister(
+        VAR const* param,
+        RegSet const* regset,
+        REG reg) const
+{
+    #ifdef TO_BE_COMPATIBLE_WITH_ARM_LINUX_GNUEABI
+    if (//only check value that is in paired-register
+        param->getByteSize(m_tm) == CONTINUOUS_REG_NUM * GENERAL_REGISTER_SIZE
+
+        //only check non-memory-chunk
+        && !param->is_mc()) {
+        ASSERT0(param->getDType() == xoc::D_U64 ||
+                param->getDType() == xoc::D_I64 ||
+                param->getDType() == xoc::D_F64);
+        if (!isEvenReg(reg) || //paired register start at even.
+
+            //at least two registers available
+            regset->get_next(reg) == -1) {
+            //Passed the odd number register to facilitate the use
+            //of value in paired-register.
+            ASSERTN(isEvenReg(regset->get_next(reg)),
+                ("not continuous"));
+            return true;
+        }
+    }
+    #endif
+    return false;    
 }

@@ -94,7 +94,11 @@ author: Su Zhenyu
 //Define target machine memory and stack alignment.
 //The alignment is power of 2 on ARM.
 #define MEMORY_ALIGNMENT        4
-#define STACK_ALIGNMENT         MEMORY_ALIGNMENT
+#define STACK_ALIGNMENT         4
+
+//Define target machine stack pointer adjustment operation's alignment.
+//The alignment should not less than STACK_ALIGNMENT.
+#define SPADJUST_ALIGNMENT      8
 
 //Define default float mantissa in output file, such as GR file.
 #define DEFAULT_MANTISSA_NUM    6
@@ -129,6 +133,11 @@ author: Su Zhenyu
 //Higher Dominator Frontier Density might make SSAMgr inserting
 //ton of PHIs which will blow up memory.
 #define THRESHOLD_HIGH_DOMINATOR_FRONTIER_DENSITY    1000
+
+//Defined macros to skip some special argument registers when passing
+//arguments.
+#define TO_BE_COMPATIBLE_WITH_ARM_LINUX_GNUEABI
+#define CONTINUOUS_REG_NUM 2
 
 //Issue slot for multi-issue architecture.
 //FIRST_SLOT must be equal to 0.

@@ -90,26 +90,26 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     tbuf.clean();
     switch (OR_code(o)) {
     case OR_orr_lsr_i:
-        //orr Rd, Rs1, Rs2, lsr, #imm
+        //orr Rd, Rs1, Rs2, lsr #imm
         buf.strcat("%s, ", o->get_result(0)->getAsmName(tbuf, m_cg));
         tbuf.clean();
         buf.strcat("%s, ", o->get_opnd(1)->getAsmName(tbuf, m_cg));
         tbuf.clean();
         buf.strcat("%s, ", o->get_opnd(2)->getAsmName(tbuf, m_cg));
         tbuf.clean();
-        buf.strcat("lsr, ");
-        buf.strcat("%s, ", o->get_opnd(3)->getAsmName(tbuf, m_cg));
+        buf.strcat("lsr ");
+        buf.strcat("%s", o->get_opnd(3)->getAsmName(tbuf, m_cg));
         return buf.buf;
     case OR_orr_lsl_i:
-        //orr Rd, Rs1, Rs2, lsr, #imm
+        //orr Rd, Rs1, Rs2, lsr #imm
         buf.strcat("%s, ", o->get_result(0)->getAsmName(tbuf, m_cg));
         tbuf.clean();
         buf.strcat("%s, ", o->get_opnd(1)->getAsmName(tbuf, m_cg));
         tbuf.clean();
         buf.strcat("%s, ", o->get_opnd(2)->getAsmName(tbuf, m_cg));
         tbuf.clean();
-        buf.strcat("lsl, ");
-        buf.strcat("%s, ", o->get_opnd(3)->getAsmName(tbuf, m_cg));
+        buf.strcat("lsl ");
+        buf.strcat("%s", o->get_opnd(3)->getAsmName(tbuf, m_cg));
         return buf.buf;
     case OR_ldrb:
     case OR_ldrb_i12:
@@ -299,13 +299,13 @@ void ARMAsmPrinter::printData(FILE * asmh, Section & sect)
         if (v->is_string()) {
             CHAR const* p = SYM_name(VAR_string(v));
             ASSERT0(v->getByteSize(m_tm) == xstrlen(p) + 1);
+            fprintf(asmh, "\n.align 0");
+            fprintf(asmh, "\n#2^0 bit");
             fprintf(asmh, "\n%s:", name);
 
             //Always align string in 1 byte.
-            //fprintf(asmh, "\n.align %d", computeAlignIsPowerOf2(v));
-            fprintf(asmh, "\n#2^0 bit");
-            fprintf(asmh, "\n.align 0");
-
+            //fprintf(asmh, "\n.align %d", computeAlignIsPowerOf2(v));            
+            
             fprintf(asmh, "\n.byte ");
             while (*p != 0) {
                 if (*p == 0xa) {
@@ -325,9 +325,9 @@ void ARMAsmPrinter::printData(FILE * asmh, Section & sect)
             fprintf(asmh, "\n");
         } else {
             buf.clean();
+            fprintf(asmh, "\n.align %d", computeAlignIsPowerOf2(v));            
             fprintf(asmh, "\n#%s", v->dump(buf, m_tm));
             fprintf(asmh, "\n%s:", name);
-            fprintf(asmh, "\n.align %d", computeAlignIsPowerOf2(v));
             fprintf(asmh, "\n.byte ");
             for (UINT i = 0; i < v->getByteSize(m_tm); i++) {
                 fprintf(asmh, "0 ");
@@ -384,8 +384,8 @@ void ARMAsmPrinter::printCode(FILE * asmh)
     CHAR const* func_name = SYM_name(
         m_cg->getRegion()->getRegionVar()->get_name());
     ASSERT0(func_name);
-    fprintf(asmh, "\n\n\n\n.section .text, \"ax\", \"progbits\"");
     fprintf(asmh, "\n.align 2");
+    fprintf(asmh, "\n\n\n\n.section .text, \"ax\", \"progbits\"");
     fprintf(asmh, "\n.type %s, %%function", func_name);
     fprintf(asmh, "\n.global %s", func_name);
     fprintf(asmh, "\n%s:", func_name);

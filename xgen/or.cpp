@@ -93,7 +93,7 @@ void OR::clean()
 void OR::copyDbx(IR const* ir)
 {
     ASSERT0(ir);
-    Dbx * t = ::get_dbx(ir);
+    Dbx * t = ::getDbx(ir);
     if (t != NULL) {
         OR_dbx(this).copy(*t);
     }

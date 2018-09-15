@@ -1,4 +1,6 @@
 clean:
+	@find ./ -name "*.gcda" | xargs rm -f
+	@find ./ -name "*.gcno" | xargs rm -f
 	@find ./ -name "*.o" | xargs rm -f
 	@find ./ -name "*.a" | xargs rm -f
 	@find ./ -name "*.dot" | xargs rm -f

@@ -84,7 +84,7 @@ void CLDbxMgr::printSrcLine(Dbx const* dbx)
 {
     if (g_tfile == NULL) { return; }
 
-    UINT lineno = get_lineno(dbx);
+    UINT lineno = getLineNum(dbx);
     if (lineno == m_cur_lineno) {
         //It is dispensable that print the same souce file multiple times.
         return;
@@ -129,9 +129,9 @@ static void usage()
 
 static bool is_c_source_file(CHAR * fn)
 {
-    UINT len = strlen(fn) + 1;
+    size_t len = strlen(fn) + 1;
     CHAR * buf = (CHAR*)ALLOCA(len);
-    upper(getfilesuffix(fn, buf, strlen(fn) + 1));
+    upper(getfilesuffix(fn, buf, (UINT)strlen(fn) + 1));
     if (strcmp(buf, "C") == 0 ||
         strcmp(buf, "I") == 0) {
         return true;
