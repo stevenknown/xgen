@@ -809,11 +809,12 @@ bool IR2OR::passArgInRegister(
 
     //Target dependent code.
     skipArgRegister(ir, argdescmgr, m_cg);
-
+    
     IOC tmp_cont;
     //Try to pass data through argument-register.
     //Transfer data in single register size.
     UINT transfer_size = GENERAL_REGISTER_SIZE;
+    *irsize = MAX(*irsize, transfer_size);
     for (;; i++) {
         SR * argreg = NULL;
         if ((*irsize) > 0) {

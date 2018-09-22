@@ -19,7 +19,7 @@ include ../opt/Makefile.inc
 
 CFLAGS =\
    -D_DEBUG_ \
-   -O2 \
+   -O0 -g2 \
    -D$(TARG) \
    -Wno-write-strings \
    -Wsign-promo \

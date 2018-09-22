@@ -831,12 +831,39 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     tmp.clean();
     bool is_inverted = false;
 
-    SR * res = getCG()->genReg();
-    SR * p1 = getCG()->genPredReg();
-    SR * p2 = getCG()->genPredReg();
     getCG()->buildARMCmp(OR_cmp, getCG()->genTruePred(), sr0, sr1, ors, cont);
 
     cont->set_reg(0, NULL);
+
+    SR * p1 = NULL;
+    SR * p2 = NULL;
+    switch (ir->getCode()) {
+    case IR_LT:
+        p1 = getCG()->genLTPred();
+        p2 = getCG()->genGEPred();
+        break;
+    case IR_LE:
+        p1 = getCG()->genLEPred();
+        p2 = getCG()->genGTPred();
+        break;
+    case IR_GT:
+        p1 = getCG()->genGTPred();
+        p2 = getCG()->genLEPred();
+        break;
+    case IR_GE:
+        p1 = getCG()->genGEPred();
+        p2 = getCG()->genLTPred();
+        break;
+    case IR_EQ:
+        p1 = getCG()->genEQPred();
+        p2 = getCG()->genNEPred();
+        break;
+    case IR_NE:
+        p1 = getCG()->genNEPred();
+        p2 = getCG()->genEQPred();
+        break;
+    default: UNREACHABLE();
+    }
 
     //record true-result
     cont->set_reg(1, p1); //used by convertSelect

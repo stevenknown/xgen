@@ -1529,7 +1529,8 @@ void ARMCG::buildARMCmp(
 void ARMCG::buildUncondBr(IN SR * tgt_lab, OUT ORList & ors, IN IOC *)
 {
     ASSERT0(tgt_lab && SR_is_label(tgt_lab));
-    ASSERT0(OTD_is_uncond_br(tmGetORTypeDesc(OR_b)));
+    //OR_b with TruePred is unconditional branch.
+    //ASSERT0(OTD_is_uncond_br(tmGetORTypeDesc(OR_b)));
     OR * o = genOR(OR_b);
     o->setLabel(tgt_lab);
     o->set_pred(genTruePred());
