@@ -109,6 +109,7 @@ public:
     {
         reg_vec.copy(src.reg_vec);
         set_addr(src.get_addr());
+        IOC_mem_byte_size(this) = IOC_mem_byte_size(&src);
     }
 
     virtual SR * get_pred() const { return pred; }
@@ -136,16 +137,9 @@ protected:
     Region * m_ru; //Current region.
     TypeMgr * m_tm; //Data manager.
     CG * m_cg; //Code generator.
-    bool m_pass_through_stack_always;
 
 protected:
     void convertLoadConst(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    void copyArgToStack(
-            SR * value,
-            UINT value_size,
-            UINT param_offset,
-            IR const* ir,
-            OUT ORList & ors);
     void flattenSRVec(IOC const* cont, Vector<SR*> * vec);
 
 public:
@@ -392,48 +386,17 @@ public:
 
     //Return true if whole ir has been passed through registers, otherwise
     //return false.
-    bool tryPassArgThroughRegister(
-            IR const* ir,
-            UINT * irsize,
-            ArgDescMgr * argdesc,
-            OUT ORList & ors,
-            IN IOC * cont);
     void passArgThroughStack(
             IR const* ir,
             ArgDescMgr * argdesc,
             OUT ORList & ors,
             IN IOC * cont);
-    
-    //Return true if whole ir has been passed through registers, otherwise
-    //return false.
-    bool passArgInMemory(
-            IR const* ir,
-            UINT * irsize,
-            OUT ArgDescMgr * argdescmgr,
-            IOC const* load_cont,
-            OUT ORList & ors);
-    
-    //Return true if whole ir has been passed through registers, otherwise
-    //return false.
-    bool passArgInRegister(
-            IR const* ir,
-            UINT * irsize,            
-            OUT ArgDescMgr * argdescmgr,
-            IOC const* load_cont,
-            OUT ORList & ors);
     void processRealParamsThroughRegister(
             IR const* ir,
             ArgDescMgr * argdesc,
             OUT ORList & ors,
             IN IOC * cont);
     void processRealParams(IR const* ir, OUT ORList & ors, IN IOC * cont);
-
-    //True if current argument register should be bypassed.
-    virtual bool skipArgRegister(
-            IR const* ir,
-            OUT ArgDescMgr * argdescmgr,
-            CG const* cg)
-    { ASSERTN(0, ("Target Dependent Code")); return false; };
 };
 
 } //namespace xgen

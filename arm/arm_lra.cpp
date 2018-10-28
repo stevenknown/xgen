@@ -68,7 +68,7 @@ void ARMLifeTimeMgr::considerSpecialConstrains(
             }
         }
         break;
-    }    
+    }
     case OR_ldrd:
     case OR_ldrd_i32:
     case OR_ldrd_i10: {
@@ -92,7 +92,7 @@ void ARMLifeTimeMgr::considerSpecialConstrains(
             }
         }
         break;
-    }    
+    }
     default:;
     }
 
@@ -135,7 +135,7 @@ void ARMLifeTimeMgr::handlePreferredReg(OR const* o)
             const_cast<OR*>(o), low, 0, is_result));
         LT_preferred_reg(highlt) = SR_phy_regid(low) + 1;
     }
-    
+
     if (SR_phy_regid(high) != REG_UNDEF && SR_phy_regid(low) == REG_UNDEF) {
         ASSERTN(!SR_is_global(low),
             ("Global sr should be assigned register during GRA."));

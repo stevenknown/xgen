@@ -882,8 +882,8 @@ static bool parallelBB(ORBB * bb, ParallelPartMgrVec & ppm_vec)
     }
 
     #ifdef _DEBUG_
-    fprintf(g_tfile, "\n*************************************\n");
-    fprintf(g_tfile, "\nRegion:%s:ORBB%d:", Cur_PU_Name, bb->id);
+    note("\n*************************************\n");
+    note("\nRegion:%s:ORBB%d:", Cur_PU_Name, bb->id);
     #endif
 
     if (!isParaBB(bb)) {
@@ -897,7 +897,7 @@ static bool parallelBB(ORBB * bb, ParallelPartMgrVec & ppm_vec)
         if (multi_bb) {
             if (!isParaMultiBB(loop_desc)) {
                 #ifdef _DEBUG_
-                fprintf(g_tfile, "\nMulti-ORBB do not allowed currently!!!"
+                note("\nMulti-ORBB do not allowed currently!!!"
                                  " Loop Header:ORBB%d\n", bb->id);
                 #endif
                 return false;
@@ -906,7 +906,7 @@ static bool parallelBB(ORBB * bb, ParallelPartMgrVec & ppm_vec)
             if (new_single_bb == NULL) {
                 REMOVE_FLAG(LI_flag(loopinfo), LI_PARALLELIZABLE);
                 #ifdef _DEBUG_
-                fprintf(g_tfile, "\nIf-Conversion for Multi-ORBB failed!!!"
+                note("\nIf-Conversion for Multi-ORBB failed!!!"
                                  " Loop Header:ORBB%d\n", bb->id);
                 #endif
                 return false;
@@ -930,7 +930,7 @@ static bool parallelBB(ORBB * bb, ParallelPartMgrVec & ppm_vec)
                      &red_or, &cmp_or, &iv,
                      ppm->numOfParallelPart())) {
         #ifdef _DEBUG_
-        fprintf(g_tfile, "\nLoop_Peeling() failed!!! ORBB%d\n", bb->id);
+        note("\nLoop_Peeling() failed!!! ORBB%d\n", bb->id);
         #endif
         return false;
     }
@@ -939,7 +939,7 @@ static bool parallelBB(ORBB * bb, ParallelPartMgrVec & ppm_vec)
     getRegionEntryBB()->initLiveness();
     if (para_bb == NULL) {
         #ifdef _DEBUG_
-        fprintf(g_tfile, "\nAfter LoopPeeling(ORBB%d), para_bb is NULL?!\n", bb->id);
+        note("\nAfter LoopPeeling(ORBB%d), para_bb is NULL?!\n", bb->id);
         #endif
         return false;
     }
@@ -954,13 +954,13 @@ static bool parallelBB(ORBB * bb, ParallelPartMgrVec & ppm_vec)
         }
     }
     #ifdef _DEBUG_
-    fprintf(g_tfile, "\nParallellizing Success!! Dump all of OR:\n");
+    note("\nParallellizing Success!! Dump all of OR:\n");
     for (OR * o = ORBB_orlist(para_bb).get_head(); o != NULL;
          o = ORBB_orlist(para_bb).get_next()) {
-        fprintf(g_tfile, "\t");
+        prt("\t");
         Print_OP_No_SrcLine(o);
     }
-    fprintf(g_tfile, "\n\n\n");
+    note("\n\n\n");
     #endif
     return true;
 }
@@ -1084,8 +1084,8 @@ void parallelInnerLoop(ParallelPartMgrVec & ppm_vec)
     }
 
     #ifdef _DEBUG_
-    fprintf(g_tfile, "Finish CG Parallelizing");
-    fprintf(g_tfile, "\n*************************************\n\n\n\n");
+    prt("Finish CG Parallelizing");
+    note("\n*************************************\n\n\n\n");
     #endif
 
     Show_Phase("---\tEnd of ParallelInnerLoop()", NULL);

@@ -333,7 +333,7 @@ void ARMCG::buildLoad(
             //ARM does not support load value from memory label directly.
             SR_var_ofst(base) += (UINT)SR_int_imm(ofst);
             SR * res = genReg();
-            
+
             if (SR_is_int_imm(sr_ofst)) {
                 SR_int_imm(sr_ofst) = SR_var_ofst(base);
             } else {
@@ -432,7 +432,7 @@ void ARMCG::buildStore(
                 ASSERT0(m_is_compute_sect_offset);
                 ASSERT0(SR_is_var(sr_ofst));
             }
-            
+
             base = res;
         } else {
             ASSERT0(SR_is_reg(sr_base));
@@ -676,7 +676,7 @@ void ARMCG::buildMemcpyInternal(
 
     //src = src + size.
     tc.clean_bottomup();
-    buildAdd(src, sz, GENERAL_REGISTER_SIZE, false, ors, &tc);    
+    buildAdd(src, sz, GENERAL_REGISTER_SIZE, false, ors, &tc);
     ASSERT0(OR_code(ors.get_tail()) == OR_add ||
             OR_code(ors.get_tail()) == OR_add_i);
     ASSERT0(SR_is_reg(ors.get_tail()->get_result(0)));
@@ -1137,7 +1137,7 @@ void ARMCG::buildShiftLeft(
             //t <- lo << (32 - ofst)
             //hi <- hi | t
             //lo <- lo << ofst
-            
+
             SR * hi = SR_vec(src)->get(1);
             SR * lo = SR_vec(src)->get(0);
             ASSERT0(hi && lo);
@@ -1158,7 +1158,7 @@ void ARMCG::buildShiftLeft(
         } else if (SR_int_imm(shift_ofst) <= 63) {
             //hi <- lo << (ofst - 32)
             //lo <- 0
-            
+
             SR * hi = SR_vec(src)->get(1);
             SR * lo = SR_vec(src)->get(0);
             ASSERT0(hi && lo);
@@ -1213,7 +1213,7 @@ void ARMCG::buildShiftRight(
             //lo = lo >>(asr) shift_ofst
             //lo = lo | (hi <<(lsl) (32 - shift_ofst))
             //hi = hi >>(asr) shift_ofst
-            
+
             SR * hi = SR_vec(src)->get(1);
             SR * lo = SR_vec(src)->get(0);
             ASSERT0(hi && lo);
@@ -1242,7 +1242,7 @@ void ARMCG::buildShiftRight(
             //} else {
             //    hi <- 0
             //}
-            
+
             SR * hi = SR_vec(src)->get(1);
             SR * lo = SR_vec(src)->get(0);
             ASSERT0(hi && lo);
@@ -1307,8 +1307,8 @@ void ARMCG::buildAddRegImm(
             ors.append_tail(o);
             return;
         }
-        
-        SR * t = genReg();        
+
+        SR * t = genReg();
         buildMove(t, genIntImm((HOST_INT)(SR_int_imm(imm)), true), ors, NULL);
 
         SR * res = genReg();
@@ -1434,29 +1434,6 @@ void ARMCG::buildAddRegReg(
         SR * res = getSRVecMgr()->genSRVec(2, genReg(), genReg());
         SR * res_2 = SR_vec(res)->get(1);
 
-        OR_TYPE orty = OR_UNDEF;
-        OR_TYPE orty2 = OR_UNDEF;
-        List<SR*> reslst;
-        List<SR*> opndlst;
-        if (is_add) {
-            orty = OR_adds;
-            orty2 = OR_adc;
-            reslst.append_tail(res_2);
-            reslst.append_tail(genRflag());
-            opndlst.append_tail(genTruePred());
-            opndlst.append_tail(src1_2);
-            opndlst.append_tail(src2_2);
-            opndlst.append_tail(genRflag());
-        } else {
-            orty = OR_subs;
-            orty2 = OR_sbc;
-            reslst.append_tail(res_2);
-            reslst.append_tail(genRflag());
-            opndlst.append_tail(genTruePred());
-            opndlst.append_tail(src1_2);
-            opndlst.append_tail(src2_2);
-        }
-
         SR * t = genLTPred();
         if (!is_add) {
             //64BIT c = a - b;
@@ -1472,6 +1449,39 @@ void ARMCG::buildAddRegReg(
             ASSERT0(SR_is_reg(src1) && SR_is_reg(src2));
             buildARMCmp(OR_cmp, genTruePred(),
                 src1, src2, ors, cont);
+        }
+
+        OR_TYPE orty = OR_UNDEF;
+        OR_TYPE orty2 = OR_UNDEF;
+        List<SR*> reslst;
+        List<SR*> opndlst;
+        if (is_add) {
+            orty = OR_adds;
+            orty2 = OR_adc;
+            reslst.append_tail(res_2);
+            opndlst.append_tail(genTruePred());
+            opndlst.append_tail(src1_2);
+            opndlst.append_tail(src2_2);
+            opndlst.append_tail(genRflag());
+
+            ASSERT0(::tmGetResultNum(orty) == 2);
+            ASSERT0(::tmGetOpndNum(orty) == 3);
+            ASSERT0(::tmGetResultNum(orty2) == 1);
+            ASSERT0(::tmGetOpndNum(orty2) == 4);
+
+        } else {
+            orty = OR_subs;
+            orty2 = OR_sbc;
+            reslst.append_tail(res_2);
+            opndlst.append_tail(genTruePred());
+            opndlst.append_tail(src1_2);
+            opndlst.append_tail(src2_2);
+            opndlst.append_tail(genRflag());
+
+            ASSERT0(::tmGetResultNum(orty) == 2);
+            ASSERT0(::tmGetOpndNum(orty) == 3);
+            ASSERT0(::tmGetResultNum(orty2) == 1);
+            ASSERT0(::tmGetOpndNum(orty2) == 4);
         }
 
         OR * o = buildOR(orty, 2, 3, res, genRflag(),
@@ -2116,7 +2126,7 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
 
         ORList ors;
         IOC cont;
-        buildAdd(sr3, ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);        
+        buildAdd(sr3, ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
         OR * last = ors.get_tail();
         ASSERT0(last && (OR_code(last) == OR_add ||
                          OR_code(last) == OR_add_i));
@@ -2202,5 +2212,5 @@ bool ARMCG::skipArgRegister(
         }
     }
     #endif
-    return false;    
+    return false;
 }

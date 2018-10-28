@@ -157,6 +157,15 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         getCFG()->computePdomAndIpdom(oc);
     }
 
+    //START FUCK CODE
+    //Test code, to force recomputing AA and DUChain.
+    //AA and DU Chain need not to be recompute, because
+    //simplification maintained them.
+    {
+    OC_is_ref_valid(oc) = OC_is_du_chain_valid(oc) = false; int a = 0;
+    }
+    //END FUCK CODE
+
     if (!OC_is_aa_valid(oc) ||
         !OC_is_ref_valid(oc) ||
         !OC_is_du_chain_valid(oc)) {
@@ -188,6 +197,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
                 getDUMgr()->perform(oc, SOL_REF|SOL_REACH_DEF|COMPUTE_PR_DU);
                 getDUMgr()->computeMDDUChain(oc, false, COMPUTE_PR_DU);
             }
+            checkValidAndRecompute(&oc, PASS_LOOP_INFO, PASS_UNDEF);
             aa->perform(oc);
         }
 
@@ -341,7 +351,7 @@ bool ARMRegion::ARMHighProcess(OptCtx & oc)
     if (g_do_cfs_opt) {
         IR_CFS_OPT co(this);
         co.perform(simp);
-        ASSERT0(verify_irs(getIRList(), NULL, this));
+        ASSERT0(verifyIRList(getIRList(), NULL, this));
     }
 
     //Simplify control-structure to build CFG.
@@ -354,8 +364,8 @@ bool ARMRegion::ARMHighProcess(OptCtx & oc)
     SIMP_break(&simp) = true;
     SIMP_continue(&simp) = true;
     setIRList(simplifyStmtList(getIRList(), &simp));
-    ASSERT0(verify_simp(getIRList(), simp));
-    ASSERT0(verify_irs(getIRList(), NULL, this));
+    ASSERT0(verifySimp(getIRList(), simp));
+    ASSERT0(verifyIRList(getIRList(), NULL, this));
     //partitionRegion(); //Split region.
 
     //Lower to middle in order to perform analysis.
@@ -386,12 +396,16 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         getCFG()->computeExitList();
         ASSERT0(getCFG()->verify());
 
+        //Infer pointer arith need loopinfo.
+        checkValidAndRecompute(&oc, PASS_DOM, PASS_LOOP_INFO, PASS_UNDEF);
+
         getCFG()->performMiscOpt(oc);
     }
 
     if (g_do_aa) {
         ASSERT0(g_cst_bb_list && OC_is_cfg_valid(oc));
-        checkValidAndRecompute(&oc, PASS_AA, PASS_UNDEF);
+        checkValidAndRecompute(&oc, PASS_DOM, PASS_LOOP_INFO,
+            PASS_AA, PASS_UNDEF);
     }
 
     if (g_do_md_du_ana) {
@@ -413,6 +427,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         } else if (dumgr->perform(oc, f) && OC_is_ref_valid(oc)) {
             ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MD_SSA_MGR))->
                 construction(oc);
+            //((MDSSAMgr*)getPassMgr()->queryPass(PASS_MD_SSA_MGR))->dump();
         }
     }
 }

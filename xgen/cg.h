@@ -70,12 +70,12 @@ public:
         SR * src_value;
         SR * src_startaddr;
     };
-    
+
     xoc::Dbx const* arg_dbx;
     UINT is_record_addr:1;
     UINT arg_size:30; //stack byte size to be passed.
 
-    //byte offset to the base SR record in 
+    //byte offset to the base SR record in
     //src_startaddr if is_record_addr is true.
     UINT src_ofst;
 
@@ -98,7 +98,6 @@ public:
 };
 
 
-#define ARGDESCMGR_total_byte_size(s) ((s)->m_total_byte_size)
 class ArgDescMgr {
 protected:
     Vector<ArgDesc*> m_arg_desc;
@@ -117,9 +116,6 @@ public:
     //User should update the value when one argument passed.
     UINT m_passed_arg_in_stack_byte_size;
 
-    //Record the total byte size of argument section that to be passed.
-    UINT m_total_byte_size;
-
 public:
     ArgDescMgr()
     {
@@ -129,7 +125,6 @@ public:
         }
         m_passed_arg_in_register_byte_size = 0;
         m_passed_arg_in_stack_byte_size = 0;
-        m_total_byte_size = 0;
     }
     ~ArgDescMgr()
     {
@@ -185,14 +180,6 @@ public:
             UINT src_ofst)
     { return addDesc(true, src_addr, dbx, arg_size, src_ofst); }
 
-    //This function will increase the size of parameter section
-    //accroding to 'desc'.
-    void addArgInArgSection(UINT bytesize)
-    {
-        ARGDESCMGR_total_byte_size(this) += (INT)xcom::ceil_align(
-            bytesize, STACK_ALIGNMENT);
-    }
-
     //Allocate dedicated argument register.
     SR * allocArgRegister(CG * cg);
 
@@ -203,7 +190,12 @@ public:
     void dropArgRegister();
 
     //Get the total bytesize of current parameter section.
-    UINT getArgSectionSize() const { return ARGDESCMGR_total_byte_size(this); }
+    UINT getArgSectionSize() const
+    {
+        return (UINT)xcom::ceil_align(
+            getPassedRegisterArgSize() + getPassedStackArgSize(),
+            STACK_ALIGNMENT);
+    }
     ArgDesc * getCurrentDesc() { return m_arg_list.get_head(); }
 
     RegSet const* getArgRegSet() const { return &m_argregs; }
@@ -213,6 +205,7 @@ public:
     { return m_passed_arg_in_stack_byte_size; }
     UINT getArgStartAddrOnStack() const { return getPassedStackArgSize(); }
 
+    //This function record the total bytesize that passed through registers.
     //This function should be invoked after passing one argument through register.
     //Decrease tgt_ofst for each desc by the bytesize.
     //e.g: pass 2 argument:
@@ -222,18 +215,19 @@ public:
     //  mgr.updatePassedArgInRegister(arg2.bytesize);
     void updatePassedArgInRegister(UINT bytesize);
 
+    //This function record the total bytesize that passed via stack.
     //This function should be invoked after passing one argument to arg-
     //section. The argument may be passed through register or stack memory.
     //e.g: pass 2 argument:
     //  %r0 = arg1;
-    //  mgr.updatePassedArgInStack(GNENERAL_REGISTER_SIZE);
+    //  mgr.updatePassedArgInRegister(GNENERAL_REGISTER_SIZE);
     //  [sp+0] = arg2;
-    //  mgr.updatePassedArgInfo(arg2.bytesize);
+    //  mgr.updatePassedArgInStack(arg2.bytesize);
     void updatePassedArgInStack(UINT bytesize)
     {
         m_passed_arg_in_stack_byte_size += (INT)xcom::ceil_align(
             bytesize, STACK_ALIGNMENT);
-    }    
+    }
 };
 
 
@@ -309,14 +303,14 @@ protected:
 
     //Record the max bytesize for callee argument section.
     UINT m_max_real_arg_size;
-    
+
 protected:
     void addSerialDependence(ORBB * bb, DataDepGraph * ddg);
 
     UINT compute_pad();
     SR * computeAndUpdateOffset(SR * sr);
     UINT calcSizeOfParameterPassedViaRegister(
-            List<VAR const*> const* param_lst) const;
+        List<VAR const*> const* param_lst) const;
 
     void * xmalloc(INT size)
     {
@@ -335,7 +329,7 @@ protected:
 
     void localizeBB(SR * sr, ORBB * bb);
     void localizeBBTab(SR * sr, xcom::TTab<ORBB*> * orbbtab);
-    
+
 public:
     //Mapping from STORE/LOAD operation to the target address.
     xcom::TMap<OR*, xoc::VAR const*> m_or2memaddr_map;
@@ -345,7 +339,7 @@ public:
 
     //Builtin function should be initialized in initBuiltin().
     xoc::VAR const* m_builtin_memcpy;
-    
+
 public:
     CG(xoc::Region * rg, CGMgr * cgmgr);
     COPY_CONSTRUCTOR(CG);
@@ -365,13 +359,13 @@ public:
     RegSet * allocRegSet() { return m_regset_mgr.allocRegSet(); }
     virtual BBSimulator * allocBBSimulator(ORBB * bb, bool is_log = true);
     virtual LIS * allocLIS(
-            ORBB * bb,
-            DataDepGraph * ddg,
-            BBSimulator * sim,
-            UINT sch_mode,
-            bool change_slot,
-            bool change_cluster,
-            bool is_log = true);
+        ORBB * bb,
+        DataDepGraph * ddg,
+        BBSimulator * sim,
+        UINT sch_mode,
+        bool change_slot,
+        bool change_cluster,
+        bool is_log = true);
     virtual DataDepGraph * allocDDG(bool is_log = true);
     void assembleSRVec(SRVec * srvec, SR * sr1, SR * sr2);
     virtual IR2OR * allocIR2OR() = 0;
@@ -390,24 +384,24 @@ public:
     virtual OR * buildOR(OR_TYPE orty, IN SRList & result, IN SRList & opnd);
     virtual void buildSpadjust(OUT ORList & ors, IN IOC * cont);
     virtual void buildSpill(
-            IN SR * store_val,
-            IN xoc::VAR * spill_loc,
-            IN ORBB * bb,
-            OUT ORList & ors);
+        IN SR * store_val,
+        IN xoc::VAR * spill_loc,
+        IN ORBB * bb,
+        OUT ORList & ors);
     virtual void buildReload(
-            IN SR * result_val,
-            IN xoc::VAR * reload_loc,
-            IN ORBB * bb,
-            OUT ORList & ors);
+        IN SR * result_val,
+        IN xoc::VAR * reload_loc,
+        IN ORBB * bb,
+        OUT ORList & ors);
 
     //'sr_size': The number of integral multiple of byte-size of single SR.
     virtual void buildMul(
-            SR * src1,
-            SR * src2,
-            UINT sr_size,
-            bool is_sign,
-            OUT ORList &,
-            IN IOC *)
+        SR * src1,
+        SR * src2,
+        UINT sr_size,
+        bool is_sign,
+        OUT ORList &,
+        IN IOC *)
     {
         DUMMYUSE(is_sign);
         DUMMYUSE(src1);
@@ -418,12 +412,12 @@ public:
 
     //'sr_size': The number of integral multiple of byte-size of single SR.
     virtual void buildDiv(
-            SR * src1,
-            SR * src2,
-            UINT sr_size,
-            bool is_sign,
-            OUT ORList &,
-            IN IOC *)
+        SR * src1,
+        SR * src2,
+        UINT sr_size,
+        bool is_sign,
+        OUT ORList &,
+        IN IOC *)
     {
         DUMMYUSE(is_sign);
         DUMMYUSE(src1);
@@ -434,144 +428,144 @@ public:
 
     //'sr_size': The number of integral multiple of byte-size of single SR.
     virtual void buildAdd(
-            SR * src1,
-            SR * src2,
-            UINT sr_size,
-            bool is_sign,
-            OUT ORList & ors,
-            IN IOC * cont);
+        SR * src1,
+        SR * src2,
+        UINT sr_size,
+        bool is_sign,
+        OUT ORList & ors,
+        IN IOC * cont);
 
     //'sr_size': The number of integral multiple of byte-size of single SR.
     virtual void buildSub(
-            SR * src1,
-            SR * src2,
-            UINT sr_size,
-            bool is_sign,
-            OUT ORList & ors,
-            IN IOC * cont);
+        SR * src1,
+        SR * src2,
+        UINT sr_size,
+        bool is_sign,
+        OUT ORList & ors,
+        IN IOC * cont);
     virtual void buildAddRegImm(
-            SR * src,
-            SR * imm,
-            UINT sr_size,
-            bool is_sign,
-            OUT ORList & ors,
-            IN IOC * cont) = 0;
+        SR * src,
+        SR * imm,
+        UINT sr_size,
+        bool is_sign,
+        OUT ORList & ors,
+        IN IOC * cont) = 0;
     virtual void buildAddRegReg(
-            bool is_add,
-            SR * src1,
-            SR * src2,
-            UINT sr_size,
-            bool is_sign,
-            OUT ORList & ors,
-            IN IOC * cont) = 0;
+        bool is_add,
+        SR * src1,
+        SR * src2,
+        UINT sr_size,
+        bool is_sign,
+        OUT ORList & ors,
+        IN IOC * cont) = 0;
     virtual void buildMod(
-            CLUST clust,
-            SR ** result,
-            SR * src1,
-            SR * src2,
-            UINT sr_size,
-            bool is_sign,
-            OUT ORList & ors,
-            IN IOC * cont);
+        CLUST clust,
+        SR ** result,
+        SR * src1,
+        SR * src2,
+        UINT sr_size,
+        bool is_sign,
+        OUT ORList & ors,
+        IN IOC * cont);
 
     //Build copy-operation with given predicate register.
     virtual void buildCopyPred(
-            CLUST clust,
-            UNIT unit,
-            IN SR * to, //should not add 'const' qualifier because RA will change the value.
-            IN SR * from,
-            IN SR * pd,
-            OUT ORList & ors) = 0;
+        CLUST clust,
+        UNIT unit,
+        IN SR * to, //should not add 'const' qualifier because RA will change the value.
+        IN SR * from,
+        IN SR * pd,
+        OUT ORList & ors) = 0;
 
     //Build function call instruction.
     virtual void buildCall(
-            xoc::VAR const* callee,
-            UINT ret_val_size,
-            OUT ORList & ors,
-            IOC * cont) = 0;
+        xoc::VAR const* callee,
+        UINT ret_val_size,
+        OUT ORList & ors,
+        IOC * cont) = 0;
 
     //Build indirect function call instruction.
     //Function-Call may violate SP,FP,GP,
     //RFLAG register, return-value register,
     //return address register.
     virtual void buildIcall(
-            SR * callee,
-            UINT ret_val_size,
-            OUT ORList & ors,
-            IOC * cont) = 0;
+        SR * callee,
+        UINT ret_val_size,
+        OUT ORList & ors,
+        IOC * cont) = 0;
 
     //Build load-address instruction.
     virtual void buildStore(
-            SR * store_val,
-            xoc::VAR const* base,
-            HOST_INT ofst,
-            OUT ORList & ors,
-            IN IOC * cont);
+        SR * store_val,
+        xoc::VAR const* base,
+        HOST_INT ofst,
+        OUT ORList & ors,
+        IN IOC * cont);
     virtual void buildLoad(
-            SR * load_val,
-            xoc::VAR const* base,
-            HOST_INT ofst,
-            OUT ORList & ors,
-            IN IOC * cont)
+        SR * load_val,
+        xoc::VAR const* base,
+        HOST_INT ofst,
+        OUT ORList & ors,
+        IN IOC * cont)
     {
         ASSERT0(SR_is_reg(load_val));
         SR * mem_base = genVAR(base);
         buildLoad(load_val, mem_base, genIntImm(ofst, true), ors, cont);
     }
     virtual void buildGeneralLoad(
-            IN SR * val,
-            HOST_INT ofst,
-            OUT ORList & ors,
-            IN IOC * cont);
+        IN SR * val,
+        HOST_INT ofst,
+        OUT ORList & ors,
+        IN IOC * cont);
     virtual void buildTypeCvt(
-            IR const* tgt,
-            IR const* src,
-            OUT ORList & ors,
-            IN OUT IOC * cont);
+        IR const* tgt,
+        IR const* src,
+        OUT ORList & ors,
+        IN OUT IOC * cont);
 
     //Implement memory block copy.
     //Note tgt and src should not overlap.
     virtual void buildMemcpyInternal(
-            SR * tgt,
-            SR * src,
-            UINT bytesize,
-            OUT ORList & ors,
-            IN IOC * cont) = 0;
+        SR * tgt,
+        SR * src,
+        UINT bytesize,
+        OUT ORList & ors,
+        IN IOC * cont) = 0;
     //Generate ::memcpy.
     void buildMemcpy(
-            SR * tgt,
-            SR * src,
-            UINT bytesize,
-            OUT ORList & ors,
-            IN IOC * cont);
+        SR * tgt,
+        SR * src,
+        UINT bytesize,
+        OUT ORList & ors,
+        IN IOC * cont);
 
     //Generate operations: reg = &var
     virtual void buildLda(
-            xoc::VAR const* var,
-            HOST_INT lda_ofst,
-            Dbx const* dbx,
-            OUT ORList & ors,
-            IN IOC * cont);
+        xoc::VAR const* var,
+        HOST_INT lda_ofst,
+        Dbx const* dbx,
+        OUT ORList & ors,
+        IN IOC * cont);
 
     //Generate opcode of accumulating operation.
     //Form as: A = A op B
     virtual void buildAccumulate(
-            OR * red_or,
-            SR * red_var,
-            SR * restore_val,
-            List<OR*> & ors);
+        OR * red_or,
+        SR * red_var,
+        SR * restore_val,
+        List<OR*> & ors);
     virtual void buildLoad(
-            IN SR * load_val,
-            IN SR * base,
-            IN SR * ofst,
-            OUT ORList & ors,
-            IN IOC * cont) = 0;
+        IN SR * load_val,
+        IN SR * base,
+        IN SR * ofst,
+        OUT ORList & ors,
+        IN IOC * cont) = 0;
     virtual void buildStore(
-            SR * store_val,
-            SR * base,
-            SR * ofst,
-            OUT ORList & ors,
-            IN IOC * cont) = 0;
+        SR * store_val,
+        SR * base,
+        SR * ofst,
+        OUT ORList & ors,
+        IN IOC * cont) = 0;
 
     //Build a general copy operation from register to register.
     //to: source register
@@ -579,89 +573,91 @@ public:
     //unit: function unit.
     //clust: cluster.
     virtual void buildCopy(
-            CLUST clust,
-            UNIT unit,
-            SR * to,
-            SR * from,
-            OUT ORList & ors) = 0;
+        CLUST clust,
+        UNIT unit,
+        SR * to,
+        SR * from,
+        OUT ORList & ors) = 0;
 
     //Generate copy operation from source to register.
     //Source can be immediate or register, and target must be register.
     //Note there is no difference between signed and unsigned number moving.
     virtual void buildMove(
-            IN SR * to,
-            IN SR * from,
-            OUT ORList & ors,
-            IN IOC * cont) = 0;
+        IN SR * to,
+        IN SR * from,
+        OUT ORList & ors,
+        IN IOC * cont) = 0;
     virtual void buildUncondBr(
-            IN SR * tgt_lab,
-            OUT ORList & ors,
-            IN IOC * cont) = 0;
+        IN SR * tgt_lab,
+        OUT ORList & ors,
+        IN IOC * cont) = 0;
     virtual void buildCondBr(
-            IN SR * tgt_lab,
-            OUT ORList & ors,
-            IN IOC * cont) = 0;
+        IN SR * tgt_lab,
+        OUT ORList & ors,
+        IN IOC * cont) = 0;
     virtual void buildCompare(
-            OR_TYPE br_cond,
-            bool is_truebr,
-            IN SR * opnd0,
-            IN SR * opnd1,
-            OUT ORList & ors,
-            IN IOC * cont) = 0;
+        OR_TYPE br_cond,
+        bool is_truebr,
+        IN SR * opnd0,
+        IN SR * opnd1,
+        OUT ORList & ors,
+        IN IOC * cont) = 0;
 
     //Generate inter-cluster copy operation.
     //Copy from 'src' in 'src_clust' to 'tgt' of in 'tgt_clust'.
     virtual OR * buildBusCopy(
-            IN SR * src,
-            IN SR * tgt,
-            IN SR * pd,
-            CLUST src_clust,
-            CLUST tgt_clust) = 0;
+        IN SR * src,
+        IN SR * tgt,
+        IN SR * pd,
+        CLUST src_clust,
+        CLUST tgt_clust) = 0;
     virtual void buildShiftLeft(
-            IN SR * src,
-            ULONG sr_size,
-            IN SR * shift_ofst,
-            OUT ORList & ors,
-            IN OUT IOC * cont) = 0;
+        IN SR * src,
+        ULONG sr_size,
+        IN SR * shift_ofst,
+        OUT ORList & ors,
+        IN OUT IOC * cont) = 0;
     virtual void buildShiftRight(
-            IN SR * src,
-            ULONG sr_size,
-            IN SR * shift_ofst,
-            bool is_signed,
-            OUT ORList & ors,
-            IN OUT IOC * cont) = 0;
+        IN SR * src,
+        ULONG sr_size,
+        IN SR * shift_ofst,
+        bool is_signed,
+        OUT ORList & ors,
+        IN OUT IOC * cont) = 0;
 
     void constructORBBList(IN ORList  & or_list);
     void computeEntryAndExit(
-            IN OR_CFG & cfg,
-            OUT List<ORBB*> & entry_lst,
-            OUT List<ORBB*> & exit_lst);
+        IN OR_CFG & cfg,
+        OUT List<ORBB*> & entry_lst,
+        OUT List<ORBB*> & exit_lst);
     INT computeOpndIdx(OR * o, SR const* opnd);
     INT computeResultIdx(OR * o, SR const* res);
     void computeMaxRealParamSpace();
     virtual void computeAndUpdateGlobalVarLayout(
-            xoc::VAR const* var,
-            OUT SR ** base,
-            OUT SR ** base_ofst);
+        xoc::VAR const* var,
+        OUT SR ** base,
+        OUT SR ** base_ofst);
     virtual void computeAndUpdateStackVarLayout(
-            xoc::VAR const* var,
-            OUT SR ** sp, //stack pointer
-            OUT SR ** sp_ofst);
+        xoc::VAR const* var,
+        OUT SR ** sp, //stack pointer
+        OUT SR ** sp_ofst);
     virtual void computeParamLayout(
-            xoc::VAR const* id,
-            OUT SR ** base,
-            OUT SR ** ofst);
+        xoc::VAR const* id,
+        OUT SR ** base,
+        OUT SR ** ofst);
     virtual UINT computeTotalParameterStackSize(IR * ir);
     virtual void computeVarBaseOffset(
-            xoc::VAR const* var,
-            ULONGLONG var_ofst,
-            OUT SR ** base,
-            OUT SR ** ofst);
+        xoc::VAR const* var,
+        ULONGLONG var_ofst,
+        OUT SR ** base,
+        OUT SR ** ofst);
     virtual CLUST computeAsmCluster(OR * o);
 
     //Return the index of copied source operand.
     virtual INT computeCopyOpndIdx(OR *)
-    { ASSERTN(0, ("Target Dependent Code")); return -1; }
+    {
+        ASSERTN(0, ("Target Dependent Code")); return -1;
+    }
 
     //Compute the byte size of memory which will be loaded/stored.
     virtual INT computeMemByteSize(OR * o)
@@ -675,9 +671,9 @@ public:
     //Return the alternative equivalent o-type of 'from'
     //that correspond with 'to_unit' and 'to_clust'.
     virtual OR_TYPE computeEquivalentORType(
-            OR_TYPE from,
-            UNIT to_unit,
-            CLUST to_clust)
+        OR_TYPE from,
+        UNIT to_unit,
+        CLUST to_clust)
     {
         DUMMYUSE(to_clust);
         ASSERTN(tmGetEqualORType(from), ("miss EquORTypes information"));
@@ -703,34 +699,36 @@ public:
     //If is_test is true, this function only check whether the given
     //OR can be changed.
     virtual bool changeORUnit(
-            OR * o,
-            UNIT to_unit,
-            CLUST to_clust,
-            Vector<bool> const& regfile_unique,
-            bool is_test /*only test purpose*/);
+        OR * o,
+        UNIT to_unit,
+        CLUST to_clust,
+        Vector<bool> const& regfile_unique,
+        bool is_test /*only test purpose*/);
 
     //Return the combination of all of available function unit of 'o'.
     //This function will modify m_tmp_us internally.
     virtual UnitSet const* computeORUnit(OR const*, OUT UnitSet*);
     virtual UnitSet const* computeORUnit(OR const* o)
-    { return computeORUnit(o, NULL); }
+    {
+        return computeORUnit(o, NULL);
+    }
 
     //Change the correlated cluster of 'o'
     //If is_test is true, this function only check whether the given
     //OR can be changed.
     virtual bool changeORCluster(
-            OR * o,
-            CLUST to_clust,
-            Vector<bool> const& regfile_unique,
-            bool is_test /*only test purpose*/);
+        OR * o,
+        CLUST to_clust,
+        Vector<bool> const& regfile_unique,
+        bool is_test /*only test purpose*/);
 
     //Change 'o' to 'ot', modifing all operands and results.
     virtual bool changeORType(
-            OR * o,
-            OR_TYPE ot,
-            CLUST src,
-            CLUST tgt,
-            Vector<bool> const& regfile_unique);
+        OR * o,
+        OR_TYPE ot,
+        CLUST src,
+        CLUST tgt,
+        Vector<bool> const& regfile_unique);
 
     virtual SR * dupSR(SR const* sr);
     virtual OR * dupOR(OR const* o);
@@ -753,9 +751,11 @@ public:
         buf.strcat("%s_", prefix);
         if (LABEL_INFO_type(lab) == L_ILABEL) {
             buf.strcat(ILABEL_STR_FORMAT, ILABEL_CONT(lab));
-        } else if (LABEL_INFO_type(lab) == L_CLABEL) {
+        }
+        else if (LABEL_INFO_type(lab) == L_CLABEL) {
             buf.strcat(CLABEL_STR_FORMAT, CLABEL_CONT(lab));
-        } else {
+        }
+        else {
             ASSERTN(0, ("unknown label type"));
         }
         return buf.buf;
@@ -768,7 +768,9 @@ public:
     virtual void fixCluster(ORList & spill_ops, CLUST clust);
 
     Vector<ParallelPartMgr*> * getParallelPartMgrVec() const
-    { return m_ppm_vec; }
+    {
+        return m_ppm_vec;
+    }
 
     SR * genVAR(xoc::VAR const* var);
     SR * genLabel(LabelInfo const* li);
@@ -824,11 +826,13 @@ public:
     Section * getDataSection() { return &m_data_sect; }
     Section * getBssSection() { return &m_bss_sect; }
     Section * getStackSection() { return &m_stack_sect; }
-    Section * getParamSection() { return &m_param_sect; }    
+    Section * getParamSection() { return &m_param_sect; }
     virtual REGFILE getRflagRegfile() const = 0;
     virtual REGFILE getPredicateRegfile() const;
     Vector<xoc::VAR const*> const& get_param_vars() const
-    { return m_params; }
+    {
+        return m_params;
+    }
     virtual ORAsmInfo * getAsmInfo(OR const*) const
     {
         ASSERTN(0, ("Target Dependent Code"));
@@ -836,18 +840,20 @@ public:
     }
 
     virtual RegFileSet const* getValidRegfileSet(
-            OR_TYPE ortype,
-            UINT idx,
-            bool is_result) const;
+        OR_TYPE ortype,
+        UINT idx,
+        bool is_result) const;
     virtual RegSet const* getValidRegSet(
-            OR_TYPE ortype,
-            UINT idx,
-            bool is_result) const;
+        OR_TYPE ortype,
+        UINT idx,
+        bool is_result) const;
     SRMgr * getSRMgr() { return m_cgmgr->getSRMgr(); }
     ORMgr * getORMgr() { return m_cgmgr->getORMgr(); }
     SRVecMgr * getSRVecMgr() { return m_cgmgr->getSRVecMgr(); }
     Vector<IssuePackageList*> * getIssuePackageListVec()
-    { return &m_ipl_vec; }
+    {
+        return &m_ipl_vec;
+    }
 
     //Map phsical register to dedicated symbol register if exist.
     SR * getDedicatedSRForPhyReg(REG reg);
@@ -869,10 +875,10 @@ public:
     bool isRegflowDep(OR * from, OR * to);
     bool isRegoutDep(OR * from, OR * to);
     bool isOpndSameWithResult(
-            SR const* test_tn,
-            IN OR * o,
-            OUT INT * opndnum,
-            OUT INT * resnum);
+        SR const* test_tn,
+        IN OR * o,
+        OUT INT * opndnum,
+        OUT INT * resnum);
     //Return true if specified operand or result is Rflag register.
     bool isRflagRegister(OR_TYPE ot, UINT idx, bool is_result) const;
     virtual bool isReductionOR(OR * o);
@@ -883,17 +889,17 @@ public:
 
     //Return true if regfile can be assigned to referred operand.
     virtual bool isValidRegFile(
-            OR_TYPE ot,
-            INT opndnum,
-            REGFILE regfile,
-            bool is_result) const;
+        OR_TYPE ot,
+        INT opndnum,
+        REGFILE regfile,
+        bool is_result) const;
 
     //Return true if regfile can be assigned to referred operand.
     virtual bool isValidRegFile(
-            OR * o,
-            SR const* opnd,
-            REGFILE regfile,
-            bool is_result) const;
+        OR * o,
+        SR const* opnd,
+        REGFILE regfile,
+        bool is_result) const;
     virtual bool isConsistentRegFileForCopy(REGFILE rf1, REGFILE rf2);
 
     //If stack-base-pointer register could use 'unit', return true.
@@ -908,15 +914,17 @@ public:
     bool isReturnValueSR(SR const* sr) const
     {
         return SR_phy_regid(sr) != REG_UNDEF &&
-               tmGetRegSetOfReturnValue()->is_contain(SR_phy_regid(sr));
+            tmGetRegSetOfReturnValue()->is_contain(SR_phy_regid(sr));
     }
     bool isArgumentSR(SR const* sr) const
     {
         return SR_phy_regid(sr) != REG_UNDEF &&
-               tmGetRegSetOfArgument()->is_contain(SR_phy_regid(sr));
+            tmGetRegSetOfArgument()->is_contain(SR_phy_regid(sr));
     }
     bool isDedicatedSR(SR const* sr) const
-    { return SR_is_dedicated(sr) || isReturnValueSR(sr); }
+    {
+        return SR_is_dedicated(sr) || isReturnValueSR(sr);
+    }
     bool isSREqual(SR const* sr1, SR const* sr2) const;
 
     //Return true if SR is integer register.
@@ -929,7 +937,9 @@ public:
     }
 
     virtual bool isOREqual(OR const* v1, OR const* v2)
-    { return v1->is_equal(v2); }
+    {
+        return v1->is_equal(v2);
+    }
 
     virtual bool isCompareOR(OR const* o);
     virtual bool isCondExecOR(OR * o);
@@ -986,13 +996,13 @@ public:
     virtual bool isMultiLoad(OR_TYPE, INT res_num) = 0;
 
     virtual bool isValidOpndRegfile(
-            OR_TYPE opcode,
-            INT opndnum,
-            REGFILE regfile) const;
+        OR_TYPE opcode,
+        INT opndnum,
+        REGFILE regfile) const;
     virtual bool isValidResultRegfile(
-            OR_TYPE opcode,
-            INT resnum,
-            REGFILE regfile) const;
+        OR_TYPE opcode,
+        INT resnum,
+        REGFILE regfile) const;
     virtual bool isValidRegInSRVec(OR * o, SR * sr, UINT idx, bool is_result);
 
     //Return true if the runtime value of base1 is equal to base2.
@@ -1017,23 +1027,23 @@ public:
     bool mustDef(OR const* o, SR const* sr) const;
     bool mustUse(OR const* o, SR const* sr) const;
     bool mayDefInRange(
-            SR const* sr,
-            IN ORCt * start,
-            IN ORCt * end,
-            IN ORList & ors);
+        SR const* sr,
+        IN ORCt * start,
+        IN ORCt * end,
+        IN ORList & ors);
     bool mayDef(IN OR * o, SR const* sr);
     bool mayUse(IN OR * o, SR const* sr);
     virtual xoc::VAR const* mapOR2Var(OR * o);
     virtual bool mapRegSet2RegFile(
-            OUT Vector<INT> & regfilev,
-            RegSet const* regs);
+        OUT Vector<INT> & regfilev,
+        RegSet const* regs);
     virtual UNIT mapSR2Unit(OR const* o, SR const* sr);
     virtual CLUST mapSlot2Cluster(SLOT slot);
 
     //Return the regisiter-file set which 'clust' corresponded with.
     virtual List<REGFILE> & mapCluster2RegFileList(
-            CLUST clust,
-            OUT List<REGFILE> & regfiles)
+        CLUST clust,
+        OUT List<REGFILE> & regfiles)
     {
         DUMMYUSE(clust);
         ASSERTN(0, ("Target Dependent Code"));
@@ -1043,8 +1053,8 @@ public:
     //Return register-file set which the unit set corresponded with.
     //'units': function unit set
     virtual List<REGFILE> & mapUnitSet2RegFileList(
-            IN UnitSet & us,
-            OUT List<REGFILE> & regfiles)
+        IN UnitSet & us,
+        OUT List<REGFILE> & regfiles)
     {
         DUMMYUSE(us);
         DUMMYUSE(regfiles);
@@ -1092,9 +1102,9 @@ public:
 
     //Return the function unit which can operate on 'regfile'.
     virtual UnitSet & mapRegFile2UnitSet(
-            REGFILE regfile,
-            SR const* sr,
-            OUT UnitSet & us)
+        REGFILE regfile,
+        SR const* sr,
+        OUT UnitSet & us)
     {
         DUMMYUSE(regfile);
         DUMMYUSE(sr);
@@ -1105,68 +1115,76 @@ public:
 
     //Return the cluster which owns 'sr'
     virtual CLUST mapSR2Cluster(OR *, SR const*)
-    { ASSERTN(0, ("Target Dependent Code")); return CLUST_UNDEF; }
+    {
+        ASSERTN(0, ("Target Dependent Code")); return CLUST_UNDEF;
+    }
 
     void relocateStackVarOffset();
     void renameResult(
-            OR * o,
-            SR * oldsr,
-            SR * newsr,
-            bool match_phy_reg);
+        OR * o,
+        SR * oldsr,
+        SR * newsr,
+        bool match_phy_reg);
     void renameOpnd(
-            OR * o,
-            SR * oldsr,
-            SR * newsr,
-            bool match_phy_reg);
+        OR * o,
+        SR * oldsr,
+        SR * newsr,
+        bool match_phy_reg);
     void renameOpndAndResultFollowed(
-            SR * oldsr,
-            SR * newsr,
-            ORCt * start,
-            BBORList * ors);
+        SR * oldsr,
+        SR * newsr,
+        ORCt * start,
+        BBORList * ors);
     void renameOpndAndResultFollowed(
-            SR * oldsr,
-            SR * newsr,
-            OR * start,
-            BBORList * ors);
+        SR * oldsr,
+        SR * newsr,
+        OR * start,
+        BBORList * ors);
     void renameOpndAndResultInRange(
-            SR * oldsr,
-            SR * newsr,
-            ORCt * start,
-            ORCt * end,
-            BBORList * orlist);
+        SR * oldsr,
+        SR * newsr,
+        ORCt * start,
+        ORCt * end,
+        BBORList * orlist);
     void renameOpndAndResultInRange(
-            SR * oldsr,
-            SR * newsr,
-            OR * start,
-            OR * end,
-            BBORList * orlist);
+        SR * oldsr,
+        SR * newsr,
+        OR * start,
+        OR * end,
+        BBORList * orlist);
     virtual void reviseFormalParameterAndSpadjust();
-    virtual void reviseFormalParamAccess(UINT lv_size);    
+    virtual void reviseFormalParamAccess(UINT lv_size);
 
-    virtual void storeArgToStack(
-            ArgDescMgr * argdesc,
-            OUT ORList & ors,
-            IN IOC *);
+    void storeArgToStack(
+        ArgDescMgr * argdesc,
+        OUT ORList & ors,
+        IN IOC *);
     void setMapPR2SR(UINT prno, SR * sr) { m_pr2sr_map.set(prno, sr); }
     void setMapSymbolReg2SR(UINT regid, SR * sr)
-    { DUMMYUSE(regid); m_regid2sr_map.set(SR_sregid(sr), sr); }
+    {
+        DUMMYUSE(regid); m_regid2sr_map.set(SR_sregid(sr), sr);
+    }
 
     void setCluster(ORList & ors, CLUST clust);
     void setComputeSectOffset(bool doit) { m_is_compute_sect_offset = doit; }
     void storeParameterAfterSpadjust(
-            UINT param_start,
-            List<ORBB*> * entry_lst,
-            List<VAR const*> * param_lst);
+        UINT param_start,
+        List<ORBB*> * entry_lst,
+        List<VAR const*> * param_lst);
     void storeRegisterParameterBackToStack(
-            List<ORBB*> * entry_lst,
-            UINT param_start);
-    
+        List<ORBB*> * entry_lst,
+        UINT param_start);
+
     //True if current argument register should be bypassed.
     virtual bool skipArgRegister(
-            VAR const* param,
-            RegSet const* regset,
-            REG reg) const
-    { ASSERTN(0, ("Target Dependent Code")); return false; }
+        VAR const* param,
+        RegSet const* regset,
+        REG reg) const
+    {
+        DUMMYUSE(param && regset && reg);
+        ASSERTN(0, ("Target Dependent Code")); return false;
+    }
+    bool skipArgRegister(UINT sz, OUT ArgDescMgr * argdescmgr);
 
     virtual void package(Vector<BBSimulator*> & simvec);
 
@@ -1179,7 +1197,7 @@ public:
     bool verify();
 
     void updateMaxCalleeArgSize(UINT maxsize)
-    {        
+    {
         ASSERT0(maxsize < MAX_STACK_SPACE);
         UINT sz = CG_max_real_arg_size(this);
         sz = MAX(sz, maxsize);
@@ -1187,26 +1205,59 @@ public:
         CG_max_real_arg_size(this) = sz;
     }
 
-    bool passArgThroughRegister(
-            OUT ArgDescMgr * argdescmgr,
-            OUT ORList & ors,
-            IOC * cont);
     void prependSpill(ORBB * bb, ORList & ors);
     virtual void preLS(
-            IN ORBB * bb,
-            IN RaMgr * ra_mgr,
-            OUT DataDepGraph ** ddg,
-            OUT BBSimulator ** sim,
-            OUT LIS ** lis);
+        IN ORBB * bb,
+        IN RaMgr * ra_mgr,
+        OUT DataDepGraph ** ddg,
+        OUT BBSimulator ** sim,
+        OUT LIS ** lis);
 
     //Perform Instruction Scheduling.
     virtual void performIS(
-            OUT Vector<BBSimulator*> & simvec,
-            RaMgr * ra_mgr);
+        OUT Vector<BBSimulator*> & simvec,
+        RaMgr * ra_mgr);
 
     //Perform Register Allocation.
     virtual RaMgr * performRA();
     bool perform();
+
+    void passArgVariant(
+        ArgDescMgr * argdescmgr,
+        OUT ORList & ors,
+        UINT num,
+        ...);
+
+    //This function try to pass all arguments through registers.
+    //Otherwise pass remaingin arguments through stack memory.
+    //'ir': the first parameter of CALL.
+    void passArg(
+        SR * argval,
+        SR * argaddr,
+        UINT argsz,
+        OUT ArgDescMgr * argdescmgr,
+        OUT ORList & ors,
+        IN IOC * cont);
+    bool tryPassArgThroughRegister(
+        SR * regval,
+        SR * start_addr,
+        UINT * argsz,
+        IN OUT ArgDescMgr * argdescmgr,
+        OUT ORList & ors,
+        IOC * cont);
+    bool passArgInRegister(
+        SR * argval,
+        UINT * sz,
+        ArgDescMgr * argdescmgr,
+        ORList & ors,
+        IOC const* cont);
+    bool passArgInMemory(
+        SR * argaddr,
+        UINT * argsz,
+        OUT ArgDescMgr * argdescmgr,
+        OUT ORList & ors,
+        IOC * cont);
+    void flattenInVec(SR * argval, Vector<SR*> * vec);
 };
 
 } //namespace xgen

@@ -1003,21 +1003,21 @@ void LifeTime::dump(LifeTimeMgr * mgr)
 {
     ASSERT0(mgr);
     xcom::StrBuf buf(6);
-    xoc::prt("\n==-- LT(%3d)[%s] --==", LT_id(this),
+    xoc::note("\n==-- LT(%3d)[%s] --==", LT_id(this),
         LT_sr(this)->get_name(buf, mgr->getCG()));
     buf.clean();
     for (INT i = LT_pos(this)->get_first();
          i >= 0; i = LT_pos(this)->get_next(i)) {
         PosInfo * pi = LT_desc(this).get(i);
         if (pi == NULL) { continue; }
-        xoc::prt("\n=- POS%d[%s]:", i, POSINFO_is_def(pi) ? "def" : "use");
+        xoc::note("\n=- POS%d[%s]:", i, POSINFO_is_def(pi) ? "def" : "use");
         OR const* o = mgr->getOR(i);
         ASSERT0(o);
         buf.clean();
         o->dump(buf, mgr->getCG());
         xoc::prt("%s", buf.buf);
     }
-    xoc::prt("\n");
+    xoc::note("\n");
 }
 //END LifeTime
 
@@ -1089,6 +1089,7 @@ void SibMgr::setSib(LifeTime * prev, LifeTime * next)
         //Sibling lt should be assigned continuous register.
         int a = SR_phy_regid(LT_sr(prev)) + 1;
         int b = SR_phy_regid(LT_sr(next));
+        DUMMYUSE(a && b);
         ASSERT0(SR_phy_regid(LT_sr(prev)) + 1 ==
             SR_phy_regid(LT_sr(next)));
     }
@@ -3330,6 +3331,7 @@ bool LRA::assignRegister(
         RegFileGroup * rfg)
 {
     SR * sr = LT_sr(lt);
+
     REGFILE regfile = SR_regfile(sr);
     ASSERTN(regfile != RF_UNDEF, ("Regfile undefined."));
     REG reg = REG_UNDEF;
@@ -3339,15 +3341,12 @@ bool LRA::assignRegister(
     //Shrink to register set 'regfile' allowed.
     RegSet const* regfile_usable_reg_set = tmMapRegFile2RegSet(regfile);
     usable->intersect(*regfile_usable_reg_set);
-
     if (m_ramgr != NULL && !RAMGR_can_alloc_callee(m_ramgr)) {
         usable->diff(*tmGetRegSetOfCalleeSaved());
     }
-
     if (usable->get_elem_count() == 0) {
         return false;
     }
-
     List<LifeTime*> ni_list;
     ig.getNeighborList(ni_list, lt);
 
@@ -3440,7 +3439,7 @@ FIN:
         //Current assignment will incur lt's sibling allcation always fail.
         return false;
     }
-    
+
 
     SR_phy_regid(sr) = reg;
     if (m_ramgr != NULL) {
@@ -6699,7 +6698,7 @@ void LRA::coalesceMovi(
                     ddg.appendOR(new_mov);
                     ddg.union_edge(succ_succs, new_mov);
                     ddg.union_edge(succ_preds, new_mov);
-                }                
+                }
             }
         } //end if
 
@@ -9370,7 +9369,7 @@ bool LRA::perform()
         }
     }
 
-    m_cur_phase |= PHASE_RA_DONE;    
+    m_cur_phase |= PHASE_RA_DONE;
     finalLRAOpt(mgr, ig, ddg);
     postLRA();
     delete mgr;

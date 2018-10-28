@@ -261,7 +261,7 @@ typedef enum _REGFILE {
 #define REG_R1                       2
 #define REG_R2                       3
 #define REG_R3                       4
-#define REG_R12                      13
+#define REG_R12                      13 //Scratch Register
 #define REG_SP                       14
 #define REG_RFLAG_REGISTER           97
 #define REG_EQ_PRED                  98

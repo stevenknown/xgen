@@ -33,23 +33,29 @@ author: Su Zhenyu
 
 class ARMTargInfo : public TargInfo {
 public:
-    virtual UINT getNumOfAllocableIntegerRegister() { return 16; }
-    virtual UINT getNumOfAllocableFloatRegister() { return 16; }
+    virtual UINT getNumOfAllocableIntegerRegister() const { return 16; }
+    virtual UINT getNumOfAllocableFloatRegister() const { return 16; }
 
     //Return byte size of data cache.
-    virtual UINT getDCacheSize() { return 32 * 1024; }
+    virtual UINT getDCacheSize() const { return 32 * 1024; }
 
     //Return byte size of instruction cache.
-    virtual UINT getICacheSize() { return 32 * 1024; }
+    virtual UINT getICacheSize() const { return 32 * 1024; }
 
     //Return byte size of cache line.
-    virtual UINT getCacheLineSize() { return 32; }
+    virtual UINT getCacheLineSize() const { return 32; }
 
     //Return byte size of TLB if any.
-    virtual UINT getTLBSize() { return 4096; }
+    virtual UINT getTLBSize() const { return 4096; }
 
     //Approximate the cycles to execute ir operation.
-    virtual UINT estimateNumOfCycles(IR const*) { return 2; }
+    virtual UINT estimateNumOfCycles(IR const*) const { return 2; }
+
+    //Return byte size of data cache.
+    virtual UINT getDCacheLineSize() const { return 32; }
+
+    //Return byte size of instruction cache.
+    virtual UINT getICacheLineSize() const { return 32; }
 };
 
 #endif

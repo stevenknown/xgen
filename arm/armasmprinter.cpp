@@ -226,6 +226,9 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     }
 
     for (UINT i = 0; i < o->result_num(); i++) {
+        if (o->get_result(i) == ((ARMCG*)m_cg)->genRflag()) {
+            continue;
+        }
         if (i != 0) {
             buf.strcat(", ");
         }
@@ -236,7 +239,8 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
         buf.strcat(", ");
     }
     for (UINT i = 0; i < o->opnd_num(); i++) {
-        if (i == 0 && HAS_PREDICATE_REGISTER) {
+        if (i == 0 && HAS_PREDICATE_REGISTER ||
+            o->get_opnd(i) == m_cg->genRflag()) {
             //nothing to do
             continue;
         }
@@ -304,8 +308,8 @@ void ARMAsmPrinter::printData(FILE * asmh, Section & sect)
             fprintf(asmh, "\n%s:", name);
 
             //Always align string in 1 byte.
-            //fprintf(asmh, "\n.align %d", computeAlignIsPowerOf2(v));            
-            
+            //fprintf(asmh, "\n.align %d", computeAlignIsPowerOf2(v));
+
             fprintf(asmh, "\n.byte ");
             while (*p != 0) {
                 if (*p == 0xa) {
@@ -325,7 +329,7 @@ void ARMAsmPrinter::printData(FILE * asmh, Section & sect)
             fprintf(asmh, "\n");
         } else {
             buf.clean();
-            fprintf(asmh, "\n.align %d", computeAlignIsPowerOf2(v));            
+            fprintf(asmh, "\n.align %d", computeAlignIsPowerOf2(v));
             fprintf(asmh, "\n#%s", v->dump(buf, m_tm));
             fprintf(asmh, "\n%s:", name);
             fprintf(asmh, "\n.byte ");

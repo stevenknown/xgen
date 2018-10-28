@@ -61,51 +61,51 @@ xcom::BitSet * OR_DF_MGR::get_use_var(ORBB * bb)
 void OR_DF_MGR::dump()
 {
     StrBuf buf(64);
-    fprintf(g_tfile, "\n==---- DUMP Set Info of OR_DF_MGR ----==\n");
+    note("\n==---- DUMP Set Info of OR_DF_MGR ----==\n");
     List<ORBB*> * bbl = m_cg->getORBBList();
     g_indent = 2;
     for (ORBB * bb = bbl->get_head(); bb != NULL; bb = bbl->get_next()) {
-        fprintf(g_tfile, "\n--- BB%d ---", ORBB_id(bb));
+        note("\n--- BB%d ---", ORBB_id(bb));
         xcom::BitSet * live_in = &ORBB_livein(bb);
         xcom::BitSet * live_out = &ORBB_liveout(bb);
         xcom::BitSet * def = get_def_var(bb);
         xcom::BitSet * use = get_use_var(bb);
         INT i;
 
-        fprintf(g_tfile, "\nLIVE-IN SR: ");
+        note("\nLIVE-IN SR: ");
         for (i = live_in->get_first(); i != -1; i = live_in->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr);
 
             buf.clean();
-            fprintf(g_tfile, "%s, ", sr->get_name(buf, m_cg));
+            prt("%s, ", sr->get_name(buf, m_cg));
         }
 
-        fprintf(g_tfile, "\nLIVE-OUT SR: ");
+        note("\nLIVE-OUT SR: ");
         for (i = live_out->get_first(); i != -1; i = live_out->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr != NULL);
 
             buf.clean();
-            fprintf(g_tfile, "%s, ", sr->get_name(buf, m_cg));
+            prt("%s, ", sr->get_name(buf, m_cg));
         }
 
-        fprintf(g_tfile, "\nDEF SR: ");
+        note("\nDEF SR: ");
         for (i = def->get_first(); i != -1; i = def->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr != NULL);
 
             buf.clean();
-            fprintf(g_tfile, "%s, ", sr->get_name(buf, m_cg));
+            prt("%s, ", sr->get_name(buf, m_cg));
         }
 
-        fprintf(g_tfile, "\nUSE SR: ");
+        note("\nUSE SR: ");
         for (i = use->get_first(); i != -1; i = use->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr != NULL);
 
             buf.clean();
-            fprintf(g_tfile, "%s, ", sr->get_name(buf, m_cg));
+            prt("%s, ", sr->get_name(buf, m_cg));
         }
     }
     fflush(g_tfile);
@@ -220,7 +220,7 @@ void GLT_MGR::dump()
 {
     UINT max_name_len = 0;
     StrBuf buf(64);
-    if (g_tfile == NULL) return;
+    if (g_tfile == NULL) { return; }
     xcom::BitSet srbs;
     List<ORBB*> * bbl = m_cg->getORBBList();
     for (ORBB * bb = bbl->get_head(); bb != NULL; bb = bbl->get_next()) {
@@ -247,8 +247,8 @@ void GLT_MGR::dump()
         }
     }
 
-    fprintf(g_tfile, "\n==---- DUMP Global LIFE TIME ----==\n");
-    fprintf(g_tfile, "---- SR lived BB\n");
+    note("\n==---- DUMP Global LIFE TIME ----==\n");
+    prt("---- SR lived BB\n");
     for (INT i = srbs.get_first(); i >= 0; i = srbs.get_next(i)) {
         SR * sr = m_cg->mapSymbolReg2SR(i);
         ASSERT0(sr != NULL);
@@ -256,11 +256,11 @@ void GLT_MGR::dump()
 
         //Print SR name.
         buf.clean();
-        fprintf(g_tfile, "\n%s", sr->get_name(buf, m_cg));
+        note("\n%s", sr->get_name(buf, m_cg));
         for (UINT v = 0; v < max_name_len - buf.strlen(); v++) {
-            fprintf(g_tfile, " ");
+            prt(" ");
         }
-        fprintf(g_tfile, ":");
+        prt(":");
 
         //Print live BB.
         if (livebbs == NULL || livebbs->is_empty()) { continue; }
@@ -269,10 +269,10 @@ void GLT_MGR::dump()
             for (INT j = start; j < u; j++) {
                 buf.sprint("%d,", j);
                 for (UINT k = 0; k < buf.strlen(); k++) {
-                    fprintf(g_tfile, " ");
+                    prt(" ");
                 }
             }
-            fprintf(g_tfile, "%d,", u);
+            prt("%d,", u);
             start = u + 1;
         }
     }

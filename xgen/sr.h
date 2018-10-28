@@ -91,10 +91,12 @@ SR const* checkSRIMM(SR const* ir);
 #define SR_label_ofst(sr)        (CK_SR_LAB(sr)) //Reserved
 
 //If sr belong to a sr-vector, record the vector.
-#define SR_vec(sr)               ((CK_SR_REG(sr))->m_sr_vec)
+//sr is either register or immeidate.
+#define SR_vec(sr)               ((sr)->m_sr_vec)
 
 //Record the sr's position in the vector, start at 0.
-#define SR_vec_idx(sr)           ((CK_SR_REG(sr))->m_sr_vec_idx)
+//sr is either register or immeidate.
+#define SR_vec_idx(sr)           ((sr)->m_sr_vec_idx)
 #define SR_is_vec(sr)            (SR_vec(sr) != NULL)
 #define SR_is_str(sr)            (SR_type(sr) == SR_STR)
 #define SR_is_label(sr)          (SR_type(sr) == SR_LAB)
@@ -174,7 +176,7 @@ public:
 
     //Note SR which has composed SRVec can not make up another SRVec.
     //The relationship between SR and SRVec is unique.
-    //SRs in SRVec do not have to be consecutive.    
+    //SRs in SRVec do not have to be consecutive.
     SRVec * m_sr_vec;
     INT m_sr_vec_idx;
 

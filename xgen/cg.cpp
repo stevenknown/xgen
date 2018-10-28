@@ -53,7 +53,7 @@ void ArgDescMgr::dropArgRegister()
     INT phyreg = m_argregs.get_first();
     if (phyreg != -1) {
         m_argregs.diff(phyreg);
-    }    
+    }
 }
 
 
@@ -202,39 +202,15 @@ void CG::buildMemcpy(
     //::memcpy(void *dest, const void *src, int n);
     SR * immreg = genReg();
     buildMove(immreg, genIntImm((HOST_INT)bytesize, false), ors, cont);
-
     ArgDescMgr argdescmgr;
-    ArgDesc * desc = NULL;
-
-    //The left most parameter: void *dest
-    desc = argdescmgr.addValueDesc(tgt, NULL, tgt->getByteSize(), 0);
-    argdescmgr.addArgInArgSection(desc->arg_size);
-    ASSERT0(m_tm->get_pointer_bytesize() == tgt->getByteSize());   
-
-    //The second right most parameter: const void *src
-    desc = argdescmgr.addValueDesc(src, NULL, src->getByteSize(), 0);
-    argdescmgr.addArgInArgSection(desc->arg_size);
-    ASSERT0(m_tm->get_pointer_bytesize() == src->getByteSize());
-
-    //The right most parameter: int n
-    desc = argdescmgr.addValueDesc(immreg, NULL, immreg->getByteSize(), 0);
-    argdescmgr.addArgInArgSection(desc->arg_size);
+    passArgVariant(&argdescmgr, ors, 3,
+        tgt, NULL, tgt->getByteSize(), NULL,
+        src, NULL, src->getByteSize(), NULL,
+        immreg, NULL, immreg->getByteSize(), NULL);
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-djust operation afterwards.
     updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
-
-    if (isPassArgumentThroughRegister()) {
-        //Try to pass ir through register.
-        if (!passArgThroughRegister(&argdescmgr, ors, cont)) {
-            //Fail to pass all argument through registers.
-            //Generate code to push remaining parameters.
-            storeArgToStack(&argdescmgr, ors, cont);
-        }        
-    } else {
-        //Generate code to push parameters.
-        storeArgToStack(&argdescmgr, ors, cont);
-    }
 
     ASSERT0(argdescmgr.getCurrentDesc() == NULL);
 
@@ -1785,7 +1761,9 @@ bool CG::isValidImmOpnd(OR_TYPE ot, UINT idx, HOST_INT imm) const
     SRDescGroup<> const* sdg = OTD_srd_group(otd);
     SRDesc const* sr_desc = sdg->get_opnd(idx);
     ASSERT0(sr_desc && SRD_is_imm(sr_desc));
-    HOST_UINT pimm = abs(imm);
+    //Clear the high non-zero bit.
+    //e.g: given imm 0xffffFFFF80000000, clean high 32bit.
+    HOST_UINT pimm = xcom::xabs(imm);
     HOST_UINT mask = (((HOST_UINT)1) << SRD_bitsize(sr_desc)) - 1;
     return (mask & pimm) == pimm;
 }
@@ -1929,32 +1907,249 @@ void CG::fixCluster(IN OUT ORList & spill_ors, CLUST clust)
 }
 
 
-//Return true if all args has been passed through registers, otherwise
+void CG::flattenInVec(SR * argval, Vector<SR*> * vec)
+{
+    ASSERT0(argval && vec);
+    UINT vec_count = 0;
+
+    if (SR_is_vec(argval)) {
+        ASSERTN(SR_vec_idx(argval) == 0, ("expect first element"));
+        for (INT j = 0; j <= SR_vec(argval)->get_last_idx(); j++) {
+            vec->set(vec_count, SR_vec(argval)->get(j));
+            vec_count++;
+        }
+    } else {
+        vec->set(vec_count, argval);
+        vec_count++;
+    }
+}
+
+
+//True if current argument register should be bypassed.
+bool CG::skipArgRegister(UINT sz, OUT ArgDescMgr * argdescmgr)
+{
+    ASSERT0(argdescmgr);
+    DUMMYUSE(sz && argdescmgr);
+    #ifdef TO_BE_COMPATIBLE_WITH_ARM_LINUX_GNUEABI
+    if (sz == CONTINUOUS_REG_NUM * GENERAL_REGISTER_SIZE) {
+        ASSERT0(sz == 2 * GENERAL_REGISTER_SIZE);
+        RegSet const* rs = argdescmgr->getArgRegSet();
+        REG first_reg = rs->get_first();
+        if (first_reg == (REG)-1) {
+            return false;
+        }
+        if (!isEvenReg(first_reg) || //bypass odd register
+            rs->get_elem_count() < CONTINUOUS_REG_NUM) { //not enough
+                                              //continuous arg register
+            argdescmgr->dropArgRegister();
+            return true;
+        }
+    }
+    #endif
+    return false;
+}
+
+
+//Return true if whole ir has been passed through registers, otherwise
 //return false.
-bool CG::passArgThroughRegister(
+bool CG::passArgInMemory(
+        SR * argaddr,
+        UINT * argsz,
         OUT ArgDescMgr * argdescmgr,
         OUT ORList & ors,
         IOC *)
 {
-    IOC tcont;
-    for (; argdescmgr->getCurrentDesc() != NULL;) {
-        SR * argreg = argdescmgr->allocArgRegister(this);
-        if (argreg == NULL) {
-            return false;
-        }
-        ArgDesc const* desc = argdescmgr->pullOutDesc();
-        ASSERT0(!desc->is_record_addr);
-        SR * arg_val = desc->src_value;
-        //ASSERT0(arg_val && arg_val->getByteSize() == GENERAL_REGISTER_SIZE);
-        //Only move register size data for each time.
-        ASSERT0(arg_val);   
+    UINT total_size = *argsz;
+    IOC tmp_cont;
 
-        tcont.clean();
-        buildMove(argreg, arg_val, ors, &tcont);
-        ASSERT0(arg_val->getByteSize() == GENERAL_REGISTER_SIZE);
-        argdescmgr->updatePassedArgInRegister(GENERAL_REGISTER_SIZE);
+    //CG compute the ADDR for data rather than generate load operation.
+    //Get the address of LoadValue.
+    ASSERT0(argaddr);
+
+    //Try to pass data through argument-register.
+    //Transfer data in single register size.
+    UINT transfer_size = GENERAL_REGISTER_SIZE;
+    for (UINT i = 0;; i++) {
+        SR * argreg = NULL;
+        if ((*argsz) > 0) {
+            argreg = argdescmgr->allocArgRegister(this);
+        }
+        if (argreg == NULL) {
+            break;
+        }
+        tmp_cont.clean();
+        IOC_mem_byte_size(&tmp_cont) = transfer_size;
+        buildLoad(argreg, argaddr,
+            genIntImm(i * transfer_size, false),
+            ors, &tmp_cont);
+        (*argsz) -= transfer_size;
+        argdescmgr->updatePassedArgInRegister(transfer_size);
+    }
+
+    //There is still remaining data have to be passed through stack.
+    if (*argsz > 0) {
+        argdescmgr->addAddrDesc(argaddr,
+            NULL, *argsz, total_size - *argsz);
+        return false;
     }
     return true;
+}
+
+
+//Return true if whole ir has been passed through registers, otherwise
+//return false.
+bool CG::passArgInRegister(
+        SR * argval,
+        UINT * sz,
+        ArgDescMgr * argdescmgr,
+        ORList & ors,
+        IOC const*)
+{
+    //Target dependent code.
+    skipArgRegister(*sz, argdescmgr);
+
+    //Get the LoadValue and spread them into vector.
+    //e.g: return value is {r1, <r4, r5>, r7}
+    //     spread to: {r1, r4, r5, r7}
+    UINT i = 0;
+    Vector<SR*> vec;
+    flattenInVec(argval, &vec);
+
+    IOC tmp_cont;
+    //Try to pass data through argument-register.
+    //Transfer data in single register size.
+    UINT transfer_size = GENERAL_REGISTER_SIZE;
+    *sz = MAX(*sz, transfer_size);
+    for (; *sz != 0; i++) {
+        SR * argreg = NULL;
+        if (*sz > 0) {
+            argreg = argdescmgr->allocArgRegister(this);
+        }
+        if (argreg == NULL) {
+            break;
+        }
+        SR * arg_val = vec.get(i);
+        //ASSERT0(arg_val && arg_val->getByteSize() == GENERAL_REGISTER_SIZE);
+        //Only move register size data for each time.
+        ASSERT0(arg_val);
+
+        tmp_cont.clean();
+        buildMove(argreg, arg_val, ors, &tmp_cont);
+        *sz -= transfer_size;
+        argdescmgr->updatePassedArgInRegister(transfer_size);
+    }
+
+    if (*sz > 0) {
+        //There is still remaining data have to be passed through stack.
+        for (INT remaining_irsize = *sz; remaining_irsize > 0; i++) {
+            SR * arg = vec.get(i);
+            ASSERT0(arg);
+            argdescmgr->addValueDesc(arg, NULL, transfer_size, 0);
+            remaining_irsize -= transfer_size;
+        }
+        return false;
+    }
+    return true;
+}
+
+
+//Return true if whole ir has been passed through registers, otherwise
+//return false.
+bool CG::tryPassArgThroughRegister(
+        SR * argval,
+        SR * argaddr,
+        UINT * argsz,
+        IN OUT ArgDescMgr * argdescmgr,
+        OUT ORList & ors,
+        IOC * cont)
+{
+    ASSERT0((argval != NULL) ^ (argaddr != NULL));
+    if (argaddr != NULL) {
+        return passArgInMemory(argaddr, argsz, argdescmgr, ors, cont);
+    }
+    return passArgInRegister(argval, argsz, argdescmgr, ors, cont);
+}
+
+
+//Pass variant arguments.
+//num: the number of group of arguments, a group is consist of
+//     {argval, argaddr, argsz, dbx}.
+//e.g: given num is 2, the stack layout will be:
+// argval0,
+// argaddr0,
+// argsz0,
+// argdb0,
+// argval1,
+// argaddr1,
+// argsz1,
+// argdb1,
+void CG::passArgVariant(
+        ArgDescMgr * argdescmgr,
+        OUT ORList & ors,
+        UINT num,
+        ...)
+{
+    va_list ptr;
+    va_start(ptr, num);
+    IOC tmp;
+    ORList tors;
+    for (UINT i = 0; i < num; i++) {
+        SR * argval = va_arg(ptr, SR*);
+        SR * argaddr = va_arg(ptr, SR*);
+        UINT argsz = va_arg(ptr, UINT);
+        Dbx * dbx = va_arg(ptr, Dbx*);
+        tmp.clean();
+        tors.clean();
+        passArg(argval, argaddr, argsz, argdescmgr, tors, &tmp);
+        if (dbx != NULL) {
+            tors.copyDbx(dbx);
+        }
+        ors.append_tail(tors);
+    }
+    va_end(ptr);
+}
+
+
+//This function try to pass all arguments through registers.
+//Otherwise pass remaingin arguments through stack memory.
+//'ir': the first parameter of CALL.
+void CG::passArg(
+        SR * argval,
+        SR * argaddr,
+        UINT argsz,
+        OUT ArgDescMgr * argdescmgr,
+        OUT ORList & ors,
+        IN IOC * cont)
+{
+    ASSERT0((argval != NULL) ^ (argaddr != NULL));
+    if (tmGetRegSetOfArgument() != NULL &&
+        tmGetRegSetOfArgument()->get_elem_count() != 0) {
+        //Try to pass argval or data in argaddr through register.
+        if (!tryPassArgThroughRegister(argval, argaddr, &argsz,
+                argdescmgr, ors, cont)) {
+            //Fail to pass argument through registers.
+            ASSERT0(argsz != 0);
+        }
+
+        if (argdescmgr->getCurrentDesc() != NULL) {
+            //Pass remainging data through stack.
+            storeArgToStack(argdescmgr, ors, cont);
+        }
+        return;
+    }
+
+    //Pass data in argaddr through stack.
+    if (argval != NULL) {
+        argdescmgr->addValueDesc(argval, NULL, argsz, 0);
+    } else {
+        ASSERT0(argaddr);
+        argdescmgr->addAddrDesc(argaddr, NULL, argsz, 0);
+    }
+    storeArgToStack(argdescmgr, ors, cont);
+
+    //ArgSectionSize may be 0 if all arguments passed through register.
+    //ASSERT0(argdescmgr->getArgSectionSize() ==
+    //    argdescmgr->getPassedArgByteSize());
 }
 
 
@@ -1993,9 +2188,9 @@ void CG::storeArgToStack(
                     false, tors, &tc);
                 src = tc.get_reg(0);
             }
-            
+
             tc.clean();
-            if (desc->tgt_ofst != 0) {            
+            if (desc->tgt_ofst != 0) {
                 //tgt = SP + tgt_ofst;
                 buildAdd(tgt,
                     genIntImm((HOST_INT)desc->tgt_ofst, false),
@@ -2010,7 +2205,7 @@ void CG::storeArgToStack(
                 tgt = res;
             }
 
-            //copy(x, parameter_start_addr, copy_size);            
+            //copy(x, parameter_start_addr, copy_size);
             ASSERT0(src && tgt && SR_is_reg(tgt) && SR_is_reg(src));
             tc.clean();
             buildMemcpyInternal(tgt, src,
@@ -2905,7 +3100,6 @@ void CG::storeParameterAfterSpadjust(
     ASSERT0(entry_lst && param_lst);
     RegSet const* phyregset = tmGetRegSetOfArgument();
     ASSERT0(phyregset);
-    INT phyreg = -1;
     ORList ors;
     IOC tc;
     for (ORBB * bb = entry_lst->get_head();
@@ -2919,7 +3113,7 @@ void CG::storeParameterAfterSpadjust(
         VAR const* param = param_lst->get_head();
         ASSERT0(param);
         UINT passed_paramsz = 0; //record the bytesize that has been passed.
- 
+
         ors.clean();
         tc.clean();
         UINT regsz = 0;
@@ -2956,7 +3150,6 @@ UINT CG::calcSizeOfParameterPassedViaRegister(
 {
     RegSet const* phyregset = tmGetRegSetOfArgument();
     ASSERT0(phyregset);
-    INT phyreg = -1;
     C<VAR const*> * ct = NULL;
     param_lst->get_head(&ct);
     if (ct == NULL) {
@@ -2993,14 +3186,14 @@ void CG::storeRegisterParameterBackToStack(
     }
     ASSERT0(tmGetRegSetOfArgument());
     List<VAR const*> param_list;
-    m_ru->findFormalParam(param_list, true);    
+    m_ru->findFormalParam(param_list, true);
     storeParameterAfterSpadjust(param_start, entry_lst, &param_list);
 }
 
 
 void CG::reviseFormalParameterAndSpadjust()
 {
-    //size of (register caller parameter size + local variable + 
+    //size of (register caller parameter size + local variable +
     //         temporary variable + callee parameter size).
     INT size = (INT)SECT_size(getStackSection()) + getMaxArgSectionSize();
 
@@ -3040,7 +3233,7 @@ void CG::reviseFormalParameterAndSpadjust()
             ASSERT0(alignsize > bytesize_of_arg_passed_via_reg);
             size += alignsize - bytesize_of_arg_passed_via_reg;
         }
-        
+
         //Update the parameter section start.
         m_param_sect_start_offset = size;
         storeRegisterParameterBackToStack(&entry_lst, size);
@@ -3049,7 +3242,7 @@ void CG::reviseFormalParameterAndSpadjust()
 
     //size must align in SPADJUST_ALIGNMENT.
     ASSERT0(size == xcom::ceil_align(size, SPADJUST_ALIGNMENT));
-    
+
     for (ORBB * bb = entry_lst.get_head();
          bb != NULL; bb = entry_lst.get_next()) {
         OR * spadj = ORBB_entry_spadjust(bb);
@@ -3503,7 +3696,7 @@ void CG::localizeBB(SR * sr, ORBB * bb)
         buildLoad(newsr, SR_spill_var(sr), 0, ors, &toc);
         ASSERT0(first_usestmt_ct != ORBB_orlist(bb)->end());
         ORBB_orlist(bb)->insert_before(ors, first_usestmt_ct);
-                
+
         if (first_defstmt_ct != NULL) {
             ASSERT0(first_usestmt_ct == first_defstmt_ct ||
                 ORBB_orlist(bb)->is_or_precedes(
@@ -3677,16 +3870,14 @@ bool CG::verify()
 bool CG::perform()
 {
     ASSERTN(isPowerOf2(STACK_ALIGNMENT),
-           ("Stack alignment should be power of 2"));
+        ("Stack alignment should be power of 2"));
+    xoc::note("\n==---- START CODE GENERATION (%d)'%s' ----==\n",
+            REGION_id(m_ru), m_ru->getRegionName());
+    m_ru->dump(false);
 
     if (m_ru->getIRList() == NULL &&
         m_ru->getBBList()->get_elem_count() == 0) {
         return true;
-    }
-    if (xoc::g_tfile != NULL) {
-        fprintf(xoc::g_tfile,
-            "\n==---- Code Generation for region(%d)'%s' ----==\n",
-            REGION_id(m_ru), m_ru->getRegionName());
     }
 
     ORList or_list; //record OR list after converting xoc::IR to OR.
@@ -3695,13 +3886,18 @@ bool CG::perform()
     IR2OR * ir2or = allocIR2OR();
     ASSERT0(ir2or);
 
+    if (m_ru->isRegionName("main"))
+    {
+        int a = 0; //fuck
+    }
 
     CHAR const* varname = SYM_name(m_ru->getRegionVar()->get_name());
     DUMMYUSE(varname);
     ir2or->convertIRBBListToORList(or_list);
-
     constructORBBList(or_list);
 
+    xoc::note("\n==---- AFTER IR2OR CONVERT %s ----==", m_ru->getRegionName());
+    dumpORBBList(m_or_bb_list);
 
     //Build CFG
     ASSERT0(m_or_cfg == NULL);
@@ -3710,7 +3906,6 @@ bool CG::perform()
     OptCtx oc;
     m_or_cfg->removeEmptyBB(oc);
     m_or_cfg->build(oc);
-
     m_or_cfg->removeEmptyBB(oc);
     m_or_cfg->computeExitList();
     if (m_or_cfg->removeUnreachBB()) {
@@ -3721,9 +3916,20 @@ bool CG::perform()
         generateFuncUnitDedicatedCode();
     }
 
-    if (!isGRAEnable()) { localize(); }
+    if (!isGRAEnable()) {
+        localize();
+        note("\n==---- AFTER LOCALIZE ----==");
+        dumpORBBList(m_or_bb_list);
+    }
 
+    xoc::note("\n==---- BEFORE REGISTER ALLOCATION %s ----==",
+        m_ru->getRegionName());
+    dumpORBBList(m_or_bb_list);
     RaMgr * ra_mgr = performRA();
+
+    xoc::note("\n==---- AFTER REGISTER ALLOCATION %s ----==",
+        m_ru->getRegionName());
+    dumpORBBList(m_or_bb_list);
 
     bool change;
     do {
@@ -3744,6 +3950,9 @@ bool CG::perform()
 
     if (m_ru->is_function()) {
         reviseFormalParameterAndSpadjust();
+
+        xoc::note("\n==---- AFTER REVISE SPADJUST ----==");
+        dumpORBBList(m_or_bb_list);
     }
 
     Vector<BBSimulator*> simvec;
@@ -3751,13 +3960,22 @@ bool CG::perform()
 
     relocateStackVarOffset();
 
-    ASSERT0(verify());
+    xoc::note("\n==---- AFTER RELOCATE STACK OFFSET ----==");
+    getParamSection()->dump(this);
+    getStackSection()->dump(this);
+    dumpORBBList(m_or_bb_list);
 
     delete ra_mgr;
     freeDdgList();
     freeLisList();
 
     package(simvec);
+
+    xoc::note("\n==---- AFTER PACKAGE ----==");
+    dumpPackage();
+    dumpORBBList(m_or_bb_list);
+
+    ASSERT0(verify());
 
     freeSimmList(); //Free BBSimulator list here.
     return true;

@@ -603,7 +603,7 @@ bool ORBB::isDownBoundary(OR * o)
 void dumpORBBList(List<ORBB*> & bbl)
 {
     if (xoc::g_tfile == NULL) { return; }
-    prt("\n==---- DUMP ORBB List ----==");
+    note("\n==---- DUMP ORBB List ----==");
     if (g_dbx_mgr != NULL) {
         g_dbx_mgr->doPrepareWorkBeforePrint();
     }

@@ -38,7 +38,7 @@ class ARMLifeTimeMgr : public LifeTimeMgr {
 public:
     ARMLifeTimeMgr(CG * cg) : LifeTimeMgr(cg) {}
     virtual ~ARMLifeTimeMgr() {}
-    
+
     virtual void handlePreferredReg(OR const*);
 
     virtual void considerSpecialConstrains(

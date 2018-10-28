@@ -178,9 +178,9 @@ void ARMIR2OR::convertCall(IR const* ir, OUT ORList & ors, IN IOC * cont)
     processRealParams(CALL_param_list(ir), ors, cont);
 
     //Collect the maximum parameters size during code generation.
-    //And revise spadjust operation afterwards.    
+    //And revise spadjust operation afterwards.
     m_cg->updateMaxCalleeArgSize(IOC_param_size(cont));
-    
+
     if (IOC_param_size(cont) > 0) {
         //DO not adjust SP here for parameters, callee will
         //do this job.
@@ -215,7 +215,7 @@ void ARMIR2OR::convertCall(IR const* ir, OUT ORList & ors, IN IOC * cont)
     tors.copyDbx(ir);
     ors.append_tail(tors);
 
-    convertReturnValue(ir, ors, cont);    
+    convertReturnValue(ir, ors, cont);
 }
 
 
@@ -244,26 +244,16 @@ void ARMIR2OR::convertRem(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    ArgDesc * desc = NULL;
-    desc = argdescmgr.addValueDesc(
-        opnd0, ::getDbx(op0), opnd0->getByteSize(), 0);
-    argdescmgr.addArgInArgSection(desc->arg_size);
-    ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
-
-    desc = argdescmgr.addValueDesc(
-        opnd1, ::getDbx(op1), opnd1->getByteSize(), 0);
-    argdescmgr.addArgInArgSection(desc->arg_size);
-    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
+    m_cg->passArgVariant(&argdescmgr, ors, 2,
+        opnd0, NULL, opnd0->getByteSize(), ::getDbx(op0),
+        opnd1, NULL, opnd1->getByteSize(), ::getDbx(op1));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-djust operation afterwards.
     m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
-    getCG()->passArgThroughRegister(&argdescmgr, ors, cont);
-
-    ORList tors;
-
     //Intrinsic Call.
+    ORList tors;
     UINT retv_sz = ir->getTypeSize(m_tm);
     VAR const* builtin = NULL;
     if (retv_sz <= 4) {
@@ -305,23 +295,13 @@ void ARMIR2OR::convertAddSubFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    ArgDesc * desc = NULL;
-    desc = argdescmgr.addValueDesc(
-        opnd0, ::getDbx(op0), opnd0->getByteSize(), 0);    
-    argdescmgr.addArgInArgSection(desc->arg_size);    
-    ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
-
-    desc = argdescmgr.addValueDesc(
-        opnd1, ::getDbx(op1), opnd1->getByteSize(), 0);
-    argdescmgr.addArgInArgSection(desc->arg_size);
-    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
+    m_cg->passArgVariant(&argdescmgr, ors, 2,
+        opnd0, NULL, opnd0->getByteSize(), ::getDbx(op0),
+        opnd1, NULL, opnd1->getByteSize(), ::getDbx(op1));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-adjust operation afterwards.
     m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
-
-    //Push parameters to stack.
-    getCG()->passArgThroughRegister(&argdescmgr, ors, cont);
 
     //Intrinsic Call.
     UINT retv_sz = ir->getTypeSize(m_tm);
@@ -371,23 +351,13 @@ void ARMIR2OR::convertDiv(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    ArgDesc * desc = NULL;
-    desc = argdescmgr.addValueDesc(
-        opnd0, ::getDbx(op0), opnd0->getByteSize(), 0);
-    argdescmgr.addArgInArgSection(desc->arg_size);
-    ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
-
-    desc = argdescmgr.addValueDesc(
-        opnd1, ::getDbx(op1), opnd1->getByteSize(), 0);
-    argdescmgr.addArgInArgSection(desc->arg_size);
-    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
+    m_cg->passArgVariant(&argdescmgr, ors, 2,
+        opnd0, NULL, opnd0->getByteSize(), ::getDbx(op0),
+        opnd1, NULL, opnd1->getByteSize(), ::getDbx(op1));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-adjust operation afterwards.
     m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
-
-    //Push parameters to stack.    
-    getCG()->passArgThroughRegister(&argdescmgr, ors, cont);
 
     //Intrinsic Call.
     UINT retv_sz = ir->getTypeSize(m_tm);
@@ -454,33 +424,26 @@ void ARMIR2OR::convertMulofLongLong(
     //Operand0
     IOC tmp;
     convert(op0, ors, &tmp);
+    ASSERT0(tmp.get_addr() == NULL);
     SR * opnd0 = tmp.get_reg(0);
     ASSERT0(opnd0 != NULL && SR_is_reg(opnd0) && SR_is_vec(opnd0));
 
     //Operand1
     tmp.clean();
     convert(op1, ors, &tmp);
+    ASSERT0(tmp.get_addr() == NULL);
     SR * opnd1 = tmp.get_reg(0);
     ASSERT0(opnd1 != NULL && SR_is_reg(opnd1) && SR_is_vec(opnd1));
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    ArgDesc * desc = NULL;
-    desc = argdescmgr.addValueDesc(
-        opnd0, ::getDbx(op0), opnd0->getByteSize(), 0);    
-    argdescmgr.addArgInArgSection(desc->arg_size);
-    ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
+    m_cg->passArgVariant(&argdescmgr, ors, 2,
+        opnd0, NULL, opnd0->getByteSize(), ::getDbx(op0),
+        opnd1, NULL, opnd1->getByteSize(), ::getDbx(op1));
 
-    desc = argdescmgr.addValueDesc(
-        opnd1, ::getDbx(op1), opnd1->getByteSize(), 0);
-    argdescmgr.addArgInArgSection(desc->arg_size);
-    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
- 
     //Collect the maximum parameters size during code generation.
     //And revise SP-djust operation afterwards.
     m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
-
-    getCG()->passArgThroughRegister(&argdescmgr, ors, cont);
 
     //Intrinsic Call.
     ORList tors;
@@ -527,22 +490,13 @@ void ARMIR2OR::convertMulofFloat(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    ArgDesc * desc = NULL;
-    desc = argdescmgr.addValueDesc(
-        opnd0, ::getDbx(op0), opnd0->getByteSize(), 0);
-    argdescmgr.addArgInArgSection(desc->arg_size);
-    ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
+    m_cg->passArgVariant(&argdescmgr, ors, 2,
+        opnd0, NULL, opnd0->getByteSize(), ::getDbx(op0),
+        opnd1, NULL, opnd1->getByteSize(), ::getDbx(op1));
 
-    desc = argdescmgr.addValueDesc(
-        opnd1, ::getDbx(op1), opnd1->getByteSize(), 0);
-    argdescmgr.addArgInArgSection(desc->arg_size);
-    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
- 
     //Collect the maximum parameters size during code generation.
     //And revise SP-djust operation afterwards.
     m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
-
-    getCG()->passArgThroughRegister(&argdescmgr, ors, cont);
 
     //Intrinsic Call.
     VAR const* builtin;
@@ -752,9 +706,6 @@ void ARMIR2OR::convertRelationOpDWORD(
         SR_vec(sr0)->get(1), SR_vec(sr1)->get(1), tors, cont);
 
     //Compare low part.
-    bool is_lowpart_inverted = false;
-    bool is_lowpart_truebr = true;
-
     SR * pred = truepd;
     SR * respd1 = truepd; //getCG()->genPredReg();
     SR * respd2 = falsepd; //getCG()->genPredReg();
@@ -763,8 +714,6 @@ void ARMIR2OR::convertRelationOpDWORD(
         SR_vec(sr0)->get(0), SR_vec(sr1)->get(0), tors, cont);
 
     //The second comparison of high part.
-    bool is_highpart_inverted = false;
-    bool is_highpart_truebr = true;
     SR * pred2 = falsepd;
 
     getCG()->buildARMCmp(OR_cmp,
@@ -824,17 +773,10 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     convertGeneralLoad(opnd1, ors, &tmp);
     SR * sr1 = tmp.get_reg(0);
 
-    bool is_signed = opnd0->is_signed();
-    UINT opnd_ty_size = opnd0->getTypeSize(m_tm);
-
     //Generate compare operations.
     tmp.clean();
-    bool is_inverted = false;
-
     getCG()->buildARMCmp(OR_cmp, getCG()->genTruePred(), sr0, sr1, ors, cont);
-
     cont->set_reg(0, NULL);
-
     SR * p1 = NULL;
     SR * p2 = NULL;
     switch (ir->getCode()) {
@@ -1006,23 +948,13 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors, IN IOC * cont
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    ArgDesc * desc = NULL;
-    desc = argdescmgr.addValueDesc(
-        opnd0, ::getDbx(op0), opnd0->getByteSize(), 0);
-    argdescmgr.addArgInArgSection(desc->arg_size);
-    ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
+    m_cg->passArgVariant(&argdescmgr, ors, 2,
+        opnd0, NULL, opnd0->getByteSize(), ::getDbx(op0),
+        opnd1, NULL, opnd1->getByteSize(), ::getDbx(op1));
 
-    desc = argdescmgr.addValueDesc(
-        opnd1, ::getDbx(op1), opnd1->getByteSize(), 0);
-    argdescmgr.addArgInArgSection(desc->arg_size);
-    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
-   
     //Collect the maximum parameters size during code generation.
     //And revise SP-adjust operation afterwards.
     m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
-
-    //Push parameters to stack.
-    getCG()->passArgThroughRegister(&argdescmgr, ors, cont);    
 
     VAR const* builtin = NULL;
     if (opnd0->getByteSize() == GENERAL_REGISTER_SIZE) {
@@ -1257,18 +1189,12 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    ArgDesc * desc = NULL;
-    desc = argdescmgr.addValueDesc(
-        opnd, ::getDbx(CVT_exp(ir)), opnd->getByteSize(), 0);
-    argdescmgr.addArgInArgSection(desc->arg_size);
-    ASSERT0(opnd->getByteSize() >= CVT_exp(ir)->getTypeSize(m_tm));
+    m_cg->passArgVariant(&argdescmgr, ors, 1,
+        opnd, NULL, opnd->getByteSize(), ::getDbx(CVT_exp(ir)));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-adjust operation afterwards.
     m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
-
-    //Push parameters to stack.
-    getCG()->passArgThroughRegister(&argdescmgr, ors, cont);
 
     VAR const* builtin = NULL;
     if (ir->is_int()) {
@@ -1490,32 +1416,4 @@ OR_TYPE ARMIR2OR::mapIRType2ORType(
     default: ASSERTN(0, ("unsupport"));
     }
     return orty;
-}
-
-
-//True if current argument register should be bypassed.
-bool ARMIR2OR::skipArgRegister(
-        IR const* ir,
-        OUT ArgDescMgr * argdescmgr,
-        CG const* cg)
-{
-    ASSERT0(ir && argdescmgr && cg);
-    #ifdef TO_BE_COMPATIBLE_WITH_ARM_LINUX_GNUEABI
-    if (ir->getTypeSize(cg->getTypeMgr()) ==
-            CONTINUOUS_REG_NUM * GENERAL_REGISTER_SIZE &&
-        !ir->is_mc()) {
-        ASSERT0(ir->getDType() == xoc::D_U64 ||
-            ir->getDType() == xoc::D_I64 ||
-            ir->getDType() == xoc::D_F64);
-        RegSet const* rs = argdescmgr->getArgRegSet();
-        REG first_reg = rs->get_first();
-        if (!cg->isEvenReg(first_reg) || //bypass odd register
-            rs->get_elem_count() < CONTINUOUS_REG_NUM) { //not enough
-                                              //continuous arg register            
-            argdescmgr->dropArgRegister();
-            return true;
-        }
-    }
-    #endif
-    return false;
 }

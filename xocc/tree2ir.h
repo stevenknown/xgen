@@ -153,7 +153,7 @@ public:
     //If the return type is structure whose size is bigger than 64bit, we need
     //to generate an implcitly VAR to indicate the stack buffer which used
     //to hold the return value.
-    void genReturnValBuf(IR const* ir);
+    IR * genReturnValBuf(IR * ir);
     BYTE getMantissaNum(CHAR const* fpval);
 
     IR * buildId(IN Tree * t);

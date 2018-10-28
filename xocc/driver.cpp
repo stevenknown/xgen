@@ -94,7 +94,7 @@ void CLDbxMgr::printSrcLine(Dbx const* dbx)
 
     if (lineno == 0) {
         //No line number info recorded.
-        fprintf(g_tfile, "\n[0]\n");
+        note("\n[0]\n");
         return;
     }
 
@@ -102,7 +102,7 @@ void CLDbxMgr::printSrcLine(Dbx const* dbx)
         ASSERTN(m_cur_lineno < OFST_TAB_LINE_SIZE, ("unexpected src line"));
         fseek(g_hsrc, g_ofst_tab[m_cur_lineno], SEEK_SET);
         if (fgets(g_cur_line, g_cur_line_len, g_hsrc) != NULL) {
-            fprintf(g_tfile, "\n\n[%u]%s", m_cur_lineno, g_cur_line);
+            note("\n\n[%u]%s", m_cur_lineno, g_cur_line);
         }
     }
 }
@@ -532,19 +532,19 @@ static void dumpPoolUsage()
     #ifdef _DEBUG_
     if (g_tfile == NULL) { return; }
 
-    fprintf(g_tfile, "\n== Situation of pool used==");
-    fprintf(g_tfile, "\n ****** gerenal pool %lu KB ********",
+    note("\n== Situation of pool used==");
+    note("\n ****** gerenal pool %lu KB ********",
                     (ULONG)smpoolGetPoolSize(g_pool_general_used)/KB);
-    fprintf(g_tfile, "\n ****** tree pool %lu KB ********",
+    note("\n ****** tree pool %lu KB ********",
                     (ULONG)smpoolGetPoolSize(g_pool_tree_used)/KB);
-    fprintf(g_tfile, "\n ****** st pool %lu KB ********",
+    note("\n ****** st pool %lu KB ********",
                     (ULONG)smpoolGetPoolSize(g_pool_st_used)/KB);
-    fprintf(g_tfile, "\n ****** tmp pool %lu KB ********",
+    note("\n ****** tmp pool %lu KB ********",
                     (ULONG)smpoolGetPoolSize(xoc::get_tmp_pool())/KB);
-    fprintf(g_tfile, "\n ****** total mem query size : %lu KB\n",
+    note("\n ****** total mem query size : %lu KB\n",
                     (ULONG)g_stat_mem_size/KB);
 
-    fprintf(g_tfile, "\n===========================\n");
+    note("\n===========================\n");
     fflush(g_tfile);
     #endif
 }
@@ -580,7 +580,7 @@ static void test_ru(RegionMgr * rm)
         //VarMgr * vm = x->getVarMgr();
         //vm->dump();
         //MDSystem * ms = x->getMDSystem();
-        //ms->dumpAllMD();
+        //ms->dump();
         tfree();
         x->destroy();
         i++;
@@ -669,6 +669,7 @@ static CLRegionMgr * initRegionMgr()
 {
     CLRegionMgr * rm = allocRegionMgr();
     rm->initVarMgr();
+    rm->initTargInfo();
 
     //g_opt_level = OPT_LEVEL0;
     //Retain CFG, DU info for IPA used.
