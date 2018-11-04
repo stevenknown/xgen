@@ -886,6 +886,9 @@ public:
     //Return true if specified immediate operand is in valid range.
     bool isValidImmOpnd(OR_TYPE ot, UINT idx, HOST_INT imm) const;
     bool isValidImmOpnd(OR_TYPE ot, HOST_INT imm) const;
+    //Return true if specified immediate in
+    //valid range that described with bitsize.
+    bool isValidImm(UINT bitsize, HOST_INT imm) const;
 
     //Return true if regfile can be assigned to referred operand.
     virtual bool isValidRegFile(

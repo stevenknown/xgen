@@ -221,7 +221,7 @@ static bool process_t(INT argc, CHAR * argv[], INT & i)
         return false;
     }
     i++;
-    g_show_comp_time = true;
+    g_show_time = true;
     return true;
 }
 
@@ -627,7 +627,7 @@ static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr, FILE * asmh)
             continue;
         }
 
-        if (g_show_comp_time) {
+        if (g_show_time) {
             printf("\n====Start Process region(%d)%s ====\n",
                REGION_id(rg), rg->getRegionName());
         }

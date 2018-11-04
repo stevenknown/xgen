@@ -1761,10 +1761,18 @@ bool CG::isValidImmOpnd(OR_TYPE ot, UINT idx, HOST_INT imm) const
     SRDescGroup<> const* sdg = OTD_srd_group(otd);
     SRDesc const* sr_desc = sdg->get_opnd(idx);
     ASSERT0(sr_desc && SRD_is_imm(sr_desc));
+    return isValidImm(SRD_bitsize(sr_desc), imm);
+}
+
+
+//Return true if specified immediate in
+//valid range that described with bitsize.
+bool CG::isValidImm(UINT bitsize, HOST_INT imm) const
+{
     //Clear the high non-zero bit.
     //e.g: given imm 0xffffFFFF80000000, clean high 32bit.
     HOST_UINT pimm = xcom::xabs(imm);
-    HOST_UINT mask = (((HOST_UINT)1) << SRD_bitsize(sr_desc)) - 1;
+    HOST_UINT mask = (((HOST_UINT)1) << bitsize) - 1;
     return (mask & pimm) == pimm;
 }
 
@@ -3871,6 +3879,7 @@ bool CG::perform()
 {
     ASSERTN(isPowerOf2(STACK_ALIGNMENT),
         ("Stack alignment should be power of 2"));
+    g_indent = 0;
     xoc::note("\n==---- START CODE GENERATION (%d)'%s' ----==\n",
             REGION_id(m_ru), m_ru->getRegionName());
     m_ru->dump(false);

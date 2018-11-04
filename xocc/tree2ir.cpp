@@ -2337,7 +2337,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     //all local-variable into VarTab.
     scanScopeDeclList(DECL_fun_body(dcl), r, false);
 
-    //dump_scope(DECL_fun_body(dcl), 0xffffFFFF);
+    dump_scope(DECL_fun_body(dcl), 0xffffFFFF);
 
     //Generate IRs.
     CTree2IR ct2ir(r, dcl);
@@ -2365,6 +2365,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     irs = r->refineIRlist(irs, change, rc);
     ASSERT0(verifyIRList(irs, NULL, r));
     r->setIRList(irs);
+    dumpIRList(irs, r->getTypeMgr());
     //rg->dumpVARInRegion();
     return ST_SUCC;
 }
