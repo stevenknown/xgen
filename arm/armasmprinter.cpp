@@ -203,6 +203,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     case OR_ret3:
     case OR_ret4:
     case OR_bl:
+    case OR_blx:
         buf.strcat("%s", o->get_opnd(1)->getAsmName(tbuf, m_cg));
         return buf.buf;
     case OR_cmn:
@@ -224,18 +225,19 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
         return buf.buf;
     default: {}
     }
-
+    bool print_result = false;
     for (UINT i = 0; i < o->result_num(); i++) {
         if (o->get_result(i) == ((ARMCG*)m_cg)->genRflag()) {
             continue;
         }
+        print_result = true;
         if (i != 0) {
             buf.strcat(", ");
         }
         tbuf.clean();
         buf.strcat("%s", o->get_result(i)->getAsmName(tbuf, m_cg));
     }
-    if (o->result_num() != 0) {
+    if (print_result != 0) {
         buf.strcat(", ");
     }
     for (UINT i = 0; i < o->opnd_num(); i++) {

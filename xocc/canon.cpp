@@ -146,45 +146,15 @@ IR * Canon::handle_exp(IN IR * ir, OUT bool & change, CanonCtx * cc)
         return ir;
     case IR_LDA: // &a get address of 'a'
         return handle_lda(ir, change, cc);
-    case IR_ADD:
-    case IR_SUB:
-    case IR_MUL:
-    case IR_DIV:
-    case IR_REM:
-    case IR_MOD:
-    case IR_LAND: //logical and &&
-    case IR_LOR:  //logical or ||
-    case IR_BAND: //inclusive and &
-    case IR_BOR:  //inclusive or |
-    case IR_XOR:  //exclusive or
+	SWITCH_CASE_BIN:
         BIN_opnd0(ir) = handle_exp(BIN_opnd0(ir), change, cc);
         BIN_opnd1(ir) = handle_exp(BIN_opnd1(ir), change, cc);
         return ir;
-    case IR_BNOT: //bitwise not
-    case IR_LNOT: //logical not
-    case IR_NEG:  //negative
+	SWITCH_CASE_UNA:
         UNA_opnd(ir) = handle_exp(UNA_opnd(ir), change, cc);
-        return ir;
-    case IR_LT:
-    case IR_LE:
-    case IR_GT:
-    case IR_GE:
-    case IR_EQ: //==
-    case IR_NE: //!=
-        BIN_opnd0(ir) = handle_exp(BIN_opnd0(ir), change, cc);
-        BIN_opnd1(ir) = handle_exp(BIN_opnd1(ir), change, cc);
         return ir;
     case IR_LABEL:
     case IR_ARRAY:
-        return ir;
-    case IR_ASR:
-    case IR_LSR:
-    case IR_LSL:
-        BIN_opnd0(ir) = handle_exp(BIN_opnd0(ir), change, cc);
-        BIN_opnd1(ir) = handle_exp(BIN_opnd1(ir), change, cc);
-        return ir;
-    case IR_CVT: //type convertion
-        CVT_exp(ir) = handle_exp(CVT_exp(ir), change, cc);
         return ir;
     case IR_PR:
         return ir;

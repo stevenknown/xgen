@@ -807,10 +807,29 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     default: UNREACHABLE();
     }
 
-    //record true-result
+    if (!ir->getParent()->isConditionalBr()) {
+        SR * res = getCG()->genReg();
+        ORList tors;
+        getCG()->buildMove(res, sr0, tors, cont);
+        tors.set_pred(p1);
+        ors.append_tail(tors);
+
+        tors.clean();
+        getCG()->buildMove(res, sr1, tors, cont);
+        tors.set_pred(p2);
+        ors.append_tail(tors);
+
+        cont->set_reg(0, res); //used by convertSelect
+        return;
+    }
+
+    //record result
+    cont->set_reg(0, getCG()->genPredReg()); //used by convertSelect
+        
+    //record true-result predicator
     cont->set_reg(1, p1); //used by convertSelect
 
-    //record false-result
+    //record false-result predicator
     cont->set_reg(2, p2); //used by convertSelect
 
     //record true-result
@@ -853,7 +872,7 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     SR * res = getCG()->genReg();
     ASSERT0(IR_dt(BIN_opnd0(SELECT_pred(ir))) ==
-             IR_dt(BIN_opnd1(SELECT_pred(ir))));
+            IR_dt(BIN_opnd1(SELECT_pred(ir))));
     UINT res_size = ir->getTypeSize(m_tm);
 
     //True exp value
@@ -1008,7 +1027,7 @@ void ARMIR2OR::convertTruebrFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     //Build truebr.
     ORList tors;
     SR * tgt_lab = getCG()->genLabel(BR_lab(ir));
-    getCG()->buildCompare(OR_cmp, true, retv,
+    getCG()->buildCompare(OR_cmp_i, true, retv,
         getCG()->genIntImm((HOST_INT)true, false), tors, cont);
     //cmp does not produce result in register.
     ASSERT0(cont->get_reg(0) == NULL);

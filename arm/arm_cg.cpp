@@ -2052,6 +2052,35 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
 {
     ASSERT0(OR_is_fake(o) && ipl);
     switch (OR_code(o)) {
+    case OR_strd: {
+        SR * ofst = o->get_store_ofst();
+        ASSERT0(SR_is_imm(ofst));
+        if (!isValidImm(8, SR_int_imm(ofst))) {
+            SR * base = o->get_store_base();
+            ORList ors;
+            IOC cont;
+            buildAdd(base, ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
+            OR * last = ors.get_tail();
+            ASSERT0(last && (OR_code(last) == OR_add ||
+                             OR_code(last) == OR_add_i));
+            last->set_result(0, gen_r12()); //replace result-register with r12.
+            renameOpnd(o, base, gen_r12(), false);
+            renameOpnd(o, ofst, genIntImm(0, true), false);
+
+            IssuePackage * ip = allocIssuePackage();
+            ip->set(SLOT_G, last);
+            ipl->append_tail(ip);
+            
+            IssuePackage * ip2 = allocIssuePackage();
+            ip2->set(SLOT_G, o);
+            ipl->append_tail(ip2);
+        } else {
+            IssuePackage * ip = allocIssuePackage();
+            ip->set(SLOT_G, o);
+            ipl->append_tail(ip);
+        }
+        break;
+    }        
     case OR_spadjust: {
         SR * ofst = o->get_opnd(HAS_PREDICATE_REGISTER + 1);
         ASSERT0(SR_is_int_imm(ofst));

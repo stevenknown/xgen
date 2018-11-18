@@ -798,16 +798,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     sda->set_opnd(0, sr_p);
     sda->set_opnd(1, sr_r); //LR
     sda->set_opnd(2, sr_r);
-    setSRDescGroup(OR_ret1, sda);
-
-    //0 res, 3 opnd:-- <- p, r, 32b_unsig_imm
-    sda = newSRDescGroup(0, 3);
-    //opnd
-    sda->set_opnd(0, sr_p);
-    sda->set_opnd(1, sr_r);
-    sda->set_opnd(2, sr_32b_unsig_imm);
-    setSRDescGroup(OR_cmp_i, sda);
-    setSRDescGroup(OR_cmn_i, sda);
+    setSRDescGroup(OR_ret1, sda);    
 
     //0 res, 4 opnd:-- <- p, r, r, r
     sda = newSRDescGroup(0, 4);
@@ -974,6 +965,8 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     sda->set_opnd(2, sr_32b_unsig_imm);
     setSRDescGroup(OR_tst_i, sda);
     setSRDescGroup(OR_teq_i, sda);
+    setSRDescGroup(OR_cmp_i, sda);
+    setSRDescGroup(OR_cmn_i, sda);
 
     //1 res, 3 opnd: r <- p, r, r
     sda = newSRDescGroup(1, 3);
@@ -1255,6 +1248,10 @@ static void initORProperty()
 
     od = &g_or_type_desc[OR_label];
     OTD_is_fake(od) = 1;
+
+    od = &g_or_type_desc[OR_strd];
+    OTD_is_fake(od) = 1;
+    OTD_is_bus(od) = 1;
 
     od = &g_or_type_desc[OR_asm];
     OTD_is_volatile(od) = 1;
