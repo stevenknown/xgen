@@ -359,7 +359,8 @@ static VAR * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
     }
 
     if (is_initialized(decl)) {
-        SET_FLAG(flag, VAR_HAS_INIT_VAL);
+        //TODO: record initial value in VAR at CTree2IR.
+        //SET_FLAG(flag, VAR_HAS_INIT_VAL);
     }
 
     UINT data_size = 0;

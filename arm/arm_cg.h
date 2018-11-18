@@ -31,10 +31,6 @@ author: Su Zhenyu
 #ifndef _ARM_CG_H_
 #define _ARM_CG_H_
 
-#define COMPARE_RESULT_REGISTER_INDEX   0
-#define TRUE_PREDICATE_REGISTER_INDEX   1
-#define FALSE_PREDICATE_REGISTER_INDEX  2
-
 //
 //START ARMCG
 //

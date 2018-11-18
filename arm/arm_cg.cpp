@@ -1561,7 +1561,7 @@ void ARMCG::buildCompare(
     ASSERT0(cont);
 
     //ARM cmp operation does not produce result in register.
-    cont->set_reg(COMPARE_RESULT_REGISTER_INDEX, NULL); //record compare result
+    cont->set_reg(RESULT_REGISTER_INDEX, NULL); //record compare result
 }
 
 

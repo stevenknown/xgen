@@ -549,7 +549,7 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT ORList & ors, IN IOC * cont)
         if (ir->getTypeSize(m_tm) <= 4) {
             SR * res = getCG()->genIntImm((HOST_INT)-CONST_int_val(opnd), true);
             ASSERT0(cont != NULL);
-            cont->set_reg(0, res);
+            cont->set_reg(RESULT_REGISTER_INDEX, res);
         } else if (ir->getTypeSize(m_tm) <= 8) {
             ASSERT0_DUMMYUSE(sizeof(LONGLONG) == 8);
             LONGLONG v = -CONST_int_val(opnd);
@@ -557,7 +557,7 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT ORList & ors, IN IOC * cont)
             SR * res2 = getCG()->genIntImm((HOST_INT)(v >> 32), true);
             ASSERT0(cont != NULL);
             getCG()->getSRVecMgr()->genSRVec(2, res, res2);
-            cont->set_reg(0, res);
+            cont->set_reg(RESULT_REGISTER_INDEX, res);
             //cont->set_reg(1, res2);
         } else {
             UNREACHABLE();
@@ -574,7 +574,7 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT ORList & ors, IN IOC * cont)
         copyDbx(o, ir);
         ors.append_tail(o);
         ASSERT0(cont != NULL);
-        cont->set_reg(0, res);
+        cont->set_reg(RESULT_REGISTER_INDEX, res);
     } else if (ir->getTypeSize(m_tm) <= 8) {
         SR * res = tc.get_reg(0);
         SR * res2 = SR_vec(res)->get(1);;
@@ -589,7 +589,7 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT ORList & ors, IN IOC * cont)
         ASSERT0(cont && tc.get_reg(0)->getByteSize() == 8);
         res = tc.get_reg(0);
         res2 = SR_vec(res)->get(1);
-        cont->set_reg(0, res);
+        cont->set_reg(RESULT_REGISTER_INDEX, res);
         //cont->set_reg(1, res2);
     } else {
         UNREACHABLE();
@@ -725,9 +725,9 @@ void ARMIR2OR::convertRelationOpDWORD(
     ors.append_tail(tors);
 
     //Record result.
-    cont->set_reg(0, NULL);
-    cont->set_reg(1, respd1); //record true result.
-    cont->set_reg(2, respd2); //record false result.
+    cont->set_reg(RESULT_REGISTER_INDEX, NULL);
+    cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, respd1); //record true result
+    cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, respd2); //record false result
     cont->set_pred(pred3);
 }
 
@@ -776,7 +776,7 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     //Generate compare operations.
     tmp.clean();
     getCG()->buildARMCmp(OR_cmp, getCG()->genTruePred(), sr0, sr1, ors, cont);
-    cont->set_reg(0, NULL);
+    cont->set_reg(RESULT_REGISTER_INDEX, NULL);
     SR * p1 = NULL;
     SR * p2 = NULL;
     switch (ir->getCode()) {
@@ -819,18 +819,18 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
         tors.set_pred(p2);
         ors.append_tail(tors);
 
-        cont->set_reg(0, res); //used by convertSelect
+        cont->set_reg(RESULT_REGISTER_INDEX, res); //used by convertSelect
         return;
     }
 
     //record result
-    cont->set_reg(0, getCG()->genPredReg()); //used by convertSelect
+    cont->set_reg(RESULT_REGISTER_INDEX, getCG()->genPredReg()); //used by convertSelect
         
     //record true-result predicator
-    cont->set_reg(1, p1); //used by convertSelect
+    cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, p1); //used by convertSelect
 
     //record false-result predicator
-    cont->set_reg(2, p2); //used by convertSelect
+    cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, p2); //used by convertSelect
 
     //record true-result
     cont->set_pred(p1);
@@ -937,7 +937,7 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT ORList & ors, IN IOC * cont)
         tors.copyDbx(SELECT_falseexp(ir));
         ors.append_tail(tors);
     }
-    cont->set_reg(0, res);
+    cont->set_reg(RESULT_REGISTER_INDEX, res);
 }
 
 
@@ -1002,15 +1002,15 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors, IN IOC * cont
     getCG()->buildCall(builtin, ir->getTypeSize(m_tm), tors, cont);
 
     //Get return value of call.
-    SR * retv = getCG()->genReg();
-    getCG()->buildMove(retv, getCG()->gen_r0(), tors, cont);
+    //SR * retv = getCG()->genReg();
+    //getCG()->buildMove(retv, getCG()->gen_r0(), tors, cont);
 
     //Set result SR.
     ASSERT0(cont);
-    cont->set_reg(0, retv);
-    cont->set_reg(1, NULL);
-    cont->set_reg(2, NULL);
-    cont->set_pred(getCG()->genTruePred());
+    cont->set_reg(RESULT_REGISTER_INDEX, getCG()->gen_r0());
+    cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, NULL);
+    cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, NULL);
+    //cont->set_pred(getCG()->genTruePred());
 
     tors.copyDbx(ir);
     ors.append_tail(tors);
@@ -1031,6 +1031,8 @@ void ARMIR2OR::convertTruebrFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
         getCG()->genIntImm((HOST_INT)true, false), tors, cont);
     //cmp does not produce result in register.
     ASSERT0(cont->get_reg(0) == NULL);
+    ASSERT0(cont->get_pred() == NULL);
+    cont->set_pred(getCG()->genEQPred());
     getCG()->buildCondBr(tgt_lab, tors, cont);
     tors.copyDbx(ir);
     ors.append_tail(tors);
@@ -1234,7 +1236,7 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
     //Result register.
     ASSERT0(cont);
     if (ir->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE) {
-        cont->set_reg(0, getCG()->gen_r0());
+        cont->set_reg(RESULT_REGISTER_INDEX, getCG()->gen_r0());
     } else {
         ASSERT0(ir->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
         //SR * res0 = getCG()->genReg();
@@ -1246,7 +1248,7 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
         SR * res1 = getCG()->gen_r1();
         getCG()->getSRVecMgr()->genSRVec(2, res0, res1);
         cont->clean_regvec();
-        cont->set_reg(0, res0);
+        cont->set_reg(RESULT_REGISTER_INDEX, res0);
         //cont->set_reg(1, res1); //Is it indispensable?
     }
 
@@ -1296,7 +1298,7 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT ORList & ors, IN IOC * cont)
         ASSERT0(retv && SR_is_reg(retv));
         getCG()->buildMove(r0, retv, tors, NULL);
         ASSERT0(cont);
-        cont->set_reg(0, r0);
+        cont->set_reg(RESULT_REGISTER_INDEX, r0);
         OR * o;
         if (exp->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE) {
             o = getCG()->buildOR(OR_ret1, 0, 3,

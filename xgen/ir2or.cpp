@@ -212,16 +212,13 @@ void IR2OR::convertGeneralLoad(IR const* ir, OUT ORList & ors, IN IOC * cont)
     default:
         cont->clean_bottomup();
         convert(ir, ors, cont);
-
         if (cont->get_reg(0) == NULL) {
             ASSERT0(cont->get_addr());
             break;
         }
 
         res = cont->get_reg(0);
-        ASSERT0(res && res->getByteSize() >=
-                ir->getTypeSize(m_tm));
-
+        ASSERT0(res && res->getByteSize() >= ir->getTypeSize(m_tm));
         if (!SR_is_reg(res)) {
             SRVec * srvec = SR_vec(res);
             ORList tors;
@@ -1209,6 +1206,7 @@ void IR2OR::convertIRBBListToORList(OUT ORList & or_list)
         xcom::C<IR*> * ct;
         for (BB_irlist(bb).get_head(&ct);
              ct != BB_irlist(bb).end(); ct = BB_irlist(bb).get_next(ct)) {
+            cont.clean();
             convert(ct->val(), or_list, &cont);
         }
     }
