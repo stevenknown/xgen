@@ -17,3 +17,13 @@ usage:
     cp -rf ../xocfe/src/cfe .
  5. cd xgen/arm directory     
  6. make -f Make.xocc  
+ 7. Install arm-assembler, arm-linker:
+    sudo apt-get install gcc-arm-linux-gnueabihf
+ 8. Install qemu-arm:    
+    sudo apt-get install qemu-user-static
+ 9. Test xocc.exe
+    write hello.c
+    xocc.exe hello.c -o hello.s
+    arm-linux-gnueabihf-as hello.s -o hello.o
+    arm-linux-gnueabihf-gcc hello.o -o hello.out
+    qemu-arm -L /usr/arm-linux-gnueabihf hello.out    
