@@ -2346,13 +2346,13 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
         return ST_ERR;
     }
     note("\n==---- AFTER TREE2IR CONVERT '%s' -----==", get_decl_name(dcl));
-    dumpIRList(irs, r->getTypeMgr());
+    dumpIRList(irs, r);
     //Ensure RETURN IR at the end of function
     //if its return-type is VOID.
     irs = addReturn(irs, r);
     //Reshape IR tree to well formed outlook.
     note("\n==---- AFTER RESHAPE IR -----==", get_decl_name(dcl));
-    dumpIRList(irs, r->getTypeMgr());
+    dumpIRList(irs, r);
 
     Canon ic(r);
     bool change = false;
@@ -2365,7 +2365,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     irs = r->refineIRlist(irs, change, rc);
     ASSERT0(verifyIRList(irs, NULL, r));
     r->setIRList(irs);
-    dumpIRList(irs, r->getTypeMgr());
+    dumpIRList(irs, r);
     //rg->dumpVARInRegion();
     return ST_SUCC;
 }

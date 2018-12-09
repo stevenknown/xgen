@@ -159,6 +159,13 @@ SR * ARMCG::genRflag()
     return sr;
 }
 
+SR * ARMCG::gen_one() {
+    return genIntImm((HOST_INT)1, false);
+}
+
+SR * ARMCG::gen_zero() {
+    return genIntImm((HOST_INT)0, false);
+}
 
 SR * ARMCG::gen_r0()
 {

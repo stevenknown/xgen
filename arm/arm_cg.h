@@ -115,6 +115,8 @@ public:
     virtual SR * genSP();
     virtual SR * genFP();
     virtual SR * genGP();
+    SR * gen_one();
+    SR * gen_zero();
     SR * gen_r0();
     SR * gen_r1();
     SR * gen_r2();

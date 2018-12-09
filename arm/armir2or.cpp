@@ -810,12 +810,12 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     if (!ir->getParent()->isConditionalBr()) {
         SR * res = getCG()->genReg();
         ORList tors;
-        getCG()->buildMove(res, sr0, tors, cont);
+        getCG()->buildMove(res, getCG()->gen_one(), tors, cont);
         tors.set_pred(p1);
         ors.append_tail(tors);
 
         tors.clean();
-        getCG()->buildMove(res, sr1, tors, cont);
+        getCG()->buildMove(res, getCG()->gen_zero(), tors, cont);
         tors.set_pred(p2);
         ors.append_tail(tors);
 
@@ -824,7 +824,8 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     }
 
     //record result
-    cont->set_reg(RESULT_REGISTER_INDEX, getCG()->genPredReg()); //used by convertSelect
+    //used by convertSelect
+    cont->set_reg(RESULT_REGISTER_INDEX, getCG()->genPredReg());
         
     //record true-result predicator
     cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, p1); //used by convertSelect
@@ -941,6 +942,10 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT ORList & ors, IN IOC * cont)
 }
 
 
+//Generate compare operations and return the comparation result registers.
+//The output registers in IOC are ResultSR,
+//TruePredicatedSR, FalsePredicatedSR.
+//The ResultSR record the boolean value of comparison of relation operation.
 void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
     ASSERT0(ir && ir->is_relation());
@@ -967,7 +972,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors, IN IOC * cont
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    m_cg->passArgVariant(&argdescmgr, ors, 2,
+    m_cg->passArgVariant(&argdescmgr, tors, 2,
         opnd0, NULL, opnd0->getByteSize(), ::getDbx(op0),
         opnd1, NULL, opnd1->getByteSize(), ::getDbx(op1));
 
@@ -1005,21 +1010,185 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors, IN IOC * cont
     //SR * retv = getCG()->genReg();
     //getCG()->buildMove(retv, getCG()->gen_r0(), tors, cont);
 
-    //Set result SR.
-    ASSERT0(cont);
-    cont->set_reg(RESULT_REGISTER_INDEX, getCG()->gen_r0());
-    cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, NULL);
-    cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, NULL);
-    //cont->set_pred(getCG()->genTruePred());
-
     tors.copyDbx(ir);
     ors.append_tail(tors);
+    tors.clean();
+    
+    SR * r0 = getCG()->gen_r0();
+    SR * one = getCG()->gen_one();
+    SR * zero = getCG()->gen_zero();
+    SR * truepd = NULL;
+    SR * falsepd = NULL;
+    bool needresval = !ir->getStmt()->isConditionalBr();
+    if (needresval) {
+        getCG()->buildCompare(OR_cmp_i, true, getCG()->gen_r0(),
+            getCG()->genIntImm((HOST_INT)0, false), tors, cont);
+        tors.copyDbx(ir);
+        ors.append_tail(tors);
+        tors.clean();
+    }
+    switch (ir->getCode()) {
+    case IR_LT:
+        //Buildin function return a value less than zero
+        //if neither argument is NaN, and a is less than or equal to b.        
+        falsepd = getCG()->genGEPred();
+        truepd = getCG()->genLTPred();
+        if (needresval) {
+            //(ge)r0 = 0;
+            getCG()->buildMove(r0, zero, tors, cont);
+            ASSERT0(tors.get_elem_count() == 1);
+            tors.set_pred(falsepd);
+            tors.copyDbx(ir);
+            ors.append_tail(tors);
+            tors.clean();
+
+            //(lt)r0 = 1;
+            getCG()->buildMove(r0, one, tors, cont);
+            ASSERT0(tors.get_elem_count() == 1);
+            tors.set_pred(truepd);
+            tors.copyDbx(ir);
+            ors.append_tail(tors);
+            tors.clean();
+        }
+        break;
+    case IR_LE:
+        //Buildin function return a value less than or equal to zero
+        //if neither argument is NaN, and a is less than or equal to b.
+        falsepd = getCG()->genGTPred();
+        truepd = getCG()->genLEPred();
+        if (needresval) {
+            //(gt)r0 = 0;
+            getCG()->buildMove(r0, zero, tors, cont);
+            ASSERT0(tors.get_elem_count() == 1);
+            tors.set_pred(falsepd);
+            tors.copyDbx(ir);
+            ors.append_tail(tors);
+            tors.clean();
+
+            //(le)r0 = 1;
+            getCG()->buildMove(r0, one, tors, cont);
+            ASSERT0(tors.get_elem_count() == 1);
+            tors.set_pred(truepd);
+            tors.copyDbx(ir);
+            ors.append_tail(tors);
+            tors.clean();
+        }
+        break;
+    case IR_GT:
+        //Buildin function return a value greater than zero
+        //if neither argument is NaN, and a is less than or equal to b.
+        falsepd = getCG()->genLEPred();
+        truepd = getCG()->genGTPred();
+        if (needresval) {
+            //(le)r0 = 0;
+            getCG()->buildMove(r0, zero, tors, cont);
+            ASSERT0(tors.get_elem_count() == 1);
+            tors.set_pred(falsepd);
+            tors.copyDbx(ir);
+            ors.append_tail(tors);
+            tors.clean();
+
+            //(gt)r0 = 1;
+            getCG()->buildMove(r0, one, tors, cont);
+            ASSERT0(tors.get_elem_count() == 1);
+            tors.set_pred(truepd);
+            tors.copyDbx(ir);
+            ors.append_tail(tors);
+            tors.clean();
+        }
+        break;
+    case IR_GE:
+        //Buildin function return a value greater than or equal to zero
+        //if neither argument is NaN, and a is less than or equal to b.
+        falsepd = getCG()->genLTPred();
+        truepd = getCG()->genGEPred();
+        if (needresval) {
+            //(lt)r0 = 0;
+            getCG()->buildMove(r0, zero, tors, cont);
+            ASSERT0(tors.get_elem_count() == 1);
+            tors.set_pred(falsepd);
+            tors.copyDbx(ir);
+            ors.append_tail(tors);
+            tors.clean();
+
+            //(ge)r0 = 1;
+            getCG()->buildMove(r0, one, tors, cont);
+            ASSERT0(tors.get_elem_count() == 1);
+            tors.set_pred(truepd);
+            tors.copyDbx(ir);
+            ors.append_tail(tors);
+            tors.clean();
+        }
+        break;
+    case IR_EQ:
+        //These functions return zero if
+        //either argument is NaN, or if a and b are equal.
+        falsepd = getCG()->genNEPred();
+        truepd = getCG()->genEQPred();
+        if (needresval) {
+            //(ne)r0 = 0;
+            getCG()->buildMove(r0, zero, tors, cont);
+            ASSERT0(tors.get_elem_count() == 1);
+            tors.set_pred(falsepd);
+            tors.copyDbx(ir);
+            ors.append_tail(tors);
+            tors.clean();
+
+            //(eq)r0 = 1;
+            getCG()->buildMove(r0, one, tors, cont);
+            ASSERT0(tors.get_elem_count() == 1);
+            tors.set_pred(truepd);
+            tors.copyDbx(ir);
+            ors.append_tail(tors);
+            tors.clean();
+        }
+        break;        
+    case IR_NE:
+        //These functions return a nonzero value if
+        //either argument is NaN, or if a and b are unequal.
+        falsepd = getCG()->genEQPred();
+        truepd = getCG()->genNEPred();
+        if (needresval) {
+            //(eq)r0 = 0;
+            getCG()->buildMove(r0, zero, tors, cont);
+            ASSERT0(tors.get_elem_count() == 1);
+            tors.set_pred(falsepd);
+            tors.copyDbx(ir);
+            ors.append_tail(tors);
+            tors.clean();
+
+            //(ne)r0 = 1;
+            getCG()->buildMove(r0, one, tors, cont);
+            ASSERT0(tors.get_elem_count() == 1);
+            tors.set_pred(truepd);
+            tors.copyDbx(ir);
+            ors.append_tail(tors);
+            tors.clean();
+        }
+        break;
+    default:
+        UNREACHABLE();
+    }
+
+    //Set result SR.
+    ASSERT0(cont);
+    cont->set_reg(RESULT_REGISTER_INDEX, r0);
+
+    //Record predicate register that will be used by convertSelect.
+    cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, truepd);
+    cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, falsepd);    
+
+    //Record predicate register that will be
+    //used by convertTruebr/convertTruebrFP.    
+    cont->set_pred(truepd);
 }
 
 
 void ARMIR2OR::convertTruebrFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
+    ASSERT0(cont->get_pred() == NULL);
     convertRelationOpFp(BR_det(ir), ors, cont);
+    ASSERT0(cont->get_pred());
 
     SR * retv = cont->get_reg(0);
     ASSERT0(retv && SR_is_reg(retv));
@@ -1028,13 +1197,12 @@ void ARMIR2OR::convertTruebrFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     ORList tors;
     SR * tgt_lab = getCG()->genLabel(BR_lab(ir));
     getCG()->buildCompare(OR_cmp_i, true, retv,
-        getCG()->genIntImm((HOST_INT)true, false), tors, cont);
+        getCG()->genIntImm((HOST_INT)0, false), tors, cont);
     //cmp does not produce result in register.
     ASSERT0(cont->get_reg(0) == NULL);
-    ASSERT0(cont->get_pred() == NULL);
-    cont->set_pred(getCG()->genEQPred());
     getCG()->buildCondBr(tgt_lab, tors, cont);
     tors.copyDbx(ir);
+    cont->set_pred(NULL); //clean status
     ors.append_tail(tors);
 }
 
@@ -1210,7 +1378,7 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    m_cg->passArgVariant(&argdescmgr, ors, 1,
+    m_cg->passArgVariant(&argdescmgr, tors, 1,
         opnd, NULL, opnd->getByteSize(), ::getDbx(CVT_exp(ir)));
 
     //Collect the maximum parameters size during code generation.

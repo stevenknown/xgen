@@ -404,7 +404,7 @@ void ARMAsmPrinter::printCode(FILE * asmh)
     ASSERT0(bblst);
     for (ORBB * bb = bblst->get_head(); bb != NULL; bb = bblst->get_next()) {
         //Print BB info
-        fprintf(asmh, "\n#START BB(%d)", ORBB_id(bb));
+        fprintf(asmh, "\n#START BB%d", ORBB_id(bb));
         if (ORBB_is_entry(bb)) {
             fprintf(asmh, ", entry");
         }

@@ -46,7 +46,7 @@ OR * ARMORMgr::allocOR()
 
 void ARMOR::set_pred(SR * v)
 {
-    ASSERT_DUMMYUSE(HAS_PREDICATE_REGISTER, ("target not support"));
+    ASSERTN_DUMMYUSE(HAS_PREDICATE_REGISTER, ("target not support"));
     set_opnd(0, v);
 }
 //END ARMORMgr
