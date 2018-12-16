@@ -2362,9 +2362,13 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     RC_refine_div_const(rc) = false;
     RC_refine_mul_const(rc) = false;
     change = false;
+
     irs = r->refineIRlist(irs, change, rc);
     ASSERT0(verifyIRList(irs, NULL, r));
     r->setIRList(irs);
+
+    //Reshape IR tree to well formed outlook.
+    note("\n==---- AFTER REFINE IR -----==", get_decl_name(dcl));
     dumpIRList(irs, r);
     //rg->dumpVARInRegion();
     return ST_SUCC;

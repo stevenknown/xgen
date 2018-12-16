@@ -491,7 +491,7 @@ CLUST ParallelPartMgr::getCluster(UINT n) const
 
 UINT ParallelPartMgr::getFirstClusterIdx() const
 {
-    ASSERT_DUMMYUSE(CLUST_FIRST + 1 == CLUST_NUM, ("Target Dependent Code"));
+    ASSERTN_DUMMYUSE(CLUST_FIRST + 1 == CLUST_NUM, ("Target Dependent Code"));
     return 0;
 }
 
@@ -614,7 +614,7 @@ void ParallelPartMgr::computeUniqueRegFile(
 void ParallelPartMgr::computeNumOfParallelPart()
 {
     ASSERTN(m_pool, ("not yet initialize."));
-    ASSERT_DUMMYUSE(CLUST_FIRST + 1 == CLUST_NUM, ("Target Dependent Code"));
+    ASSERTN_DUMMYUSE(CLUST_FIRST + 1 == CLUST_NUM, ("Target Dependent Code"));
     m_num_cluster = CLUST_NUM;
 }
 

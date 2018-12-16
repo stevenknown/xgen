@@ -2072,7 +2072,7 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
                              OR_code(last) == OR_add_i));
             last->set_result(0, gen_r12()); //replace result-register with r12.
             renameOpnd(o, base, gen_r12(), false);
-            renameOpnd(o, ofst, genIntImm(0, true), false);
+            renameOpnd(o, ofst, genIntImm(0, true), false);            
 
             IssuePackage * ip = allocIssuePackage();
             ip->set(SLOT_G, last);
@@ -2081,6 +2081,10 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
             IssuePackage * ip2 = allocIssuePackage();
             ip2->set(SLOT_G, o);
             ipl->append_tail(ip2);
+
+            for (OR * o2 = ors.get_head(); o2 != NULL; o2 = ors.get_next()) {
+                o2->set_pred(o->get_pred());
+            }
         } else {
             IssuePackage * ip = allocIssuePackage();
             ip->set(SLOT_G, o);
@@ -2143,6 +2147,7 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
 
         for (OR * o2 = ors.get_head(); o2 != NULL; o2 = ors.get_next()) {
             IssuePackage * ip = allocIssuePackage();
+            o2->set_pred(o->get_pred());
             ip->set(SLOT_G, o2);
             ipl->append_tail(ip);
         }
@@ -2169,12 +2174,15 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
         last->set_result(0, sr1); //replace result-register with sr1.
         for (OR * o2 = ors.get_head(); o2 != NULL; o2 = ors.get_next()) {
             IssuePackage * ip = allocIssuePackage();
+            o2->set_pred(o->get_pred());
             ip->set(SLOT_G, o2);
             ipl->append_tail(ip);
         }
 
         OR * ldrd = buildOR(OR_ldrd_i10, 2, 3, sr1, sr2,
             o->get_pred(), sr1, genIntImm(0, true));
+        ldrd->set_pred(o->get_pred());
+
         IssuePackage * ip = allocIssuePackage();
         ip->set(SLOT_G, ldrd);
         ipl->append_tail(ip);
@@ -2192,18 +2200,23 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
             low->set_mov_to(to);
             low->set_mov_from(genIntImm(
                 (HOST_INT)(SR_int_imm(from) & 0xFFFF), true));
+            low->set_pred(o->get_pred());
 
             high = genOR(OR_movt_i);
             high->set_mov_to(to);
             high->set_mov_from(genIntImm(
                 (HOST_INT)((SR_int_imm(from) >> 16) & 0xFFFF), true));
+            high->set_pred(o->get_pred());
         } else if (SR_type(from) == SR_VAR) {
             low = genOR(OR_movw_i);
             low->set_mov_to(to);
             low->set_mov_from(genVAR(SR_var(from)));
+            low->set_pred(o->get_pred());
+
             high = genOR(OR_movt_i);
             high->set_mov_to(to);
             high->set_mov_from(genVAR(SR_var(from)));
+            high->set_pred(o->get_pred());
         } else {
             UNREACHABLE();
         }

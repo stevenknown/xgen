@@ -1893,7 +1893,7 @@ CLUST CG::computeORCluster(OR const* o) const
     if (clust != CLUST_UNDEF) { return clust; }
 
     //Can not find any cluster info, set default cluster.
-    ASSERT_DUMMYUSE(CLUST_UNDEF + 2 == CLUST_NUM, ("Only one cluster."));
+    ASSERTN_DUMMYUSE(CLUST_UNDEF + 2 == CLUST_NUM, ("Only one cluster."));
     return (CLUST)(CLUST_UNDEF + 1);
 }
 

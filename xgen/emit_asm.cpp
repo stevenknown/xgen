@@ -45,7 +45,7 @@ AsmPrinter::AsmPrinter(CG * cg, AsmPrinterMgr * apmgr)
 //Print instructions to assembly file.
 void AsmPrinter::printCode(FILE * asmfile)
 {
-    ASSERT_DUMMYUSE(FIRST_SLOT == LAST_SLOT, ("Target Dependent Code"));
+    ASSERTN_DUMMYUSE(FIRST_SLOT == LAST_SLOT, ("Target Dependent Code"));
     CHAR const* code_indent = "      ";
     Vector<IssuePackageList*> * ipcvec = m_cg->getIssuePackageListVec();
     List<ORBB*> * bblst = m_cg->getORBBList();

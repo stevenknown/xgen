@@ -46,7 +46,7 @@ BBSimulator::BBSimulator(ORBB * bb)
 void BBSimulator::init()
 {
     if (m_pool != NULL) return;
-    ASSERT_DUMMYUSE(FIRST_SLOT == 0, ("illegal slot type"));
+    ASSERTN_DUMMYUSE(FIRST_SLOT == 0, ("illegal slot type"));
     m_cyc_counter = 0;
     m_pool = smpoolCreate(256, MEM_COMM);
     for (INT i = FIRST_SLOT; i < SLOT_NUM; i++) {

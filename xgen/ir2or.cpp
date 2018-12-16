@@ -145,7 +145,7 @@ void IR2OR::convertLoadConst(
             //Float
             float val = (float)CONST_fp_val(ir);
 
-            ASSERT_DUMMYUSE(sizeof(UINT32) == BYTE_PER_FLOAT,
+            ASSERTN_DUMMYUSE(sizeof(UINT32) == BYTE_PER_FLOAT,
                 ("use suitably integer type"));
             UINT32 * pb = (UINT32*)&val;
             m_cg->buildMove(load_val, m_cg->genIntImm((HOST_INT)*pb, false),
@@ -153,15 +153,15 @@ void IR2OR::convertLoadConst(
         } else {
             //Double
             double val = CONST_fp_val(ir);
-            ASSERT_DUMMYUSE(sizeof(ULONGLONG) == BYTE_PER_FLOAT * 2,
+            ASSERTN_DUMMYUSE(sizeof(ULONGLONG) == BYTE_PER_FLOAT * 2,
                 ("use the suitably integer type to match with question"));
 
-            ASSERT_DUMMYUSE(sizeof(ULONGLONG) == BYTE_PER_FLOAT * 2,
+            ASSERTN_DUMMYUSE(sizeof(ULONGLONG) == BYTE_PER_FLOAT * 2,
                 ("use suitably integer type"));
 
             ULONGLONG * pb = (ULONGLONG*)&val;
 
-            ASSERT_DUMMYUSE(sizeof(ULONGLONG) == 8,
+            ASSERTN_DUMMYUSE(sizeof(ULONGLONG) == 8,
                 ("use suitably macro to take low part"));
 
             m_cg->buildMove(load_val,
@@ -756,7 +756,7 @@ void IR2OR::processRealParams(IR const* ir, OUT ORList & ors, IN IOC * cont)
         return;
     }
 
-    ASSERT_DUMMYUSE(PUSH_PARAM_FROM_RIGHT_TO_LEFT, ("Not yet support"));
+    ASSERTN_DUMMYUSE(PUSH_PARAM_FROM_RIGHT_TO_LEFT, ("Not yet support"));
     //Find the most rightside parameter in order to coincide with
     //accessing order of the calling convention of stack varaible.
     //e.g:1
