@@ -2230,6 +2230,38 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
         ipl->append_tail(ip);
         break;
     }
+    case OR_lsr_i: {
+        SR * shift_size = o->get_opnd(2);
+        ASSERT0(SR_is_imm(shift_size));
+        if (!isValidImmOpnd(OR_code(o), 2, SR_int_imm(shift_size))) {
+            ORList ors;
+            IOC cont;
+            buildMove(gen_r12(), shift_size, ors, &cont);
+            OR * mv = ors.get_tail();
+            ASSERT0(mv && ors.get_elem_count() == 1);
+            mv->set_pred(o->get_pred());
+            if (OR_is_fake(mv)) {
+                expandFakeOR(mv, ipl);
+            } else {
+                IssuePackage * ip = allocIssuePackage();
+                ip->set(SLOT_G, mv);
+                ipl->append_tail(ip);
+            }
+
+            //Change OR_lsr_i to OR_lsr.
+            renameOpnd(o, shift_size, gen_r12(), false);
+            OR_code(o) = OR_lsr;
+            
+            IssuePackage * ip2 = allocIssuePackage();
+            ip2->set(SLOT_G, o);
+            ipl->append_tail(ip2);
+        } else {
+            IssuePackage * ip = allocIssuePackage();
+            ip->set(SLOT_G, o);
+            ipl->append_tail(ip);
+        }
+        break;
+    }
     default: UNREACHABLE();
     }
 }

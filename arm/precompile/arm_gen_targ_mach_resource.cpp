@@ -1029,6 +1029,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_asl_i, sda);
     setSRDescGroup(OR_asr_i, sda);
     setSRDescGroup(OR_lsl_i, sda);
+    setSRDescGroup(OR_lsr_i, sda);
 
     //1 res, 4 opnd: r <- p, r, r, cpsr
     sda = newSRDescGroup(1, 4);
@@ -1285,6 +1286,10 @@ static void initORProperty()
     od = &g_or_type_desc[OR_ldrd_i32];
     OTD_is_fake(od) = 1;
     OTD_is_load(od) = 1;
+    
+    od = &g_or_type_desc[OR_lsr_i];
+    //Simplify shift_size if it is out of range.
+    OTD_is_fake(od) = 1;
 
     OR_TYPE store[] = {
         OR_stm,
