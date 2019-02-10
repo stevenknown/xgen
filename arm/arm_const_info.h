@@ -387,16 +387,15 @@ typedef enum _OR_TYPE {
     OR_ldrsb, //load 1 byte, sign extend to 32 bits.
     OR_ldrh, //load 2 bytes, zero extend to 32 bits.
     OR_ldrsh, //load 2 bytes, sign extend to 32 bits.
-    OR_ldrd, //load 8 bytes. load double word.
+    OR_ldrd, //load 8 bytes. load double word. 32bit offset.
 
     //Indirect load via base-register + immdediate-offset.
-    OR_ldrd_i32, //load 8 bytes. load double word. 32bit offset.
     OR_ldr_i12, //load word
     OR_ldrb_i12,
-    OR_ldrsb_i12,
-    OR_ldrh_i12,
-    OR_ldrsh_i12,
-    OR_ldrd_i10,
+    OR_ldrsb_i8,
+    OR_ldrh_i8,
+    OR_ldrsh_i8,
+    OR_ldrd_i8,
 
     //Direct store
     OR_stm, //store multiple words.
@@ -410,8 +409,8 @@ typedef enum _OR_TYPE {
     //Indirect load via base-register + immdediate-offset.
     OR_str_i12,
     OR_strb_i12,
-    OR_strh_i12,
-    OR_strd_i10,
+    OR_strh_i8,
+    OR_strd_i8,
 
     OR_ret,
     OR_ret1,

@@ -125,7 +125,7 @@ void ARMRegion::low_to_pr_mode(OptCtx & oc)
     simplifyBBlist(getBBList(), &simp);
     if (SIMP_need_recon_bblist(&simp)) {
         //New BB boundary IR generated, rebuilding CFG.
-        if (reconstructBBlist(oc)) {
+        if (reconstructBBList(oc)) {
             getCFG()->rebuild(oc);
             getCFG()->removeEmptyBB(oc);
             getCFG()->computeExitList();
@@ -137,8 +137,13 @@ void ARMRegion::low_to_pr_mode(OptCtx & oc)
 
 bool ARMRegion::MiddleProcess(OptCtx & oc)
 {
+    //START FUCK CODE
+    //Test code, to force generating as many IR stmts as possible.
+    //g_is_lower_to_pr_mode = true;
+    //END FUCK CODE
+
     bool own = false;
-    if (own) {
+     if (own) {
         ARMMiddleProcess(oc);
     } else {
         Region::MiddleProcess(oc);
@@ -162,7 +167,9 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     //AA and DU Chain need not to be recompute, because
     //simplification maintained them.
     {
-    OC_is_ref_valid(oc) = OC_is_du_chain_valid(oc) = false; int a = 0;
+        OC_is_ref_valid(oc) = OC_is_du_chain_valid(oc) = false; int a = 0;
+        g_compute_classic_du_chain = false;
+        g_do_md_ssa = true;
     }
     //END FUCK CODE
 
@@ -185,7 +192,6 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
 
             //Compute PR's definition to improve AA precison.
             if (g_do_pr_ssa) {
-            //if  (true) {
                 ASSERT0(getPassMgr());
                 PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->
                     registerPass(PASS_PR_SSA_MGR);
@@ -202,12 +208,12 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         }
 
         IR_DU_MGR * dumgr = getDUMgr();
-        if (g_do_md_du_ana && dumgr != NULL) {
+        if (g_do_md_du_analysis && dumgr != NULL) {
             if (g_do_md_ssa) {
                 ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MD_SSA_MGR))->construction(oc);
-            } else {
+            } else if (g_compute_classic_du_chain) {
                 dumgr->perform(oc, SOL_REF|SOL_REACH_DEF|
-                    COMPUTE_PR_DU|COMPUTE_NOPR_DU);
+                                   COMPUTE_PR_DU|COMPUTE_NOPR_DU);
                 if (OC_is_ref_valid(oc) && OC_is_reach_def_valid(oc)) {
                     UINT flag = COMPUTE_NOPR_DU;
                     //If PRs have already been in SSA form, compute
@@ -281,7 +287,7 @@ bool ARMRegion::ARMMiddleProcess(OptCtx & oc)
     simp.setSimpSelect();
     simp.setSimpLandLor();
     simp.setSimpLnot();
-    simp.setSimpIldIst();
+    simp.setSimpILdISt();
     simp.setSimpToLowestHeight();
     ASSERT0(verifyIRandBB(getBBList(), this));
     ASSERT0(getDUMgr() &&
@@ -291,7 +297,7 @@ bool ARMRegion::ARMMiddleProcess(OptCtx & oc)
     simplifyBBlist(bbl, &simp);
     if (SIMP_need_recon_bblist(&simp) &&
         g_cst_bb_list &&
-        reconstructBBlist(oc)) {
+        reconstructBBList(oc)) {
         ASSERTN(g_do_cfg, ("construct BB list need CFG"));
         IR_CFG * cfg = getCFG();
         ASSERT0(cfg);
@@ -370,7 +376,7 @@ bool ARMRegion::ARMHighProcess(OptCtx & oc)
 
     //Lower to middle in order to perform analysis.
     if (g_cst_bb_list) {
-        constructIRBBlist();
+        constructBBList();
         ASSERT0(verifyIRandBB(getBBList(), this));
         ASSERT0(verifyBBlist(*getBBList()));
         setIRList(NULL); //All IRs have been moved to each IRBB.
@@ -408,26 +414,30 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
             PASS_AA, PASS_UNDEF);
     }
 
-    if (g_do_md_du_ana) {
+    if (g_do_md_du_analysis) {
         ASSERT0(g_cst_bb_list && OC_is_cfg_valid(oc) && OC_is_aa_valid(oc));
         ASSERT0(getPassMgr());
         IR_DU_MGR * dumgr = (IR_DU_MGR*)getPassMgr()->
             registerPass(PASS_DU_MGR);
         ASSERT0(dumgr);
-        UINT f = SOL_REF|COMPUTE_NOPR_DU|COMPUTE_PR_DU;
+        UINT f = SOL_REF;
         if (g_compute_region_imported_defuse_md) {
             f |= SOL_RU_REF;
         }
 
-        if (g_compute_du_chain) {
+        if (g_compute_classic_du_chain) {
             //Compute du chain in non-ssa form.
-            f |= SOL_RU_REF|SOL_REACH_DEF|COMPUTE_NOPR_DU|COMPUTE_PR_DU;
-            dumgr->perform(oc, f);
-            dumgr->computeMDDUChain(oc, false, f);
-        } else if (dumgr->perform(oc, f) && OC_is_ref_valid(oc)) {
-            ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MD_SSA_MGR))->
-                construction(oc);
-            //((MDSSAMgr*)getPassMgr()->queryPass(PASS_MD_SSA_MGR))->dump();
+            f |= SOL_REACH_DEF|COMPUTE_NOPR_DU|COMPUTE_PR_DU;
+            if (dumgr->perform(oc, f) && OC_is_ref_valid(oc)) {
+                dumgr->computeMDDUChain(oc, false, f);
+            }
+        } else if (g_do_md_ssa) {
+            f |= COMPUTE_NOPR_DU | COMPUTE_PR_DU;
+            //Compute du chain in ssa form.
+            if (dumgr->perform(oc, f) && OC_is_ref_valid(oc)) {
+                ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MD_SSA_MGR))->
+                    construction(oc);
+            }
         }
     }
 }
@@ -465,7 +475,7 @@ void ARMRegion::simplify(OptCtx & oc)
     simp.setSimpSelect();
     simp.setSimpLandLor();
     simp.setSimpLnot();
-    simp.setSimpIldIst();
+    simp.setSimpILdISt();
     simp.setSimpToLowestHeight();
     if (g_is_lower_to_pr_mode) {
         simp.setSimpToPRmode();
@@ -476,7 +486,7 @@ void ARMRegion::simplify(OptCtx & oc)
     if (g_do_cfg &&
         g_cst_bb_list &&
         SIMP_need_recon_bblist(&simp) &&
-        reconstructBBlist(oc)) {
+        reconstructBBList(oc)) {
 
         //Simplification may generate new memory operations.
         ASSERT0(verifyMDRef());

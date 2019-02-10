@@ -35,6 +35,13 @@ author: Su Zhenyu
 //START ARMCG
 //
 class ARMCG : public CG {
+private:
+    void expandFakeStore(IN OR * o, OUT IssuePackageList * ipl);
+    void expandFakeSpadjust(IN OR * o, OUT IssuePackageList * ipl);
+    void expandFakeLoad(IN OR * o, OUT IssuePackageList * ipl);
+    void expandFakeMultiLoad(IN OR * o, OUT IssuePackageList * ipl);
+    void expandFakeMov32(IN OR * o, OUT IssuePackageList * ipl);
+
 protected:
     void _output_bss(FILE * asmh, Section & sect);
     void _output_data(FILE * asmh, Section & sect);
@@ -43,21 +50,27 @@ protected:
     SR const* m_gp;
     SR const* m_true_pred;
     virtual void initBuiltin();
+
 public:
     VAR const* m_builtin_uimod;
+    VAR const* m_builtin_imod;
     VAR const* m_builtin_uidiv;
     VAR const* m_builtin_ashldi3;
     VAR const* m_builtin_lshrdi3;
     VAR const* m_builtin_ashrdi3;
     VAR const* m_builtin_modsi3;
+    VAR const* m_builtin_umodsi3;
     VAR const* m_builtin_moddi3;
+    VAR const* m_builtin_umoddi3;
     VAR const* m_builtin_addsf3;
     VAR const* m_builtin_adddf3;
     VAR const* m_builtin_subsf3;
     VAR const* m_builtin_subdf3;
     VAR const* m_builtin_divsi3;
+    VAR const* m_builtin_udivsi3;
     VAR const* m_builtin_divsf3;
     VAR const* m_builtin_divdi3;
+    VAR const* m_builtin_udivdi3;
     VAR const* m_builtin_divdf3;
     VAR const* m_builtin_muldi3;
     VAR const* m_builtin_mulsf3;
@@ -127,16 +140,18 @@ public:
     virtual SR * genTruePred();
     SR * genEQPred();
     SR * genNEPred();
-    SR * genCSPred();
-    SR * genHSPred();
-    SR * genCCPred();
-    SR * genLOPred();
-    SR * genMIPred();
-    SR * genPLPred();
-    SR * genGEPred();
-    SR * genLTPred();
-    SR * genGTPred();
-    SR * genLEPred();
+    SR * genCSPred(); //Carry set.
+    SR * genCCPred(); //Carry clear.
+    SR * genHSPred(); //Signed higher (identical to CS, Unsigned GE).
+    SR * genLOPred(); //Unsigned lower (identical to CC, Unsigned LT)
+    SR * genMIPred(); //Minus, negative, less-than.
+    SR * genPLPred(); //Plus, positive or zero.
+    SR * genGEPred(); //Signed GE
+    SR * genLTPred(); //Signed LT
+    SR * genGTPred(); //Signed GT
+    SR * genLEPred(); //Signed LE
+    SR * genHIPred(); //Unsigned GT
+    SR * genLSPred(); //Unsigned LE
 
     //FIXME, only for passing the compilation.
     virtual SR * genPredReg() { return genTruePred(); }
@@ -250,7 +265,7 @@ public:
             UINT ret_val_size,
             OUT ORList & ors,
             IOC * cont);
-    void buildIcall(SR * callee,
+    void buildICall(SR * callee,
             UINT ret_val_size,
             OUT ORList & ors,
             IOC * cont);
@@ -260,6 +275,11 @@ public:
             SR * src2,
             UINT sr_size,
             bool is_sign,
+            OUT ORList & ors,
+            IN IOC * cont);
+    virtual void buildStoreAndAssignRegister(
+            SR * reg,
+            UINT offset,
             OUT ORList & ors,
             IN IOC * cont);
 
@@ -274,8 +294,19 @@ public:
     virtual INT computeMemByteSize(OR * o);
     virtual CLUST computeClusterOfBusOR(OR * o);
     virtual SLOT computeORSlot(OR const* o);
+    virtual UINT computeArgAlign(UINT argsz) const
+    {
+        #ifdef TO_BE_COMPATIBLE_WITH_ARM_LINUX_GNUEABI
+        UINT align = argsz >= GENERAL_REGISTER_SIZE * 2 ?
+            GENERAL_REGISTER_SIZE * 2 : STACK_ALIGNMENT;
 
-    void expandFakeOR(IN OR * o, OUT IssuePackageList * ipl);
+        return align;
+        #else
+        return STACK_ALIGNMENT;
+        #endif
+    }
+
+    virtual void expandFakeOR(IN OR * o, OUT IssuePackageList * ipl);
 
     virtual bool isPassArgumentThroughRegister() { return true; }
     virtual bool isValidRegInSRVec(OR * o, SR * sr, UINT idx, bool is_result);

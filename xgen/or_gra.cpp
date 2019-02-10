@@ -573,6 +573,7 @@ void GRA::solveConflict(
 
 void GRA::perform()
 {
+    START_TIMER(t, "Perform Global Register Allocation");
     //dumpBBList(*m_cg->getORBBList());
     OR_DF_MGR live_mgr(m_cg);
     live_mgr.computeLiveness();
@@ -600,6 +601,7 @@ void GRA::perform()
         //Start to Solve Conflict.
         solveConflict(uncolored_list, prio_list, ig, action);
     }
+    END_TIMER(t, "Perform Global Register Allocation");
 }
 //END GRA
 

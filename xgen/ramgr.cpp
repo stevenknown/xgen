@@ -716,6 +716,7 @@ void RaMgr::addVARRefList(ORBB * bb, OR * o, xoc::VAR const* loc)
 //Free logged LRA during destroy().
 void RaMgr::performLRA()
 {
+    START_TIMER(t, "Perform Local Register Allocation");
     preBuild();
     xcom::C<ORBB*> * ct = NULL;
     for (m_bb_list->get_head(&ct);
@@ -732,6 +733,7 @@ void RaMgr::performLRA()
         delete lra;
     }
     postBuild();
+    END_TIMER(t, "Perform Local Register Allocation");
 }
 
 

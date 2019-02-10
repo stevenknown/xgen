@@ -560,7 +560,7 @@ void ORBB::mergeLabeInfoList(ORBB * from)
 
 
 void ORBB::dump()
-{    
+{
     note("\n------ BB%d ------", ORBB_id(this));
 
     //Label Info list

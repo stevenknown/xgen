@@ -157,16 +157,15 @@ static ORTypeDesc g_or_type_desc [] = {
     {OR_ldrsb,     "ldrsb",      }, // (px)ldr Rd, label
     {OR_ldrh,      "ldrh",       }, // (px)ldr Rd, label
     {OR_ldrsh,     "ldrsh",      }, // (px)ldr Rd, label
-    {OR_ldrd,      "ldrd",       }, // (px)ldrd Rd, Rd2, [Rn]
+    {OR_ldrd,      "ldrd",       }, // (px)ldrd Rd, Rd2, [Rn, Imm32]
 
     //Indirect load via base-register + immdediate-offset.
-    {OR_ldrd_i32,  "ldrd_i32",   }, // (px)ldrd Rd, Rd2, [Rn, Imm32]
     {OR_ldr_i12,   "ldr_i12",    }, // (px)ldr Rd, [Rn, Imm12]
     {OR_ldrb_i12,  "ldrb_i12",   }, // (px)ldr Rd, [Rn, Imm12]
-    {OR_ldrsb_i12, "ldrsb_i12",  }, // (px)ldr Rd, [Rn, Imm12]
-    {OR_ldrh_i12,  "ldrh_i12",   }, // (px)ldr Rd, [Rn, Imm12]
-    {OR_ldrsh_i12, "ldrsh_i12",  }, // (px)ldr Rd, [Rn, Imm12]
-    {OR_ldrd_i10,  "ldrd_i10",   }, // (px)ldr Rd, Rd2, [Rn, Imm10]
+    {OR_ldrsb_i8,  "ldrsb_i8",   }, // (px)ldr Rd, [Rn, Imm8]
+    {OR_ldrh_i8,   "ldrh_i8",    }, // (px)ldr Rd, [Rn, Imm8]
+    {OR_ldrsh_i8,  "ldrsh_i8",   }, // (px)ldr Rd, [Rn, Imm8]
+    {OR_ldrd_i8,   "ldrd_i8",    }, // (px)ldr Rd, Rd2, [Rn, Imm8]
 
     //Symbol store
     {OR_stm,       "stm",        }, // (px)stm Rn, {Rx,Ry,...}
@@ -180,8 +179,8 @@ static ORTypeDesc g_or_type_desc [] = {
     //Indirect store via base-register + immdediate-offset.
     {OR_str_i12,   "str_i12",    }, // (px)str Rt, [Rn, Imm12]
     {OR_strb_i12,  "strb_i12",   }, // (px)str Rt, [Rn, Imm12]
-    {OR_strh_i12,  "strh_i12",   }, // (px)str Rt, [Rn, Imm12]
-    {OR_strd_i10,  "strd_i10",   }, // (px)str Rt, Rt2, [Rn, Imm10]
+    {OR_strh_i8,   "strh_i8",    }, // (px)str Rt, [Rn, Imm8]
+    {OR_strd_i8,   "strd_i8",    }, // (px)str Rt, Rt2, [Rn, Imm8]
 
     //simulated operation.
     {OR_ret,       "ret",        }, // (px)ret Lr
@@ -798,7 +797,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     sda->set_opnd(0, sr_p);
     sda->set_opnd(1, sr_r); //LR
     sda->set_opnd(2, sr_r);
-    setSRDescGroup(OR_ret1, sda);    
+    setSRDescGroup(OR_ret1, sda);
 
     //0 res, 4 opnd:-- <- p, r, r, r
     sda = newSRDescGroup(0, 4);
@@ -819,14 +818,14 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_str_i12, sda);
     setSRDescGroup(OR_strb_i12, sda);
 
-    //0 res, 4 opnd:-- <- p(pred), r(base), 9b_unsig_imm(offset), r(store_val)
+    //0 res, 4 opnd:-- <- p(pred), r(base), 8b_unsig_imm(offset), r(store_val)
     sda = newSRDescGroup(0, 4);
     //opnd
     sda->set_opnd(0, sr_p);
     sda->set_opnd(1, sr_r); //base
-    sda->set_opnd(2, sr_12b_unsig_imm); //offset
+    sda->set_opnd(2, sr_8b_unsig_imm); //offset
     sda->set_opnd(3, sr_r);
-    setSRDescGroup(OR_strh_i12, sda);
+    setSRDescGroup(OR_strh_i8, sda);
 
     //0 res, 4 opnd:-- <- p(pred), r(base), 1b_unsig_imm(offset), r(store_val)
     sda = newSRDescGroup(0, 4);
@@ -850,18 +849,19 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_ret3, sda);
 
     //double store
-    //0 res, 5 opnd: <- p, r(base), 9b_unsig_imm(offset), r(store_val1), r(store_val2)
+    //0 res, 5 opnd: <- p, r(base), 9b_unsig_imm(offset),
+    //                  r(store_val1), r(store_val2)
     sda = newSRDescGroup(0, 5);
     //opnd
     sda->set_opnd(0, sr_p);
     sda->set_opnd(1, sr_r); //base
-    sda->set_opnd(2, sr_9b_unsig_imm); //offset
+    sda->set_opnd(2, sr_8b_unsig_imm); //offset
     sda->set_opnd(3, sr_r); // Rs1 store to [base]+offset
     sda->set_opnd(4, sr_r); // Rs2 store to [base]+offset+4
-    setSRDescGroup(OR_strd_i10, sda);
+    setSRDescGroup(OR_strd_i8, sda);
 
     //double store
-    //0 res, 6 opnd: <- p, r(base), sr_0b_unsig_imm, r(store_val1), r(store_val2)
+    //0 res, 6 opnd: <- p, r(base), 32b_unsig_imm, r(store_val1), r(store_val2)
     sda = newSRDescGroup(0, 5);
     //opnd
     sda->set_opnd(0, sr_p);
@@ -987,6 +987,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_lsl, sda);
     setSRDescGroup(OR_lsr, sda);
     setSRDescGroup(OR_asl, sda);
+    setSRDescGroup(OR_asr, sda);
     setSRDescGroup(OR_ror, sda);
 
     //1 res, 3 opnd: r <- p, r, Imm
@@ -996,7 +997,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     //opnd
     sda->set_opnd(0, sr_p);
     sda->set_opnd(1, sr_r);
-    sda->set_opnd(2, sr_12b_unsig_imm);
+    sda->set_opnd(2, sr_10b_unsig_imm);
     setSRDescGroup(OR_add_i, sda);
     setSRDescGroup(OR_sub_i, sda);
     setSRDescGroup(OR_rsb_i, sda);
@@ -1017,6 +1018,29 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_ldrsb, sda);
     setSRDescGroup(OR_ldrh, sda);
     setSRDescGroup(OR_ldrsh, sda);
+
+    //1 res, 3 opnd: r <- p, r, Imm
+    sda = newSRDescGroup(1, 3);
+    //res
+    sda->set_res(0, sr_r);
+    //opnd
+    sda->set_opnd(0, sr_p);
+    sda->set_opnd(1, sr_r); //base
+    sda->set_opnd(2, sr_12b_unsig_imm); //offset
+    setSRDescGroup(OR_ldr_i12, sda);
+    setSRDescGroup(OR_ldrb_i12, sda);
+
+   //1 res, 3 opnd: r <- p, r, Imm
+    sda = newSRDescGroup(1, 3);
+    //res
+    sda->set_res(0, sr_r);
+    //opnd
+    sda->set_opnd(0, sr_p);
+    sda->set_opnd(1, sr_r); //base
+    sda->set_opnd(2, sr_8b_unsig_imm); //offset
+    setSRDescGroup(OR_ldrsb_i8, sda);
+    setSRDescGroup(OR_ldrh_i8, sda);
+    setSRDescGroup(OR_ldrsh_i8, sda);
 
     //1 res, 3 opnd: r <- p, r, Imm
     sda = newSRDescGroup(1, 3);
@@ -1056,16 +1080,6 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_orr_lsr_i, sda);
     setSRDescGroup(OR_orr_lsl_i, sda);
 
-    //2 res, 2 opnd: r, r <- p, r
-    sda = newSRDescGroup(2, 2);
-    //res
-    sda->set_res(0, sr_r);
-    sda->set_res(1, sr_r);
-    //opnd
-    sda->set_opnd(0, sr_p);
-    sda->set_opnd(1, sr_r); //base
-    setSRDescGroup(OR_ldrd, sda);
-
     //2 res, 3 opnd: r, cpsr <- p, r, r
     sda = newSRDescGroup(2, 3);
     //res
@@ -1100,8 +1114,8 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     //opnd
     sda->set_opnd(0, sr_p);
     sda->set_opnd(1, sr_r);
-    sda->set_opnd(2, sr_10b_unsig_imm);
-    setSRDescGroup(OR_ldrd_i10, sda);
+    sda->set_opnd(2, sr_8b_unsig_imm);
+    setSRDescGroup(OR_ldrd_i8, sda);
 
     //2 res, 3 opnd: r, r <- p, r, imm32
     sda = newSRDescGroup(2, 3);
@@ -1112,7 +1126,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     sda->set_opnd(0, sr_p);
     sda->set_opnd(1, sr_r);
     sda->set_opnd(2, sr_32b_unsig_imm);
-    setSRDescGroup(OR_ldrd_i32, sda);
+    setSRDescGroup(OR_ldrd, sda);
 
     //2 res, 4 opnd: r, cpsr <- p, r, r, cpsr
     sda = newSRDescGroup(2, 4);
@@ -1244,15 +1258,11 @@ static void initORProperty()
     }
 
     od = &g_or_type_desc[OR_spadjust];
-    OTD_is_fake(od) = 1;
+    OTD_is_fake(od) = 1; //expand OR if offset is out of range.
     OTD_is_bus(od) = 1;
 
     od = &g_or_type_desc[OR_label];
     OTD_is_fake(od) = 1;
-
-    od = &g_or_type_desc[OR_strd];
-    OTD_is_fake(od) = 1;
-    OTD_is_bus(od) = 1;
 
     od = &g_or_type_desc[OR_asm];
     OTD_is_volatile(od) = 1;
@@ -1273,23 +1283,29 @@ static void initORProperty()
         OR_ldrd,
         OR_ldr_i12,
         OR_ldrb_i12,
-        OR_ldrsb_i12,
-        OR_ldrh_i12,
-        OR_ldrsh_i12,
-        OR_ldrd_i10,
+        OR_ldrsb_i8,
+        OR_ldrh_i8,
+        OR_ldrsh_i8,
+        OR_ldrd_i8,
     };
     for (UINT i = 0; i < sizeof(load) / sizeof(load[0]); i++) {
         od = &g_or_type_desc[load[i]];
         OTD_is_load(od) = 1;
+        switch (load[i]) {
+        case OR_ldr:
+        case OR_ldrb:
+        case OR_ldrsb:
+        case OR_ldrh:
+        case OR_ldrsh:
+        case OR_ldrd:
+            OTD_is_fake(od) = 1; //expand OR if offset is out of range.
+            break;
+        default: {}
+        }
     }
 
-    od = &g_or_type_desc[OR_ldrd_i32];
-    OTD_is_fake(od) = 1;
-    OTD_is_load(od) = 1;
-    
     od = &g_or_type_desc[OR_lsr_i];
-    //Simplify shift_size if it is out of range.
-    OTD_is_fake(od) = 1;
+    OTD_is_fake(od) = 1; //expand OR if shift-size is out of range.
 
     OR_TYPE store[] = {
         OR_stm,
@@ -1301,12 +1317,23 @@ static void initORProperty()
         OR_strd,
         OR_str_i12,
         OR_strb_i12,
-        OR_strh_i12,
-        OR_strd_i10,
+        OR_strh_i8,
+        OR_strd_i8,
     };
     for (UINT i = 0; i < sizeof(store) / sizeof(store[0]); i++) {
         od = &g_or_type_desc[store[i]];
         OTD_is_store(od) = 1;
+        switch (store[i]) {
+        case OR_str:
+        case OR_strd:
+        case OR_strb:
+        case OR_strsb:
+        case OR_strh:
+        case OR_strsh:
+            OTD_is_fake(od) = 1; //expand OR if offset is out of range.
+            break;
+        default: {}
+        }
     }
 
     od = &g_or_type_desc[OR_bl];
@@ -1339,16 +1366,18 @@ static void initORProperty()
 
     od = &g_or_type_desc[OR_add_i];
     OTD_is_addi(od) = 1;
+    OTD_is_fake(od) = 1; //expand OR if immediate-addend is out of range.
 
     od = &g_or_type_desc[OR_sub_i];
     OTD_is_subi(od) = 1;
+    OTD_is_fake(od) = 1; //expand OR if immediate-addend is out of range.
 
     od = &g_or_type_desc[OR_mov_i];
     OTD_is_movi(od) = 1;
 
     od = &g_or_type_desc[OR_mov32_i];
     OTD_is_movi(od) = 1;
-    OTD_is_fake(od) = 1;
+    OTD_is_fake(od) = 1; //expand OR if immediate-addend is out of range.
 
     od = &g_or_type_desc[OR_movw_i];
     OTD_is_movi(od) = 1;
@@ -1878,13 +1907,12 @@ static void initAndPrtScheInfoImpl(OR_TYPE ot)
     case OR_ldrh:
     case OR_ldrsh:
     case OR_ldrd:
-    case OR_ldrd_i32:
     case OR_ldr_i12:
     case OR_ldrb_i12:
-    case OR_ldrsb_i12:
-    case OR_ldrh_i12:
-    case OR_ldrsh_i12:
-    case OR_ldrd_i10: {
+    case OR_ldrsb_i8:
+    case OR_ldrh_i8:
+    case OR_ldrsh_i8:
+    case OR_ldrd_i8: {
         for (UINT i = 0; i < sdg->get_res_num(); i++) {
             //Optimistic load latency.
             ORSI_reg_result_avail_cyc(si, i) = 3;
@@ -1902,8 +1930,8 @@ static void initAndPrtScheInfoImpl(OR_TYPE ot)
     case OR_strd:
     case OR_str_i12:
     case OR_strb_i12:
-    case OR_strh_i12:
-    case OR_strd_i10: {
+    case OR_strh_i8:
+    case OR_strd_i8: {
         for (UINT i = 0; i < sdg->get_res_num(); i++) {
             //Optimistic write latency.
             ORSI_reg_result_avail_cyc(si, i) = 1;

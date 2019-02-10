@@ -588,6 +588,24 @@ void CG::buildAccumulate(
 }
 
 
+//Build memory store operation that store 'reg' into stack.
+//NOTE: user have to assign physical register manually if there is
+//new OR generated and need register allocation.
+//reg: register to be stored.
+//offset: bytesize offset related to SP.
+//ors: record output.
+//cont: context.
+void CG::buildStoreAndAssignRegister(
+        SR * reg,
+        UINT offset,
+        ORList & ors,
+        IOC * cont)
+{
+    SR * sr_offset = genIntImm((HOST_INT)offset, false);
+    buildStore(reg, genSP(), sr_offset, ors, cont);
+}
+
+
 ORBB * CG::allocBB()
 {
     if (m_or_bb_mgr == NULL) {
@@ -607,7 +625,7 @@ void CG::freeORBBList()
     for (ORBB * bb = m_or_bb_list.get_head();
          bb != NULL; bb = m_or_bb_list.get_next()) {
         for (OR * o = ORBB_first_or(bb); o != NULL; o = ORBB_next_or(bb)) {
-            m_or_mgr->free_or(o);
+            m_or_mgr->freeOR(o);
         }
     }
     m_or_bb_list.clean();
@@ -844,6 +862,7 @@ SR * CG::computeAndUpdateOffset(SR * sr)
 //supersede the symbol variable with the offset.
 void CG::relocateStackVarOffset()
 {
+    START_TIMER(t0, "Relocate Stack Variable Offset");
     List<ORBB*> * bblist = getORBBList();
     for (ORBB * bb = bblist->get_head();
          bb != NULL; bb = bblist->get_next()) {
@@ -885,6 +904,7 @@ void CG::relocateStackVarOffset()
             }
         }
     }
+    END_TIMER(t0, "Relocate Stack Variable Offset");
 }
 
 
@@ -1102,7 +1122,7 @@ UINT CG::compute_pad()
 void CG::dumpPackage()
 {
     if (xoc::g_tfile == NULL) { return; }
-
+    g_indent = 0;
     note("\n==---- DUMP Package, Region(%d)'%s' ----==",
          REGION_id(getRegion()),
          getRegion()->getRegionName() == NULL ?
@@ -1126,12 +1146,27 @@ void CG::dumpPackage()
 
                 OR * o = ip->get(s);
                 if (o == NULL) {
-                    fprintf(xoc::g_tfile, format.buf, " ");
+                    prt(format.buf, " ");
                 } else {
-                    fprintf(xoc::g_tfile, format.buf, OR_code_name(o));
+                    prt(format.buf, OR_code_name(o));
                 }
             }
+
             fprintf(xoc::g_tfile, "}");
+
+            //Dump instruction details.
+            g_indent += 4;
+            for (SLOT s = FIRST_SLOT; s <= LAST_SLOT; s = (SLOT)(s + 1)) {
+                if (s != FIRST_SLOT) { fprintf(xoc::g_tfile, "|"); }
+
+                OR * o = ip->get(s);
+                if (o == NULL) {
+                    note("\nnop");
+                } else {
+                    o->dump(this);
+                }
+            }
+            g_indent -= 4;
         }
     }
     fflush(xoc::g_tfile);
@@ -1738,6 +1773,29 @@ bool CG::isRflagRegister(OR_TYPE ot, UINT idx, bool is_result) const
 
 
 //Return true if specified immediate operand is in valid range.
+bool CG::isValidImmOpnd(OR const* o) const
+{
+    OR_TYPE ot = OR_code(o);
+    ORTypeDesc const* otd = tmGetORTypeDesc(ot);
+    SRDescGroup<> const* sdg = OTD_srd_group(otd);
+    for (UINT i = 0; i < tmGetOpndNum(ot); i++) {
+        SRDesc const* sr_desc = sdg->get_opnd(i);
+        ASSERT0(sr_desc);
+        if (!SRD_is_imm(sr_desc)) { continue; }
+        SR * imm_opnd = o->get_opnd(i);
+        if (SR_is_var(imm_opnd) || SR_is_label(imm_opnd)) {
+            continue;
+        }
+        ASSERT0(imm_opnd && SR_is_int_imm(imm_opnd));
+        if (!isValidImmOpnd(ot, i, SR_int_imm(imm_opnd))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+//Return true if specified immediate operand is in valid range.
 bool CG::isValidImmOpnd(OR_TYPE ot, HOST_INT imm) const
 {
     ORTypeDesc const* otd = tmGetORTypeDesc(ot);
@@ -1997,7 +2055,7 @@ bool CG::passArgInMemory(
     //There is still remaining data have to be passed through stack.
     if (*argsz > 0) {
         argdescmgr->addAddrDesc(argaddr,
-            NULL, *argsz, total_size - *argsz);
+            NULL, STACK_ALIGNMENT, *argsz, total_size - *argsz);
         return false;
     }
     return true;
@@ -2052,7 +2110,8 @@ bool CG::passArgInRegister(
         for (INT remaining_irsize = *sz; remaining_irsize > 0; i++) {
             SR * arg = vec.get(i);
             ASSERT0(arg);
-            argdescmgr->addValueDesc(arg, NULL, transfer_size, 0);
+            argdescmgr->addValueDesc(arg, NULL,
+                STACK_ALIGNMENT, transfer_size, 0);
             remaining_irsize -= transfer_size;
         }
         return false;
@@ -2119,7 +2178,7 @@ void CG::passArgVariant(
 
 
 //This function try to pass all arguments through registers.
-//Otherwise pass remaingin arguments through stack memory.
+//Otherwise pass remaining arguments through stack memory.
 //'ir': the first parameter of CALL.
 void CG::passArg(
         SR * argval,
@@ -2131,7 +2190,8 @@ void CG::passArg(
 {
     ASSERT0((argval != NULL) ^ (argaddr != NULL));
     if (tmGetRegSetOfArgument() != NULL &&
-        tmGetRegSetOfArgument()->get_elem_count() != 0) {
+        tmGetRegSetOfArgument()->get_elem_count() != 0 &&
+        argdescmgr->getNumOfAvailArgReg() > 0) {
         //Try to pass argval or data in argaddr through register.
         if (!tryPassArgThroughRegister(argval, argaddr, &argsz,
                 argdescmgr, ors, cont)) {
@@ -2146,12 +2206,15 @@ void CG::passArg(
         return;
     }
 
-    //Pass data in argaddr through stack.
+    //Pass whole parameter data through stack.
+    UINT align = computeArgAlign(argsz);
     if (argval != NULL) {
-        argdescmgr->addValueDesc(argval, NULL, argsz, 0);
+        //Pass value.
+        argdescmgr->addValueDesc(argval, NULL, align, argsz, 0);
     } else {
+        //Pass address.
         ASSERT0(argaddr);
-        argdescmgr->addAddrDesc(argaddr, NULL, argsz, 0);
+        argdescmgr->addAddrDesc(argaddr, NULL, align, argsz, 0);
     }
     storeArgToStack(argdescmgr, ors, cont);
 
@@ -2271,6 +2334,7 @@ void CG::expandFakeOR(OR * o, OUT IssuePackageList * ipl)
 
 void CG::package(Vector<BBSimulator*> & simvec)
 {
+    START_TIMER(t0, "Perform Packaging");
     List<ORBB*> * bblst = getORBBList();
     for (ORBB * bb = bblst->get_head(); bb != NULL; bb = bblst->get_next()) {
         BBSimulator * sim = simvec.get(ORBB_id(bb));
@@ -2297,6 +2361,7 @@ void CG::package(Vector<BBSimulator*> & simvec)
             }
         }
     }
+    END_TIMER(t0, "Perform Packaging");
 }
 
 
@@ -2942,8 +3007,12 @@ void CG::generateFuncUnitDedicatedCode()
     computeEntryAndExit(*m_or_cfg, entry_lst, exit_lst);
     for (ORBB * bb = entry_lst.get_head();
          bb != NULL; bb = entry_lst.get_next()) {
+        Dbx const* dbx = NULL;
+        if (ORBB_first_or(bb) != NULL) {
+            dbx = &OR_dbx(ORBB_first_or(bb));
+        }
 
-        //Protection of ret-address.
+        //Save function return-address to stack.
         if (has_call) {
             ors.clean();
             SR * sr = genReturnAddr();
@@ -2953,6 +3022,9 @@ void CG::generateFuncUnitDedicatedCode()
             IOC cont1;
             IOC_mem_byte_size(&cont1) = GENERAL_REGISTER_SIZE;
             buildStore(sr, loc, 0, ors, &cont1);
+            if (dbx != NULL) {
+                ors.copyDbx(dbx);
+            }
             ORBB_orlist(bb)->append_head(ors);
         }
 
@@ -2961,6 +3033,9 @@ void CG::generateFuncUnitDedicatedCode()
         IOC_int_imm(&cont) = 0;
         buildSpadjust(ors, &cont);
         ASSERTN(ors.get_elem_count() == 1, ("at most one spadjust operation."));
+        if (dbx != NULL) {
+            ors.copyDbx(dbx);
+        }
         ORBB_orlist(bb)->append_head(ors);
         ORBB_entry_spadjust(bb) = ors.get_head();
     }
@@ -2968,6 +3043,10 @@ void CG::generateFuncUnitDedicatedCode()
     for (ORBB * bb = exit_lst.get_head();
          bb != NULL; bb = exit_lst.get_next()) {
         OR * last_or = ORBB_last_or(bb);
+        Dbx const* dbx = NULL;
+        if (last_or != NULL) {
+            dbx = &OR_dbx(last_or);
+        }
 
         //Protection of ret-address.
         if (has_call) {
@@ -2979,6 +3058,9 @@ void CG::generateFuncUnitDedicatedCode()
             IOC cont2;
             IOC_mem_byte_size(&cont2) = GENERAL_REGISTER_SIZE;
             buildLoad(sr, loc, 0, ors, &cont2);
+            if (dbx != NULL) {
+                ors.copyDbx(dbx);
+            }
             if (last_or != NULL &&
                 (OR_is_call(last_or) ||
                  OR_is_cond_br(last_or) ||
@@ -2994,6 +3076,9 @@ void CG::generateFuncUnitDedicatedCode()
         ors.clean();
         IOC_int_imm(&cont) = 0;
         buildSpadjust(ors, &cont);
+        if (dbx != NULL) {
+            ors.copyDbx(dbx);
+        }
         ASSERTN(ors.get_elem_count() == 1, ("at most one spadjust operation."));
         if (last_or != NULL &&
             (OR_is_call(last_or) ||
@@ -3065,8 +3150,9 @@ xoc::VAR * CG::genSpillVar(SR * sr)
 }
 
 
-//Adjust offset of parameter of current region.
-//'lv_size': size of (local variable + temporary variable +
+//Amend byte offset of load/store of parameters according to
+//frame bytesize.
+//'lv_size': bytesize of (local variable + temporary variable +
 //    callee parameter size).
 void CG::reviseFormalParamAccess(UINT lv_size)
 {
@@ -3090,65 +3176,6 @@ void CG::reviseFormalParamAccess(UINT lv_size)
                 }
             }
         }
-    }
-}
-
-
-//Insert store of register value of parameters
-//after spadjust at each entry BB.
-//regparamoffset: bytesize offset from SP
-//regparamsize: bytesize of total parameter section
-//entry_lst: list of entry BB
-//param_lst: parameter variable which sorted in declaration order
-void CG::storeParameterAfterSpadjust(
-        UINT param_start,
-        List<ORBB*> * entry_lst,
-        List<VAR const*> * param_lst)
-{
-    ASSERT0(entry_lst && param_lst);
-    RegSet const* phyregset = tmGetRegSetOfArgument();
-    ASSERT0(phyregset);
-    ORList ors;
-    IOC tc;
-    for (ORBB * bb = entry_lst->get_head();
-        bb != NULL; bb = entry_lst->get_next()) {
-        OR * spadj = ORBB_entry_spadjust(bb);
-        if (spadj == NULL) { continue; }
-        ORCt * orct = NULL;
-        ORBB_orlist(bb)->find(spadj, &orct);
-        ASSERTN(orct, ("not find spadjust in BB"));
-
-        VAR const* param = param_lst->get_head();
-        ASSERT0(param);
-        UINT passed_paramsz = 0; //record the bytesize that has been passed.
-
-        ors.clean();
-        tc.clean();
-        UINT regsz = 0;
-        for (INT phyreg = phyregset->get_first();
-             phyreg >= 0 && param != NULL;
-             phyreg = phyregset->get_next(phyreg)) {
-            if (passed_paramsz == 0 && //only check if whole
-                                       //value can be passed via reg
-                skipArgRegister(param, phyregset, phyreg)) {
-                continue;
-            }
-            ASSERT0(phyreg >= 0);
-            SR * store_val = genDedicatedReg(phyreg);
-            ASSERT0(store_val);
-            IOC_mem_byte_size(&tc) = GENERAL_REGISTER_SIZE;
-            buildStore(store_val, genSP(),
-                genIntImm((HOST_INT)(param_start + regsz), false),
-                ors, &tc);
-            regsz += GENERAL_REGISTER_SIZE;
-            passed_paramsz += GENERAL_REGISTER_SIZE;
-            if (passed_paramsz == param->getByteSize(m_tm)) {
-                param = param_lst->get_next();
-                passed_paramsz = 0;
-            }
-        }
-
-        ORBB_orlist(bb)->insert_after(ors, orct);
     }
 }
 
@@ -3185,6 +3212,11 @@ UINT CG::calcSizeOfParameterPassedViaRegister(
 }
 
 
+//Insert store of register value of parameters
+//after spadjust at each entry BB.
+//param_start: bytesize offset of total parameter section, related to SP.
+//entry_lst: list of entry BB
+//param_lst: parameter variable which sorted in declaration order
 void CG::storeRegisterParameterBackToStack(
         List<ORBB*> * entry_lst,
         UINT param_start)
@@ -3193,17 +3225,68 @@ void CG::storeRegisterParameterBackToStack(
         return;
     }
     ASSERT0(tmGetRegSetOfArgument());
-    List<VAR const*> param_list;
-    m_ru->findFormalParam(param_list, true);
-    storeParameterAfterSpadjust(param_start, entry_lst, &param_list);
+    List<VAR const*> param_lst;
+    m_ru->findFormalParam(param_lst, true);
+
+    ASSERT0(entry_lst);
+    RegSet const* phyregset = tmGetRegSetOfArgument();
+    ASSERT0(phyregset);
+    ORList ors;
+    IOC tc;
+    for (ORBB * bb = entry_lst->get_head();
+        bb != NULL; bb = entry_lst->get_next()) {
+        OR * spadj = ORBB_entry_spadjust(bb);
+        if (spadj == NULL) { continue; }
+        ORCt * orct = NULL;
+        ORBB_orlist(bb)->find(spadj, &orct);
+        ASSERTN(orct, ("not find spadjust in BB"));
+        VAR const* param = param_lst.get_head();
+        ASSERT0(param);
+
+        ors.clean();
+        tc.clean();
+        //Record the bytesize that has been passed for each parameter.
+        UINT passed_paramsz = 0;
+
+        //Record bytesize of total parameters that has been passed.
+        UINT passed_total_paramsz = 0;
+        for (INT phyreg = phyregset->get_first();
+             phyreg >= 0 && param != NULL;
+             phyreg = phyregset->get_next(phyreg)) {
+            if (passed_paramsz == 0 && //only check if whole
+                                       //value can be passed via reg
+                skipArgRegister(param, phyregset, phyreg)) {
+                //This physical register does not need to
+                //store into stack.
+                continue;
+            }
+            ASSERT0(phyreg >= 0);
+            SR * sr_phyreg = genDedicatedReg(phyreg);
+            ASSERT0(sr_phyreg);
+            IOC_mem_byte_size(&tc) = GENERAL_REGISTER_SIZE;
+            buildStoreAndAssignRegister(sr_phyreg,
+                param_start + passed_total_paramsz,
+                ors, &tc);
+            passed_total_paramsz += GENERAL_REGISTER_SIZE;
+            passed_paramsz += GENERAL_REGISTER_SIZE;
+            if (passed_paramsz == param->getByteSize(m_tm)) {
+                param = param_lst.get_next();
+                passed_paramsz = 0;
+            }
+        }
+
+        ORBB_orlist(bb)->insert_after(ors, orct);
+    }
 }
 
 
+//Insert store of parameter register after spadjust at each entry BB
+//if target machine support pass argument through register.
 void CG::reviseFormalParameterAndSpadjust()
 {
-    //size of (register caller parameter size + local variable +
-    //         temporary variable + callee parameter size).
-    INT size = (INT)SECT_size(getStackSection()) + getMaxArgSectionSize();
+    //framesize = (register caller parameter size + local variable +
+    //             temporary variable + callee parameter size).
+    INT framesize = (INT)SECT_size(getStackSection()) + getMaxArgSectionSize();
 
     //Adjust size by stack alignment.
     ASSERTN(isPowerOf2(STACK_ALIGNMENT),
@@ -3212,12 +3295,12 @@ void CG::reviseFormalParameterAndSpadjust()
         ("For the convenience of generating double load/store"));
     ASSERTN(SPADJUST_ALIGNMENT - 1 <= 0xFFFF, ("Stack alignment is too big"));
 
-    size = (INT)xcom::ceil_align(size, SPADJUST_ALIGNMENT);
+    framesize = (INT)xcom::ceil_align(framesize, SPADJUST_ALIGNMENT);
 
     if (!g_is_enable_fp &&
         (getMaxArgSectionSize() > 0 &&
          SECT_size(getParamSection()) > 0)) {
-        reviseFormalParamAccess(size);
+        reviseFormalParamAccess(framesize);
     }
 
     List<ORBB*> entry_lst;
@@ -3226,7 +3309,7 @@ void CG::reviseFormalParameterAndSpadjust()
 
     //Update the parameter section start.
     ASSERTN(m_param_sect_start_offset == -1, ("already set"));
-    m_param_sect_start_offset = size;
+    m_param_sect_start_offset = framesize;
 
     if (isPassArgumentThroughRegister()) {
         RegSet const* phyregset = tmGetRegSetOfArgument();
@@ -3239,44 +3322,46 @@ void CG::reviseFormalParameterAndSpadjust()
             UINT alignsize = (UINT)xcom::ceil_align(
                 bytesize_of_arg_passed_via_reg, SPADJUST_ALIGNMENT);
             ASSERT0(alignsize > bytesize_of_arg_passed_via_reg);
-            size += alignsize - bytesize_of_arg_passed_via_reg;
+            framesize += alignsize - bytesize_of_arg_passed_via_reg;
         }
 
         //Update the parameter section start.
-        m_param_sect_start_offset = size;
-        storeRegisterParameterBackToStack(&entry_lst, size);
-        size += bytesize_of_arg_passed_via_reg;
+        m_param_sect_start_offset = framesize;
+        storeRegisterParameterBackToStack(&entry_lst, framesize);
+
+        //Amend framesize.
+        framesize += bytesize_of_arg_passed_via_reg;
     }
 
     //size must align in SPADJUST_ALIGNMENT.
-    ASSERT0(size == xcom::ceil_align(size, SPADJUST_ALIGNMENT));
+    ASSERT0(framesize == xcom::ceil_align(framesize, SPADJUST_ALIGNMENT));
 
     for (ORBB * bb = entry_lst.get_head();
          bb != NULL; bb = entry_lst.get_next()) {
         OR * spadj = ORBB_entry_spadjust(bb);
         if (spadj == NULL) { continue; }
-        if (size == 0) {
+        if (framesize == 0) {
             //Spadjust OR should be removed if the frame length is zero.
             //Do not free o, its SR may be used by other OR.
             ORBB_orlist(bb)->remove(spadj);
             continue;
         }
 
-        setSpadjustOffset(spadj, -size);
+        setSpadjustOffset(spadj, -framesize);
     }
 
     for (ORBB * bb = exit_lst.get_head(); bb != NULL;
          bb = exit_lst.get_next()) {
         OR * spadj = ORBB_exit_spadjust(bb);
         if (spadj == NULL) { continue; }
-        if (size == 0) {
+        if (framesize == 0) {
             //Spadjust OR should be removed if the frame length is zero.
             //Do not free o, its SR may be used by other OR.
             ORBB_orlist(bb)->remove(spadj);
             continue;
         }
 
-        setSpadjustOffset(spadj, size);
+        setSpadjustOffset(spadj, framesize);
     }
 }
 
@@ -3358,7 +3443,7 @@ void CG::constructORBBList(IN ORList & or_list)
     if (or_list.get_elem_count() == 0) {
         return;
     }
-
+    START_TIMER(t, "Construct ORBB list");
     ORBB * cur_bb = NULL;
     for (OR * o = or_list.get_head(); o != NULL; o = or_list.get_next()) {
         //Insert xoc::IR into individual BB.
@@ -3399,10 +3484,10 @@ void CG::constructORBBList(IN ORList & or_list)
         } else {
             ORBB_orlist(cur_bb)->append_tail(o);
         }
-    } //end for each of ORs
-    ASSERT0(cur_bb != NULL);
+    }
+    ASSERT0(cur_bb);
     m_or_bb_list.append_tail(cur_bb);
-
+    END_TIMER(t, "Construct ORBB list");
     #ifdef _DEBUG_
     //Do some verifications.
     for (ORBB * bb = m_or_bb_list.get_head();
@@ -3424,6 +3509,7 @@ void CG::constructORBBList(IN ORList & or_list)
 //Perform global and local register allocation.
 RaMgr * CG::performRA()
 {
+    START_TIMER(t, "Perform Register Allocation");
     RaMgr * lm = allocRaMgr(getORBBList(), m_ru->is_function());
     lm->setParallelPartMgrVec(getParallelPartMgrVec());
     #ifdef _DEBUG_
@@ -3437,6 +3523,7 @@ RaMgr * CG::performRA()
         lm->performGRA();
     }
     lm->performLRA();
+    END_TIMER(t, "Perform Register Allocation");
     return lm;
 }
 
@@ -3461,8 +3548,7 @@ void CG::addSerialDependence(ORBB * bb, DataDepGraph * ddg)
 //Local instruction scheduling.
 void CG::performIS(IN OUT Vector<BBSimulator*> & simvec, IN RaMgr * ra_mgr)
 {
-    START_TIMER(t, "List Schedule");
-
+    START_TIMER(t, "Perform List Schedule");
     List<ORBB*> * bblist = getORBBList();
     for (ORBB * bb = bblist->get_head();
          bb != NULL; bb = bblist->get_next()) {
@@ -3485,8 +3571,7 @@ void CG::performIS(IN OUT Vector<BBSimulator*> & simvec, IN RaMgr * ra_mgr)
         }
         lis->dump(NULL, false, true);
     }
-
-    END_TIMER(t, "List Schedule");
+    END_TIMER(t, "Perform List Schedule");
 }
 
 
@@ -3513,6 +3598,7 @@ bool CG::isAlloca(xoc::IR const* ir) const
 //Reserving space for real parameters.
 void CG::computeMaxRealParamSpace()
 {
+    START_TIMER(t, "Compute Max Real Parameter Space");
     BBList * ir_bb_list = m_ru->getBBList();
     for (IRBB * bb = ir_bb_list->get_head();
          bb != NULL; bb = ir_bb_list->get_next()) {
@@ -3529,6 +3615,7 @@ void CG::computeMaxRealParamSpace()
     if (getMaxArgSectionSize() > 0) {
         SECT_size(getStackSection()) += getMaxArgSectionSize();
     }
+    END_TIMER(t, "Compute Max Real Parameter Space");
 }
 
 
@@ -3763,6 +3850,7 @@ void CG::localizeBBTab(SR * sr, TTab<ORBB*> * orbbtab)
 
 void CG::localize()
 {
+    START_TIMER(t0, "CG Localization");
     TMap<SR*, ORBB*> sr2bb;
     TMap<SR*, TTab<ORBB*>*> sr2orbbtab;
     List<ORBB*> * bbl = getORBBList();
@@ -3824,8 +3912,6 @@ void CG::localize()
         }
     }
 
-    if (sr2orbbtab.get_elem_count() == 0) { return; }
-
     TMapIter<SR*, TTab<ORBB*>*> iter;
     TTab<ORBB*> * orbbtab;
     for (SR * sr = sr2orbbtab.get_first(iter, &orbbtab);
@@ -3833,44 +3919,65 @@ void CG::localize()
         localizeBBTab(sr, orbbtab);
         delete orbbtab;
     }
+    END_TIMER(t0, "CG Localization");
 }
 
 
-//Check is SR assigned physical register and register file.
-bool CG::verify()
+//Scan package list and verify OR.
+//1. Check is SR assigned physical register and register file.
+//2. Check if immediate operand is in valid value range.
+bool CG::verifyPackageList()
 {
-    List<ORBB*> * bbl = getORBBList();
-    for (ORBB * bb = bbl->get_head(); bb != NULL; bb = bbl->get_next()) {
-        for (OR * o = ORBB_first_or(bb); o != NULL; o = ORBB_next_or(bb)) {
-            for (UINT i = 0; i < o->result_num(); i++) {
-                SR * sr = o->get_result(i);
-                ASSERT0(sr);
-                if (SR_is_reg(sr)) {
-                    ASSERTN(SR_phy_regid(sr) != REG_UNDEF,
-                        ("SR is not assigned physical register"));
-                    ASSERTN(SR_regfile(sr) != RF_UNDEF,
-                        ("SR is not assigned register file"));
-                }
-                if (SR_is_int_imm(sr)) {
-                    ASSERT0(isValidImmOpnd(OR_code(o), SR_int_imm(sr)));
-                }
-            }
-            for (UINT i = 0; i < o->opnd_num(); i++) {
-                SR * sr = o->get_opnd(i);
-                ASSERT0(sr);
-                if (SR_is_reg(sr)) {
-                    ASSERTN(SR_phy_regid(sr) != REG_UNDEF,
-                        ("SR is not assigned physical register"));
-                    ASSERTN(SR_regfile(sr) != RF_UNDEF,
-                        ("SR is not assigned register file"));
-                }
-                if (SR_is_int_imm(sr)) {
-                    ASSERT0(isValidImmOpnd(OR_code(o), i, SR_int_imm(sr)));
-                }
+    START_TIMER(t0, "Verify Package List");
+    for (INT bbid = 0; bbid <= m_ipl_vec.get_last_idx(); bbid++) {
+        IssuePackageList * ipl = m_ipl_vec.get(bbid);
+        if (ipl == NULL) { continue; }
+        xcom::C<IssuePackage*> * ipct;
+        for (ipl->get_head(&ipct); ipct != ipl->end();
+            ipct = ipl->get_next(ipct)) {
+            IssuePackage * ip = ipct->val();
+            for (SLOT s = FIRST_SLOT; s <= LAST_SLOT; s = (SLOT)(s + 1)) {
+                OR const* o = ip->get(s);
+                if (o == NULL) { continue; }
+                verifyOR(o);
             }
         }
     }
+    END_TIMER(t0, "Verify Package List");
+    return true;
+}
 
+
+bool CG::verifyOR(OR const* o)
+{
+    for (UINT i = 0; i < o->result_num(); i++) {
+        SR * sr = o->get_result(i);
+        ASSERT0(sr);
+        if (SR_is_reg(sr)) {
+            ASSERTN(SR_phy_regid(sr) != REG_UNDEF,
+                ("SR is not assigned physical register"));
+            ASSERTN(SR_regfile(sr) != RF_UNDEF,
+                ("SR is not assigned register file"));
+        }
+        if (SR_is_int_imm(sr)) {
+            ASSERT0(isValidImmOpnd(OR_code(o), SR_int_imm(sr)));
+        }
+    }
+    for (UINT i = 0; i < o->opnd_num(); i++) {
+        SR * sr = o->get_opnd(i);
+        ASSERT0(sr);
+        if (SR_is_reg(sr)) {
+            ASSERTN(SR_phy_regid(sr) != REG_UNDEF,
+                ("SR is not assigned physical register"));
+            ASSERTN(SR_regfile(sr) != RF_UNDEF,
+                ("SR is not assigned register file"));
+        }
+        if (SR_is_int_imm(sr)) {
+            ASSERT0(isValidImmOpnd(OR_code(o), i, SR_int_imm(sr)));
+        }
+    }
+
+    ASSERT0(isValidImmOpnd(o));
     return true;
 }
 
@@ -3895,11 +4002,6 @@ bool CG::perform()
     IR2OR * ir2or = allocIR2OR();
     ASSERT0(ir2or);
 
-    if (m_ru->isRegionName("main"))
-    {
-        int a = 0; //fuck
-    }
-
     CHAR const* varname = SYM_name(m_ru->getRegionVar()->get_name());
     DUMMYUSE(varname);
     ir2or->convertIRBBListToORList(or_list);
@@ -3913,6 +4015,7 @@ bool CG::perform()
     m_or_cfg = allocORCFG();
 
     OptCtx oc;
+    START_TIMER(t0, "OR Control Flow Optimizations");
     m_or_cfg->removeEmptyBB(oc);
     m_or_cfg->build(oc);
     m_or_cfg->removeEmptyBB(oc);
@@ -3920,6 +4023,7 @@ bool CG::perform()
     if (m_or_cfg->removeUnreachBB()) {
         m_or_cfg->computeExitList();
     }
+    END_TIMER(t0, "OR Control Flow Optimizations");
 
     if (m_ru->is_function()) {
         generateFuncUnitDedicatedCode();
@@ -3940,6 +4044,7 @@ bool CG::perform()
         m_ru->getRegionName());
     dumpORBBList(m_or_bb_list);
 
+    START_TIMER(t1, "OR Control Flow Optimizations");
     bool change;
     do {
         change = false;
@@ -3956,6 +4061,7 @@ bool CG::perform()
             change = true;
         }
     } while (change);
+    END_TIMER(t1, "OR Control Flow Optimizations");
 
     if (m_ru->is_function()) {
         reviseFormalParameterAndSpadjust();
@@ -3980,12 +4086,13 @@ bool CG::perform()
 
     package(simvec);
 
+    ///////////////////////////////////////
+    //DO NOT DUMP BB LIST AFTER THIS LINE//
+    ///////////////////////////////////////
+
     xoc::note("\n==---- AFTER PACKAGE ----==");
     dumpPackage();
-    dumpORBBList(m_or_bb_list);
-
-    ASSERT0(verify());
-
+    ASSERT0(verifyPackageList());
     freeSimmList(); //Free BBSimulator list here.
     return true;
 }

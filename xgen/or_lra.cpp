@@ -9159,6 +9159,8 @@ bool LRA::verifyRegSR()
 bool LRA::perform()
 {
     if (ORBB_ornum(m_bb) <= 0) { return true; }
+    START_TIMER_FMT(t, ("Perform Local Register Allocation for ORBB%d",
+        ORBB_id(m_bb)));
     if (ORBB_ornum(m_bb) > MAX_OR_BB_OPT_BB_LEN) {
         interwarn("During LRA: Length of ORBB%d is larger "
             "than %d, optimizations are disabled!",
@@ -9198,11 +9200,17 @@ bool LRA::perform()
         ddg->build();
     }
 
+    List<LifeTime*> prio_list;
+    LifeTimeMgr * mgr;
+    RegFileAffinityGraph * rdg;
+    BBSimulator * sim;
+    RegFileGroup * rfg;
+    InterfGraph * ig;
+    bool Enable_Optimal_Partition = false;
     if (HAVE_FLAG(m_cur_phase, PHASE_INIT) && ORBB_ornum(m_bb) <= 0) {
         postLRA();
-        return true;
+        goto SUCC;
     }
-
     computeUniqueRegFile(is_regfile_unique);
 
     //Assigninment of cluster must done before life time constructing.
@@ -9211,11 +9219,9 @@ bool LRA::perform()
     if (isMultiCluster()) {
         reviseInterClusterOR(*ddg, is_regfile_unique);
     }
-
     m_cur_phase |= PHASE_CA_DONE;
 
     //TODO, use optimal partitioning method.
-    bool Enable_Optimal_Partition = false;
     if (isOpt() && Enable_Optimal_Partition) {
         if (!ddg->is_param_equal(INC_PHY_REG,
             NO_MEM_READ,
@@ -9254,7 +9260,7 @@ bool LRA::perform()
     }
 
     //Create life time at first.
-    LifeTimeMgr * mgr = m_ramgr->allocLifeTimeMgr();
+    mgr = m_ramgr->allocLifeTimeMgr();
     mgr->init(m_bb, false, true);
     mgr->create();
     mgr->computeUsableRegs();
@@ -9262,7 +9268,7 @@ bool LRA::perform()
     //ORBB_liveout(m_bb).dump();
 
     //Build Affinity xcom::Graph
-    RegFileAffinityGraph * rdg = allocRegFileAffinityGraph();
+    rdg = allocRegFileAffinityGraph();
     rdg->init(m_bb);
     rdg->build(*mgr, *ddg);
 
@@ -9271,14 +9277,14 @@ bool LRA::perform()
     assignRegFile(cri, is_regfile_unique, *mgr, *ddg, *rdg);
 
     //Perform target independent optimizations to simplify code.
-    BBSimulator * sim = allocBBSimulator();
+    sim = allocBBSimulator();
     if (isOpt()) {
         middleLRAOpt(*ddg, *mgr, *sim, is_regfile_unique, cri);
     }
 
     if (ORBB_ornum(m_bb) <= 0) {
         postLRA();
-        return true;
+        goto SUCC;
     }
 
     //Computing usable registers, available for all phases.
@@ -9297,18 +9303,17 @@ bool LRA::perform()
 
     //Build interference graph.
     show_phase("Build Interference xcom::Graph");
-    InterfGraph * ig = allocInterfGraph();
+    ig = allocInterfGraph();
     ig->init(m_bb);
     ig->build(*mgr);
 
     //Calculate the prioirtys.
-    List<LifeTime*> prio_list;
     show_phase("Build Priority List");
     buildPriorityList(prio_list, *ig, *mgr, *ddg);
     ASSERT0(verifyUsableRegSet(*mgr));
 
     show_phase("Compute Layer");
-    RegFileGroup * rfg = allocRegFileGroup();
+    rfg = allocRegFileGroup();
     rfg->init();
     rfg->setBB(m_bb);
     rfg->computeGroup();
@@ -9373,6 +9378,9 @@ bool LRA::perform()
     finalLRAOpt(mgr, ig, ddg);
     postLRA();
     delete mgr;
+SUCC:
+    END_TIMER_FMT(t, ("Perform Local Register Allocation for ORBB%d",
+        ORBB_id(m_bb)));
     return true;
 }
 //END LRA

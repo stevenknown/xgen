@@ -41,20 +41,24 @@ void ARMCG::initBuiltin()
     CG::initBuiltin();
 
     m_builtin_uimod = addBuiltinVar("__aeabi_uidivmod");
+    m_builtin_imod = addBuiltinVar("__aeabi_idivmod");
     m_builtin_uidiv = addBuiltinVar("__aeabi_uidiv");
-
     m_builtin_ashldi3 = addBuiltinVar("__ashldi3");
     m_builtin_lshrdi3 = addBuiltinVar("__lshrdi3");
     m_builtin_ashrdi3 = addBuiltinVar("__ashrdi3");
     m_builtin_modsi3 = addBuiltinVar("__modsi3");
+    m_builtin_umodsi3 = addBuiltinVar("__umodsi3");
     m_builtin_moddi3 = addBuiltinVar("__moddi3");
+    m_builtin_umoddi3 = addBuiltinVar("__umoddi3");
     m_builtin_addsf3 = addBuiltinVar("__addsf3");
     m_builtin_adddf3 = addBuiltinVar("__adddf3");
     m_builtin_subsf3 = addBuiltinVar("__subsf3");
     m_builtin_subdf3 = addBuiltinVar("__subdf3");
     m_builtin_divsi3 = addBuiltinVar("__divsi3");
+    m_builtin_udivsi3 = addBuiltinVar("__udivsi3");
     m_builtin_divsf3 = addBuiltinVar("__divsf3");
     m_builtin_divdi3 = addBuiltinVar("__divdi3");
+    m_builtin_udivdi3 = addBuiltinVar("__udivdi3");
     m_builtin_divdf3 = addBuiltinVar("__divdf3");
     m_builtin_muldi3 = addBuiltinVar("__muldi3");
     m_builtin_mulsf3 = addBuiltinVar("__mulsf3");
@@ -263,6 +267,24 @@ SR * ARMCG::genLOPred()
 }
 
 
+//Unsigned GT
+SR * ARMCG::genHIPred()
+{
+    SR * sr = genDedicatedReg(REG_HI_PRED);
+    SR_is_pred(sr) = true;
+    return sr;
+}
+
+
+//Unsigned LE
+SR * ARMCG::genLSPred()
+{
+    SR * sr = genDedicatedReg(REG_LS_PRED);
+    SR_is_pred(sr) = true;
+    return sr;
+}
+
+
 SR * ARMCG::genMIPred()
 {
     SR * sr = genDedicatedReg(REG_MI_PRED);
@@ -389,7 +411,7 @@ void ARMCG::buildLoad(
         setMapOR2Mem(o, v);
         ors.append_tail(o);
     } else if (IOC_mem_byte_size(cont) <= 8) {
-        OR * o = genOR(OR_ldrd_i32);
+        OR * o = genOR(OR_ldrd);
         ASSERT0(load_val->getByteSize() == 8);
         ASSERT0(SR_is_vec(load_val));
         ASSERT0(SR_vec(load_val)->get(0) && SR_vec(load_val)->get(1));
@@ -470,7 +492,7 @@ void ARMCG::buildStore(
                     base = tc.get_reg(0);
                     ASSERT0(base && SR_is_reg(base));
                     code = OR_strb;
-                    SR_int_imm(sr_ofst) = 0;
+                    sr_ofst = genIntImm(0, false);
                 }
             } else if (SR_is_var(sr_ofst)) {
                 code = OR_strb;
@@ -480,8 +502,8 @@ void ARMCG::buildStore(
             break;
         case 2:
             if (SR_is_int_imm(sr_ofst)) {
-                if (isValidImmOpnd(OR_strh_i12, SR_int_imm(sr_ofst))) {
-                    code = OR_strh_i12;
+                if (isValidImmOpnd(OR_strh_i8, SR_int_imm(sr_ofst))) {
+                    code = OR_strh_i8;
                 } else {
                     IOC tc;
                     buildAdd(base, sr_ofst, IOC_mem_byte_size(cont),
@@ -489,7 +511,7 @@ void ARMCG::buildStore(
                     base = tc.get_reg(0);
                     ASSERT0(base && SR_is_reg(base));
                     code = OR_str;
-                    SR_int_imm(sr_ofst) = 0;
+                    sr_ofst = genIntImm(0, false);
                 }
             } else if (SR_is_var(sr_ofst)) {
                 code = OR_strh;
@@ -508,7 +530,7 @@ void ARMCG::buildStore(
                     base = tc.get_reg(0);
                     ASSERT0(base && SR_is_reg(base));
                     code = OR_str;
-                    SR_int_imm(sr_ofst) = 0;
+                    sr_ofst = genIntImm(0, false);
                 }
             } else if (SR_is_var(sr_ofst)) {
                 code = OR_str;
@@ -532,8 +554,8 @@ void ARMCG::buildStore(
     } else if (IOC_mem_byte_size(cont) <= 8) {
         OR_TYPE code = OR_UNDEF;
         if (SR_is_int_imm(sr_ofst)) {
-            if (isValidImmOpnd(OR_strd_i10, SR_int_imm(sr_ofst))) {
-                code = OR_strd_i10;
+            if (isValidImmOpnd(OR_strd_i8, SR_int_imm(sr_ofst))) {
+                code = OR_strd_i8;
             } else {
                 IOC tc;
                 buildAdd(base, sr_ofst, IOC_mem_byte_size(cont),
@@ -541,7 +563,7 @@ void ARMCG::buildStore(
                 base = tc.get_reg(0);
                 ASSERT0(base && SR_is_reg(base));
                 code = OR_str;
-                SR_int_imm(sr_ofst) = 0;
+                sr_ofst = genIntImm(0, false);
             }
         } else if (SR_is_var(sr_ofst)) {
             code = OR_strd;
@@ -825,7 +847,7 @@ void ARMCG::buildSpadjust(OUT ORList & ors, IN IOC * cont)
 }
 
 
-void ARMCG::buildIcall(
+void ARMCG::buildICall(
         SR * callee,
         UINT ret_val_size,
         OUT ORList & ors,
@@ -1441,23 +1463,6 @@ void ARMCG::buildAddRegReg(
         SR * res = getSRVecMgr()->genSRVec(2, genReg(), genReg());
         SR * res_2 = SR_vec(res)->get(1);
 
-        SR * t = genLTPred();
-        if (!is_add) {
-            //64BIT c = a - b;
-            //  a:ah, al
-            //  b:bh, bl
-            //  c:ch, cl
-            //
-            //  cl = al - bl
-            //  ch = ah - bh
-            //  if (al < bl) {
-            //      ch = ch - 1
-            //  }
-            ASSERT0(SR_is_reg(src1) && SR_is_reg(src2));
-            buildARMCmp(OR_cmp, genTruePred(),
-                src1, src2, ors, cont);
-        }
-
         OR_TYPE orty = OR_UNDEF;
         OR_TYPE orty2 = OR_UNDEF;
         List<SR*> reslst;
@@ -1470,12 +1475,10 @@ void ARMCG::buildAddRegReg(
             opndlst.append_tail(src1_2);
             opndlst.append_tail(src2_2);
             opndlst.append_tail(genRflag());
-
             ASSERT0(::tmGetResultNum(orty) == 2);
             ASSERT0(::tmGetOpndNum(orty) == 3);
             ASSERT0(::tmGetResultNum(orty2) == 1);
             ASSERT0(::tmGetOpndNum(orty2) == 4);
-
         } else {
             orty = OR_subs;
             orty2 = OR_sbc;
@@ -1484,45 +1487,51 @@ void ARMCG::buildAddRegReg(
             opndlst.append_tail(src1_2);
             opndlst.append_tail(src2_2);
             opndlst.append_tail(genRflag());
-
             ASSERT0(::tmGetResultNum(orty) == 2);
             ASSERT0(::tmGetOpndNum(orty) == 3);
             ASSERT0(::tmGetResultNum(orty2) == 1);
             ASSERT0(::tmGetOpndNum(orty2) == 4);
         }
 
-        OR * o = buildOR(orty, 2, 3, res, genRflag(),
+        OR * o1 = buildOR(orty, 2, 3, res, genRflag(),
             genTruePred(), src1, src2);
-        ors.append_tail(o);
+        ors.append_tail(o1);
 
-        o = buildOR(orty2, reslst, opndlst);
-        ors.append_tail(o);
+        OR * o2 = buildOR(orty2, reslst, opndlst);
+        ors.append_tail(o2);
 
         if (!is_add) {
-            //64BIT c = a - b;
-            //  a:ah, al
-            //  b:bh, bl
-            //  c:ch, cl
+            //TO BE CONFIRMED: What is the purpose of following code?
+            ////64BIT c = a - b;
+            ////  a:ah, al
+            ////  b:bh, bl
+            ////  c:ch, cl
+            ////
+            ////  cl = al - bl
+            ////  ch = ah - bh
+            ////  if (al < bl) {
+            ////      ch = ch - 1
+            ////  }
+            //ASSERT0(SR_is_reg(src1) && SR_is_reg(src2));
+            ////Build: al < bl
+            //buildARMCmp(OR_cmp, genTruePred(),
+            //    src1, src2, ors, cont);
             //
-            //  cl = al - bl
-            //  ch = ah - bh
-            //  if (al < bl) {
-            //      ch = ch - 1
-            //  }
-            ORList tors;
-            IOC tmp;
-            //Build: ch = ch - 1 for high-part 32bit value.
-            buildSub(res_2, genIntImm((HOST_INT)1, false),
-                4, is_sign, tors, &tmp);
-            ASSERT0(tors.get_elem_count() == 1);
-            res_2 = tmp.get_reg(0); //update the high-part SR.
-            tors.get_head()->set_pred(t);
-            ors.append_tail(tors);
+            ////Build: ch = ch - 1 to compute high-part 32bit value.
+            //ORList tors;
+            //IOC tmp;
+            //buildSub(res_2, genIntImm((HOST_INT)1, false),
+            //    GENERAL_REGISTER_SIZE, is_sign, tors, &tmp);
+            //ASSERT0(tors.get_elem_count() == 1);
+            //res_2 = tmp.get_reg(0); //update the high-part SR.
+            //tors.get_head()->set_pred(genLTPred());
+            //ors.append_tail(tors);
         }
 
-        ASSERT0(cont != NULL);
+        ASSERT0(cont);
+        //Record the result, also the first element of SRVector.
         cont->set_reg(0, res);
-        //cont->set_reg(1, res_2);
+        //cont->set_reg(1, res_2); //no need to record second part.
         assembleSRVec(SR_vec(res), res, res_2);
     } else {
         ASSERTN(0, ("TODO"));
@@ -1584,6 +1593,41 @@ void ARMCG::buildCondBr(IN SR * tgt_lab, OUT ORList & ors, IN IOC * cont)
     o->set_pred(pred);
     o->setLabel(tgt_lab);
     ors.append_tail(o);
+}
+
+
+//Build memory store operation that store 'reg' into stack.
+//NOTE: user have to assign physical register manually if there is
+//new OR generated and need register allocation.
+void ARMCG::buildStoreAndAssignRegister(
+        SR * reg,
+        UINT offset,
+        ORList & ors,
+        IOC * cont)
+{
+    SR * sr_offset = genIntImm((HOST_INT)offset, false);
+    ORList tors;
+    buildStore(reg, genSP(), sr_offset, tors, cont);
+    switch (tors.get_elem_count()) {
+    case 1: break;
+    case 2: {
+        //add_i sr, SP, offset;
+        //store reg -> [sr];
+        OR * add = tors.get_head_nth(0);
+        ASSERT0(OR_code(add) == OR_add_i);
+        OR * st = tors.get_head_nth(1);
+        ASSERT0(OR_code(st) == OR_str);
+        SR * res = add->get_result(0);
+        ASSERT0(res && SR_phy_regid(res) == REG_UNDEF);
+
+        //Use scratch physical register.
+        renameResult(add, res, gen_r12(), false);
+        renameOpnd(st, res, gen_r12(), false);
+        break;
+    }
+    default: UNREACHABLE();
+    }
+    ors.append_tail(tors);
 }
 
 
@@ -1788,7 +1832,6 @@ bool ARMCG::isMultiResultOR(OR_TYPE ortype, UINT res_num)
     case OR_umlal:
     case OR_swpb:
     case OR_ldrd:
-    case OR_ldrd_i32:
        return true;
     default:;
     }
@@ -1811,7 +1854,7 @@ bool ARMCG::isMultiStore(OR_TYPE ortype, INT opnd_num)
         case OR_smull:
         case OR_smlal:
         case OR_strd:
-        case OR_strd_i10:
+        case OR_strd_i8:
             return true;
         default: break;
         }
@@ -1820,7 +1863,7 @@ bool ARMCG::isMultiStore(OR_TYPE ortype, INT opnd_num)
         case OR_smull:
         case OR_smlal:
         case OR_strd:
-        case OR_strd_i10:
+        case OR_strd_i8:
             return true;
         default: break;
         }
@@ -1834,7 +1877,6 @@ bool ARMCG::isMultiLoad(OR_TYPE ortype, INT res_num)
     if (res_num == -1) {
         switch (ortype) {
         case OR_ldrd:
-        case OR_ldrd_i32:
         case OR_ldm:
             return true;
         default:;
@@ -1842,7 +1884,6 @@ bool ARMCG::isMultiLoad(OR_TYPE ortype, INT res_num)
     } else if (res_num == 2) {
         switch (ortype) {
         case OR_ldrd:
-        case OR_ldrd_i32:
             return true;
         default:;
         }
@@ -2000,17 +2041,17 @@ INT ARMCG::computeMemByteSize(OR * o)
     }
     case OR_ldrb:
     case OR_ldrb_i12:
-    case OR_ldrsb_i12:
+    case OR_ldrsb_i8:
     case OR_strb:
     case OR_strb_i12:
         return 1;
     case OR_ldrh:
     case OR_ldrsh:
-    case OR_ldrh_i12:
-    case OR_ldrsh_i12:
+    case OR_ldrh_i8:
+    case OR_ldrsh_i8:
     case OR_strh:
     case OR_strsh:
-    case OR_strh_i12:
+    case OR_strh_i8:
         return 2;
     case OR_ldr:
     case OR_ldr_i12:
@@ -2018,9 +2059,8 @@ INT ARMCG::computeMemByteSize(OR * o)
     case OR_str_i12:
         return 4;
     case OR_ldrd:
-    case OR_ldrd_i32:
     case OR_strd:
-    case OR_strd_i10:
+    case OR_strd_i8:
         return 8;
     default: ASSERTN(0, ("Not memory opcode"));
     }
@@ -2055,191 +2095,374 @@ SLOT ARMCG::computeORSlot(OR const* o)
 }
 
 
+void ARMCG::expandFakeStore(IN OR * o, OUT IssuePackageList * ipl)
+{
+    ASSERT0(o && ipl);
+    OR_TYPE real_code = OR_UNDEF;
+    switch (OR_code(o)) {
+    case OR_str: real_code = OR_str_i12; break;
+    case OR_strd: real_code = OR_strd_i8; break;
+    case OR_strb: real_code = OR_strb_i12; break;
+    case OR_strh: real_code = OR_strh_i8; break;
+    default: UNREACHABLE();
+    }
+
+    SR * ofst = o->get_store_ofst();
+    ASSERT0(SR_is_int_imm(ofst));
+    if (isValidImmOpnd(real_code, SR_int_imm(ofst))) {
+        IssuePackage * ip = allocIssuePackage();
+        ip->set(SLOT_G, o);
+        ipl->append_tail(ip);
+        return;
+    }
+
+    // [base+ofst] = v;
+    //=>
+    // r12 = base+ofst;
+    // [r12+0] = v;
+    SR * base = o->get_store_base();
+    ORList ors;
+    IOC cont;
+    buildAdd(base, ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
+    ors.copyDbx(&OR_dbx(o));
+
+    ASSERT0(ors.get_elem_count() == 1);
+    OR * last = ors.get_tail();
+    ASSERT0(last && (OR_code(last) == OR_add ||
+                     OR_code(last) == OR_add_i));
+    last->set_result(0, gen_r12()); //replace result-register with r12.
+    for (OR * o2 = ors.get_head(); o2 != NULL; o2 = ors.get_next()) {
+        o2->set_pred(o->get_pred());
+    }
+    renameOpnd(o, base, gen_r12(), false);
+    renameOpnd(o, ofst, genIntImm(0, true), false);
+
+    if (OR_is_fake(last)) {
+        expandFakeOR(last, ipl);
+    } else {
+        IssuePackage * ip = allocIssuePackage();
+        ip->set(SLOT_G, last);
+        ipl->append_tail(ip);
+    }
+
+    OR_code(o) = real_code;
+    IssuePackage * ip2 = allocIssuePackage();
+    ip2->set(SLOT_G, o);
+    ipl->append_tail(ip2);
+    return;
+}
+
+
+void ARMCG::expandFakeSpadjust(IN OR * o, OUT IssuePackageList * ipl)
+{
+    SR * ofst = o->get_opnd(HAS_PREDICATE_REGISTER + 1);
+    ASSERT0(SR_is_int_imm(ofst));
+    ORList ors;
+    IOC cont;
+
+    // spadjust, SIZEOFSTACK
+    //=>
+    // sp = sp - SIZEOFSTACK
+    buildAdd(genSP(), ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
+    ors.copyDbx(&OR_dbx(o));
+
+    if (ors.get_elem_count() == 1) {
+        // add sr66 <--tp, sp, #Imm10
+        //=>
+        // add sp <--PRED, sp, #Imm10
+        OR * add = ors.get_head();
+        ASSERT0(add && SR_is_reg(add->get_result(0)));
+
+        add->set_pred(o->get_pred());
+        add->set_result(0, genSP());
+
+        if (OR_is_fake(add)) {
+            expandFakeOR(add, ipl);
+        }
+        return;
+    }
+    if (ors.get_elem_count() == 2) {
+        // movw_i sr65 <--tp, #108
+        // add sr66 <--tp, sp, sr65
+        //=>
+        // movw_i t <--tp, #108
+        // add sp <--tp, sp, t
+        ASSERT0(OR_is_movi(ors.get_head_nth(0)));
+        ASSERT0(OR_code(ors.get_head_nth(1)) == OR_add);
+
+        OR * movi = ors.get_head_nth(0);
+        SR * res = movi->get_result(0);
+        movi->set_mov_to(o->get_result(1));
+        ASSERT0(!OR_is_fake(movi));
+
+        OR * add = ors.get_head_nth(1);
+        renameOpnd(add, res, o->get_result(1), false);
+        add->set_result(0, genSP());
+
+        for (OR * o2 = ors.get_head(); o2 != NULL; o2 = ors.get_next()) {
+            IssuePackage * ip = allocIssuePackage();
+            o2->set_pred(o->get_pred());
+            ip->set(SLOT_G, o2);
+            ipl->append_tail(ip);
+        }
+        return;
+    }
+    if (ors.get_elem_count() == 3) {
+        // movw_i sr57 <--tp, #65428
+        // movt_i sr57 <--tp, #65535
+        // add sr58 <--tp, sp, sr57
+        //=>
+        // movw_i t <--tp, #65428
+        // movt_i t <--tp, #65535
+        // add sp <--tp, sp, t
+        ASSERT0(OR_is_movi(ors.get_head_nth(0)));
+        ASSERT0(OR_is_movi(ors.get_head_nth(1)));
+        ASSERT0(OR_code(ors.get_head_nth(2)) == OR_add);
+
+        OR * movi = ors.get_head_nth(0);
+        ASSERT0(!OR_is_fake(movi));
+
+        SR * res = movi->get_result(0);
+        movi->set_mov_to(o->get_result(1));
+        ors.get_head_nth(1)->set_mov_to(o->get_result(1));
+
+        OR * add = ors.get_head_nth(2);
+        renameOpnd(add, res, o->get_result(1), false);
+        add->set_result(0, genSP());
+
+        for (OR * o2 = ors.get_head(); o2 != NULL; o2 = ors.get_next()) {
+            IssuePackage * ip = allocIssuePackage();
+            o2->set_pred(o->get_pred());
+            ip->set(SLOT_G, o2);
+            ipl->append_tail(ip);
+        }
+        return;
+    }
+    UNREACHABLE();
+}
+
+
+void ARMCG::expandFakeLoad(IN OR * o, OUT IssuePackageList * ipl)
+{
+    ASSERT0(o && ipl);
+    OR_TYPE real_code = OR_UNDEF;
+    switch (OR_code(o)) {
+    case OR_ldr: real_code = OR_ldr_i12; break;
+    case OR_ldrb: real_code = OR_ldrb_i12; break;
+    case OR_ldrh: real_code = OR_ldrh_i8; break;
+    case OR_ldrsb: real_code = OR_ldrsb_i8; break;
+    case OR_ldrsh: real_code = OR_ldrsh_i8; break;
+    case OR_ldrd: real_code = OR_ldrd_i8; break;
+    default: UNREACHABLE();
+    }
+
+    SR * ofst = o->get_load_ofst();
+    ASSERT0(SR_is_int_imm(ofst));
+    if (isValidImmOpnd(real_code, SR_int_imm(ofst))) {
+        IssuePackage * ip = allocIssuePackage();
+        ip->set(SLOT_G, o);
+        ipl->append_tail(ip);
+        return;
+    }
+
+    //  sr1 = [sr3, ofst]
+    //=>
+    //  sr1 = sr3 + ofst
+    //  sr1 = [sr1]
+    SR * sr1 = o->get_result(0);
+    SR * sr3 = o->get_load_base();
+    ASSERT0(sr1 && sr3 && SR_is_reg(sr1) && SR_is_reg(sr3));
+    ASSERT0(ofst);
+
+    ORList ors;
+    IOC cont;
+    buildAdd(sr3, ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
+    ors.copyDbx(&OR_dbx(o));
+
+    ASSERT0(ors.get_elem_count() == 1);
+    OR * last = ors.remove_tail();
+    ASSERT0(last && (OR_code(last) == OR_add ||
+                     OR_code(last) == OR_add_i));
+    last->set_result(0, sr1); //replace result-register with sr1.
+    if (OR_is_fake(last)) {
+        expandFakeOR(last, ipl);
+    } else {
+        IssuePackage * ip = allocIssuePackage();
+        last->set_pred(o->get_pred());
+        ip->set(SLOT_G, last);
+        ipl->append_tail(ip);
+    }
+
+    OR_code(o) = real_code;
+    o->set_load_base(sr1);
+    o->set_load_ofst(genIntImm(0, false));
+    IssuePackage * ip = allocIssuePackage();
+    ip->set(SLOT_G, o);
+    ipl->append_tail(ip);
+}
+
+
+void ARMCG::expandFakeMultiLoad(IN OR * o, OUT IssuePackageList * ipl)
+{
+    //  sr1, sr2 = [sr3, ofst]
+    //=>
+    //  sr1 = sr3 + ofst
+    //  sr1, sr2 = [sr1]
+    SR * sr1 = o->get_result(0);
+    SR * sr2 = o->get_result(1);
+    SR * sr3 = o->get_load_base();
+    ASSERT0(sr1 && sr3 && SR_is_reg(sr1) && SR_is_reg(sr3));
+
+    SR * ofst = o->get_load_ofst();
+    ASSERT0(ofst);
+    ASSERT0(SR_is_int_imm(ofst));
+    if (isValidImmOpnd(OR_ldrd_i8, SR_int_imm(ofst))) {
+        OR_code(o) = OR_ldrd_i8;
+        IssuePackage * ip = allocIssuePackage();
+        ip->set(SLOT_G, o);
+        ipl->append_tail(ip);
+        return;
+    }
+
+    ORList ors;
+    IOC cont;
+    buildAdd(sr3, ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
+    ors.copyDbx(&OR_dbx(o));
+    ASSERT0(ors.get_elem_count() == 1);
+
+    OR * last = ors.remove_tail();
+    ASSERT0(last && (OR_code(last) == OR_add ||
+        OR_code(last) == OR_add_i));
+    last->set_result(0, sr1); //replace result-register with sr1.
+
+    //for (OR * o2 = ors.get_head(); o2 != NULL; o2 = ors.get_next()) {
+    //    IssuePackage * ip = allocIssuePackage();
+    //    o2->set_pred(o->get_pred());
+    //    ip->set(SLOT_G, o2);
+    //    ipl->append_tail(ip);
+    //}
+
+    if (OR_is_fake(last)) {
+        expandFakeOR(last, ipl);
+    } else {
+        IssuePackage * ip = allocIssuePackage();
+        last->set_pred(o->get_pred());
+        ip->set(SLOT_G, last);
+        ipl->append_tail(ip);
+    }
+
+    OR * ldrd = buildOR(OR_ldrd_i8, 2, 3, sr1, sr2,
+        o->get_pred(), sr1, genIntImm(0, false));
+    ldrd->set_pred(o->get_pred());
+    OR_dbx(ldrd).copy(OR_dbx(o));
+
+    IssuePackage * ip = allocIssuePackage();
+    ip->set(SLOT_G, ldrd);
+    ipl->append_tail(ip);
+}
+
+
+void ARMCG::expandFakeMov32(IN OR * o, OUT IssuePackageList * ipl)
+{
+    SR * to = o->get_mov_to();
+    SR * from = o->get_mov_from();
+    ASSERT0(to && from);
+    OR * low = NULL;
+    OR * high = NULL;
+
+    //Decompose OR_mov32_i into OR_movw_i and OR_movt_i.
+    if (SR_type(from) == SR_INT_IMM) {
+        // mov32 rd = imm
+        //=>
+        // movw rd, first_half_part(imm)
+        // movt rd, second_half_part(imm)
+        low = genOR(OR_movw_i);
+        low->set_mov_to(to);
+        low->set_mov_from(genIntImm(
+            (HOST_INT)(SR_int_imm(from) & 0xFFFF), true));
+        low->set_pred(o->get_pred());
+
+        high = genOR(OR_movt_i);
+        high->set_mov_to(to);
+        high->set_mov_from(genIntImm(
+            (HOST_INT)((SR_int_imm(from) >> 16) & 0xFFFF), true));
+        high->set_pred(o->get_pred());
+    } else if (SR_type(from) == SR_VAR) {
+        // mov32 rd = SYM
+        //=>
+        // movw rd, SYM
+        // movt rd, SYM
+        low = genOR(OR_movw_i);
+        low->set_mov_to(to);
+        low->set_mov_from(genVAR(SR_var(from)));
+        low->set_pred(o->get_pred());
+
+        high = genOR(OR_movt_i);
+        high->set_mov_to(to);
+        high->set_mov_from(genVAR(SR_var(from)));
+        high->set_pred(o->get_pred());
+    } else {
+        UNREACHABLE();
+    }
+
+    ASSERT0(low && high);
+    OR_dbx(low).copy(OR_dbx(o));
+    OR_dbx(high).copy(OR_dbx(o));
+    IssuePackage * ip = allocIssuePackage();
+    ip->set(SLOT_G, low);
+    ipl->append_tail(ip);
+    ip = allocIssuePackage();
+    ip->set(SLOT_G, high);
+    ipl->append_tail(ip);
+}
+
+
 void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
 {
     ASSERT0(OR_is_fake(o) && ipl);
     switch (OR_code(o)) {
-    case OR_strd: {
-        SR * ofst = o->get_store_ofst();
-        ASSERT0(SR_is_imm(ofst));
-        if (!isValidImm(8, SR_int_imm(ofst))) {
-            SR * base = o->get_store_base();
-            ORList ors;
-            IOC cont;
-            buildAdd(base, ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
-            OR * last = ors.get_tail();
-            ASSERT0(last && (OR_code(last) == OR_add ||
-                             OR_code(last) == OR_add_i));
-            last->set_result(0, gen_r12()); //replace result-register with r12.
-            renameOpnd(o, base, gen_r12(), false);
-            renameOpnd(o, ofst, genIntImm(0, true), false);            
-
-            IssuePackage * ip = allocIssuePackage();
-            ip->set(SLOT_G, last);
-            ipl->append_tail(ip);
-            
-            IssuePackage * ip2 = allocIssuePackage();
-            ip2->set(SLOT_G, o);
-            ipl->append_tail(ip2);
-
-            for (OR * o2 = ors.get_head(); o2 != NULL; o2 = ors.get_next()) {
-                o2->set_pred(o->get_pred());
-            }
-        } else {
-            IssuePackage * ip = allocIssuePackage();
-            ip->set(SLOT_G, o);
-            ipl->append_tail(ip);
-        }
-        break;
-    }        
-    case OR_spadjust: {
-        SR * ofst = o->get_opnd(HAS_PREDICATE_REGISTER + 1);
-        ASSERT0(SR_is_int_imm(ofst));
-        ORList ors;
-        IOC cont;
-
-        //{sp,t = sp - SIZEOFSTACK}
-        buildAdd(genSP(), ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
-        if (ors.get_elem_count() == 1) {
-            //add sr66 <--tp(AL)(RF_P), sp(r13)(RF_R), #Imm12
-            OR * add = ors.get_head();
-            ASSERT0(add && SR_is_reg(add->get_result(0)));
-            add->set_result(0, genSP());
-        } else if (ors.get_elem_count() == 2) {
-            //movw_i sr65 <--tp(AL)(RF_P), #108
-            //add sr66 <--tp(AL)(RF_P), sp(r13)(RF_R), sr65
-            //=>
-            //movw_i t <--tp(AL)(RF_P), #108
-            //add sp <--tp(AL)(RF_P), sp(r13)(RF_R), t
-            ASSERT0(OR_is_movi(ors.get_head_nth(0)));
-            ASSERT0(OR_code(ors.get_head_nth(1)) == OR_add);
-
-            OR * movi = ors.get_head_nth(0);
-            SR * res = movi->get_result(0);
-            movi->set_mov_to(o->get_result(1));
-
-            OR * add = ors.get_head_nth(1);
-            renameOpnd(add, res, o->get_result(1), false);
-            add->set_result(0, genSP());
-        } else if (ors.get_elem_count() == 3) {
-            //[id:101] movw_i sr57 <--tp(AL)(RF_P), #65428
-            //[id:102] movt_i sr57 <--tp(AL)(RF_P), #65535
-            //[id:103] add sr58 <--tp(AL)(RF_P), sp(r13)(RF_R), sr57
-            //=>
-            //[id:101] movw_i t <--tp(AL)(RF_P), #65428
-            //[id:102] movt_i t <--tp(AL)(RF_P), #65535
-            //[id:103] add sp <--tp(AL)(RF_P), sp(r13)(RF_R), t
-            ASSERT0(OR_is_movi(ors.get_head_nth(0)));
-            ASSERT0(OR_is_movi(ors.get_head_nth(1)));
-            ASSERT0(OR_code(ors.get_head_nth(2)) == OR_add);
-
-            OR * movi = ors.get_head_nth(0);
-            SR * res = movi->get_result(0);
-            movi->set_mov_to(o->get_result(1));
-            ors.get_head_nth(1)->set_mov_to(o->get_result(1));
-
-            OR * add = ors.get_head_nth(2);
-            renameOpnd(add, res, o->get_result(1), false);
-            add->set_result(0, genSP());
-        } else {
-            UNREACHABLE();
-        }
-
-        for (OR * o2 = ors.get_head(); o2 != NULL; o2 = ors.get_next()) {
-            IssuePackage * ip = allocIssuePackage();
-            o2->set_pred(o->get_pred());
-            ip->set(SLOT_G, o2);
-            ipl->append_tail(ip);
-        }
-        break;
-    }
-    case OR_ldrd_i32: {
-        //  sr1, sr2 = [sr3, ofst]
-        //=>
-        //  sr1 = sr3 + ofst
-        //  sr1, sr2 = [sr1]
-        SR * sr1 = o->get_result(0);
-        SR * sr2 = o->get_result(1);
-        SR * sr3 = o->get_load_base();
-        SR * ofst = o->get_load_ofst();
-        ASSERT0(sr1 && sr3 && SR_is_reg(sr1) && SR_is_reg(sr3));
-        ASSERT0(ofst);
-
-        ORList ors;
-        IOC cont;
-        buildAdd(sr3, ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
-        OR * last = ors.get_tail();
-        ASSERT0(last && (OR_code(last) == OR_add ||
-                         OR_code(last) == OR_add_i));
-        last->set_result(0, sr1); //replace result-register with sr1.
-        for (OR * o2 = ors.get_head(); o2 != NULL; o2 = ors.get_next()) {
-            IssuePackage * ip = allocIssuePackage();
-            o2->set_pred(o->get_pred());
-            ip->set(SLOT_G, o2);
-            ipl->append_tail(ip);
-        }
-
-        OR * ldrd = buildOR(OR_ldrd_i10, 2, 3, sr1, sr2,
-            o->get_pred(), sr1, genIntImm(0, true));
-        ldrd->set_pred(o->get_pred());
-
-        IssuePackage * ip = allocIssuePackage();
-        ip->set(SLOT_G, ldrd);
-        ipl->append_tail(ip);
-        break;
-    }
-    case OR_mov32_i: {
-        SR * to = o->get_mov_to();
-        SR * from = o->get_mov_from();
-        ASSERT0(to && from);
-        OR * low = NULL;
-        OR * high = NULL;
-        //Decompose OR_mov32_i into OR_movw_i and OR_movt_i.
-        if (SR_type(from) == SR_INT_IMM) {
-            low = genOR(OR_movw_i);
-            low->set_mov_to(to);
-            low->set_mov_from(genIntImm(
-                (HOST_INT)(SR_int_imm(from) & 0xFFFF), true));
-            low->set_pred(o->get_pred());
-
-            high = genOR(OR_movt_i);
-            high->set_mov_to(to);
-            high->set_mov_from(genIntImm(
-                (HOST_INT)((SR_int_imm(from) >> 16) & 0xFFFF), true));
-            high->set_pred(o->get_pred());
-        } else if (SR_type(from) == SR_VAR) {
-            low = genOR(OR_movw_i);
-            low->set_mov_to(to);
-            low->set_mov_from(genVAR(SR_var(from)));
-            low->set_pred(o->get_pred());
-
-            high = genOR(OR_movt_i);
-            high->set_mov_to(to);
-            high->set_mov_from(genVAR(SR_var(from)));
-            high->set_pred(o->get_pred());
-        } else {
-            UNREACHABLE();
-        }
-
-        ASSERT0(low && high);
-        IssuePackage * ip = allocIssuePackage();
-        ip->set(SLOT_G, low);
-        ipl->append_tail(ip);
-        ip = allocIssuePackage();
-        ip->set(SLOT_G, high);
-        ipl->append_tail(ip);
-        break;
-    }
+    case OR_str:
+    case OR_strd:
+    case OR_strb:
+    case OR_strsb:
+    case OR_strh:
+    case OR_strsh:
+       expandFakeStore(o, ipl);
+       break;
+    case OR_spadjust:
+       expandFakeSpadjust(o, ipl);
+       break;
+    case OR_ldr:
+    case OR_ldrb:
+    case OR_ldrsb:
+    case OR_ldrh:
+    case OR_ldrsh:
+       expandFakeLoad(o, ipl);
+       break;
+    case OR_ldrd:
+       expandFakeMultiLoad(o, ipl);
+       break;
+    case OR_mov32_i:
+       expandFakeMov32(o, ipl);
+       break;
+    case OR_add_i:
+    case OR_sub_i:
     case OR_lsr_i: {
-        SR * shift_size = o->get_opnd(2);
-        ASSERT0(SR_is_imm(shift_size));
-        if (!isValidImmOpnd(OR_code(o), 2, SR_int_imm(shift_size))) {
+        SR * imm = o->get_opnd(2);
+        ASSERT0(SR_is_imm(imm));
+        if (!isValidImmOpnd(OR_code(o), 2, SR_int_imm(imm))) {
+            // rd = rs + imm;
+            //=>
+            // r12 = imm;
+            // rd = rs + r12;
             ORList ors;
             IOC cont;
-            buildMove(gen_r12(), shift_size, ors, &cont);
+            buildMove(gen_r12(), imm, ors, &cont);
             OR * mv = ors.get_tail();
             ASSERT0(mv && ors.get_elem_count() == 1);
             mv->set_pred(o->get_pred());
+            OR_dbx(mv).copy(OR_dbx(o));
+
             if (OR_is_fake(mv)) {
                 expandFakeOR(mv, ipl);
             } else {
@@ -2248,10 +2471,18 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
                 ipl->append_tail(ip);
             }
 
-            //Change OR_lsr_i to OR_lsr.
-            renameOpnd(o, shift_size, gen_r12(), false);
-            OR_code(o) = OR_lsr;
-            
+            renameOpnd(o, imm, gen_r12(), false);
+
+            //Change OR code from OR_xxx_i to OR_xxx.
+            OR_TYPE newort = OR_UNDEF;
+            switch (OR_code(o)) {
+            case OR_add_i: newort = OR_add; break;
+            case OR_sub_i: newort = OR_sub; break;
+            case OR_lsr_i: newort = OR_lsr; break;
+            default: UNREACHABLE();
+            }
+            OR_code(o) = newort;
+
             IssuePackage * ip2 = allocIssuePackage();
             ip2->set(SLOT_G, o);
             ipl->append_tail(ip2);

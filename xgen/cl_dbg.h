@@ -39,6 +39,6 @@ public:
     //Do some prepare work before print source file.
     virtual void doPrepareWorkBeforePrint() { m_cur_lineno = 0; }
 
-    virtual void printSrcLine(Dbx const* dbx);
+    virtual void printSrcLine(Dbx const* dbx, PrtCtx * ctx);
 };
 

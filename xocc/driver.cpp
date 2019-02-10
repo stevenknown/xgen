@@ -80,7 +80,7 @@ INT report_location(CHAR const* file, INT line)
 #define WARN(parmlist)
 #endif
 
-void CLDbxMgr::printSrcLine(Dbx const* dbx)
+void CLDbxMgr::printSrcLine(Dbx const* dbx, PrtCtx * ctx)
 {
     if (g_tfile == NULL) { return; }
 
@@ -94,7 +94,11 @@ void CLDbxMgr::printSrcLine(Dbx const* dbx)
 
     if (lineno == 0) {
         //No line number info recorded.
-        note("\n[0]\n");
+        if (ctx != NULL && ctx->prefix != NULL) {
+            note("\n%s[0]\n", ctx->prefix);
+        } else {
+            note("\n[0]\n");
+        }
         return;
     }
 
@@ -102,7 +106,11 @@ void CLDbxMgr::printSrcLine(Dbx const* dbx)
         ASSERTN(m_cur_lineno < OFST_TAB_LINE_SIZE, ("unexpected src line"));
         fseek(g_hsrc, g_ofst_tab[m_cur_lineno], SEEK_SET);
         if (fgets(g_cur_line, g_cur_line_len, g_hsrc) != NULL) {
-            note("\n\n[%u]%s", m_cur_lineno, g_cur_line);
+            if (ctx != NULL && ctx->prefix != NULL) {
+                note("\n\n%s[%u]%s", ctx->prefix, m_cur_lineno, g_cur_line);
+            } else {
+                note("\n\n[%u]%s", m_cur_lineno, g_cur_line);
+            }
         }
     }
 }
@@ -676,7 +684,7 @@ static CLRegionMgr * initRegionMgr()
     //Retain CFG, DU info for IPA used.
     g_retain_pass_mgr_for_region = true;
     g_compute_region_imported_defuse_md = true;
-    g_compute_du_chain = false;
+    g_compute_classic_du_chain = false;
     g_do_refine = true;
     g_do_rp = false;
     g_do_dce = false;

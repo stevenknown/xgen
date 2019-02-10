@@ -46,7 +46,7 @@ void ARMLifeTimeMgr::considerSpecialConstrains(
     ARMCG * armcg = (ARMCG*)m_cg;
     switch (OR_code(o)) {
     case OR_strd:
-    case OR_strd_i10: {
+    case OR_strd_i8: {
         //First Rs must be even number register.
         SR * low = o->get_store_val(0);
         SR * high = o->get_store_val(1);
@@ -70,8 +70,7 @@ void ARMLifeTimeMgr::considerSpecialConstrains(
         break;
     }
     case OR_ldrd:
-    case OR_ldrd_i32:
-    case OR_ldrd_i10: {
+    case OR_ldrd_i8: {
         //First Rd must be even number register.
         SR * low = o->get_result(PAIR_LOW_RES_IDX);
         SR * high = o->get_result(PAIR_HIGH_RES_IDX);

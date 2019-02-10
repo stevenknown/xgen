@@ -152,8 +152,8 @@ public:
     virtual ~IR2OR() {}
 
     virtual void convertLabel(IRBB const* bb, OUT ORList & ors, IN IOC * cont);
-    virtual void convertIload(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    virtual void convertIstore(IR const* ir, OUT ORList & ors, IN IOC * cont);
+    virtual void convertILoad(IR const* ir, OUT ORList & ors, IN IOC * cont);
+    virtual void convertIStore(IR const* ir, OUT ORList & ors, IN IOC * cont);
     virtual void convertLoadVar(IR const* ir, OUT ORList & ors, IN IOC * cont);
     virtual void convertId(IR const* ir, OUT ORList & ors, IN IOC * cont);
     virtual void convertStorePR(IR const* ir, OUT ORList & ors, IN IOC * cont);
@@ -197,7 +197,7 @@ public:
             OUT ORList & ors,
             IN IOC * cont) = 0;
     virtual void convertCall(IR const* ir, OUT ORList & ors, IN IOC * cont) = 0;
-    virtual void convertIcall(
+    virtual void convertICall(
             IR const* ir,
             OUT ORList & ors,
             IN IOC * cont) = 0;
@@ -390,11 +390,6 @@ public:
 
     //Return true if whole ir has been passed through registers, otherwise
     //return false.
-    void passArgThroughStack(
-            IR const* ir,
-            ArgDescMgr * argdesc,
-            OUT ORList & ors,
-            IN IOC * cont);
     void processRealParamsThroughRegister(
             IR const* ir,
             ArgDescMgr * argdesc,

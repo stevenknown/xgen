@@ -113,11 +113,11 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
         return buf.buf;
     case OR_ldrb:
     case OR_ldrb_i12:
-    case OR_ldrsb_i12:
+    case OR_ldrsb_i8:
     case OR_ldrh:
     case OR_ldrsh:
-    case OR_ldrh_i12:
-    case OR_ldrsh_i12:
+    case OR_ldrh_i8:
+    case OR_ldrsh_i8:
     case OR_ldr:
     case OR_ldr_i12:
         buf.strcat("%s, ", o->get_load_val(0)->getAsmName(tbuf, m_cg));
@@ -130,7 +130,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     case OR_strb_i12:
     case OR_strh:
     case OR_strsh:
-    case OR_strh_i12:
+    case OR_strh_i8:
     case OR_str:
     case OR_str_i12:
         buf.strcat("%s, ", o->get_store_val()->getAsmName(tbuf, m_cg));
@@ -140,8 +140,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
         buf.strcat("%s]", o->get_store_ofst()->getAsmName(tbuf, m_cg));
         return buf.buf;
     case OR_ldrd:
-    case OR_ldrd_i10:
-    case OR_ldrd_i32:
+    case OR_ldrd_i8:
         buf.strcat("%s, ", o->get_load_val(0)->getAsmName(tbuf, m_cg));
         tbuf.clean();
         buf.strcat("%s, ", o->get_load_val(1)->getAsmName(tbuf, m_cg));
@@ -151,7 +150,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
         buf.strcat("%s]", o->get_load_ofst()->getAsmName(tbuf, m_cg));
         return buf.buf;
     case OR_strd:
-    case OR_strd_i10:
+    case OR_strd_i8:
         buf.strcat("%s, ", o->get_store_val(0)->getAsmName(tbuf, m_cg));
         tbuf.clean();
         buf.strcat("%s, ", o->get_store_val(1)->getAsmName(tbuf, m_cg));
@@ -367,11 +366,21 @@ void ARMAsmPrinter::printCodeSequentially(
 
     CHAR const* format = "%s%19s";
     CHAR const* code_indent = "";
+    DbxMgr::PrtCtx prtctx;
+    prtctx.prefix = "#";
 
     for (IssuePackage const* ip = ipl->get_head();
          ip != NULL; ip = ipl->get_next()) {
         fprintf(asmh, "\n");
         OR * o = ip->get(SLOT_G);
+
+        FILE * old = g_tfile;
+        g_tfile = asmh;
+        if (xoc::g_dbx_mgr != NULL && g_cg_dump_src_line) {
+            xoc::g_dbx_mgr->printSrcLine(&OR_dbx(o), &prtctx);
+        }
+        g_tfile = old;
+
         if (o != NULL) {
             buf.clean();
             fprintf(asmh, format, code_indent, printOR(o, buf));

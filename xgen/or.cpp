@@ -150,7 +150,7 @@ void OR::dump(CG * cg) const
 CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
 {
     if (xoc::g_dbx_mgr != NULL && g_cg_dump_src_line) {
-        xoc::g_dbx_mgr->printSrcLine(&OR_dbx(this));
+        xoc::g_dbx_mgr->printSrcLine(&OR_dbx(this), NULL);
     }
 
     OR * pthis = const_cast<OR*>(this);
@@ -367,7 +367,7 @@ OR * ORMgr::getOR(UINT id)
 }
 
 
-OR * ORMgr::gen_or(OR_TYPE ort, CG * cg)
+OR * ORMgr::genOR(OR_TYPE ort, CG * cg)
 {
     OR * o = m_free_or_list.remove_head();
     if (o == NULL) {
@@ -389,7 +389,7 @@ OR * ORMgr::gen_or(OR_TYPE ort, CG * cg)
 }
 
 
-void ORMgr::free_or(OR * o)
+void ORMgr::freeOR(OR * o)
 {
     UINT i;
     ASSERT0(m_sr_mgr);
@@ -414,10 +414,10 @@ void ORMgr::free_or(OR * o)
 }
 
 
-void ORMgr::free_or_list(IN ORList & ors)
+void ORMgr::freeORList(IN ORList & ors)
 {
     for (OR * o = ors.get_head(); o != NULL; o = ors.get_next()) {
-        free_or(o);
+        freeOR(o);
     }
 }
 //END ORMgr

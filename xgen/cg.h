@@ -148,6 +148,7 @@ public:
     ArgDesc * addDesc(bool is_record_addr,
                       SR * value_or_addr,
                       xoc::Dbx const* dbx,
+                      UINT align,
                       UINT arg_size,
                       UINT src_ofst)
     {
@@ -161,7 +162,8 @@ public:
         desc->arg_dbx = dbx;
         desc->arg_size = arg_size;
         desc->src_ofst = src_ofst;
-        desc->tgt_ofst = getArgStartAddrOnStack(); //getArgSectionSize();
+        desc->tgt_ofst = (UINT)xcom::ceil_align(
+            getArgStartAddrOnStack(), align);
         updatePassedArgInStack(arg_size);
         return desc;
     }
@@ -169,16 +171,18 @@ public:
     ArgDesc * addValueDesc(
             SR * src_value,
             xoc::Dbx const* dbx,
+            UINT align,
             UINT arg_size,
             UINT src_ofst)
-    { return addDesc(false, src_value, dbx, arg_size, src_ofst); }
+    { return addDesc(false, src_value, dbx, align, arg_size, src_ofst); }
 
     ArgDesc * addAddrDesc(
             SR * src_addr,
             xoc::Dbx const* dbx,
+            UINT align,
             UINT arg_size,
             UINT src_ofst)
-    { return addDesc(true, src_addr, dbx, arg_size, src_ofst); }
+    { return addDesc(true, src_addr, dbx, align, arg_size, src_ofst); }
 
     //Allocate dedicated argument register.
     SR * allocArgRegister(CG * cg);
@@ -198,6 +202,9 @@ public:
     }
     ArgDesc * getCurrentDesc() { return m_arg_list.get_head(); }
 
+    //Return the number of available physical reigsters.
+    UINT getNumOfAvailArgReg() const
+    { return getArgRegSet()->get_elem_count(); }
     RegSet const* getArgRegSet() const { return &m_argregs; }
     UINT getPassedRegisterArgSize() const
     { return m_passed_arg_in_register_byte_size; }
@@ -488,7 +495,7 @@ public:
     //Function-Call may violate SP,FP,GP,
     //RFLAG register, return-value register,
     //return address register.
-    virtual void buildIcall(
+    virtual void buildICall(
         SR * callee,
         UINT ret_val_size,
         OUT ORList & ors,
@@ -624,6 +631,18 @@ public:
         bool is_signed,
         OUT ORList & ors,
         IN OUT IOC * cont) = 0;
+    //Build memory store operation that store 'reg' into stack.
+    //NOTE: user have to assign physical register manually if there is
+    //new OR generated and need register allocation.
+    //reg: register to be stored.
+    //offset: bytesize offset related to SP.
+    //ors: record output.
+    //cont: context.
+    virtual void buildStoreAndAssignRegister(
+        SR * reg,
+        UINT offset,
+        OUT ORList & ors,
+        IN IOC * cont);
 
     void constructORBBList(IN ORList  & or_list);
     void computeEntryAndExit(
@@ -693,6 +712,18 @@ public:
     virtual CLUST computeClusterOfBusOR(OR * o);
     virtual CLUST computeORCluster(OR const* o) const;
     virtual SLOT computeORSlot(OR const* o);
+
+    //Compute the stack alignment for argument with given bytesize.
+    //This alignment will affect the argument's byte offset to SP.
+    //Return arguments alignment.
+    //e.g:If argsz is less than 4 bytes, the alignment will be 4; if argsz is
+    //    more than 8 bytes, the alignments will be 8.
+    virtual UINT computeArgAlign(UINT argsz) const
+    {
+        DUMMYUSE(argsz);
+        ASSERTN(0, ("Target Dependent Code"));
+        return 0;
+    }
     xoc::VAR const* computeSpillVar(OR * o);
 
     //Change the function unit and related cluster of 'o'.
@@ -820,7 +851,7 @@ public:
     UINT getMaxArgSectionSize() const { return CG_max_real_arg_size(this); }
     xoc::VAR * genTempVar(xoc::Type const* type, UINT align, bool func_level);
     OR * getOR(UINT id);
-    OR * genOR(OR_TYPE ort) { return m_cgmgr->getORMgr()->gen_or(ort, this); }
+    OR * genOR(OR_TYPE ort) { return m_cgmgr->getORMgr()->genOR(ort, this); }
     Section * getRodataSection() { return &m_rodata_sect; }
     Section * getCodeSection() { return &m_code_sect; }
     Section * getDataSection() { return &m_data_sect; }
@@ -886,6 +917,7 @@ public:
     //Return true if specified immediate operand is in valid range.
     bool isValidImmOpnd(OR_TYPE ot, UINT idx, HOST_INT imm) const;
     bool isValidImmOpnd(OR_TYPE ot, HOST_INT imm) const;
+    bool isValidImmOpnd(OR const* o) const;
     //Return true if specified immediate in
     //valid range that described with bitsize.
     bool isValidImm(UINT bitsize, HOST_INT imm) const;
@@ -1170,10 +1202,6 @@ public:
 
     void setCluster(ORList & ors, CLUST clust);
     void setComputeSectOffset(bool doit) { m_is_compute_sect_offset = doit; }
-    void storeParameterAfterSpadjust(
-        UINT param_start,
-        List<ORBB*> * entry_lst,
-        List<VAR const*> * param_lst);
     void storeRegisterParameterBackToStack(
         List<ORBB*> * entry_lst,
         UINT param_start);
@@ -1197,7 +1225,8 @@ public:
 
     void localize();
 
-    bool verify();
+    bool verifyPackageList();
+    bool verifyOR(OR const* o);
 
     void updateMaxCalleeArgSize(UINT maxsize)
     {

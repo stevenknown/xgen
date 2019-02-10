@@ -246,7 +246,7 @@ void IR2OR::convertGeneralLoad(IR const* ir, OUT ORList & ors, IN IOC * cont)
 }
 
 
-void IR2OR::convertIstore(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void IR2OR::convertIStore(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
     ASSERT0(ir && ir->is_ist());
     ORList tors;
@@ -309,7 +309,7 @@ void IR2OR::convertIstore(IR const* ir, OUT ORList & ors, IN IOC * cont)
 }
 
 
-void IR2OR::convertIload(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void IR2OR::convertILoad(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
     ASSERT0(ir != NULL && ir->is_ild());
     IOC tmp_cont;
@@ -420,7 +420,7 @@ void IR2OR::convertGeneralLoadPR(IR const* ir, OUT ORList & ors, IN IOC * cont)
 }
 
 
-//Copy 'src' to 'tgt'.
+//Copy 'src' to 'tgt's PR'.
 //'tgt': must be PR.
 //'src': register or imm.
 void IR2OR::convertCopyPR(
@@ -430,9 +430,8 @@ void IR2OR::convertCopyPR(
         IN IOC * cont)
 {
     ASSERT0(tgt->isReadPR() || tgt->isWritePR() || tgt->isCallStmt());
-
     UINT tgtprno = tgt->getPrno();
-    ASSERT0(tgtprno > 0);
+    ASSERT0(tgtprno != PRNO_UNDEF);
     SR * tgtx = m_cg->mapPR2SR(tgtprno);
     if (tgtx != NULL) {
         ASSERT0(src != NULL);
@@ -659,38 +658,6 @@ void IR2OR::convertBinaryOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
 }
 
 
-void IR2OR::passArgThroughStack(
-        IR const* ir,
-        IN OUT ArgDescMgr * argdescmgr,
-        OUT ORList & ors,
-        IN IOC * cont)
-{
-    ASSERT0(argdescmgr);
-    //Prepare the SR vector and Dbx vector.
-    IOC tmp_cont;
-    if (ir->getTypeSize(m_tm) <= 8) {
-        convertGeneralLoad(ir, ors, &tmp_cont);
-
-        //This SR will be stored to stack to transfer parameter value.
-        SR * arg_val = tmp_cont.get_reg(0);
-        ASSERT0(arg_val && (arg_val->getByteSize() >= ir->getTypeSize(m_tm)));
-
-        argdescmgr->addValueDesc(arg_val,
-            ::getDbx(ir), ir->getTypeSize(m_tm), 0);
-    } else {
-        //Memory block duplication.
-        convertGeneralLoad(ir, ors, &tmp_cont);
-
-        //This SR will be stored to stack to transfer parameter value.
-        SR * arg_val_addr = tmp_cont.get_addr();
-        ASSERT0(arg_val_addr);
-        argdescmgr->addAddrDesc(arg_val_addr,
-            ::getDbx(ir), ir->getTypeSize(m_tm), 0);
-    }
-    m_cg->storeArgToStack(argdescmgr, ors, cont);
-}
-
-
 void IR2OR::flattenSRVec(IOC const* cont, Vector<SR*> * vec)
 {
     ASSERT0(cont && vec);
@@ -722,6 +689,7 @@ void IR2OR::processRealParamsThroughRegister(
         OUT ORList & ors,
         IN IOC *)
 {
+    ORList tors;
     //ASSERT0(tmGetRegSetOfArgument() &&
     //    tmGetRegSetOfArgument()->get_elem_count() != 0);
     for (; ir != NULL; ir = ir->get_next()) {
@@ -741,8 +709,11 @@ void IR2OR::processRealParamsThroughRegister(
         }
 
         tcont.clean();
+        tors.clean();
         m_cg->passArg(argval, argaddr, irsize,
-            argdescmgr, ors, &tcont);
+            argdescmgr, tors, &tcont);
+        tors.copyDbx(ir);
+        ors.append_tail(tors);
     }
 }
 
@@ -1063,11 +1034,11 @@ void IR2OR::convert(IR const* ir, OUT ORList & ors, IN IOC * cont)
         convertStorePR(ir, tors, cont);
         break;
     case IR_ILD:
-        convertIload(ir, tors, cont);
+        convertILoad(ir, tors, cont);
         ASSERT0(cont->get_reg(0) || cont->get_addr());
         break;
     case IR_IST:
-        convertIstore(ir, tors, cont);
+        convertIStore(ir, tors, cont);
         break;
     case IR_LDA:   // &a get address of 'a'
         convertLda(ir, tors, cont);
@@ -1077,7 +1048,7 @@ void IR2OR::convert(IR const* ir, OUT ORList & ors, IN IOC * cont)
         convertCall(ir, tors, cont);
         break;
     case IR_ICALL:
-        convertIcall(ir, tors, cont);
+        convertICall(ir, tors, cont);
         break;
     case IR_ASR:
         convertASR(ir, tors, cont);
@@ -1196,6 +1167,7 @@ void IR2OR::convert(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
 void IR2OR::convertIRBBListToORList(OUT ORList & or_list)
 {
+    START_TIMER(t, "Convert IR to OR");
     ASSERT0(m_ru);
     BBList * ir_bb_list = m_ru->getBBList();
     ASSERT0(ir_bb_list);
@@ -1210,6 +1182,7 @@ void IR2OR::convertIRBBListToORList(OUT ORList & or_list)
             convert(ct->val(), or_list, &cont);
         }
     }
+    END_TIMER(t, "Convert IR to OR");
 }
 
 } //namespace xgen

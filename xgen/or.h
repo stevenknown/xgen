@@ -447,11 +447,10 @@ public:
     virtual ~ORList() {}
     void copyDbx(IR const* ir)
     {
+        ASSERT0(ir);
         if (IR_ai(ir) == NULL) { return; }
-
         DbxAttachInfo * da = (DbxAttachInfo*)IR_ai(ir)->get(AI_DBX);
         if (da == NULL) { return; }
-
         for (OR * o = get_head(); o != NULL; o = get_next()) {
             OR_dbx(o).copy(da->dbx);
         }
@@ -459,6 +458,7 @@ public:
 
     void copyDbx(Dbx const* dbx)
     {
+        ASSERT0(dbx);
         for (OR * o = get_head(); o != NULL; o = get_next()) {
             OR_dbx(o).copy(*dbx);
         }
@@ -466,6 +466,7 @@ public:
 
     void set_pred(IN SR * pred)
     {
+        ASSERT0(pred);
         for (OR * o = get_head(); o != NULL; o = get_next()) {
             o->set_pred(pred);
         }
@@ -494,9 +495,9 @@ public:
     virtual OR * allocOR();
 
     OR * getOR(UINT id);
-    virtual OR * gen_or(OR_TYPE ort, CG * cg);
-    virtual void free_or(IN OR * o);
-    virtual void free_or_list(IN ORList & o);
+    virtual OR * genOR(OR_TYPE ort, CG * cg);
+    virtual void freeOR(IN OR * o);
+    virtual void freeORList(IN ORList & o);
 };
 //END ORMgr
 

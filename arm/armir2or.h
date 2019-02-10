@@ -47,7 +47,11 @@ protected:
             IN IOC * cont);
     void convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont);
 
-    void getResultPredByIRTYPE(IR_TYPE code, SR ** truepd, SR ** falsepd);
+    void getResultPredByIRTYPE(
+            IR_TYPE code,
+            SR ** truepd,
+            SR ** falsepd,
+            bool is_signed);
     ARMCG * getCG() { return (ARMCG*)m_cg; }
 
     VAR const* fp2fp(IR const* tgt, IR const* src);
@@ -69,7 +73,7 @@ public:
             OUT ORList & ors,
             IN IOC * cont);
     virtual void convertLda(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    virtual void convertIcall(IR const* ir, OUT ORList & ors, IN IOC * cont)
+    virtual void convertICall(IR const* ir, OUT ORList & ors, IN IOC * cont)
     { convertCall(ir, ors, cont); }
     virtual void convertCall(IR const* ir,    OUT ORList & ors, IN IOC * cont);
     virtual void convertDiv(IR const* ir, OUT ORList & ors, IN IOC * cont);
@@ -90,5 +94,13 @@ public:
             IN SR * opnd0,
             IN SR * opnd1,
             bool is_signed);
+
+    void recordRelationOpResult(
+            IR const* ir,
+            SR * truepd,
+            SR * falsepd,
+            SR * result_pred,
+            OUT ORList & ors,
+            IN OUT IOC * cont);
 };
 #endif

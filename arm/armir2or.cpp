@@ -81,7 +81,7 @@ void ARMIR2OR::convertBinaryOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
         break;
     case IR_SUB:
         getCG()->buildSub(opnd0, opnd1,
-            BIN_opnd0(ir)->getTypeSize(m_tm), ir->is_signed(), ors, cont);
+            BIN_opnd0(ir)->getTypeSize(m_tm), ir->is_signed(), tors, cont);
         tors.copyDbx(ir);
         ors.append_tail(tors);
         break;
@@ -152,6 +152,9 @@ void ARMIR2OR::convertReturnValue(IR const* ir, OUT ORList & ors, IN IOC * cont)
     if (ir == NULL) { return; }
     ASSERTN(ir->get_next() == NULL, ("ARM only support C language."));
     ASSERT0(ir->isCallStmt());
+    if (!ir->hasReturnValue()) {
+        return;
+    }
     IOC tmp_cont;
     SR * retv = NULL;
     if (ir->getTypeSize(m_tm) <= 4) {
@@ -210,7 +213,7 @@ void ARMIR2OR::convertCall(IR const* ir, OUT ORList & ors, IN IOC * cont)
             convertGeneralLoad(CVT_exp(callee), tors, &tc);
         }
         SR * tgtsr = tc.get_reg(0);
-        getCG()->buildIcall(tgtsr, retv_sz, tors, cont);
+        getCG()->buildICall(tgtsr, retv_sz, tors, cont);
     }
     tors.copyDbx(ir);
     ors.append_tail(tors);
@@ -257,13 +260,26 @@ void ARMIR2OR::convertRem(IR const* ir, OUT ORList & ors, IN IOC * cont)
     UINT retv_sz = ir->getTypeSize(m_tm);
     VAR const* builtin = NULL;
     if (retv_sz <= 4) {
-        builtin = getCG()->m_builtin_uimod;
+        if (ir->is_uint()) {
+            //builtin = getCG()->m_builtin_uimod;
+            builtin = getCG()->m_builtin_umodsi3;
+        } else if (ir->is_sint()) {
+            builtin = getCG()->m_builtin_modsi3;
+        } else {
+            UNREACHABLE();
+        }
     } else if (retv_sz <= 8) {
-        builtin = getCG()->m_builtin_moddi3;
-    } else { ASSERTN(0, ("Not support")); }
-
+        if (ir->is_uint()) {
+            builtin = getCG()->m_builtin_umoddi3;
+        } else if (ir->is_sint()) {
+            builtin = getCG()->m_builtin_moddi3;
+        } else {
+            UNREACHABLE();
+        }
+    } else {
+        UNREACHABLE();
+    }
     getCG()->buildCall(builtin, retv_sz, tors, cont);
-
     tors.copyDbx(ir);
     ors.append_tail(tors);
 }
@@ -363,13 +379,17 @@ void ARMIR2OR::convertDiv(IR const* ir, OUT ORList & ors, IN IOC * cont)
     UINT retv_sz = ir->getTypeSize(m_tm);
     VAR const* builtin = NULL;
     if (retv_sz <= 4) {
-        if (op0->is_int()) {
+        if (op0->is_uint()) {
+            builtin = getCG()->m_builtin_udivsi3;
+        } else if (op0->is_sint()) {
             builtin = getCG()->m_builtin_divsi3;
         } else if (op0->is_fp()) {
             builtin = getCG()->m_builtin_divsf3;
         } else { UNREACHABLE(); }
     } else if (retv_sz <= 8) {
-        if (op0->is_int()) {
+        if (op0->is_uint()) {
+            builtin = getCG()->m_builtin_udivdi3;
+        } else if (op0->is_sint()) {
             builtin = getCG()->m_builtin_divdi3;
         } else if (op0->is_fp()) {
             builtin = getCG()->m_builtin_divdf3;
@@ -622,7 +642,11 @@ void ARMIR2OR::invertBoolValue(Dbx * dbx, SR * val, OUT ORList & ors)
 }
 
 
-void ARMIR2OR::getResultPredByIRTYPE(IR_TYPE code, SR ** truepd, SR ** falsepd)
+void ARMIR2OR::getResultPredByIRTYPE(
+        IR_TYPE code,
+        SR ** truepd,
+        SR ** falsepd,
+        bool is_signed)
 {
     ASSERT0(truepd && falsepd);
     switch (code) {
@@ -635,20 +659,40 @@ void ARMIR2OR::getResultPredByIRTYPE(IR_TYPE code, SR ** truepd, SR ** falsepd)
         *falsepd = getCG()->genEQPred();
         return;
     case IR_LT:
-        *truepd = getCG()->genLTPred();
-        *falsepd = getCG()->genGEPred();
+        if (is_signed) {
+            *truepd = getCG()->genLTPred();
+            *falsepd = getCG()->genGEPred();
+        } else {
+            *truepd = getCG()->genLOPred();
+            *falsepd = getCG()->genHSPred();
+        }
         return;
     case IR_GT:
-        *truepd = getCG()->genGTPred();
-        *falsepd = getCG()->genLEPred();
+        if (is_signed) {
+            *truepd = getCG()->genGTPred();
+            *falsepd = getCG()->genLEPred();
+        } else {
+            *truepd = getCG()->genHIPred();
+            *falsepd = getCG()->genLSPred();
+        }
         return;
     case IR_LE:
-        *truepd = getCG()->genLEPred();
-        *falsepd = getCG()->genGTPred();
+        if (is_signed) {
+            *truepd = getCG()->genLEPred();
+            *falsepd = getCG()->genGTPred();
+        } else {
+            *truepd = getCG()->genLSPred();
+            *falsepd = getCG()->genHIPred();
+        }
         return;
     case IR_GE:
-        *truepd = getCG()->genGEPred();
-        *falsepd = getCG()->genLTPred();
+        if (is_signed) {
+            *truepd = getCG()->genGEPred();
+            *falsepd = getCG()->genLTPred();
+        } else {
+            *truepd = getCG()->genHSPred();
+            *falsepd = getCG()->genLOPred();
+        }
         return;
     default: break;
     }
@@ -698,37 +742,30 @@ void ARMIR2OR::convertRelationOpDWORD(
 
     SR * truepd = NULL;
     SR * falsepd = NULL;
-    getResultPredByIRTYPE(ir->getCode(), &truepd, &falsepd);
+    getResultPredByIRTYPE(ir->getCode(), &truepd, &falsepd, opnd0->is_signed());
+
+    //Comparison algo:
+    //  compare is <sr1,sr2>, <sr3,sr4> equal:
+    //  cmp sr2, sr4
+    //  ifeq cmp sr1, sr3
+    //  ifle cmp sr2, sr4
 
     //Compare high part equality.
     //truepd, falsepd = cmp sr0, sr1
     getCG()->buildARMCmp(OR_cmp, getCG()->genTruePred(),
         SR_vec(sr0)->get(1), SR_vec(sr1)->get(1), tors, cont);
 
-    //Compare low part.
-    SR * pred = truepd;
-    SR * respd1 = truepd; //getCG()->genPredReg();
-    SR * respd2 = falsepd; //getCG()->genPredReg();
-
-    getCG()->buildARMCmp(OR_cmp, pred,
+    //Compare low part if high part is equal.
+    getCG()->buildARMCmp(OR_cmp, getCG()->genEQPred(),
         SR_vec(sr0)->get(0), SR_vec(sr1)->get(0), tors, cont);
 
-    //The second comparison of high part.
-    SR * pred2 = falsepd;
-
+    //Recompare high part if falsepd is true.
     getCG()->buildARMCmp(OR_cmp,
-        pred2, SR_vec(sr0)->get(1), SR_vec(sr1)->get(1), tors, cont);
-
-    SR * pred3 = respd1;
+        falsepd, SR_vec(sr0)->get(1), SR_vec(sr1)->get(1), tors, cont);
 
     tors.copyDbx(ir);
     ors.append_tail(tors);
-
-    //Record result.
-    cont->set_reg(RESULT_REGISTER_INDEX, NULL);
-    cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, respd1); //record true result
-    cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, respd2); //record false result
-    cont->set_pred(pred3);
+    recordRelationOpResult(ir, truepd, falsepd, truepd, ors, cont);
 }
 
 
@@ -777,64 +814,85 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     tmp.clean();
     getCG()->buildARMCmp(OR_cmp, getCG()->genTruePred(), sr0, sr1, ors, cont);
     cont->set_reg(RESULT_REGISTER_INDEX, NULL);
-    SR * p1 = NULL;
-    SR * p2 = NULL;
-    switch (ir->getCode()) {
-    case IR_LT:
-        p1 = getCG()->genLTPred();
-        p2 = getCG()->genGEPred();
-        break;
-    case IR_LE:
-        p1 = getCG()->genLEPred();
-        p2 = getCG()->genGTPred();
-        break;
-    case IR_GT:
-        p1 = getCG()->genGTPred();
-        p2 = getCG()->genLEPred();
-        break;
-    case IR_GE:
-        p1 = getCG()->genGEPred();
-        p2 = getCG()->genLTPred();
-        break;
-    case IR_EQ:
-        p1 = getCG()->genEQPred();
-        p2 = getCG()->genNEPred();
-        break;
-    case IR_NE:
-        p1 = getCG()->genNEPred();
-        p2 = getCG()->genEQPred();
-        break;
-    default: UNREACHABLE();
-    }
+    SR * truepd = NULL;
+    SR * falsepd = NULL;
+    getResultPredByIRTYPE(ir->getCode(),
+        &truepd, &falsepd, opnd0->is_signed());
 
+    recordRelationOpResult(ir, truepd, falsepd, truepd, ors, cont);
+    //if (!ir->getParent()->isConditionalBr()) {
+    //    SR * res = getCG()->genReg();
+    //    ORList tors;
+    //    getCG()->buildMove(res, getCG()->gen_one(), tors, cont);
+    //    tors.set_pred(truepd);
+    //    tors.copyDbx(ir);
+    //    ors.append_tail(tors);
+
+    //    tors.clean();
+    //    getCG()->buildMove(res, getCG()->gen_zero(), tors, cont);
+    //    tors.set_pred(falsepd);
+    //    tors.copyDbx(ir);
+    //    ors.append_tail(tors);
+
+    //    cont->set_reg(RESULT_REGISTER_INDEX, res); //used by non-conditional op
+    //    return;
+    //}
+
+    ////record result
+    ////used by convertSelect
+    //cont->set_reg(RESULT_REGISTER_INDEX, getCG()->genPredReg());
+    //
+    ////record true-result predicator
+    //cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, truepd); //used by convertSelect
+
+    ////record false-result predicator
+    //cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, falsepd); //used by convertSelect
+
+    ////record true-result
+    //cont->set_pred(truepd);
+
+    //IOC_is_inverted(cont) = false;
+}
+
+
+void ARMIR2OR::recordRelationOpResult(
+        IR const* ir,
+        SR * truepd,
+        SR * falsepd,
+        SR * result_pred,
+        OUT ORList & ors,
+        IN OUT IOC * cont)
+{
     if (!ir->getParent()->isConditionalBr()) {
         SR * res = getCG()->genReg();
         ORList tors;
         getCG()->buildMove(res, getCG()->gen_one(), tors, cont);
-        tors.set_pred(p1);
+        tors.set_pred(truepd);
         ors.append_tail(tors);
 
         tors.clean();
         getCG()->buildMove(res, getCG()->gen_zero(), tors, cont);
-        tors.set_pred(p2);
+        tors.set_pred(falsepd);
         ors.append_tail(tors);
 
-        cont->set_reg(RESULT_REGISTER_INDEX, res); //used by convertSelect
+        cont->set_reg(RESULT_REGISTER_INDEX, res); //used by non-conditional op
+
+        //truepd, falsepd and result_pred are useless.
         return;
     }
 
-    //record result
-    //used by convertSelect
-    cont->set_reg(RESULT_REGISTER_INDEX, getCG()->genPredReg());
-        
-    //record true-result predicator
-    cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, p1); //used by convertSelect
+    //Record result.
+    //used by Non-Conditional-Op, such as convertSelect.
+    cont->set_reg(RESULT_REGISTER_INDEX, NULL);
 
-    //record false-result predicator
-    cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, p2); //used by convertSelect
+    //Record true-result predicator
+    cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, truepd); //record true result
 
-    //record true-result
-    cont->set_pred(p1);
+    //Record false-result predicator
+    cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, falsepd); //record false result
+
+    //Record true-result.
+    cont->set_pred(result_pred);
 
     IOC_is_inverted(cont) = false;
 }
@@ -1013,7 +1071,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors, IN IOC * cont
     tors.copyDbx(ir);
     ors.append_tail(tors);
     tors.clean();
-    
+
     SR * r0 = getCG()->gen_r0();
     SR * one = getCG()->gen_one();
     SR * zero = getCG()->gen_zero();
@@ -1030,7 +1088,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors, IN IOC * cont
     switch (ir->getCode()) {
     case IR_LT:
         //Buildin function return a value less than zero
-        //if neither argument is NaN, and a is less than or equal to b.        
+        //if neither argument is NaN, and a is less than or equal to b.
         falsepd = getCG()->genGEPred();
         truepd = getCG()->genLTPred();
         if (needresval) {
@@ -1142,7 +1200,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors, IN IOC * cont
             ors.append_tail(tors);
             tors.clean();
         }
-        break;        
+        break;
     case IR_NE:
         //These functions return a nonzero value if
         //either argument is NaN, or if a and b are unequal.
@@ -1176,10 +1234,10 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors, IN IOC * cont
 
     //Record predicate register that will be used by convertSelect.
     cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, truepd);
-    cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, falsepd);    
+    cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, falsepd);
 
     //Record predicate register that will be
-    //used by convertTruebr/convertTruebrFP.    
+    //used by convertTruebr/convertTruebrFP.
     cont->set_pred(truepd);
 }
 

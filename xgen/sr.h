@@ -116,8 +116,8 @@ SR const* checkSRIMM(SR const* ir);
 #define SR_is_imm(sr)            (SR_is_int_imm(sr) || SR_is_fp_imm(sr))
 #define SR_is_reg(sr)            ((sr)->type == SR_REG)
 #define SR_is_constant(sr)       (SR_is_imm(sr) ||  \
-                                 SR_is_label(sr) || \
-                                 SR_is_var(sr))
+                                  SR_is_label(sr) || \
+                                  SR_is_var(sr))
 class SR {
 public:
     SR_TYPE type;
