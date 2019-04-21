@@ -42,7 +42,7 @@ DataDepGraph::DataDepGraph()
     m_is_clonal = false;
     m_ppm = NULL; //Parallel part manager
     m_pool = smpoolCreate(32, MEM_COMM);
-    set_param(NO_PHY_REG,
+    setParam(NO_PHY_REG,
               NO_MEM_READ,
               INC_MEM_FLOW,
               INC_MEM_OUT,
@@ -107,7 +107,7 @@ bool DataDepGraph::is_param_equal(
 }
 
 
-void DataDepGraph::set_param(
+void DataDepGraph::setParam(
         bool phy_reg_dep,
         bool memread_dep,
         bool memflow_dep,

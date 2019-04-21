@@ -2349,6 +2349,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     dumpIRList(irs, r);
     //Ensure RETURN IR at the end of function
     //if its return-type is VOID.
+
     irs = addReturn(irs, r);
     //Reshape IR tree to well formed outlook.
     note("\n==---- AFTER RESHAPE IR -----==", get_decl_name(dcl));

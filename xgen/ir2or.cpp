@@ -1165,6 +1165,7 @@ void IR2OR::convert(IR const* ir, OUT ORList & ors, IN IOC * cont)
 }
 
 
+//Translate IR in IRBB to a list of OR.
 void IR2OR::convertIRBBListToORList(OUT ORList & or_list)
 {
     START_TIMER(t, "Convert IR to OR");

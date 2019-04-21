@@ -2268,6 +2268,7 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
             if (POSINFO_is_def(pi)) { //Deal with reuslts
                 for (UINT i = 0; i < o->result_num(); i++) {
                     SR * res = o->get_result(i);
+                    ASSERT0(res);
                     if (SR_regfile(res) != rf || rf == RF_UNDEF) {
                         continue;
                     }
@@ -2275,6 +2276,7 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
                         continue;
                     }
                     RegSet const* rs = tmMapRegFile2RegSet(SR_regfile(res));
+                    ASSERT0(rs);
                     usable_rs->intersect(*rs);
                 }
 
@@ -2282,6 +2284,7 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
                     //Reserve anticipated register for allocation.
                     UINT opndidx = m_cg->computeCopyOpndIdx(o);
                     SR * copy_src = o->get_opnd(opndidx);
+                    ASSERT0(copy_src);
                     if (SR_is_reg(copy_src) &&
                         SR_regfile(copy_src) == SR_regfile(sr) &&
                         SR_regfile(sr) != RF_UNDEF) {
@@ -2298,6 +2301,7 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
                     }
                     RegSet const* rs = m_cg->getValidRegSet(
                         OR_code(o), i, false);
+                    ASSERT0(rs);
                     usable_rs->intersect(*rs);
                 }
 
@@ -2818,7 +2822,7 @@ void InstructionPartition<Mat, T>::formulateTargetFunction(
         tgtf.set(0, vm.map_or_cyc2varidx(OR_id(last_op), c), c);
     }
 
-    //tgtf.set_all(1);
+    //tgtf.setAllElem(1);
     tgtf.set(0, rhs_idx, 0);
 }
 
@@ -2850,7 +2854,7 @@ void InstructionPartition<Mat, T>::formulateMustScheduleConstrains(
         if (eq.size() == 0) {
             eq = tmp_eq;
         } else {
-            eq.grow_row(tmp_eq);
+            eq.growRow(tmp_eq);
         }
     }
 }
@@ -2865,7 +2869,7 @@ void InstructionPartition<Mat, T>::formulateIssueConstrains(
         UINT num_vars)
 {
     UINT rhs_idx = num_vars;
-    Mat iss_cs(num_cycs, leq.get_col_size());
+    Mat iss_cs(num_cycs, leq.getColSize());
     for (INT c = 0; c < (INT)num_cycs; c++) {
         for (UINT i = 0; i < num_ops; i++) {
             OR * o = vm.map_vecidx2or(i);
@@ -2878,7 +2882,7 @@ void InstructionPartition<Mat, T>::formulateIssueConstrains(
     if (leq.size() == 0) {
         leq = iss_cs;
     } else {
-        leq.grow_row(iss_cs, 0, iss_cs.get_row_size() - 1);
+        leq.growRow(iss_cs, 0, iss_cs.getRowSize() - 1);
     }
 }
 
@@ -2925,7 +2929,7 @@ void InstructionPartition<Mat, T>::formulateDependenceConstrains(
         if (leq.size() == 0) {
             leq = tmp_leq;
         } else {
-            leq.grow_row(tmp_leq);
+            leq.growRow(tmp_leq);
         }
     }
 
@@ -2945,7 +2949,7 @@ void InstructionPartition<Mat, T>::formulateDependenceConstrains(
     //    if (leq.size() == 0) {
     //        leq = tmp_leq;
     //    } else {
-    //        leq.grow_row(tmp_leq);
+    //        leq.growRow(tmp_leq);
     //    }
     //
     //    //SIGMA(j*xj) <= lstart
@@ -2954,7 +2958,7 @@ void InstructionPartition<Mat, T>::formulateDependenceConstrains(
     //        tmp_leq.set(0, vm.map_or_cyc2varidx(opi, c), c);
     //    }
     //    tmp_leq.set(0, rhs_idx, lstart);
-    //    leq.grow_row(tmp_leq);
+    //    leq.growRow(tmp_leq);
     //}
 }
 
@@ -2988,12 +2992,12 @@ void InstructionPartition<Mat, T>::formulateInterClusterConstrains(
             leq.set(i, ofst + j, c);
         }
 
-        Mat tmp_eq(1, eq.get_col_size());
+        Mat tmp_eq(1, eq.getColSize());
         for (UINT j = 0; j < num_new_cs_of_each_edge; j++) {
             tmp_eq.set(0, ofst + j, 1);
         }
         tmp_eq.set(0, new_rhs_idx, 1);
-        eq.grow_row(tmp_eq);
+        eq.growRow(tmp_eq);
 
         ofst += num_new_cs_of_each_edge;
     }
@@ -3016,7 +3020,7 @@ void InstructionPartition<Mat, T>::format(
 {
     DUMMYUSE(rhs_idx);
 
-    ASSERT0(sol.get_row_size() == 1);
+    ASSERT0(sol.getRowSize() == 1);
     sched_form.reinit(num_cycs, ORBB_ornum(bb));
     for (UINT j = 0; j < num_op_vars; j++) {
         OR * o = NULL;
@@ -3031,7 +3035,7 @@ void InstructionPartition<Mat, T>::format(
     }
 
     Mat op_form(num_cycs, vm.get_issue_port_per_clust());
-    op_form.set_all(-1);
+    op_form.setAllElem(-1);
     for (INT c = 0; c < (INT)num_cycs; c++) {
         UINT pos = 0;
         for (UINT j = 0; j < ORBB_ornum(bb); j++) {
@@ -3140,13 +3144,13 @@ bool InstructionPartition<Mat, T>::partition(
         //                            num_vars, num_cst);
         if (num_icc_vars != 0) {
             tgtf.insertColumnsBefore(rhs_idx, num_icc_vars);
-            tgtf.set_cols(rhs_idx, rhs_idx + num_icc_vars, 1);
+            tgtf.setCols(rhs_idx, rhs_idx + num_icc_vars, 1);
         }
 
         //Construct variable constrains.
         Mat vc(num_vars + num_icc_vars, num_vars + num_icc_vars);
         vc.eye(-1);
-        vc.grow_col(1);
+        vc.growCol(1);
         //
         //tgtf.dumpf();
         //vc.dumpf();
@@ -7099,7 +7103,7 @@ bool LRA::elimRedundantRegDef(DataDepGraph & ddg)
                             INC_SYM_REG)) {
         //UNREACHABLE(); //diff in rrd
         ddg.pushParam();
-        ddg.set_param(INC_PHY_REG,
+        ddg.setParam(INC_PHY_REG,
                       NO_MEM_READ,
                       INC_MEM_FLOW,
                       INC_MEM_OUT,
@@ -7562,7 +7566,7 @@ bool LRA::partitionGroup(
                             INC_MEM_ANTI,
                             INC_SYM_REG)) {
         ddg.pushParam();
-        ddg.set_param(NO_PHY_REG,
+        ddg.setParam(NO_PHY_REG,
                     NO_MEM_READ,
                     INC_MEM_FLOW,
                     INC_MEM_OUT,
@@ -8221,7 +8225,7 @@ bool LRA::cyc_estimate(
                             INC_SYM_REG)) {
         //diff in cd, phy_reg_dep, rrd
         ddg.pushParam();
-        ddg.set_param(NO_PHY_REG,
+        ddg.setParam(NO_PHY_REG,
                       NO_MEM_READ,
                       INC_MEM_FLOW,
                       INC_MEM_OUT,
@@ -8705,7 +8709,7 @@ void LRA::middleLRAOpt(
          HAVE_FLAG(m_opt_phase, LRA_OPT_DDE)) &&
         ORBB_ornum(m_bb) < OR_BB_LEN_AFTER_RFA) {
         ddg.pushParam();
-        ddg.set_param(INC_PHY_REG,
+        ddg.setParam(INC_PHY_REG,
                       NO_MEM_READ,
                       INC_MEM_FLOW,
                       INC_MEM_OUT,
@@ -8761,7 +8765,7 @@ void LRA::middleLRAOpt(
                                 INC_SYM_REG)) {
             change_ddg_param = true;
             ddg.pushParam();
-            ddg.set_param(INC_PHY_REG,
+            ddg.setParam(INC_PHY_REG,
                           NO_MEM_READ,
                           INC_MEM_FLOW,
                           INC_MEM_OUT,
@@ -8935,7 +8939,7 @@ void LRA::finalLRAOpt(LifeTimeMgr * mgr, InterfGraph * ig, DataDepGraph * ddg)
         show_phase("Alloca life time completely, start to post optimizations");
         //Data dependence need update while physical registers
         //have been assigned.
-        ddg->set_param(INC_PHY_REG,
+        ddg->setParam(INC_PHY_REG,
                        NO_MEM_READ,
                        INC_MEM_FLOW,
                        INC_MEM_OUT,
@@ -9185,7 +9189,7 @@ bool LRA::perform()
         include_mem_dep = true;
     }
 
-    ddg->set_param(NO_PHY_REG,
+    ddg->setParam(NO_PHY_REG,
         NO_MEM_READ,
         include_mem_dep ? INC_MEM_FLOW : NO_MEM_FLOW,
         include_mem_dep ? INC_MEM_OUT : NO_MEM_OUT,
@@ -9232,7 +9236,7 @@ bool LRA::perform()
             INC_REG_ANTI,
             INC_MEM_ANTI,
             INC_SYM_REG)) {
-            ddg->set_param(INC_PHY_REG,
+            ddg->setParam(INC_PHY_REG,
                 NO_MEM_READ,
                 INC_MEM_FLOW,
                 INC_MEM_OUT,
@@ -9247,7 +9251,7 @@ bool LRA::perform()
     }
 
     if (isOpt()) {
-        ddg->set_param(INC_PHY_REG,
+        ddg->setParam(INC_PHY_REG,
             NO_MEM_READ,
             INC_MEM_FLOW,
             INC_MEM_OUT,
@@ -9337,7 +9341,7 @@ bool LRA::perform()
                 INC_MEM_ANTI,
                 INC_SYM_REG)) {
             //diff in rrd
-            ddg->set_param(INC_PHY_REG,
+            ddg->setParam(INC_PHY_REG,
                 NO_MEM_READ,
                 INC_MEM_FLOW,
                 INC_MEM_OUT,

@@ -1252,6 +1252,8 @@ public:
 
     //Perform Register Allocation.
     virtual RaMgr * performRA();
+
+    //Generate target dependent information.
     bool perform();
 
     void passArgVariant(

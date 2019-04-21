@@ -905,6 +905,13 @@ void CG::relocateStackVarOffset()
         }
     }
     END_TIMER(t0, "Relocate Stack Variable Offset");
+
+    if (g_is_dump_after_pass) {
+        xoc::note("\n==---- DUMP AFTER RELOCATE STACK OFFSET ----==");
+        getParamSection()->dump(this);
+        getStackSection()->dump(this);
+        dumpORBBList(m_or_bb_list);
+    }
 }
 
 
@@ -2332,6 +2339,7 @@ void CG::expandFakeOR(OR * o, OUT IssuePackageList * ipl)
 }
 
 
+//Perform package if target machine is multi-issue architecture.
 void CG::package(Vector<BBSimulator*> & simvec)
 {
     START_TIMER(t0, "Perform Packaging");
@@ -2362,6 +2370,15 @@ void CG::package(Vector<BBSimulator*> & simvec)
         }
     }
     END_TIMER(t0, "Perform Packaging");
+
+    if (g_is_dump_after_pass) {
+        /////////////////////////////////////
+        //DO NOT DUMP BB LIST AFTER PACKAGE//
+        /////////////////////////////////////
+        xoc::note("\n==---- DUMP AFTER PACKAGE ----==");
+        dumpPackage();
+    }
+    ASSERT0(verifyPackageList());
 }
 
 
@@ -3363,6 +3380,11 @@ void CG::reviseFormalParameterAndSpadjust()
 
         setSpadjustOffset(spadj, framesize);
     }
+
+    if (g_is_dump_after_pass) {
+        xoc::note("\n==---- DUMP AFTER REVISE SPADJUST ----==");
+        dumpORBBList(m_or_bb_list);
+    }
 }
 
 
@@ -3438,6 +3460,7 @@ xoc::VAR * CG::genTempVar(xoc::Type const* type, UINT align, bool func_level)
 }
 
 
+//Split OR list into ORBB.
 void CG::constructORBBList(IN ORList & or_list)
 {
     if (or_list.get_elem_count() == 0) {
@@ -3503,12 +3526,23 @@ void CG::constructORBBList(IN ORList & or_list)
         }
     }
     #endif
+
+    if (g_is_dump_after_pass) {
+        xoc::note("\n==---- DUMP AFTER IR2OR CONVERT %s ----==",
+            m_ru->getRegionName());
+        dumpORBBList(m_or_bb_list);
+    }
 }
 
 
 //Perform global and local register allocation.
 RaMgr * CG::performRA()
 {
+    if (g_is_dump_before_pass) {
+        xoc::note("\n==---- DUMP BEFORE REGISTER ALLOCATION %s ----==",
+            m_ru->getRegionName());
+        dumpORBBList(m_or_bb_list);
+    }
     START_TIMER(t, "Perform Register Allocation");
     RaMgr * lm = allocRaMgr(getORBBList(), m_ru->is_function());
     lm->setParallelPartMgrVec(getParallelPartMgrVec());
@@ -3524,6 +3558,11 @@ RaMgr * CG::performRA()
     }
     lm->performLRA();
     END_TIMER(t, "Perform Register Allocation");
+    if (g_is_dump_after_pass) {
+        xoc::note("\n==---- DUMP AFTER REGISTER ALLOCATION %s ----==",
+            m_ru->getRegionName());
+        dumpORBBList(m_or_bb_list);
+    }
     return lm;
 }
 
@@ -3595,7 +3634,7 @@ bool CG::isAlloca(xoc::IR const* ir) const
 }
 
 
-//Reserving space for real parameters.
+//Estimate and reserve stack memory space for real parameters.
 void CG::computeMaxRealParamSpace()
 {
     START_TIMER(t, "Compute Max Real Parameter Space");
@@ -3700,7 +3739,7 @@ void CG::preLS(IN ORBB * bb,
 {
     //Init DDG
     DataDepGraph * tddg = allocDDG(true);
-    tddg->set_param(INC_PHY_REG, NO_MEM_READ,
+    tddg->setParam(INC_PHY_REG, NO_MEM_READ,
         INC_MEM_FLOW, INC_MEM_OUT, NO_CONTROL, NO_REG_READ, INC_REG_ANTI,
         INC_MEM_ANTI, INC_SYM_REG);
     Vector<ParallelPartMgr*> * ppm_vec = ra_mgr->getParallelPartMgrVec();
@@ -3848,6 +3887,7 @@ void CG::localizeBBTab(SR * sr, TTab<ORBB*> * orbbtab)
 }
 
 
+//Perform localization to global life-time PR.
 void CG::localize()
 {
     START_TIMER(t0, "CG Localization");
@@ -3920,6 +3960,10 @@ void CG::localize()
         delete orbbtab;
     }
     END_TIMER(t0, "CG Localization");
+    if (g_is_dump_after_pass) {
+        note("\n==---- DUMP AFTER LOCALIZE ----==");
+        dumpORBBList(m_or_bb_list);
+    }
 }
 
 
@@ -3982,21 +4026,25 @@ bool CG::verifyOR(OR const* o)
 }
 
 
+//This function generate target dependent information.
 bool CG::perform()
 {
     ASSERTN(isPowerOf2(STACK_ALIGNMENT),
         ("Stack alignment should be power of 2"));
-    g_indent = 0;
-    xoc::note("\n==---- START CODE GENERATION (%d)'%s' ----==\n",
+    
+    if (g_is_dump_after_pass || g_is_dump_before_pass) {
+        g_indent = 0;
+        xoc::note("\n==---- DUMP START CODE GENERATION (%d)'%s' ----==\n",
             REGION_id(m_ru), m_ru->getRegionName());
-    m_ru->dump(false);
+        m_ru->dump(false);
+    }
 
     if (m_ru->getIRList() == NULL &&
         m_ru->getBBList()->get_elem_count() == 0) {
         return true;
     }
-
-    ORList or_list; //record OR list after converting xoc::IR to OR.
+    
+    //Estimate and reserve stack memory space for real parameters.
     computeMaxRealParamSpace();
 
     IR2OR * ir2or = allocIR2OR();
@@ -4004,16 +4052,20 @@ bool CG::perform()
 
     CHAR const* varname = SYM_name(m_ru->getRegionVar()->get_name());
     DUMMYUSE(varname);
+    
+    //Translate IR in IRBB to a list of OR.
+    //Record OR list after converting xoc::IR to OR.
+    ORList or_list;
     ir2or->convertIRBBListToORList(or_list);
+
+    //Split OR list into ORBB.
     constructORBBList(or_list);
 
-    xoc::note("\n==---- AFTER IR2OR CONVERT %s ----==", m_ru->getRegionName());
-    dumpORBBList(m_or_bb_list);
-
-    //Build CFG
-    ASSERT0(m_or_cfg == NULL);
+    //Allocate CFG.
+    ASSERTN(m_or_cfg == NULL, ("CFG already exist"));
     m_or_cfg = allocORCFG();
 
+    //Build CFG.
     OptCtx oc;
     START_TIMER(t0, "OR Control Flow Optimizations");
     m_or_cfg->removeEmptyBB(oc);
@@ -4026,24 +4078,23 @@ bool CG::perform()
     END_TIMER(t0, "OR Control Flow Optimizations");
 
     if (m_ru->is_function()) {
+        //Generate SP adjustment operation, and the code protecting the
+        //Return Address if region has a call.
+        //If SP adjust operations are more than one, you should construct a
+        //fake operation, and expand it at the phase before emitting assmbly.
         generateFuncUnitDedicatedCode();
     }
 
+
     if (!isGRAEnable()) {
+        //Perform localization to global life-time PR.
         localize();
-        note("\n==---- AFTER LOCALIZE ----==");
-        dumpORBBList(m_or_bb_list);
     }
 
-    xoc::note("\n==---- BEFORE REGISTER ALLOCATION %s ----==",
-        m_ru->getRegionName());
-    dumpORBBList(m_or_bb_list);
+    //Perform global and local register allocation.
     RaMgr * ra_mgr = performRA();
 
-    xoc::note("\n==---- AFTER REGISTER ALLOCATION %s ----==",
-        m_ru->getRegionName());
-    dumpORBBList(m_or_bb_list);
-
+    //Perform control flow optimizations.
     START_TIMER(t1, "OR Control Flow Optimizations");
     bool change;
     do {
@@ -4063,37 +4114,33 @@ bool CG::perform()
     } while (change);
     END_TIMER(t1, "OR Control Flow Optimizations");
 
+    //Insert store of parameter register after spadjust at each entry BB
+    //if target machine support pass argument through register.
     if (m_ru->is_function()) {
         reviseFormalParameterAndSpadjust();
-
-        xoc::note("\n==---- AFTER REVISE SPADJUST ----==");
-        dumpORBBList(m_or_bb_list);
     }
 
+    //Perform Local instruction scheduling.
     Vector<BBSimulator*> simvec;
     performIS(simvec, ra_mgr);
 
+    //Compute the offset for stack variable and
+    //supersede the symbol variable with the offset.
     relocateStackVarOffset();
-
-    xoc::note("\n==---- AFTER RELOCATE STACK OFFSET ----==");
-    getParamSection()->dump(this);
-    getStackSection()->dump(this);
-    dumpORBBList(m_or_bb_list);
 
     delete ra_mgr;
     freeDdgList();
     freeLisList();
-
+    
+    //Perform package if target machine is multi-issue architecture.
     package(simvec);
 
     ///////////////////////////////////////
     //DO NOT DUMP BB LIST AFTER THIS LINE//
     ///////////////////////////////////////
 
-    xoc::note("\n==---- AFTER PACKAGE ----==");
-    dumpPackage();
-    ASSERT0(verifyPackageList());
-    freeSimmList(); //Free BBSimulator list here.
+    //Free BBSimulator list.
+    freeSimmList();
     return true;
 }
 

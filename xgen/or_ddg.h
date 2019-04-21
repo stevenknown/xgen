@@ -251,7 +251,7 @@ public:
     void sortInTopological(OUT Vector<UINT> & vex_vec);
     void setParallelPartMgr(ParallelPartMgr * ppm);
     void simplifyGraph();
-    void set_param(bool phy_reg_dep,
+    void setParam(bool phy_reg_dep,
                    bool memread_dep,
                    bool memflow_dep,
                    bool memout_dep,

@@ -361,7 +361,7 @@ bool ParallelPartMgr::prepare_distribute(OR * red_or, OR * cmp_or, SR * iv)
     if (!red_or || !cmp_or || !iv) {
         //ORBB's dependence graph.
         DataDepGraph ddg;
-        ddg.set_param(NO_PHY_REG,
+        ddg.setParam(NO_PHY_REG,
                       NO_MEM_READ,
                       INC_MEM_FLOW,
                       INC_MEM_OUT,

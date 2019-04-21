@@ -129,7 +129,8 @@ public:
 #define OR_is_indirect_br(o)    OTD_is_indirect_br(tmGetORTypeDesc(OR_code(o)))
 #define OR_is_cond_br(o)        OTD_is_cond_br(tmGetORTypeDesc(OR_code(o)))
 #define OR_is_return(o)         OTD_is_return(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_br(o)             (OR_is_cond_br(o) || OR_is_uncond_br(o) || OR_is_return(o) || OR_is_call(o))
+#define OR_is_br(o)             (OR_is_cond_br(o) || OR_is_uncond_br(o) || \
+                                 OR_is_return(o) || OR_is_call(o))
 #define OR_is_predicated(o)     OTD_is_predicated(tmGetORTypeDesc(OR_code(o)))
 #define OR_is_load(o)           OTD_is_load(tmGetORTypeDesc(OR_code(o)))
 #define OR_is_store(o)          OTD_is_store(tmGetORTypeDesc(OR_code(o)))

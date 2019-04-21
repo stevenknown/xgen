@@ -265,7 +265,7 @@ static void modifyBB2(IN OUT ORBB * bb2, ORBB const* orig_bb,
 
     //ORBB's dependence graph.
     DataDepGraph ddg;
-    ddg.set_param(NO_PHY_REG,
+    ddg.setParam(NO_PHY_REG,
                   NO_MEM_READ,
                   INC_MEM_FLOW,
                   INC_MEM_OUT,
@@ -728,7 +728,7 @@ static bool LoopPeeling(IN ORBB * bb,
     ORBB * bb5 = Gen_BB();
 
     DataDepGraph ddg;
-    ddg.set_param(NO_PHY_REG,
+    ddg.setParam(NO_PHY_REG,
                   NO_MEM_READ,
                   INC_MEM_FLOW,
                   INC_MEM_OUT,
