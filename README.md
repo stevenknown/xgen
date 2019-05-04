@@ -12,12 +12,12 @@ usage:
     cd xgen
     cp -rf ../xoc/com ../xoc/opt ../xoc/reader .
  3. clone xocfe project
- 4. copy xocfe/src/cfe into xgen directory
+ 4. copy xocfe/src/cfe into xgen directory：
     cd xgen
     cp -rf ../xocfe/src/cfe .
  5. cd xgen/arm directory     
  6. make -f Make.xocc  
- 7. Install arm-assembler, arm-linker:
+ 7. Install arm-assembler, arm-linker:    
     sudo apt-get install gcc-arm-linux-gnueabihf
  8. Install qemu-arm:    
     sudo apt-get install qemu-user-static
