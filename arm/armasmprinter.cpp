@@ -89,6 +89,17 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     buf.strcat(" ");
     tbuf.clean();
     switch (OR_code(o)) {
+    case OR_ands_asr_i:
+        //ands Rd, Rs1, Rs2, lsr #imm
+        buf.strcat("%s, ", o->get_result(0)->getAsmName(tbuf, m_cg));
+        tbuf.clean();
+        buf.strcat("%s, ", o->get_opnd(1)->getAsmName(tbuf, m_cg));
+        tbuf.clean();
+        buf.strcat("%s, ", o->get_opnd(2)->getAsmName(tbuf, m_cg));
+        tbuf.clean();
+        buf.strcat("asr ");
+        buf.strcat("%s", o->get_opnd(3)->getAsmName(tbuf, m_cg));
+        return buf.buf;
     case OR_orr_lsr_i:
         //orr Rd, Rs1, Rs2, lsr #imm
         buf.strcat("%s, ", o->get_result(0)->getAsmName(tbuf, m_cg));

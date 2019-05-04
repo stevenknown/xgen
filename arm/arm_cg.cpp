@@ -1148,7 +1148,7 @@ void ARMCG::buildShiftLeft(
         if (SR_is_reg(shift_ofst)) {
             ort = OR_lsl;
         } else if (SR_is_imm(shift_ofst)) {
-            ort = OR_lsl_i;
+            ort = OR_lsl_i32;
         } else {
             UNREACHABLE();
         }
@@ -1160,13 +1160,86 @@ void ARMCG::buildShiftLeft(
     }
 
     ASSERTN(sr_size <= 8, ("TODO"));
-    if (SR_is_imm(shift_ofst)) {
+    if (SR_is_reg(shift_ofst)) {
+        //e.g:long long a,b; int j;
+        //    a = b << j;
+        //  generated code:
+        //    rsb r6, j, #32
+        //    sub r1, j, #32
+        //    lsl r5, a_hi, j             
+        //    lsr r6, a_lo, r6             
+        //    lsl r4, a_lo, r1             
+        //    orrs r5, r5, r6         
+        //    lsl res_lo, r0, j             
+        //    ands res_hi, r5, r1, asr #32
+        //    it  cc
+        //    movcc res_hi, r4
+        //    strd res_lo, res_hi ->[b_lo, b_hi]
+        SR * hi = SR_vec(src)->get(1);
+        SR * lo = SR_vec(src)->get(0);
+        ASSERT0(hi && lo);
+        SR * res_lo = genReg();
+        SR * res_hi = genReg();
+        getSRVecMgr()->genSRVec(2, res_lo, res_hi);
+
+        //    rsb r6, j, #32
+        SR * r6 = genReg();
+        OR * o = buildOR(OR_rsb_i, 1, 3, r6,
+            genTruePred(), shift_ofst, genIntImm(32, false));
+        ors.append_tail(o);
+
+        //    sub r1, j, #32
+        SR * r1 = genReg();
+        o = buildOR(OR_sub_i, 1, 3, r1,
+            genTruePred(), shift_ofst, genIntImm(32, false));
+        ors.append_tail(o);
+
+        //    lsl r5, a_hi, j
+        SR * r5 = genReg();
+        o = buildOR(OR_lsl, 1, 3, r5,
+            genTruePred(), hi, shift_ofst);
+        ors.append_tail(o);
+
+        //    lsr r6, a_lo, r6
+        o = buildOR(OR_lsr, 1, 3, r6,
+            genTruePred(), lo, r6);
+        ors.append_tail(o);
+
+        //    lsl r4, a_lo, r1
+        SR * r4 = genReg();
+        o = buildOR(OR_lsl, 1, 3, r4,
+            genTruePred(), lo, r1);
+        ors.append_tail(o);
+
+        //    orrs r5, r5, r6
+        o = buildOR(OR_orrs, 2, 3, r5, genRflag(),
+            genTruePred(), r5, r6);
+        ors.append_tail(o);
+
+        //    lsl res_lo, a_lo, j
+        o = buildOR(OR_lsl, 1, 3, res_lo,
+            genTruePred(), lo, shift_ofst);
+        ors.append_tail(o);
+
+        //    ands res_hi, r5, r1, asr #32
+        o = buildOR(OR_ands_asr_i, 2, 4, res_hi, genRflag(),
+            genTruePred(), r5, r1, genIntImm(32, false));
+        ors.append_tail(o);
+
+        //    movcc res_hi, r4
+        o = buildOR(OR_mov, 1, 2, res_hi, genCCPred(), r4);
+        ors.append_tail(o);
+
+        //    strd res_lo, res_hi ->[b_lo, b_hi]
+        ASSERT0(cont);
+        cont->set_reg(0, res_lo);
+        return;
+    } else if (SR_is_imm(shift_ofst)) {
         if (SR_int_imm(shift_ofst) <= 31) {
             //hi <- hi << ofst
             //t <- lo << (32 - ofst)
             //hi <- hi | t
             //lo <- lo << ofst
-
             SR * hi = SR_vec(src)->get(1);
             SR * lo = SR_vec(src)->get(0);
             ASSERT0(hi && lo);
@@ -1179,7 +1252,6 @@ void ARMCG::buildShiftLeft(
             o = buildOR(OR_lsl_i, 1, 3, lo, genTruePred(),
                 lo, shift_ofst);
             ors.append_tail(o);
-
             ASSERT0(cont);
             cont->set_reg(0, lo);
             //cont->set_reg(0, hi);
@@ -1187,7 +1259,6 @@ void ARMCG::buildShiftLeft(
         } else if (SR_int_imm(shift_ofst) <= 63) {
             //hi <- lo << (ofst - 32)
             //lo <- 0
-
             SR * hi = SR_vec(src)->get(1);
             SR * lo = SR_vec(src)->get(0);
             ASSERT0(hi && lo);
@@ -1201,7 +1272,22 @@ void ARMCG::buildShiftLeft(
             cont->set_reg(0, lo);
             return;
         } else {
-            UNREACHABLE();
+            SR * hi = SR_vec(src)->get(1);
+            SR * lo = SR_vec(src)->get(0);
+            ASSERT0(hi && lo);
+            // hi <- 0
+            OR * set_high = buildOR(OR_mov_i, 1, 2, hi,
+                genTruePred(), genIntImm(0, true));
+            // lo <- 0
+            OR * set_low = buildOR(OR_mov_i, 1, 2, lo,
+                genTruePred(), genIntImm(0, true));                
+            ASSERT0(set_high && set_low);
+            ors.append_tail(set_high);
+            ors.append_tail(set_low);
+            ASSERT0(cont);
+            cont->set_reg(0, hi);
+            //cont->set_reg(1, hi);
+            return;
         }
     }
     UNREACHABLE();
@@ -1221,15 +1307,14 @@ void ARMCG::buildShiftRight(
         OR_TYPE ort = OR_UNDEF;
         if (is_signed) {
             if (SR_is_reg(shift_ofst)) { ort = OR_asr; }
-            else if (SR_is_imm(shift_ofst)) { ort = OR_asr_i; }
+            else if (SR_is_imm(shift_ofst)) { ort = OR_asr_i32; }
             else { UNREACHABLE(); }
         } else {
             if (SR_is_reg(shift_ofst)) { ort = OR_lsr; }
-            else if (SR_is_imm(shift_ofst)) { ort = OR_lsr_i; }
+            else if (SR_is_imm(shift_ofst)) { ort = OR_lsr_i32; }
             else { UNREACHABLE(); }
         }
-        OR * o = buildOR(ort, 1, 3, res,
-            genTruePred(), src, shift_ofst);
+        OR * o = buildOR(ort, 1, 3, res, genTruePred(), src, shift_ofst);
         ors.append_tail(o);
         ASSERT0(cont);
         cont->set_reg(0, res);
@@ -1237,27 +1322,118 @@ void ARMCG::buildShiftRight(
     }
 
     ASSERTN(sr_size <= 8, ("TODO"));
-    if (SR_is_imm(shift_ofst)) {
+    if (SR_is_reg(shift_ofst)) {
+        //e.g:long long res;
+        //    long long src;
+        //    int shift_ofst;
+        //    void foo() {
+        //        res = src >> shift_ofst;
+        //    }
+        //
+        //    sub r5 <- shift_ofst, #32
+        //    asr r6 <- src_hi, r5
+        //    rsb ip <- shift_ofst, #32
+        //    lsl ip <- src_hi, ip
+        //    lsr r2 <- src_lo, shift_ofst
+        //    orr res_lo <- ip, r2
+        //    cmp r5, #0
+        //    it ge      #must exist if ISA is thumb.
+        //    movge res_lo <- r6
+        //    asr res_hi <- src_hi, r4
+        //    strd {res_lo,res_hi} -> result
+
+        OR_TYPE ort = OR_UNDEF;
+        if (is_signed) {
+            ort = OR_asr;
+        } else {
+            ort = OR_lsr;
+        }
+
+        SR * src_hi = SR_vec(src)->get(1);
+        SR * src_lo = SR_vec(src)->get(0);
+        ASSERT0(src_hi && src_lo);
+        SR * res_lo = genReg();
+        SR * res_hi = genReg();
+        getSRVecMgr()->genSRVec(2, res_lo, res_hi);
+
+        //    sub r5, shift_ofst, #32
+        SR * r5 = genReg();
+        OR * o = buildOR(OR_sub_i, 1, 3, r5,
+            genTruePred(), shift_ofst, genIntImm(32, false));
+        ors.append_tail(o);
+
+        //    asr/lsr r6, src_hi, r5
+        SR * r6 = genReg();
+        o = buildOR(ort, 1, 3, r6, genTruePred(), src_hi, r5);
+        ors.append_tail(o);
+
+        //    rsb ip, shift_ofst, #32
+        SR * ip = genReg();
+        o = buildOR(OR_rsb_i, 1, 3, ip,
+            genTruePred(), shift_ofst, genIntImm(32, false));
+        ors.append_tail(o);
+
+        //    lsl ip, src_hi, ip
+        o = buildOR(OR_lsl, 1, 3, ip, genTruePred(), src_hi, ip);
+        ors.append_tail(o);
+
+        //    lsr r2, src_lo, shift_ofst
+        SR * r2 = genReg();
+        o = buildOR(OR_lsr, 1, 3, r2, genTruePred(), src_lo, shift_ofst);
+        ors.append_tail(o);
+
+        //    orr res_lo, ip, r2
+        o = buildOR(OR_orr, 1, 3, res_lo, genTruePred(), ip, r2);
+        ors.append_tail(o);
+
+        //    cmp r5, #0
+        o = buildOR(OR_cmp_i, 1, 3, genRflag(),
+            genTruePred(), r5, genIntImm(0, false));
+        ors.append_tail(o);
+
+        //    mov_ge  res_lo, r6
+        o = buildOR(OR_mov, 1, 2, res_lo, genGEPred(), r6);
+        ors.append_tail(o);
+
+        //    asr/lsr res_hi, src_hi, shift_ofst
+        o = buildOR(ort, 1, 3, res_hi, genTruePred(), src_hi, shift_ofst);
+        ors.append_tail(o);
+
+        //    strd res_lo, res_hi ->[b_lo, b_hi]
+        ASSERT0(cont);
+        cont->set_reg(0, res_lo);
+        return;
+    } else if (SR_is_imm(shift_ofst)) {
         if (SR_int_imm(shift_ofst) <= 31) {
-            //lo = lo >>(asr) shift_ofst
+            //lo = lo >>(lsr) shift_ofst
             //lo = lo | (hi <<(lsl) (32 - shift_ofst))
-            //hi = hi >>(asr) shift_ofst
+            //hi = hi >> shift_ofst
 
             SR * hi = SR_vec(src)->get(1);
             SR * lo = SR_vec(src)->get(0);
             ASSERT0(hi && lo);
-            OR_TYPE ort = OR_UNDEF;
+
+            //NOTE: Need LOGICAL shift to reserve space to
+            //hold residual part of high-part.
+            //DO NOT USE ARITH-SHIFT.
+            //lo = lo >>(lsr) shift_ofst
+            OR * o = buildOR(OR_lsr_i, 1, 3, lo, genTruePred(), lo, shift_ofst);
+            ors.append_tail(o);
+
+            //lo = lo | (hi <<(lsl) (32 - shift_ofst))
+            o = buildOR(OR_orr_lsl_i, 1, 4, lo,
+                genTruePred(),
+                lo, hi, genIntImm(32 - SR_int_imm(shift_ofst), false));
+            ors.append_tail(o);
+
+            //hi = hi >> shift_ofst
+            OR_TYPE ort = OR_lsr_i;
             if (is_signed) {
                 ort = OR_asr_i;
             } else {
                 ort = OR_lsr_i;
             }
-            OR * o = buildOR(ort, 1, 3, lo, genTruePred(), lo, shift_ofst);
-            ors.append_tail(o);
-            o = buildOR(OR_orr_lsl_i, 1, 4, lo, genTruePred(),
-                lo, hi, genIntImm(32 - SR_int_imm(shift_ofst), false));
-            ors.append_tail(o);
-            o = buildOR(OR_asr_i, 1, 3, hi, genTruePred(), hi, shift_ofst);
+            o = buildOR(ort, 1, 3, hi, genTruePred(), hi, shift_ofst);
             ors.append_tail(o);
 
             ASSERT0(cont);
@@ -1272,28 +1448,77 @@ void ARMCG::buildShiftRight(
             //    hi <- 0
             //}
 
+            OR_TYPE ort = OR_UNDEF;
+            if (is_signed) {
+                ort = OR_asr_i;
+            }
+            else {
+                ort = OR_lsr_i;
+            }
+
             SR * hi = SR_vec(src)->get(1);
             SR * lo = SR_vec(src)->get(0);
             ASSERT0(hi && lo);
-            //Do we need asrs_i here?
-            OR * o = buildOR(OR_asr_i, 1, 3, hi, genTruePred(),
-                lo, genIntImm(SR_int_imm(shift_ofst) - 32, true));
-            ors.append_tail(o);
+            //Do we need asr_i here?
+            //lo <- hi asr (ofst - 32)
+            OR * set_low = buildOR(ort, 1, 3, lo,
+                genTruePred(), hi,
+                genIntImm(SR_int_imm(shift_ofst) - 32, true));
+            ors.append_tail(set_low);
+
+            OR * set_high = NULL;
             if (is_signed) {
-                //Do we need asrs_i here?
-                o = buildOR(OR_asr_i, 1, 3, hi, genTruePred(),
-                    hi, genIntImm(31, true));
+                //DO WE NEED ASR_I HERE ??
+                //    hi <- hi asr shift_ofst
+                set_high = buildOR(OR_asr_i, 1, 3, hi,
+                    genTruePred(), hi, genIntImm(31, true));
             } else {
-                o = buildOR(OR_mov_i, 1, 2, lo, genTruePred(),
-                    genIntImm(0, true));
+                //    hi <- 0
+                set_high = buildOR(OR_mov_i, 1, 2, hi,
+                    genTruePred(), genIntImm(0, true));
             }
-            ors.append_tail(o);
+            ors.append_tail(set_high);
             ASSERT0(cont);
-            cont->set_reg(0, lo);
+            cont->set_reg(0, hi);
             //cont->set_reg(1, hi);
             return;
         } else {
-            UNREACHABLE();
+            //if (is_signed) {
+            //    lo <- hi asr 31
+            //    hi <- hi asr 31
+            //} else {
+            //    lo <- 0
+            //    hi <- 0
+            //}
+
+            SR * hi = SR_vec(src)->get(1);
+            SR * lo = SR_vec(src)->get(0);
+            ASSERT0(hi && lo);
+            OR * set_high = NULL;
+            OR * set_low = NULL;
+            if (is_signed) {
+                //Do we need asrs_i here?
+                //    lo <- hi asr 31
+                set_high = buildOR(OR_asr_i, 1, 3, lo,
+                    genTruePred(), hi, genIntImm(31, true));
+                //    hi <- hi asr 31
+                set_low = buildOR(OR_asr_i, 1, 3, hi,
+                    genTruePred(), hi, genIntImm(31, true));
+            } else {
+                //    hi <- 0
+                set_high = buildOR(OR_mov_i, 1, 2, hi,
+                    genTruePred(), genIntImm(0, true));
+                //    lo <- 0
+                set_low = buildOR(OR_mov_i, 1, 2, lo,
+                    genTruePred(), genIntImm(0, true));
+            }
+            ASSERT0(set_high && set_low);
+            ors.append_tail(set_high);
+            ors.append_tail(set_low);
+            ASSERT0(cont);
+            cont->set_reg(0, hi);
+            //cont->set_reg(1, hi);
+            return;
         }
     }
     UNREACHABLE();
@@ -1910,6 +2135,9 @@ bool ARMCG::isCopyOR(OR * o)
         break;
     case OR_lsl_i:
     case OR_lsr_i:
+    case OR_lsl_i32:
+    case OR_lsr_i32:        
+    case OR_asr_i32:        
     case OR_asl_i:
     case OR_asr_i:
         if (SR_is_int_imm(o->get_opnd(2)) && SR_int_imm(o->get_opnd(2)) == 0) {
@@ -1994,6 +2222,9 @@ INT ARMCG::computeCopyOpndIdx(OR * o)
         break;
     case OR_lsl_i:
     case OR_lsr_i:
+    case OR_lsl_i32:
+    case OR_lsr_i32:
+    case OR_asr_i32:
     case OR_asr_i:
         if (SR_is_int_imm(o->get_opnd(2)) && SR_int_imm(o->get_opnd(2)) == 0) {
             return HAS_PREDICATE_REGISTER;
@@ -2417,6 +2648,64 @@ void ARMCG::expandFakeMov32(IN OR * o, OUT IssuePackageList * ipl)
 }
 
 
+void ARMCG::expandFakeShift(IN OR * o, OUT IssuePackageList * ipl)
+{
+    OR_TYPE ckort = OR_UNDEF;
+    OR_TYPE newort = OR_UNDEF;
+    switch (OR_code(o)) {
+    case OR_lsr_i32:
+        ckort = OR_lsr_i;
+        newort = OR_lsr;
+        break;
+    case OR_lsl_i32:
+        ckort = OR_lsl_i;
+        newort = OR_lsl;
+        break;
+    case OR_asr_i32:
+        ckort = OR_asr_i;
+        newort = OR_asr;
+        break;
+    default: UNREACHABLE();
+    }
+    SR * imm = o->get_opnd(2);
+    ASSERT0(SR_is_imm(imm));
+    if (!isValidImmOpnd(ckort, 2, SR_int_imm(imm))) {
+        // rd = rs + imm;
+        //=>
+        // r12 = imm;
+        // rd = rs + r12;
+        ORList ors;
+        IOC cont;
+        buildMove(gen_r12(), imm, ors, &cont);
+        OR * mv = ors.get_tail();
+        ASSERT0(mv && ors.get_elem_count() == 1);
+        mv->set_pred(o->get_pred());
+        OR_dbx(mv).copy(OR_dbx(o));
+
+        if (OR_is_fake(mv)) {
+            expandFakeOR(mv, ipl);
+        } else {
+            IssuePackage * ip = allocIssuePackage();
+            ip->set(SLOT_G, mv);
+            ipl->append_tail(ip);
+        }
+
+        renameOpnd(o, imm, gen_r12(), false);
+
+        //Change OR code from OR_xxx_i to OR_xxx.
+        OR_code(o) = newort;
+
+        IssuePackage * ip2 = allocIssuePackage();
+        ip2->set(SLOT_G, o);
+        ipl->append_tail(ip2);
+    } else {
+        IssuePackage * ip = allocIssuePackage();
+        ip->set(SLOT_G, o);
+        ipl->append_tail(ip);
+    }
+}
+
+
 void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
 {
     ASSERT0(OR_is_fake(o) && ipl);
@@ -2444,6 +2733,11 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
        break;
     case OR_mov32_i:
        expandFakeMov32(o, ipl);
+       break;
+    case OR_lsr_i32:
+    case OR_lsl_i32:
+    case OR_asr_i32:
+       expandFakeShift(o, ipl);
        break;
     case OR_add_i:
     case OR_sub_i:

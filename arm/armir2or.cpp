@@ -590,7 +590,8 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT ORList & ors, IN IOC * cont)
     convertGeneralLoad(opnd, ors, &tc);
     if (ir->getTypeSize(m_tm) <= 4) {
         SR * res = tc.get_reg(0);
-        OR * o = getCG()->buildOR(OR_neg, 1, 2, res, getCG()->genTruePred(), res);
+        OR * o = getCG()->buildOR(OR_neg, 1, 2,
+            res, getCG()->genTruePred(), res);
         copyDbx(o, ir);
         ors.append_tail(o);
         ASSERT0(cont != NULL);

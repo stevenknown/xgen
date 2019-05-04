@@ -641,8 +641,8 @@ static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr, FILE * asmh)
                REGION_id(rg), rg->getRegionName());
         }
 
-        OptCtx oc;
-        bool s = rm->compileFuncRegion(rg, cgmgr, asmh, &oc);
+        OptCtx * oc = rm->getAndGenOptCtx(rg->id());
+        bool s = rm->compileFuncRegion(rg, cgmgr, asmh, oc);
         ASSERT0(s);
         DUMMYUSE(s);
         //rm->deleteRegion(rg); //Local region can be deleted if processed.
@@ -666,8 +666,8 @@ static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr, FILE * asmh)
     //    g_tfile = oldvalue;
     //}
 
-    OptCtx oc;
-    bool s = rm->processProgramRegion(program, &oc);
+    OptCtx * oc = rm->getAndGenOptCtx(program->id());
+    bool s = rm->processProgramRegion(program, oc);
     ASSERT0(s);
     DUMMYUSE(s);
     dumpPoolUsage();
@@ -807,7 +807,8 @@ bool compileGRFile(CHAR * gr_file_name)
             xoc::PRSSAMgr * ssamgr = (PRSSAMgr*)r->
             	getPassMgr()->queryPass(PASS_PR_SSA_MGR);
             if (ssamgr != NULL && ssamgr->isSSAConstructed()) {
-            	ssamgr->destruction();
+                OptCtx * oc = rm->getAndGenOptCtx(r->id());
+            	ssamgr->destruction(oc);
             }
     	}
     }

@@ -111,8 +111,10 @@ static ORTypeDesc g_or_type_desc [] = {
     {OR_rscs_i,    "rscs_i",     }, // (px)rsc Rd, Cpsr, Rs1, Imm32, Cpsr
 
     {OR_and,       "and",        }, // (px)and Rd, Rs1, Rs2
+    {OR_ands_asr_i,"ands_asr_i", }, // (px)ands Rd, Rs1, Rs2, asr, Imm6
     {OR_and_i,     "and_i",      }, // (px)and Rd, Rs1, Imm32
     {OR_orr,       "orr",        }, // (px)orr Rd, Rs1, Rs2
+    {OR_orrs,      "orrs",       }, // (px)orrs Rd, Cpsr, Rs1, Rs2
     {OR_orr_i,     "orr_i",      }, // (px)orr Rd, Rs1, Imm32
     {OR_orr_lsr_i, "orr_lsr_i",  }, // (px)orr Rd, Rs1, Rs2, lsr, Imm5
     {OR_orr_lsl_i, "orr_lsl_i",  }, // (px)orr Rd, Rs1, Rs2, lsr, Imm5
@@ -139,12 +141,15 @@ static ORTypeDesc g_or_type_desc [] = {
 
     {OR_lsl,       "lsl",        }, // (px)lsl Rd, Rs1, Rs2
     {OR_lsl_i,     "lsl_i",      }, // (px)lsl Rd, Rs1, Imm5
+    {OR_lsl_i32,   "lsl_i32",    }, // (px)lsl Rd, Rs1, Imm32
     {OR_lsr,       "lsr",        }, // (px)lsr Rd, Rs1, Rs2
     {OR_lsr_i,     "lsr_i",      }, // (px)lsr Rd, Rs1, Imm5
+    {OR_lsr_i32,   "lsr_i32",    }, // (px)lsr Rd, Rs1, Imm32
     {OR_asl,       "asl",        }, // (px)asl Rd, Rs1, Rs2
     {OR_asl_i,     "asl_i",      }, // (px)asl Rd, Rs1, Imm5
     {OR_asr,       "asr",        }, // (px)asr Rd, Rs1, Rs2
     {OR_asr_i,     "asr_i",      }, // (px)asr Rd, Rs1, Imm5
+    {OR_asr_i32,   "asr_i32",    }, // (px)asr Rd, Rs1, Imm32
     {OR_ror,       "ror",        }, // (px)ror Rd, Rs1, Rs2
     {OR_ror_i,     "ror_i",      }, // (px)ror Rd, Rs1, Imm5
     {OR_rrx,       "rrx",        }, // (px)rrx Rd, Rs1
@@ -1055,6 +1060,18 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_lsl_i, sda);
     setSRDescGroup(OR_lsr_i, sda);
 
+    //1 res, 3 opnd: r <- p, r, Imm
+    sda = newSRDescGroup(1, 3);
+    //res
+    sda->set_res(0, sr_r);
+    //opnd
+    sda->set_opnd(0, sr_p);
+    sda->set_opnd(1, sr_r);
+    sda->set_opnd(2, sr_32b_unsig_imm);
+    setSRDescGroup(OR_lsl_i32, sda);
+    setSRDescGroup(OR_lsr_i32, sda);
+    setSRDescGroup(OR_asr_i32, sda);
+
     //1 res, 4 opnd: r <- p, r, r, cpsr
     sda = newSRDescGroup(1, 4);
     //res
@@ -1080,6 +1097,18 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_orr_lsr_i, sda);
     setSRDescGroup(OR_orr_lsl_i, sda);
 
+    //2 res, 4 opnd: r, r <- p, r, r, Imm
+    sda = newSRDescGroup(2, 4);
+    //res
+    sda->set_res(0, sr_r);
+    sda->set_res(1, sr_cpsr);
+    //opnd
+    sda->set_opnd(0, sr_p);
+    sda->set_opnd(1, sr_r);
+    sda->set_opnd(2, sr_r);
+    sda->set_opnd(3, sr_6b_unsig_imm);
+    setSRDescGroup(OR_ands_asr_i, sda);
+
     //2 res, 3 opnd: r, cpsr <- p, r, r
     sda = newSRDescGroup(2, 3);
     //res
@@ -1092,6 +1121,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_adds, sda);
     setSRDescGroup(OR_subs, sda);
     setSRDescGroup(OR_rsbs, sda);
+    setSRDescGroup(OR_orrs, sda);
 
     //2 res, 3 opnd: r, cpsr <- p, r, Imm
     sda = newSRDescGroup(2, 3);
@@ -1305,6 +1335,15 @@ static void initORProperty()
     }
 
     od = &g_or_type_desc[OR_lsr_i];
+    OTD_is_fake(od) = 1; //expand OR if shift-size is out of range.
+
+    od = &g_or_type_desc[OR_lsr_i32];
+    OTD_is_fake(od) = 1; //expand OR if shift-size is out of range.
+
+    od = &g_or_type_desc[OR_lsl_i32];
+    OTD_is_fake(od) = 1; //expand OR if shift-size is out of range.
+
+    od = &g_or_type_desc[OR_asr_i32];
     OTD_is_fake(od) = 1; //expand OR if shift-size is out of range.
 
     OR_TYPE store[] = {
@@ -1828,8 +1867,10 @@ static void initAndPrtScheInfoImpl(OR_TYPE ot)
     case OR_and:
     case OR_and_i:
     case OR_orr:
+    case OR_orrs:
     case OR_orr_i:
     case OR_orr_lsr_i:
+    case OR_ands_asr_i:
     case OR_orr_lsl_i:
     case OR_eor:
     case OR_eor_i:
@@ -1846,12 +1887,15 @@ static void initAndPrtScheInfoImpl(OR_TYPE ot)
     case OR_swpb:
     case OR_lsl:
     case OR_lsl_i:
+    case OR_lsl_i32:
     case OR_lsr:
     case OR_lsr_i:
+    case OR_lsr_i32:
     case OR_asl:
     case OR_asl_i:
     case OR_asr:
     case OR_asr_i:
+    case OR_asr_i32:
     case OR_ror:
     case OR_ror_i:
     case OR_rrx:

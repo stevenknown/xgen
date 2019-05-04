@@ -36,6 +36,7 @@ author: Su Zhenyu
 //
 class ARMCG : public CG {
 private:
+    void expandFakeShift(IN OR * o, OUT IssuePackageList * ipl);
     void expandFakeStore(IN OR * o, OUT IssuePackageList * ipl);
     void expandFakeSpadjust(IN OR * o, OUT IssuePackageList * ipl);
     void expandFakeLoad(IN OR * o, OUT IssuePackageList * ipl);

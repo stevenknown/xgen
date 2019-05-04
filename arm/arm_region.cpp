@@ -103,6 +103,64 @@ IR * ARMRegion::insertCvtForFloat(IR * parent, IR * kid, bool & change)
 }
 
 
+void ARMRegion::simplify(OptCtx & oc)
+{
+    if (getBBList() == NULL || getBBList()->get_elem_count() == 0) {
+        return;
+    }
+
+    SimpCtx simp;
+    simp.setSimpCFS();
+    SIMP_if(&simp) = true;
+    SIMP_doloop(&simp) = true;
+    SIMP_dowhile(&simp) = true;
+    SIMP_whiledo(&simp) = true;
+    SIMP_switch(&simp) = true;
+    SIMP_break(&simp) = true;
+    SIMP_continue(&simp) = true;
+    simp.setSimpCFS();
+    simp.setSimpArray();
+    simp.setSimpSelect();
+    simp.setSimpLandLor();
+    simp.setSimpLnot();
+    simp.setSimpILdISt();
+    simp.setSimpToLowestHeight();
+    if (g_is_lower_to_pr_mode) {
+        simp.setSimpToPRmode();
+    }
+
+    simplifyBBlist(getBBList(), &simp);
+
+    if (g_do_cfg &&
+        g_cst_bb_list &&
+        SIMP_need_recon_bblist(&simp) &&
+        reconstructBBList(oc)) {
+
+        //Simplification may generate new memory operations.
+        ASSERT0(verifyMDRef());
+
+        //Before CFG building.
+        getCFG()->removeEmptyBB(oc);
+
+        getCFG()->rebuild(oc);
+
+        //After CFG building.
+        //Remove empty bb when cfg rebuilted because
+        //rebuilding cfg may generate redundant empty bb.
+        //It disturbs the computation of entry and exit.
+        getCFG()->removeEmptyBB(oc);
+
+        //Compute exit bb while cfg rebuilt.
+        getCFG()->computeExitList();
+        ASSERT0(getCFG()->verify());
+
+        getCFG()->performMiscOpt(oc);
+    } else {
+        ASSERT0(verifyMDRef());
+    }
+}
+
+
 void ARMRegion::low_to_pr_mode(OptCtx & oc)
 {
     SimpCtx simp;
@@ -141,9 +199,8 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     //Test code, to force generating as many IR stmts as possible.
     //g_is_lower_to_pr_mode = true;
     //END FUCK CODE
-
     bool own = false;
-     if (own) {
+    if (own) {
         ARMMiddleProcess(oc);
     } else {
         Region::MiddleProcess(oc);
@@ -151,7 +208,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
 			getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
             IR_CP * cp = (IR_CP*)getPassMgr()->registerPass(PASS_CP);
             cp->perform(oc);
-        }
+        }        
     }
 
     if (g_do_cfg_dom && !OC_is_dom_valid(oc)) {
@@ -168,7 +225,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     //simplification maintained them.
     {
         OC_is_ref_valid(oc) = OC_is_du_chain_valid(oc) = false; int a = 0;
-        g_compute_classic_du_chain = false;
+        g_compute_classic_du_chain = true; //fuck
         g_do_md_ssa = true;
     }
     //END FUCK CODE
@@ -176,8 +233,14 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     if (!OC_is_aa_valid(oc) ||
         !OC_is_ref_valid(oc) ||
         !OC_is_du_chain_valid(oc)) {
-        //Opt phase may lead it to be invalid.
         IR_AA * aa = getAA();
+        if (g_do_aa && aa != NULL &&
+            !OC_is_aa_valid(oc) && !OC_is_ref_valid(oc)) {
+            aa->set_flow_sensitive(false);
+            aa->perform(oc);
+        }
+
+        //Opt phase may lead it to be invalid.        
         if (g_do_aa && aa != NULL) {
             //Compute the threshold to perform AA.
             UINT numir = 0;
@@ -210,12 +273,15 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         IR_DU_MGR * dumgr = getDUMgr();
         if (g_do_md_du_analysis && dumgr != NULL) {
             if (g_do_md_ssa) {
-                ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MD_SSA_MGR))->construction(oc);
-            } else if (g_compute_classic_du_chain) {
+                ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MD_SSA_MGR))->
+                    construction(oc);
+            }
+            
+            if (g_compute_classic_du_chain) {
                 dumgr->perform(oc, SOL_REF|SOL_REACH_DEF|
-                                   COMPUTE_PR_DU|COMPUTE_NOPR_DU);
+                                   COMPUTE_PR_DU|COMPUTE_NONPR_DU);
                 if (OC_is_ref_valid(oc) && OC_is_reach_def_valid(oc)) {
-                    UINT flag = COMPUTE_NOPR_DU;
+                    UINT flag = COMPUTE_NONPR_DU;
                     //If PRs have already been in SSA form, compute
                     //DU chain doesn't make any sense.
                     if (getPassMgr() != NULL) {
@@ -227,23 +293,55 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
                     } else {
                         flag |= COMPUTE_PR_DU;
                     }
-
                     dumgr->computeMDDUChain(oc, false, flag);
                 }
             }
         }
     }
 
-    PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->queryPass(PASS_PR_SSA_MGR);
-    if (ssamgr != NULL && ssamgr->isSSAConstructed()) {
-        ssamgr->destruction();
+    g_do_gcse = true;
+    if (g_do_gcse) {
+        MDSSAMgr * mdssamgr = (MDSSAMgr*)
+            getPassMgr()->registerPass(PASS_MD_SSA_MGR);
+        ASSERT0(mdssamgr);
+        if (!mdssamgr->isMDSSAConstructed()) {
+            mdssamgr->construction(oc);
+        }
+        if (getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
+            IR_GCSE * pass = (IR_GCSE*)
+                getPassMgr()->registerPass(PASS_GCSE);
+            bool changed = false;
+            changed = pass->perform(oc);
+            if (changed) {
+                getDUMgr()->perform(oc,
+                    SOL_REACH_DEF |
+                    COMPUTE_PR_DU | COMPUTE_NONPR_DU);
+                OC_is_du_chain_valid(oc) = false;
+                getDUMgr()->computeMDDUChain(oc, false,
+                    SOL_REF | SOL_REACH_DEF |
+                    COMPUTE_PR_DU | COMPUTE_NONPR_DU);
+            }
+        }
+    }
+    
+    g_do_cp = true;
+    if (g_do_cp &&
+        getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
+        IR_CP * cp = (IR_CP*)getPassMgr()->registerPass(PASS_CP);
+        cp->perform(oc);
     }
 
     ASSERT0(verifyMDRef());
     ASSERT0(verifyIRandBB(getBBList(), this));
     if (OC_is_du_chain_valid(oc)) {
         ASSERT0(getDUMgr() == NULL ||
-            getDUMgr()->verifyMDDUChain(COMPUTE_PR_DU | COMPUTE_NOPR_DU));
+            getDUMgr()->verifyMDDUChain(COMPUTE_PR_DU | COMPUTE_NONPR_DU));
+    }
+
+    PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->queryPass(PASS_PR_SSA_MGR);
+    if (ssamgr != NULL && ssamgr->isSSAConstructed()) {
+        //NOTE: ssa destruction might violate classic DU chain.
+        ssamgr->destruction(&oc);
     }
 
     ///////////////////////////////////////////////////
@@ -291,7 +389,7 @@ bool ARMRegion::ARMMiddleProcess(OptCtx & oc)
     simp.setSimpToLowestHeight();
     ASSERT0(verifyIRandBB(getBBList(), this));
     ASSERT0(getDUMgr() &&
-        getDUMgr()->verifyMDDUChain(COMPUTE_PR_DU | COMPUTE_NOPR_DU));
+        getDUMgr()->verifyMDDUChain(COMPUTE_PR_DU | COMPUTE_NONPR_DU));
 
     //dumpBBList(getBBList(), this);
     simplifyBBlist(bbl, &simp);
@@ -427,12 +525,12 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
 
         if (g_compute_classic_du_chain) {
             //Compute du chain in non-ssa form.
-            f |= SOL_REACH_DEF|COMPUTE_NOPR_DU|COMPUTE_PR_DU;
+            f |= SOL_REACH_DEF|COMPUTE_NONPR_DU|COMPUTE_PR_DU;
             if (dumgr->perform(oc, f) && OC_is_ref_valid(oc)) {
                 dumgr->computeMDDUChain(oc, false, f);
             }
         } else if (g_do_md_ssa) {
-            f |= COMPUTE_NOPR_DU | COMPUTE_PR_DU;
+            f |= COMPUTE_NONPR_DU | COMPUTE_PR_DU;
             //Compute du chain in ssa form.
             if (dumgr->perform(oc, f) && OC_is_ref_valid(oc)) {
                 ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MD_SSA_MGR))->
@@ -453,62 +551,3 @@ bool ARMRegion::HighProcess(OptCtx & oc)
     }
     return true;
 }
-
-
-void ARMRegion::simplify(OptCtx & oc)
-{
-    if (getBBList() == NULL || getBBList()->get_elem_count() == 0) {
-        return;
-    }
-
-    SimpCtx simp;
-    simp.setSimpCFS();
-    SIMP_if(&simp) = true;
-    SIMP_doloop(&simp) = true;
-    SIMP_dowhile(&simp) = true;
-    SIMP_whiledo(&simp) = true;
-    SIMP_switch(&simp) = true;
-    SIMP_break(&simp) = true;
-    SIMP_continue(&simp) = true;
-    simp.setSimpCFS();
-    simp.setSimpArray();
-    simp.setSimpSelect();
-    simp.setSimpLandLor();
-    simp.setSimpLnot();
-    simp.setSimpILdISt();
-    simp.setSimpToLowestHeight();
-    if (g_is_lower_to_pr_mode) {
-        simp.setSimpToPRmode();
-    }
-
-    simplifyBBlist(getBBList(), &simp);
-
-    if (g_do_cfg &&
-        g_cst_bb_list &&
-        SIMP_need_recon_bblist(&simp) &&
-        reconstructBBList(oc)) {
-
-        //Simplification may generate new memory operations.
-        ASSERT0(verifyMDRef());
-
-        //Before CFG building.
-        getCFG()->removeEmptyBB(oc);
-
-        getCFG()->rebuild(oc);
-
-        //After CFG building.
-        //Remove empty bb when cfg rebuilted because
-        //rebuilding cfg may generate redundant empty bb.
-        //It disturbs the computation of entry and exit.
-        getCFG()->removeEmptyBB(oc);
-
-        //Compute exit bb while cfg rebuilt.
-        getCFG()->computeExitList();
-        ASSERT0(getCFG()->verify());
-
-        getCFG()->performMiscOpt(oc);
-    } else {
-        ASSERT0(verifyMDRef());
-    }
-}
-

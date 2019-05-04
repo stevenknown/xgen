@@ -338,8 +338,10 @@ typedef enum _OR_TYPE {
     OR_rscs_i,
 
     OR_and, //logical AND
+    OR_ands_asr_i, //logical OR with Rn register logical shift right.
     OR_and_i, //logical AND
     OR_orr, //logical OR
+    OR_orrs, //logical OR
     OR_orr_i, //logical OR
     OR_orr_lsr_i, //logical OR with Rn register logical shift right.
     OR_orr_lsl_i, //logical OR with Rn register logical shift left.
@@ -369,12 +371,15 @@ typedef enum _OR_TYPE {
     OR_swpb, //byte data swap
     OR_lsl, //logical shift left
     OR_lsl_i,
+    OR_lsl_i32,
     OR_lsr, //logical shift right
     OR_lsr_i,
+    OR_lsr_i32,
     OR_asl, //arith shift left
     OR_asl_i,
     OR_asr, //arith shift right
     OR_asr_i,
+    OR_asr_i32,
     OR_ror, //cycle shift right
     OR_ror_i,
     OR_rrx, //carried cycle shift right
