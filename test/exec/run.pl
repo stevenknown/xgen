@@ -32,8 +32,10 @@ our $g_ld = "pacdsp-elf-ld";
 our $g_ld_flag = "-lc -lm -lgcc -lsim";
 our $g_simulator = "pacdsp-elf-run";
 our $g_cflags = "-O0"; 
-computeXocRootDir();
+computeRelatedPathToXocRootDir();
+#computeAbsolutePathToXocRootDir();
 require "$g_xoc_root_path/test/util.pl";
+#require "d:/X/test/util.pl";
 main();
 #############################################################
 sub main 
@@ -54,7 +56,7 @@ sub main
     print "\nTEST FINISH!\n";
 }
 
-sub computeXocRootDir
+sub computeAbsolutePathToXocRootDir
 {
     my $curdir = getcwd;
     my @segs = split(/\//, $curdir);
@@ -75,24 +77,31 @@ sub computeXocRootDir
             last;
         }
     }
+}
+
+sub computeRelatedPathToXocRootDir
+{
+    my $curdir = getcwd;
+    my @segs = split(/\//, $curdir);
+    my $seg;
 
     #Compute related path.
-    #my $i = 0; #loop index
-    #while (defined($seg = $segs[$i])) { $i++; }
-    #$i--;
-    #$g_xoc_root_path = "../";
-    #while (defined($seg = $segs[$i])) {
-    #    if ($seg ne "test") {
-    #        $g_xoc_root_path = "$g_xoc_root_path../";
-    #    } else {
-    #        last;
-    #    }
-    #    $i--;
-    #    if ($i > 30) {
-    #        #too deep directory
-    #        last;
-    #    }
-    #}
+    my $i = 0; #loop index
+    while (defined($seg = $segs[$i])) { $i++; }
+    $i--;
+    $g_xoc_root_path = "../";
+    while (defined($seg = $segs[$i])) {
+        if ($seg ne "test") {
+            $g_xoc_root_path = "$g_xoc_root_path../";
+        } else {
+            last;
+        }
+        $i--;
+        if ($i > 30) {
+            #too deep directory
+            last;
+        }
+    }
 }
 
 sub parseCmdLine
@@ -161,7 +170,7 @@ sub selectTarget
     }
     if($g_osname eq 'MSWin32') {
         if ($g_target eq "pac") {
-           $g_xocc = "$g_xoc_root_path/src/xocc.prj/debug/xocc.exe";
+           $g_xocc = "$g_xoc_root_path/src/xocc.prj/Debug/xocc.exe";
            $g_base_cc = "pacc";
            $g_as = "pacdsp-elf-as --horizontaledit";
            $g_ld = "pacdsp-elf-ld -L/home/zhenyu/gj310/install/linux/pacdsp-elf/lib/ -Tpac.ld /home/zhenyu/gj310/install/linux/pacdsp-elf/lib/crt1.o -lc -lsim -lm -lc -lgcc ";
@@ -169,7 +178,7 @@ sub selectTarget
            $g_simulator = "pacdsp-elf-run";
         } elsif ($g_target eq "arm") {
            $g_base_cc = "arm-linux-gnueabihf-gcc";
-           $g_xocc = "$g_xoc_root_path/src/xocc.arm.prj/debug/xocc.exe";
+           $g_xocc = "$g_xoc_root_path/src/xocc.arm.prj/x64/build/xocc.exe";
            $g_as = "arm-linux-gnueabihf-as";
            $g_ld = "arm-linux-gnueabihf-gcc";
            $g_ld_flag = "";
