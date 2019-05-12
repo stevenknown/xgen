@@ -164,17 +164,23 @@ sub runPACC
 sub runXOCC
 {
     my $cmdline;
-    my $fullpath = $_[0]; 
+    my $src_fullpath = $_[0]; 
     my $is_invoke_assembler = $_[1]; 
     my $is_invoke_linker = $_[2]; 
-    my $fname = substr($fullpath, rindex($fullpath, "/") + 1);
-    my $asmname = $fullpath.".asm";
-   
+    my $is_input_gr = $_[3]; 
+    my $fname = substr($src_fullpath, rindex($src_fullpath, "/") + 1);
+    my $asmname = $src_fullpath.".asm";
+  
     #compile
     unlink($asmname);
-    $cmdline = "$g_xocc $g_cflags $fullpath -o $asmname";
+    $cmdline = "$g_xocc $g_cflags -o $asmname";
+    if ($is_input_gr) {
+        $cmdline = "$cmdline -readgr $src_fullpath";
+    } else {
+        $cmdline = "$cmdline $src_fullpath";
+    }
     print("\nCMD>>", $cmdline, "\n");
-    
+
     my $retval = system($cmdline);
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");

@@ -42,14 +42,15 @@ INT main(INT argc, CHAR * argv[])
         #endif
     }
     if (g_gr_file_name != NULL) {
+        g_c_file_name = NULL;
         bool res = compileGRFile(g_gr_file_name);
         xoc::finidump();
         return res ? 0 : 2;
     } else if (g_c_file_name != NULL) {
-		bool res = compileCFile();
+        bool res = compileCFile();
         xoc::finidump();
-		return res ? 0 : 3;
-	}
+        return res ? 0 : 3;
+    }
 
     fprintf(stdout, "xocc.exe: no input files\n");
     return 4;

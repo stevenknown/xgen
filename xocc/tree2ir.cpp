@@ -765,9 +765,11 @@ IR * CTree2IR::convert_pragma(IN Tree *, INT lineno, IN T2IRCtx *)
 
 //Return true if function do not modify any variable.
 bool CTree2IR::is_readonly(VAR const* v)
-{
+{   
     CHAR const* vname = SYM_name(VAR_name(v));
     if (strcmp(vname, "printf") == 0) {
+        //CASE: If 'printf' is set to be READONLY, IR_DCE will remove
+        //the call-site if there is no use of printf's return value.
         return true;
     }
     return false;

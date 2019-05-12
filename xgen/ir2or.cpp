@@ -1159,6 +1159,8 @@ void IR2OR::convert(IR const* ir, OUT ORList & ors, IN IOC * cont)
     case IR_SELECT: //formulized determinate_exp?exp:exp
         convertSelect(ir, tors, cont);
         break;
+    case IR_REGION:
+        break;
     default: ASSERTN(0, ("unknown IR type:%s", IRNAME(ir)));
     }
     ors.append_tail(tors);
