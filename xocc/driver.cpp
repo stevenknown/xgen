@@ -120,7 +120,7 @@ void CLDbxMgr::printSrcLine(Dbx const* dbx, PrtCtx * ctx)
 static void usage()
 {
     fprintf(stdout,
-            "\nXOCC Version 0.9.1"
+            "\nXOCC Version 0.9.2"
             "\nUsage: xoc [options] file"
             "\nOptions: "
             "\n  -O0,           compile without any optimization"

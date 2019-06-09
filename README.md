@@ -16,7 +16,7 @@ usage:
     cd xgen
     cp -rf ../xocfe/src/cfe .
  5. cd xgen/arm directory     
- 6. make -f Make.xocc  
+ 6. make -f Makefile.xocc  
  7. Install arm-assembler, arm-linker:    
     sudo apt-get install gcc-arm-linux-gnueabihf
  8. Install qemu-arm:    

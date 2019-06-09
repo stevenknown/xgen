@@ -195,10 +195,6 @@ void ARMRegion::low_to_pr_mode(OptCtx & oc)
 
 bool ARMRegion::MiddleProcess(OptCtx & oc)
 {
-    //START FUCK CODE
-    //Test code, to force generating as many IR stmts as possible.
-    //g_is_lower_to_pr_mode = true;
-    //END FUCK CODE
     bool own = false;
     if (own) {
         ARMMiddleProcess(oc);
@@ -218,17 +214,6 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     if (g_do_cfg_pdom && !OC_is_pdom_valid(oc)) {
         getCFG()->computePdomAndIpdom(oc);
     }
-
-    //START FUCK CODE
-    //Test code, to force recomputing AA and DUChain.
-    //AA and DU Chain need not to be recompute, because
-    //simplification maintained them.
-    {
-        OC_is_ref_valid(oc) = OC_is_du_chain_valid(oc) = false; int a = 0;
-        g_compute_classic_du_chain = true; //fuck
-        g_do_md_ssa = true;
-    }
-    //END FUCK CODE
 
     if (!OC_is_aa_valid(oc) ||
         !OC_is_ref_valid(oc) ||
