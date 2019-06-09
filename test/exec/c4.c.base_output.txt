@@ -1,0 +1,3 @@
+
+argc:1, *argv:c4.c
+14: duplicate global definition

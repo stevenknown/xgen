@@ -32,7 +32,7 @@ author: Su Zhenyu
 #include "../opt/cominc.h"
 #include "../opt/comopt.h"
 #include "../opt/cfs_opt.h"
-#include "../opt/prdf.h"
+#include "../opt/liveness_mgr.h"
 #include "../xgen/xgeninc.h"
 #include "../xocc/feinc.h"
 #include "../cfe/cfexport.h"

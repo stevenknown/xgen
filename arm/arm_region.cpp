@@ -32,7 +32,7 @@ author: Su Zhenyu
 #include "../opt/cominc.h"
 #include "../opt/comopt.h"
 #include "../opt/cfs_opt.h"
-#include "../opt/prdf.h"
+#include "../opt/liveness_mgr.h"
 #include "../xgen/xgeninc.h"
 #include "../cfe/cfexport.h"
 #include "../opt/util.h"
@@ -324,11 +324,24 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         }
     }
     
-    g_do_cp = true;
-    if (g_do_cp &&
-        getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
-        IR_CP * cp = (IR_CP*)getPassMgr()->registerPass(PASS_CP);
-        cp->perform(oc);
+    g_do_licm = false;
+    if (g_do_licm) {
+        IR_LICM * pass = (IR_LICM*)getPassMgr()->registerPass(PASS_LICM);
+        if (pass->perform(oc)) {
+            getPassMgr()->registerPass(PASS_MD_SSA_MGR)->perform(oc);
+        }
+    }
+
+    g_do_cp = false;
+    if (g_do_cp) {
+        IR_CP * pass = (IR_CP*)getPassMgr()->registerPass(PASS_CP);
+        pass->perform(oc);
+    }
+
+    g_do_dce = false;
+    if (g_do_dce) {
+        IR_DCE * pass = (IR_DCE*)getPassMgr()->registerPass(PASS_DCE);
+        pass->perform(oc);
     }
 
     ASSERT0(verifyMDRef());
