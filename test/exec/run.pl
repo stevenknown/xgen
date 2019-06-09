@@ -201,7 +201,7 @@ sub selectTarget
            $g_simulator = "pacdsp-elf-run";
         } elsif ($g_target eq "arm") {
            $g_base_cc = "arm-linux-gnueabihf-gcc";
-           $g_xocc = "$g_xoc_root_path/src/arm/xocc.exe";
+           $g_xocc = "$g_xoc_root_path/arm/xocc.exe";
            $g_as = "arm-linux-gnueabihf-as";
            $g_ld = "arm-linux-gnueabihf-gcc";
            $g_ld_flag = "";
