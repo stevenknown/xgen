@@ -195,6 +195,10 @@ void ARMRegion::low_to_pr_mode(OptCtx & oc)
 
 bool ARMRegion::MiddleProcess(OptCtx & oc)
 {
+    //START HACK CODE
+    //Test code, to force generating as many IR stmts as possible.
+    //g_is_lower_to_pr_mode = true;
+    //END HACK CODE
     bool own = false;
     if (own) {
         ARMMiddleProcess(oc);
@@ -215,12 +219,23 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         getCFG()->computePdomAndIpdom(oc);
     }
 
+    //START HACK CODE
+    //Test code, to force recomputing AA and DUChain.
+    //AA and DU Chain need not to be recompute, because
+    //simplification maintained them.
+    {
+        OC_is_ref_valid(oc) = OC_is_du_chain_valid(oc) = false; int a = 0;
+        g_compute_classic_du_chain = true;
+        g_do_md_ssa = true;
+    }
+    //END HACK CODE
+
     if (!OC_is_aa_valid(oc) ||
         !OC_is_ref_valid(oc) ||
         !OC_is_du_chain_valid(oc)) {
         IR_AA * aa = getAA();
         if (g_do_aa && aa != NULL &&
-            !OC_is_aa_valid(oc) && !OC_is_ref_valid(oc)) {
+            (!OC_is_aa_valid(oc) || !OC_is_ref_valid(oc))) {
             aa->set_flow_sensitive(false);
             aa->perform(oc);
         }
@@ -284,7 +299,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         }
     }
 
-    g_do_gcse = true;
+    g_do_gcse = false;
     if (g_do_gcse) {
         MDSSAMgr * mdssamgr = (MDSSAMgr*)
             getPassMgr()->registerPass(PASS_MD_SSA_MGR);
