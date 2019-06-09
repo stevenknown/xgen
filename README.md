@@ -27,13 +27,13 @@ usage:
     arm-linux-gnueabihf-as hello.s -o hello.o
     arm-linux-gnueabihf-gcc hello.o -o hello.out
     qemu-arm -L /usr/arm-linux-gnueabihf hello.out    
-10. cd xgen/test and there are a lot of testfiles wrote in C or GR language.
-    e.g: Run testcases in 'exec':
-    cd exec
-    perl ./run.pl
-    It will show you all commandlines provided by run.pl,
-    Try and see the simplest test:
-    perl ./run.pl arm
-    You can see all C files under 'exec' will be compiled by xocc.exe and running on qemu-arm.
-    e.g2: Run single case in 'exec':
-    perl ./run.pl arm Case = shift.c
+10. cd xgen/test and there are a lot of testfiles wrote in C or GR language.    
+    e.g: Run testcases in 'exec':     
+    cd exec     
+    perl ./run.pl      
+    It will show you all commandlines provided by run.pl,    
+    Try and see the simplest test:    
+    perl ./run.pl arm      
+    You can see all C files under 'exec' will be compiled by xocc.exe and running on qemu-arm.    
+    e.g2: Run single case in 'exec':    
+    perl ./run.pl arm Case = shift.c    
