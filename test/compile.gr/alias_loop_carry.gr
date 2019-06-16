@@ -1,0 +1,15 @@
+
+//====---- Dump region '.program' ----====
+region program @".program" () {
+    region func main () {
+        label ENTRY;
+        goto FOR_BODY;
+        label FOR_BODY;
+        phi $1 = ($4, ENTRY), ($2, FOR_BODY);
+        phi $2 = ($5, ENTRY), ($1, FOR_BODY);
+        stpr $10 = ild:f32 ($1:*<1>);
+        ist = $2:*<1>, $3; //$3 is RHS
+        truebr (gt $10:u32, 0:f32), FOR_BODY;
+        return 0;
+    };
+}

@@ -156,7 +156,7 @@ void ARMRegion::simplify(OptCtx & oc)
 
         getCFG()->performMiscOpt(oc);
     } else {
-        ASSERT0(verifyMDRef());
+        ASSERT0((!g_do_md_du_analysis && !g_do_md_ssa) || verifyMDRef());
     }
 }
 
@@ -195,6 +195,10 @@ void ARMRegion::low_to_pr_mode(OptCtx & oc)
 
 bool ARMRegion::MiddleProcess(OptCtx & oc)
 {
+    if (g_opt_level == OPT_LEVEL0) {
+        assignPRMD();
+    }
+
     //START HACK CODE
     //Test code, to force generating as many IR stmts as possible.
     //g_is_lower_to_pr_mode = true;
@@ -205,12 +209,12 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     } else {
         Region::MiddleProcess(oc);
         if (g_do_cp &&
-			getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
+            getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
             IR_CP * cp = (IR_CP*)getPassMgr()->registerPass(PASS_CP);
             cp->perform(oc);
         }        
     }
-
+    
     if (g_do_cfg_dom && !OC_is_dom_valid(oc)) {
         getCFG()->computeDomAndIdom(oc);
     }
@@ -225,8 +229,8 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     //simplification maintained them.
     {
         OC_is_ref_valid(oc) = OC_is_du_chain_valid(oc) = false; int a = 0;
-        g_compute_classic_du_chain = true;
-        g_do_md_ssa = true;
+        //g_compute_classic_du_chain = true;
+        //g_do_md_ssa = true;
     }
     //END HACK CODE
 
@@ -236,6 +240,9 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         IR_AA * aa = getAA();
         if (g_do_aa && aa != NULL &&
             (!OC_is_aa_valid(oc) || !OC_is_ref_valid(oc))) {
+            if (!aa->is_init()) {
+                aa->initAliasAnalysis();
+            }
             aa->set_flow_sensitive(false);
             aa->perform(oc);
         }
@@ -262,21 +269,16 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
                 if (!ssamgr->isSSAConstructed()) {
                     ssamgr->construction(oc);
                 }
-            } else {
+            } else if (getDUMgr() != NULL) {
                 getDUMgr()->perform(oc, SOL_REF|SOL_REACH_DEF|COMPUTE_PR_DU);
                 getDUMgr()->computeMDDUChain(oc, false, COMPUTE_PR_DU);
             }
-            checkValidAndRecompute(&oc, PASS_LOOP_INFO, PASS_UNDEF);
+            //checkValidAndRecompute(&oc, PASS_LOOP_INFO, PASS_UNDEF);
             aa->perform(oc);
         }
 
         IR_DU_MGR * dumgr = getDUMgr();
         if (g_do_md_du_analysis && dumgr != NULL) {
-            if (g_do_md_ssa) {
-                ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MD_SSA_MGR))->
-                    construction(oc);
-            }
-            
             if (g_compute_classic_du_chain) {
                 dumgr->perform(oc, SOL_REF|SOL_REACH_DEF|
                                    COMPUTE_PR_DU|COMPUTE_NONPR_DU);
@@ -295,6 +297,12 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
                     }
                     dumgr->computeMDDUChain(oc, false, flag);
                 }
+            }
+            if (g_do_md_ssa) {
+                //MDSSA have to be recomputed when DURef and overlap set
+                //are available.
+                ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MD_SSA_MGR))->
+                    construction(oc);
             }
         }
     }
@@ -344,7 +352,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         pass->perform(oc);
     }
 
-    ASSERT0(verifyMDRef());
+    ASSERT0((!g_do_md_du_analysis && !g_do_md_ssa) || verifyMDRef());
     ASSERT0(verifyIRandBB(getBBList(), this));
     if (OC_is_du_chain_valid(oc)) {
         ASSERT0(getDUMgr() == NULL ||
@@ -369,7 +377,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     RefineCtx rf;
     RC_insert_cvt(rf) = g_do_refine_auto_insert_cvt;
     refineBBlist(getBBList(), rf);
-    ASSERT0(verifyMDRef());
+    ASSERT0((!g_do_md_du_analysis && !g_do_md_ssa) || verifyMDRef());
     ASSERT0(verifyIRandBB(getBBList(), this));
 
     return true;
@@ -513,8 +521,15 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         getCFG()->computeExitList();
         ASSERT0(getCFG()->verify());
 
-        //Infer pointer arith need loopinfo.
-        checkValidAndRecompute(&oc, PASS_DOM, PASS_LOOP_INFO, PASS_UNDEF);
+        if (g_do_cfg_dom) {
+            //Infer pointer arith need loopinfo.
+            checkValidAndRecompute(&oc, PASS_DOM, PASS_UNDEF);
+        }
+
+        if (g_do_loop_ana) {
+            //Infer pointer arith need loopinfo.
+            checkValidAndRecompute(&oc, PASS_LOOP_INFO, PASS_UNDEF);
+        }
 
         getCFG()->performMiscOpt(oc);
     }

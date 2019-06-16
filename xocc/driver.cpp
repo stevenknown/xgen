@@ -319,6 +319,25 @@ bool processCmdLine(INT argc, CHAR * argv[])
     if (g_output_file_name != NULL) {
         UNLINK(g_output_file_name);
     }
+    if (g_opt_level == OPT_LEVEL0) {
+        g_do_cfg_remove_empty_bb = false;
+        g_do_cfg_remove_unreach_bb = false;
+        g_do_cfg_remove_trampolin_bb = false;
+        g_do_cfg_remove_unreach_bb = false;
+        g_do_cfg_remove_trampolin_bb = false;
+        g_do_cfg_dom = false;
+        g_do_cfg_pdom = false;
+        g_do_loop_ana = false;
+        g_do_cdg = false;
+        g_do_cfg_remove_redundant_branch = false;
+        g_do_cfg_invert_condition_and_remove_trampolin_bb = false;
+        g_do_aa = false;
+        g_do_md_du_analysis = false;
+        g_is_support_dynamic_type = false;
+        g_do_md_ssa = false;
+        g_do_pr_ssa = false;
+        g_compute_classic_du_chain = false;
+    }
     return true;
 }
 
