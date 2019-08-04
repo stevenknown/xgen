@@ -87,7 +87,7 @@ IR * Canon::handle_lda(IR * ir, bool & change, CanonCtx * cc)
     //    ir = m_ru->simplifyArrayAddrExp(LDA_base(ir), &tc);
     //    ASSERTN(SIMP_stmtlist(&tc) == NULL, ("TODO: handle this case"));
     //    if (cc != NULL) {
-    //        add_next(&cc->new_stmts, SIMP_stmtlist(&tc));
+    //        xcom::add_next(&cc->new_stmts, SIMP_stmtlist(&tc));
     //    }
     //    change = true;
     //}
@@ -176,7 +176,7 @@ void Canon::handle_call(IN IR * ir, OUT bool & change, CanonCtx * cc)
         IR * last = NULL;
         while (param != NULL) {
             IR * newp = handle_exp(param, change, cc);
-            add_next(&newparamlst, &last, newp);
+            xcom::add_next(&newparamlst, &last, newp);
             last = newp;
             param = xcom::removehead(&CALL_param_list(ir));
         }
@@ -264,8 +264,8 @@ IR * Canon::handle_stmt_list(IR * ir_list, bool & change)
 
             CanonCtx cc;
             IR * allocIR = handle_stmt(ir, lchange, &cc);
-            add_next(&new_list, &last, cc.new_stmts);
-            add_next(&new_list, &last, allocIR);
+            xcom::add_next(&new_list, &last, cc.new_stmts);
+            xcom::add_next(&new_list, &last, allocIR);
         }
         change |= lchange;
         ir_list = new_list;

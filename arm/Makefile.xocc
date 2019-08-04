@@ -17,10 +17,16 @@ include ../com/Makefile.inc
 include ../xgen/Makefile.inc
 include ../opt/Makefile.inc
 
-CFLAGS =\
+ifdef WIN
+#Add predefined macro if build host is Windows.
+CFLAGS += -D_ON_WINDOWS_
+endif
+
+CFLAGS +=\
    -D_DEBUG_ \
    -O0 -g2 \
    -D$(TARG) \
+   -Wno-unknown-pragmas \
    -Wno-write-strings \
    -Wsign-promo \
    -Wparentheses \

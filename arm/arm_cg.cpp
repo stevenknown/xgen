@@ -2562,16 +2562,8 @@ void ARMCG::expandFakeMultiLoad(IN OR * o, OUT IssuePackageList * ipl)
     ASSERT0(ors.get_elem_count() == 1);
 
     OR * last = ors.remove_tail();
-    ASSERT0(last && (OR_code(last) == OR_add ||
-        OR_code(last) == OR_add_i));
+    ASSERT0(last && (OR_code(last) == OR_add || OR_code(last) == OR_add_i));
     last->set_result(0, sr1); //replace result-register with sr1.
-
-    //for (OR * o2 = ors.get_head(); o2 != NULL; o2 = ors.get_next()) {
-    //    IssuePackage * ip = allocIssuePackage();
-    //    o2->set_pred(o->get_pred());
-    //    ip->set(SLOT_G, o2);
-    //    ipl->append_tail(ip);
-    //}
 
     if (OR_is_fake(last)) {
         expandFakeOR(last, ipl);

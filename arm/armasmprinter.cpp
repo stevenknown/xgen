@@ -251,7 +251,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
         buf.strcat(", ");
     }
     for (UINT i = 0; i < o->opnd_num(); i++) {
-        if (i == 0 && HAS_PREDICATE_REGISTER ||
+        if ((i == 0 && HAS_PREDICATE_REGISTER) ||
             o->get_opnd(i) == m_cg->genRflag()) {
             //nothing to do
             continue;

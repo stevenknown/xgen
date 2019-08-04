@@ -203,7 +203,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     //Test code, to force generating as many IR stmts as possible.
     //g_is_lower_to_pr_mode = true;
     //END HACK CODE
-    bool own = false;
+    bool own = false;    
     if (own) {
         ARMMiddleProcess(oc);
     } else {
@@ -229,7 +229,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     //simplification maintained them.
     {
         OC_is_ref_valid(oc) = OC_is_du_chain_valid(oc) = false; int a = 0;
-        //g_compute_classic_du_chain = true;
+        g_compute_classic_du_chain = true;
         //g_do_md_ssa = true;
     }
     //END HACK CODE
