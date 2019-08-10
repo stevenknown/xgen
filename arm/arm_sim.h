@@ -28,29 +28,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-#ifndef _ARM_REGION_MGR_H_
-#define _ARM_REGION_MGR_H_
+#ifndef _ARM_SIM_H_
+#define _ARM_SIM_H_
 
-class ARMRegionMgr : public CLRegionMgr {
-protected:
-    AsmPrinterMgr m_asmprtmgr;
-    FILE * m_asmfile; //assembly file handler.
-
+class ARMSim : public BBSimulator {
 public:
-    ARMRegionMgr() { m_asmfile = NULL; }
-    COPY_CONSTRUCTOR(ARMRegionMgr);
-    virtual ~ARMRegionMgr() {}
+    ARMSim(ORBB * bb);
+    virtual UINT numOfMemResult(OR const* o) const;
+    virtual bool isRegResourceConflict(
+                    DEP_TYPE deptype,
+                    ORDesc * ck_ord,
+                    OR const* cand_or);
+    virtual bool isMemResourceConflict(
+                    DEP_TYPE deptype,
+                    ORDesc * ck_ord,
+                    OR const* cand_or);
 
-    virtual Region * allocRegion(REGION_TYPE rt);
-    virtual VarMgr * allocVarMgr();
-    virtual TargInfo * allocTargInfo();
-
-    void initAsmFileHandler(FILE * asmh) { m_asmfile = asmh; }
-
-    bool GenAndPrtGlobalVariable(Region * rg);
-    FILE * getAsmFileHandler() const { return m_asmfile; }
-
-    bool CodeGen(Region * rg);
+    virtual void getOccupiedSlot(OR const* o, OUT bool occ_slot[SLOT_NUM]);
 };
 
 #endif

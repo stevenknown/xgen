@@ -114,6 +114,18 @@ LIS * ARMCG::allocLIS(
 }
 
 
+//'is_log': false value means that Caller will delete
+//    the object allocated utilmately.
+BBSimulator * ARMCG::allocBBSimulator(ORBB * bb, bool is_log)
+{
+    BBSimulator * p = new ARMSim(bb);
+    if (is_log) {
+        m_simm_list.append_tail(p);
+    }
+    return (BBSimulator*)p;
+}
+
+
 RaMgr * ARMCG::allocRaMgr(List<ORBB*> * bblist, bool is_func)
 {
     return (RaMgr*)new ARMRaMgr(bblist, is_func, this);
@@ -1166,11 +1178,11 @@ void ARMCG::buildShiftLeft(
         //  generated code:
         //    rsb r6, j, #32
         //    sub r1, j, #32
-        //    lsl r5, a_hi, j             
-        //    lsr r6, a_lo, r6             
-        //    lsl r4, a_lo, r1             
-        //    orrs r5, r5, r6         
-        //    lsl res_lo, r0, j             
+        //    lsl r5, a_hi, j
+        //    lsr r6, a_lo, r6
+        //    lsl r4, a_lo, r1
+        //    orrs r5, r5, r6
+        //    lsl res_lo, r0, j
         //    ands res_hi, r5, r1, asr #32
         //    it  cc
         //    movcc res_hi, r4
@@ -1280,7 +1292,7 @@ void ARMCG::buildShiftLeft(
                 genTruePred(), genIntImm(0, true));
             // lo <- 0
             OR * set_low = buildOR(OR_mov_i, 1, 2, lo,
-                genTruePred(), genIntImm(0, true));                
+                genTruePred(), genIntImm(0, true));
             ASSERT0(set_high && set_low);
             ors.append_tail(set_high);
             ors.append_tail(set_low);
@@ -2136,8 +2148,8 @@ bool ARMCG::isCopyOR(OR * o)
     case OR_lsl_i:
     case OR_lsr_i:
     case OR_lsl_i32:
-    case OR_lsr_i32:        
-    case OR_asr_i32:        
+    case OR_lsr_i32:
+    case OR_asr_i32:
     case OR_asl_i:
     case OR_asr_i:
         if (SR_is_int_imm(o->get_opnd(2)) && SR_int_imm(o->get_opnd(2)) == 0) {

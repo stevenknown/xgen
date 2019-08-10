@@ -377,6 +377,7 @@ public:
             bool change_cluster,
             bool is_log);
     virtual IR2OR * allocIR2OR();
+    virtual BBSimulator * allocBBSimulator(ORBB * bb, bool is_log);
     RaMgr * allocRaMgr(List<ORBB*> * bblist, bool is_func);
 
     virtual void setSpadjustOffset(OR * spadj, INT size);

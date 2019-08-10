@@ -1,6 +1,7 @@
 ARM_OBJS +=\
 ../arm/armasmprinter.o\
 ../arm/arm_cg.o\
+../arm/arm_sim.o\
 ../arm/arm_cgmgr.o\
 ../arm/arm.o\
 ../arm/armir2or.o\

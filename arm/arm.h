@@ -38,7 +38,7 @@ author: Su Zhenyu
 //#include "../arm/arm_ddg.h"
 //#include "../arm/arm_parallelpartmgr.h"
 #include "../arm/arm_lra.h"
-//#include "../arm/arm_sim.h"
+#include "../arm/arm_sim.h"
 #include "../arm/arm_lis.h"
 //#include "../arm/arm_ip.h"
 #include "../arm/arm_passmgr.h"

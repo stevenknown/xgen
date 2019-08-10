@@ -203,7 +203,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     //Test code, to force generating as many IR stmts as possible.
     //g_is_lower_to_pr_mode = true;
     //END HACK CODE
-    bool own = false;    
+    bool own = false;
     if (own) {
         ARMMiddleProcess(oc);
     } else {
@@ -212,9 +212,9 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
             getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
             IR_CP * cp = (IR_CP*)getPassMgr()->registerPass(PASS_CP);
             cp->perform(oc);
-        }        
+        }
     }
-    
+
     if (g_do_cfg_dom && !OC_is_dom_valid(oc)) {
         getCFG()->computeDomAndIdom(oc);
     }
@@ -234,9 +234,10 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     }
     //END HACK CODE
 
-    if (!OC_is_aa_valid(oc) ||
-        !OC_is_ref_valid(oc) ||
-        !OC_is_du_chain_valid(oc)) {
+    if (g_opt_level > OPT_LEVEL0 &&
+        (!OC_is_aa_valid(oc) ||
+         !OC_is_ref_valid(oc) ||
+         !OC_is_du_chain_valid(oc))) {
         IR_AA * aa = getAA();
         if (g_do_aa && aa != NULL &&
             (!OC_is_aa_valid(oc) || !OC_is_ref_valid(oc))) {
@@ -247,7 +248,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
             aa->perform(oc);
         }
 
-        //Opt phase may lead it to be invalid.        
+        //Opt phase may lead it to be invalid.
         if (g_do_aa && aa != NULL) {
             //Compute the threshold to perform AA.
             UINT numir = 0;
@@ -331,7 +332,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
             }
         }
     }
-    
+
     g_do_licm = false;
     if (g_do_licm) {
         IR_LICM * pass = (IR_LICM*)getPassMgr()->registerPass(PASS_LICM);
@@ -512,6 +513,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
     if (g_do_cfg) {
         ASSERT0(g_cst_bb_list);
         checkValidAndRecompute(&oc, PASS_CFG, PASS_UNDEF);
+
         //Remove empty bb when cfg rebuilted because
         //rebuilding cfg may generate redundant empty bb.
         //It disturbs the computation of entry and exit.
