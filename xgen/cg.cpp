@@ -4031,7 +4031,7 @@ bool CG::perform()
 {
     ASSERTN(isPowerOf2(STACK_ALIGNMENT),
         ("Stack alignment should be power of 2"));
-    
+
     if (g_is_dump_after_pass || g_is_dump_before_pass) {
         g_indent = 0;
         xoc::note("\n==---- DUMP START CODE GENERATION (%d)'%s' ----==\n",
@@ -4043,7 +4043,7 @@ bool CG::perform()
         m_ru->getBBList()->get_elem_count() == 0) {
         return true;
     }
-    
+
     //Estimate and reserve stack memory space for real parameters.
     computeMaxRealParamSpace();
 
@@ -4052,7 +4052,7 @@ bool CG::perform()
 
     CHAR const* varname = SYM_name(m_ru->getRegionVar()->get_name());
     DUMMYUSE(varname);
-    
+
     //Translate IR in IRBB to a list of OR.
     //Record OR list after converting xoc::IR to OR.
     ORList or_list;
@@ -4131,7 +4131,7 @@ bool CG::perform()
     delete ra_mgr;
     freeDdgList();
     freeLisList();
-    
+
     //Perform package if target machine is multi-issue architecture.
     package(simvec);
 

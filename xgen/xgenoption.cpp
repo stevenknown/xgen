@@ -47,7 +47,10 @@ bool g_gen_code_for_big_return_value = true;
 bool g_cg_dump_src_line = true;
 
 //Perform instruction scheduling.
-bool g_do_lis = true;
+bool g_do_lis = false;
+
+//Perform global register allocation.
+bool g_do_gra = false;
 
 //Accessing parameter via FP+ofst
 bool g_is_enable_fp = false;

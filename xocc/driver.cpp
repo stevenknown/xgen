@@ -337,6 +337,10 @@ bool processCmdLine(INT argc, CHAR * argv[])
         g_do_md_ssa = false;
         g_do_pr_ssa = false;
         g_compute_classic_du_chain = false;
+        g_do_refine = false;
+        g_do_refine_auto_insert_cvt = false;
+        g_do_call_graph = false;
+        g_do_ipa = false;
     }
     return true;
 }
@@ -656,7 +660,7 @@ static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr, FILE * asmh)
         }
 
         if (g_show_time) {
-            printf("\n====Start Process region(%d)%s ====\n",
+            printf("\n====Start Process Region(id:%d)'%s' ====\n",
                REGION_id(rg), rg->getRegionName());
         }
 
@@ -699,34 +703,18 @@ static CLRegionMgr * initRegionMgr()
     rm->initVarMgr();
     rm->initTargInfo();
 
-    //g_opt_level = OPT_LEVEL0;
-    //Retain CFG, DU info for IPA used.
-    g_retain_pass_mgr_for_region = true;
-    g_compute_region_imported_defuse_md = true;
-    g_compute_classic_du_chain = false;
+    //For C language, inserting CVT is expected.
+    g_do_refine_auto_insert_cvt = true;
     g_do_refine = true;
-    g_do_rp = false;
-    g_do_dce = false;
-    g_do_call_graph = true;
-    g_do_ipa = true;
-
-    g_is_support_dynamic_type = true;
-
-    g_do_rp = false;
-    g_do_cp = false;
-    g_do_rce = false;
-    g_do_licm = false;
-    g_do_loop_convert = false;
-    g_do_cdg = false;
-    g_do_expr_tab = false;
+    
+    //Retain CFG, DU info for IPA used.
     g_compute_region_imported_defuse_md = true;
-    g_do_lis = false;
-    g_do_gra = false;
+    g_retain_pass_mgr_for_region = true;
+    g_compute_classic_du_chain = false;
+    //g_do_call_graph = true;
+    //g_do_ipa = true;
+    g_is_support_dynamic_type = true; 
     g_is_opt_float = true;
-    g_do_dce = false;
-    g_do_pr_ssa = false;
-    g_show_pass_info = false;
-    g_do_ivr = false;
     g_prt_asm_horizontal = true;
     g_do_refine_auto_insert_cvt = false;
     g_is_dump_mdset_hash = true;
@@ -766,7 +754,7 @@ static void initCompile(
         CGMgr ** cgmgr,
         TargInfo ** ti)
 {
-	*rm = initRegionMgr();
+    *rm = initRegionMgr();
     *cgmgr = xgen::allocCGMgr();
     *asmh = createAsmFileHandler();
     *ti = (*rm)->allocTargInfo();

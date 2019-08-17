@@ -207,7 +207,7 @@ bool BBSimulator::isMemResourceConflict(
     UINT start_cyc = ORDESC_start_cyc(ck_ord);
     OR * ck_or = ORDESC_or(ck_ord);
     ORScheInfo const* or_info = ORDESC_or_sche_info(ck_ord);
-    //Resource is available only if all of memory operands is ready.
+    //Resource is available only if all of memory operands are ready.
     if (HAVE_FLAG(deptype, DEP_MEM_VOL) ||
         HAVE_FLAG(deptype, DEP_MEM_OUT) ||
         HAVE_FLAG(deptype, DEP_MEM_FLOW)) {

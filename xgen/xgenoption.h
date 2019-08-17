@@ -42,6 +42,9 @@ extern bool g_cg_dump_src_line;
 //Perform instruction scheduling.
 extern bool g_do_lis;
 
+//Perform global register allocation.
+extern bool g_do_gra;
+
 //Enable access parameter via FP+ofst.
 extern bool g_is_enable_fp;
 
