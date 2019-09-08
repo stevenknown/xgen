@@ -757,8 +757,7 @@ static void initCompile(
     *rm = initRegionMgr();
     *cgmgr = xgen::allocCGMgr();
     *asmh = createAsmFileHandler();
-    *ti = (*rm)->allocTargInfo();
-    (*rm)->setTargetInfo(*ti);
+    *ti = (*rm)->getTargInfo();
     ASSERT0(*asmh);
 }
 
