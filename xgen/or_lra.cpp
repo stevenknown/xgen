@@ -143,24 +143,6 @@ UINT VAR_MAP::map_icc_varidx2coeff(UINT varidx)
 //
 //START ACTION
 //
-ACTION::ACTION()
-{
-    m_pool = smpoolCreate(256, MEM_COMM);
-}
-
-
-ACTION::~ACTION()
-{
-    for (INT i = 0; i <= m_lt2action_done.get_last_idx(); i++) {
-        List<INT> *ac_lst = m_lt2action_done.get(i);
-        if (ac_lst) {
-            ac_lst->destroy();
-        }
-    }
-    smpoolDelete(m_pool);
-}
-
-
 void * ACTION::xmalloc(INT size)
 {
     ASSERTN(size > 0, ("xmalloc: size less zero!"));
@@ -169,18 +151,6 @@ void * ACTION::xmalloc(INT size)
     if (p == NULL) return NULL;
     ::memset(p, 0, size);
     return p;
-}
-
-
-UINT ACTION::get_action(LifeTime * lt)
-{
-    return m_lt2action.get(LT_id(lt));
-}
-
-
-List<INT> * ACTION::get_action_done(LifeTime * lt)
-{
-    return m_lt2action_done.get(LT_id(lt));
 }
 
 
@@ -202,27 +172,13 @@ void ACTION::set_action(LifeTime * lt, UINT action)
 //START ORMap
 //
 //ORMap
-ORMap::ORMap()
-{
-    m_is_init = false;
-    m_pool = NULL;
-    init();
-}
-
-
-ORMap::~ORMap()
-{
-    destroy();
-}
-
-
 void * ORMap::xmalloc(INT size)
 {
     ASSERTN(m_is_init, ("xcom::Graph must be initialized before clone."));
     ASSERTN(size > 0, ("xmalloc: size less zero!"));
     ASSERTN(m_pool != NULL,("need graph pool!!"));
     void * p = smpoolMalloc(size, m_pool);
-    if (p == NULL) return NULL;
+    if (p == NULL) { return NULL; }
     ::memset(p,0,size);
     return p;
 }
@@ -230,7 +186,7 @@ void * ORMap::xmalloc(INT size)
 
 void ORMap::init()
 {
-    if (m_is_init) return;
+    if (m_is_init) { return; }
     m_or2orlist_map.init();
     m_idx2or_map.init();
     m_or_list.init();
@@ -241,7 +197,7 @@ void ORMap::init()
 
 void ORMap::destroy()
 {
-    if (!m_is_init) return;
+    if (!m_is_init) { return; }
     for (INT i = 0; i <= m_or2orlist_map.get_last_idx(); i++) {
         List<OR*> * orlist = m_or2orlist_map.get(i);
         if (orlist == NULL) {
@@ -254,21 +210,6 @@ void ORMap::destroy()
     m_or_list.destroy();
     smpoolDelete(m_pool);
     m_is_init = false;
-}
-
-
-ORList * ORMap::get_ors()
-{
-    ASSERTN(m_is_init, ("List not yet initialized."));
-    return &m_or_list;
-}
-
-
-List<OR*> * ORMap::get_or_ors(OR * o)
-{
-    ASSERTN(o != NULL, ("o is NULL."));
-    ASSERTN(m_is_init, ("List not yet initialized."));
-    return m_or2orlist_map.get(OR_id(o));
 }
 
 
@@ -427,24 +368,11 @@ void RefORBBList::destroy()
 //
 //START RegFileAffinityGraph
 //
-RegFileAffinityGraph::RegFileAffinityGraph()
-{
-    m_is_init = false; //Initialize stack/global memory.
-}
-
-
-RegFileAffinityGraph::~RegFileAffinityGraph()
-{
-    destroy();
-}
-
-
 //Initialize register dependence graph.
 //    1. Create position vector.
 void RegFileAffinityGraph::init(ORBB * bb, bool is_enable_far)
 {
     if (m_is_init) { return; }
-
     xcom::Graph::init();
     m_pool = smpoolCreate(64,MEM_COMM);
     m_bb = bb;
@@ -457,24 +385,6 @@ void RegFileAffinityGraph::init(ORBB * bb, bool is_enable_far)
     set_direction(false);
     m_id2lt.init();
     m_is_init = true;
-}
-
-
-void RegFileAffinityGraph::destroy()
-{
-    if (!m_is_init) { return; }
-
-    xcom::Graph::destroy();
-    smpoolDelete(m_pool);
-    m_id2lt.destroy();
-    m_is_init = false;
-}
-
-
-ORBB * RegFileAffinityGraph::bb()
-{
-    ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
-    return m_bb;
 }
 
 
@@ -505,10 +415,9 @@ void RegFileAffinityGraph::clone(RegFileAffinityGraph & rdg)
 }
 
 
-xcom::Edge * RegFileAffinityGraph::clustering(
-        SR * sr1,
-        SR * sr2,
-        LifeTimeMgr & mgr)
+xcom::Edge * RegFileAffinityGraph::clustering(SR * sr1,
+                                              SR * sr2,
+                                              LifeTimeMgr & mgr)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     LifeTime * lt1 = mgr.getLifeTime(sr1);
@@ -653,7 +562,7 @@ void InterfGraph::init(ORBB * bb, bool clustering, bool estimate)
 void InterfGraph::destroy()
 {
     INT i;
-    if (!m_is_init) return;
+    if (!m_is_init) { return; }
     m_lt_mgr = NULL;
     for (i = 0; i < RF_NUM; i++) {
         m_lt_rf_group[i].clean();
@@ -699,7 +608,8 @@ bool InterfGraph::isGraphNode(LifeTime * lt)
 //Similarly it also could be handled in If-Conversion.
 bool InterfGraph::isInterferred(LifeTime * lt1, LifeTime * lt2)
 {
-    ASSERTN(SR_is_reg(LT_sr(lt1)) && SR_is_reg(LT_sr(lt2)), ("sr is not register"));
+    ASSERTN(SR_is_reg(LT_sr(lt1)) && SR_is_reg(LT_sr(lt2)),
+            ("sr is not register"));
     if (LT_id(lt1) == LT_id(lt2) || !LT_pos(lt1)->is_intersect(*LT_pos(lt2))) {
         return false;
     }
@@ -745,7 +655,7 @@ void InterfGraph::rebuild()
     if(ORBB_ornum(m_bb) == 0) return;
     //Recheck interference
     LifeTime *lt1 = NULL, *lt2 = NULL;
-    List<LifeTime*> *tmpcl = NULL;
+    List<LifeTime*> * tmpcl = NULL;
     for (UINT c = CLUST_UNDEF; c < CLUST_NUM; c++) {
         tmpcl = &m_lt_cl_group[c];
         for (UINT j = 0; j < tmpcl->get_elem_count(); j++) {
@@ -766,14 +676,14 @@ void InterfGraph::build(LifeTimeMgr & mgr)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     ASSERTN(mgr.getMaxLifeTimeLen() > 0, ("Need to create life time at first"));
-    if (ORBB_ornum(m_bb) == 0) return;
+    if (ORBB_ornum(m_bb) == 0) { return; }
     m_lt_mgr = &mgr;
     //Check interference
     INT c;
     for (LifeTime * lt1 = mgr.getFirstLifeTime(c);
          lt1 != NULL; lt1 = mgr.getNextLifeTime(c)) {
         ASSERTN(LT_cluster(lt1) != CLUST_UNDEF || !m_clustering,
-           ("Life time cluster is illegal."));
+                ("Life time cluster is illegal."));
         m_lt_rf_group[SR_regfile(LT_sr(lt1))].append_tail(lt1);
         ASSERTN(LT_cluster(lt1) >= CLUST_UNDEF, ("?? cluster"));
         m_lt_cl_group[LT_cluster(lt1)].append_tail(lt1);
@@ -806,9 +716,7 @@ void InterfGraph::getLifeTimeList(List<LifeTime*> & lt_group, CLUST clust)
 
 
 //Get all lifetimes which belong to group of 'regfile'.
-void InterfGraph::getLifeTimeList(
-    List<LifeTime*> & lt_group,
-    REGFILE regfile)
+void InterfGraph::getLifeTimeList(List<LifeTime*> & lt_group, REGFILE regfile)
 {
     ASSERTN(regfile != RF_UNDEF, ("Unknown regfile."));
     for (LifeTime * lt = m_lt_rf_group[regfile].get_tail();
@@ -819,11 +727,10 @@ void InterfGraph::getLifeTimeList(
 }
 
 
-void InterfGraph::getLifeTimeList(
-        List<LifeTime*> & lt_group,
-        REGFILE regfile,
-        INT start,
-        INT end)
+void InterfGraph::getLifeTimeList(List<LifeTime*> & lt_group,
+                                  REGFILE regfile,
+                                  INT start,
+                                  INT end)
 {
     DUMMYUSE(start);
     DUMMYUSE(end);
@@ -837,12 +744,11 @@ void InterfGraph::getLifeTimeList(
 
 
 //Move life time from one cluster to another cluster.
-void InterfGraph::moveLifeTime(
-        LifeTime * lt,
-        CLUST from_clust,
-        INT from_regfile,
-        CLUST to_clust,
-        INT to_regfile)
+void InterfGraph::moveLifeTime(LifeTime * lt,
+                               CLUST from_clust,
+                               INT from_regfile,
+                               CLUST to_clust,
+                               INT to_regfile)
 {
     ASSERTN(from_clust >= CLUST_UNDEF && to_clust >= CLUST_UNDEF,
             ("Illegal info"));
@@ -979,8 +885,8 @@ void InterfGraph::dump()
     for(xcom::Vertex * v = m_vertices.get_first(c);
         v != NULL; v = m_vertices.get_next(c)){
         fprintf(h, "\nnode: { title:\"%d\" label:\"%d\" "
-                    "shape:circle fontname:\"courB\" color:gold}",
-                    VERTEX_id(v), VERTEX_id(v));
+                   "shape:circle fontname:\"courB\" color:gold}",
+                   VERTEX_id(v), VERTEX_id(v));
     }
 
     //Print edges
@@ -1161,12 +1067,11 @@ INT LifeTimeMgr::getPos(OR * o, bool is_result)
 }
 
 
-void LifeTimeMgr::init(
-        ORBB * bb,
-        bool is_verify,
-        bool clustering) //Only avaible for multi-cluster machine
+void LifeTimeMgr::init(ORBB * bb,
+                       bool is_verify,
+                       bool clustering) //Only avaible for multi-cluster machine
 {
-    if (m_is_init) return;
+    if (m_is_init) { return; }
     m_gra_used.clean();
     m_bb = bb;
     m_lt_count = 0;
@@ -1222,7 +1127,8 @@ void LifeTimeMgr::computeLifeTimeCluster(LifeTime * lt, OR * o)
     if (m_cg->isBusSR(sr)) {
         if (m_is_verify) {
             if (LT_cluster(lt) != CLUST_UNDEF) {
-                ASSERTN(m_cg->isBusCluster(LT_cluster(lt)), ("Unmatch cluster"));
+                ASSERTN(m_cg->isBusCluster(LT_cluster(lt)),
+                        ("Unmatch cluster"));
             }
         }
         LT_cluster(lt) = m_cg->computeClusterOfBusOR(o);
@@ -1317,9 +1223,8 @@ LifeTime * LifeTimeMgr::clone_lifetime(LifeTime * lt)
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
     ASSERTN(lt, ("Life time is NULL."));
 
-    LifeTime *newlt = (LifeTime*)xmalloc(sizeof(LifeTime));
-    LT_pos(newlt)->copy(*LT_pos(lt));
-
+    LifeTime * newlt = (LifeTime*)xmalloc(sizeof(LifeTime));
+    LT_pos(newlt)->copy(*LT_pos(lt));    
     LT_desc(newlt).init();
     for (INT i = LT_pos(lt)->get_first();
          i >= 0; i = LT_desc(lt).get_next(i)) {
@@ -1444,10 +1349,9 @@ bool LifeTimeMgr::clone(LifeTimeMgr & mgr)
 
     m_pos2or_map.copy(mgr.m_pos2or_map);
     m_or2pos_map.copy(mgr.m_or2pos_map);
-    m_oridx2sr_livein_gsr_spill_pos.copy(
-                mgr.m_oridx2sr_livein_gsr_spill_pos);
+    m_oridx2sr_livein_gsr_spill_pos.copy(mgr.m_oridx2sr_livein_gsr_spill_pos);
     m_oridx2sr_liveout_gsr_reload_pos.copy(
-                mgr.m_oridx2sr_liveout_gsr_reload_pos);
+        mgr.m_oridx2sr_liveout_gsr_reload_pos);
     m_oridx2or_map.copy(mgr.m_oridx2or_map);
     return true;
 }
@@ -1458,19 +1362,21 @@ bool LifeTimeMgr::verifyLifeTime()
 {
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
     INT c;
-    for (LifeTime * lt = getFirstLifeTime(c); lt != NULL; lt = getNextLifeTime(c)) {
+    for (LifeTime * lt = getFirstLifeTime(c);
+         lt != NULL; lt = getNextLifeTime(c)) {
         ASSERTN(LT_sr(lt), ("Not any SR binding to LifeTime."));
         ASSERTN(LT_cluster(lt) != CLUST_UNDEF, ("Miss cluster info"));
 
         if (m_cg->isBusSR(LT_sr(lt))) {
-            ASSERTN(m_cg->isBusCluster(LT_cluster(lt)), ("Unmatch cluster infor"));
+            ASSERTN(m_cg->isBusCluster(LT_cluster(lt)),
+                    ("Unmatch cluster infor"));
             continue; //Do not need to check occurrence.
         }
 
         ASSERTN(LT_desc(lt).get(0) == NULL, ("Position 0 is in-exposed use"));
         ASSERTN(LT_desc(lt).get(m_max_lt_len - 1) == NULL,
-               ("Position %d is out-exposed use, last_idx is %d",
-                m_max_lt_len - 1, LT_desc(lt).get_last_idx()));
+                ("Position %d is out-exposed use, last_idx is %d",
+                 m_max_lt_len - 1, LT_desc(lt).get_last_idx()));
 
         //Check for all ORs which lifetime lived through.
         for (INT i = LT_pos(lt)->get_first();
@@ -1501,8 +1407,7 @@ UINT LifeTimeMgr::getOccCount(LifeTime * lt)
 {
     ASSERTN(lt, ("getOccCount:lt is NULL"));
     INT count = 0;
-    for (INT i = LT_pos(lt)->get_first();
-         i >= 0; i = LT_desc(lt).get_next(i)) {
+    for (INT i = LT_pos(lt)->get_first(); i >= 0; i = LT_desc(lt).get_next(i)) {
         if (LT_desc(lt).get(i)) {
             count++;
         }
@@ -1528,15 +1433,14 @@ RegSet * LifeTimeMgr::getGRAUsedReg()
 
 //Get occurrences in between of 'pos1' and 'pos2',
 //and also include both of them.
-void LifeTimeMgr::getOccInRange(
-        INT start,
-        INT end,
-        IN LifeTime * lt,
-        IN OUT List<INT> &occs)
+void LifeTimeMgr::getOccInRange(INT start,
+                                INT end,
+                                IN LifeTime * lt,
+                                IN OUT List<INT> &occs)
 {
     ASSERTN(start <= end && start >= 0 && end >= 0, ("out of range"));
     ASSERTN(start >= LT_FIRST_POS && end <= (INT)(getMaxLifeTimeLen() - 1),
-           ("out of range"));
+            ("out of range"));
     start = MAX(start, LT_pos(lt)->get_first());
     end = MIN(end, LT_pos(lt)->get_last());
     PosInfo * pi;
@@ -1551,12 +1455,8 @@ void LifeTimeMgr::getOccInRange(
 
 
 //Get backward occurrences of 'pos'
-//e.g:
-//    Lowest_Pos...Backward_Occ....Pos.....Highest_Pos
-INT LifeTimeMgr::getBackwardOcc(
-        INT pos,
-        IN LifeTime * lt,
-        IN OUT bool * is_def)
+//e.g:Lowest_Pos...Backward_Occ....Pos.....Highest_Pos
+INT LifeTimeMgr::getBackwardOcc(INT pos, IN LifeTime * lt, IN OUT bool * is_def)
 {
     INT backwpos = -1;
     if (pos <= LT_FIRST_POS) {
@@ -1591,12 +1491,8 @@ INT LifeTimeMgr::getBackwardOcc(
 
 
 //Get forward occurrences of 'pos'
-//e.g:
-//    Lowest_Pos....Pos...Forward_Occ...Highest_Pos
-INT LifeTimeMgr::getForwardOcc(
-        INT pos,
-        IN LifeTime * lt,
-        IN OUT bool * is_def)
+//e.g:Lowest_Pos....Pos...Forward_Occ...Highest_Pos
+INT LifeTimeMgr::getForwardOcc(INT pos, IN LifeTime * lt, IN OUT bool * is_def)
 {
     INT forwpos = -1;
     ASSERTN(pos >= LT_FIRST_POS && pos <= (INT)(getMaxLifeTimeLen() - 1),
@@ -1706,7 +1602,8 @@ void LifeTimeMgr::reviseLTCase1(LifeTime * lt)
 void LifeTimeMgr::reviseLifeTime(List<LifeTime*> & lts)
 {
     INT c;
-    for (LifeTime * lt = getFirstLifeTime(c); lt != NULL; lt = getNextLifeTime(c)) {
+    for (LifeTime * lt = getFirstLifeTime(c);
+         lt != NULL; lt = getNextLifeTime(c)) {
         if (!SR_is_global(LT_sr(lt)) &&
             !SR_is_dedicated(LT_sr(lt)) &&
             LT_pos(lt)->get_first() == LT_FIRST_POS) {
@@ -1786,10 +1683,9 @@ INT LifeTimeMgr::recreate(ORBB * bb, bool is_verify, bool clustering)
 
 
 //Process the function/region returning ORBB.
-void LifeTimeMgr::processFuncExitBB(
-        IN OUT List<LifeTime*> & liveout_exitbb_lts,
-        IN OUT LifeTimeHash & live_lt_list,
-        INT pos)
+void LifeTimeMgr::processFuncExitBB(IN OUT List<LifeTime*> & liveout_exitbb_lts,
+                                    IN OUT LifeTimeHash & live_lt_list,
+                                    INT pos)
 {
     RegSet const* regs = tmGetRegSetOfReturnValue();
     for (INT reg = regs->get_first(); reg != -1; reg = regs->get_next(reg)) {
@@ -1871,11 +1767,10 @@ void LifeTimeMgr::appendPosition(IN OUT LifeTimeHash & live_lt_list, INT pos)
 
 //Life times which got same physical register with 'sr' must
 //record the current occurrence.
-void LifeTimeMgr::recordPhysicalRegOcc(
-        IN SR * sr,
-        IN LifeTimeHash & live_lt_list,
-        INT pos,
-        IN PosInfo * pi)
+void LifeTimeMgr::recordPhysicalRegOcc(IN SR * sr,
+                                       IN LifeTimeHash & live_lt_list,
+                                       INT pos,
+                                       IN PosInfo * pi)
 {
     if (SR_phy_regid(sr) != REG_UNDEF) {
         //Record the occurrence before the lived life-time be
@@ -1939,8 +1834,7 @@ INT LifeTimeMgr::create()
     OR * o;
     ORCt * ct;
     for (pos = m_max_lt_len - 2, o = ORBB_orlist(m_bb)->get_tail(&ct);
-         o != NULL;
-         o = ORBB_orlist(m_bb)->get_prev(&ct), pos--) {
+         o != NULL; o = ORBB_orlist(m_bb)->get_prev(&ct), pos--) {
         m_oridx2or_map.set(OR_id(o), o);
         m_pos2or_map.set(pos, o); //Map 'pos'ition to relative or
         m_or2pos_map.set(OR_id(o), pos); //Map 'pos'ition to relative or
@@ -2046,7 +1940,8 @@ INT LifeTimeMgr::create()
     #ifdef _DEBUG_
     //Life time verification.
     INT c;
-    for (LifeTime * lt = getFirstLifeTime(c); lt != NULL; lt = getNextLifeTime(c)) {
+    for (LifeTime * lt = getFirstLifeTime(c);
+         lt != NULL; lt = getNextLifeTime(c)) {
         if (!SR_is_global(LT_sr(lt)) &&
             !SR_is_dedicated(LT_sr(lt)) &&
             !LT_has_allocated(lt)) {
@@ -2117,17 +2012,15 @@ bool LifeTimeMgr::isRecalcSR(SR * sr)
 //Return true if operation 'ortype' passed through by 'lt',
 //otherwise return false.
 //'orlst': operations which has the 'ortype'.
-bool LifeTimeMgr::isContainOR(
-        IN LifeTime * lt,
-        OR_TYPE ortype,
-        OUT List<OR*> * orlst)
+bool LifeTimeMgr::isContainOR(IN LifeTime * lt,
+                              OR_TYPE ortype,
+                              OUT List<OR*> * orlst)
 {
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
 
     //Traversing
     bool find = false;
-    for (INT i = LT_pos(lt)->get_first(); i >= 0;
-            i = LT_desc(lt).get_next(i)) {
+    for (INT i = LT_pos(lt)->get_first(); i >= 0; i = LT_desc(lt).get_next(i)) {
         if (LT_desc(lt).get(i)) {
             OR * o = m_pos2or_map.get(i);
             ASSERTN(o, ("Position:%d has not any o mapped",i));
@@ -2401,7 +2294,8 @@ void LifeTimeMgr::dump(UINT flag)
         fprintf(h, "\n\nREG_FILE:%s", tmGetRegFileName((REGFILE)regfile));
         fprintf(h, "\n  POS:");
         INT c2;
-        for (lt1 = getFirstLifeTime(c2); lt1 != NULL; lt1 = getNextLifeTime(c2)) {
+        for (lt1 = getFirstLifeTime(c2);
+             lt1 != NULL; lt1 = getNextLifeTime(c2)) {
             if (SR_regfile(LT_sr(lt1)) != regfile) {
                 continue;
             }
@@ -2429,7 +2323,8 @@ void LifeTimeMgr::dump(UINT flag)
         }
 
         fprintf(h, "\n\n  DESC:");
-        for (lt1 = getFirstLifeTime(c2); lt1 != NULL; lt1 = getNextLifeTime(c2)) {
+        for (lt1 = getFirstLifeTime(c2);
+             lt1 != NULL; lt1 = getNextLifeTime(c2)) {
             if (SR_regfile(LT_sr(lt1)) != regfile) {
                 continue;
             }
@@ -2551,8 +2446,8 @@ void LifeTimeMgr::dump(UINT flag)
         //Collects position info
         PosInfo * pi;
         ASSERTN(LT_desc(lt1).get_last_idx() == -1 ||
-               LT_desc(lt1).get_last_idx() < maxlen,
-               ("Depiction of life time long than the finial position"));
+                LT_desc(lt1).get_last_idx() < maxlen,
+                ("Depiction of life time long than the finial position"));
         for (INT i2 = LT_FIRST_POS; i2 < maxlen; i2++) {
             if ((pi = LT_desc(lt1).get(i2)) != NULL) {
                 if (POSINFO_is_def(pi)) {
@@ -2623,19 +2518,6 @@ void LifeTimeMgr::considerSpecialConstrains(
 //
 //START GroupMgr
 //
-GroupMgr::GroupMgr(ORBB *bb, CG * cg)
-{
-    m_is_init = false;
-    init(bb, cg);
-}
-
-
-GroupMgr::~GroupMgr()
-{
-    destroy();
-}
-
-
 void * GroupMgr::xmalloc(INT size)
 {
     ASSERTN(m_is_init, ("xcom::Graph must be initialized before clone."));
@@ -2677,12 +2559,6 @@ void GroupMgr::destroy()
 }
 
 
-INT GroupMgr::get_last_group() const
-{
-    return m_groupidx2ors_map.get_last_idx();
-}
-
-
 INT GroupMgr::get_groups() const
 {
     ASSERTN(m_is_init, ("not yet initialized."));
@@ -2693,14 +2569,6 @@ INT GroupMgr::get_groups() const
         }
     }
     return count;
-}
-
-
-INT GroupMgr::get_or_group(OR * o)
-{
-    ASSERTN(o, ("o is NULL."));
-    ASSERTN(m_is_init, ("not yet initialized."));
-    return m_oridx2group_map.get(OR_id(o));
 }
 
 

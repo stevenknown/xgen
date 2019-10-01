@@ -33,36 +33,36 @@ author: Su Zhenyu
 
 namespace xgen {
 
-#define LT_FIRST_POS         0
-#define LT_LAST_POS          (mgr.getMaxLifeTimeLen() - 1)
-#define HOLE_LENGTH          1 //Length of hole
-#define HOLE_INTERF_LT_NUM   2 //Number of life times interferefering mutually .
-#define UNNUMBERED_ORS       4
+#define LT_FIRST_POS 0
+#define LT_LAST_POS (mgr.getMaxLifeTimeLen() - 1)
+#define HOLE_LENGTH 1 //Length of hole
+#define HOLE_INTERF_LT_NUM 2 //Number of life times interferefering mutually .
+#define UNNUMBERED_ORS 4
 
 //Options to passes.
-#define LRA_OPT_RCEL         0x1 //Redundant Code Elimination
-#define LRA_OPT_RCIE         0x2 //Redundant Code Elimination Inversing
-#define LRA_OPT_DDE          0x4 //Dead Def Elimination
-#define LRA_OPT_SCH          0x8 //Func Unit Scheduling
-#define LRA_OPT_HSL          0x10 //Hoisting Spill Location
-#define LRA_OPT_CMO          0x20 //Code Motion
-#define LRA_OPT_RSLE         0x40 //Redundant Store/Load Elimination
-#define LRA_OPT_RCPE         0x80 //Redundant Copy Elimination
-#define LRA_OPT_PG           0x100 //Partition Group of Instrutions
-#define LRA_OPT_FINAL_OPT    0x200 //Finial Optimization of BB
-#define LRA_OPT_CYCES        0x400 //Perform cyclic estimation of BB
-#define LRA_OPT_RNSR         0x800 //Rename SR
-#define LRA_OPT_LIS          0x1000 //Local Instruction Scheduling
-#define LRA_VERIFY_REG       0x2000 //Verify Physical Register
+#define LRA_OPT_RCEL 0x1 //Redundant Code Elimination
+#define LRA_OPT_RCIE 0x2 //Redundant Code Elimination Inversing
+#define LRA_OPT_DDE 0x4 //Dead Def Elimination
+#define LRA_OPT_SCH 0x8 //Func Unit Scheduling
+#define LRA_OPT_HSL 0x10 //Hoisting Spill Location
+#define LRA_OPT_CMO 0x20 //Code Motion
+#define LRA_OPT_RSLE 0x40 //Redundant Store/Load Elimination
+#define LRA_OPT_RCPE 0x80 //Redundant Copy Elimination
+#define LRA_OPT_PG 0x100 //Partition Group of Instrutions
+#define LRA_OPT_FINAL_OPT 0x200 //Finial Optimization of BB
+#define LRA_OPT_CYCES 0x400 //Perform cyclic estimation of BB
+#define LRA_OPT_RNSR 0x800 //Rename SR
+#define LRA_OPT_LIS 0x1000 //Local Instruction Scheduling
+#define LRA_VERIFY_REG 0x2000 //Verify Physical Register
 
 //Internal Phases of LRA
-#define PHASE_UNDEF               0x0
-#define PHASE_INIT                0x1
-#define PHASE_CA_DONE             0x2
-#define PHASE_SCH_DONE            0x4
-#define PHASE_RA_DONE             0x8
-#define PHASE_FINIAL_FIXUP_DONE   0x10
-#define PHASE_APPEND_CALLEE_SAVE  0x20
+#define PHASE_UNDEF 0x0
+#define PHASE_INIT 0x1
+#define PHASE_CA_DONE 0x2
+#define PHASE_SCH_DONE 0x4
+#define PHASE_RA_DONE 0x8
+#define PHASE_FINIAL_FIXUP_DONE 0x10
+#define PHASE_APPEND_CALLEE_SAVE 0x20
 
 class RaMgr;
 class CG;
@@ -104,23 +104,23 @@ public:
 };
 
 
-#define POSINFO_is_def(c)    (c)->is_def
+#define POSINFO_is_def(c) (c)->is_def
 class PosInfo {
 public:
     bool is_def;
 };
 
 
-#define LT_id(c)              (c)->id
-#define LT_pos(c)             (c)->pos
-#define LT_desc(c)            (c)->desc
-#define LT_sr(c)              (c)->sr
-#define LT_cluster(c)         (c)->cluster
-#define LT_has_allocated(c)   (SR_phy_regid(LT_sr(c)) != REG_UNDEF)
-#define LT_prio(c)            (c)->priority
-#define LT_has_may_def(c)     (c)->has_may_def_point
-#define LT_has_may_use(c)     (c)->has_may_use_point
-#define LT_preferred_reg(c)   (c)->preferred_reg
+#define LT_id(c)  (c)->id
+#define LT_pos(c) (c)->pos
+#define LT_desc(c) (c)->desc
+#define LT_sr(c) (c)->sr
+#define LT_cluster(c) (c)->cluster
+#define LT_has_allocated(c) (SR_phy_regid(LT_sr(c)) != REG_UNDEF)
+#define LT_prio(c) (c)->priority
+#define LT_has_may_def(c) (c)->has_may_def_point
+#define LT_has_may_use(c) (c)->has_may_use_point
+#define LT_preferred_reg(c) (c)->preferred_reg
 class LifeTime {
 public:
     UINT id;
@@ -139,12 +139,12 @@ public:
 };
 
 
-#define ACTION_NON                   0
-#define ACTION_SPILL                 1
-#define ACTION_SPLIT                 2
-#define ACTION_DFS_REASSIGN_REGFILE  3
-#define ACTION_BFS_REASSIGN_REGFILE  4
-#define ACTION_MOVE_HOUSE            5
+#define ACTION_NON 0
+#define ACTION_SPILL 1
+#define ACTION_SPLIT 2
+#define ACTION_DFS_REASSIGN_REGFILE 3
+#define ACTION_BFS_REASSIGN_REGFILE 4
+#define ACTION_MOVE_HOUSE 5
 //Finite Automata
 class ACTION {
     Vector<UINT> m_lt2action;
@@ -153,12 +153,23 @@ class ACTION {
     //Map 'Status' and 'Input' to 'Action'
     //UINT m_status_trans[MAX_ST][MAX_INPUT];
     SMemPool * m_pool;
-    void *xmalloc(INT size);
+    void * xmalloc(INT size);
 public:
-    ACTION();
-    ~ACTION();
-    UINT get_action(LifeTime * lt);
-    List<INT> * get_action_done(LifeTime * lt);
+    ACTION() { m_pool = smpoolCreate(256, MEM_COMM); }
+    ~ACTION()
+    {
+        for (INT i = 0; i <= m_lt2action_done.get_last_idx(); i++) {
+            List<INT> *ac_lst = m_lt2action_done.get(i);
+            if (ac_lst != NULL) {
+                ac_lst->destroy();
+            }
+        }
+        smpoolDelete(m_pool);
+    }
+    
+    UINT get_action(LifeTime * lt) const { return m_lt2action.get(LT_id(lt)); }
+    List<INT> * get_action_done(LifeTime * lt) const
+    { return m_lt2action_done.get(LT_id(lt)); }
     void set_action(LifeTime * lt, UINT action);
 };
 
@@ -186,7 +197,6 @@ public:
 
 typedef Hash<LifeTime*, HashFuncForLifeTime> LifeTimeHash;
 
-
 class ORMap {
     Vector<List<OR*>*> m_or2orlist_map;
     Vector<OR*> m_idx2or_map;
@@ -194,29 +204,45 @@ class ORMap {
     bool m_is_init;
     SMemPool * m_pool;
 
-    void *xmalloc(INT size);
+    void * xmalloc(INT size);
 public:
-    ORMap();
-    ~ORMap();
+    ORMap()
+    {
+        m_is_init = false;
+        m_pool = NULL;
+        init();
+    }
+    ~ORMap() { destroy(); }
+
     void init();
     void destroy();
-    ORList * get_ors();
-    List<OR*> * get_or_ors(OR * o);
+    
+    ORList * get_ors()
+    {
+        ASSERTN(m_is_init, ("List not yet initialized."));
+        return &m_or_list;
+    }
+    List<OR*> * get_or_ors(OR * o)
+    {
+        ASSERTN(o != NULL, ("o is NULL."));
+        ASSERTN(m_is_init, ("List not yet initialized."));
+        return m_or2orlist_map.get(OR_id(o));
+    }
     void add_or(OR * o, OR * mapped);
     void add_ors(OR * o, ORList * mapped);
 };
 
 
 //For global optimization.
-#define ORUNIT_or(ou)        (ou)->or
+#define ORUNIT_or(ou) (ou)->or
 class ORUnit {
 public:
     OR * o;
 };
 
 
-#define OR_BBUNIT_bb(bu)        (bu)->bb
-#define OR_BBUNIT_or_list(bu)    (bu)->or_list
+#define OR_BBUNIT_bb(bu) (bu)->bb
+#define OR_BBUNIT_or_list(bu) (bu)->or_list
 class ORBBUnit {
 public:
     ORBB * bb;
@@ -234,13 +260,20 @@ class GroupMgr {
 
     void * xmalloc(INT size);
 public:
-    GroupMgr(ORBB * bb, CG * cg);
-    ~GroupMgr();
+    GroupMgr(ORBB * bb, CG * cg) { m_is_init = false; init(bb, cg); }
+    ~GroupMgr() { destroy(); }
+
     void init(ORBB * bb, CG * cg);
     void destroy();
-    inline INT get_groups() const;
-    inline INT get_last_group() const;
-    INT get_or_group(OR * o);
+    INT get_groups() const;
+    INT get_last_group() const { return m_groupidx2ors_map.get_last_idx(); }
+    INT get_or_group(OR * o) const
+    {
+        ASSERTN(o, ("o is NULL."));
+        ASSERTN(m_is_init, ("not yet initialized."));
+        return m_oridx2group_map.get(OR_id(o));
+    }
+
     inline List<OR*> * get_orlist_in_group(INT i);
     void add_or(OR * o, INT group);
     void add_ors(ORList & ors, INT group);
@@ -554,15 +587,27 @@ protected:
         return p;
     }
 public:
-    RegFileAffinityGraph();
+    RegFileAffinityGraph() { m_is_init = false; }
     COPY_CONSTRUCTOR(RegFileAffinityGraph);
-    virtual ~RegFileAffinityGraph();
+    virtual ~RegFileAffinityGraph() { destroy(); }
     void init(ORBB * bb, bool is_enable_far = false);
-    void destroy();
+    void destroy()
+    {
+        if (!m_is_init) { return; }
+        xcom::Graph::destroy();
+        smpoolDelete(m_pool);
+        m_id2lt.destroy();
+        m_is_init = false;
+    }
+
     virtual void build(LifeTimeMgr & mgr, DataDepGraph & ddg);
     void clone(RegFileAffinityGraph & rdg);
     RDG_EDGE_INFO * getEdgeInfo(UINT start, UINT end);
-    ORBB * bb();
+    ORBB * bb()
+    {
+        ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
+        return m_bb;
+    }
     xcom::Edge * clustering(SR * sr1, SR * sr2, LifeTimeMgr & mgr);
     bool isEnableFarEdge() const { return m_is_enable_far_edge; }
     void dump();
@@ -626,49 +671,44 @@ public:
     bool partition(ORBB * bb,
             DataDepGraph & ddg,
             Vector<bool> & is_regfile_unique);
-    void formulateTargetFunction(
-            OUT Mat & tgtf,
-            IN VAR_MAP & vm,
-            IN OR * last_sr,
-            UINT num_cycs,
-            UINT num_ors,
-            UINT num_vars,
-            UINT num_cst);
-    void formulateMustScheduleConstrains(
-            OUT Mat & eq,
-            IN ORBB * bb,
-            IN VAR_MAP & vm,
-            UINT num_cycs,
-            UINT num_ors,
-            UINT num_vars,
-            UINT num_cst);
-    void formulateDependenceConstrains(
-            OUT Mat & leq,
-            IN ORBB * bb,
-            IN DataDepGraph & ddg,
-            IN VAR_MAP & vm,
-            IN BBSimulator & sim,
-            UINT num_cycs,
-            UINT num_ors,
-            UINT num_vars,
-            UINT num_cst);
-    void formulateIssueConstrains(
-            OUT Mat & leq,
-            IN VAR_MAP & vm,
-            UINT num_cycs,
-            UINT num_ors,
-            UINT num_vars);
-    void formulateInterClusterConstrains(
-            OUT Mat & leq,
-            OUT Mat & eq,
-            OUT UINT & num_icc_vars,
-            IN ORBB * bb,
-            IN DataDepGraph & ddg,
-            IN VAR_MAP & vm,
-            UINT num_cycs,
-            UINT num_ors,
-            UINT num_vars,
-            UINT num_cst);
+    void formulateTargetFunction(OUT Mat & tgtf,
+                                 IN VAR_MAP & vm,
+                                 IN OR * last_sr,
+                                 UINT num_cycs,
+                                 UINT num_ors,
+                                 UINT num_vars,
+                                 UINT num_cst);
+    void formulateMustScheduleConstrains(OUT Mat & eq,
+                                         IN ORBB * bb,
+                                         IN VAR_MAP & vm,
+                                         UINT num_cycs,
+                                         UINT num_ors,
+                                         UINT num_vars,
+                                         UINT num_cst);
+    void formulateDependenceConstrains(OUT Mat & leq,
+                                       IN ORBB * bb,
+                                       IN DataDepGraph & ddg,
+                                       IN VAR_MAP & vm,
+                                       IN BBSimulator & sim,
+                                       UINT num_cycs,
+                                       UINT num_ors,
+                                       UINT num_vars,
+                                       UINT num_cst);
+    void formulateIssueConstrains(OUT Mat & leq,
+                                  IN VAR_MAP & vm,
+                                  UINT num_cycs,
+                                  UINT num_ors,
+                                  UINT num_vars);
+    void formulateInterClusterConstrains(OUT Mat & leq,
+                                         OUT Mat & eq,
+                                         OUT UINT & num_icc_vars,
+                                         IN ORBB * bb,
+                                         IN DataDepGraph & ddg,
+                                         IN VAR_MAP & vm,
+                                         UINT num_cycs,
+                                         UINT num_ors,
+                                         UINT num_vars,
+                                         UINT num_cst);
     void format(OUT INTMat & sched_form,
                 OUT INTMat & icc_form,
                 IN ORBB * bb,
@@ -722,35 +762,31 @@ protected:
 protected:
     bool checkSpillCanBeRemoved(xoc::VAR const* spill_loc);
 
-    void genSRWith2opnds(
-            OR_TYPE src,
-            CLUST clust,
-            SR * result,
-            SR * src1,
-            SR * src2,
-            SR * pd,
-            ORList & ors);
+    void genSRWith2opnds(OR_TYPE src,
+                         CLUST clust,
+                         SR * result,
+                         SR * src1,
+                         SR * src2,
+                         SR * pd,
+                         ORList & ors);
 
-    void findFollowedLoad(
-            OUT ORList & followed_lds,
-            IN OR * o,
-            xoc::VAR const* spill_loc,
-            IN OUT bool & spill_can_be_removed,
-            IN DataDepGraph & ddg);
-    SR * findAvailPhyRegFromLoadList(
-            IN OR * o,
-            IN OUT bool & spill_can_be_removed,
-            IN ORList & followed_lds,
-            IN LifeTimeMgr & mgr,
-            IN InterfGraph & ig);
+    void findFollowedLoad(OUT ORList & followed_lds,
+                          IN OR * o,
+                          xoc::VAR const* spill_loc,
+                          IN OUT bool & spill_can_be_removed,
+                          IN DataDepGraph & ddg);
+    SR * findAvailPhyRegFromLoadList(IN OR * o,
+                                     IN OUT bool & spill_can_be_removed,
+                                     IN ORList & followed_lds,
+                                     IN LifeTimeMgr & mgr,
+                                     IN InterfGraph & ig);
 
-    bool hoistSpillLocForStore(
-            IN OR * o,
-            IN InterfGraph & ig,
-            IN LifeTimeMgr & mgr,
-            IN OUT DataDepGraph & ddg,
-            IN ORCt * orct,
-            IN OUT ORCt ** next_orct);
+    bool hoistSpillLocForStore(IN OR * o,
+                               IN InterfGraph & ig,
+                               IN LifeTimeMgr & mgr,
+                               IN OUT DataDepGraph & ddg,
+                               IN ORCt * orct,
+                               IN OUT ORCt ** next_orct);
 public:
     LRA(IN ORBB * bb, IN RaMgr * ra_mgr);
     COPY_CONSTRUCTOR(LRA);
@@ -1117,9 +1153,8 @@ public:
 
     //Revise inter-cluster data transfer operation(bus OR) if necessary.
     //Return true if 'ddg' need to be update.
-    virtual bool reviseInterClusterOR(
-            DataDepGraph &,
-            IN Vector<bool> & is_regfile_unique)
+    virtual bool reviseInterClusterOR(DataDepGraph &,
+                                      IN Vector<bool> & is_regfile_unique)
     {
         if (!isMultiCluster()) { return false; }
         DUMMYUSE(is_regfile_unique);
@@ -1127,14 +1162,13 @@ public:
     }
 
     //Refining scheduling result, return true if DDG need to be updated.
-    virtual bool refineScheduling(
-            CLUST,
-            IN OUT ORList &,
-            IN LifeTimeMgr &,
-            IN DataDepGraph &,
-            IN Vector<bool> & regfile_unique,
-            IN BBSimulator *)
-       {
+    virtual bool refineScheduling(CLUST,
+                                  IN OUT ORList &,
+                                  IN LifeTimeMgr &,
+                                  IN DataDepGraph &,
+                                  IN Vector<bool> & regfile_unique,
+                                  IN BBSimulator *)
+    {
         DUMMYUSE(regfile_unique);
         ASSERTN(0, ("Target Dependent Code"));
         return false;
@@ -1145,33 +1179,30 @@ public:
     virtual void resetGSRSpillLocation();
     virtual void renameSR();
 
-    virtual bool schedulFuncUnit(
-            IN LifeTimeMgr & mgr,
-            IN DataDepGraph & ddg,
-            IN OUT BBSimulator * sim,
-            IN OUT Vector<bool> & is_regfile_unique,
-            ClustRegInfo cri[CLUST_NUM]);
-    bool solveConflictRecursive(
-            LifeTime * lt,
-            List<LifeTime*> & uncolored_list,
-            List<LifeTime*> & prio_list,
-            IN OUT ClustRegInfo cri[CLUST_NUM],
-            Vector<bool> const& is_regfile_unique,
-            InterfGraph & ig,
-            LifeTimeMgr & mgr,
-            DataDepGraph & ddg,
-            RegFileGroup * rfg,
-            ACTION & action);
-    bool solveConflict(
-            List<LifeTime*> & uncolored_list,
-            List<LifeTime*> & prio_list,
-            IN OUT ClustRegInfo cri[CLUST_NUM],
-            Vector<bool> const& is_regfile_unique,
-            InterfGraph & ig,
-            LifeTimeMgr & mgr,
-            DataDepGraph & ddg,
-            RegFileGroup * rfg,
-            ACTION & action);
+    virtual bool schedulFuncUnit(IN LifeTimeMgr & mgr,
+                                 IN DataDepGraph & ddg,
+                                 IN OUT BBSimulator * sim,
+                                 IN OUT Vector<bool> & is_regfile_unique,
+                                 ClustRegInfo cri[CLUST_NUM]);
+    bool solveConflictRecursive(LifeTime * lt,
+                                List<LifeTime*> & uncolored_list,
+                                List<LifeTime*> & prio_list,
+                                IN OUT ClustRegInfo cri[CLUST_NUM],
+                                Vector<bool> const& is_regfile_unique,
+                                InterfGraph & ig,
+                                LifeTimeMgr & mgr,
+                                DataDepGraph & ddg,
+                                RegFileGroup * rfg,
+                                ACTION & action);
+    bool solveConflict(List<LifeTime*> & uncolored_list,
+                       List<LifeTime*> & prio_list,
+                       IN OUT ClustRegInfo cri[CLUST_NUM],
+                       Vector<bool> const& is_regfile_unique,
+                       InterfGraph & ig,
+                       LifeTimeMgr & mgr,
+                       DataDepGraph & ddg,
+                       RegFileGroup * rfg,
+                       ACTION & action);
     void setOptPhase(UINT opt_phase) { m_opt_phase = opt_phase; }
     void setParallelPartMgr(ParallelPartMgr * ppm) { m_ppm = ppm; }
     void show_phase(CHAR * phase_name);
@@ -1198,41 +1229,36 @@ public:
                REG spill_location,
                ACTION & action,
                IN OUT ClustRegInfo cri[CLUST_NUM]);
-    void splitLTAt(
-            INT start,
-            INT end,
-            bool is_start_spill,
-            bool is_end_spill,
-            LifeTime * lt,
-            LifeTimeMgr & mgr);
-    void splitOneLT(
-            LifeTime * lt,
-            List<LifeTime*> & prio_list,
-            List<LifeTime*> & uncolored_list,
-            LifeTimeMgr & mgr,
-            InterfGraph & ig,
-            REG spill_location,
-            ACTION & action);
-    bool splitTwoLTContained(
-            LifeTime * lt1,
-            LifeTime * lt2,
-            LifeTimeMgr & mgr);
+    void splitLTAt(INT start,
+                   INT end,
+                   bool is_start_spill,
+                   bool is_end_spill,
+                   LifeTime * lt,
+                   LifeTimeMgr & mgr);
+    void splitOneLT(LifeTime * lt,
+                    List<LifeTime*> & prio_list,
+                    List<LifeTime*> & uncolored_list,
+                    LifeTimeMgr & mgr,
+                    InterfGraph & ig,
+                    REG spill_location,
+                    ACTION & action);
+    bool splitTwoLTContained(LifeTime * lt1,
+                             LifeTime * lt2,
+                             LifeTimeMgr & mgr);
     bool splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr);
     bool splitTwoLT(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr);
     bool spillFirstDef(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr);
-    void selectReasonableSplitPos(
-            IN OUT INT * pos1,
-            IN OUT INT * pos2,
-            IN OUT bool * is_pos1_spill,
-            IN OUT bool * is_pos2_spill,
-            IN LifeTime * lt,
-            IN LifeTimeMgr & mgr);
+    void selectReasonableSplitPos(IN OUT INT * pos1,
+                                  IN OUT INT * pos2,
+                                  IN OUT bool * is_pos1_spill,
+                                  IN OUT bool * is_pos2_spill,
+                                  IN LifeTime * lt,
+                                  IN LifeTimeMgr & mgr);
 
-    virtual bool tryAssignCluster(
-            CLUST exp_clust,
-            List<OR*> * orlist,
-            Vector<bool> & is_regfile_unique,
-            ORList ors[CLUST_NUM]);
+    virtual bool tryAssignCluster(CLUST exp_clust,
+                                  List<OR*> * orlist,
+                                  Vector<bool> & is_regfile_unique,
+                                  ORList ors[CLUST_NUM]);
 
     virtual bool verifyUsableRegSet(LifeTimeMgr & mgr);
     virtual void verifyRegFileForOpnd(OR * o, INT opnd, bool is_result);
