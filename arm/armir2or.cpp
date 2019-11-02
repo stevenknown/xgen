@@ -1425,15 +1425,13 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
         IR2OR::convertCvt(ir, ors, cont);
         return;
     }
-
-    ASSERTN(!ir->is_void() && !CVT_exp(ir)->is_void(), ("TODO"));
-
+    ASSERTN(!ir->is_any() && !CVT_exp(ir)->is_any(),
+            ("Unsupported CVT from void"));
     ORList tors;
     IOC tmp;
     convertGeneralLoad(CVT_exp(ir), tors, &tmp);
     SR * opnd = tmp.get_reg(0);
-    ASSERT0(CVT_exp(ir)->getTypeSize(m_tm) <=
-            opnd->getByteSize());
+    ASSERT0(CVT_exp(ir)->getTypeSize(m_tm) <= opnd->getByteSize());
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
@@ -1457,7 +1455,6 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
     } else { UNREACHABLE(); }
 
     ASSERT0(builtin);
-
     getCG()->buildCall(builtin, ir->getTypeSize(m_tm), tors, cont);
 
     //Result register.

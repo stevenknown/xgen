@@ -3098,20 +3098,15 @@ LRA::LRA(ORBB * bb, RaMgr * ra_mgr)
 //Display phase name
 void LRA::show_phase(CHAR * phase_name)
 {
-    if (!g_show_pass_info) { return; }
-
-    fprintf(stdout, "\nRegion(%d)%s, ORBB(%d)Len(%d), PHASE:%s",
-        REGION_id(m_ru),
-        m_ru->getRegionName() != NULL ? m_ru->getRegionName() : "",
-        m_bb->id(), ORBB_ornum(m_bb), phase_name);
-
-    if (xoc::g_tfile == NULL) { return; }
-
+    if (!g_dump_opt.isDumpRA() || xoc::g_tfile == NULL) { return; }
+    fprintf(xoc::g_tfile, "\nRegion(%d)%s, ORBB(%d)Len(%d), PHASE:%s",
+         REGION_id(m_ru),
+         m_ru->getRegionName() != NULL ? m_ru->getRegionName() : "",
+         m_bb->id(), ORBB_ornum(m_bb), phase_name);
     fprintf(xoc::g_tfile, "\nRegion(%d)%s, ORBB(%d)Len(%d), PHASE:%s",
             REGION_id(m_ru),
             m_ru->getRegionName() != NULL ? m_ru->getRegionName() : "",
             m_bb->id(), ORBB_ornum(m_bb), phase_name);
-
     fflush(xoc::g_tfile);
 }
 

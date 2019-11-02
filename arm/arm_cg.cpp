@@ -2796,10 +2796,9 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
 }
 
 
-bool ARMCG::skipArgRegister(
-        VAR const* param,
-        RegSet const* regset,
-        REG reg) const
+bool ARMCG::skipArgRegister(VAR const* param,
+                            RegSet const* regset,
+                            REG reg) const
 {
     #ifdef TO_BE_COMPATIBLE_WITH_ARM_LINUX_GNUEABI
     if (//only check value that is in paired-register

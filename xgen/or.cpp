@@ -150,7 +150,8 @@ void OR::dump(CG * cg) const
 CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
 {
     if (xoc::g_dbx_mgr != NULL && g_cg_dump_src_line) {
-        xoc::g_dbx_mgr->printSrcLine(&OR_dbx(this), NULL);
+        DbxMgr::PrtCtx prtctx;
+        xoc::g_dbx_mgr->printSrcLine(buf, &OR_dbx(this), &prtctx);
     }
 
     OR * pthis = const_cast<OR*>(this);

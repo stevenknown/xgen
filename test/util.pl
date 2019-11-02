@@ -179,6 +179,8 @@ sub runSimulator
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $cmdline FAILED!! RES:$retval\n";
+        #Base compiler might also failed, thus we just compare
+        #the result of base compiler even if it is failed.
         #die($retval);
     }
 }
@@ -353,6 +355,10 @@ sub runXOCC
 
 sub abort
 {
+    my $msg = $_[0];
+    if ($msg) { 
+        print "\n$msg\n";
+    }
     exit(1);
 }
 

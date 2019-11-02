@@ -313,7 +313,12 @@ void ARMAsmPrinter::printData(FILE * asmh, Section & sect)
 
         CHAR const* name = SYM_name(v->get_name());
         if (v->is_string()) {
-            CHAR const* p = SYM_name(VAR_string(v));
+            CHAR const* p = NULL;
+            if (VAR_string(v) != NULL) {
+                p = SYM_name(VAR_string(v));
+            } else {
+                p = "";
+            }
             ASSERT0(v->getByteSize(m_tm) == xstrlen(p) + 1);
             fprintf(asmh, "\n.align 0");
             fprintf(asmh, "\n#2^0 bit");
@@ -368,30 +373,23 @@ void ARMAsmPrinter::printData(FILE * asmh)
 }
 
 
-void ARMAsmPrinter::printCodeSequentially(
-        IssuePackageList * ipl,
-        StrBuf & buf,
-        FILE * asmh)
+void ARMAsmPrinter::printCodeSequentially(IssuePackageList * ipl,
+                                          StrBuf & buf,
+                                          FILE * asmh)
 {
     ASSERT0(ipl);
-
     CHAR const* format = "%s%19s";
     CHAR const* code_indent = "";
     DbxMgr::PrtCtx prtctx;
     prtctx.prefix = "#";
-
+    prtctx.handler = asmh;
     for (IssuePackage const* ip = ipl->get_head();
          ip != NULL; ip = ipl->get_next()) {
         fprintf(asmh, "\n");
         OR * o = ip->get(SLOT_G);
-
-        FILE * old = g_tfile;
-        g_tfile = asmh;
         if (xoc::g_dbx_mgr != NULL && g_cg_dump_src_line) {
             xoc::g_dbx_mgr->printSrcLine(&OR_dbx(o), &prtctx);
         }
-        g_tfile = old;
-
         if (o != NULL) {
             buf.clean();
             fprintf(asmh, format, code_indent, printOR(o, buf));

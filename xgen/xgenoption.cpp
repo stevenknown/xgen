@@ -58,7 +58,4 @@ bool g_is_enable_fp = false;
 //Perform Code Generation.
 bool g_do_cg = true;
 
-//Display phase information on stdout.
-bool g_show_pass_info = true;
-
 } //namespace xgen

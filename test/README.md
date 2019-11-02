@@ -2,4 +2,4 @@
 testsuite of XOC
 
 # run and show help
-run.pl arm
+cd exec && run.pl arm

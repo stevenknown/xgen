@@ -193,7 +193,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             if (!l->is_ptr() && !r->is_ptr()) {
                 type = m_tm->hoistDtypeForBinop(l, r);
             } else {
-                type = m_tm->getVoid();
+                type = m_tm->getAny();
                 //buildBinaryOp will inefer the type of result ir.
             }
 
@@ -217,7 +217,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             if (!l->is_ptr() && !r->is_ptr()) {
                 type = m_tm->hoistDtypeForBinop(l, r);
             } else {
-                type = m_tm->getVoid();
+                type = m_tm->getAny();
                 //buildBinaryOp will inefer the type of result ir.
             }
             ir = m_ru->buildBinaryOp(IR_BOR, type, l, r);
@@ -240,7 +240,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             if (!l->is_ptr() && !r->is_ptr()) {
                 type = m_tm->hoistDtypeForBinop(l, r);
             } else {
-                type = m_tm->getVoid();
+                type = m_tm->getAny();
                 //buildBinaryOp will inefer the type of result ir.
             }
 
@@ -275,7 +275,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             if (!l->is_ptr() && !r->is_ptr()) {
                 type = m_tm->hoistDtypeForBinop(l, r);
             } else {
-                type = m_tm->getVoid();
+                type = m_tm->getAny();
                 //buildBinaryOp will inefer the type of result ir.
             }
             ir = m_ru->buildBinaryOp(IR_SUB, type, l, r);
@@ -308,7 +308,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             if (!l->is_ptr() && !r->is_ptr()) {
                 type = m_tm->hoistDtypeForBinop(l, r);
             } else {
-                type = m_tm->getVoid();
+                type = m_tm->getAny();
                 //buildBinaryOp will inefer the type of result ir.
             }
             ir = m_ru->buildBinaryOp(IR_MUL, type, l, r);
@@ -341,7 +341,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             if (!l->is_ptr() && !r->is_ptr()) {
                 type = m_tm->hoistDtypeForBinop(l, r);
             } else {
-                type = m_tm->getVoid();
+                type = m_tm->getAny();
                 //buildBinaryOp will inefer the type of result ir.
             }
             ir = m_ru->buildBinaryOp(IR_DIV, type, l, r);
@@ -374,7 +374,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             if (!l->is_ptr() && !r->is_ptr()) {
                 type = m_tm->hoistDtypeForBinop(l, r);
             } else {
-                type = m_tm->getVoid();
+                type = m_tm->getAny();
                 //buildBinaryOp will inefer the type of result ir.
             }
             ir = m_ru->buildBinaryOp(IR_XOR, type, l, r);
@@ -417,7 +417,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             if (!l->is_ptr() && !r->is_ptr()) {
                 type = m_tm->hoistDtypeForBinop(l, r);
             } else {
-                type = m_tm->getVoid();
+                type = m_tm->getAny();
                 //buildBinaryOp will inefer the type of result ir.
             }
             ir = m_ru->buildBinaryOp(l->is_sint() ? IR_ASR : IR_LSR,
@@ -451,7 +451,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             if (!l->is_ptr() && !r->is_ptr()) {
                 type = m_tm->hoistDtypeForBinop(l, r);
             } else {
-                type = m_tm->getVoid();
+                type = m_tm->getAny();
                 //buildBinaryOp will inefer the type of result ir.
             }
             ir = m_ru->buildBinaryOp(IR_LSL, type, l, r);
@@ -484,7 +484,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             if (!l->is_ptr() && !r->is_ptr()) {
                 type = m_tm->hoistDtypeForBinop(l, r);
             } else {
-                type = m_tm->getVoid();
+                type = m_tm->getAny();
                 //buildBinaryOp will inefer the type of result ir.
             }
 
@@ -908,7 +908,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     if (is_direct) {
         ASSERT0(callee->is_id());
         VAR * v = ID_info(callee);
-        call = m_ru->buildCall(v, callarglist, 0, m_tm->getVoid());
+        call = m_ru->buildCall(v, callarglist, 0, m_tm->getAny());
         if (is_readonly(v)) {
             CALL_is_readonly(call) = true;
         }
@@ -916,7 +916,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             CALL_is_alloc_heap(call) = true;
         }
     } else {
-        call = m_ru->buildICall(callee, callarglist, 0, m_tm->getVoid());
+        call = m_ru->buildICall(callee, callarglist, 0, m_tm->getAny());
     }
     call->verify(m_ru);
     setLineNum(call, lineno, m_ru);
@@ -2194,7 +2194,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
 
 
 //Count up the number of local-variables.
-static void scanScopeDeclList(SCOPE * s, OUT Region * rg, bool scan_sib)
+static void scanScopeDeclList(SCOPE * s, OUT xoc::Region * rg, bool scan_sib)
 {
     if (s == NULL) return;
     Decl * decl = SCOPE_decl_list(s);
@@ -2204,10 +2204,10 @@ static void scanScopeDeclList(SCOPE * s, OUT Region * rg, bool scan_sib)
             decl = DECL_next(decl);
             continue;
         }
-        VAR * v = mapDecl2VAR(decl);
+        xoc::VAR * v = mapDecl2VAR(decl);
         ASSERTN(v, ("NULL variable correspond to"));
         if (VAR_is_global(v)) {
-            Region * topru = rg->getTopRegion();
+            xoc::Region * topru = rg->getTopRegion();
             ASSERT0(topru);
             if (topru->is_program()) {
                 topru->addToVarTab(v);
@@ -2249,10 +2249,10 @@ static IR * addReturn(IR * irs, Region * rg)
 //If 'decl' presents a pointer type, convert pointer-type to D_PTR.
 //If 'decl' presents an array, convert type to D_M descriptor.
 //size: return byte size of decl.
-DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, TypeMgr * tm)
+xoc::DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, xoc::TypeMgr * tm)
 {
     ASSERT0(decl && tm);
-    DATA_TYPE dtype = D_UNDEF;
+    xoc::DATA_TYPE dtype = xoc::D_UNDEF;
     *size = 0;
     ASSERTN(DECL_dt(decl) == DCL_DECLARATION ||
            DECL_dt(decl) == DCL_TYPE_NAME, ("TODO"));
@@ -2262,11 +2262,11 @@ DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, TypeMgr * tm)
 
     if (is_pointer(decl)) {
         *size = BYTE_PER_POINTER;
-        return D_PTR;
+        return xoc::D_PTR;
     }
 
     if (is_array(decl)) {
-        dtype = D_MC;
+        dtype = xoc::D_MC;
         *size = get_decl_size(decl);
         return dtype;
     }
@@ -2293,14 +2293,14 @@ DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, TypeMgr * tm)
     } else if (IS_TYPE(ty, T_SPEC_FLOAT) || IS_TYPE(ty, T_SPEC_DOUBLE)) {
         dtype = tm->get_fp_dtype(*size * BIT_PER_BYTE);
     } else if (IS_STRUCT(ty) || IS_UNION(ty)) {
-        dtype = D_MC;
+        dtype = xoc::D_MC;
         ASSERT0(*size == get_decl_size(decl));
     } else if (IS_TYPE(ty, T_SPEC_USER_TYPE)) {
         ty = get_pure_type_spec(ty);
 
         //USER Type should NOT be here.
         ASSERTN(0, ("You should factorize the type specification "
-                   "into pure type during declaration()"));
+                    "into pure type during declaration()"));
 
         //dtype = get_decl_dtype(USER_TYPE_decl(TYPE_user_type(ty)), size);
     } else {
@@ -2321,7 +2321,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     ASSERT0(DECL_is_fun_def(dcl));
 
     //Generate region for function.
-    Region * r = rumgr->newRegion(REGION_FUNC);
+    xoc::Region * r = rumgr->newRegion(xoc::REGION_FUNC);
     r->setRegionVar(mapDecl2VAR(dcl));
     ASSERTN(r->getRegionVar(), ("Region miss var"));
 
@@ -2331,7 +2331,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     ASSERT0(rumgr->get_program());
     REGION_parent(r) = rumgr->get_program();
     REGION_parent(r)->addToVarTab(r->getRegionVar());
-    IR * lst = rumgr->get_program()->getIRList();
+    xoc::IR * lst = rumgr->get_program()->getIRList();
     xcom::add_next(&lst, rumgr->get_program()->buildRegion(r));
     rumgr->get_program()->setIRList(lst);
 
@@ -2339,41 +2339,49 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     //all local-variable into VarTab.
     scanScopeDeclList(DECL_fun_body(dcl), r, false);
 
-    dump_scope(DECL_fun_body(dcl), 0xffffFFFF);
+    if (xoc::g_dump_opt.isDumpALL()) {    
+        dump_scope(DECL_fun_body(dcl), 0xffffFFFF);
+    }
 
     //Generate IRs.
     CTree2IR ct2ir(r, dcl);
-    IR * irs = ct2ir.convert(SCOPE_stmt_list(DECL_fun_body(dcl)), NULL);
+    xoc::IR * irs = ct2ir.convert(SCOPE_stmt_list(DECL_fun_body(dcl)), NULL);
     if (g_err_msg_list.get_elem_count() > 0) {
         return ST_ERR;
     }
-    note("\n==---- AFTER TREE2IR CONVERT '%s' -----==", get_decl_name(dcl));
-    dumpIRList(irs, r);
+    if (xoc::g_dump_opt.isDumpALL()) {
+        xoc::note("\n==---- AFTER TREE2IR CONVERT '%s' -----==",
+                  get_decl_name(dcl));
+        xoc::dumpIRList(irs, r);
+    }
     //Ensure RETURN IR at the end of function
     //if its return-type is VOID.
 
     irs = addReturn(irs, r);
     //Reshape IR tree to well formed outlook.
-    note("\n==---- AFTER RESHAPE IR -----==", get_decl_name(dcl));
-    dumpIRList(irs, r);
-
+    if (xoc::g_dump_opt.isDumpALL()) {
+        xoc::note("\n==---- AFTER RESHAPE IR -----==", get_decl_name(dcl));
+        xoc::dumpIRList(irs, r);
+    }
     Canon ic(r);
     bool change = false;
     irs = ic.handle_stmt_list(irs, change);
 
-    RefineCtx rc;
+    xoc::RefineCtx rc;
     RC_refine_div_const(rc) = false;
     RC_refine_mul_const(rc) = false;
     change = false;
 
     irs = r->refineIRlist(irs, change, rc);
-    ASSERT0(verifyIRList(irs, NULL, r));
+    ASSERT0(xoc::verifyIRList(irs, NULL, r));
     r->setIRList(irs);
 
     //Reshape IR tree to well formed outlook.
-    note("\n==---- AFTER REFINE IR -----==", get_decl_name(dcl));
-    dumpIRList(irs, r);
-    //rg->dumpVARInRegion();
+    if (xoc::g_dump_opt.isDumpALL()) {
+        xoc::note("\n==---- AFTER REFINE IR -----==", get_decl_name(dcl));
+        xoc::dumpIRList(irs, r);
+        //rg->dumpVARInRegion();
+    }    
     return ST_SUCC;
 }
 
@@ -2394,7 +2402,9 @@ bool generateRegion(RegionMgr * rm)
         ".program", rm->getTypeMgr()->getMCType(0), 1, VAR_GLOBAL|VAR_FAKE));
 
     //In the file scope, generate function region.
-    dump_scope(s, 0xffffffff);
+    if (g_dump_opt.isDumpALL()) {
+        dump_scope(s, 0xffffffff);
+    }
 
     for (Decl * dcl = SCOPE_decl_list(s); dcl != NULL; dcl = DECL_next(dcl)) {
         if (is_fun_decl(dcl)) {

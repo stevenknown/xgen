@@ -40,5 +40,6 @@ public:
     virtual void doPrepareWorkBeforePrint() { m_cur_lineno = 0; }
 
     virtual void printSrcLine(Dbx const* dbx, PrtCtx * ctx);
+    virtual void printSrcLine(StrBuf & output, Dbx const* dbx, PrtCtx * ctx);
 };
 

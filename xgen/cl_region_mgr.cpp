@@ -34,20 +34,23 @@ author: Su Zhenyu
 
 namespace xgen {
 
-bool CLRegionMgr::compileFuncRegion(
-    xoc::Region * func,
-    CGMgr * cgmgr,
-    FILE * asmh,
-    xoc::OptCtx * oc)
+bool CLRegionMgr::compileFuncRegion(xoc::Region * func,
+                                    CGMgr * cgmgr,
+                                    FILE * asmh,
+                                    xoc::OptCtx * oc)
 {
     ASSERT0(func && cgmgr && asmh && oc);
-    ASSERT0(func->is_function() || func->is_program());
+    ASSERT0(func->is_function() || func->is_program() || func->is_inner());
+
+    //Note we regard INNER region as FUNCTION region.
     if (!xoc::RegionMgr::processFuncRegion(func, oc)) {
         return false;
     }
-    cgmgr->CodeGen(func, asmh);
-    if (xoc::g_show_memory_usage) {
-        func->dumpMemUsage();
+    if (g_do_cg) {
+        cgmgr->CodeGen(func, asmh);
+        if (g_dump_opt.isDumpMemUsage()) {
+            func->dumpMemUsage();
+        }
     }
     xoc::tfree();
     return true;

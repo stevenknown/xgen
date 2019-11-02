@@ -51,9 +51,6 @@ extern bool g_is_enable_fp;
 //Perform Code Generation.
 extern bool g_do_cg;
 
-//Display pass information on stdout.
-extern bool g_show_pass_info;
-
 } //namespace xgen
 
 #endif

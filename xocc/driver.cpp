@@ -82,16 +82,19 @@ INT report_location(CHAR const* file, INT line)
 
 void CLDbxMgr::printSrcLine(Dbx const* dbx, PrtCtx * ctx)
 {
-    if (g_tfile == NULL) { return; }
+    ASSERT0(ctx && dbx);
+    if (ctx->handler == NULL) { return; }
+    
+    FILE * old = g_tfile;
+    g_tfile = ctx->handler;
 
     UINT lineno = getLineNum(dbx);
     if (lineno == m_cur_lineno) {
         //It is dispensable that print the same souce file multiple times.
-        return;
+        goto FIN;
     }
 
     m_cur_lineno = lineno;
-
     if (lineno == 0) {
         //No line number info recorded.
         if (ctx != NULL && ctx->prefix != NULL) {
@@ -99,7 +102,7 @@ void CLDbxMgr::printSrcLine(Dbx const* dbx, PrtCtx * ctx)
         } else {
             note("\n[0]\n");
         }
-        return;
+        goto FIN;
     }
 
     if (g_hsrc != NULL) {
@@ -110,6 +113,42 @@ void CLDbxMgr::printSrcLine(Dbx const* dbx, PrtCtx * ctx)
                 note("\n\n%s[%u]%s", ctx->prefix, m_cur_lineno, g_cur_line);
             } else {
                 note("\n\n[%u]%s", m_cur_lineno, g_cur_line);
+            }
+        }
+    }
+FIN:
+    g_tfile = old;
+}
+
+
+void CLDbxMgr::printSrcLine(xcom::StrBuf & output, Dbx const* dbx, PrtCtx * ctx)
+{
+    ASSERT0(ctx && dbx);   
+    UINT lineno = getLineNum(dbx);
+    if (lineno == m_cur_lineno) {
+        //It is dispensable that print the same souce file multiple times.
+        return;
+    }
+    m_cur_lineno = lineno;
+    if (lineno == 0) {
+        //No line number info recorded.
+        if (ctx != NULL && ctx->prefix != NULL) {
+            output.strcat("\n%s[0]\n", ctx->prefix);
+        } else {
+            output.strcat("\n[0]\n");
+        }
+        return;
+    }
+
+    if (g_hsrc != NULL) {
+        ASSERTN(m_cur_lineno < OFST_TAB_LINE_SIZE, ("unexpected src line"));
+        fseek(g_hsrc, g_ofst_tab[m_cur_lineno], SEEK_SET);
+        if (fgets(g_cur_line, g_cur_line_len, g_hsrc) != NULL) {
+            if (ctx != NULL && ctx->prefix != NULL) {
+                output.strcat("\n\n%s[%u]%s", ctx->prefix,
+                    m_cur_lineno, g_cur_line);
+            } else {
+                output.strcat("\n\n[%u]%s", m_cur_lineno, g_cur_line);
             }
         }
     }
@@ -286,6 +325,36 @@ bool processCmdLine(INT argc, CHAR * argv[])
                     return false;
                 }
                 g_dump_file_name = n;
+            } else if (!strcmp(cmdstr, "nocg")) {
+                g_do_cg = false;
+                i++;
+            } else if (!strcmp(cmdstr, "dump-aa")) {
+                g_dump_opt.is_dump_aa = true;
+                i++;
+            } else if (!strcmp(cmdstr, "dump-dumgr")) {
+                g_dump_opt.is_dump_dumgr = true;
+                i++;
+            } else if (!strcmp(cmdstr, "dump-prssamgr")) {
+                g_dump_opt.is_dump_prssamgr = true;
+                i++;
+            } else if (!strcmp(cmdstr, "dump-mdssamgr")) {
+                g_dump_opt.is_dump_mdssamgr = true;
+                i++;
+            } else if (!strcmp(cmdstr, "dump-ra")) {
+                g_dump_opt.is_dump_ra = true;
+                i++;
+            } else if (!strcmp(cmdstr, "dump-cg")) {
+                g_dump_opt.is_dump_cg = true;
+                i++;
+            } else if (!strcmp(cmdstr, "dump-simplification")) {
+                g_dump_opt.is_dump_simplification = true;
+                i++;
+            } else if (!strcmp(cmdstr, "dump-all")) {
+                g_dump_opt.is_dump_all = true;
+                i++;
+            } else if (!strcmp(cmdstr, "dump-nothing")) {
+                g_dump_opt.is_dump_nothing = true;
+                i++;
             } else if (!strcmp(cmdstr, "readgr")) {
                 CHAR * n = process_readgr(argc, argv, i);
                 if (n == NULL) {
@@ -658,6 +727,9 @@ static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr, FILE * asmh)
             }
             continue;
         }
+        if (rg->is_blackbox()) {
+            continue;
+        }
 
         if (g_show_time) {
             printf("\n====Start Process Region(id:%d)'%s' ====\n",
@@ -693,7 +765,9 @@ static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr, FILE * asmh)
     bool s = rm->processProgramRegion(program, oc);
     ASSERT0(s);
     DUMMYUSE(s);
-    dumpPoolUsage();
+    if (g_dump_opt.isDumpALL()) {
+        dumpPoolUsage();
+    }
 }
 
 
@@ -717,8 +791,6 @@ static CLRegionMgr * initRegionMgr()
     g_is_opt_float = true;
     g_prt_asm_horizontal = true;
     g_do_refine_auto_insert_cvt = false;
-    g_is_dump_mdset_hash = true;
-    g_is_dump_du_chain = true;
     return rm;
 }
 

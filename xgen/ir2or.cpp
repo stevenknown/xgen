@@ -884,7 +884,7 @@ void IR2OR::convertLSL(IR const* ir, OUT ORList & ors, IN IOC * cont)
 void IR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
     ASSERT0(ir->is_cvt() && CVT_exp(ir));
-    ASSERTN(!ir->is_void() && !CVT_exp(ir)->is_void(), ("TODO"));
+    ASSERTN(!ir->is_any() && !CVT_exp(ir)->is_any(), ("TODO"));
     ORList tors;
     convertGeneralLoad(CVT_exp(ir), tors, cont);
     m_cg->buildTypeCvt(ir, CVT_exp(ir), tors, cont);
