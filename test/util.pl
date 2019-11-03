@@ -16,17 +16,35 @@ our @EXPORT_OK = qw(
     runArmToolChainToComputeBaseResult
     runPACC 
     runBaseCC 
+    computeRelatedPathToXocRootDir
+    computeAbsolutePathToXocRootDir
+    clean
     runXOCC);
-our $g_simulator;
 our $g_base_cc;
 our $g_xocc;
-our $g_pacc;
-our $g_host_cc;
-our $g_cflags;
-our $g_as;
-our $g_ld;
+our $g_pacc = "pacc";
+our $g_as = "pacdsp-elf-as";
+our $g_ld = "pacdsp-elf-ld";
+our $g_simulator = "pacdsp-elf-run";
+our $g_cflags = "-O0"; 
 our $g_ld_flag;
-our $g_is_quit_early; #finish test if error occurred.
+our $g_is_quit_early = 1; #finish test if error occurred.
+our $g_target; #indicate target machine.
+our $g_is_create_base_result = 0;
+our $g_is_move_passed_case = 0;
+our $g_is_test_gr = 0;
+our $g_is_input_gr = 0;
+our $g_is_invoke_assembler = 1;
+our $g_is_invoke_linker = 1;
+our $g_is_invoke_simulator = 1;
+#1 if user intend to run testcase recursively, otherwise only
+#test current directory.
+our $g_is_recur = 0;
+our $g_osname = $^O;
+our $g_xoc_root_path = "";
+our $g_single_testcase = ""; #record the single testcase
+our $g_override_xocc_path = "";
+our $g_is_compare_dump = 0;
 
 sub findCurrent {
     my $dir = $_[0];
@@ -392,4 +410,291 @@ sub computeDirFromFilePath
     return $dir;
 }
 
+sub prolog
+{
+    computeRelatedPathToXocRootDir();
+    #computeAbsolutePathToXocRootDir();
+    $g_target = $ARGV[0];
+    if (!$g_target) {
+        usage();
+        abort();
+    }
+    parseCmdLine();
+    selectTarget();
+    printEnvVar();
+}
+
+sub parseCmdLine
+{
+    #Skip ARGV[0], it should describe target machine.
+    for (my $i = 1; $ARGV[$i]; $i++) {
+        if ($ARGV[$i] eq "CreateBaseResult") {
+            $g_is_create_base_result = 1;
+            next;
+        } elsif ($ARGV[$i] eq "CompareNewResult") {
+        } elsif ($ARGV[$i] eq "MovePassed") {
+            $g_is_move_passed_case = 1;
+        } elsif ($ARGV[$i] eq "TestGr") {
+            $g_is_test_gr = 1;
+        } elsif ($ARGV[$i] eq "InputGr") {
+            $g_is_input_gr = 1;
+        } elsif ($ARGV[$i] eq "ShowTime") {
+            $g_cflags .= " -time";
+        } elsif ($ARGV[$i] eq "Recur") {
+            $g_is_recur = 1;
+        } elsif ($ARGV[$i] eq "NotQuitEarly") {
+            $g_is_quit_early = 0;
+        } elsif ($ARGV[$i] eq "Case") {
+            $i++;
+            if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                usage();
+                abort();
+            }
+            $i++;
+            if (!$ARGV[$i]) {
+                usage();
+                abort();
+            }
+            $g_single_testcase = $ARGV[$i];
+        } elsif ($ARGV[$i] eq "OnlyCompile") {
+            $g_is_invoke_assembler = 0; 
+            $g_is_invoke_linker = 0; 
+            $g_is_invoke_simulator = 0;
+        } elsif ($ARGV[$i] eq "CompareDump") {
+            $g_is_compare_dump = 1; 
+        } elsif ($ARGV[$i] eq "OverrideXoccPath") {
+            $i++;
+            if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                usage();
+                abort();
+            }
+            $i++;
+            if (!$ARGV[$i]) {
+                usage();
+                abort();
+            }
+            $g_override_xocc_path = $ARGV[$i];
+        } else {
+            abort("UNSUPPORT COMMAND LINE:'$ARGV[$i]'");
+        }
+    }
+}
+
+sub printEnvVar
+{
+    print "\n==---- ENVIROMENT VARIABLES ----==\n";
+    print "\ng_osname = $g_osname";
+    print "\ng_simulator = $g_simulator";
+    print "\ng_base_cc = $g_base_cc";
+    print "\ng_xocc = $g_xocc";
+    print "\ng_pacc = $g_pacc";
+    print "\ng_cflags = $g_cflags";
+    print "\ng_as = $g_as";
+    print "\ng_ld = $g_ld";
+    print "\ng_ld_flag = $g_ld_flag";
+    print "\ng_is_test_gr = $g_is_test_gr";
+    print "\ng_is_input_gr = $g_is_input_gr";
+    print "\ng_xoc_root_path = $g_xoc_root_path";
+    if ($g_single_testcase ne "") {
+        print "\ng_single_testcase = $g_single_testcase";
+    }
+    if ($g_override_xocc_path ne "") {
+        print "\ng_override_xocc_path = $g_override_xocc_path";
+    }
+    print "\n";
+}
+
+sub selectTarget
+{
+    if (!$g_target) {
+        usage();
+        print "\nNOT SPECIFY A TARGET!\n";
+        abort();
+    }
+    if($g_osname eq 'MSWin32') {
+        if ($g_target eq "pac") {
+           $g_xocc = "$g_xoc_root_path/src/xocc.prj/Debug/xocc.exe";
+           $g_base_cc = "pacc";
+           $g_as = "pacdsp-elf-as --horizontaledit";
+           $g_ld = "pacdsp-elf-ld -L/home/zhenyu/gj310/install/linux/pacdsp-elf/lib/ -Tpac.ld /home/zhenyu/gj310/install/linux/pacdsp-elf/lib/crt1.o -lc -lsim -lm -lc -lgcc ";
+           $g_ld_flag = "-lc -lm -lgcc -lsim";
+           $g_simulator = "pacdsp-elf-run";
+        } elsif ($g_target eq "arm") {
+           $g_base_cc = "arm-linux-gnueabihf-gcc";
+           $g_xocc = "$g_xoc_root_path/src/xocc.arm.prj/x64/build/xocc.exe";
+           $g_as = "arm-linux-gnueabihf-as";
+           $g_ld = "arm-linux-gnueabihf-gcc";
+           $g_ld_flag = "";
+           $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
+        } elsif ($g_target eq "x86") {
+           $g_xocc = "$g_xoc_root_path/src/xocc.x64.prj/debug/xocc.exe";
+        }
+    } else {
+        if ($g_target eq "pac") {
+           $g_base_cc = "pacc";
+           $g_xocc = "$g_xoc_root_path/src/pac/xocc.exe";
+           $g_as = "pacdsp-elf-as --horizontaledit";
+           $g_ld = "pacdsp-elf-ld -L/home/zhenyu/gj310/install/linux/pacdsp-elf/lib/ -Tpac.ld /home/zhenyu/gj310/install/linux/pacdsp-elf/lib/crt1.o -lc -lsim -lm -lc -lgcc ";
+           $g_ld_flag = "-lc -lm -lgcc -lsim";
+           $g_simulator = "pacdsp-elf-run";
+        } elsif ($g_target eq "arm") {
+           $g_base_cc = "arm-linux-gnueabihf-gcc";
+           $g_xocc = "$g_xoc_root_path/src/arm/xocc.exe";
+           $g_as = "arm-linux-gnueabihf-as";
+           $g_ld = "arm-linux-gnueabihf-gcc";
+           $g_ld_flag = "";
+           $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
+        } elsif ($g_target eq "x86") {
+           $g_xocc = "$g_xoc_root_path/src/x86/xocc.exe";
+        }
+    }
+    #$g_xocc = "/home/zhenyu/x/src.passed_all_execute_test_in_test_exec/xocc/xocc.exe";
+    if (!$g_xocc) {
+        usage();
+        print "\nNOT FIND xocc.exe FOR $g_target!\n";
+        abort();
+    }
+}
+
+sub usage
+{
+    print "NOTE: You have to make sure the file name of testcase is unqiue.\n";
+    print "USAGE: ./run.pl pac|x64|arm [CreateBaseResult] [MovePassed] ",
+          "[TestGr] [ShowTime] [OnlyCompile] [Recur] [NotQuitEarly] [CompareDump] ",
+          "[Case = your_test_file_name]  ",
+          "[OverrideXoccPath = your_xocc_file_path] ",
+          "\n";
+    print "\nMovePassed:        move passed testcase to 'passed' directory",
+          "\n                   NOTE: do not delete testcase in 'passed' directory",
+          "\nCreateBaseResult:  generate result if there is no one",
+          "\n                   NOTE: deleting the exist one will regenerate base result",
+          "\nTestGr:            test GR file",
+          "\nInputGr:           inpute file is GR file",
+          "\nShowTime:          show compiling time for each compiler pass",
+          "\nOnlyCompile:       only compile and assemble testcase",
+          "\nRecur:             perform test recursively",
+          "\nNotQuitEarly:      perform test always even if there is failure",
+          "\nCase = ...:        run single case",
+          "\nCompareDump:       only compile and compare the dump file",
+          "\nOverrideXoccPath = ...:",
+          "\n                   refer xocc path",
+          "\n";
+}
+
+sub clean
+{
+    my $cmdline = "find -name \"*.asm\" | xargs rm -f";
+    system($cmdline);
+    $cmdline = "rm -rf log";
+    system($cmdline);
+}
+
+#This function infer absolute root path for XOC project directory.
+sub computeAbsolutePathToXocRootDir
+{
+    my $curdir = getcwd;
+    my @segs = split(/\//, $curdir);
+    my $seg;
+
+    #Compute absoluately path.
+    my $i = 0; #loop index
+    $g_xoc_root_path = "/";
+    while (defined($seg = $segs[$i])) {
+        if ($seg eq "test") {
+            last;
+        } elsif ($seg ne "") {
+            $g_xoc_root_path = $g_xoc_root_path.$seg."/";
+        }
+        $i++;
+        if ($i > 30) {
+            #too deep directory
+            last;
+        }
+    }
+}
+
+#This function infer related root path for XOC project directory.
+sub computeRelatedPathToXocRootDir
+{
+    my $curdir = getcwd;
+    my @segs = split(/\//, $curdir);
+    my $seg;
+
+    #Compute related path.
+    my $i = 0; #loop index
+    while (defined($seg = $segs[$i])) { $i++; }
+    $i--;
+    $g_xoc_root_path = "../";
+    while (defined($seg = $segs[$i])) {
+        if ($seg ne "test") {
+            $g_xoc_root_path = "$g_xoc_root_path../";
+        } else {
+            last;
+        }
+        $i--;
+        if ($i > 30) {
+            #too deep directory
+            last;
+        }
+    }
+}
+
+sub invokeSimulator
+{
+    my $fullpath = $_[0];
+    my $curdir = $_[1];
+    my $xocc_output = $_[2];
+    my $rundir = $_[3];
+
+    print("\nCMD>>unlink $xocc_output\n");
+    unlink($xocc_output);
+    my $outname = computeOutputName($fullpath);
+    
+    #Some testcase need input file to run, the default location of
+    #input file is same with testcase.
+    if ($rundir ne $curdir) {
+        chdir $rundir;
+    }
+    runSimulator($outname, $xocc_output);
+}
+
+sub generateGRandCompile
+{
+    my $fullpath = $_; 
+    my $grname = $fullpath.".gr";
+    my $asmname = $grname.".asm";
+
+    generateGR($fullpath);
+    compileGR($fullpath);
+    if ($g_is_invoke_assembler) {
+        runAssembler($g_as, $asmname);
+    }
+    if ($g_is_invoke_linker) {
+        runLinker("xocc.out"); 
+    }
+}
+
+#Extract CFLAG from *.conf and append it to g_cflags.
+sub extractAndSetCflag
+{
+    #Record the configure file.
+    my $configure_file_path = $_[0].".conf";
+    if (!-e $configure_file_path) { 
+        return;
+    }
+    my $pattern = qr/World/;
+    # read file content
+    open my $file, '<', $configure_file_path or
+        abort("Error openning file: $!\n");
+    while (defined(my $line = <$file>)) {
+        chomp $line;
+        $g_cflags = $g_cflags." ".$line;
+
+        # match the pattern with the content in each line of file
+        #if ($line =~ /$pattern/) {
+        #   last;
+        #}
+    }
+    close ($file);
+}
 1;
