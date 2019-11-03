@@ -421,6 +421,9 @@ sub prolog
     }
     parseCmdLine();
     selectTarget();
+    if ($g_override_xocc_path ne "") {
+        $g_xocc = $g_override_xocc_path;
+    }
     printEnvVar();
 }
 

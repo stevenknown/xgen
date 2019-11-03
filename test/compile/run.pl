@@ -28,7 +28,6 @@ our $g_ld;
 our $g_ld_flag;
 our $g_simulator;
 our $g_cflags;
-our $g_override_xocc_path;
 our $g_is_compare_dump;
 require "../util.pl";
 prolog();
