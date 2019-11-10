@@ -1,0 +1,17 @@
+region program @".program" () {
+    var a:f32:(align(4));
+    region func main () {
+        st a = 0xffffFFFFF;
+        region inner bar () {
+            var boom:any:(readonly, align(4));
+            var pad:i32:(align(4));
+            st pad = id boom;
+        };
+        region blackbox rawdata() {
+            var bindata:i32:(align(4), byte(1,2,3,4), volatile);
+            var strdata:str:(align(4), string("hello"), volatile);
+        };
+        call main(id rawdata, id bar, id main, 0x10, 0x20, "world");
+        return 0;
+    };
+}

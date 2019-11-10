@@ -624,7 +624,7 @@ void ARMIR2OR::invertBoolValue(Dbx * dbx, SR * val, OUT ORList & ors)
     ASSERT0(val);
     SR * one = getCG()->genIntImm(1, false);
     OR_TYPE orty = mapIRType2ORType(IR_XOR,
-        m_tm->get_dtype_bytesize(D_B), val, one, false);
+        m_tm->getDTypeByteSize(D_B), val, one, false);
     ASSERTN(orty != OR_UNDEF,
         ("mapIRType2ORType() can not find proper operation"));
 

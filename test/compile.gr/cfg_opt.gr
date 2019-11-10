@@ -1,0 +1,11 @@
+region program @"program" () {
+    region func main () {
+        truebr (eq $1, $2), L2;
+        goto L1;  //goto is actually fallthrough to label L1.
+                  //So it can be removed.
+        label L1;
+        goto L1;
+        label L2;
+    	stpr $7 = xor $7, $3;
+    };
+}

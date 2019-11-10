@@ -1,0 +1,23 @@
+
+==---- DUMP MDSSAMgr DU Chain 'foo' ----==
+
+--- BB3 ---
+--- BB1 ---
+
+[4]    p->a = 20; //S1
+
+ist:i32 id:5 attachinfo:Dbx,MDSSA    
+    ld:*<8> 'p' decl:struct S * p  base id:3 attachinfo:Dbx,MDSSA    
+    intconst:i32 20|0x14 id:4 attachinfo:Dbx
+----------------
+ist(id:5) --USE LIST:ld(id:2(MD2V1))
+ld(id:3) --DEF LIST:MD2V0,MD5V0
+
+[6]    return p->b; //S2
+
+return id:7 attachinfo:Dbx
+    ild:i32:offset(4) id:1 attachinfo:Dbx,MDSSA        
+        ld:*<8> 'p' decl:struct S * p  id:2 attachinfo:Dbx,MDSSA
+----------------
+ild(id:1) --DEF LIST:
+ld(id:2) --DEF LIST:MD5V0,MD2V1(ist(id:5))

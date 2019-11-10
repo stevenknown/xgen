@@ -1,0 +1,4 @@
+region program @".program" () {
+    var a:str:(align(4));
+    st a = "hello world";
+}

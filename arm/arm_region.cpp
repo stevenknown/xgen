@@ -551,7 +551,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         UINT f = SOL_REF;
         if (g_compute_region_imported_defuse_md) {
             f |= SOL_RU_REF;
-        }        
+        }
         if (g_compute_classic_du_chain) {
             //Compute du chain in non-ssa form.
             f |= SOL_REACH_DEF|COMPUTE_NONPR_DU|COMPUTE_PR_DU;
@@ -565,6 +565,17 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
                 ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MD_SSA_MGR))->
                     construction(oc);                
             }
+        }
+    
+        if (g_do_refine_duchain) {
+            RefineDUChain * refdu = (RefineDUChain*)getPassMgr()->
+                registerPass(PASS_REFINE_DUCHAIN);
+            if (g_compute_classic_du_chain) {
+                refdu->setUseGvn(true);
+                IR_GVN * gvn = (IR_GVN*)getPassMgr()->registerPass(PASS_GVN);
+                gvn->perform(oc);
+            }
+            refdu->perform(oc);            
         }
     }
 }

@@ -39,8 +39,7 @@ IR * CTree2IR::buildId(IN Decl * id)
 {
     VAR * var_info = mapDecl2VAR(id);
     ASSERT0(var_info);
-    IR * ir = m_ru->buildId(var_info);
-    return ir;
+    return m_ru->buildId(var_info);
 }
 
 
@@ -48,7 +47,7 @@ IR * CTree2IR::buildId(IN Decl * id)
 //Calculate the byte-size of identifier.
 IR * CTree2IR::buildId(IN Tree * t)
 {
-    ASSERTN(TREE_type(t)==TR_ID, ("illegal tree node , expected TR_ID"));
+    ASSERTN(TREE_type(t) == TR_ID, ("illegal tree node , expected TR_ID"));
     Decl * decl = TREE_id_decl(t);
     //TREE_result_type is useless for C,
     //but keep it for another langages used.
@@ -72,17 +71,14 @@ bool CTree2IR::is_istore_lhs(IN Tree * t)
     ASSERT0(t != NULL &&
             (TR_ASSIGN == TREE_type(TREE_parent(t))) &&
             t == TREE_lchild(TREE_parent(t)));
-    if (TREE_type(t) == TR_DEREF) {
-        return true;
-    }
-    return false;
+    return TREE_type(t) == TR_DEREF;
 }
 
 
 IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 {
-    // one of   '='   '*='   '/='   '%='  '+='
-    //          '-='  '<<='  '>>='  '&='  '^='  '|='
+    //One of '='   '*='   '/='   '%='  '+='
+    //       '-='  '<<='  '>>='  '&='  '^='  '|='
     IR * ist_mem_addr = NULL; //record mem_addr if 't' is an ISTORE
     IR * epilog_ir_list = NULL;
     CONT_is_lvalue(cont) = true;
@@ -91,28 +87,28 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     IR * l = convert(TREE_lchild(t), cont);
     bool is_ild_array_case = false;
     ASSERTN(l != NULL && l->is_single(),
-           ("Lchild cannot be NULL and must be single"));
+            ("Lchild cannot be NULL and must be single"));
     if (l->is_ild()) {
         //'lchild' is dereference, such as '*p', and
         //converted STORE IR tree is in the form:
-        //        ST
-        //         ILD, ofst <== ir would be removed
-        //          LD 'p'
+        //  ST
+        //  |-ILD, ofst <== ir would be removed
+        //    |-LD 'p'
         //generating IST instead of ILD.
         //The legitimate IR tree should be:
-        //        IST ofst
-        //         LD 'p'
+        //  IST ofst
+        //  |-LD 'p'
         ASSERT0(ILD_base(l) != NULL);
         if (ILD_base(l)->is_array()) {
             ist_mem_addr = m_ru->dupIRTree(ILD_base(l));
             is_ild_array_case = true;
             //In the situation, e.g: *(a[1]) = 10
             //we generate like this:
-            //    pr = a[1]
-            //    *pr = 10
+            //  pr = a[1]
+            //  *pr = 10
             //and
-            //    ST(PR, ARRAY)
-            //    IST(PR, 10);
+            //  ST(PR, ARRAY)
+            //  IST(PR, 10);
         } else {
             ist_mem_addr = m_ru->dupIRTree(ILD_base(l));
         }
@@ -126,7 +122,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     Type const* rtype = NULL;
     if (is_pointer(TREE_result_type(t))) {
         rtype = m_tm->getPointerType(
-                    get_pointer_base_size(TREE_result_type(t)));
+            get_pointer_base_size(TREE_result_type(t)));
     } else {
         UINT s;
         DATA_TYPE dt = ::get_decl_dtype(TREE_result_type(t), &s, m_tm);
@@ -144,372 +140,335 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     IR * r = convert(TREE_rchild(t), cont);
     IR * ir = NULL;
     switch (TREE_token(t)) {
+    Type const* type;
     case T_ASSIGN:
-        {
-            if (ist_mem_addr != NULL) {
-                if (is_ild_array_case) {
-                    IR * tmpir = m_ru->buildStorePR(ist_mem_addr->getType(),
-                        ist_mem_addr);
-                    ASSERTN(tmpir->is_ptr(),
-                           ("I think tmpir should already be set to"
-                            "pointer in buildStore()"));
-                    setLineNum(tmpir, lineno, m_ru);
-                    xcom::add_next(CONT_toplirlist(cont), tmpir);
-                    ir = m_ru->buildIStore(m_ru->buildPRdedicated(
-                        STPR_no(tmpir), tmpir->getType()), r, rtype);
-                } else {
-                    ir = m_ru->buildIStore(ist_mem_addr, r, rtype);
-                }
-                ir->setOffset(ir->getOffset() + l->getOffset());
-            } else if (l->is_ld()) {
-                //Generate IR_ST.
-                //Normalize LHS.
-                ir = m_ru->buildStore(LD_idinfo(l), l->getType(), r);
-                ir->setOffset(ir->getOffset() + LD_ofst(l));
-            } else if (l->is_array()) {
-                //Generate IR_STARRAY.
-                //Normalize LHS.
-                ir = m_ru->buildStoreArray(
-                    ARR_base(l),
-                    ARR_sub_list(l),
-                    l->getType(),
-                    ARR_elemtype(l),
-                    ((CArray*)l)->getDimNum(),
-                    ARR_elem_num_buf(l),
-                    r);
-                ARR_base(l) = NULL;
-                ARR_sub_list(l) = NULL;
-                ir->setOffset(ARR_ofst(l));
+        if (ist_mem_addr != NULL) {
+            if (is_ild_array_case) {
+                IR * tmpir = m_ru->buildStorePR(ist_mem_addr->getType(),
+                    ist_mem_addr);
+                ASSERTN(tmpir->is_ptr(),
+                        ("I think tmpir should already be set to"
+                         "pointer in buildStore()"));
+                setLineNum(tmpir, lineno, m_ru);
+                xcom::add_next(CONT_toplirlist(cont), tmpir);
+                ir = m_ru->buildIStore(m_ru->buildPRdedicated(
+                    STPR_no(tmpir), tmpir->getType()), r, rtype);
             } else {
-                ASSERTN(0, ("unsupport lhs IR type."));
+                ir = m_ru->buildIStore(ist_mem_addr, r, rtype);
             }
-
-            m_ru->freeIRTree(l); //l is useless.
+            ir->setOffset(ir->getOffset() + l->getOffset());
+        } else if (l->is_ld()) {
+            //Generate IR_ST.
+            //Normalize LHS.
+            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), r);
+            ir->setOffset(ir->getOffset() + LD_ofst(l));
+        } else if (l->is_array()) {
+            //Generate IR_STARRAY.
+            //Normalize LHS.
+            ir = m_ru->buildStoreArray(ARR_base(l),
+                                       ARR_sub_list(l),
+                                       l->getType(),
+                                       ARR_elemtype(l),
+                                       ((CArray*)l)->getDimNum(),
+                                       ARR_elem_num_buf(l),
+                                       r);
+            ARR_base(l) = NULL;
+            ARR_sub_list(l) = NULL;
+            ir->setOffset(ARR_ofst(l));
+        } else {
+            ASSERTN(0, ("unsupport lhs IR type."));
         }
+        m_ru->freeIRTree(l); //l is useless.
         break;
     case T_BITANDEQU:
-        {
-            Type const* type = NULL;
-            if (!l->is_ptr() && !r->is_ptr()) {
-                type = m_tm->hoistDtypeForBinop(l, r);
-            } else {
-                type = m_tm->getAny();
-                //buildBinaryOp will inefer the type of result ir.
-            }
+        if (!l->is_ptr() && !r->is_ptr()) {
+            type = m_tm->hoistDtypeForBinop(l, r);
+        } else {
+            type = m_tm->getAny();
+            //buildBinaryOp will inefer the type of result ir.
+        }
 
-            ir = m_ru->buildBinaryOp(IR_BAND, type, l, r);
-            if (ist_mem_addr != NULL) {
-                ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
-                ir->setOffset(ir->getOffset() + l->getOffset());
-            } else {
-                //Generate IR_ST.
-                ASSERT0(l->is_ld());
+        ir = m_ru->buildBinaryOp(IR_BAND, type, l, r);
+        if (ist_mem_addr != NULL) {
+            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir->setOffset(ir->getOffset() + l->getOffset());
+        } else {
+            //Generate IR_ST.
+            ASSERT0(l->is_ld());
 
-                //Normalize LHS.
-                ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
-                ir->setOffset(ir->getOffset() + LD_ofst(l));
-            }
+            //Normalize LHS.
+            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir->setOffset(ir->getOffset() + LD_ofst(l));
         }
         break;
     case T_BITOREQU:
-        {
-            Type const* type = NULL;
-            if (!l->is_ptr() && !r->is_ptr()) {
-                type = m_tm->hoistDtypeForBinop(l, r);
-            } else {
-                type = m_tm->getAny();
-                //buildBinaryOp will inefer the type of result ir.
-            }
-            ir = m_ru->buildBinaryOp(IR_BOR, type, l, r);
-            if (ist_mem_addr != NULL) {
-                ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
-                ir->setOffset(ir->getOffset() + l->getOffset());
-            } else {
-                //Generate IR_ST.
-                ASSERT0(l->is_ld());
+        if (!l->is_ptr() && !r->is_ptr()) {
+            type = m_tm->hoistDtypeForBinop(l, r);
+        } else {
+            type = m_tm->getAny();
+            //buildBinaryOp will inefer the type of result ir.
+        }
+        ir = m_ru->buildBinaryOp(IR_BOR, type, l, r);
+        if (ist_mem_addr != NULL) {
+            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir->setOffset(ir->getOffset() + l->getOffset());
+        } else {
+            //Generate IR_ST.
+            ASSERT0(l->is_ld());
 
-                //Normalize LHS.
-                ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
-                ir->setOffset(ir->getOffset() + LD_ofst(l));
-            }
+            //Normalize LHS.
+            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir->setOffset(ir->getOffset() + LD_ofst(l));
         }
         break;
     case T_ADDEQU:
-        {
-            Type const* type = NULL;
-            if (!l->is_ptr() && !r->is_ptr()) {
-                type = m_tm->hoistDtypeForBinop(l, r);
-            } else {
-                type = m_tm->getAny();
-                //buildBinaryOp will inefer the type of result ir.
-            }
+        if (!l->is_ptr() && !r->is_ptr()) {
+            type = m_tm->hoistDtypeForBinop(l, r);
+        } else {
+            type = m_tm->getAny();
+            //buildBinaryOp will inefer the type of result ir.
+        }
 
-            ir = m_ru->buildBinaryOp(IR_ADD, type, l, r);
+        ir = m_ru->buildBinaryOp(IR_ADD, type, l, r);
 
-            if (ist_mem_addr != NULL) {
-                ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
-                ir->setOffset(ir->getOffset() + l->getOffset());
-            } else if (l->is_ld()) {
-                //Generate IR_ST.
-                ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
-                ir->setOffset(ir->getOffset() + LD_ofst(l));
-            } else if (l->is_array()) {
-                //Generate IR_STARRAY.
-                ir = m_ru->buildStoreArray(
-                    m_ru->dupIRTree(ARR_base(l)),
-                    m_ru->dupIRTree(ARR_sub_list(l)),
-                    l->getType(),
-                    ARR_elemtype(l),
-                    ((CArray*)l)->getDimNum(),
-                    ARR_elem_num_buf(l),
-                    r);
-                ir->setOffset(ARR_ofst(l));
-            } else {
-                ASSERTN(0, ("unsupport lhs IR type."));
-            }
+        if (ist_mem_addr != NULL) {
+            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir->setOffset(ir->getOffset() + l->getOffset());
+        } else if (l->is_ld()) {
+            //Generate IR_ST.
+            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir->setOffset(ir->getOffset() + LD_ofst(l));
+        } else if (l->is_array()) {
+            //Generate IR_STARRAY.
+            ir = m_ru->buildStoreArray(
+                m_ru->dupIRTree(ARR_base(l)),
+                m_ru->dupIRTree(ARR_sub_list(l)),
+                                l->getType(),
+                                ARR_elemtype(l),
+                                ((CArray*)l)->getDimNum(),
+                                ARR_elem_num_buf(l),
+                                r);
+            ir->setOffset(ARR_ofst(l));
+        } else {
+            ASSERTN(0, ("unsupport lhs IR type."));
         }
         break;
     case T_SUBEQU:
-        {
-            Type const* type = NULL;
-            if (!l->is_ptr() && !r->is_ptr()) {
-                type = m_tm->hoistDtypeForBinop(l, r);
-            } else {
-                type = m_tm->getAny();
-                //buildBinaryOp will inefer the type of result ir.
-            }
-            ir = m_ru->buildBinaryOp(IR_SUB, type, l, r);
-            if (ist_mem_addr != NULL) {
-                ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
-                ir->setOffset(ir->getOffset() + l->getOffset());
-            } else if (l->is_ld()) {
-                //Generate IR_ST.
-                ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
-                ir->setOffset(ir->getOffset() + LD_ofst(l));
-            } else if (l->is_array()) {
-                //Generate IR_STARRAY.
-                ir = m_ru->buildStoreArray(
-                    m_ru->dupIRTree(ARR_base(l)),
-                    m_ru->dupIRTree(ARR_sub_list(l)),
-                    l->getType(),
-                    ARR_elemtype(l),
-                    ((CArray*)l)->getDimNum(),
-                    ARR_elem_num_buf(l),
-                    r);
-                ir->setOffset(ARR_ofst(l));
-            } else {
-                ASSERTN(0, ("unsupport lhs IR type."));
-            }
+        if (!l->is_ptr() && !r->is_ptr()) {
+            type = m_tm->hoistDtypeForBinop(l, r);
+        } else {
+            type = m_tm->getAny();
+            //buildBinaryOp will inefer the type of result ir.
+        }
+        ir = m_ru->buildBinaryOp(IR_SUB, type, l, r);
+        if (ist_mem_addr != NULL) {
+            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir->setOffset(ir->getOffset() + l->getOffset());
+        } else if (l->is_ld()) {
+            //Generate IR_ST.
+            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir->setOffset(ir->getOffset() + LD_ofst(l));
+        } else if (l->is_array()) {
+            //Generate IR_STARRAY.
+            ir = m_ru->buildStoreArray(
+                m_ru->dupIRTree(ARR_base(l)),
+                m_ru->dupIRTree(ARR_sub_list(l)),
+                                l->getType(),
+                                ARR_elemtype(l),
+                                ((CArray*)l)->getDimNum(),
+                                ARR_elem_num_buf(l),
+                                r);
+            ir->setOffset(ARR_ofst(l));
+        } else {
+            ASSERTN(0, ("unsupport lhs IR type."));
         }
         break;
     case T_MULEQU:
-        {
-            Type const* type = NULL;
-            if (!l->is_ptr() && !r->is_ptr()) {
-                type = m_tm->hoistDtypeForBinop(l, r);
-            } else {
-                type = m_tm->getAny();
-                //buildBinaryOp will inefer the type of result ir.
-            }
-            ir = m_ru->buildBinaryOp(IR_MUL, type, l, r);
-            if (ist_mem_addr != NULL) {
-                ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
-                ir->setOffset(ir->getOffset() + l->getOffset());
-            } else if (l->is_ld()) {
-                //Generate IR_ST.
-                ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
-                ir->setOffset(ir->getOffset() + LD_ofst(l));
-            } else if (l->is_array()) {
-                //Generate IR_STARRAY.
-                ir = m_ru->buildStoreArray(
-                    m_ru->dupIRTree(ARR_base(l)),
-                    m_ru->dupIRTree(ARR_sub_list(l)),
-                    l->getType(),
-                    ARR_elemtype(l),
-                    ((CArray*)l)->getDimNum(),
-                    ARR_elem_num_buf(l),
-                    r);
-                ir->setOffset(ARR_ofst(l));
-            } else {
-                ASSERTN(0, ("unsupport lhs IR type."));
-            }
+        if (!l->is_ptr() && !r->is_ptr()) {
+            type = m_tm->hoistDtypeForBinop(l, r);
+        } else {
+            type = m_tm->getAny();
+            //buildBinaryOp will inefer the type of result ir.
+        }
+        ir = m_ru->buildBinaryOp(IR_MUL, type, l, r);
+        if (ist_mem_addr != NULL) {
+            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir->setOffset(ir->getOffset() + l->getOffset());
+        } else if (l->is_ld()) {
+            //Generate IR_ST.
+            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir->setOffset(ir->getOffset() + LD_ofst(l));
+        } else if (l->is_array()) {
+            //Generate IR_STARRAY.
+            ir = m_ru->buildStoreArray(
+                m_ru->dupIRTree(ARR_base(l)),
+                m_ru->dupIRTree(ARR_sub_list(l)),
+                                l->getType(),
+                                ARR_elemtype(l),
+                                ((CArray*)l)->getDimNum(),
+                                ARR_elem_num_buf(l),
+                                r);
+            ir->setOffset(ARR_ofst(l));
+        } else {
+            ASSERTN(0, ("unsupport lhs IR type."));
         }
         break;
     case T_DIVEQU:
-        {
-            Type const* type = NULL;
-            if (!l->is_ptr() && !r->is_ptr()) {
-                type = m_tm->hoistDtypeForBinop(l, r);
-            } else {
-                type = m_tm->getAny();
-                //buildBinaryOp will inefer the type of result ir.
-            }
-            ir = m_ru->buildBinaryOp(IR_DIV, type, l, r);
-            if (ist_mem_addr != NULL) {
-                ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
-                ir->setOffset(ir->getOffset() + l->getOffset());
-            } else if (l->is_ld()) {
-                //Generate IR_ST.
-                ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
-                ir->setOffset(ir->getOffset() + LD_ofst(l));
-            } else if (l->is_array()) {
-                //Generate IR_STARRAY.
-                ir = m_ru->buildStoreArray(
-                    m_ru->dupIRTree(ARR_base(l)),
-                    m_ru->dupIRTree(ARR_sub_list(l)),
-                    l->getType(),
-                    ARR_elemtype(l),
-                    ((CArray*)l)->getDimNum(),
-                    ARR_elem_num_buf(l),
-                    r);
-                ir->setOffset(ARR_ofst(l));
-            } else {
-                ASSERTN(0, ("unsupport lhs IR type."));
-            }
+        if (!l->is_ptr() && !r->is_ptr()) {
+            type = m_tm->hoistDtypeForBinop(l, r);
+        } else {
+            type = m_tm->getAny();
+            //buildBinaryOp will inefer the type of result ir.
+        }
+        ir = m_ru->buildBinaryOp(IR_DIV, type, l, r);
+        if (ist_mem_addr != NULL) {
+            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir->setOffset(ir->getOffset() + l->getOffset());
+        } else if (l->is_ld()) {
+            //Generate IR_ST.
+            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir->setOffset(ir->getOffset() + LD_ofst(l));
+        } else if (l->is_array()) {
+            //Generate IR_STARRAY.
+            ir = m_ru->buildStoreArray(
+                m_ru->dupIRTree(ARR_base(l)),
+                m_ru->dupIRTree(ARR_sub_list(l)),
+                                l->getType(),
+                                ARR_elemtype(l),
+                                ((CArray*)l)->getDimNum(),
+                                ARR_elem_num_buf(l),
+                                r);
+            ir->setOffset(ARR_ofst(l));
+        } else {
+            ASSERTN(0, ("unsupport lhs IR type."));
         }
         break;
     case T_XOREQU:
-        {
-            Type const* type = NULL;
-            if (!l->is_ptr() && !r->is_ptr()) {
-                type = m_tm->hoistDtypeForBinop(l, r);
-            } else {
-                type = m_tm->getAny();
-                //buildBinaryOp will inefer the type of result ir.
-            }
-            ir = m_ru->buildBinaryOp(IR_XOR, type, l, r);
-            if (ist_mem_addr != NULL) {
-                ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
-                ir->setOffset(ir->getOffset() + l->getOffset());
-            } else if (l->is_ld()) {
-                //Generate IR_ST.
-                ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
-                ir->setOffset(ir->getOffset() + LD_ofst(l));
-            } else if (l->is_array()) {
-                //Generate IR_STARRAY.
-                ir = m_ru->buildStoreArray(
-                    m_ru->dupIRTree(ARR_base(l)),
-                    m_ru->dupIRTree(ARR_sub_list(l)),
-                    l->getType(),
-                    ARR_elemtype(l),
-                    ((CArray*)l)->getDimNum(),
-                    ARR_elem_num_buf(l),
-                    r);
-                ir->setOffset(ARR_ofst(l));
-            } else {
-                ASSERTN(0, ("unsupport lhs IR type."));
-            }
+        if (!l->is_ptr() && !r->is_ptr()) {
+            type = m_tm->hoistDtypeForBinop(l, r);
+        } else {
+            type = m_tm->getAny();
+            //buildBinaryOp will inefer the type of result ir.
+        }
+        ir = m_ru->buildBinaryOp(IR_XOR, type, l, r);
+        if (ist_mem_addr != NULL) {
+            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir->setOffset(ir->getOffset() + l->getOffset());
+        } else if (l->is_ld()) {
+            //Generate IR_ST.
+            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir->setOffset(ir->getOffset() + LD_ofst(l));
+        } else if (l->is_array()) {
+            //Generate IR_STARRAY.
+            ir = m_ru->buildStoreArray(
+                m_ru->dupIRTree(ARR_base(l)),
+                m_ru->dupIRTree(ARR_sub_list(l)),
+                                l->getType(),
+                                ARR_elemtype(l),
+                                ((CArray*)l)->getDimNum(),
+                                ARR_elem_num_buf(l),
+                                r);
+            ir->setOffset(ARR_ofst(l));
+        } else {
+            ASSERTN(0, ("unsupport lhs IR type."));
         }
         break;
     case T_RSHIFTEQU:
-        {
-            ASSERTN(!l->is_fp() && !r->is_fp(),
-                   ("illegal shift operation of float point"));
-            Type const* type = NULL;
-            ASSERTN(r->is_int(), ("type of shift-right should be integer"));
-            if (r->is_signed()) {
-                IR_dt(r) = m_tm->getSimplexTypeEx(
-                    m_tm->get_int_dtype(
-                        m_tm->get_dtype_bitsize(
-                            TY_dtype(r->getType())), false));
-            }
+        ASSERTN(!l->is_fp() && !r->is_fp(),
+                ("illegal shift operation of float point"));
+        ASSERTN(r->is_int(), ("type of shift-right should be integer"));
+        if (r->is_signed()) {
+            IR_dt(r) = m_tm->getSimplexTypeEx(
+                m_tm->get_int_dtype(
+                    m_tm->getDTypeBitSize(
+                        TY_dtype(r->getType())), false));
+        }
 
-            if (!l->is_ptr() && !r->is_ptr()) {
-                type = m_tm->hoistDtypeForBinop(l, r);
-            } else {
-                type = m_tm->getAny();
-                //buildBinaryOp will inefer the type of result ir.
-            }
-            ir = m_ru->buildBinaryOp(l->is_sint() ? IR_ASR : IR_LSR,
-                                     type, l, r);
-            if (ist_mem_addr != NULL) {
-                ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
-                ir->setOffset(ir->getOffset() + l->getOffset());
-            } else if (l->is_ld()) {
-                //Generate IR_ST.
-                ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
-                ir->setOffset(ir->getOffset() + LD_ofst(l));
-            } else if (l->is_array()) {
-                //Generate IR_STARRAY.
-                ir = m_ru->buildStoreArray(
-                    m_ru->dupIRTree(ARR_base(l)),
-                    m_ru->dupIRTree(ARR_sub_list(l)),
-                    l->getType(),
-                    ARR_elemtype(l),
-                    ((CArray*)l)->getDimNum(),
-                    ARR_elem_num_buf(l),
-                    r);
-                ir->setOffset(ARR_ofst(l));
-            } else {
-                ASSERTN(0, ("unsupport lhs IR type."));
-            }
+        if (!l->is_ptr() && !r->is_ptr()) {
+            type = m_tm->hoistDtypeForBinop(l, r);
+        } else {
+            type = m_tm->getAny();
+            //buildBinaryOp will inefer the type of result ir.
+        }
+        ir = m_ru->buildBinaryOp(l->is_sint() ? IR_ASR : IR_LSR, type, l, r);
+        if (ist_mem_addr != NULL) {
+            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir->setOffset(ir->getOffset() + l->getOffset());
+        } else if (l->is_ld()) {
+            //Generate IR_ST.
+            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir->setOffset(ir->getOffset() + LD_ofst(l));
+        } else if (l->is_array()) {
+            //Generate IR_STARRAY.
+            ir = m_ru->buildStoreArray(m_ru->dupIRTree(ARR_base(l)),
+                                       m_ru->dupIRTree(ARR_sub_list(l)),
+                                       l->getType(),
+                                       ARR_elemtype(l),
+                                       ((CArray*)l)->getDimNum(),
+                                       ARR_elem_num_buf(l),
+                                       r);
+            ir->setOffset(ARR_ofst(l));
+        } else {
+            ASSERTN(0, ("unsupport lhs IR type."));
         }
         break;
     case T_LSHIFTEQU:
-        {
-            Type const* type = NULL;
-            if (!l->is_ptr() && !r->is_ptr()) {
-                type = m_tm->hoistDtypeForBinop(l, r);
-            } else {
-                type = m_tm->getAny();
-                //buildBinaryOp will inefer the type of result ir.
-            }
-            ir = m_ru->buildBinaryOp(IR_LSL, type, l, r);
-            if (ist_mem_addr != NULL) {
-                ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
-                ir->setOffset(ir->getOffset() + l->getOffset());
-            } else if (l->is_ld()) {
-                //Generate IR_ST.
-                ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
-                ir->setOffset(ir->getOffset() + LD_ofst(l));
-            } else if (l->is_array()) {
-                //Generate IR_STARRAY.
-                ir = m_ru->buildStoreArray(
-                    m_ru->dupIRTree(ARR_base(l)),
-                    m_ru->dupIRTree(ARR_sub_list(l)),
-                    l->getType(),
-                    ARR_elemtype(l),
-                    ((CArray*)l)->getDimNum(),
-                    ARR_elem_num_buf(l),
-                    r);
-                ir->setOffset(ARR_ofst(l));
-            } else {
-                ASSERTN(0, ("unsupport lhs IR type."));
-            }
+        if (!l->is_ptr() && !r->is_ptr()) {
+            type = m_tm->hoistDtypeForBinop(l, r);
+        } else {
+            type = m_tm->getAny();
+            //buildBinaryOp will inefer the type of result ir.
+        }
+        ir = m_ru->buildBinaryOp(IR_LSL, type, l, r);
+        if (ist_mem_addr != NULL) {
+            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir->setOffset(ir->getOffset() + l->getOffset());
+        } else if (l->is_ld()) {
+            //Generate IR_ST.
+            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir->setOffset(ir->getOffset() + LD_ofst(l));
+        } else if (l->is_array()) {
+            //Generate IR_STARRAY.
+            ir = m_ru->buildStoreArray(m_ru->dupIRTree(ARR_base(l)),
+                                       m_ru->dupIRTree(ARR_sub_list(l)),
+                                       l->getType(),
+                                       ARR_elemtype(l),
+                                       ((CArray*)l)->getDimNum(),
+                                       ARR_elem_num_buf(l),
+                                       r);
+            ir->setOffset(ARR_ofst(l));
+        } else {
+            ASSERTN(0, ("unsupport lhs IR type."));
         }
         break;
     case T_REMEQU:
-        {
-            Type const* type = NULL;
-            if (!l->is_ptr() && !r->is_ptr()) {
-                type = m_tm->hoistDtypeForBinop(l, r);
-            } else {
-                type = m_tm->getAny();
-                //buildBinaryOp will inefer the type of result ir.
-            }
+        if (!l->is_ptr() && !r->is_ptr()) {
+            type = m_tm->hoistDtypeForBinop(l, r);
+        } else {
+            type = m_tm->getAny();
+            //buildBinaryOp will inefer the type of result ir.
+        }
 
-            ir = m_ru->buildBinaryOp(IR_REM, type, l, r);
-            if (ist_mem_addr != NULL) {
-                ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
-                ir->setOffset(ir->getOffset() + l->getOffset());
-            } else if (l->is_ld()) {
-                //Generate IR_ST.
-                ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
-                ir->setOffset(ir->getOffset() + LD_ofst(l));
-            } else if (l->is_array()) {
-                //Generate IR_STARRAY.
-                ir = m_ru->buildStoreArray(
-                    m_ru->dupIRTree(ARR_base(l)),
-                    m_ru->dupIRTree(ARR_sub_list(l)),
-                    l->getType(),
-                    ARR_elemtype(l),
-                    ((CArray*)l)->getDimNum(),
-                    ARR_elem_num_buf(l),
-                    r);
-                ir->setOffset(ARR_ofst(l));
-            } else {
-                ASSERTN(0, ("unsupport lhs IR type."));
-            }
+        ir = m_ru->buildBinaryOp(IR_REM, type, l, r);
+        if (ist_mem_addr != NULL) {
+            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir->setOffset(ir->getOffset() + l->getOffset());
+        } else if (l->is_ld()) {
+            //Generate IR_ST.
+            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir->setOffset(ir->getOffset() + LD_ofst(l));
+        } else if (l->is_array()) {
+            //Generate IR_STARRAY.
+            ir = m_ru->buildStoreArray(m_ru->dupIRTree(ARR_base(l)),
+                                       m_ru->dupIRTree(ARR_sub_list(l)),
+                                       l->getType(),
+                                       ARR_elemtype(l),
+                                       ((CArray*)l)->getDimNum(),
+                                       ARR_elem_num_buf(l),
+                                       r);
+            ir->setOffset(ARR_ofst(l));
+        } else {
+            ASSERTN(0, ("unsupport lhs IR type."));
         }
         break;
     default: UNREACHABLE();
@@ -854,7 +813,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         if (callee->is_ptr()) {
             is_direct = false; //Current call is indirect function call.
             ASSERTN(callee->is_ld() || callee->is_lda() || callee->is_cvt(),
-                ("enable more case"));
+                    ("enable more case"));
         } else if (callee->is_const() && callee->is_int()) {
             is_direct = false; //Current call is indirect function call.
         } else {
@@ -870,7 +829,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     //the call.
     IR * callarglist = NULL;
     VAR * retval_buf = NULL;
-    UINT return_val_size = m_tm->get_bytesize(rettype);
+    UINT return_val_size = m_tm->getByteSize(rettype);
     if (return_val_size > NUM_OF_RETURN_VAL_REGISTERS *
                           GENERAL_REGISTER_SIZE) {
         xcom::StrBuf tmp(64);
@@ -892,7 +851,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         }
 
         ASSERT0(VAR_formal_param_pos(retval_buf) ==
-            g_formal_parameter_start - 1);
+                g_formal_parameter_start - 1);
 
         //The var will be the first parameter of current function,
         //it is hidden and can not see by programmer.
@@ -1006,8 +965,7 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         //    ist(x) = ild(x) + 1
         //    return pr
         ASSERT0(ILD_base(inc_exp)->is_ptr());
-        xstpr = m_ru->buildStorePR(inc_exp->getType(),
-            m_ru->dupIRTree(inc_exp));
+        xstpr = m_ru->buildStorePR(inc_exp->getType(), m_ru->dupIRTree(inc_exp));
         xincst = m_ru->buildIStore(m_ru->dupIRTree(ILD_base(inc_exp)),
             addsub, inc_exp->getType());
     } else if (inc_exp->is_array()) {
@@ -1018,13 +976,12 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         //    return pr
         xstpr = m_ru->buildStorePR(inc_exp->getType(),
             m_ru->dupIRTree(inc_exp));
-        xincst = m_ru->buildStoreArray(
-                    m_ru->dupIRTree(ARR_base(inc_exp)),
-                    m_ru->dupIRTree(ARR_sub_list(inc_exp)),
-                    inc_exp->getType(),
-                    ARR_elemtype(inc_exp),
-                    ((CArray*)inc_exp)->getDimNum(),
-                    ARR_elem_num_buf(inc_exp), addsub);
+        xincst = m_ru->buildStoreArray(m_ru->dupIRTree(ARR_base(inc_exp)),
+                                       m_ru->dupIRTree(ARR_sub_list(inc_exp)),
+                                       inc_exp->getType(),
+                                       ARR_elemtype(inc_exp),
+                                       ((CArray*)inc_exp)->getDimNum(),
+                                       ARR_elem_num_buf(inc_exp), addsub);
     } else {
         //Generate:
         // pr = x
@@ -1061,11 +1018,10 @@ IR * CTree2IR::convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx *)
     vexp = only_left_last(vexp);
     ASSERT0(vexp);
 
-    //
+    //Record current processing of TR_CASE.
     m_case_list_stack.push(m_case_list);
     List<CaseValue*> case_list;
-    m_case_list = &case_list;
-    //
+    m_case_list = &case_list;    
 
     IR * body = convert(TREE_switch_body(t), NULL);
 
@@ -1074,20 +1030,15 @@ IR * CTree2IR::convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx *)
     #endif
 
     LabelInfo const* deflab = NULL;
-
     IR * casev_list = NULL;
-
     IR * last = NULL;
-
     for (CaseValue * casev = case_list.get_head();
          casev != NULL; casev = case_list.get_next()) {
         if (CASEV_is_def(casev)) {
             ASSERTN(!find_default_lab, ("redefined DEFAULT in SWITCH"));
-
             #ifdef _DEBUG_
             find_default_lab = true;
             #endif
-
             deflab = CASEV_lab(casev);
         } else {
             DATA_TYPE dt = m_tm->getDType(WORD_LENGTH_OF_HOST_MACHINE, true);
@@ -1102,7 +1053,6 @@ IR * CTree2IR::convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx *)
 
     IR * ir = m_ru->buildSwitch(vexp, casev_list, body, deflab);
     setLineNum(ir, lineno, m_ru);
-
     return ir;
 }
 
@@ -1200,7 +1150,8 @@ IR * CTree2IR::convertInDirectMemAccess(Tree * t, INT lineno, IN T2IRCtx * cont)
     ASSERTN(base->is_ptr(), ("base of indirect memory access must be pointer."));
 
     if (is_pointer(field_decl)) {
-        Type const* type = m_tm->getPointerType(get_pointer_base_size(field_decl));
+        Type const* type = m_tm->getPointerType(
+            get_pointer_base_size(field_decl));
         //CASE: generate ild to access field's value.
         //e.g: p->b, will generate,
         //t = ld(p)
@@ -1362,9 +1313,9 @@ IR * CTree2IR::genReturnValBuf(IR * ir)
     //return registers, generate a return-value-buffer and
     //transfering its address as the first implict parameter to
     //the call.
-    UINT return_val_bytesize = m_tm->get_bytesize(retval->getType());
+    UINT return_val_bytesize = m_tm->getByteSize(retval->getType());
     if (return_val_bytesize <= NUM_OF_RETURN_VAL_REGISTERS *
-            GENERAL_REGISTER_SIZE) {
+                               GENERAL_REGISTER_SIZE) {
         return ir;
     }
     if (m_retval_buf == NULL) {
@@ -1469,13 +1420,13 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
         //Recompute the pointer's base size.
         //e.g: struct {short a; char b} s;
         //     ... = &s.b;
-        //    genereate code:
-        //    LDA(PTR ptbase 3)
-        //        ID(s, ofst:2)
-        //    Here is an error, LDA generate a pointer type with
-        //    basesize is 3, it point to s! It should point to s.b,
-        //    which type is char. So we need to fix the pointer
-        //    base size of LDA to be 1.
+        //Genereate IR expression:
+        //  LDA(PTR ptbase 3)
+        //    ID(s, ofst:2)
+        //Here is an error, LDA generate a pointer type with
+        //basesize is 3, it point to s! It should point to s.b,
+        //which type is char. So we need to fix the pointer
+        //base size of LDA to be 1.
         IR_dt(ir) = m_tm->getPointerType(base->getTypeSize(m_tm));
         m_ru->freeIRTree(base);
     } else if (base->is_array()) {
@@ -1500,13 +1451,13 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
         //Recompute the pointer's base size.
         //e.g: struct {short a; char b} s;
         //     ... = &s.b;
-        //    genereate code:
+        //genereate code:
         //    LDA(PTR ptbase 3)
-        //        ID(s, ofst:2)
-        //    Here is an error, LDA generate a pointer type with
-        //    basesize is 3, it point to s! It should point to s.b,
-        //    which type is char. So we need to fix the pointer
-        //    base size of LDA to be 1.
+        //      ID(s, ofst:2)
+        //Here is an error, LDA generate a pointer type with
+        //basesize is 3, it point to s! It should point to s.b,
+        //which type is char. So we need to fix the pointer
+        //base size of LDA to be 1.
         IR_dt(ir) = m_tm->getPointerType(base->getTypeSize(m_tm));
         m_ru->freeIRTree(base);
     } else if (base->is_ild()) {
@@ -1547,7 +1498,7 @@ IR * CTree2IR::convertCVT(Tree * t, INT lineno, T2IRCtx * cont)
         ir = m_ru->buildCvt(convert(TREE_cast_exp(t), cont),
             m_tm->getPointerType(get_pointer_base_size(cvtype)));
     } else {
-        UINT size;
+        UINT size = 0;
         DATA_TYPE dt = get_decl_dtype(cvtype, &size, m_tm);
         Type const* type = NULL;
         if (IS_SIMPLEX(dt)) {
@@ -1581,9 +1532,8 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
         ASSERT0(array_id->is_id());
         ASSERT0(VAR_is_array(ID_info(array_id)));
         ASSERTN(!VAR_is_formal_param(ID_info(array_id)),
-               ("array parameter should be transformed "
-                "to pointer type at FrontEnd's compound_stmt()"));
-
+                ("array parameter should be transformed "
+                 "to pointer type at FrontEnd's compound_stmt()"));
         if (TREE_type(TREE_parent(t)) == TR_LDA) {
             //e.g: int v[100]; ..=&v
             //In this case, parent tree node is TR_LDA operator,
@@ -1632,6 +1582,7 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
 }
 
 
+//Given a list of IR, only keep the leftmost.
 IR * CTree2IR::only_left_last(IR * head)
 {
     IR * last = removetail(&head);
@@ -1661,7 +1612,7 @@ BYTE CTree2IR::getMantissaNum(CHAR const* fpval)
 }
 
 
-//Convert AST to IR.
+//Convert TREE AST to IR.
 IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
 {
     IR * ir = NULL;
@@ -2224,7 +2175,7 @@ static void scanScopeDeclList(SCOPE * s, OUT xoc::Region * rg, bool scan_sib)
 }
 
 
-//Ensure RETURN at the end of function if its return-type is VOID.
+//Ensure IR_RETURN at the end of function if its return-type is VOID.
 static IR * addReturn(IR * irs, Region * rg)
 {
     IR * last = get_last(irs);
@@ -2255,7 +2206,7 @@ xoc::DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, xoc::TypeMgr * tm)
     xoc::DATA_TYPE dtype = xoc::D_UNDEF;
     *size = 0;
     ASSERTN(DECL_dt(decl) == DCL_DECLARATION ||
-           DECL_dt(decl) == DCL_TYPE_NAME, ("TODO"));
+            DECL_dt(decl) == DCL_TYPE_NAME, ("TODO"));
 
     TypeSpec * ty = DECL_spec(decl);
     bool is_signed;
@@ -2309,6 +2260,7 @@ xoc::DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, xoc::TypeMgr * tm)
     return dtype;
 }
 
+
 //Convert AS-Tree of C front-end into the IR.
 //The instructions are
 //    1. building region unit
@@ -2356,8 +2308,8 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     }
     //Ensure RETURN IR at the end of function
     //if its return-type is VOID.
-
     irs = addReturn(irs, r);
+
     //Reshape IR tree to well formed outlook.
     if (xoc::g_dump_opt.isDumpALL()) {
         xoc::note("\n==---- AFTER RESHAPE IR -----==", get_decl_name(dcl));
@@ -2367,16 +2319,14 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     bool change = false;
     irs = ic.handle_stmt_list(irs, change);
 
+    //Refine and perform peephole optimizations.
     xoc::RefineCtx rc;
     RC_refine_div_const(rc) = false;
     RC_refine_mul_const(rc) = false;
-    change = false;
-
+    change = false;   
     irs = r->refineIRlist(irs, change, rc);
     ASSERT0(xoc::verifyIRList(irs, NULL, r));
     r->setIRList(irs);
-
-    //Reshape IR tree to well formed outlook.
     if (xoc::g_dump_opt.isDumpALL()) {
         xoc::note("\n==---- AFTER REFINE IR -----==", get_decl_name(dcl));
         xoc::dumpIRList(irs, r);
@@ -2398,14 +2348,15 @@ bool generateRegion(RegionMgr * rm)
     topru->registerGlobalVAR();
     rm->addToRegionTab(topru);
     ((CLRegionMgr*)rm)->set_program(topru);
-    topru->setRegionVar(topru->getVarMgr()->registerVar(
-        ".program", rm->getTypeMgr()->getMCType(0), 1, VAR_GLOBAL|VAR_FAKE));
+    topru->setRegionVar(topru->getVarMgr()->registerVar(".program",
+        rm->getTypeMgr()->getMCType(0), 1, VAR_GLOBAL|VAR_FAKE));
 
     //In the file scope, generate function region.
     if (g_dump_opt.isDumpALL()) {
         dump_scope(s, 0xffffffff);
     }
 
+    //Iterate each declaration in scope.
     for (Decl * dcl = SCOPE_decl_list(s); dcl != NULL; dcl = DECL_next(dcl)) {
         if (is_fun_decl(dcl)) {
             if (DECL_is_fun_def(dcl)) {
@@ -2423,13 +2374,15 @@ bool generateRegion(RegionMgr * rm)
                 SET_FLAG(VAR_flag(v), VAR_FUNC_DECL);
                 topru->addToVarTab(v);
             }
-        } else {
-            //It might be variable/function declaration, not definition.
-            topru->addToVarTab(mapDecl2VAR(dcl));
+            continue;
         }
+
+        //It have to be normal variable declaration, function declaration.
+        //But it can never be function definition.
+        topru->addToVarTab(mapDecl2VAR(dcl));        
     }
 
-    //free the tmp memory pool.
+    //Free the temprary memory pool.
     tfree();
     END_TIMER(t, "CAst2IR");
     return true;

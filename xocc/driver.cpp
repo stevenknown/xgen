@@ -349,6 +349,9 @@ bool processCmdLine(INT argc, CHAR * argv[])
             } else if (!strcmp(cmdstr, "dump-simplification")) {
                 g_dump_opt.is_dump_simplification = true;
                 i++;
+            } else if (!strcmp(cmdstr, "dump-refine-duchain")) {
+                g_dump_opt.is_dump_refine_duchain = true;
+                i++;
             } else if (!strcmp(cmdstr, "dump-all")) {
                 g_dump_opt.is_dump_all = true;
                 i++;
@@ -483,7 +486,7 @@ static VAR * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
         type = dm->getMCType(data_size);
     } else {
         //data_size must definitly equal to corresponding size.
-        ASSERT0(data_size == dm->get_dtype_bytesize(data_type));
+        ASSERT0(data_size == dm->getDTypeByteSize(data_type));
         type = dm->getSimplexTypeEx(data_type);
     }
 
