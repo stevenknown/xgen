@@ -37,6 +37,7 @@ our $g_is_input_gr = 0;
 our $g_is_invoke_assembler = 1;
 our $g_is_invoke_linker = 1;
 our $g_is_invoke_simulator = 1;
+our $g_is_only_compile = 0;
 #1 if user intend to run testcase recursively, otherwise only
 #test current directory.
 our $g_is_recur = 0;
@@ -421,6 +422,9 @@ sub prolog
     }
     parseCmdLine();
     selectTarget();
+    if ($g_is_only_compile) {
+        $g_cflags = $g_cflags." -nocg ";
+    }
     if ($g_override_xocc_path ne "") {
         $g_xocc = $g_override_xocc_path;
     }
@@ -463,6 +467,7 @@ sub parseCmdLine
             $g_is_invoke_assembler = 0; 
             $g_is_invoke_linker = 0; 
             $g_is_invoke_simulator = 0;
+            $g_is_only_compile = 1;
         } elsif ($ARGV[$i] eq "CompareDump") {
             $g_is_compare_dump = 1; 
         } elsif ($ARGV[$i] eq "OverrideXoccPath") {
