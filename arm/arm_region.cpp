@@ -161,13 +161,12 @@ void ARMRegion::simplify(OptCtx & oc)
 }
 
 
-void ARMRegion::low_to_pr_mode(OptCtx & oc)
+void ARMRegion::simplifyToPRmode(OptCtx & oc)
 {
     SimpCtx simp;
     if (g_is_lower_to_pr_mode) {
         simp.setSimpToPRmode();
     }
-
     if (g_do_pr_ssa) {
         //Note if this flag enable,
         //AA may generate imprecise result.
@@ -177,8 +176,6 @@ void ARMRegion::low_to_pr_mode(OptCtx & oc)
         simp.setSimpLandLor();
         simp.setSimpLnot();
     }
-
-    //dumpBBList(getBBList(),this);
     //Simplify IR tree if it is needed.
     simplifyBBlist(getBBList(), &simp);
     if (SIMP_need_recon_bblist(&simp)) {
@@ -189,218 +186,26 @@ void ARMRegion::low_to_pr_mode(OptCtx & oc)
             getCFG()->computeExitList();
         }
     }
-    //dumpBBList(getBBList(),this);
 }
 
 
-bool ARMRegion::MiddleProcess(OptCtx & oc)
-{
-    if (g_opt_level == OPT_LEVEL0) {
-        assignPRMD();
-    }
-
-    //START HACK CODE
-    //Test code, to force generating as many IR stmts as possible.
-    //g_is_lower_to_pr_mode = true;
-    //END HACK CODE
-    bool own = false;
-    if (own) {
-        ARMMiddleProcess(oc);
-    } else {
-        Region::MiddleProcess(oc);
-        if (g_do_cp &&
-            getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
-            IR_CP * cp = (IR_CP*)getPassMgr()->registerPass(PASS_CP);
-            cp->perform(oc);
-        }
-    }
-
-    if (g_do_cfg_dom && !OC_is_dom_valid(oc)) {
-        getCFG()->computeDomAndIdom(oc);
-    }
-
-    if (g_do_cfg_pdom && !OC_is_pdom_valid(oc)) {
-        getCFG()->computePdomAndIpdom(oc);
-    }
-
-    //START HACK CODE
-    //Test code, to force recomputing AA and DUChain.
-    //AA and DU Chain need not to be recompute, because
-    //simplification maintained them.
-    {
-        OC_is_ref_valid(oc) = OC_is_du_chain_valid(oc) = false; int a = 0;
-        g_compute_classic_du_chain = true;
-        //g_do_md_ssa = true;
-    }
-    //END HACK CODE
-
-    if (g_opt_level > OPT_LEVEL0 &&
-        (!OC_is_aa_valid(oc) ||
-         !OC_is_ref_valid(oc) ||
-         !OC_is_du_chain_valid(oc))) {
-        IR_AA * aa = getAA();
-        if (g_do_aa && aa != NULL &&
-            (!OC_is_aa_valid(oc) || !OC_is_ref_valid(oc))) {
-            if (!aa->is_init()) {
-                aa->initAliasAnalysis();
-            }
-            aa->set_flow_sensitive(false);
-            aa->perform(oc);
-        }
-
-        //Opt phase may lead it to be invalid.
-        if (g_do_aa && aa != NULL) {
-            //Compute the threshold to perform AA.
-            UINT numir = 0;
-            for (IRBB * bb = getBBList()->get_head();
-                 bb != NULL; bb = getBBList()->get_next()) {
-                numir += bb->getNumOfIR();
-            }
-
-            if (numir > g_thres_opt_ir_num) {
-                aa->set_flow_sensitive(false);
-            }
-
-            //Compute PR's definition to improve AA precison.
-            if (g_do_pr_ssa) {
-                ASSERT0(getPassMgr());
-                PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->
-                    registerPass(PASS_PR_SSA_MGR);
-                ASSERT0(ssamgr);
-                if (!ssamgr->isSSAConstructed()) {
-                    ssamgr->construction(oc);
-                }
-            } else if (getDUMgr() != NULL) {
-                getDUMgr()->perform(oc, SOL_REF|SOL_REACH_DEF|COMPUTE_PR_DU);
-                getDUMgr()->computeMDDUChain(oc, false, COMPUTE_PR_DU);
-            }
-            //checkValidAndRecompute(&oc, PASS_LOOP_INFO, PASS_UNDEF);
-            aa->perform(oc);
-        }
-
-        IR_DU_MGR * dumgr = getDUMgr();
-        if (g_do_md_du_analysis && dumgr != NULL) {
-            if (g_compute_classic_du_chain) {
-                dumgr->perform(oc, SOL_REF|SOL_REACH_DEF|
-                                   COMPUTE_PR_DU|COMPUTE_NONPR_DU);
-                if (OC_is_ref_valid(oc) && OC_is_reach_def_valid(oc)) {
-                    UINT flag = COMPUTE_NONPR_DU;
-                    //If PRs have already been in SSA form, compute
-                    //DU chain doesn't make any sense.
-                    if (getPassMgr() != NULL) {
-                        PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->
-                            queryPass(PASS_PR_SSA_MGR);
-                        if (ssamgr == NULL) {
-                            flag |= COMPUTE_PR_DU;
-                        }
-                    } else {
-                        flag |= COMPUTE_PR_DU;
-                    }
-                    dumgr->computeMDDUChain(oc, false, flag);
-                }
-            }
-            if (g_do_md_ssa) {
-                //MDSSA have to be recomputed when DURef and overlap set
-                //are available.
-                ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MD_SSA_MGR))->
-                    construction(oc);
-            }
-        }
-    }
-
-    g_do_gcse = false;
-    if (g_do_gcse) {
-        MDSSAMgr * mdssamgr = (MDSSAMgr*)
-            getPassMgr()->registerPass(PASS_MD_SSA_MGR);
-        ASSERT0(mdssamgr);
-        if (!mdssamgr->isMDSSAConstructed()) {
-            mdssamgr->construction(oc);
-        }
-        if (getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
-            IR_GCSE * pass = (IR_GCSE*)
-                getPassMgr()->registerPass(PASS_GCSE);
-            bool changed = false;
-            changed = pass->perform(oc);
-            if (changed) {
-                getDUMgr()->perform(oc,
-                    SOL_REACH_DEF |
-                    COMPUTE_PR_DU | COMPUTE_NONPR_DU);
-                OC_is_du_chain_valid(oc) = false;
-                getDUMgr()->computeMDDUChain(oc, false,
-                    SOL_REF | SOL_REACH_DEF |
-                    COMPUTE_PR_DU | COMPUTE_NONPR_DU);
-            }
-        }
-    }
-
-    g_do_licm = false;
-    if (g_do_licm) {
-        IR_LICM * pass = (IR_LICM*)getPassMgr()->registerPass(PASS_LICM);
-        if (pass->perform(oc)) {
-            getPassMgr()->registerPass(PASS_MD_SSA_MGR)->perform(oc);
-        }
-    }
-
-    g_do_cp = false;
-    if (g_do_cp) {
-        IR_CP * pass = (IR_CP*)getPassMgr()->registerPass(PASS_CP);
-        pass->perform(oc);
-    }
-
-    g_do_dce = false;
-    if (g_do_dce) {
-        IR_DCE * pass = (IR_DCE*)getPassMgr()->registerPass(PASS_DCE);
-        pass->perform(oc);
-    }
-
-    ASSERT0((!g_do_md_du_analysis && !g_do_md_ssa) || verifyMDRef());
-    ASSERT0(verifyIRandBB(getBBList(), this));
-    if (OC_is_du_chain_valid(oc)) {
-        ASSERT0(getDUMgr() == NULL ||
-            getDUMgr()->verifyMDDUChain(COMPUTE_PR_DU | COMPUTE_NONPR_DU));
-    }
-
-    PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->queryPass(PASS_PR_SSA_MGR);
-    if (ssamgr != NULL && ssamgr->isSSAConstructed()) {
-        //NOTE: ssa destruction might violate classic DU chain.
-        ssamgr->destruction(&oc);
-    }
-
-    ///////////////////////////////////////////////////
-    //DO NOT DO OPTIMIZATION ANY MORE AFTER THIS LINE//
-    ///////////////////////////////////////////////////
-
-    //Finial refine to insert CVT if necessary when compile C/C++.
-    //Insert int32->int64, int32<->f32, int32<->f64, int64<->f32, int64<->f64
-    g_do_refine_auto_insert_cvt = true;
-    ASSERTN(g_do_refine, ("inserting CVT is expected"));
-
-    RefineCtx rf;
-    RC_insert_cvt(rf) = g_do_refine_auto_insert_cvt;
-    refineBBlist(getBBList(), rf);
-    ASSERT0((!g_do_md_du_analysis && !g_do_md_ssa) || verifyMDRef());
-    ASSERT0(verifyIRandBB(getBBList(), this));
-
-    return true;
-}
-
-
-bool ARMRegion::ARMMiddleProcess(OptCtx & oc)
+//START HACK CODE
+//Test code, to force generating as many IR stmts as possible.
+//g_is_lower_to_pr_mode = true;
+bool ARMRegion::ARMMiddleProcessForTesting(OptCtx & oc)
 {
     if (g_opt_level != OPT_LEVEL0) {
         PassMgr * passmgr = getPassMgr();
         ASSERT0(passmgr);
-
         //Perform scalar optimizations.
         passmgr->performScalarOpt(oc);
     }
-
     ASSERT0(verifyRPO(oc));
     ASSERT0(getPassMgr());
-
     BBList * bbl = getBBList();
-    if (bbl->get_elem_count() == 0) { return true; }
-
+    if (bbl->get_elem_count() == 0) {
+        return true;
+    }
     SimpCtx simp;
     simp.setSimpCFS();
     simp.setSimpArray();
@@ -411,12 +216,9 @@ bool ARMRegion::ARMMiddleProcess(OptCtx & oc)
     simp.setSimpToLowestHeight();
     ASSERT0(verifyIRandBB(getBBList(), this));
     ASSERT0(getDUMgr() &&
-        getDUMgr()->verifyMDDUChain(COMPUTE_PR_DU | COMPUTE_NONPR_DU));
-
-    //dumpBBList(getBBList(), this);
+            getDUMgr()->verifyMDDUChain(COMPUTE_PR_DU | COMPUTE_NONPR_DU));
     simplifyBBlist(bbl, &simp);
-    if (SIMP_need_recon_bblist(&simp) &&
-        g_cst_bb_list &&
+    if (SIMP_need_recon_bblist(&simp) && g_cst_bb_list &&
         reconstructBBList(oc)) {
         ASSERTN(g_do_cfg, ("construct BB list need CFG"));
         IR_CFG * cfg = getCFG();
@@ -431,43 +233,11 @@ bool ARMRegion::ARMMiddleProcess(OptCtx & oc)
         //Compute entry bb, exit bb while cfg rebuilt.
         cfg->computeExitList();
         ASSERT0(cfg->verify());
-
-        bool change = true;
-        UINT count = 0;
-        while (change && count < 20) {
-            change = false;
-            if (g_do_cfg_remove_empty_bb &&
-                cfg->removeEmptyBB(oc)) {
-                cfg->computeExitList();
-                change = true;
-            }
-            if (g_do_cfg_remove_unreach_bb &&
-                cfg->removeUnreachBB()) {
-                cfg->computeExitList();
-                change = true;
-            }
-            if (g_do_cfg_remove_trampolin_bb &&
-                cfg->removeTrampolinEdge()) {
-                cfg->computeExitList();
-                change = true;
-            }
-            if (g_do_cfg_remove_unreach_bb &&
-                cfg->removeUnreachBB()) {
-                cfg->computeExitList();
-                change = true;
-            }
-            if (g_do_cfg_remove_trampolin_bb &&
-                cfg->removeTrampolinBB()) {
-                cfg->computeExitList();
-                change = true;
-            }
-            count++;
-        }
-        ASSERT0(!change);
+        cfg->performMiscOpt(oc);
     }
-
     return true;
 }
+//END HACK CODE
 
 
 bool ARMRegion::ARMHighProcess(OptCtx & oc)
@@ -552,6 +322,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         if (g_compute_region_imported_defuse_md) {
             f |= SOL_RU_REF;
         }
+        //g_compute_classic_du_chain = 1;
         if (g_compute_classic_du_chain) {
             //Compute du chain in non-ssa form.
             f |= SOL_REACH_DEF|COMPUTE_NONPR_DU|COMPUTE_PR_DU;
@@ -575,9 +346,192 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
                 IR_GVN * gvn = (IR_GVN*)getPassMgr()->registerPass(PASS_GVN);
                 gvn->perform(oc);
             }
-            refdu->perform(oc);            
+            refdu->perform(oc);
         }
     }
+}
+
+
+//This function perform aggressive AA and DU analysis.
+//1. Perform flow-insensitive AA.
+//2. Perform PR DU chain.
+//3. Perform flow-sensitive AA.
+//4. Perform both classic DU chain and MDSSA DU chain.
+void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
+{
+    //START HACK CODE
+    //Test code, to force recomputing AA and DUChain.
+    //AA and DU Chain need not to be recompute, because
+    //simplification maintained them.
+    bool org_compute_classic_du_chain = g_compute_classic_du_chain;
+    OC_is_ref_valid(oc) = OC_is_du_chain_valid(oc) = false; int a = 0;
+    g_compute_classic_du_chain = true;
+    //g_do_md_ssa = true;
+    //END HACK CODE
+    if (g_opt_level > OPT_LEVEL0 &&
+        (!OC_is_aa_valid(oc) ||
+         !OC_is_ref_valid(oc) ||
+         !OC_is_du_chain_valid(oc))) {
+        IR_AA * aa = getAA();
+        if (g_do_aa && aa != NULL &&
+            (!OC_is_aa_valid(oc) || !OC_is_ref_valid(oc))) {
+            if (!aa->is_init()) {
+                aa->initAliasAnalysis();
+            }
+            aa->set_flow_sensitive(false);
+            aa->perform(oc);
+        }
+
+        //Opt phase may lead it to be invalid.
+        if (g_do_aa && aa != NULL) {
+            //Compute the threshold to perform AA.
+            UINT numir = 0;
+            for (IRBB * bb = getBBList()->get_head();
+                 bb != NULL; bb = getBBList()->get_next()) {
+                numir += bb->getNumOfIR();
+            }
+
+            if (numir > g_thres_opt_ir_num) {
+                aa->set_flow_sensitive(false);
+            }
+
+            //Compute PR's definition to improve AA precison.
+            if (g_do_pr_ssa) {
+                ASSERT0(getPassMgr());
+                PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->
+                    registerPass(PASS_PR_SSA_MGR);
+                ASSERT0(ssamgr);
+                if (!ssamgr->isSSAConstructed()) {
+                    ssamgr->construction(oc);
+                }
+            } else if (getDUMgr() != NULL) {
+                getDUMgr()->perform(oc, SOL_REF|SOL_REACH_DEF|COMPUTE_PR_DU);
+                getDUMgr()->computeMDDUChain(oc, false, COMPUTE_PR_DU);
+            }
+            //checkValidAndRecompute(&oc, PASS_LOOP_INFO, PASS_UNDEF);
+            aa->perform(oc);
+        }
+
+        IR_DU_MGR * dumgr = getDUMgr();
+        if (g_do_md_du_analysis && dumgr != NULL) {
+            if (g_compute_classic_du_chain) {
+                dumgr->perform(oc, SOL_REF|SOL_REACH_DEF|
+                                   COMPUTE_PR_DU|COMPUTE_NONPR_DU);
+                if (OC_is_ref_valid(oc) && OC_is_reach_def_valid(oc)) {
+                    UINT flag = COMPUTE_NONPR_DU;
+                    //If PRs have already been in SSA form, compute
+                    //DU chain doesn't make any sense.
+                    if (getPassMgr() != NULL) {
+                        PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->
+                            queryPass(PASS_PR_SSA_MGR);
+                        if (ssamgr == NULL) {
+                            flag |= COMPUTE_PR_DU;
+                        }
+                    } else {
+                        flag |= COMPUTE_PR_DU;
+                    }
+                    dumgr->computeMDDUChain(oc, false, flag);
+                }
+            }
+            if (g_do_md_ssa) {
+                //MDSSA have to be recomputed when DURef and overlap set
+                //are available.
+                ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MD_SSA_MGR))->
+                    construction(oc);
+            }
+        }
+    }
+    g_compute_classic_du_chain = org_compute_classic_du_chain;    
+}
+
+
+bool ARMRegion::MiddleProcess(OptCtx & oc)
+{
+    if (g_opt_level == OPT_LEVEL0) {
+        assignPRMD();
+    }    
+    bool own = false;
+    if (own) {
+        ARMMiddleProcessForTesting(oc);
+    } else {
+        Region::MiddleProcess(oc);
+        if (g_do_cp && getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
+            ((IR_CP*)getPassMgr()->registerPass(PASS_CP))->perform(oc);
+        }
+    }
+    if (g_do_cfg_dom && !OC_is_dom_valid(oc)) {
+        getCFG()->computeDomAndIdom(oc);
+    }
+    if (g_do_cfg_pdom && !OC_is_pdom_valid(oc)) {
+        getCFG()->computePdomAndIpdom(oc);
+    }
+    MiddleProcessAggressiveAnalysis(oc);
+
+    g_do_gcse = false;
+    if (g_do_gcse) {
+        MDSSAMgr * mdssamgr = (MDSSAMgr*)
+            getPassMgr()->registerPass(PASS_MD_SSA_MGR);
+        ASSERT0(mdssamgr);
+        if (!mdssamgr->isMDSSAConstructed()) {
+            mdssamgr->construction(oc);
+        }
+        if (getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
+            IR_GCSE * pass = (IR_GCSE*)
+                getPassMgr()->registerPass(PASS_GCSE);
+            bool changed = false;
+            changed = pass->perform(oc);
+            if (changed) {
+                getDUMgr()->perform(oc,
+                    SOL_REACH_DEF |
+                    COMPUTE_PR_DU | COMPUTE_NONPR_DU);
+                OC_is_du_chain_valid(oc) = false;
+                getDUMgr()->computeMDDUChain(oc, false,
+                    SOL_REF | SOL_REACH_DEF |
+                    COMPUTE_PR_DU | COMPUTE_NONPR_DU);
+            }
+        }
+    }
+    if (g_do_licm) {
+        IR_LICM * pass = (IR_LICM*)getPassMgr()->registerPass(PASS_LICM);
+        if (pass->perform(oc)) {
+            getPassMgr()->registerPass(PASS_MD_SSA_MGR)->perform(oc);
+        }
+    }
+    if (g_do_cp) {
+        IR_CP * pass = (IR_CP*)getPassMgr()->registerPass(PASS_CP);
+        pass->perform(oc);
+    }
+    if (g_do_dce) {
+        IR_DCE * pass = (IR_DCE*)getPassMgr()->registerPass(PASS_DCE);
+        pass->perform(oc);
+    }
+    ASSERT0((!g_do_md_du_analysis && !g_do_md_ssa) || verifyMDRef());
+    ASSERT0(verifyIRandBB(getBBList(), this));
+    if (OC_is_du_chain_valid(oc)) {
+        ASSERT0(getDUMgr() == NULL ||
+                getDUMgr()->verifyMDDUChain(COMPUTE_PR_DU | COMPUTE_NONPR_DU));
+    }
+    PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->queryPass(PASS_PR_SSA_MGR);
+    if (ssamgr != NULL && ssamgr->isSSAConstructed()) {
+        //NOTE: ssa destruction might violate classic DU chain.
+        ssamgr->destruction(&oc);
+    }
+
+    ///////////////////////////////////////////////////
+    //DO NOT DO OPTIMIZATION ANY MORE AFTER THIS LINE//
+    ///////////////////////////////////////////////////
+    //Finial refine to insert CVT if necessary when compile C/C++.
+    //Insert int32->int64, int32<->f32, int32<->f64, int64<->f32, int64<->f64
+    g_do_refine_auto_insert_cvt = true;
+    ASSERTN(g_do_refine, ("inserting CVT is expected"));
+
+    RefineCtx rf;
+    RC_insert_cvt(rf) = g_do_refine_auto_insert_cvt;
+    refineBBlist(getBBList(), rf);
+    ASSERT0((!g_do_md_du_analysis && !g_do_md_ssa) || verifyMDRef());
+    ASSERT0(verifyIRandBB(getBBList(), this));
+
+    return true;
 }
 
 

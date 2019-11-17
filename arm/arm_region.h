@@ -36,23 +36,19 @@ class ARMRegion : public Region {
 protected:
     void simplify(OptCtx & oc);
     void HighProcessImpl(OptCtx & oc);
+    void MiddleProcessAggressiveAnalysis(OptCtx & oc);
+    bool ARMMiddleProcessForTesting(OptCtx & oc);
+    bool ARMHighProcess(OptCtx & oc);
 public:
     ARMRegion(REGION_TYPE rt, RegionMgr * rm) : Region(rt, rm) {}
-
     virtual void destroy();
-
     virtual PassMgr * allocPassMgr();
 
     //Insert CVT for float if necessary.
     virtual IR * insertCvtForFloat(IR * parent, IR * kid, bool & change);
-
-    void low_to_pr_mode(OptCtx & oc);
-
+    void simplifyToPRmode(OptCtx & oc);
     virtual bool HighProcess(OptCtx & oc);
     virtual bool MiddleProcess(OptCtx & oc);
-    bool ARMMiddleProcess(OptCtx & oc);
-    bool ARMHighProcess(OptCtx & oc);
-
     virtual bool process(OptCtx * oc)
     {
         bool res = Region::process(oc);

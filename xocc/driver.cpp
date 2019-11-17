@@ -328,6 +328,9 @@ bool processCmdLine(INT argc, CHAR * argv[])
             } else if (!strcmp(cmdstr, "nocg")) {
                 g_do_cg = false;
                 i++;
+            } else if (!strcmp(cmdstr, "dump-cfg")) {
+                g_dump_opt.is_dump_cfg = true;
+                i++;
             } else if (!strcmp(cmdstr, "dump-aa")) {
                 g_dump_opt.is_dump_aa = true;
                 i++;
@@ -567,6 +570,9 @@ static void scanAndInitVar(SCOPE * s, VarMgr * vm, TypeMgr * tm)
             //General variable declaration decl.
             if (mapDecl2VAR(decl) == NULL &&
                 !(DECL_is_formal_para(decl) && get_decl_sym(decl) == NULL)) {
+                //No need to generate VAR for parameter that does not
+                //have a name.
+                //e.g: parameter of foo(char*)
                 addDecl(decl, vm, tm);
             }
         }
@@ -916,6 +922,10 @@ bool compileCFile()
     if (FrontEnd() != ST_SUCC) {
         res = false;
         goto FIN;
+    }
+    //In the file scope, generate function region.
+    if (g_dump_opt.isDumpALL()) {
+        dump_scope(get_global_scope(), 0xffffffff);
     }
     scanAndInitVar(get_global_scope(), rm->getVarMgr(), rm->getTypeMgr());
     if (generateRegion(rm)) {
