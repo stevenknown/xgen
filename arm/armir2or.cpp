@@ -1505,7 +1505,7 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT ORList & ors, IN IOC * cont)
         ASSERT0(srcaddr && SR_is_reg(srcaddr));
 
         //Copy return-value to buffer.
-        VAR const* retbuf = m_ru->findFormalParam(0);
+        VAR const* retbuf = m_rg->findFormalParam(0);
         ASSERT0(retbuf &&
             retbuf->getByteSize(m_tm) == exp->getTypeSize(m_tm));
         tmp.clean_bottomup();

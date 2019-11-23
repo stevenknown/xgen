@@ -41,7 +41,7 @@ IR * Canon::only_left_last(IR * head)
     IR * last = removetail(&head);
     while (head != NULL) {
         IR * t = xcom::removehead(&head);
-        m_ru->freeIRTree(t);
+        m_rg->freeIRTree(t);
     }
     return last;
 }
@@ -59,7 +59,7 @@ IR * Canon::handle_select(IN IR * ir, OUT bool & change, CanonCtx *)
     if (SELECT_pred(ir)->get_next() != NULL) {
         SELECT_pred(ir) = only_left_last(SELECT_pred(ir));
         if (!SELECT_pred(ir)->is_judge()) {
-            SELECT_pred(ir) = m_ru->buildJudge(SELECT_pred(ir));
+            SELECT_pred(ir) = m_rg->buildJudge(SELECT_pred(ir));
             ir->setParent(SELECT_pred(ir));
         }
     }
@@ -84,7 +84,7 @@ IR * Canon::handle_lda(IR * ir, bool & change, CanonCtx * cc)
     //if (LDA_base(ir)->is_array()) {
     //    SimpCtx tc;
     //    SIMP_array(&tc) = true;
-    //    ir = m_ru->simplifyArrayAddrExp(LDA_base(ir), &tc);
+    //    ir = m_rg->simplifyArrayAddrExp(LDA_base(ir), &tc);
     //    ASSERTN(SIMP_stmtlist(&tc) == NULL, ("TODO: handle this case"));
     //    if (cc != NULL) {
     //        xcom::add_next(&cc->new_stmts, SIMP_stmtlist(&tc));
@@ -258,7 +258,7 @@ IR * Canon::handle_stmt_list(IR * ir_list, bool & change)
                 //Delete exp node from statement list.
                 //Just free ir and its kids tree,
                 //but without sibling nodes!
-                m_ru->freeIRTree(ir);
+                m_rg->freeIRTree(ir);
                 continue;
             }
 

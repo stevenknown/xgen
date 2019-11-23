@@ -84,7 +84,7 @@ void CLDbxMgr::printSrcLine(Dbx const* dbx, PrtCtx * ctx)
 {
     ASSERT0(ctx && dbx);
     if (ctx->handler == NULL) { return; }
-    
+
     FILE * old = g_tfile;
     g_tfile = ctx->handler;
 
@@ -123,7 +123,7 @@ FIN:
 
 void CLDbxMgr::printSrcLine(xcom::StrBuf & output, Dbx const* dbx, PrtCtx * ctx)
 {
-    ASSERT0(ctx && dbx);   
+    ASSERT0(ctx && dbx);
     UINT lineno = getLineNum(dbx);
     if (lineno == m_cur_lineno) {
         //It is dispensable that print the same souce file multiple times.
@@ -789,14 +789,14 @@ static CLRegionMgr * initRegionMgr()
     //For C language, inserting CVT is expected.
     g_do_refine_auto_insert_cvt = true;
     g_do_refine = true;
-    
+
     //Retain CFG, DU info for IPA used.
     g_compute_region_imported_defuse_md = true;
     g_retain_pass_mgr_for_region = true;
     g_compute_classic_du_chain = false;
     //g_do_call_graph = true;
     //g_do_ipa = true;
-    g_is_support_dynamic_type = true; 
+    g_is_support_dynamic_type = true;
     g_is_opt_float = true;
     g_prt_asm_horizontal = true;
     g_do_refine_auto_insert_cvt = false;

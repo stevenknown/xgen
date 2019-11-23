@@ -39,7 +39,7 @@ author: Su Zhenyu
 void ARMPassMgr::performScalarOpt(OptCtx & oc)
 {
     ASSERT0(OC_is_cfg_valid(oc));
-    ASSERT0(m_ru && m_ru->getCFG()->verify());
+    ASSERT0(m_rg && m_rg->getCFG()->verify());
 
     List<Pass*> passlist; //A list of Optimization.
 
@@ -70,8 +70,8 @@ void ARMPassMgr::performScalarOpt(OptCtx & oc)
 
     bool change;
     UINT count = 0;
-    //dumpBBList(m_ru->getBBList(), m_ru, "before");
-    ASSERT0(verifySSAInfo(m_ru));
+    //dumpBBList(m_rg->getBBList(), m_rg, "before");
+    ASSERT0(verifySSAInfo(m_rg));
     do {
         change = false;
         for (Pass * pass = passlist.get_head();
@@ -79,28 +79,28 @@ void ARMPassMgr::performScalarOpt(OptCtx & oc)
             CHAR const* passname = pass->getPassName();
             DUMMYUSE(passname);
 
-            ASSERT0(verifyIRandBB(m_ru->getBBList(), m_ru));
+            ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
             ULONGLONG t = getusec();
 
-            //dumpBBList(m_ru->getBBList(), m_ru, "before");
-            //m_ru->getCFG()->dump_vcg("before.vcg", true, true);
+            //dumpBBList(m_rg->getBBList(), m_rg, "before");
+            //m_rg->getCFG()->dumpVCG("before.vcg", true, true);
             bool doit = pass->perform(oc);
 
-            //dumpBBList(m_ru->getBBList(), m_ru, "after");
-            //m_ru->getCFG()->dump_vcg("after.vcg", true, true);
+            //dumpBBList(m_rg->getBBList(), m_rg, "after");
+            //m_rg->getCFG()->dumpVCG("after.vcg", true, true);
 
             appendTimeInfo(pass->getPassName(), getusec() - t);
             if (doit) {
                 //RefineCtx rf;
                 //RC_insert_cvt(rf) = false;
-                //m_ru->refineBBlist(m_ru->getBBList(), rf);
+                //m_rg->refineBBlist(m_rg->getBBList(), rf);
                 change = true;
             }
 
-            ASSERT0(verifyIRandBB(m_ru->getBBList(), m_ru));
-            ASSERT0(m_ru->getCFG()->verify());
-            ASSERT0(verifySSAInfo(m_ru));
-            ASSERT0(m_ru->verifyRPO(oc));
+            ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
+            ASSERT0(m_rg->getCFG()->verify());
+            ASSERT0(verifySSAInfo(m_rg));
+            ASSERT0(m_rg->verifyRPO(oc));
         }
         count++;
     } while (change && count < 20);

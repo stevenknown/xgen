@@ -40,10 +40,10 @@ public:
 
 class Canon {
 protected:
-    Region * m_ru;
+    Region * m_rg;
 
 public:
-    Canon(Region * rg) { m_ru = rg; }
+    Canon(Region * rg) { m_rg = rg; }
     COPY_CONSTRUCTOR(Canon);
     ~Canon() {}
 

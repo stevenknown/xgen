@@ -699,7 +699,7 @@ void ARMCG::buildMemcpyInternal(
     SR * srt2 = tc.get_reg(0);
     ASSERT0(srt2 && SR_is_reg(srt2));
 
-    SR * loop_start_lab = genLabel(m_ru->buildIlabel()->getLabel());
+    SR * loop_start_lab = genLabel(m_rg->buildIlabel()->getLabel());
     buildLabel(SR_label(loop_start_lab), ors, &tc);
 
     IOC_mem_byte_size(&tc) = src->getByteSize();

@@ -334,10 +334,10 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
             //Compute du chain in ssa form.
             if (dumgr->perform(oc, f) && OC_is_ref_valid(oc)) {
                 ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MD_SSA_MGR))->
-                    construction(oc);                
+                    construction(oc);
             }
         }
-    
+
         if (g_do_refine_duchain) {
             RefineDUChain * refdu = (RefineDUChain*)getPassMgr()->
                 registerPass(PASS_REFINE_DUCHAIN);
@@ -441,7 +441,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
             }
         }
     }
-    g_compute_classic_du_chain = org_compute_classic_du_chain;    
+    g_compute_classic_du_chain = org_compute_classic_du_chain;
 }
 
 
@@ -449,7 +449,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
 {
     if (g_opt_level == OPT_LEVEL0) {
         assignPRMD();
-    }    
+    }
     bool own = false;
     if (own) {
         ARMMiddleProcessForTesting(oc);

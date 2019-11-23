@@ -39,7 +39,7 @@ IR * CTree2IR::buildId(IN Decl * id)
 {
     VAR * var_info = mapDecl2VAR(id);
     ASSERT0(var_info);
-    return m_ru->buildId(var_info);
+    return m_rg->buildId(var_info);
 }
 
 
@@ -62,7 +62,7 @@ IR * CTree2IR::buildLoad(IN Tree * t)
     ASSERT0(decl);
     VAR * var_info = mapDecl2VAR(decl);
     ASSERT0(var_info);
-    return m_ru->buildLoad(var_info);
+    return m_rg->buildLoad(var_info);
 }
 
 
@@ -100,7 +100,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         //  |-LD 'p'
         ASSERT0(ILD_base(l) != NULL);
         if (ILD_base(l)->is_array()) {
-            ist_mem_addr = m_ru->dupIRTree(ILD_base(l));
+            ist_mem_addr = m_rg->dupIRTree(ILD_base(l));
             is_ild_array_case = true;
             //In the situation, e.g: *(a[1]) = 10
             //we generate like this:
@@ -110,7 +110,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             //  ST(PR, ARRAY)
             //  IST(PR, 10);
         } else {
-            ist_mem_addr = m_ru->dupIRTree(ILD_base(l));
+            ist_mem_addr = m_rg->dupIRTree(ILD_base(l));
         }
     } else if (l->is_array()) {
         ist_mem_addr = NULL;
@@ -144,28 +144,28 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     case T_ASSIGN:
         if (ist_mem_addr != NULL) {
             if (is_ild_array_case) {
-                IR * tmpir = m_ru->buildStorePR(ist_mem_addr->getType(),
+                IR * tmpir = m_rg->buildStorePR(ist_mem_addr->getType(),
                     ist_mem_addr);
                 ASSERTN(tmpir->is_ptr(),
                         ("I think tmpir should already be set to"
                          "pointer in buildStore()"));
-                setLineNum(tmpir, lineno, m_ru);
+                setLineNum(tmpir, lineno, m_rg);
                 xcom::add_next(CONT_toplirlist(cont), tmpir);
-                ir = m_ru->buildIStore(m_ru->buildPRdedicated(
+                ir = m_rg->buildIStore(m_rg->buildPRdedicated(
                     STPR_no(tmpir), tmpir->getType()), r, rtype);
             } else {
-                ir = m_ru->buildIStore(ist_mem_addr, r, rtype);
+                ir = m_rg->buildIStore(ist_mem_addr, r, rtype);
             }
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
             //Generate IR_ST.
             //Normalize LHS.
-            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), r);
+            ir = m_rg->buildStore(LD_idinfo(l), l->getType(), r);
             ir->setOffset(ir->getOffset() + LD_ofst(l));
         } else if (l->is_array()) {
             //Generate IR_STARRAY.
             //Normalize LHS.
-            ir = m_ru->buildStoreArray(ARR_base(l),
+            ir = m_rg->buildStoreArray(ARR_base(l),
                                        ARR_sub_list(l),
                                        l->getType(),
                                        ARR_elemtype(l),
@@ -178,7 +178,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         } else {
             ASSERTN(0, ("unsupport lhs IR type."));
         }
-        m_ru->freeIRTree(l); //l is useless.
+        m_rg->freeIRTree(l); //l is useless.
         break;
     case T_BITANDEQU:
         if (!l->is_ptr() && !r->is_ptr()) {
@@ -188,16 +188,16 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             //buildBinaryOp will inefer the type of result ir.
         }
 
-        ir = m_ru->buildBinaryOp(IR_BAND, type, l, r);
+        ir = m_rg->buildBinaryOp(IR_BAND, type, l, r);
         if (ist_mem_addr != NULL) {
-            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else {
             //Generate IR_ST.
             ASSERT0(l->is_ld());
 
             //Normalize LHS.
-            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir = m_rg->buildStore(LD_idinfo(l), l->getType(), ir);
             ir->setOffset(ir->getOffset() + LD_ofst(l));
         }
         break;
@@ -208,16 +208,16 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
         }
-        ir = m_ru->buildBinaryOp(IR_BOR, type, l, r);
+        ir = m_rg->buildBinaryOp(IR_BOR, type, l, r);
         if (ist_mem_addr != NULL) {
-            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else {
             //Generate IR_ST.
             ASSERT0(l->is_ld());
 
             //Normalize LHS.
-            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir = m_rg->buildStore(LD_idinfo(l), l->getType(), ir);
             ir->setOffset(ir->getOffset() + LD_ofst(l));
         }
         break;
@@ -229,20 +229,20 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             //buildBinaryOp will inefer the type of result ir.
         }
 
-        ir = m_ru->buildBinaryOp(IR_ADD, type, l, r);
+        ir = m_rg->buildBinaryOp(IR_ADD, type, l, r);
 
         if (ist_mem_addr != NULL) {
-            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
             //Generate IR_ST.
-            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir = m_rg->buildStore(LD_idinfo(l), l->getType(), ir);
             ir->setOffset(ir->getOffset() + LD_ofst(l));
         } else if (l->is_array()) {
             //Generate IR_STARRAY.
-            ir = m_ru->buildStoreArray(
-                m_ru->dupIRTree(ARR_base(l)),
-                m_ru->dupIRTree(ARR_sub_list(l)),
+            ir = m_rg->buildStoreArray(
+                m_rg->dupIRTree(ARR_base(l)),
+                m_rg->dupIRTree(ARR_sub_list(l)),
                                 l->getType(),
                                 ARR_elemtype(l),
                                 ((CArray*)l)->getDimNum(),
@@ -260,19 +260,19 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
         }
-        ir = m_ru->buildBinaryOp(IR_SUB, type, l, r);
+        ir = m_rg->buildBinaryOp(IR_SUB, type, l, r);
         if (ist_mem_addr != NULL) {
-            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
             //Generate IR_ST.
-            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir = m_rg->buildStore(LD_idinfo(l), l->getType(), ir);
             ir->setOffset(ir->getOffset() + LD_ofst(l));
         } else if (l->is_array()) {
             //Generate IR_STARRAY.
-            ir = m_ru->buildStoreArray(
-                m_ru->dupIRTree(ARR_base(l)),
-                m_ru->dupIRTree(ARR_sub_list(l)),
+            ir = m_rg->buildStoreArray(
+                m_rg->dupIRTree(ARR_base(l)),
+                m_rg->dupIRTree(ARR_sub_list(l)),
                                 l->getType(),
                                 ARR_elemtype(l),
                                 ((CArray*)l)->getDimNum(),
@@ -290,19 +290,19 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
         }
-        ir = m_ru->buildBinaryOp(IR_MUL, type, l, r);
+        ir = m_rg->buildBinaryOp(IR_MUL, type, l, r);
         if (ist_mem_addr != NULL) {
-            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
             //Generate IR_ST.
-            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir = m_rg->buildStore(LD_idinfo(l), l->getType(), ir);
             ir->setOffset(ir->getOffset() + LD_ofst(l));
         } else if (l->is_array()) {
             //Generate IR_STARRAY.
-            ir = m_ru->buildStoreArray(
-                m_ru->dupIRTree(ARR_base(l)),
-                m_ru->dupIRTree(ARR_sub_list(l)),
+            ir = m_rg->buildStoreArray(
+                m_rg->dupIRTree(ARR_base(l)),
+                m_rg->dupIRTree(ARR_sub_list(l)),
                                 l->getType(),
                                 ARR_elemtype(l),
                                 ((CArray*)l)->getDimNum(),
@@ -320,19 +320,19 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
         }
-        ir = m_ru->buildBinaryOp(IR_DIV, type, l, r);
+        ir = m_rg->buildBinaryOp(IR_DIV, type, l, r);
         if (ist_mem_addr != NULL) {
-            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
             //Generate IR_ST.
-            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir = m_rg->buildStore(LD_idinfo(l), l->getType(), ir);
             ir->setOffset(ir->getOffset() + LD_ofst(l));
         } else if (l->is_array()) {
             //Generate IR_STARRAY.
-            ir = m_ru->buildStoreArray(
-                m_ru->dupIRTree(ARR_base(l)),
-                m_ru->dupIRTree(ARR_sub_list(l)),
+            ir = m_rg->buildStoreArray(
+                m_rg->dupIRTree(ARR_base(l)),
+                m_rg->dupIRTree(ARR_sub_list(l)),
                                 l->getType(),
                                 ARR_elemtype(l),
                                 ((CArray*)l)->getDimNum(),
@@ -350,19 +350,19 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
         }
-        ir = m_ru->buildBinaryOp(IR_XOR, type, l, r);
+        ir = m_rg->buildBinaryOp(IR_XOR, type, l, r);
         if (ist_mem_addr != NULL) {
-            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
             //Generate IR_ST.
-            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir = m_rg->buildStore(LD_idinfo(l), l->getType(), ir);
             ir->setOffset(ir->getOffset() + LD_ofst(l));
         } else if (l->is_array()) {
             //Generate IR_STARRAY.
-            ir = m_ru->buildStoreArray(
-                m_ru->dupIRTree(ARR_base(l)),
-                m_ru->dupIRTree(ARR_sub_list(l)),
+            ir = m_rg->buildStoreArray(
+                m_rg->dupIRTree(ARR_base(l)),
+                m_rg->dupIRTree(ARR_sub_list(l)),
                                 l->getType(),
                                 ARR_elemtype(l),
                                 ((CArray*)l)->getDimNum(),
@@ -390,18 +390,18 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
         }
-        ir = m_ru->buildBinaryOp(l->is_sint() ? IR_ASR : IR_LSR, type, l, r);
+        ir = m_rg->buildBinaryOp(l->is_sint() ? IR_ASR : IR_LSR, type, l, r);
         if (ist_mem_addr != NULL) {
-            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
             //Generate IR_ST.
-            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir = m_rg->buildStore(LD_idinfo(l), l->getType(), ir);
             ir->setOffset(ir->getOffset() + LD_ofst(l));
         } else if (l->is_array()) {
             //Generate IR_STARRAY.
-            ir = m_ru->buildStoreArray(m_ru->dupIRTree(ARR_base(l)),
-                                       m_ru->dupIRTree(ARR_sub_list(l)),
+            ir = m_rg->buildStoreArray(m_rg->dupIRTree(ARR_base(l)),
+                                       m_rg->dupIRTree(ARR_sub_list(l)),
                                        l->getType(),
                                        ARR_elemtype(l),
                                        ((CArray*)l)->getDimNum(),
@@ -419,18 +419,18 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
         }
-        ir = m_ru->buildBinaryOp(IR_LSL, type, l, r);
+        ir = m_rg->buildBinaryOp(IR_LSL, type, l, r);
         if (ist_mem_addr != NULL) {
-            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
             //Generate IR_ST.
-            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir = m_rg->buildStore(LD_idinfo(l), l->getType(), ir);
             ir->setOffset(ir->getOffset() + LD_ofst(l));
         } else if (l->is_array()) {
             //Generate IR_STARRAY.
-            ir = m_ru->buildStoreArray(m_ru->dupIRTree(ARR_base(l)),
-                                       m_ru->dupIRTree(ARR_sub_list(l)),
+            ir = m_rg->buildStoreArray(m_rg->dupIRTree(ARR_base(l)),
+                                       m_rg->dupIRTree(ARR_sub_list(l)),
                                        l->getType(),
                                        ARR_elemtype(l),
                                        ((CArray*)l)->getDimNum(),
@@ -449,18 +449,18 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             //buildBinaryOp will inefer the type of result ir.
         }
 
-        ir = m_ru->buildBinaryOp(IR_REM, type, l, r);
+        ir = m_rg->buildBinaryOp(IR_REM, type, l, r);
         if (ist_mem_addr != NULL) {
-            ir = m_ru->buildIStore(ist_mem_addr, ir, rtype);
+            ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
             //Generate IR_ST.
-            ir = m_ru->buildStore(LD_idinfo(l), l->getType(), ir);
+            ir = m_rg->buildStore(LD_idinfo(l), l->getType(), ir);
             ir->setOffset(ir->getOffset() + LD_ofst(l));
         } else if (l->is_array()) {
             //Generate IR_STARRAY.
-            ir = m_ru->buildStoreArray(m_ru->dupIRTree(ARR_base(l)),
-                                       m_ru->dupIRTree(ARR_sub_list(l)),
+            ir = m_rg->buildStoreArray(m_rg->dupIRTree(ARR_base(l)),
+                                       m_rg->dupIRTree(ARR_sub_list(l)),
                                        l->getType(),
                                        ARR_elemtype(l),
                                        ((CArray*)l)->getDimNum(),
@@ -479,7 +479,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         ir->setPointerType(get_pointer_base_size(TREE_result_type(t)), m_tm);
     }
     CONT_is_record_epilog(cont) = false;
-    setLineNum(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_rg);
     xcom::add_next(CONT_toplirlist(cont), ir);
 
     //Record the post side effect operations.
@@ -490,7 +490,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     //return rhs as the result of STMT.
     IR * retv = ir->getRHS();
     ASSERT0(retv);
-    ir = m_ru->dupIRTree(retv);
+    ir = m_rg->dupIRTree(retv);
     return ir;
 }
 
@@ -519,7 +519,7 @@ IR * CTree2IR::convert_inc_dec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         addend = TY_ptr_base_size(inc_exp->getType());
         addend_type = m_tm->getSimplexTypeEx(m_tm->getPointerSizeDtype());
     }
-    IR * imm = m_ru->buildImmInt(addend, addend_type);
+    IR * imm = m_rg->buildImmInt(addend, addend_type);
 
     //Generate ADD/SUB.
     IR_TYPE irt = IR_UNDEF;
@@ -530,7 +530,7 @@ IR * CTree2IR::convert_inc_dec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     } else {
         UNREACHABLE();
     }
-    IR * ir = m_ru->buildBinaryOpSimp(irt, addend_type, inc_exp, imm);
+    IR * ir = m_rg->buildBinaryOpSimp(irt, addend_type, inc_exp, imm);
 
     if (inc_exp->is_ptr()) {
         //buildBinaryOpSimp does not change the result type.
@@ -552,12 +552,12 @@ IR * CTree2IR::convert_inc_dec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         //        *p = *p + 1;
         //        a = *p;
         ASSERT0(ILD_base(inc_exp)->is_ptr());
-        ir = m_ru->buildIStore(m_ru->dupIRTree(ILD_base(inc_exp)),
+        ir = m_rg->buildIStore(m_rg->dupIRTree(ILD_base(inc_exp)),
             ir, inc_exp->getType());
     } else if (inc_exp->is_array()) {
-        ir = m_ru->buildStoreArray(
-            m_ru->dupIRTree(ARR_base(inc_exp)),
-            m_ru->dupIRTreeList(ARR_sub_list(inc_exp)),
+        ir = m_rg->buildStoreArray(
+            m_rg->dupIRTree(ARR_base(inc_exp)),
+            m_rg->dupIRTreeList(ARR_sub_list(inc_exp)),
             inc_exp->getType(),
             ARR_elemtype(inc_exp),
             ((CArray*)inc_exp)->getDimNum(),
@@ -565,14 +565,14 @@ IR * CTree2IR::convert_inc_dec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             ir);
     } else {
         ASSERT0(inc_exp->is_ld());
-        ir = m_ru->buildStore(LD_idinfo(inc_exp), ir);
+        ir = m_rg->buildStore(LD_idinfo(inc_exp), ir);
     }
 
     //ST is statement, and only can be appended on top level
     //statement list.
-    setLineNum(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_rg);
     xcom::add_next(CONT_toplirlist(cont), ir);
-    return m_ru->dupIRTree(inc_exp);
+    return m_rg->dupIRTree(inc_exp);
 }
 
 
@@ -607,7 +607,7 @@ IR * CTree2IR::convert_array(Tree * t, INT lineno, IN T2IRCtx * cont)
         //    t3 = ild(t2)
         //    t4 = t3 + 3*sizeof(int)
         //    t5 = ild(t4)
-        IR * mem_addr = m_ru->buildBinaryOp(
+        IR * mem_addr = m_rg->buildBinaryOp(
             IR_ADD, base->getType(), base, index);
         ASSERT0(mem_addr->is_ptr() &&
                 TY_ptr_base_size(mem_addr->getType()) != 0);
@@ -625,7 +625,7 @@ IR * CTree2IR::convert_array(Tree * t, INT lineno, IN T2IRCtx * cont)
                 type = m_tm->getSimplexTypeEx(dt);
             }
         }
-        ir = m_ru->buildILoad(mem_addr, type);
+        ir = m_rg->buildILoad(mem_addr, type);
     } else {
         //Hanlde regular array.
         //Compute the number of elements for each dimensions.
@@ -649,7 +649,7 @@ IR * CTree2IR::convert_array(Tree * t, INT lineno, IN T2IRCtx * cont)
             SimpCtx cont2;
             SIMP_ret_array_val(&cont2) = false;
             SIMP_array(&cont2) = true;
-            base = m_ru->simplifyExpression(base, &cont2);
+            base = m_rg->simplifyExpression(base, &cont2);
             ASSERT0(SIMP_stmtlist(&cont2) == NULL);
         }
         ASSERT0(base->is_ptr());
@@ -692,14 +692,14 @@ IR * CTree2IR::convert_array(Tree * t, INT lineno, IN T2IRCtx * cont)
                 base->setPointerType(base->getTypeSize(m_tm), m_tm);
             }
         }
-        ir = m_ru->buildArray(base, sublist, type, type, n, elem_nums);
+        ir = m_rg->buildArray(base, sublist, type, type, n, elem_nums);
 
         if (is_array(TREE_result_type(t))) {
             //We are in case 3.
             SimpCtx ctx;
             SIMP_array(&ctx) = true;
-            IR * newir = m_ru->simplifyArrayAddrExp(ir, &ctx);
-            m_ru->freeIRTree(ir);
+            IR * newir = m_rg->simplifyArrayAddrExp(ir, &ctx);
+            m_rg->freeIRTree(ir);
             ir = newir;
             ASSERT0(ir->is_ptr());
 
@@ -709,7 +709,7 @@ IR * CTree2IR::convert_array(Tree * t, INT lineno, IN T2IRCtx * cont)
         }
         ::free(elem_nums);
     }
-    setLineNum(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -799,8 +799,8 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 
     if (real_callee != callee) {
         IR * old = callee;
-        callee = m_ru->dupIRTree(real_callee);
-        m_ru->freeIRTree(old);
+        callee = m_rg->dupIRTree(real_callee);
+        m_rg->freeIRTree(old);
     }
 
     if (!callee->is_ptr()) {
@@ -840,13 +840,13 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         VAR * v = ID_info(callee);
         ASSERT0(v);
         tmp.sprint("$retval_buf_of_%d_bytes", return_val_size);
-        SYM const* name = m_ru->getRegionMgr()->addToSymbolTab(tmp.buf);
-        retval_buf = m_ru->getVarMgr()->findVarByName(name);
+        SYM const* name = m_rg->getRegionMgr()->addToSymbolTab(tmp.buf);
+        retval_buf = m_rg->getVarMgr()->findVarByName(name);
         if (retval_buf == NULL) {
-            retval_buf = m_ru->getVarMgr()->registerVar(SYM_name(name),
+            retval_buf = m_rg->getVarMgr()->registerVar(SYM_name(name),
                 rettype, STACK_ALIGNMENT, VAR_LOCAL);
             //retval_buf only used in current region.
-            m_ru->addToVarTab(retval_buf);
+            m_rg->addToVarTab(retval_buf);
             VAR_formal_param_pos(retval_buf) = g_formal_parameter_start - 1;
         }
 
@@ -855,7 +855,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 
         //The var will be the first parameter of current function,
         //it is hidden and can not see by programmer.
-        IR * first_arg = m_ru->buildLda(retval_buf);
+        IR * first_arg = m_rg->buildLda(retval_buf);
         xcom::add_next(&callarglist, first_arg);
     }
     //----------
@@ -867,7 +867,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     if (is_direct) {
         ASSERT0(callee->is_id());
         VAR * v = ID_info(callee);
-        call = m_ru->buildCall(v, callarglist, 0, m_tm->getAny());
+        call = m_rg->buildCall(v, callarglist, 0, m_tm->getAny());
         if (is_readonly(v)) {
             CALL_is_readonly(call) = true;
         }
@@ -875,10 +875,10 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             CALL_is_alloc_heap(call) = true;
         }
     } else {
-        call = m_ru->buildICall(callee, callarglist, 0, m_tm->getAny());
+        call = m_rg->buildICall(callee, callarglist, 0, m_tm->getAny());
     }
-    call->verify(m_ru);
-    setLineNum(call, lineno, m_ru);
+    call->verify(m_rg);
+    setLineNum(call, lineno, m_rg);
     xcom::add_next(CONT_toplirlist(cont), call);
     //----------
 
@@ -887,15 +887,15 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     if (return_val_size > NUM_OF_RETURN_VAL_REGISTERS *
                           GENERAL_REGISTER_SIZE) {
         ASSERT0(retval_buf);
-        ret_exp = m_ru->buildLoad(retval_buf);
+        ret_exp = m_rg->buildLoad(retval_buf);
     } else {
-        IR * respr = m_ru->buildPR(rettype);
-        setLineNum(respr, lineno, m_ru);
+        IR * respr = m_rg->buildPR(rettype);
+        setLineNum(respr, lineno, m_rg);
         CALL_prno(call) = PR_no(respr);
         IR_dt(call) = rettype;
         ret_exp = respr;
     }
-    setLineNum(ret_exp, lineno, m_ru);
+    setLineNum(ret_exp, lineno, m_rg);
     return ret_exp;
 }
 
@@ -933,10 +933,10 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 
     IR * imm1 = NULL;
     if (type->is_int()) {
-        imm1 = m_ru->buildImmInt(1, type);
+        imm1 = m_rg->buildImmInt(1, type);
     } else {
         ASSERT0(type->is_fp());
-        imm1 = m_ru->buildImmFp(1, type);
+        imm1 = m_rg->buildImmFp(1, type);
     }
 
     if (is_ptr) {
@@ -945,7 +945,7 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         type = m_tm->hoistDtypeForBinop(inc_exp, imm1);
     }
 
-    IR * addsub = m_ru->buildBinaryOp(irt, type, inc_exp, imm1);
+    IR * addsub = m_rg->buildBinaryOp(irt, type, inc_exp, imm1);
     ASSERT0(addsub->is_ptr() == inc_exp->is_ptr());
 
     //Generate inc_exp = inc_exp + 1
@@ -965,8 +965,8 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         //    ist(x) = ild(x) + 1
         //    return pr
         ASSERT0(ILD_base(inc_exp)->is_ptr());
-        xstpr = m_ru->buildStorePR(inc_exp->getType(), m_ru->dupIRTree(inc_exp));
-        xincst = m_ru->buildIStore(m_ru->dupIRTree(ILD_base(inc_exp)),
+        xstpr = m_rg->buildStorePR(inc_exp->getType(), m_rg->dupIRTree(inc_exp));
+        xincst = m_rg->buildIStore(m_rg->dupIRTree(ILD_base(inc_exp)),
             addsub, inc_exp->getType());
     } else if (inc_exp->is_array()) {
         //If inc_exp is ARRAY, generate IST(ARRAY) = ARRAY + 1.
@@ -974,10 +974,10 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         //    pr = array(x)
         //    array(x) = array(x) + 1
         //    return pr
-        xstpr = m_ru->buildStorePR(inc_exp->getType(),
-            m_ru->dupIRTree(inc_exp));
-        xincst = m_ru->buildStoreArray(m_ru->dupIRTree(ARR_base(inc_exp)),
-                                       m_ru->dupIRTree(ARR_sub_list(inc_exp)),
+        xstpr = m_rg->buildStorePR(inc_exp->getType(),
+            m_rg->dupIRTree(inc_exp));
+        xincst = m_rg->buildStoreArray(m_rg->dupIRTree(ARR_base(inc_exp)),
+                                       m_rg->dupIRTree(ARR_sub_list(inc_exp)),
                                        inc_exp->getType(),
                                        ARR_elemtype(inc_exp),
                                        ((CArray*)inc_exp)->getDimNum(),
@@ -993,13 +993,13 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             return NULL;
         }
 
-        xstpr = m_ru->buildStorePR(inc_exp->getType(),
-            m_ru->buildLoad(LD_idinfo(inc_exp)));
-        xincst = m_ru->buildStore(LD_idinfo(inc_exp), addsub);
+        xstpr = m_rg->buildStorePR(inc_exp->getType(),
+            m_rg->buildLoad(LD_idinfo(inc_exp)));
+        xincst = m_rg->buildStore(LD_idinfo(inc_exp), addsub);
     }
 
-    setLineNum(xstpr, lineno, m_ru);
-    setLineNum(xincst, lineno, m_ru);
+    setLineNum(xstpr, lineno, m_rg);
+    setLineNum(xincst, lineno, m_rg);
     xcom::add_next(CONT_toplirlist(cont), xstpr);
 
     if (CONT_is_record_epilog(cont)) {
@@ -1008,7 +1008,7 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         xcom::add_next(CONT_toplirlist(cont), xincst);
     }
 
-    return m_ru->buildPRdedicated(STPR_no(xstpr), xstpr->getType());
+    return m_rg->buildPRdedicated(STPR_no(xstpr), xstpr->getType());
 }
 
 
@@ -1021,7 +1021,7 @@ IR * CTree2IR::convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx *)
     //Record current processing of TR_CASE.
     m_case_list_stack.push(m_case_list);
     List<CaseValue*> case_list;
-    m_case_list = &case_list;    
+    m_case_list = &case_list;
 
     IR * body = convert(TREE_switch_body(t), NULL);
 
@@ -1042,17 +1042,17 @@ IR * CTree2IR::convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx *)
             deflab = CASEV_lab(casev);
         } else {
             DATA_TYPE dt = m_tm->getDType(WORD_LENGTH_OF_HOST_MACHINE, true);
-            IR * imm = m_ru->buildImmInt(CASEV_constv(casev),
+            IR * imm = m_rg->buildImmInt(CASEV_constv(casev),
                                          m_tm->getSimplexTypeEx(dt));
-            xcom::add_next(&casev_list, &last, m_ru->buildCase(imm,
+            xcom::add_next(&casev_list, &last, m_rg->buildCase(imm,
                 CASEV_lab(casev)));
         }
     }
 
     m_case_list = m_case_list_stack.pop();
 
-    IR * ir = m_ru->buildSwitch(vexp, casev_list, body, deflab);
-    setLineNum(ir, lineno, m_ru);
+    IR * ir = m_rg->buildSwitch(vexp, casev_list, body, deflab);
+    setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -1090,9 +1090,9 @@ IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
             //After tree-convertor converted TREE_base_region of DMEM, the
             //convertor generates IR_LD for array base. Revise it to IR_LDA.
             //e.g: a[], convertor generate arr(ld(a)), change to arr(lda(a))
-            IR * tmp = m_ru->buildLda(LD_idinfo(ir));
+            IR * tmp = m_rg->buildLda(LD_idinfo(ir));
             LDA_ofst(tmp) = LD_ofst(ir);
-            m_ru->freeIRTree(ir);
+            m_rg->freeIRTree(ir);
             ir = tmp;
             ir->setOffset(ir->getOffset() + field_ofst);
         } else if (ir->is_array()) {
@@ -1105,8 +1105,8 @@ IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
             ASSERT0(ir->is_ptr()); //dmem's base is indmem.
             //ir already be address.
             if (field_ofst != 0) {
-                ir = m_ru->buildBinaryOpSimp(IR_ADD, ir->getType(), ir,
-                    m_ru->buildImmInt(field_ofst,
+                ir = m_rg->buildBinaryOpSimp(IR_ADD, ir->getType(), ir,
+                    m_rg->buildImmInt(field_ofst,
                         m_tm->getSimplexTypeEx(
                             m_tm->getPointerSizeDtype())));
             }
@@ -1122,7 +1122,7 @@ IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
         }
         ir->setOffset(ir->getOffset() + field_ofst);
     }
-    setLineNum(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -1156,7 +1156,7 @@ IR * CTree2IR::convertInDirectMemAccess(Tree * t, INT lineno, IN T2IRCtx * cont)
         //e.g: p->b, will generate,
         //t = ld(p)
         //t2 = ild(t + ofst(b))
-        ir = m_ru->buildILoad(base, type);
+        ir = m_rg->buildILoad(base, type);
         if (field_ofst != 0) {
             ir->setOffset(field_ofst);
         }
@@ -1169,12 +1169,12 @@ IR * CTree2IR::convertInDirectMemAccess(Tree * t, INT lineno, IN T2IRCtx * cont)
             //t = t + ofst(b)
             ir = base;
             if (field_ofst != 0) {
-                ir = m_ru->buildBinaryOpSimp(IR_ADD, base->getType(),
-                    base, m_ru->buildImmInt(field_ofst, m_tm->getSimplexTypeEx(
+                ir = m_rg->buildBinaryOpSimp(IR_ADD, base->getType(),
+                    base, m_rg->buildImmInt(field_ofst, m_tm->getSimplexTypeEx(
                         m_tm->getPointerSizeDtype())));
             }
         } else {
-            ir = m_ru->buildILoad(base, m_tm->getMCType(sz));
+            ir = m_rg->buildILoad(base, m_tm->getMCType(sz));
             if (field_ofst != 0) {
                 ir->setOffset(field_ofst);
             }
@@ -1186,14 +1186,14 @@ IR * CTree2IR::convertInDirectMemAccess(Tree * t, INT lineno, IN T2IRCtx * cont)
         //t2 = ild(t + ofst(b))
         ASSERT0(IS_SIMPLEX(dt));
         Type const* type = m_tm->getSimplexTypeEx(dt);
-        ir = m_ru->buildILoad(base, type);
+        ir = m_rg->buildILoad(base, type);
         if (field_ofst != 0) {
             ir->setOffset(field_ofst);
         }
     }
 
     ASSERT0(ir);
-    setLineNum(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -1230,9 +1230,9 @@ IR * CTree2IR::convertDeref(IN Tree * t, INT lineno, IN T2IRCtx * cont)
                 type = m_tm->getSimplexTypeEx(dt);
             }
         }
-        ir = m_ru->buildILoad(addr, type);
+        ir = m_rg->buildILoad(addr, type);
     }
-    setLineNum(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -1249,11 +1249,11 @@ IR * CTree2IR::convertSelect(Tree * t, INT lineno, T2IRCtx * cont)
     ASSERT0(texp && fexp);
 
     while (IR_next(texp) != NULL) {
-        m_ru->freeIRTree(xcom::removehead(&texp));
+        m_rg->freeIRTree(xcom::removehead(&texp));
     }
 
     while (IR_next(fexp) != NULL) {
-        m_ru->freeIRTree(xcom::removehead(&fexp));
+        m_rg->freeIRTree(xcom::removehead(&fexp));
     }
 
     Type const* d0 = texp->getType();
@@ -1277,22 +1277,22 @@ IR * CTree2IR::convertSelect(Tree * t, INT lineno, T2IRCtx * cont)
     } else {
         type = m_tm->hoistDtypeForBinop(texp, fexp);
         if (texp->getType() != type) {
-            IR * cvt = m_ru->buildCvt(texp, type);
+            IR * cvt = m_rg->buildCvt(texp, type);
             texp = cvt;
         }
         if (fexp->getType() != type) {
-            IR * cvt = m_ru->buildCvt(fexp, type);
+            IR * cvt = m_rg->buildCvt(fexp, type);
             fexp = cvt;
         }
     }
 
     if (!det->is_bool()) {
         IR * old = det;
-        det = m_ru->buildJudge(det);
-        copyDbx(det, old, m_ru);
+        det = m_rg->buildJudge(det);
+        copyDbx(det, old, m_rg);
     }
-    IR * ir = m_ru->buildSelect(det, texp, fexp, type);
-    setLineNum(ir, lineno, m_ru);
+    IR * ir = m_rg->buildSelect(det, texp, fexp, type);
+    setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -1319,23 +1319,23 @@ IR * CTree2IR::genReturnValBuf(IR * ir)
         return ir;
     }
     if (m_retval_buf == NULL) {
-        CHAR const* rname = m_ru->getRegionName();
+        CHAR const* rname = m_rg->getRegionName();
         ASSERT0(rname);
         xcom::StrBuf tmp((UINT)(::strlen(rname) + 32));
         tmp.sprint("#retval_buf_of_%s", rname);
 
-        Type const* ptr = m_ru->getTypeMgr()->getPointerType(
-            retval->getTypeSize(m_ru->getTypeMgr()));
-        m_retval_buf = m_ru->getVarMgr()->registerVar(
+        Type const* ptr = m_rg->getTypeMgr()->getPointerType(
+            retval->getTypeSize(m_rg->getTypeMgr()));
+        m_retval_buf = m_rg->getVarMgr()->registerVar(
             tmp.buf, ptr, STACK_ALIGNMENT,
             VAR_LOCAL | VAR_IS_FORMAL_PARAM);
 
         //retval_buf only used in current region.
-        m_ru->addToVarTab(m_retval_buf);
+        m_rg->addToVarTab(m_retval_buf);
     }
 
-    IR * ist = m_ru->buildIStore(
-        m_ru->buildLoad(m_retval_buf), retval, retval->getType());
+    IR * ist = m_rg->buildIStore(
+        m_rg->buildLoad(m_retval_buf), retval, retval->getType());
     RET_exp(ir) = NULL;
 
     xcom::add_next(&ist, ir);
@@ -1390,19 +1390,19 @@ xoc::Type const* CTree2IR::checkAndGenCVTType(Decl const* tgt, Decl const* src)
 
 IR * CTree2IR::convertReturn(Tree * t, INT lineno, T2IRCtx * cont)
 {
-    IR * ir = m_ru->buildReturn(convert(TREE_ret_exp(t), cont));
+    IR * ir = m_rg->buildReturn(convert(TREE_ret_exp(t), cont));
     if (RET_exp(ir) != NULL) {
         ASSERTN(IR_next(RET_exp(ir)) == NULL, ("unsupport"));
         ir->setParentPointer(false);
         xoc::Type const* cvttype = checkAndGenCVTType(
             m_return_type, TREE_result_type(TREE_ret_exp(t)));
         if (cvttype != NULL) {
-            IR * cvt = m_ru->buildCvt(RET_exp(ir), cvttype);
+            IR * cvt = m_rg->buildCvt(RET_exp(ir), cvttype);
             RET_exp(ir) = cvt;
             ir->setParent(cvt);
         }
     }
-    setLineNum(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_rg);
     ir = genReturnValBuf(ir);
     return ir;
 }
@@ -1414,7 +1414,7 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
     IR * base = convert(TREE_lchild(t), cont);
     if (base->is_ld()) {
         //Need to revise the exp.
-        ir = m_ru->buildLda(LD_idinfo(base));
+        ir = m_rg->buildLda(LD_idinfo(base));
         LDA_ofst(ir) = LD_ofst(base);
 
         //Recompute the pointer's base size.
@@ -1428,25 +1428,25 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
         //which type is char. So we need to fix the pointer
         //base size of LDA to be 1.
         IR_dt(ir) = m_tm->getPointerType(base->getTypeSize(m_tm));
-        m_ru->freeIRTree(base);
+        m_rg->freeIRTree(base);
     } else if (base->is_array()) {
         //e.g:int a[]; int b;
         //    ...=&a[i];
         //    ...=&a[i].x;
         //    ...=&b;
-        //ir = m_ru->buildLda(base);
+        //ir = m_rg->buildLda(base);
         //LDA_ofst(ir) = base->getOffset();
         //base->setOffset(0);
 
         SimpCtx tc;
         SIMP_array(&tc) = true;
-        ir = m_ru->simplifyArrayAddrExp(base, &tc);
+        ir = m_rg->simplifyArrayAddrExp(base, &tc);
         if (SIMP_stmtlist(&tc) != NULL) {
             xcom::add_next(CONT_toplirlist(cont), SIMP_stmtlist(&tc));
         }
     } else if (base->is_id()) {
         //Need to revise the exp.
-        ir = m_ru->buildLda(ID_info(base));
+        ir = m_rg->buildLda(ID_info(base));
 
         //Recompute the pointer's base size.
         //e.g: struct {short a; char b} s;
@@ -1459,7 +1459,7 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
         //which type is char. So we need to fix the pointer
         //base size of LDA to be 1.
         IR_dt(ir) = m_tm->getPointerType(base->getTypeSize(m_tm));
-        m_ru->freeIRTree(base);
+        m_rg->freeIRTree(base);
     } else if (base->is_ild()) {
         //e.g:struct S { int a; int b; } * p;
         //    ... = &(p->b);
@@ -1473,18 +1473,18 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
         //      IMM (4)
         ASSERT0(ILD_base(base)->is_ptr());
         if (ILD_ofst(base) != 0) {
-            ir = m_ru->buildBinaryOpSimp(IR_ADD, ILD_base(base)->getType(),
-                ILD_base(base), m_ru->buildImmInt(
+            ir = m_rg->buildBinaryOpSimp(IR_ADD, ILD_base(base)->getType(),
+                ILD_base(base), m_rg->buildImmInt(
                     ILD_ofst(base), m_tm->getI32()));
         } else {
             ir = ILD_base(base);
         }
         ILD_base(base) = NULL;
-        m_ru->freeIRTree(base);
+        m_rg->freeIRTree(base);
     } else {
         UNREACHABLE();
     }
-    setLineNum(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -1495,7 +1495,7 @@ IR * CTree2IR::convertCVT(Tree * t, INT lineno, T2IRCtx * cont)
     Decl * cvtype = TREE_type_name(TREE_cvt_type(t));
     if (is_pointer(cvtype)) {
         //decl is pointer variable
-        ir = m_ru->buildCvt(convert(TREE_cast_exp(t), cont),
+        ir = m_rg->buildCvt(convert(TREE_cast_exp(t), cont),
             m_tm->getPointerType(get_pointer_base_size(cvtype)));
     } else {
         UINT size = 0;
@@ -1510,9 +1510,9 @@ IR * CTree2IR::convertCVT(Tree * t, INT lineno, T2IRCtx * cont)
         } else {
             UNREACHABLE();
         }
-        ir = m_ru->buildCvt(convert(TREE_cast_exp(t), cont), type);
+        ir = m_rg->buildCvt(convert(TREE_cast_exp(t), cont), type);
     }
-    setLineNum(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -1542,7 +1542,7 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
         } else {
             //Access array via ID means to taken ID's address.
             //e.g: int * p; int a[10]; p = a;
-            ir = m_ru->buildLda(ID_info(array_id));
+            ir = m_rg->buildLda(ID_info(array_id));
         }
     } else if (is_fun_decl(res_ty)) {
         //If current Tree is fun-decl, there will be two case:
@@ -1560,7 +1560,7 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
             //}
             VAR * var = mapDecl2VAR(TREE_id_decl(t));
             ASSERT0(var && VAR_is_func_decl(var));
-            ir = m_ru->buildLda(var);
+            ir = m_rg->buildLda(var);
         }
     } else if (TREE_parent(t) != NULL && TREE_type(TREE_parent(t)) == TR_LDA) {
         ir = buildId(t);
@@ -1577,7 +1577,7 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
         //Normal load.
         ir = buildLoad(t);
     }
-    setLineNum(ir, lineno, m_ru);
+    setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -1588,7 +1588,7 @@ IR * CTree2IR::only_left_last(IR * head)
     IR * last = removetail(&head);
     while (head != NULL) {
         IR * t = xcom::removehead(&head);
-        m_ru->freeIRTree(t);
+        m_rg->freeIRTree(t);
     }
     return last;
 }
@@ -1640,9 +1640,9 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 DATA_TYPE dt = ::get_decl_dtype(
                     TREE_result_type(t), &s, m_tm);
                 //The maximum integer supported is 64bit.
-                ir = m_ru->buildImmInt(TREE_imm_val(t),
+                ir = m_rg->buildImmInt(TREE_imm_val(t),
                     m_tm->getSimplexTypeEx(dt));
-                setLineNum(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_rg);
             }
             break;
         case TR_IMML:
@@ -1653,9 +1653,9 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                     TREE_result_type(t), &s, m_tm);
                 ASSERT0(dt == D_I64 || dt == D_U64);
                 //The maximum integer supported is 64bit.
-                ir = m_ru->buildImmInt(TREE_imm_val(t),
+                ir = m_rg->buildImmInt(TREE_imm_val(t),
                     m_tm->getSimplexTypeEx(dt));
-                setLineNum(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_rg);
             }
             break;
         case TR_FP:
@@ -1672,14 +1672,14 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 SYM * fp = TREE_fp_str_val(t);
 
                 //Default float point type is 64bit.
-                ir = m_ru->buildImmFp(::atof(SYM_name(fp)),
+                ir = m_rg->buildImmFp(::atof(SYM_name(fp)),
                     m_tm->getSimplexTypeEx(
                         TREE_type(t) == TR_FPF ? D_F32 : D_F64));
                 BYTE mantissa_num = getMantissaNum(SYM_name(fp));
                 if (mantissa_num > DEFAULT_MANTISSA_NUM) {
                     CONST_fp_mant(ir) = mantissa_num;
                 }
-                setLineNum(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_rg);
             }
             break;
         case TR_ENUM_CONST:
@@ -1687,31 +1687,31 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 INT v = get_enum_const_val(TREE_enum(t),TREE_enum_val_idx(t));
                 //Default const type of enumerator is 'unsigned int'
                 //of target machine
-                ir = m_ru->buildImmInt(v, m_tm->getSimplexTypeEx(
+                ir = m_rg->buildImmInt(v, m_tm->getSimplexTypeEx(
                     m_tm->getDType(WORD_LENGTH_OF_TARGET_MACHINE, true)));
-                setLineNum(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_rg);
                 break;
             }
         case TR_STRING:
-            ir = m_ru->buildLdaString(NULL, TREE_string_val(t));
+            ir = m_rg->buildLdaString(NULL, TREE_string_val(t));
             ASSERT0(ir->is_lda() &&
                 LDA_idinfo(ir)->is_global() &&
-                m_ru->getTopRegion() != NULL &&
-                m_ru->getTopRegion()->is_program());
-            m_ru->getTopRegion()->addToVarTab(LDA_idinfo(ir));
-            setLineNum(ir, lineno, m_ru);
+                m_rg->getTopRegion() != NULL &&
+                m_rg->getTopRegion()->is_program());
+            m_rg->getTopRegion()->addToVarTab(LDA_idinfo(ir));
+            setLineNum(ir, lineno, m_rg);
             break;
         case TR_LOGIC_OR: //logical or        ||
             l = convert(TREE_lchild(t),cont);
             r = convert(TREE_rchild(t),cont);
-            ir = m_ru->buildCmp(IR_LOR, l, r);
-            setLineNum(ir, lineno, m_ru);
+            ir = m_rg->buildCmp(IR_LOR, l, r);
+            setLineNum(ir, lineno, m_rg);
             break;
         case TR_LOGIC_AND: //logical and      &&
             l = convert(TREE_lchild(t),cont);
             r = convert(TREE_rchild(t),cont);
-            ir = m_ru->buildCmp(IR_LAND, l, r);
-            setLineNum(ir, lineno, m_ru);
+            ir = m_rg->buildCmp(IR_LAND, l, r);
+            setLineNum(ir, lineno, m_rg);
             break;
         case TR_INCLUSIVE_OR: //inclusive or  |
             {
@@ -1731,8 +1731,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                         type = m_tm->getSimplexTypeEx(dt);
                     }
                 }
-                ir = m_ru->buildBinaryOp(IR_BOR, type, l, r);
-                setLineNum(ir, lineno, m_ru);
+                ir = m_rg->buildBinaryOp(IR_BOR, type, l, r);
+                setLineNum(ir, lineno, m_rg);
             }
             break;
         case TR_INCLUSIVE_AND: //inclusive and &
@@ -1753,8 +1753,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                         type = m_tm->getSimplexTypeEx(dt);
                     }
                 }
-                ir = m_ru->buildBinaryOp(IR_BAND, type, l, r);
-                setLineNum(ir, lineno, m_ru);
+                ir = m_rg->buildBinaryOp(IR_BAND, type, l, r);
+                setLineNum(ir, lineno, m_rg);
             }
             break;
         case TR_XOR: //exclusive or
@@ -1775,38 +1775,38 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                         type = m_tm->getSimplexTypeEx(dt);
                     }
                 }
-                ir = m_ru->buildBinaryOp(IR_XOR, type, l, r);
+                ir = m_rg->buildBinaryOp(IR_XOR, type, l, r);
             }
             break;
         case TR_EQUALITY: // == !=
             l = convert(TREE_lchild(t), cont);
             r = convert(TREE_rchild(t), cont);
             if (TREE_token(t) == T_EQU) {
-                ir = m_ru->buildCmp(IR_EQ, l, r);
+                ir = m_rg->buildCmp(IR_EQ, l, r);
             } else {
-                ir = m_ru->buildCmp(IR_NE, l, r);
+                ir = m_rg->buildCmp(IR_NE, l, r);
             }
-            setLineNum(ir, lineno, m_ru);
+            setLineNum(ir, lineno, m_rg);
             break;
         case TR_RELATION: // < > >= <=
             l = convert(TREE_lchild(t), cont);
             r = convert(TREE_rchild(t), cont);
             switch (TREE_token(t)) {
             case T_LESSTHAN:     // <
-                ir = m_ru->buildCmp(IR_LT, l, r);
+                ir = m_rg->buildCmp(IR_LT, l, r);
                 break;
             case T_MORETHAN:     // >
-                ir = m_ru->buildCmp(IR_GT, l, r);
+                ir = m_rg->buildCmp(IR_GT, l, r);
                 break;
             case T_NOLESSTHAN:   // >=
-                ir = m_ru->buildCmp(IR_GE, l, r);
+                ir = m_rg->buildCmp(IR_GE, l, r);
                 break;
             case T_NOMORETHAN:   // <=
-                ir = m_ru->buildCmp(IR_LE, l, r);
+                ir = m_rg->buildCmp(IR_LE, l, r);
                 break;
             default: UNREACHABLE();
             }
-            setLineNum(ir, lineno, m_ru);
+            setLineNum(ir, lineno, m_rg);
             break;
         case TR_SHIFT:   // >> <<
             {
@@ -1827,12 +1827,12 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                     }
                 }
                 if (TREE_token(t) == T_RSHIFT) {
-                    ir = m_ru->buildBinaryOp(l->is_signed() ?
+                    ir = m_rg->buildBinaryOp(l->is_signed() ?
                         IR_ASR : IR_LSR, type, l, r);
                 } else {
-                    ir = m_ru->buildBinaryOp(IR_LSL, type, l, r);
+                    ir = m_rg->buildBinaryOp(IR_LSL, type, l, r);
                 }
-                setLineNum(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_rg);
             }
             break;
         case TR_ADDITIVE: // '+' '-'
@@ -1855,11 +1855,11 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 }
                 if (TREE_token(t) == T_ADD) {
                     IR_dt(l) = type;
-                    ir = m_ru->buildBinaryOp(IR_ADD, type, l, r);
+                    ir = m_rg->buildBinaryOp(IR_ADD, type, l, r);
                 } else {
-                    ir = m_ru->buildBinaryOp(IR_SUB, type, l, r);
+                    ir = m_rg->buildBinaryOp(IR_SUB, type, l, r);
                 }
-                setLineNum(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_rg);
             }
             break;
         case TR_MULTI:    // '*' '/' '%'
@@ -1880,13 +1880,13 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                     }
                 }
                 if (TREE_token(t) == T_ASTERISK) {
-                    ir = m_ru->buildBinaryOp(IR_MUL, type, l, r);
+                    ir = m_rg->buildBinaryOp(IR_MUL, type, l, r);
                 } else if (TREE_token(t) == T_DIV) {
-                    ir = m_ru->buildBinaryOp(IR_DIV, type, l, r);
+                    ir = m_rg->buildBinaryOp(IR_DIV, type, l, r);
                 } else {
-                    ir = m_ru->buildBinaryOp(IR_REM, type, l, r);
+                    ir = m_rg->buildBinaryOp(IR_REM, type, l, r);
                 }
-                setLineNum(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_rg);
             }
             break;
         case TR_SCOPE:
@@ -1898,18 +1898,18 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 IR * det = convert(TREE_if_det(t), cont);
                 det = only_left_last(det);
                 if (det == NULL) {
-                    det = m_ru->buildJudge(m_ru->buildImmInt(1, m_tm->getI32()));
+                    det = m_rg->buildJudge(m_rg->buildImmInt(1, m_tm->getI32()));
                 }
 
                 IR * truebody = convert(TREE_if_true_stmt(t), NULL);
                 IR * falsebody = convert(TREE_if_false_stmt(t), NULL);
                 if (!det->is_judge()) {
                     IR * old = det;
-                    det = m_ru->buildJudge(det);
-                    copyDbx(det, old, m_ru);
+                    det = m_rg->buildJudge(det);
+                    copyDbx(det, old, m_rg);
                 }
-                ir = m_ru->buildIf(det, truebody, falsebody);
-                setLineNum(ir, lineno, m_ru);
+                ir = m_rg->buildIf(det, truebody, falsebody);
+                setLineNum(ir, lineno, m_rg);
             }
             break;
         case TR_DO:
@@ -1924,12 +1924,12 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 IR * det = convert(TREE_dowhile_det(t), &ct2);
                 det = only_left_last(det);
                 if (det == NULL) {
-                    det = m_ru->buildJudge(m_ru->buildImmInt(1, m_tm->getI32()));
+                    det = m_rg->buildJudge(m_rg->buildImmInt(1, m_tm->getI32()));
                 }
 
                 if (prolog != NULL) {
                     //Do NOT add prolog before DO_WHILE stmt.
-                    //dup_prolog = m_ru->dupIRTreeList(prolog);
+                    //dup_prolog = m_rg->dupIRTreeList(prolog);
                     //xcom::add_next(&ir_list, prolog);
                 }
 
@@ -1944,11 +1944,11 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
 
                 if (!det->is_judge()) {
                     IR * old = det;
-                    det = m_ru->buildJudge(det);
-                    copyDbx(det, old, m_ru);
+                    det = m_rg->buildJudge(det);
+                    copyDbx(det, old, m_rg);
                 }
-                ir = m_ru->buildDoWhile(det, body);
-                setLineNum(ir, lineno, m_ru);
+                ir = m_rg->buildDoWhile(det, body);
+                setLineNum(ir, lineno, m_rg);
             }
             break;
         case TR_WHILE:
@@ -1963,13 +1963,13 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 IR * det = convert(TREE_whiledo_det(t), &ct2);
                 det = only_left_last(det);
                 if (det == NULL) {
-                    det = m_ru->buildJudge(m_ru->buildImmInt(1,
+                    det = m_rg->buildJudge(m_rg->buildImmInt(1,
                         m_tm->getI32()));
                 }
 
                 IR * dup_prolog = NULL;
                 if (prolog != NULL) {
-                    dup_prolog = m_ru->dupIRTreeList(prolog);
+                    dup_prolog = m_rg->dupIRTreeList(prolog);
                     xcom::add_next(&ir_list, prolog);
                 }
                 ASSERT0(epilog == NULL);
@@ -1981,12 +1981,12 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
 
                 if (!det->is_judge()) {
                     IR * old = det;
-                    det = m_ru->buildJudge(det);
-                    copyDbx(det, old, m_ru);
+                    det = m_rg->buildJudge(det);
+                    copyDbx(det, old, m_rg);
                 }
 
-                ir = m_ru->buildWhileDo(det, body);
-                setLineNum(ir, lineno, m_ru);
+                ir = m_rg->buildWhileDo(det, body);
+                setLineNum(ir, lineno, m_rg);
             }
             break;
         case TR_FOR:
@@ -2004,7 +2004,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
 
                 det = only_left_last(det);
                 if (det == NULL) {
-                    det = m_ru->buildJudge(m_ru->buildImmInt(1,
+                    det = m_rg->buildJudge(m_rg->buildImmInt(1,
                         m_tm->getI32()));
                 }
 
@@ -2012,17 +2012,17 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 IR * step = convert(TREE_for_step(t), NULL);
                 xcom::add_next(&body, step);
                 if (stmt_in_det != NULL) {
-                    xcom::add_next(&body, m_ru->dupIRTreeList(stmt_in_det));
+                    xcom::add_next(&body, m_rg->dupIRTreeList(stmt_in_det));
                 }
 
                 if (!det->is_judge()) {
                     IR * old = det;
-                    det = m_ru->buildJudge(det);
-                    copyDbx(det, old, m_ru);
+                    det = m_rg->buildJudge(det);
+                    copyDbx(det, old, m_rg);
                 }
 
-                IR * whiledo = m_ru->buildWhileDo(det, body);
-                setLineNum(whiledo, lineno, m_ru);
+                IR * whiledo = m_rg->buildWhileDo(det, body);
+                setLineNum(whiledo, lineno, m_rg);
                 xcom::add_next(&init, whiledo);
                 ir = init;
             }
@@ -2031,44 +2031,44 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             ir = convertSwitch(t, lineno, cont);
             break;
         case TR_BREAK:
-            ir = m_ru->buildBreak();
-            setLineNum(ir, lineno, m_ru);
+            ir = m_rg->buildBreak();
+            setLineNum(ir, lineno, m_rg);
             break;
         case TR_CONTINUE:
-            ir = m_ru->buildContinue();
-            setLineNum(ir, lineno, m_ru);
+            ir = m_rg->buildContinue();
+            setLineNum(ir, lineno, m_rg);
             break;
         case TR_RETURN:
             ir = convertReturn(t, lineno, cont);
             break;
         case TR_GOTO:
-            ir = m_ru->buildGoto(getUniqueLabel(TREE_lab_info(t)));
-            setLineNum(ir, lineno, m_ru);
+            ir = m_rg->buildGoto(getUniqueLabel(TREE_lab_info(t)));
+            setLineNum(ir, lineno, m_rg);
             break;
         case TR_LABEL:
-            ir = m_ru->buildLabel(getUniqueLabel(TREE_lab_info(t)));
-            setLineNum(ir, lineno, m_ru);
+            ir = m_rg->buildLabel(getUniqueLabel(TREE_lab_info(t)));
+            setLineNum(ir, lineno, m_rg);
             break;
         case TR_CASE:
             {
-                ir = m_ru->buildIlabel();
+                ir = m_rg->buildIlabel();
                 CaseValue * casev = (CaseValue*)xmalloc(sizeof(CaseValue));
                 CASEV_lab(casev) = LAB_lab(ir);
                 CASEV_constv(casev) = TREE_case_value(t);
                 CASEV_is_def(casev) = false;
                 m_case_list->append_tail(casev);
-                setLineNum(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_rg);
                 break;
             }
         case TR_DEFAULT:
             {
-                ir = m_ru->buildIlabel();
+                ir = m_rg->buildIlabel();
                 CaseValue * casev = (CaseValue*)xmalloc(sizeof(CaseValue));
                 CASEV_lab(casev) = LAB_lab(ir);
                 CASEV_constv(casev) = 0;
                 CASEV_is_def(casev) = true;
                 m_case_list->append_head(casev);
-                setLineNum(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_rg);
                 break;
             }
         case TR_COND: //formulized log_OR_exp ? exp : cond_exp
@@ -2087,22 +2087,22 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             ir = convert(TREE_lchild(t), cont);
             break;
         case TR_MINUS: // -123
-            ir = m_ru->allocIR(IR_NEG);
+            ir = m_rg->allocIR(IR_NEG);
             UNA_opnd(ir) = convert(TREE_lchild(t), cont);
             IR_dt(ir) = UNA_opnd(ir)->getType();
-            setLineNum(ir, lineno, m_ru);
+            setLineNum(ir, lineno, m_rg);
             ir->setParentPointer(false);
             break;
         case TR_REV:  // Reverse
             {
                 IR * opnd = convert(TREE_lchild(t), cont);
-                ir = m_ru->buildUnaryOp(IR_BNOT, opnd->getType(), opnd);
-                setLineNum(ir, lineno, m_ru);
+                ir = m_rg->buildUnaryOp(IR_BNOT, opnd->getType(), opnd);
+                setLineNum(ir, lineno, m_rg);
             }
             break;
         case TR_NOT:  // get non-value
-            ir = m_ru->buildLogicalNot(convert(TREE_lchild(t), cont));
-            setLineNum(ir, lineno, m_ru);
+            ir = m_rg->buildLogicalNot(convert(TREE_lchild(t), cont));
+            setLineNum(ir, lineno, m_rg);
             break;
         case TR_INC:   //++a
         case TR_DEC:   //--a
@@ -2133,7 +2133,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         t = TREE_nsib(t);
         if (ir != NULL) {
             if (getLineNum(ir) == 0) {
-                setLineNum(ir, lineno, m_ru);
+                setLineNum(ir, lineno, m_rg);
             }
             xcom::add_next(&ir_list, ir);
         }
@@ -2291,7 +2291,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     //all local-variable into VarTab.
     scanScopeDeclList(DECL_fun_body(dcl), r, false);
 
-    if (xoc::g_dump_opt.isDumpALL()) {    
+    if (xoc::g_dump_opt.isDumpALL()) {
         dump_scope(DECL_fun_body(dcl), 0xffffFFFF);
     }
 
@@ -2323,7 +2323,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     xoc::RefineCtx rc;
     RC_refine_div_const(rc) = false;
     RC_refine_mul_const(rc) = false;
-    change = false;   
+    change = false;
     irs = r->refineIRlist(irs, change, rc);
     ASSERT0(xoc::verifyIRList(irs, NULL, r));
     r->setIRList(irs);
@@ -2331,7 +2331,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
         xoc::note("\n==---- AFTER REFINE IR -----==", get_decl_name(dcl));
         xoc::dumpIRList(irs, r);
         //rg->dumpVARInRegion();
-    }    
+    }
     return ST_SUCC;
 }
 
@@ -2379,7 +2379,7 @@ bool generateRegion(RegionMgr * rm)
 
         //It have to be normal variable declaration, function declaration.
         //But it can never be function definition.
-        topru->addToVarTab(mapDecl2VAR(dcl));        
+        topru->addToVarTab(mapDecl2VAR(dcl));
     }
 
     //Free the temprary memory pool.

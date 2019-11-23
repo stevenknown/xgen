@@ -109,7 +109,7 @@ class CTree2IR {
 protected:
     Decl * m_func_decl;
     Decl const* m_return_type;
-    Region * m_ru;
+    Region * m_rg;
     TypeMgr * m_tm;
     VAR * m_retval_buf;
     List<CaseValue*> * m_case_list; //for switch/case used only
@@ -135,7 +135,7 @@ public:
         ASSERT0(rg && dcl);
         m_func_decl = dcl;
         m_return_type = get_return_type(dcl);
-        m_ru = rg;
+        m_rg = rg;
         m_tm = rg->getTypeMgr();
         m_case_list = NULL;
         m_retval_buf = NULL;
