@@ -46,8 +46,8 @@ void RaMgr::init(List<ORBB*> * bbs, bool is_func, CG * cg)
     m_bb_list = bbs;
     ASSERT0(m_cg == NULL);
     m_cg = cg;
-    m_ru = cg->getRegion();
-    ASSERT0(m_cg && m_ru);
+    m_rg = cg->getRegion();
+    ASSERT0(m_cg && m_rg);
     m_need_save_asm_effect = false;
     RAMGR_can_alloc_callee(this) = true;
     m_is_func = is_func;
@@ -61,7 +61,7 @@ void RaMgr::destroy()
 {
     m_var2or_map.destroy();
     m_bb_list = NULL;
-    m_ru = NULL;
+    m_rg = NULL;
     m_is_func = false;
     if (m_gra != NULL) {
         delete m_gra;
@@ -178,7 +178,7 @@ void RaMgr::dumpGlobalVAR2OR()
     FILE * h = xoc::g_tfile;
     fprintf(h,
         "\n==---- DUMP Mapping from Global xoc::VAR to OR, Region:%s ----==",
-        m_ru->getRegionName());
+        m_rg->getRegionName());
     INT i = 0;
     xcom::StrBuf buf(64);
     VAR2ORIter iter;
@@ -186,7 +186,7 @@ void RaMgr::dumpGlobalVAR2OR()
     for (xoc::VAR const* var = m_var2or_map.get_first(iter, &ref_bb_list);
          var != NULL; var = m_var2or_map.get_next(iter, &ref_bb_list)) {
         fprintf(h, "\n\tVAR%d", i++);
-        fprintf(h, "\n\t\t%s", var->dump(buf, m_ru->getTypeMgr()));
+        fprintf(h, "\n\t\t%s", var->dump(buf, m_rg->getTypeMgr()));
 
         ASSERTN(ref_bb_list, ("Miss info"));
         for (ORBBUnit * bu = ref_bb_list->get_head(); bu;
@@ -220,7 +220,7 @@ void RaMgr::dumpCalleeRegUsedByGra()
     if (h == NULL) { return; }
 
     fprintf(h, "\n==---- DUMP GRA Used Callee Regs, Region:%s: ",
-            m_ru->getRegionName());
+            m_rg->getRegionName());
     if (RAMGR_gra(this) == NULL) {
         fprintf(h, "No GRA\n");
         return;
@@ -271,7 +271,7 @@ void RaMgr::saveCalleePredicateAtEntry(
     }
     OR * sp_adj = ORBB_entry_spadjust(entry);
     ASSERT0(sp_adj == NULL || OR_code(sp_adj) == OR_spadjust);
-    if (m_ru->is_function()) { ASSERT0(sp_adj); }
+    if (m_rg->is_function()) { ASSERT0(sp_adj); }
 
     ORList ors;
     if (sp_adj != NULL) {
@@ -298,7 +298,7 @@ void RaMgr::saveCalleeFPRegisterAtEntry(
     OR * sp_adj = ORBB_entry_spadjust(entry);
     ASSERT0(sp_adj == NULL || OR_code(sp_adj) == OR_spadjust);
 
-    if (m_ru->is_function()) { ASSERT0(sp_adj != NULL); }
+    if (m_rg->is_function()) { ASSERT0(sp_adj != NULL); }
 
     ORList ors;
     bool modified = false;
@@ -370,7 +370,7 @@ void RaMgr::saveCalleeFPRegisterAtExit(
 
     OR * sp_adj = ORBB_exit_spadjust(exit);
     ASSERT0(sp_adj == NULL || OR_code(sp_adj) == OR_spadjust);
-    if (m_ru->is_function()) { ASSERT0(sp_adj); }
+    if (m_rg->is_function()) { ASSERT0(sp_adj); }
 
     ORList ors;
     bool modified = false;
@@ -447,7 +447,7 @@ void RaMgr::saveCalleeIntRegisterAtEntry(
     RegSet * used_regs = &used_callee_regs[regfile];
     OR * sp_adj = ORBB_entry_spadjust(entry);
     ASSERT0(sp_adj == NULL || OR_code(sp_adj) == OR_spadjust);
-    if (m_ru->is_function()) { ASSERT0(sp_adj != NULL); }
+    if (m_rg->is_function()) { ASSERT0(sp_adj != NULL); }
 
     ORList ors;
     bool modified = false;
@@ -562,7 +562,7 @@ void RaMgr::saveCalleeIntRegisterAtExit(
     RegSet * used_regs = &used_callee_regs[regfile];
     OR * sp_adj = ORBB_exit_spadjust(exit);
     ASSERT0(sp_adj == NULL || OR_code(sp_adj) == OR_spadjust);
-    if (m_ru->is_function()) { ASSERT0(sp_adj != NULL); }
+    if (m_rg->is_function()) { ASSERT0(sp_adj != NULL); }
 
     ORList ors;
     bool modified = false;
@@ -643,7 +643,7 @@ void RaMgr::saveCalleePredicateAtExit(
 
     OR * sp_adj = ORBB_exit_spadjust(exit);
     ASSERT0(sp_adj == NULL || OR_code(sp_adj) == OR_spadjust);
-    if (m_ru->is_function()) { ASSERT0(sp_adj); }
+    if (m_rg->is_function()) { ASSERT0(sp_adj); }
 
     ORList ors;
     if (sp_adj != NULL) {

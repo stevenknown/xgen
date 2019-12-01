@@ -115,7 +115,7 @@ public:
 
 
 //G_INTERF_GRAPH
-#define GIG_ru(g)            ((g)->m_ru)
+#define GIG_ru(g)            ((g)->m_rg)
 #define GIG_ra_mgr(g)        ((g)->m_ramgr)
 #define GIG_glt_mgr(g)        ((g)->m_glt_mgr)
 
@@ -153,7 +153,7 @@ public:
 
 
 //GRA
-#define GRA_ru(g)            ((g)->m_ru)
+#define GRA_ru(g)            ((g)->m_rg)
 #define GRA_ra_mgr(g)        ((g)->m_ramgr)
 class GRA {
 protected:

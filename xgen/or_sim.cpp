@@ -38,7 +38,7 @@ BBSimulator::BBSimulator(ORBB * bb)
     m_bb = bb;
     m_cg = ORBB_cg(bb);
     ASSERT0(m_cg);
-    m_ru = m_cg->getRegion();
+    m_rg = m_cg->getRegion();
     init();
 }
 
@@ -392,7 +392,7 @@ void BBSimulator::dump(CHAR * name, bool is_del, bool dump_exec_detail)
 
     ORVec const* ors_vec = getExecSnapshot();
 
-    fprintf(h, "\nRegion(%s), BB(%d)", m_ru->getRegionName(), bbid);
+    fprintf(h, "\nRegion(%s), BB(%d)", m_rg->getRegionName(), bbid);
 
     //Preparing slot name buffer
     CHAR slot_name[SLOT_NUM][SLOT_NAME_MAX_LEN];

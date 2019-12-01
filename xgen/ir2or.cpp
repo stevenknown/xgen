@@ -35,9 +35,9 @@ IR2OR::IR2OR(CG * cg)
 {
     ASSERT0(cg);
     m_cg = cg;
-    m_ru = cg->getRegion();
-    ASSERT0(m_ru);
-    m_tm = m_ru->getTypeMgr();
+    m_rg = cg->getRegion();
+    ASSERT0(m_rg);
+    m_tm = m_rg->getTypeMgr();
 }
 
 
@@ -410,7 +410,7 @@ void IR2OR::convertGeneralLoadPR(IR const* ir, OUT ORList & ors, IN IOC * cont)
         SR * mm2 = m_cg->genReg();
         m_cg->setMapPR2SR(PR_no(ir), mm2);
     } else {
-        VAR * v = m_ru->mapPR2Var(PR_no(ir));
+        VAR * v = m_rg->mapPR2Var(PR_no(ir));
         ASSERT0(v != NULL);
         ASSERT0(ir->getTypeSize(m_tm) == v->getByteSize(m_tm));
         m_cg->setMapPR2SR(PR_no(ir), m_cg->genVAR(v));
@@ -461,11 +461,11 @@ void IR2OR::convertCopyPR(
         //must be transferd through memory.
 
         //Store to local-variable(memory) instead of register.
-        VAR * loc = m_ru->mapPR2Var(tgtprno);
+        VAR * loc = m_rg->mapPR2Var(tgtprno);
         if (loc == NULL) {
             loc = registerLocalVar(tgt);
         } else {
-            m_ru->addToVarTab(loc);
+            m_rg->addToVarTab(loc);
         }
 
         ASSERT0(loc);
@@ -513,11 +513,11 @@ void IR2OR::convertStorePR(IR const* ir, OUT ORList & ors, IN IOC * cont)
             m_cg->setMapPR2SR(STPR_no(ir), m_cg->genReg());
         } else {
             //Store to local-variable(memory) instead of register.
-            VAR * v = m_ru->mapPR2Var(STPR_no(ir));
+            VAR * v = m_rg->mapPR2Var(STPR_no(ir));
             if (v == NULL) {
                 v = registerLocalVar(ir);
             } else {
-                ASSERT0(m_ru->getVarTab()->find(v));
+                ASSERT0(m_rg->getVarTab()->find(v));
             }
             ASSERT0(v != NULL);
             ASSERT0(ir->getTypeSize(m_tm) == v->getByteSize(m_tm));
@@ -539,13 +539,13 @@ VAR * IR2OR::registerLocalVar(IR const* pr)
     sprintf(name, "pr%d", prno);
     ASSERT0(strlen(name) < 128);
 
-    VAR * var = m_ru->getVarMgr()->registerVar(
+    VAR * var = m_rg->getVarMgr()->registerVar(
         name, pr->getType(), 0, VAR_LOCAL|VAR_IS_PR);
 
     //Add it to region's var-tab and it will be
     //allocated in stack.
-    m_ru->setMapPR2Var(prno, var);
-    m_ru->addToVarTab(var);
+    m_rg->setMapPR2Var(prno, var);
+    m_rg->addToVarTab(var);
     return var;
 }
 
@@ -925,7 +925,7 @@ void IR2OR::convertTruebr(IR const* ir, OUT ORList & ors, IN IOC * cont)
 void IR2OR::convertFalsebr(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
     ASSERT0(ir && ir->is_falsebr());
-    IR * newir = m_ru->dupIRTree(ir);
+    IR * newir = m_rg->dupIRTree(ir);
     IR * br_det = BR_det(newir);
     ASSERT0(br_det->is_lt() || br_det->is_le() || br_det->is_gt() ||
             br_det->is_ge() || br_det->is_eq() || br_det->is_ne());
@@ -1012,7 +1012,7 @@ void IR2OR::convertLabel(IRBB const* bb, OUT ORList & ors, IN IOC * cont)
 
 void IR2OR::convert(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
-    ASSERT0(ir && ir->verify(m_ru));
+    ASSERT0(ir && ir->verify(m_rg));
     ORList tors;
     switch (ir->getCode()) {
     case IR_CONST:
@@ -1171,8 +1171,8 @@ void IR2OR::convert(IR const* ir, OUT ORList & ors, IN IOC * cont)
 void IR2OR::convertIRBBListToORList(OUT ORList & or_list)
 {
     START_TIMER(t, "Convert IR to OR");
-    ASSERT0(m_ru);
-    BBList * ir_bb_list = m_ru->getBBList();
+    ASSERT0(m_rg);
+    BBList * ir_bb_list = m_rg->getBBList();
     ASSERT0(ir_bb_list);
     IOC cont;
     for (IRBB const* bb = ir_bb_list->get_head();

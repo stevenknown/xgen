@@ -269,7 +269,7 @@ public:
 #define CG_builtin_memcpy(r)               ((r)->m_builtin_memcpy)
 class CG {
 protected:
-    xoc::Region * m_ru;
+    xoc::Region * m_rg;
     ORMgr * m_or_mgr;
     xoc::TypeMgr * m_tm;
     UnitSet m_tmp_us; //Used for temporary purpose.
@@ -357,9 +357,9 @@ public:
     void appendReload(ORBB * bb, ORList & ors);
     inline xoc::VAR * addBuiltinVar(CHAR const* buildin_name)
     {
-        ASSERT0(m_ru);
-        xoc::SYM * s = m_ru->getRegionMgr()->addToSymbolTab(buildin_name);
-        return m_ru->getVarMgr()->registerStringVar(
+        ASSERT0(m_rg);
+        xoc::SYM * s = m_rg->getRegionMgr()->addToSymbolTab(buildin_name);
+        return m_rg->getVarMgr()->registerStringVar(
             buildin_name, s, MEMORY_ALIGNMENT);
     }
     ORBB * allocBB();
@@ -778,7 +778,7 @@ public:
     CHAR * formatLabelName(xoc::LabelInfo const* lab, OUT xcom::StrBuf & buf)
     {
         CHAR const* prefix = NULL;
-        prefix = SYM_name(m_ru->getRegionVar()->get_name());
+        prefix = SYM_name(m_rg->getRegionVar()->get_name());
         buf.strcat("%s_", prefix);
         if (LABEL_INFO_type(lab) == L_ILABEL) {
             buf.strcat(ILABEL_STR_FORMAT, ILABEL_CONT(lab));
@@ -832,7 +832,7 @@ public:
 
     //Generate function return-address register.
     virtual SR * genReturnAddr() = 0;
-    xoc::Region * getRegion() const { return m_ru; }
+    xoc::Region * getRegion() const { return m_rg; }
 
     //Generate spill location that same like 'sr'.
     //Or return the spill location if exist.

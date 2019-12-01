@@ -1030,8 +1030,8 @@ LifeTimeMgr::LifeTimeMgr(CG * cg)
 {
     ASSERT0(cg);
     m_cg = cg;
-    m_ru = cg->getRegion();
-    ASSERT0(m_ru);
+    m_rg = cg->getRegion();
+    ASSERT0(m_rg);
     m_bb = NULL;
     m_is_init = false;
 }
@@ -1207,7 +1207,7 @@ LifeTime * LifeTimeMgr::allocLifeTime(SR * sr, OR * o)
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
     ASSERTN(m_max_lt_len > 0, ("Life time length is overrange."));
     LifeTime * lt = (LifeTime*)xmalloc(sizeof(LifeTime));
-    LT_pos(lt) = m_ru->getBitSetMgr()->create();
+    LT_pos(lt) = m_rg->getBitSetMgr()->create();
     LT_desc(lt).init();
     LT_id(lt) = ++m_lt_count;
     LT_sr(lt) = sr;
@@ -1224,7 +1224,7 @@ LifeTime * LifeTimeMgr::clone_lifetime(LifeTime * lt)
     ASSERTN(lt, ("Life time is NULL."));
 
     LifeTime * newlt = (LifeTime*)xmalloc(sizeof(LifeTime));
-    LT_pos(newlt)->copy(*LT_pos(lt));    
+    LT_pos(newlt)->copy(*LT_pos(lt));
     LT_desc(newlt).init();
     for (INT i = LT_pos(lt)->get_first();
          i >= 0; i = LT_desc(lt).get_next(i)) {
@@ -1593,9 +1593,9 @@ void LifeTimeMgr::reviseLTCase1(LifeTime * lt)
 
     xcom::BitSet * tmp = LT_pos(lt);
     LT_pos(lt) = LT_pos(lt)->get_subset_in_range(
-        first_occ, LT_pos(lt)->get_last(), *m_ru->getBitSetMgr()->create());
+        first_occ, LT_pos(lt)->get_last(), *m_rg->getBitSetMgr()->create());
 
-    m_ru->getBitSetMgr()->free(tmp);
+    m_rg->getBitSetMgr()->free(tmp);
 }
 
 
@@ -1800,7 +1800,7 @@ void LifeTimeMgr::recordPhysicalRegOcc(IN SR * sr,
 INT LifeTimeMgr::create()
 {
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
-    ASSERT0(m_ru);
+    ASSERT0(m_rg);
     if (ORBB_ornum(m_bb) <= 0) {
         return 0;
     }
@@ -3078,8 +3078,8 @@ LRA::LRA(ORBB * bb, RaMgr * ra_mgr)
     m_bb = bb;
 
     m_ppm = NULL;
-    m_ru = ra_mgr->getRegion();
-    ASSERT0(m_ru);
+    m_rg = ra_mgr->getRegion();
+    ASSERT0(m_rg);
 
     m_cg = ra_mgr->getCG();
     ASSERT0(m_cg);
@@ -3099,15 +3099,14 @@ LRA::LRA(ORBB * bb, RaMgr * ra_mgr)
 void LRA::show_phase(CHAR * phase_name)
 {
     if (!g_dump_opt.isDumpRA() || xoc::g_tfile == NULL) { return; }
-    fprintf(xoc::g_tfile, "\nRegion(%d)%s, ORBB(%d)Len(%d), PHASE:%s",
-         REGION_id(m_ru),
-         m_ru->getRegionName() != NULL ? m_ru->getRegionName() : "",
+    note("\nREGION(%d)%s, ORBB(%d)Len(%d), PHASE:%s",
+         m_rg->id(),
+         m_rg->getRegionName() != NULL ? m_rg->getRegionName() : "",
          m_bb->id(), ORBB_ornum(m_bb), phase_name);
-    fprintf(xoc::g_tfile, "\nRegion(%d)%s, ORBB(%d)Len(%d), PHASE:%s",
-            REGION_id(m_ru),
-            m_ru->getRegionName() != NULL ? m_ru->getRegionName() : "",
-            m_bb->id(), ORBB_ornum(m_bb), phase_name);
-    fflush(xoc::g_tfile);
+    note("\nREGION(%d)%s, ORBB(%d)Len(%d), PHASE:%s",
+         m_rg->id(),
+         m_rg->getRegionName() != NULL ? m_rg->getRegionName() : "",
+         m_bb->id(), ORBB_ornum(m_bb), phase_name);
 }
 
 
@@ -5365,7 +5364,7 @@ void LRA::computeLTResideInHole(
     INT hole_startpos, hole_endpos;
     getMaxHole(&hole_startpos, &hole_endpos, lt, ig, mgr, HOLE_LENGTH);
     xcom::BitSet * hole = LT_pos(lt)->get_subset_in_range(hole_startpos,
-        hole_endpos, *m_ru->getBitSetMgr()->create());
+        hole_endpos, *m_rg->getBitSetMgr()->create());
     ASSERTN(hole, ("What's wrong with memory pool?"));
     List<LifeTime*> lt_group;
     ASSERTN(SR_regfile(LT_sr(lt)),("regfile undefined"));
@@ -6285,22 +6284,19 @@ void LRA::buildPriorityList(
 void LRA::dumpPrioList(List<LifeTime*> & prio_list)
 {
     if (xoc::g_tfile == NULL) { return; }
-
     StrBuf buf(64);
-    fprintf(xoc::g_tfile, "\nBB%d, Priority List:", m_bb->id());
+    note("\nBB%d, Priority List:", m_bb->id());
     UINT i = 0;
     while (i < prio_list.get_elem_count()) {
         LifeTime * lt = prio_list.get_head_nth(i);
-        fprintf(xoc::g_tfile, "\n  LT(%d):%f ", LT_id(lt), LT_prio(lt));
+        note("\n  LT(%d):%f ", LT_id(lt), LT_prio(lt));
 
         buf.clean();
-        fprintf(xoc::g_tfile, "[%s]", LT_sr(lt)->get_name(buf, m_cg));
+        note("[%s]", LT_sr(lt)->get_name(buf, m_cg));
 
         i++;
     }
-
-    fprintf(xoc::g_tfile, "\n");
-    fflush(xoc::g_tfile);
+    note("\n");
 }
 
 
@@ -7766,7 +7762,7 @@ bool LRA::optimal_partition(
     FILE * h = fopen(name, "a+");
     ASSERTN(h, ("%s create failed!!!", name));
     fprintf(h, "\nPU:%s,ORBB:%d,len:%d\n",
-        m_ru->getRegionName(), m_bb->id(), ORBB_ornum(m_bb));
+        m_rg->getRegionName(), m_bb->id(), ORBB_ornum(m_bb));
     fclose(h);
 
     ddg.simplifyGraph();
@@ -8746,7 +8742,7 @@ void LRA::renameSR()
                 //    renameOpndInRange(sr, newsr, next_prev_def,
                 //                      prev_or, ORBB_orlist(bb));
                 //}
-                //m_ru->renameOpnd(o, sr, newsr, false);
+                //m_rg->renameOpnd(o, sr, newsr, false);
                 continue;
             }
 

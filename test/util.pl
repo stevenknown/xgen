@@ -422,13 +422,37 @@ sub prolog
     }
     parseCmdLine();
     selectTarget();
-    if ($g_is_only_compile) {
+    if ($g_is_only_compile or $g_is_compare_dump) {
         $g_cflags = $g_cflags." -nocg ";
     }
     if ($g_override_xocc_path ne "") {
         $g_xocc = $g_override_xocc_path;
     }
     printEnvVar();
+    checkExistence();
+}
+
+sub checkExistence
+{
+    my @filelist = ();
+    push(@filelist, $g_xocc);
+    if ($g_is_invoke_assembler) {
+        push(@filelist, $g_as);
+    }
+    if ($g_is_invoke_linker) {
+        push(@filelist, $g_ld);
+    }
+    if ($g_is_invoke_simulator) {
+        push(@filelist, $g_simulator);
+    }
+    foreach (@filelist) {
+       if (!-e $_) { 
+           print "\n$_ does not exist!\n";
+           if ($g_is_quit_early) {
+               abort();
+           }
+       }
+    }
 }
 
 sub parseCmdLine
@@ -469,6 +493,9 @@ sub parseCmdLine
             $g_is_invoke_simulator = 0;
             $g_is_only_compile = 1;
         } elsif ($ARGV[$i] eq "CompareDump") {
+            $g_is_invoke_assembler = 0; 
+            $g_is_invoke_linker = 0; 
+            $g_is_invoke_simulator = 0;
             $g_is_compare_dump = 1; 
         } elsif ($ARGV[$i] eq "OverrideXoccPath") {
             $i++;
@@ -576,7 +603,7 @@ sub usage
           "\n                   NOTE: do not delete testcase in 'passed' directory",
           "\nCreateBaseResult:  generate result if there is no one",
           "\n                   NOTE: deleting the exist one will regenerate base result",
-          "\nTestGr:            test GR file",
+          "\nTestGr:            generate GR for related C file and test GR file",
           "\nInputGr:           inpute file is GR file",
           "\nShowTime:          show compiling time for each compiler pass",
           "\nOnlyCompile:       only compile and assemble testcase",

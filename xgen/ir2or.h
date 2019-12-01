@@ -138,7 +138,7 @@ public:
 
 class IR2OR {
 protected:
-    Region * m_ru; //Current region.
+    Region * m_rg; //Current region.
     TypeMgr * m_tm; //Data manager.
     CG * m_cg; //Code generator.
 

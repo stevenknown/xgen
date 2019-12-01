@@ -91,7 +91,7 @@ bool CGMgr::CodeGen(Region * region, FILE * asmh)
     CG * cg = allocCG(region);
     cg->initFuncUnit();
     cg->initBuiltin();
-    //cg->initGlobalVar(m_ru->getVarMgr());
+    //cg->initGlobalVar(m_rg->getVarMgr());
     cg->perform();
     if (region->is_function()) {
         AsmPrinter * ap = allocAsmPrinter(cg, &m_asmprtmgr);

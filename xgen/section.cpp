@@ -35,11 +35,9 @@ void Section::dump(CG const* cg)
     if (xoc::g_tfile == NULL) { return; }
     xoc::TypeMgr const* tm = cg->getTypeMgr();
     xcom::StrBuf buf(64);
-    fprintf(xoc::g_tfile, "\nSection:size:%d,", (UINT)SECT_size(this));
-
-    fprintf(xoc::g_tfile, "%s", sect_var->dump(buf, tm));
-
-    fprintf(xoc::g_tfile, "\n  VarLayOut:");
+    note("\nSection:size:%d,", (UINT)SECT_size(this));
+    note("%s", sect_var->dump(buf, tm));
+    note("\n  VarLayOut:");
     List<xoc::VAR const*> layout;
     for (xoc::VAR const* v = var_list.get_head();
          v != NULL; v = var_list.get_next()) {
@@ -68,10 +66,8 @@ void Section::dump(CG const* cg)
         VarDesc * vd = var2vdesc_map.get(v);
         buf.clean();
         ASSERTN(vd, ("No VarDesc correspond to xoc::VAR"));
-        fprintf(xoc::g_tfile, "\n  (%u)%s", (UINT)VD_ofst(vd), v->dump(buf, tm));
+        note("\n  (%u)%s", (UINT)VD_ofst(vd), v->dump(buf, tm));
     }
-
-    fflush(xoc::g_tfile);
 }
 
 

@@ -51,7 +51,7 @@ protected:
     RegSet m_lra_asmclobber_callee_saved_reg[RF_NUM];
     SMemPool * m_pool;
     CG * m_cg;
-    Region * m_ru;
+    Region * m_rg;
 
 protected:
     void * xmalloc(INT size);
@@ -80,7 +80,7 @@ public:
 
     List<ORBB*> * getBBList() { return m_bb_list; }
     Vector<ParallelPartMgr*> * getParallelPartMgrVec() { return m_ppm_vec; }
-    Region * getRegion() { return m_ru; }
+    Region * getRegion() { return m_rg; }
     CG * getCG() { return m_cg; }
     RegSet * getLRAUsedCalleeSavedRegSet(REGFILE rf)
     {

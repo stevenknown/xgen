@@ -234,7 +234,7 @@ static void modifyBB2(IN OUT ORBB * bb2, ORBB const* orig_bb,
         bb2->setLiveIn(rem_count_sr);
     }
     //Regenerate LOOPINFO for ORBB.
-    IR * ir = m_ru->dupIRTree(orig_loopinfo);
+    IR * ir = m_rg->dupIRTree(orig_loopinfo);
     IR_loop_trip_est(ir) = IR_loop_trip_est(orig_loopinfo) % num_para_part;
 
     xoc::LoopInfo * loop_info = TYPE_PU_ALLOC(xoc::LoopInfo);
@@ -248,7 +248,7 @@ static void modifyBB2(IN OUT ORBB * bb2, ORBB const* orig_bb,
                             IR_loop_trip(orig_loopinfo)->getType());
     if (SR_is_const(rem_count_sr)) {
         LOOPINFO_trip_count_sr(loop_info) = rem_count_sr;
-        loop_trip = m_ru->buildConst(opc_intconst, SR_int_imm(rem_count_sr));
+        loop_trip = m_rg->buildConst(opc_intconst, SR_int_imm(rem_count_sr));
         IR_set_loop_trip(ir, loop_trip_ir);
         BB_Add_Annotation(bb2, ANNOT_LOOPINFO, loop_info);
     } else {
@@ -256,9 +256,9 @@ static void modifyBB2(IN OUT ORBB * bb2, ORBB const* orig_bb,
         OR_TYPE opc_mod =
             OR_TYPE_make_op(OPR_MOD,
                 IR_loop_trip(orig_loopinfo)->getType());
-        loop_trip_ir = m_ru->buildBinarySimpOp(opc_mod,
-            m_ru->dupIRTree(IR_loop_trip(orig_loopinfo)),
-            m_ru->buildConst(opc_intconst, num_para_part));
+        loop_trip_ir = m_rg->buildBinarySimpOp(opc_mod,
+            m_rg->dupIRTree(IR_loop_trip(orig_loopinfo)),
+            m_rg->buildConst(opc_intconst, num_para_part));
         IR_set_loop_trip(ir, loop_trip_ir);
         BB_Add_Annotation(bb2, ANNOT_LOOPINFO, loop_info);
     }
@@ -440,7 +440,7 @@ static void modifyBB(IN OUT ORBB * bb,
         LOOPINFO_trip_count_sr(orig_loop_info) =
             m_cg->gen_imm(new_trip_count_val, SR_size(trip_count_sr));
         //Generate new IR to describe actually trip count.
-        IR * new_trip_count = m_ru->buildConst(opc_intconst, new_trip_count_val);
+        IR * new_trip_count = m_rg->buildConst(opc_intconst, new_trip_count_val);
         orig_loopinfo->setLoopTrip(new_trip_count);
     } else {
         LOOPINFO_trip_count_sr(orig_loop_info) = NULL;
@@ -453,13 +453,13 @@ static void modifyBB(IN OUT ORBB * bb,
         //    OR_TYPE_make_op(IR_SUB,
         //                    IR_loop_trip(orig_loopinfo)->getType());
         //IR * mod =
-        //    m_ru->buildStore(mod,
-        //                  m_ru->dupIRTree(IR_loop_trip(orig_loopinfo)),
-        //                  m_ru->buildConst(op_intconst, num_para_part));
+        //    m_rg->buildStore(mod,
+        //                  m_rg->dupIRTree(IR_loop_trip(orig_loopinfo)),
+        //                  m_rg->buildConst(op_intconst, num_para_part));
         ////Generate new IR to describe actually trip count.
         //IR * new_trip_count =
-        //    m_ru->buildStore(sub,
-        //                  m_ru->dupIRTree(IR_loop_trip(orig_loopinfo)), mod);
+        //    m_rg->buildStore(sub,
+        //                  m_rg->dupIRTree(IR_loop_trip(orig_loopinfo)), mod);
         //IR_set_loop_trip(orig_loopinfo, new_trip_count);
     }
 }

@@ -1,6 +1,6 @@
 int foo(short b, short a)
 {
-    //Promote x[2], *q, and *(p+2) into same PREG.
+    //Promote x[2], *q, and *(p+2) into same PR.
     int x[10];
     int i;
     int * p;

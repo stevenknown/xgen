@@ -166,7 +166,7 @@ public:
         }
         smpoolDelete(m_pool);
     }
-    
+
     UINT get_action(LifeTime * lt) const { return m_lt2action.get(LT_id(lt)); }
     List<INT> * get_action_done(LifeTime * lt) const
     { return m_lt2action_done.get(LT_id(lt)); }
@@ -216,7 +216,7 @@ public:
 
     void init();
     void destroy();
-    
+
     ORList * get_ors()
     {
         ASSERTN(m_is_init, ("List not yet initialized."));
@@ -404,7 +404,7 @@ protected:
     Vector<INT> m_or2pos_map;
     Vector<OR*> m_oridx2or_map;
     CG * m_cg;
-    xoc::Region * m_ru;
+    xoc::Region * m_rg;
 
     //Record the first(or named 'Prepend Op' in ORC),
     //spill/reload operation for livein/liveout gsr.
@@ -747,7 +747,7 @@ protected:
     INT m_cur_phase; //record current LRA's phase
     ParallelPartMgr * m_ppm; //parallel-partition mananger.
     RaMgr * m_ramgr;
-    xoc::Region * m_ru;
+    xoc::Region * m_rg;
     CG * m_cg;
     UINT m_opt_phase; //record optimizing option.
     List<DataDepGraph*> m_ddg_list;

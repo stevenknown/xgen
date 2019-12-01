@@ -678,13 +678,6 @@ MD7 -- base:VAR9(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 region 'foo',id:2 id:1
     region-info:
     ==---- REGION(2):foo:int foo () ----==
-    VARIABLES:6
-      VAR76(func_level_var_0):local,spill_loc,align(4),u32,decl:''
-      VAR77(func_level_var_1):local,spill_loc,align(4),u32,decl:''
-      VAR78(func_level_var_2):local,spill_loc,align(4),u32,decl:''
-      VAR79(func_level_var_3):local,spill_loc,align(4),u32,decl:''
-      VAR80(func_level_var_4):local,spill_loc,align(4),u32,decl:''
-      VAR81(func_level_var_5):local,spill_loc,align(4),u32,decl:''
     RegionMayDef(OuterRegion):MD2,MD3
     MD2 -- base:VAR2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
     MD3 -- base:VAR3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -692,7 +685,7 @@ region 'foo',id:2 id:1
     MD2 -- base:VAR2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
     MD3 -- base:VAR3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
     MD5 -- base:VAR4(p):global,,addr_taken,align(4),pointer,pt_base_sz:8,*,mem_size:4,decl:'struct S * p ' -- ofst:0 -- size:4
-    'foo' use 7KB memory
+    'foo' use 5KB memory
     The number of IR Total:8, id:0(0.0)%, ld:2(25.0)%, st:0(0.0)%, lda:0(0.0)%,call:0(0.0)%, icall:0(0.0)%, pr:0(0.0)%, stpr:0(0.0)%, ist:1(12.5)%,bin:0(0.0)%, una:1(12.5)%
     ==---- DUMP IRBBList region 'foo' ----==
     ----- BB3 ------
@@ -806,13 +799,6 @@ MD7 -- base:VAR9(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 region 'foo',id:2 id:1
     region-info:
     ==---- REGION(2):foo:int foo () ----==
-    VARIABLES:6
-      VAR76(func_level_var_0):local,spill_loc,align(4),u32,decl:''
-      VAR77(func_level_var_1):local,spill_loc,align(4),u32,decl:''
-      VAR78(func_level_var_2):local,spill_loc,align(4),u32,decl:''
-      VAR79(func_level_var_3):local,spill_loc,align(4),u32,decl:''
-      VAR80(func_level_var_4):local,spill_loc,align(4),u32,decl:''
-      VAR81(func_level_var_5):local,spill_loc,align(4),u32,decl:''
     RegionMayDef(OuterRegion):MD2,MD3
     MD2 -- base:VAR2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
     MD3 -- base:VAR3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -820,7 +806,7 @@ region 'foo',id:2 id:1
     MD2 -- base:VAR2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
     MD3 -- base:VAR3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
     MD5 -- base:VAR4(p):global,,addr_taken,align(4),pointer,pt_base_sz:8,*,mem_size:4,decl:'struct S * p ' -- ofst:0 -- size:4
-    'foo' use 7KB memory
+    'foo' use 5KB memory
     The number of IR Total:8, id:0(0.0)%, ld:2(25.0)%, st:0(0.0)%, lda:0(0.0)%,call:0(0.0)%, icall:0(0.0)%, pr:0(0.0)%, stpr:0(0.0)%, ist:1(12.5)%,bin:0(0.0)%, una:1(12.5)%
     ==---- DUMP IRBBList region 'foo' ----==
     ----- BB3 ------

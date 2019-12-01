@@ -424,9 +424,8 @@ void BBORList::dump(CG * cg)
 
         buf.clean();
         o->dump(buf, cg);
-        fprintf(xoc::g_tfile, "%s", buf.buf);
-        fprintf(xoc::g_tfile, "\n");
-        fflush(xoc::g_tfile);
+        note("%s", buf.buf);
+        note("\n");
     }
 }
 //END BBORList

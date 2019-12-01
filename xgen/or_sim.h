@@ -53,7 +53,7 @@ class BBSimulator {
 protected:
     INT m_cyc_counter;
     ORBB * m_bb;
-    xoc::Region * m_ru;
+    xoc::Region * m_rg;
     CG * m_cg;
     List<ORDesc*> m_slot_lst[SLOT_NUM]; //Record ors who are executing.
     ORVec m_exec_tab[SLOT_NUM]; //Record total ors issued.

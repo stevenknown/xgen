@@ -83,7 +83,7 @@ CG::CG(xoc::Region * rg, CGMgr * cgmgr)
 {
     ASSERTN(rg, ("Code generation need region info."));
     ASSERT0(cgmgr);
-    m_ru = rg;
+    m_rg = rg;
     m_cgmgr = cgmgr;
     m_tm = rg->getTypeMgr();
     m_or_bb_idx = 1; //the id of first bb is 1.
@@ -977,13 +977,13 @@ void CG::initBuiltin()
 //e.g: stack info, parameter info.
 void CG::initFuncUnit()
 {
-    ASSERT0(!m_ru->is_blackbox());
+    ASSERT0(!m_rg->is_blackbox());
 
     //Initializing formal parameter section.
-    ASSERT0(m_ru->getRegionVar());
+    ASSERT0(m_rg->getRegionVar());
 
     List<xoc::VAR const*> param_list;
-    m_ru->findFormalParam(param_list, true);
+    m_rg->findFormalParam(param_list, true);
 
     UINT i = 0;
     for (xoc::VAR const* v = param_list.get_head();
@@ -1149,7 +1149,7 @@ void CG::dumpPackage()
             note("\n{");
             IssuePackage * ip = ipct->val();
             for (SLOT s = FIRST_SLOT; s <= LAST_SLOT; s = (SLOT)(s + 1)) {
-                if (s != FIRST_SLOT) { fprintf(xoc::g_tfile, "|"); }
+                if (s != FIRST_SLOT) { note("|"); }
 
                 OR * o = ip->get(s);
                 if (o == NULL) {
@@ -1159,12 +1159,12 @@ void CG::dumpPackage()
                 }
             }
 
-            fprintf(xoc::g_tfile, "}");
+            note("}");
 
             //Dump instruction details.
             g_indent += 4;
             for (SLOT s = FIRST_SLOT; s <= LAST_SLOT; s = (SLOT)(s + 1)) {
-                if (s != FIRST_SLOT) { fprintf(xoc::g_tfile, "|"); }
+                if (s != FIRST_SLOT) { note("|"); }
 
                 OR * o = ip->get(s);
                 if (o == NULL) {
@@ -1183,7 +1183,7 @@ void CG::dumpPackage()
 void CG::dumpSection()
 {
     if (xoc::g_tfile == NULL) { return; }
-    fprintf(xoc::g_tfile, "\n==---- DUMP Section VAR info ----==\n");
+    note("\n==---- DUMP Section VAR info ----==\n");
     m_code_sect.dump(this);
     m_data_sect.dump(this);
     m_rodata_sect.dump(this);
@@ -3243,7 +3243,7 @@ void CG::storeRegisterParameterBackToStack(
     }
     ASSERT0(tmGetRegSetOfArgument());
     List<VAR const*> param_lst;
-    m_ru->findFormalParam(param_lst, true);
+    m_rg->findFormalParam(param_lst, true);
 
     ASSERT0(entry_lst);
     RegSet const* phyregset = tmGetRegSetOfArgument();
@@ -3332,7 +3332,7 @@ void CG::reviseFormalParameterAndSpadjust()
         RegSet const* phyregset = tmGetRegSetOfArgument();
         ASSERT0(phyregset);
         List<VAR const*> param_list;
-        m_ru->findFormalParam(param_list, true);
+        m_rg->findFormalParam(param_list, true);
         UINT bytesize_of_arg_passed_via_reg =
             calcSizeOfParameterPassedViaRegister(&param_list);
         if (bytesize_of_arg_passed_via_reg % SPADJUST_ALIGNMENT != 0) {
@@ -3439,7 +3439,7 @@ CHAR const* CG::genFuncLevelNewVarName(OUT xcom::StrBuf & name)
 xoc::VAR * CG::genTempVar(xoc::Type const* type, UINT align, bool func_level)
 {
     xcom::StrBuf name(64);
-    xoc::Region * fu = m_ru->getFuncRegion();
+    xoc::Region * fu = m_rg->getFuncRegion();
     if (func_level) {
         xoc::VAR * v = fu->getVarMgr()->registerVar(
             genFuncLevelNewVarName(name),
@@ -3529,7 +3529,7 @@ void CG::constructORBBList(IN ORList & or_list)
 
     if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
         xoc::note("\n==---- DUMP AFTER IR2OR CONVERT %s ----==",
-            m_ru->getRegionName());
+            m_rg->getRegionName());
         dumpORBBList(m_or_bb_list);
     }
 }
@@ -3540,11 +3540,11 @@ RaMgr * CG::performRA()
 {
     if (g_is_dump_before_pass && g_dump_opt.isDumpRA()) {
         xoc::note("\n==---- DUMP BEFORE REGISTER ALLOCATION of '%s' ----==",
-            m_ru->getRegionName());
+            m_rg->getRegionName());
         dumpORBBList(m_or_bb_list);
     }
     START_TIMER(t, "Perform Register Allocation");
-    RaMgr * lm = allocRaMgr(getORBBList(), m_ru->is_function());
+    RaMgr * lm = allocRaMgr(getORBBList(), m_rg->is_function());
     lm->setParallelPartMgrVec(getParallelPartMgrVec());
     #ifdef _DEBUG_
     if (tmGetRegSetOfCallerSaved()->is_empty()) {
@@ -3560,7 +3560,7 @@ RaMgr * CG::performRA()
     END_TIMER(t, "Perform Register Allocation");
     if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
         xoc::note("\n==---- DUMP AFTER REGISTER ALLOCATION %s ----==",
-            m_ru->getRegionName());
+            m_rg->getRegionName());
         dumpORBBList(m_or_bb_list);
     }
     return lm;
@@ -3640,7 +3640,7 @@ bool CG::isAlloca(xoc::IR const* ir) const
 void CG::computeMaxRealParamSpace()
 {
     START_TIMER(t, "Compute Max Real Parameter Space");
-    BBList * ir_bb_list = m_ru->getBBList();
+    BBList * ir_bb_list = m_rg->getBBList();
     for (IRBB * bb = ir_bb_list->get_head();
          bb != NULL; bb = ir_bb_list->get_next()) {
         xcom::C<xoc::IR*> * ct;
@@ -4038,12 +4038,12 @@ bool CG::perform()
         g_dump_opt.isDumpCG()) {
         g_indent = 0;
         xoc::note("\n==---- DUMP START CODE GENERATION (%d)'%s' ----==\n",
-            REGION_id(m_ru), m_ru->getRegionName());
-        m_ru->dump(false);
+            REGION_id(m_rg), m_rg->getRegionName());
+        m_rg->dump(false);
     }
 
-    if (m_ru->getIRList() == NULL &&
-        m_ru->getBBList()->get_elem_count() == 0) {
+    if (m_rg->getIRList() == NULL &&
+        m_rg->getBBList()->get_elem_count() == 0) {
         return true;
     }
 
@@ -4053,7 +4053,7 @@ bool CG::perform()
     IR2OR * ir2or = allocIR2OR();
     ASSERT0(ir2or);
 
-    CHAR const* varname = SYM_name(m_ru->getRegionVar()->get_name());
+    CHAR const* varname = SYM_name(m_rg->getRegionVar()->get_name());
     DUMMYUSE(varname);
 
     //Translate IR in IRBB to a list of OR.
@@ -4080,7 +4080,7 @@ bool CG::perform()
     }
     END_TIMER(t0, "OR Control Flow Optimizations");
 
-    if (m_ru->is_function()) {
+    if (m_rg->is_function()) {
         //Generate SP adjustment operation, and the code protecting the
         //Return Address if region has a call.
         //If SP adjust operations are more than one, you should construct a
@@ -4118,7 +4118,7 @@ bool CG::perform()
 
     //Insert store of parameter register after spadjust at each entry BB
     //if target machine support pass argument through register.
-    if (m_ru->is_function()) {
+    if (m_rg->is_function()) {
         reviseFormalParameterAndSpadjust();
     }
 
