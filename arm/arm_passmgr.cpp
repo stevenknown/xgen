@@ -36,6 +36,12 @@ author: Su Zhenyu
 #include "../cfe/cfexport.h"
 #include "../opt/util.h"
 
+Pass * ARMPassMgr::allocDUMgr()
+{
+    return new ARMDUMgr(m_rg);
+}
+
+
 void ARMPassMgr::performScalarOpt(OptCtx & oc)
 {
     ASSERT0(OC_is_cfg_valid(oc));

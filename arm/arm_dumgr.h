@@ -28,29 +28,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-#ifndef __ARM_H__
-#define __ARM_H__
 
-#include "../arm/arm_targinfo.h"
-#include "../arm/arm_sr.h"
-#include "../arm/arm_or.h"
-#include "../arm/arm_ramgr.h"
-//#include "../arm/arm_ddg.h"
-//#include "../arm/arm_parallelpartmgr.h"
-#include "../arm/arm_lra.h"
-#include "../arm/arm_sim.h"
-#include "../arm/arm_lis.h"
-//#include "../arm/arm_ip.h"
-#include "../arm/arm_passmgr.h"
-//#include "../arm/arm_ramgr.h"
-#include "../arm/arm_region.h"
-#include "../arm/arm_region_mgr.h"
-//#include "../arm/arm_util.h"
-#include "../arm/armir2or.h"
-#include "../arm/armasmprinter.h"
-#include "../arm/arm_cg.h"
-#include "../arm/arm_cgmgr.h"
-#include "../arm/arm_var.h"
-#include "../arm/arm_dumgr.h"
-
+#ifndef _ARM_DUMGR_H_
+#define _ARM_DUMGR_H_
+class ARMDUMgr : public IR_DU_MGR {
+public:
+    ARMDUMgr(Region * rg) : IR_DU_MGR(rg) {}
+    COPY_CONSTRUCTOR(ARMDUMgr);
+    virtual void computeAtomMDRef(IR * ir, UINT duflag)
+    { IR_DU_MGR::computeAtomMDRef(ir, duflag); }
+};
 #endif
