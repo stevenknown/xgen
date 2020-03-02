@@ -882,22 +882,22 @@ bool compileGRFile(CHAR * gr_file_name)
     }
 
     if (g_is_dumpgr) {
-    	dumpRegionMgrGR(rm, gr_file_name);
+        dumpRegionMgrGR(rm, gr_file_name);
     }
 
     //Dump and clean
     compileRegionSet(rm, cgmgr, asmh);
     for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
-    	Region * r = rm->getRegion(i);
-    	if (r == NULL) { continue; }
-    	if (r->getPassMgr() != NULL) {
+        Region * r = rm->getRegion(i);
+        if (r == NULL) { continue; }
+        if (r->getPassMgr() != NULL) {
             xoc::PRSSAMgr * ssamgr = (PRSSAMgr*)r->
-            	getPassMgr()->queryPass(PASS_PR_SSA_MGR);
+                getPassMgr()->queryPass(PASS_PR_SSA_MGR);
             if (ssamgr != NULL && ssamgr->isSSAConstructed()) {
                 OptCtx * oc = rm->getAndGenOptCtx(r->id());
-            	ssamgr->destruction(oc);
+                ssamgr->destruction(oc);
             }
-    	}
+        }
     }
 FIN:
     END_TIMER_FMT(t, ("Total Time To Compile '%s'", gr_file_name));

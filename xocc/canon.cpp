@@ -146,11 +146,11 @@ IR * Canon::handle_exp(IN IR * ir, OUT bool & change, CanonCtx * cc)
         return ir;
     case IR_LDA: // &a get address of 'a'
         return handle_lda(ir, change, cc);
-	SWITCH_CASE_BIN:
+    SWITCH_CASE_BIN:
         BIN_opnd0(ir) = handle_exp(BIN_opnd0(ir), change, cc);
         BIN_opnd1(ir) = handle_exp(BIN_opnd1(ir), change, cc);
         return ir;
-	SWITCH_CASE_UNA:
+    SWITCH_CASE_UNA:
         UNA_opnd(ir) = handle_exp(UNA_opnd(ir), change, cc);
         return ir;
     case IR_LABEL:

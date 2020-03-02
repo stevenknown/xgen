@@ -41,7 +41,7 @@ public:
 
     virtual void handlePreferredReg(OR const*);
 
-    virtual void considerSpecialConstrains(
+    virtual void considerSpecialConstraints(
             IN OR *,
             SR const*,
             OUT RegSet & usable_regs);

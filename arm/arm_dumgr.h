@@ -31,11 +31,11 @@ author: Su Zhenyu
 
 #ifndef _ARM_DUMGR_H_
 #define _ARM_DUMGR_H_
-class ARMDUMgr : public IR_DU_MGR {
+class ARMDUMgr : public DUMgr {
 public:
-    ARMDUMgr(Region * rg) : IR_DU_MGR(rg) {}
+    ARMDUMgr(Region * rg) : DUMgr(rg) {}
     COPY_CONSTRUCTOR(ARMDUMgr);
     virtual void computeAtomMDRef(IR * ir, UINT duflag)
-    { IR_DU_MGR::computeAtomMDRef(ir, duflag); }
+    { DUMgr::computeAtomMDRef(ir, duflag); }
 };
 #endif

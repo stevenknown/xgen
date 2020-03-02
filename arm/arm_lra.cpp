@@ -37,7 +37,7 @@ author: Su Zhenyu
 #include "../opt/util.h"
 
 
-void ARMLifeTimeMgr::considerSpecialConstrains(
+void ARMLifeTimeMgr::considerSpecialConstraints(
         IN OR * o,
         SR const* sr,
         OUT RegSet & usable_regs)

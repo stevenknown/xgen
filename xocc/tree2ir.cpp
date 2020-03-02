@@ -727,7 +727,7 @@ bool CTree2IR::is_readonly(VAR const* v)
 {
     CHAR const* vname = SYM_name(VAR_name(v));
     if (strcmp(vname, "printf") == 0) {
-        //CASE: If 'printf' is set to be READONLY, IR_DCE will remove
+        //CASE: If 'printf' is set to be READONLY, DeadCodeElim will remove
         //the call-site if there is no use of printf's return value.
         return true;
     }

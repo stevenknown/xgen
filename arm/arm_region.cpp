@@ -221,7 +221,7 @@ bool ARMRegion::ARMMiddleProcessForTesting(OptCtx & oc)
     if (SIMP_need_recon_bblist(&simp) && g_cst_bb_list &&
         reconstructBBList(oc)) {
         ASSERTN(g_do_cfg, ("construct BB list need CFG"));
-        IR_CFG * cfg = getCFG();
+        IRCFG * cfg = getCFG();
         ASSERT0(cfg);
         cfg->rebuild(oc);
 
@@ -315,7 +315,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
     if (g_do_md_du_analysis) {
         ASSERT0(g_cst_bb_list && OC_is_cfg_valid(oc) && OC_is_aa_valid(oc));
         ASSERT0(getPassMgr());
-        IR_DU_MGR * dumgr = (IR_DU_MGR*)getPassMgr()->
+        DUMgr * dumgr = (DUMgr*)getPassMgr()->
             registerPass(PASS_DU_MGR);
         ASSERT0(dumgr);
         UINT f = SOL_REF;
@@ -343,7 +343,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
                 registerPass(PASS_REFINE_DUCHAIN);
             if (g_compute_classic_du_chain) {
                 refdu->setUseGvn(true);
-                IR_GVN * gvn = (IR_GVN*)getPassMgr()->registerPass(PASS_GVN);
+                GVN * gvn = (GVN*)getPassMgr()->registerPass(PASS_GVN);
                 gvn->perform(oc);
             }
             refdu->perform(oc);
@@ -372,7 +372,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
         (!OC_is_aa_valid(oc) ||
          !OC_is_ref_valid(oc) ||
          !OC_is_du_chain_valid(oc))) {
-        IR_AA * aa = getAA();
+        AliasAnalysis * aa = getAA();
         if (g_do_aa && aa != NULL &&
             (!OC_is_aa_valid(oc) || !OC_is_ref_valid(oc))) {
             if (!aa->is_init()) {
@@ -412,7 +412,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
             aa->perform(oc);
         }
 
-        IR_DU_MGR * dumgr = getDUMgr();
+        DUMgr * dumgr = getDUMgr();
         if (g_do_md_du_analysis && dumgr != NULL) {
             if (g_compute_classic_du_chain) {
                 dumgr->perform(oc, SOL_REF|SOL_REACH_DEF|
@@ -456,7 +456,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     } else {
         Region::MiddleProcess(oc);
         if (g_do_cp && getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
-            ((IR_CP*)getPassMgr()->registerPass(PASS_CP))->perform(oc);
+            ((CopyProp*)getPassMgr()->registerPass(PASS_CP))->perform(oc);
         }
     }
     if (g_do_cfg_dom && !OC_is_dom_valid(oc)) {
@@ -476,7 +476,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
             mdssamgr->construction(oc);
         }
         if (getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
-            IR_GCSE * pass = (IR_GCSE*)
+            GCSE * pass = (GCSE*)
                 getPassMgr()->registerPass(PASS_GCSE);
             bool changed = false;
             changed = pass->perform(oc);
@@ -492,17 +492,17 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         }
     }
     if (g_do_licm) {
-        IR_LICM * pass = (IR_LICM*)getPassMgr()->registerPass(PASS_LICM);
+        LICM * pass = (LICM*)getPassMgr()->registerPass(PASS_LICM);
         if (pass->perform(oc)) {
             getPassMgr()->registerPass(PASS_MD_SSA_MGR)->perform(oc);
         }
     }
     if (g_do_cp) {
-        IR_CP * pass = (IR_CP*)getPassMgr()->registerPass(PASS_CP);
+        CopyProp * pass = (CopyProp*)getPassMgr()->registerPass(PASS_CP);
         pass->perform(oc);
     }
     if (g_do_dce) {
-        IR_DCE * pass = (IR_DCE*)getPassMgr()->registerPass(PASS_DCE);
+        DeadCodeElim * pass = (DeadCodeElim*)getPassMgr()->registerPass(PASS_DCE);
         pass->perform(oc);
     }
     ASSERT0((!g_do_md_du_analysis && !g_do_md_ssa) || verifyMDRef());

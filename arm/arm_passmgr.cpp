@@ -53,7 +53,7 @@ void ARMPassMgr::performScalarOpt(OptCtx & oc)
 
     if (g_do_cp) {
         passlist.append_tail(registerPass(PASS_CP));
-        ((IR_CP*)registerPass(PASS_CP))->setPropagationKind(CP_PROP_SIMPLEX);
+        ((CopyProp*)registerPass(PASS_CP))->setPropagationKind(CP_PROP_SIMPLEX);
     }
 
     if (g_do_rce) { passlist.append_tail(registerPass(PASS_RCE)); }
@@ -62,12 +62,12 @@ void ARMPassMgr::performScalarOpt(OptCtx & oc)
 
     if (g_do_cp) {
         passlist.append_tail(registerPass(PASS_CP));
-        ((IR_CP*)queryPass(PASS_CP))->setPropagationKind(CP_PROP_SIMPLEX);
+        ((CopyProp*)queryPass(PASS_CP))->setPropagationKind(CP_PROP_SIMPLEX);
     }
 
     if (g_do_dce) {
         passlist.append_tail(registerPass(PASS_DCE));
-        ((IR_DCE*)registerPass(PASS_DCE))->set_elim_cfs(false);
+        ((DeadCodeElim*)registerPass(PASS_DCE))->set_elim_cfs(false);
     }
 
     if (g_do_licm) { passlist.append_tail(registerPass(PASS_LICM)); }
