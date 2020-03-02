@@ -62,14 +62,14 @@ OR_CFG::OR_CFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
     case C_SESE: {  //single entry, single exit
         //The first bb in list is the entry node
         m_entry = m_bb_list->get_head();
-        ASSERT0(get_in_degree(get_vertex(ORBB_id(m_entry))) == 0);
+        ASSERT0(getInDegree(getVertex(ORBB_id(m_entry))) == 0);
         ORBB_is_entry(m_entry) = true;
 
         //create exit bb
         ORBB * exitbb = m_cg->allocBB();
-        ASSERT0(get_out_degree(get_vertex(ORBB_id(exitbb))) == 0);
+        ASSERT0(getOutDegree(getVertex(ORBB_id(exitbb))) == 0);
         ORBB_is_exit(exitbb) = true;
-        add_bb(exitbb);
+        addBB(exitbb);
         m_bb_list->append_tail(exitbb);
         m_exit_list.append_head(exitbb);
         break;
@@ -77,7 +77,7 @@ OR_CFG::OR_CFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
     case C_SEME: { //single entry, multi exit
         //The first bb in list is the entry node
         m_entry = m_bb_list->get_head();
-        ASSERT0(get_in_degree(get_vertex(ORBB_id(m_entry))) == 0);
+        ASSERT0(getInDegree(getVertex(ORBB_id(m_entry))) == 0);
         ORBB_is_entry(m_entry) = 1;
 
         //Collect exit BB.
@@ -96,7 +96,7 @@ OR_CFG::OR_CFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
 
 INT OR_CFG::getNumOfBB()
 {
-    return get_vertex_num();
+    return getVertexNum();
 }
 
 
@@ -108,7 +108,7 @@ List<ORBB*> * OR_CFG::getBBList()
 
 //Add a new vertex into Graph to describe BB, but
 //the BB list should be modified out of this function.
-void OR_CFG::add_bb(ORBB * bb)
+void OR_CFG::addBB(ORBB * bb)
 {
     ASSERT0(bb && m_bb_vec.get(ORBB_id(bb)) == NULL);
     m_bb_vec.set(ORBB_id(bb), bb);
@@ -157,7 +157,7 @@ ORBB * OR_CFG::getBB(UINT id) const
 //Return all successors.
 void OR_CFG::get_succs(IN OUT List<ORBB*> & succs, ORBB const* bb)
 {
-    xcom::Vertex * v = get_vertex(ORBB_id(bb));
+    xcom::Vertex * v = getVertex(ORBB_id(bb));
     xcom::EdgeC * el = VERTEX_out_list(v);
     succs.clean();
     if (el == NULL) return;
@@ -173,7 +173,7 @@ void OR_CFG::get_succs(IN OUT List<ORBB*> & succs, ORBB const* bb)
 //Return all predecessors.
 void OR_CFG::get_preds(IN OUT List<ORBB*> & preds, ORBB const* bb)
 {
-    xcom::Vertex * v = get_vertex(ORBB_id(bb));
+    xcom::Vertex * v = getVertex(ORBB_id(bb));
     xcom::EdgeC * el = VERTEX_in_list(v);
     preds.clean();
     if (!el) return;
@@ -231,7 +231,7 @@ void OR_CFG::dump_node(FILE * h, bool detail)
     UINT vertical_order = 1;
     for (ORBB * bb = m_bb_list->get_head();
          bb != NULL; bb = m_bb_list->get_next()) {
-        xcom::Vertex * v = get_vertex(bb->id());
+        xcom::Vertex * v = getVertex(bb->id());
         ASSERTN(v, ("bb is not in cfg"));
 
         CHAR const* shape = "box";

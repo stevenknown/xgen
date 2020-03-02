@@ -93,7 +93,7 @@ VAR_MAP::VAR_MAP(ORBB * bb)
 }
 
 
-//Mapping from OR and cycle to constrain variable.
+//Mapping from OR and cycle to constraint variable.
 UINT VAR_MAP::map_or_cyc2varidx(UINT or_idx, UINT cyc)
 {
     ASSERT0(m_oridx2vecidx.get(or_idx) >= 0);
@@ -103,7 +103,7 @@ UINT VAR_MAP::map_or_cyc2varidx(UINT or_idx, UINT cyc)
 }
 
 
-//Mapping from constrain variable to OR and cycle.
+//Mapping from constraint variable to OR and cycle.
 void VAR_MAP::map_varidx2or_cyc(UINT var_idx,
                                 OUT OR * & o,
                                 OUT UINT & cyc)
@@ -265,7 +265,7 @@ ORBBUnit * RefORBBList::get_bu(ORBB * bb)
 }
 
 
-ORBBUnit * RefORBBList::add_bb(ORBB * bb)
+ORBBUnit * RefORBBList::addBB(ORBB * bb)
 {
     ASSERTN(m_pool, ("List not yet initialized."));
     //Keep bu unique.
@@ -285,7 +285,7 @@ ORBBUnit * RefORBBList::add_bb(ORBB * bb)
 OR * RefORBBList::add_or(ORBB * bb, OR * o)
 {
     ASSERTN(m_pool, ("List not yet initialized."));
-    ORBBUnit * bu = add_bb(bb);
+    ORBBUnit * bu = addBB(bb);
     List<OR*> * or_list = OR_BBUNIT_or_list(bu);
     for (OR * tor = or_list->get_head(); tor != NULL; tor = or_list->get_next()) {
         if (tor == o) {
@@ -431,7 +431,7 @@ xcom::Edge * RegFileAffinityGraph::clustering(SR * sr1,
 RDG_EDGE_INFO * RegFileAffinityGraph::getEdgeInfo(UINT start, UINT end)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
-    xcom::Edge *e = get_edge(start, end);
+    xcom::Edge *e = getEdge(start, end);
     if (e) {
         return (RDG_EDGE_INFO*)EDGE_info(e);
     }
@@ -595,7 +595,7 @@ ORBB * InterfGraph::bb()
 //Is 'lt' on graph node.
 bool InterfGraph::isGraphNode(LifeTime * lt)
 {
-    if (get_vertex(LT_id(lt)) != NULL) {
+    if (getVertex(LT_id(lt)) != NULL) {
         return true;
     }
     return false;
@@ -794,7 +794,7 @@ void InterfGraph::updateLifeTimeInterf(LifeTime * lt, INT prio_regfile)
 
 UINT InterfGraph::getInterfDegree(LifeTime * lt)
 {
-    return xcom::Graph::get_degree(LT_id(lt));
+    return xcom::Graph::getDegree(LT_id(lt));
 }
 
 
@@ -1152,7 +1152,7 @@ void LifeTimeMgr::computeLifeTimeCluster(LifeTime * lt, OR * o)
         } else {
             //Omit regfile which can cross bus.
             if (clust != CLUST_UNDEF) {
-                //Always assigning life time the newest cluster info.
+                //Always assigning life time the latest cluster info.
                 LT_cluster(lt) = clust;
             }
         }
@@ -1173,7 +1173,7 @@ void LifeTimeMgr::computeLifeTimeCluster(LifeTime * lt, OR * o)
         } else {
             //Omit regfile which can cross bus.
             if (clust != CLUST_UNDEF) {
-                //Always assigning life time the newest cluster info.
+                //Always assigning life time the latest cluster info.
                 LT_cluster(lt) = clust;
             }
         }
@@ -2155,7 +2155,7 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
         if (pi != NULL) {
             OR * o = m_pos2or_map.get(occ);
             ASSERTN(o, ("'pos' to 'o' mapping is illegal, not any content!"));
-            considerSpecialConstrains(o, sr, *usable_rs);
+            considerSpecialConstraints(o, sr, *usable_rs);
 
             //Deduct clobbered registers from 'usable_regs'.
             if (POSINFO_is_def(pi)) { //Deal with reuslts
@@ -2505,7 +2505,7 @@ void LifeTimeMgr::dump(UINT flag)
 }
 
 
-void LifeTimeMgr::considerSpecialConstrains(
+void LifeTimeMgr::considerSpecialConstraints(
         IN OR *,
         SR const*,
         OUT RegSet & usable_regs)
@@ -2695,10 +2695,10 @@ void InstructionPartition<Mat, T>::formulateTargetFunction(
 }
 
 
-//The equation constrain should be:SIGMA(o(i)) = 1, i=0..NUM_OPS,
+//The equation constraint should be:SIGMA(o(i)) = 1, i=0..NUM_OPS,
 //for each cycles.
 template <class Mat, class T>
-void InstructionPartition<Mat, T>::formulateMustScheduleConstrains(
+void InstructionPartition<Mat, T>::formulateMustScheduleConstraints(
         OUT Mat & eq,
         IN ORBB * bb,
         IN VAR_MAP & vm,
@@ -2729,7 +2729,7 @@ void InstructionPartition<Mat, T>::formulateMustScheduleConstrains(
 
 
 template <class Mat, class T>
-void InstructionPartition<Mat, T>::formulateIssueConstrains(
+void InstructionPartition<Mat, T>::formulateIssueConstraints(
         OUT Mat & leq,
         IN VAR_MAP & vm,
         UINT num_cycs,
@@ -2755,12 +2755,12 @@ void InstructionPartition<Mat, T>::formulateIssueConstrains(
 }
 
 
-//Given a dependent edge xi->xj, the constrain is as the
+//Given a dependent edge xi->xj, the constraint is as the
 //folloing form:
 //    SIGMA(i * xi) + Latency(i,j) + 1 <= SIGMA (j * xj),
 //    where i=(cycle0, cycle1,...)
 template <class Mat, class T>
-void InstructionPartition<Mat, T>::formulateDependenceConstrains(
+void InstructionPartition<Mat, T>::formulateDependenceConstraints(
         OUT Mat & leq,
         IN ORBB * bb,
         IN DataDepGraph & ddg,
@@ -2832,7 +2832,7 @@ void InstructionPartition<Mat, T>::formulateDependenceConstrains(
 
 
 template <class Mat, class T>
-void InstructionPartition<Mat, T>::formulateInterClusterConstrains(
+void InstructionPartition<Mat, T>::formulateInterClusterConstraints(
         OUT Mat & leq,
         OUT Mat & eq,
         OUT UINT & num_icc_vars,
@@ -2848,13 +2848,13 @@ void InstructionPartition<Mat, T>::formulateInterClusterConstrains(
     INT start_idx_of_new_cs = rhs_idx;
     INT num_new_cs_of_each_edge = vm.get_clust_num() * vm.get_clust_num();
 
-    num_icc_vars = ddg.get_edge_num() * num_new_cs_of_each_edge;
+    num_icc_vars = ddg.getEdgeNum() * num_new_cs_of_each_edge;
     leq.insertColumnsBefore(rhs_idx, num_icc_vars);
     eq.insertColumnsBefore(rhs_idx, num_icc_vars);
 
     INT new_rhs_idx = num_vars + num_icc_vars;
     UINT ofst = start_idx_of_new_cs;
-    for (UINT i = 0; i < ddg.get_edge_num(); i++) {
+    for (UINT i = 0; i < ddg.getEdgeNum(); i++) {
         for (UINT j = 0; j < num_new_cs_of_each_edge; j++) {
             UINT c = vm.map_icc_varidx2coeff(j);
             leq.set(i, ofst + j, c);
@@ -2922,7 +2922,7 @@ void InstructionPartition<Mat, T>::format(
     //icc_form to be formed as:
     //col0:from_vertex  col1:to_vertex col2:from_cluster col3:to_cluster
     if (num_icc_vars) {
-        icc_form.reinit(ddg.get_edge_num(), 4);
+        icc_form.reinit(ddg.getEdgeNum(), 4);
         UINT row = 0;
         INT c;
         for (xcom::Edge * e = ddg.get_first_edge(c);
@@ -2988,24 +2988,24 @@ bool InstructionPartition<Mat, T>::partition(
                                   num_cycs, num_ops,
                                   num_vars, num_cst);
 
-        //Construct equality constrains.
+        //Construct equality constraints.
         Mat eq;
-        formulateMustScheduleConstrains(eq, bb, vm, num_cycs,
+        formulateMustScheduleConstraints(eq, bb, vm, num_cycs,
                                      num_ops, num_vars, num_cst);
 
-        //Construct inequality constrains.
+        //Construct inequality constraints.
         Mat leq;
-        formulateDependenceConstrains(leq, bb,
+        formulateDependenceConstraints(leq, bb,
                                         ddg, vm, *sim,
                                         num_cycs, num_ops,
                                         num_vars, num_cst);
 
-        //Issue constrain.
-        formulateIssueConstrains(leq, vm, num_cycs, num_ops, num_vars);
+        //Issue constraint.
+        formulateIssueConstraints(leq, vm, num_cycs, num_ops, num_vars);
 
-        //Construct inter-cluster constrains.
+        //Construct inter-cluster constraints.
         UINT num_icc_vars = 0;
-        //formulateInterClusterConstrains(leq, eq,
+        //formulateInterClusterConstraints(leq, eq,
         //                            num_icc_vars,
         //                            bb, ddg, vm,
         //                            num_cycs, num_ops,
@@ -3015,7 +3015,7 @@ bool InstructionPartition<Mat, T>::partition(
             tgtf.setCols(rhs_idx, rhs_idx + num_icc_vars, 1);
         }
 
-        //Construct variable constrains.
+        //Construct variable constraints.
         Mat vc(num_vars + num_icc_vars, num_vars + num_icc_vars);
         vc.eye(-1);
         vc.growCol(1);
@@ -3241,7 +3241,7 @@ bool LRA::assignRegister(
 
     //We have been handled(deducted already) the
     //special registers in
-    //'LifeTimeMgr::considerSpecialConstrains'.
+    //'LifeTimeMgr::considerSpecialConstraints'.
 
     //Avoid allocating the registers which are neighbors anticipated.
     for (ni = ni_list.get_head(); ni; ni = ni_list.get_next()) {
@@ -4881,7 +4881,7 @@ bool LRA::removeRedundantStoreLoadAfterLoad(
 
 //#define USE_EDGE_INFO
 #ifdef USE_EDGE_INFO
-        xcom::Edge * e = ddg.get_edge(OR_id(o), OR_id(succ));
+        xcom::Edge * e = ddg.getEdge(OR_id(o), OR_id(succ));
         ASSERTN(e, ("absent edge."));
         if (DDGEI_deptype(EDGE_info(e)) & DEP_REG_FLOW) {
             has_use = true;
@@ -6018,7 +6018,7 @@ void LRA::chooseBestRegFileFromMultipleCand(
 
 
 //Assign Register File in term of the affinity, resource pressure,
-//and target dependent constrains.
+//and target dependent constraints.
 //'lt': assign REGFILE to it.
 //'regfile_cand': a list of REGFILE.
 //NOTICE: 'cri' should be maintained.
@@ -6130,7 +6130,7 @@ bool LRA::isAlwaysColored(
     if (allowed_reg_set == NULL) {
         return false;
     }
-    UINT degree = ig.get_degree(LT_id(lt));
+    UINT degree = ig.getDegree(LT_id(lt));
 
     //lt is allocable
     if (degree + 1 <= allowed_reg_set->get_elem_count()) {
@@ -7442,7 +7442,7 @@ bool LRA::partitionGroup(
     tmpddg->init(NULL);
     tmpddg->clone(ddg);
     deductORCrossBus(*tmpddg);
-    if (tmpddg->get_vertex_num() <= 0) {
+    if (tmpddg->getVertexNum() <= 0) {
         if (change_ddg_param) {
             ddg.popParam();
             ddg.reschedul();
@@ -7458,7 +7458,7 @@ bool LRA::partitionGroup(
     //Staticitics bottom nodes which without successors.
     for (OR * o = ORBB_first_or(m_bb); o != NULL;
          o = ORBB_next_or(m_bb)) {
-        xcom::Vertex * v = tmpddg->get_vertex(OR_id(o));
+        xcom::Vertex * v = tmpddg->getVertex(OR_id(o));
         if (!v) { //node has been removed
             continue;
         }
@@ -7474,7 +7474,7 @@ bool LRA::partitionGroup(
     while (proclist.get_elem_count() > 0) {
         OR * o = proclist.remove_head();
         ASSERTN(gm.get_or_group(o) != 0, ("o has not yet grouped"));
-        xcom::Vertex * v = tmpddg->get_vertex(OR_id(o));
+        xcom::Vertex * v = tmpddg->getVertex(OR_id(o));
         ASSERTN(v, ("o is not node of graph"));
 
         //Process all preds.
@@ -7540,7 +7540,7 @@ bool LRA::partitionGroup(
         if (gp_need_process.get(i) &&
             must_clust != CLUST_UNDEF) {
             if ((((float)orlist->get_elem_count()) /
-                 ((float)tmpddg->get_vertex_num())) < GROUP_DIFF_THRESHOLD) {
+                 ((float)tmpddg->getVertexNum())) < GROUP_DIFF_THRESHOLD) {
                 if (isReasonableCluster(must_clust, *orlist,
                         *tmpddg, is_regfile_unique)) {
                     is_resch = true;
@@ -7572,7 +7572,7 @@ bool LRA::partitionGroup(
         List<OR*> * orlist = gm.get_orlist_in_group(i);
         ASSERTN(orlist, ("group is empty"));
         if ((((float)orlist->get_elem_count()) /
-             ((float)tmpddg->get_vertex_num())) > GROUP_DIFF_THRESHOLD) {
+             ((float)tmpddg->getVertexNum())) > GROUP_DIFF_THRESHOLD) {
             continue; //Ununiform group partitioning.
         }
         tgroups.append_tail(orlist);

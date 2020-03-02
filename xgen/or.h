@@ -157,7 +157,7 @@ public:
 class OR {
 protected:
     Vector<SR*, 2> m_opnd; //operand of micro operation
-	Vector<SR*, 2> m_result; //result of micro operation
+    Vector<SR*, 2> m_result; //result of micro operation
 public:
     //each op has its own unique id.
     //DO NOT MODIFY 'id' DURING cleaning, cloning or copying of OR.
@@ -181,7 +181,7 @@ public:
 
             //Set to true if OR has a dummy offset which indicated by VAR.
             //And the offset should be caclulated to be an integer
-			//before emiting assembly.
+            //before emiting assembly.
             BYTE need_to_compute_var_ofst:1;
         } s1;
         BYTE s1byte;
@@ -276,13 +276,13 @@ public:
 
     //Get LOAD VALUE, the default LOAD has one load-value opnd.
     //There are may be multiple load-value opnds if target
-	//is, for example SIMD machine.
+    //is, for example SIMD machine.
     //Layout of opnds:
-	//---------------------------------------------------------
-	// 0         | 1    | 2      | 3         | 4         |     |
-	// predicate | base | offset | load-val1 | load-val2 | ... |
-	// register  |	    |        |           |           |     |
-	//---------------------------------------------------------
+    //---------------------------------------------------------
+    // 0         | 1    | 2      | 3         | 4         |     |
+    // predicate | base | offset | load-val1 | load-val2 | ... |
+    // register  |      |        |           |           |     |
+    //---------------------------------------------------------
     //'idx': index of load-values.
     SR * get_load_val(UINT idx)
     {
@@ -331,6 +331,8 @@ public:
     UINT opnd_num() const { return tmGetOpndNum(OR_code(this)); }
     UINT result_num() const { return tmGetResultNum(OR_code(this)); }
 
+    bool hasSideEffect() const { return OR_is_side_effect(this); }
+
     virtual bool is_equal(OR const* o) const;
     //Return true if 'o' depicted a label.
     bool is_label_or()
@@ -359,7 +361,7 @@ public:
     //has one store-value opnd.
     //There are may be multiple store-value opnds if target is SIMD machine.
     //Layout of opnds:
-	//-----------------------------------------------------------
+    //-----------------------------------------------------------
     // 0         | 1    | 2      | 3          | 4          |     |
     // predicate | base | offset | store-val1 | store-val2 | ... |
     // register  |      |        |            |            |     |

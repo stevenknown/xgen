@@ -270,7 +270,7 @@ bool BBSimulator::isResourceConflict(
         DataDepGraph & ddg)
 {
     OR * ck_or = ORDESC_or(ck_ord);
-    xcom::Edge * e = ddg.get_edge(OR_id(ck_or), OR_id(cand_or));
+    xcom::Edge * e = ddg.getEdge(OR_id(ck_or), OR_id(cand_or));
     ORScheInfo const* or_info = ORDESC_or_sche_info(ck_ord);
     ASSERT0(or_info && e);
     DEP_TYPE deptype = (DEP_TYPE)DDGEI_deptype(EDGE_info(e));

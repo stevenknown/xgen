@@ -1183,7 +1183,7 @@ public:
                        OUT DataDepGraph ** ddg,
                        OUT BBSimulator ** sim,
                        OUT LIS ** lis);
-   
+
     //Perform Instruction Scheduling.
     virtual void performIS(OUT Vector<BBSimulator*> & simvec,
                            RaMgr * ra_mgr);

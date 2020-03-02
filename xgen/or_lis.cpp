@@ -118,8 +118,8 @@ COMP_REDO:
     if (nop_list.get_elem_count() > 0) {
         for (OR * o = nop_list.get_head();
              o != NULL; o = nop_list.get_next()) {
-            xcom::Vertex * v = ddg.get_vertex(OR_id(o));
-            if (ddg.get_degree(v) > 0) {
+            xcom::Vertex * v = ddg.getVertex(OR_id(o));
+            if (ddg.getDegree(v) > 0) {
                 redo = true;
             }
             ddg.removeOR(o);
@@ -514,7 +514,7 @@ bool LIS::schedule()
 
 RESCH:
     computeReadyList(*stepddg, visited, true);
-    while (stepddg->get_vertex_num() > 0 || !m_sim->done()) {
+    while (stepddg->getVertexNum() > 0 || !m_sim->done()) {
         fillIssueSlot(*stepddg);
         computeReadyList(*stepddg, visited, true);
     }

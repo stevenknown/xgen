@@ -313,7 +313,7 @@ public:
     ~RefORBBList() { destroy(); }
 
     ORBBUnit * get_bu(ORBB * bb);
-    ORBBUnit * add_bb(ORBB * bb);
+    ORBBUnit * addBB(ORBB * bb);
     OR * add_or(ORBB * bb, OR * o);
     List<OR*> * get_or_list(ORBB * bb);
     OR * removeOR(ORBB * bb, OR * o);
@@ -458,7 +458,7 @@ public:
     void computeLifeTimeCluster(LifeTime * lt, OR * o);
     void computeUsableRegs();
     void computeLifeTimeUsableRegs(LifeTime * lt, RegSet * usable_rs);
-    virtual void considerSpecialConstrains(
+    virtual void considerSpecialConstraints(
             OR * o,
             SR const* sr,
             RegSet & usable_regs);
@@ -678,14 +678,14 @@ public:
                                  UINT num_ors,
                                  UINT num_vars,
                                  UINT num_cst);
-    void formulateMustScheduleConstrains(OUT Mat & eq,
+    void formulateMustScheduleConstraints(OUT Mat & eq,
                                          IN ORBB * bb,
                                          IN VAR_MAP & vm,
                                          UINT num_cycs,
                                          UINT num_ors,
                                          UINT num_vars,
                                          UINT num_cst);
-    void formulateDependenceConstrains(OUT Mat & leq,
+    void formulateDependenceConstraints(OUT Mat & leq,
                                        IN ORBB * bb,
                                        IN DataDepGraph & ddg,
                                        IN VAR_MAP & vm,
@@ -694,12 +694,12 @@ public:
                                        UINT num_ors,
                                        UINT num_vars,
                                        UINT num_cst);
-    void formulateIssueConstrains(OUT Mat & leq,
+    void formulateIssueConstraints(OUT Mat & leq,
                                   IN VAR_MAP & vm,
                                   UINT num_cycs,
                                   UINT num_ors,
                                   UINT num_vars);
-    void formulateInterClusterConstrains(OUT Mat & leq,
+    void formulateInterClusterConstraints(OUT Mat & leq,
                                          OUT Mat & eq,
                                          OUT UINT & num_icc_vars,
                                          IN ORBB * bb,
@@ -917,7 +917,7 @@ public:
             RegSet & rs);
 
     //Return true if given hardware resource can be used as spill location.
-    //This is up to the hardware constrains.
+    //This is up to the hardware constraints.
     //This function always invoked by register hoisting which can spilling
     //a value into another register.
     virtual bool canBeSpillLoc(CLUST, REGFILE) { return true; }

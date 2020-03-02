@@ -69,7 +69,7 @@ protected:
 public:
     OR_CFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg);
     virtual ~OR_CFG() {}
-    virtual void add_bb(ORBB * bb);
+    virtual void addBB(ORBB * bb);
     virtual void cf_opt();
     void dumpVCG(CHAR const* name = NULL, bool detail = true);
 

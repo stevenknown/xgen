@@ -1248,12 +1248,12 @@ bool CG::changeORUnit(OR * o,
         return false;
     }
 
-    //Regfile needs to replaced amenable for instruction-constrain.
+    //Regfile needs to replaced amenable for instruction-constraint.
     //Thus, we perform conservative inspection for regfiles of 'o'.
     UNIT from_unit = computeORUnit(o)->checkAndGet();
     CLUST from_clust = computeORCluster(o);
 
-    //Check regfile resource constrains.
+    //Check regfile resource constraints.
     if (from_unit != to_unit || from_clust != to_clust) {
         UINT i;
         for (i = 0; i < o->result_num(); i++) {
@@ -1379,8 +1379,8 @@ bool CG::changeORType(OR * o,
         }
         if (!regfile_unique.get(SR_sregid(sr))) {
             SR_phy_regid(sr) = REG_UNDEF;
-            SR_regfile(sr) = RF_UNDEF;        
-        }        
+            SR_regfile(sr) = RF_UNDEF;
+        }
     }
 
     for (i = 0; i < o->opnd_num(); i++) {
@@ -1409,8 +1409,8 @@ bool CG::changeORType(OR * o,
         }
         if (!regfile_unique.get(SR_sregid(sr))) {
             SR_phy_regid(sr) = REG_UNDEF;
-            SR_regfile(sr) = RF_UNDEF;        
-        }        
+            SR_regfile(sr) = RF_UNDEF;
+        }
     }
     OR_code(o) = ot;
     return true;
@@ -2945,11 +2945,11 @@ void CG::computeEntryAndExit(IN OR_CFG & cfg,
          v != NULL; v = cfg.get_next_vertex(c)) {
         ORBB * bb = cfg.getBB(VERTEX_id(v));
         ASSERT0(bb);
-        if (cfg.get_in_degree(v) == 0) {
+        if (cfg.getInDegree(v) == 0) {
             ORBB_is_entry(bb) = true;
             entry_lst.append_tail(bb);
         }
-        if (cfg.get_out_degree(v) == 0) {
+        if (cfg.getOutDegree(v) == 0) {
             ORBB_is_exit(bb) = true;
             exit_lst.append_tail(bb);
         }
@@ -3909,7 +3909,7 @@ void CG::localize()
     }
 
     TMapIter<SR*, TTab<ORBB*>*> iter;
-    TTab<ORBB*> * orbbtab;
+    TTab<ORBB*> * orbbtab = NULL;
     for (SR * sr = sr2orbbtab.get_first(iter, &orbbtab);
          sr != NULL; sr = sr2orbbtab.get_next(iter, &orbbtab)) {
         localizeBBTab(sr, orbbtab);

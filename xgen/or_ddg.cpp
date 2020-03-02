@@ -206,7 +206,7 @@ void DataDepGraph::union_edge(List<OR*> & orlist, OR * tgt)
 
 void DataDepGraph::chainPredAndSucc(OR * o)
 {
-    xcom::Vertex * v = get_vertex(OR_id(o));
+    xcom::Vertex * v = getVertex(OR_id(o));
     ASSERT0(v);
     xcom::EdgeC * pred_lst = VERTEX_in_list(v);
     xcom::EdgeC * succ_lst = VERTEX_out_list(v);
@@ -327,7 +327,7 @@ bool DataDepGraph::is_dependent(OR const* o1, OR const* o2)
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
 #define METHOD1
 #ifdef METHOD1
-    if(get_edge(OR_id(o1), OR_id(o2))) {
+    if(getEdge(OR_id(o1), OR_id(o2))) {
 #else //Method2
     if(is_reachable(OR_id(o1), OR_id(o2))) {
 #endif
@@ -364,7 +364,7 @@ void DataDepGraph::removeEdge(OR * from, OR * to)
 void DataDepGraph::removeEdge(UINT from, UINT to)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
-    xcom::Graph::removeEdge(get_edge(from, to));
+    xcom::Graph::removeEdge(getEdge(from, to));
 }
 
 
@@ -702,12 +702,12 @@ void DataDepGraph::getORListWhichAccessSameMem(
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     mem_ors.clean();
     ASSERTN(o, ("Node:%d is not on DDG.", OR_id(o)));
-    xcom::Vertex * v = get_vertex(OR_id(o));
+    xcom::Vertex * v = getVertex(OR_id(o));
     if (v == NULL) { return; }
 
     List<xcom::Vertex*> worklst;
     ORList tmplst;
-    Vector<bool> visited(this->get_vertex_num());
+    Vector<bool> visited(this->getVertexNum());
 
     worklst.append_tail(v);
     visited.set(VERTEX_id(v), true);
@@ -1098,7 +1098,7 @@ void DataDepGraph::getPredsByOrder(IN OUT ORList & preds, IN OR * o)
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     preds.clean();
 
-    xcom::Vertex * v = get_vertex(OR_id(o));
+    xcom::Vertex * v = getVertex(OR_id(o));
     if (v == NULL) return;
     xcom::EdgeC * el = VERTEX_in_list(v);
     if (el == NULL) return;
@@ -1129,7 +1129,7 @@ void DataDepGraph::getSuccsByOrder(IN OUT ORList & succs, IN OR * o)
     ASSERTN(o != NULL, ("Node:%d is not on DDG.", OR_id(o)));
     succs.clean();
 
-    xcom::Vertex * v = get_vertex(OR_id(o));
+    xcom::Vertex * v = getVertex(OR_id(o));
     if (v == NULL) { return; }
 
     for (xcom::EdgeC * el = VERTEX_out_list(v); el != NULL; el = EC_next(el)) {
@@ -1160,7 +1160,7 @@ void DataDepGraph::getPredsByOrderTraverseNode(
     ASSERTN(o != NULL, ("Node:%d is not on DDG.", OR_id(o)));
     preds.clean();
 
-    xcom::Vertex * v = get_vertex(OR_id(o));
+    xcom::Vertex * v = getVertex(OR_id(o));
     if (v == NULL) return;
     xcom::EdgeC * el = VERTEX_in_list(v);
     if (el == NULL) return;
@@ -1168,7 +1168,7 @@ void DataDepGraph::getPredsByOrderTraverseNode(
     List<xcom::Vertex*> worklst;
     OR_HASH tmpbuf;
     worklst.append_tail(v);
-    Vector<bool> visited(this->get_vertex_num());
+    Vector<bool> visited(this->getVertexNum());
     while (worklst.get_elem_count() > 0) {
         xcom::Vertex * sv = worklst.remove_head();
         xcom::EdgeC * el2 = VERTEX_in_list(sv);
@@ -1218,7 +1218,7 @@ void DataDepGraph::getSuccsByOrderTraverseNode(
     ASSERTN(o != NULL, ("Node:%d is not on DDG.", OR_id(o)));
     succs.clean();
 
-    xcom::Vertex * v = get_vertex(OR_id(o));
+    xcom::Vertex * v = getVertex(OR_id(o));
     if (v == NULL) return;
     xcom::EdgeC * el = VERTEX_out_list(v);
     if (el == NULL) return;
@@ -1272,7 +1272,7 @@ void DataDepGraph::get_succs(IN OUT ORList & succs, OR const* o)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     succs.clean();
-    xcom::Vertex * v = get_vertex(OR_id(o));
+    xcom::Vertex * v = getVertex(OR_id(o));
     if (v == NULL) return;
     xcom::EdgeC * el = VERTEX_out_list(v);
     if (el == NULL) return;
@@ -1307,7 +1307,7 @@ void DataDepGraph::get_preds(IN OUT ORList & preds, OR const* o)
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     preds.clean();
 
-    xcom::Vertex * v = get_vertex(OR_id(o));
+    xcom::Vertex * v = getVertex(OR_id(o));
     if (v == NULL) return;
     xcom::EdgeC * el = VERTEX_in_list(v);
     if (el == NULL) return;
@@ -1324,7 +1324,7 @@ void DataDepGraph::get_preds(IN OUT ORList & preds, OR const* o)
 void DataDepGraph::get_neighbors(IN OUT ORList & nis, OR const* o)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
-    xcom::Vertex * v = get_vertex(OR_id(o));
+    xcom::Vertex * v = getVertex(OR_id(o));
     if (v == NULL) return;
     xcom::EdgeC * el = VERTEX_out_list(v);
     if (el == NULL) return;
@@ -1377,12 +1377,12 @@ UINT DataDepGraph::computeEstartAndLstart(IN BBSimulator & sim, OUT OR ** fin_or
     //Find root nodes.
     INT c;
     for (xcom::Vertex * v = get_first_vertex(c); v != NULL; v = get_next_vertex(c)) {
-        if (get_in_degree(v) == 0) {
+        if (getInDegree(v) == 0) {
             worklst.append_tail(v);
             m_estart_vec.set(VERTEX_id(v), 0);
         }
         //Top down scans the graph.
-        in_degree.set(VERTEX_id(v), get_in_degree(v));;
+        in_degree.set(VERTEX_id(v), getInDegree(v));;
     }
 
     while (worklst.get_elem_count() > 0) {
@@ -1437,11 +1437,11 @@ UINT DataDepGraph::computeEstartAndLstart(IN BBSimulator & sim, OUT OR ** fin_or
 
     //Find anti-root nodes.
     for (xcom::Vertex * v = get_first_vertex(c); v != NULL; v = get_next_vertex(c)) {
-        if (get_out_degree(v) == 0) {
+        if (getOutDegree(v) == 0) {
             worklst.append_tail(v);
         }
         //Bottom up scans the graph.
-        out_degree.set(VERTEX_id(v), get_out_degree(v));
+        out_degree.set(VERTEX_id(v), getOutDegree(v));
     }
 
     while (worklst.get_elem_count() > 0) {
@@ -1488,7 +1488,7 @@ UINT DataDepGraph::computeEstartAndLstart(IN BBSimulator & sim, OUT OR ** fin_or
 void DataDepGraph::sortInTopological(OUT Vector<UINT> & vex_vec)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
-    if (get_vertex_num() == 0) {
+    if (getVertexNum() == 0) {
         return;
     }
     DataDepGraph tmpddg;
@@ -1497,7 +1497,7 @@ void DataDepGraph::sortInTopological(OUT Vector<UINT> & vex_vec)
     List<xcom::Vertex*> norredvex;
     UINT pos = 0;
     vex_vec.clean();
-    vex_vec.grow(get_vertex_num());
+    vex_vec.grow(getVertexNum());
     INT c;
     while (tmpddg.get_first_vertex(c) != NULL) {
         norredvex.clean();

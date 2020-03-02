@@ -98,9 +98,9 @@ public:
         return false;
     }
 
-	//Verficiation of instruction hazard, and change slot of o if possible.
-	//Return true if 'o' can be issued at 'to_slot'.
-	//The verification includes hardware resource, instrcution hazard, etc.
+    //Verficiation of instruction hazard, and change slot of o if possible.
+    //Return true if 'o' can be issued at 'to_slot'.
+    //The verification includes hardware resource, instrcution hazard, etc.
     bool canBeIssued(OR * o,
                      OR * issue_ors[SLOT_NUM],
                      SLOT to_slot,
