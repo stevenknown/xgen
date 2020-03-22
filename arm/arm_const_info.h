@@ -35,25 +35,27 @@ author: Su Zhenyu
 //sanity verification before get to work.
 
 //Define signed and unsigned integer type on host machine.
-#define INT8                 CHAR
-#define UINT8                UCHAR
-#define INT16                SHORT
-#define UINT16               USHORT
-#define INT32                INT
-#define UINT32               UINT
-#define INT64                LONGLONG
-#define UINT64               ULONGLONG
+typedef signed char INT8;
+typedef signed short INT16;
+typedef signed int INT32;
+typedef signed long long INT64;
+typedef signed long long INT128;
+typedef unsigned char UINT8;
+typedef unsigned short UINT16;
+typedef unsigned int UINT32;
+typedef unsigned long long UINT64;
+typedef unsigned long long UINT128;
 
 //Define target machine word/half-word/byte/bit size
-#define BIT_PER_BYTE         8
-#define BYTE_PER_CHAR        1
-#define BYTE_PER_SHORT       2
-#define BYTE_PER_INT         4
-#define BYTE_PER_LONG        4
-#define BYTE_PER_LONGLONG    8
-#define BYTE_PER_FLOAT       4
-#define BYTE_PER_DOUBLE      8
-#define BYTE_PER_POINTER     4
+#define BIT_PER_BYTE 8
+#define BYTE_PER_CHAR 1
+#define BYTE_PER_SHORT 2
+#define BYTE_PER_INT 4
+#define BYTE_PER_LONG 4
+#define BYTE_PER_LONGLONG 8
+#define BYTE_PER_FLOAT 4
+#define BYTE_PER_DOUBLE 8
+#define BYTE_PER_POINTER 4
 
 //Define target machine general register byte size.
 #define GENERAL_REGISTER_SIZE BYTE_PER_POINTER
@@ -61,78 +63,78 @@ author: Su Zhenyu
 //Define the max bit length of HOST_INT that indicates the max integer
 //that compiler can represent.
 //Note HOST_INT must be signed, and HOST_UINT must be unsigned.
-#define HOST_INT             LONGLONG
-#define HOST_UINT            ULONGLONG
-#define HOST_FP              double
-#define HOST_BIT_PER_BYTE    8
-#define HOST_BYTE_PER_INT    8
+#define HOST_INT LONGLONG
+#define HOST_UINT ULONGLONG
+#define HOST_FP double
+#define HOST_BIT_PER_BYTE 8
+#define HOST_BYTE_PER_INT 8
 
 //Defined result SR index of multiple-words-load.
-#define PAIR_LOW_RES_IDX     0
-#define PAIR_HIGH_RES_IDX    1
-#define PAIR_LOW_OPND_IDX    1
-#define PAIR_HIGH_OPND_IDX   2
+#define PAIR_LOW_RES_IDX 0
+#define PAIR_HIGH_RES_IDX 1
+#define PAIR_LOW_OPND_IDX 1
+#define PAIR_HIGH_OPND_IDX 2
 
 //Describe the maximum byte size that can be allocated on host machine stack.
 //The threshold often used in allocating memory via ALLOCA.
-#define HOST_STACK_MAX_USABLE_MEMORY_BYTE_SIZE    65536
+#define HOST_STACK_MAX_USABLE_MEMORY_BYTE_SIZE 65536
 
 //Bit size of word length of host machine.
-#define WORD_LENGTH_OF_HOST_MACHINE    (HOST_BIT_PER_BYTE * HOST_BYTE_PER_INT)
+#define WORD_LENGTH_OF_HOST_MACHINE (HOST_BIT_PER_BYTE * HOST_BYTE_PER_INT)
 
 //Bit size of word length of target machine.
-#define WORD_LENGTH_OF_TARGET_MACHINE  (GENERAL_REGISTER_SIZE * BIT_PER_BYTE)
+#define WORD_LENGTH_OF_TARGET_MACHINE (GENERAL_REGISTER_SIZE * BIT_PER_BYTE)
 
 //If the number of OR of one BB is larger than following value,
 //all local optimizations are disabled.
-#define MAX_OR_BB_OPT_BB_LEN    1000
+#define MAX_OR_BB_OPT_BB_LEN 1000
 
 //Represent target machine word with host type.
 //Note TMWORD must be unsigned.
-#define TMWORD                  UINT
+#define TMWORD UINT
 
 //Define target machine memory and stack alignment.
 //The alignment is power of 2 on ARM.
-#define MEMORY_ALIGNMENT        4
-#define STACK_ALIGNMENT         4
+#define MEMORY_ALIGNMENT 4
+#define STACK_ALIGNMENT 4
 
 //Define target machine stack pointer adjustment operation's alignment.
 //The alignment should not less than STACK_ALIGNMENT.
-#define SPADJUST_ALIGNMENT      8
+#define SPADJUST_ALIGNMENT 8
 
 //Define default float mantissa in output file, such as GR file.
-#define DEFAULT_MANTISSA_NUM    6
+#define DEFAULT_MANTISSA_NUM 6
 
 //Maximum byte size of target machine stack.
-#define MAX_STACK_SPACE     16*1024*1024
+#define MAX_STACK_SPACE 16*1024*1024
 
 //Define the order to pushing parameter before function call.
 //true: from right to left
 //false: from left to right
-#define PUSH_PARAM_FROM_RIGHT_TO_LEFT  true
+#define PUSH_PARAM_FROM_RIGHT_TO_LEFT true
 
 //The number of registers which are used to store return-value.
-#define NUM_OF_RETURN_VAL_REGISTERS    2
+#define NUM_OF_RETURN_VAL_REGISTERS 2
 
 //Define whether target machine support predicate register.
 //Note the first opnd must be predicate register if target support.
-#define HAS_PREDICATE_REGISTER         true
+#define HAS_PREDICATE_REGISTER true
 
 //Define the operand index of literal offset of Spadjust operation.
-#define SPADJUST_OFFSET_INDX            1
+#define SPADJUST_OFFSET_INDX 1
 
 //Define the max/min integer value range of target machine.
-#define MIN_INT_VALUE               0x80000000
-#define EPSILON                     0.000001
+#define MIN_INT_VALUE 0x80000000
+#define EPSILON 0.000001
 
 //Display/dump integer literal with hex if it is
 //greater than this threshold.
-#define THRESHOLD_DISPLAY_IN_HEX    0x10000000
+#define THRESHOLD_DISPLAY_IN_HEX 0x10000000
 
 //Defined the threshold of Dominator Frontier Density.
 //Higher Dominator Frontier Density might make SSAMgr inserting
 //ton of PHIs which will blow up memory.
-#define THRESHOLD_HIGH_DOMINATOR_FRONTIER_DENSITY    1000
+#define THRESHOLD_HIGH_DOMINATOR_FRONTIER_DENSITY 1000
 
 //Defined macros to skip some special argument registers when passing
 //arguments.
@@ -256,34 +258,34 @@ typedef enum _REGFILE {
 } REGFILE;
 
 //Define mnemonic for ARM physical register.
-#define REG_UNDEF                    0 //Reserved undefined physical register id
-#define REG_R0                       1
-#define REG_R1                       2
-#define REG_R2                       3
-#define REG_R3                       4
-#define REG_R12                      13 //Scratch Register
-#define REG_SP                       14
-#define REG_RFLAG_REGISTER           97
-#define REG_EQ_PRED                  98
-#define REG_NE_PRED                  99
-#define REG_CS_PRED                  100
-#define REG_HS_PRED                  101
-#define REG_CC_PRED                  102
-#define REG_LO_PRED                  103
-#define REG_MI_PRED                  104
-#define REG_PL_PRED                  105
-#define REG_VS_PRED                  106
-#define REG_VC_PRED                  107
-#define REG_HI_PRED                  108
-#define REG_LS_PRED                  109
-#define REG_GE_PRED                  110
-#define REG_LT_PRED                  111
-#define REG_GT_PRED                  112
-#define REG_LE_PRED                  113
-#define REG_RETURN_ADDRESS_REGISTER  15
-#define REG_TRUE_PRED                114
-#define REG_LAST                     114 //The last physical register
-#define REG_NUM                      (REG_LAST+1) //The number of physical register
+#define REG_UNDEF 0 //Reserved undefined physical register id
+#define REG_R0 1
+#define REG_R1 2
+#define REG_R2 3
+#define REG_R3 4
+#define REG_R12 13 //Scratch Register
+#define REG_SP 14
+#define REG_RFLAG_REGISTER 97
+#define REG_EQ_PRED 98
+#define REG_NE_PRED 99
+#define REG_CS_PRED 100
+#define REG_HS_PRED 101
+#define REG_CC_PRED 102
+#define REG_LO_PRED 103
+#define REG_MI_PRED 104
+#define REG_PL_PRED 105
+#define REG_VS_PRED 106
+#define REG_VC_PRED 107
+#define REG_HI_PRED 108
+#define REG_LS_PRED 109
+#define REG_GE_PRED 110
+#define REG_LT_PRED 111
+#define REG_GT_PRED 112
+#define REG_LE_PRED 113
+#define REG_RETURN_ADDRESS_REGISTER 15
+#define REG_TRUE_PRED 114
+#define REG_LAST 114 //The last physical register
+#define REG_NUM (REG_LAST+1) //The number of physical register
 
 //Instruction Operation Type.
 typedef enum _OR_TYPE {

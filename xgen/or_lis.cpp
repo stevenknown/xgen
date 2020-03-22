@@ -85,10 +85,9 @@ void LIS::destroy()
 }
 
 
-void LIS::computeReadyList(
-        IN OUT DataDepGraph & ddg,
-        IN OUT Vector<bool> & visited,
-        bool topdown)
+void LIS::computeReadyList(IN OUT DataDepGraph & ddg,
+                           IN OUT Vector<bool> & visited,
+                           bool topdown)
 {
     ASSERTN(m_pool, ("uninitialized"));
     ORList nop_list;
@@ -155,10 +154,9 @@ bool LIS::isIssueCand(OR * o)
 
 
 //Check the usage of function unit.
-bool LIS::isFuncUnitOccupied(
-        UnitSet const& us,
-        CLUST clst,
-        OR const* const issue_ors [SLOT_NUM])
+bool LIS::isFuncUnitOccupied(UnitSet const& us,
+                             CLUST clst,
+                             OR const* const issue_ors [SLOT_NUM])
 {
     for (INT i = us.get_first(); i != -1; i = us.get_next(i)) {
         SLOT s = m_cg->mapUnit2Slot((UNIT)i, clst);
@@ -174,12 +172,11 @@ bool LIS::isFuncUnitOccupied(
 //Verficiation of instruction hazard, and change slot of o if possible.
 //Return true if 'o' can be issued at 'to_slot'.
 //The verification includes hardware resource, instrcution hazard, etc.
-bool LIS::canBeIssued(
-        OR * o,
-        OR * issue_ors[SLOT_NUM],
-        SLOT to_slot,
-        bool is_change_slot,
-        OR * conflict_ors[SLOT_NUM])
+bool LIS::canBeIssued(OR * o,
+                      OR * issue_ors[SLOT_NUM],
+                      SLOT to_slot,
+                      bool is_change_slot,
+                      OR * conflict_ors[SLOT_NUM])
 {
     ASSERT0(m_cg->mapSlot2Cluster(to_slot) != CLUST_UNDEF);
     UNIT to_slot_unit = m_cg->mapSlot2Unit(to_slot);
@@ -286,26 +283,25 @@ void LIS::updateIssueORs(
 }
 
 
-//When we could not find any o that can be issued at
-//'to_slot', the function will be call to try to move
-//the operations have been selected to 'to_slot'.
+//When we could not find any OR that can be issued at
+//'to_slot', the function will be invokoed to attemp to move outside
+//operations have been selected to 'to_slot'.
 //
-//e.g:Now the ready ors are LW, MUL, the slot are MEM, AU,
-//    and LW can issue at slot MEM, MUL can issue at slot
-//    both AU and MEM.
-//    Suppose we have chosen MUL for slot MEM, then there is
-//    not any candidate for slot AU because LW only can be
-//    issued at MEM. So we are going to move MUL at slot AU,
+//e.g:Now the ready ors are Load, Mul, the slot are MEM, ALU,
+//    and Load can issue at slot MEM, Mul can issue at slot
+//    both ALU and MEM.
+//    Suppose we have chosen Mul for slot MEM, then there is
+//    not any candidate for slot ALU because Load only can be
+//    issued at MEM. So we are going to move Mul at slot ALU,
 //    and reschedul operation for slot MEM.
 //    before roll back:
-//        {MUL | nop}
+//        {Mul | nop}
 //        {Load  | nop}
 //    after roll back:
-//        {Load  | MUL}
-SLOT LIS::rollBackORs(
-        bool be_changed[SLOT_NUM],
-        OR * issue_ors[SLOT_NUM],
-        SLOT to_slot)
+//        {Load  | Mul}
+SLOT LIS::rollBackORs(bool be_changed[SLOT_NUM],
+                      OR * issue_ors[SLOT_NUM],
+                      SLOT to_slot)
 {
     ASSERT0(issue_ors[to_slot] == NULL);
     for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {

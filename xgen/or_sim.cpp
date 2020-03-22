@@ -45,7 +45,7 @@ BBSimulator::BBSimulator(ORBB * bb)
 
 void BBSimulator::init()
 {
-    if (m_pool != NULL) return;
+    if (m_pool != NULL) { return; }
     ASSERTN_DUMMYUSE(FIRST_SLOT == 0, ("illegal slot type"));
     m_cyc_counter = 0;
     m_pool = smpoolCreate(256, MEM_COMM);
@@ -61,7 +61,7 @@ void BBSimulator::init()
 
 void BBSimulator::destroy()
 {
-    if (m_pool == NULL) return;
+    if (m_pool == NULL) { return; }
     m_cyc_counter = 0;
     for (INT i = FIRST_SLOT; i < SLOT_NUM; i++) {
         m_slot_lst[i].destroy();
@@ -115,14 +115,14 @@ bool BBSimulator::issue(OR * o, SLOT slot)
     ASSERTN(m_pool, ("not yet initialized."));
     ASSERTN(slot >= FIRST_SLOT && slot <= LAST_SLOT, ("Unknown slot"));
     ASSERTN(m_exec_tab[slot].get(m_cyc_counter) == NULL,
-        ("slot has been occupied by other candidate-OR"));
+            ("slot has been occupied by other candidate-OR"));
 
     //result-available-cycle o execution-cycle should start
     //from the cycle that the instruction to be prefetched
     //to the cycle that the last result to be avaialable.
     //e.g: The available cyc of mem-store is 1, and the shadow is 0,
     //     since mem-store only execute one
-    //     cycle(namely, occupied M-unit one cycle).
+    //     cycle(namely, occupied memory-unit one cycle).
     bool occ_slot[SLOT_NUM] = {false};
     getOccupiedSlot(o, occ_slot);
     ASSERT0(occ_slot[slot]);
@@ -177,7 +177,7 @@ UINT BBSimulator::getExecCycle(OR const* o)
 
 //Return the number of cycles that starting from the cycle 'o'
 //executed to the cycle all of results were available.
-//e.g:For LW, return value is 3 cycles, the load value can be
+//e.g:given Load, return value is 3 cycles, the load value can be
 //used at the 4 cycle.
 UINT BBSimulator::getMinLatency(OR * o)
 {
@@ -198,10 +198,9 @@ bool BBSimulator::isInShadow(ORDesc const* ord) const
 }
 
 
-bool BBSimulator::isMemResourceConflict(
-        DEP_TYPE deptype,
-        ORDesc * ck_ord,
-        OR const* cand_or)
+bool BBSimulator::isMemResourceConflict(DEP_TYPE deptype,
+                                        ORDesc * ck_ord,
+                                        OR const* cand_or)
 {
     DUMMYUSE(cand_or);
     UINT start_cyc = ORDESC_start_cyc(ck_ord);
@@ -225,10 +224,9 @@ bool BBSimulator::isMemResourceConflict(
 
 
 //NOTICE: Result register include PC register.
-bool BBSimulator::isRegResourceConflict(
-        DEP_TYPE deptype,
-        ORDesc * ck_ord,
-        OR const* cand_or)
+bool BBSimulator::isRegResourceConflict(DEP_TYPE deptype,
+                                        ORDesc * ck_ord,
+                                        OR const* cand_or)
 {
     DUMMYUSE(cand_or);
     UINT start_cyc = ORDESC_start_cyc(ck_ord);
@@ -264,10 +262,9 @@ INT BBSimulator::computeDependentResultIndex(OR const* def, OR const* use)
 //Check if resource conflict exists. Return true if
 //the needed resource of 'cand_or' is conflict with 'ck_or'.
 //For now, the machine resource include memory and register.
-bool BBSimulator::isResourceConflict(
-        ORDesc * ck_ord,
-        OR const* cand_or,
-        DataDepGraph & ddg)
+bool BBSimulator::isResourceConflict(ORDesc * ck_ord,
+                                     OR const* cand_or,
+                                     DataDepGraph & ddg)
 {
     OR * ck_or = ORDESC_or(ck_ord);
     xcom::Edge * e = ddg.getEdge(OR_id(ck_or), OR_id(cand_or));
@@ -339,7 +336,7 @@ void BBSimulator::runOneCycle(IN OUT ORList * finished_ors)
     ASSERTN(m_pool, ("not yet initialized."));
     m_cyc_counter++;
     for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {
-        ORDesc * next;
+        ORDesc * next = NULL;
         for (ORDesc * ord = m_slot_lst[i].get_head(); ord != NULL; ord = next) {
             next = m_slot_lst[i].get_next();
             //Because cyc_counter start from cycle '0', if simm run
@@ -404,8 +401,7 @@ void BBSimulator::dump(CHAR * name, bool is_del, bool dump_exec_detail)
     //Print execution detail for each of cycle.
     if (dump_exec_detail) {
         StrBuf buf(64);
-        INT i;
-        for (i = 0; i <= cyc_counter; i++) {
+        for (INT i = 0; i <= cyc_counter; i++) {
             fprintf(h, "\n\tCycle(%d):", i);
             for (UINT slot = FIRST_SLOT; slot < SLOT_NUM; slot++) {
                 fprintf(h, "\n\t\t%s: ", slot_name[slot]);

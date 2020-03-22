@@ -34,10 +34,10 @@ author: Su Zhenyu
 namespace xgen {
 
 //Local Instruction Schedulor
-#define SCH_UNDEF                0
-#define SCH_TOP_DOWN             1 //Scheducling Top-down
-#define SCH_BOTTOM_UP            2 //Scheducling bottom up
-#define SCH_BRANCH_DELAY_SLOT    3 //Scheducling branch delay
+#define SCH_UNDEF 0
+#define SCH_TOP_DOWN 1 //Scheducling Top-down
+#define SCH_BOTTOM_UP 2 //Scheducling bottom up
+#define SCH_BRANCH_DELAY_SLOT 3 //Scheducling branch delay
 class LIS {
 protected:
     SMemPool * m_pool;
@@ -47,11 +47,11 @@ protected:
     BBSimulator * m_sim;
     CG * m_cg;
     OR_HASH m_ready_list;
-    bool m_is_change_slot;    //permit func unit be changed.
+    bool m_is_change_slot; //permit func unit be changed.
     bool m_is_change_cluster; //permit cluster be changed.
-    bool m_or_changed;        //record if resource of or changed.
-    ORDesc * m_br_ord;        //description of branch operation.
-    OR_HASH m_br_all_preds;   //all of ors which are predecessors of branch-or.
+    bool m_or_changed; //record if resource of or changed.
+    ORDesc * m_br_ord; //description of branch operation.
+    OR_HASH m_br_all_preds; //all of ors which are predecessors of branch-or.
     Vector<bool> const* m_is_regfile_unique;
 
 protected:
@@ -65,11 +65,10 @@ protected:
         return p;
     }
     virtual OR * selectBestOR(OR_HASH & cand_hash, SLOT slot);
-    virtual void updateIssueORs(
-            IN OUT ORList & cand_list,
-            SLOT slot,
-            IN OR * issue_or,
-            IN OUT OR * issue_ors[SLOT_NUM]);
+    virtual void updateIssueORs(IN OUT ORList & cand_list,
+                                SLOT slot,
+                                IN OR * issue_or,
+                                IN OUT OR * issue_ors[SLOT_NUM]);
 public:
     LIS(ORBB * bb,
         DataDepGraph & ddg,
@@ -84,10 +83,9 @@ public:
     virtual ~LIS() { destroy(); }
 
     //Scheduling method
-    void computeReadyList(
-            IN OUT DataDepGraph & ddg,
-            IN OUT Vector<bool> & visited,
-            bool topdown);
+    void computeReadyList(IN OUT DataDepGraph & ddg,
+                          IN OUT Vector<bool> & visited,
+                          bool topdown);
 
     //Change OR to given issue slot.
     //Return true if success.
@@ -111,8 +109,8 @@ public:
     virtual INT dcache_miss_rate(OR * o);
     virtual INT dcache_miss_penalty(OR * o);
     virtual void dump(CHAR * name,
-            bool is_del = true,
-            bool need_exec_detail = true);
+                      bool is_del = true,
+                      bool need_exec_detail = true);
 
     virtual bool fillIssueSlot(DataDepGraph & stepddg);
 
@@ -129,11 +127,10 @@ public:
               bool change_cluster);
 
     //Return true if OR can be issued at given slot.
-    virtual bool isValidResourceUsage(
-            IN OR *,
-            SLOT slot,
-            OR * issue_ors[SLOT_NUM],
-            OR * conflict_ors[SLOT_NUM])
+    virtual bool isValidResourceUsage(IN OR *,
+                                      SLOT slot,
+                                      OR * issue_ors[SLOT_NUM],
+                                      OR * conflict_ors[SLOT_NUM])
     {
         ASSERTN(0, ("Target Dependent Code"));
         DUMMYUSE(slot);
@@ -143,24 +140,20 @@ public:
     }
 
     virtual bool isIssueCand(OR * o);
-    bool isFuncUnitOccupied(
-            UnitSet const& us,
-            CLUST clst,
-            OR const* const issue_ors [SLOT_NUM]);
+    bool isFuncUnitOccupied(UnitSet const& us,
+                            CLUST clst,
+                            OR const* const issue_ors [SLOT_NUM]);
 
-    virtual SLOT rollBackORs(
-            bool be_changed[SLOT_NUM],
-            OR * issue_ors[SLOT_NUM],
-            SLOT to_slot);
-    virtual bool selectIssueORs(
-            IN ORList & cand_list,
-            OUT OR * issue_ors[SLOT_NUM]);
+    virtual SLOT rollBackORs(bool be_changed[SLOT_NUM],
+                             OR * issue_ors[SLOT_NUM],
+                             SLOT to_slot);
+    virtual bool selectIssueORs(IN ORList & cand_list,
+                                OUT OR * issue_ors[SLOT_NUM]);
     virtual OR * selectBestORByPriority(OR_HASH & cand_hash);
-    virtual bool selectIssueOR(
-            IN ORList & cand_list,
-            SLOT slot,
-            OUT OR * issue_ors[SLOT_NUM],
-            bool change_slot);
+    virtual bool selectIssueOR(IN ORList & cand_list,
+                               SLOT slot,
+                               OUT OR * issue_ors[SLOT_NUM],
+                               bool change_slot);
     void set_simm(BBSimulator * sim) { m_sim = sim; }
     void set_sch_mode(UINT sch_mode) { m_sch_mode = sch_mode; }
 

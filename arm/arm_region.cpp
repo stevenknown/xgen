@@ -528,6 +528,10 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     RefineCtx rf;
     RC_insert_cvt(rf) = g_do_refine_auto_insert_cvt;
     refineBBlist(getBBList(), rf);
+    OC_is_expr_tab_valid(oc) = false;
+    OC_is_live_expr_valid(oc) = false;
+    OC_is_reach_def_valid(oc) = false;
+    //DU chain is kept by refinement.
     ASSERT0((!g_do_md_du_analysis && !g_do_md_ssa) || verifyMDRef());
     ASSERT0(verifyIRandBB(getBBList(), this));
 

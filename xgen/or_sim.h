@@ -33,11 +33,11 @@ author: Su Zhenyu
 
 namespace xgen {
 
-#define ORDESC_or(ord)             ((ord)->o)
-#define ORDESC_start_cyc(ord)      ((ord)->start_cyc)
-#define ORDESC_or_sche_info(ord)   ((ord)->or_info)
-#define ORDESC_next(ord)           ((ord)->next)
-#define ORDESC_prev(ord)           ((ord)->prev)
+#define ORDESC_or(ord) ((ord)->o)
+#define ORDESC_start_cyc(ord) ((ord)->start_cyc)
+#define ORDESC_or_sche_info(ord) ((ord)->or_info)
+#define ORDESC_next(ord) ((ord)->next)
+#define ORDESC_prev(ord) ((ord)->prev)
 class ORDesc {
 public:
     ORDesc * next;
@@ -101,18 +101,15 @@ public:
     UINT getCurCycle() const { return m_cyc_counter; }
 
     void init();
-    virtual bool isMemResourceConflict(
-                    DEP_TYPE deptype,
-                    ORDesc * ck_ord,
-                    OR const* cand_or);
-    virtual bool isRegResourceConflict(
-                    DEP_TYPE deptype,
-                    ORDesc * ck_ord,
-                    OR const* cand_or);
-    virtual bool isResourceConflict(
-                    ORDesc * ck_ord,
-                    OR const* cand_or,
-                    DataDepGraph & ddg);
+    virtual bool isMemResourceConflict(DEP_TYPE deptype,
+                                       ORDesc * ck_ord,
+                                       OR const* cand_or);
+    virtual bool isRegResourceConflict(DEP_TYPE deptype,
+                                       ORDesc * ck_ord,
+                                       OR const* cand_or);
+    virtual bool isResourceConflict(ORDesc * ck_ord,
+                                    OR const* cand_or,
+                                    DataDepGraph & ddg);
     virtual bool isInShadow(ORDesc const* ord) const;
     virtual bool issue(OR * o, SLOT slot);
 
