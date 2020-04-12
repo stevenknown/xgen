@@ -389,6 +389,7 @@ public:
 #define DUMP_LT_CLUST 2
 #define DUMP_LT_USABLE_REG 4
 class LifeTimeMgr {
+    COPY_CONSTRUCTOR(LifeTimeMgr);
 protected:
     bool m_is_init;
     bool m_is_verify;
@@ -445,7 +446,6 @@ protected:
     }
 public:
     explicit LifeTimeMgr(CG * cg);
-    COPY_CONSTRUCTOR(LifeTimeMgr);
     virtual ~LifeTimeMgr() { destroy(); }
 
     void addAnticiReg(LifeTime const* lt, REG reg);

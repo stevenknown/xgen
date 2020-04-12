@@ -35,7 +35,7 @@ class ARMDUMgr : public DUMgr {
 public:
     ARMDUMgr(Region * rg) : DUMgr(rg) {}
     COPY_CONSTRUCTOR(ARMDUMgr);
-    virtual void computeAtomMDRef(IR * ir, UINT duflag)
-    { DUMgr::computeAtomMDRef(ir, duflag); }
+    virtual void computeAtomMDRef(IR * ir)
+    { DUMgr::computeAtomMDRef(ir); }
 };
 #endif

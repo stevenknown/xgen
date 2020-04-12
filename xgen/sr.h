@@ -119,6 +119,7 @@ SR const* checkSRIMM(SR const* ir);
                                   SR_is_label(sr) || \
                                   SR_is_var(sr))
 class SR {
+    COPY_CONSTRUCTOR(SR);
 public:
     SR_TYPE type;
 
@@ -182,7 +183,6 @@ public:
 
 public:
     SR() { clean(); }
-    COPY_CONSTRUCTOR(SR);
     virtual ~SR() {}
 
     virtual void copy(SR const* sr, bool is_clone_vec = false, CG * cg = NULL);

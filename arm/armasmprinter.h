@@ -32,6 +32,7 @@ author: Su Zhenyu
 #define _ARM_ASM_PRINTER_H_
 
 class ARMAsmPrinter : public AsmPrinter {
+    COPY_CONSTRUCTOR(ARMAsmPrinter);
 protected:
     void printBss(FILE * asmh, Section & sect);
     void printData(FILE * asmh, Section & sect);
@@ -43,7 +44,6 @@ protected:
 public:
     ARMAsmPrinter(CG * cg, AsmPrinterMgr * asmprtmgr) :
         AsmPrinter(cg, asmprtmgr) {}
-    COPY_CONSTRUCTOR(ARMAsmPrinter);
     virtual ~ARMAsmPrinter() {}
     virtual CHAR * printOR(OR * o, StrBuf & buf);
     virtual void printData(FILE * asmh);

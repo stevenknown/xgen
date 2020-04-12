@@ -61,6 +61,7 @@ typedef struct SRDesc {
 //Group of SRDesc
 template <UINT DefaultSize = 0>
 class SRDescGroup {
+    COPY_CONSTRUCTOR(SRDescGroup);
     UINT opnd_num; //the number of operand.
     UINT res_num; //the number of result.
     SRDesc * sd_group[DefaultSize];
@@ -80,7 +81,6 @@ public:
 
         va_end(ptr);
     }
-    COPY_CONSTRUCTOR(SRDescGroup);
     ~SRDescGroup() {}
 
     void init(UINT resnum, UINT opndnum)

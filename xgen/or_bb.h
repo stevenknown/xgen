@@ -110,24 +110,25 @@ public:
 //
 //START ORBB
 //
-#define ORBB_livein(b)            ((b)->m_live_in)
-#define ORBB_liveout(b)           ((b)->m_live_out)
-#define ORBB_id(b)                ((b)->m_id)
-#define ORBB_orlist(b)            ((b)->m_or_list)
-#define ORBB_ornum(b)             (ORBB_orlist(b)->get_elem_count())
-#define ORBB_first_or(b)          (ORBB_orlist(b)->get_head())
-#define ORBB_next_or(b)           (ORBB_orlist(b)->get_next())
-#define ORBB_prev_or(b)           (ORBB_orlist(b)->get_prev())
-#define ORBB_last_or(b)           (ORBB_orlist(b)->get_tail())
-#define ORBB_is_entry(b)          ((b)->m_is_entry)
-#define ORBB_is_exit(b)           ((b)->m_is_exit)
-#define ORBB_is_target(b)         ((b)->m_is_target)
-#define ORBB_attr(b)              ((b)->m_attr)
-#define ORBB_rpo(b)               ((b)->m_rpo)
-#define ORBB_cg(b)                ((b)->m_cg)
-#define ORBB_entry_spadjust(b)    ((b)->m_entry_spadjust)
-#define ORBB_exit_spadjust(b)     ((b)->m_exit_spadjust)
+#define ORBB_livein(b) ((b)->m_live_in)
+#define ORBB_liveout(b) ((b)->m_live_out)
+#define ORBB_id(b) ((b)->m_id)
+#define ORBB_orlist(b) ((b)->m_or_list)
+#define ORBB_ornum(b) (ORBB_orlist(b)->get_elem_count())
+#define ORBB_first_or(b) (ORBB_orlist(b)->get_head())
+#define ORBB_next_or(b) (ORBB_orlist(b)->get_next())
+#define ORBB_prev_or(b) (ORBB_orlist(b)->get_prev())
+#define ORBB_last_or(b) (ORBB_orlist(b)->get_tail())
+#define ORBB_is_entry(b) ((b)->m_is_entry)
+#define ORBB_is_exit(b) ((b)->m_is_exit)
+#define ORBB_is_target(b) ((b)->m_is_target)
+#define ORBB_attr(b) ((b)->m_attr)
+#define ORBB_rpo(b) ((b)->m_rpo)
+#define ORBB_cg(b) ((b)->m_cg)
+#define ORBB_entry_spadjust(b) ((b)->m_entry_spadjust)
+#define ORBB_exit_spadjust(b) ((b)->m_exit_spadjust)
 class ORBB {
+    COPY_CONSTRUCTOR(ORBB);
 public:
     UINT m_id; //BB's id
     xcom::BitSet m_live_in; //record live in SR id.
@@ -145,7 +146,6 @@ public:
 
 public:
     explicit ORBB(CG * cg);
-    COPY_CONSTRUCTOR(ORBB);
     ~ORBB();
 
     inline void addLabel(LabelInfo const* li)

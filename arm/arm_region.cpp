@@ -308,9 +308,10 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
 
     if (g_do_aa) {
         ASSERT0(g_cst_bb_list && OC_is_cfg_valid(oc));
+        assignMD(false);
         checkValidAndRecompute(&oc, PASS_DOM, PASS_LOOP_INFO,
             PASS_AA, PASS_UNDEF);
-    }
+    }    
 
     if (g_do_md_du_analysis) {
         ASSERT0(g_cst_bb_list && OC_is_cfg_valid(oc) && OC_is_aa_valid(oc));
@@ -346,7 +347,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
                 GVN * gvn = (GVN*)getPassMgr()->registerPass(PASS_GVN);
                 gvn->perform(oc);
             }
-            refdu->perform(oc);
+            refdu->perform(oc);            
         }
     }
 }
@@ -448,7 +449,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
 bool ARMRegion::MiddleProcess(OptCtx & oc)
 {
     if (g_opt_level == OPT_LEVEL0) {
-        assignPRMD();
+        assignMD(true);
     }
     bool own = false;
     if (own) {

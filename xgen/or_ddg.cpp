@@ -1040,7 +1040,7 @@ void DataDepGraph::clone(DataDepGraph & ddg)
     }
     m_estart_vec.copy(ddg.m_estart_vec);
     m_lstart_vec.copy(ddg.m_lstart_vec);
-    xcom::Graph::clone((xcom::Graph&)ddg);
+    xcom::Graph::clone((xcom::Graph&)ddg, true, true);
     m_is_clonal = true;
 }
 

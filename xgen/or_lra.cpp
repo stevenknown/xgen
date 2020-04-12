@@ -411,7 +411,7 @@ void RegFileAffinityGraph::clone(RegFileAffinityGraph & rdg)
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     m_bb = rdg.bb();
     m_id2lt.copy(rdg.m_id2lt);
-    xcom::Graph::clone((xcom::Graph&)rdg);
+    xcom::Graph::clone((xcom::Graph&)rdg, true, true);
 }
 
 
@@ -581,7 +581,7 @@ void InterfGraph::clone(InterfGraph & ig)
     m_bb = ig.bb();
     m_clustering = ig.m_clustering;
     m_is_estimate = ig.m_is_estimate;
-    xcom::Graph::clone(ig);
+    xcom::Graph::clone(ig, true, true);
 }
 
 

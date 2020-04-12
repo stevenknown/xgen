@@ -267,6 +267,7 @@ public:
 #define CG_func_level_internal_var_list(r) ((r)->m_func_level_internal_var_list)
 #define CG_builtin_memcpy(r)               ((r)->m_builtin_memcpy)
 class CG {
+    COPY_CONSTRUCTOR(CG);
 protected:
     xoc::Region * m_rg;
     ORMgr * m_or_mgr;
@@ -348,7 +349,6 @@ public:
 
 public:
     CG(xoc::Region * rg, CGMgr * cgmgr);
-    COPY_CONSTRUCTOR(CG);
     virtual ~CG();
 
     void addBBLevelNewVar(IN xoc::VAR * var);

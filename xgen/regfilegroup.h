@@ -39,6 +39,7 @@ class CG;
 
 #define MAX_LAYER 1024
 class RegFileGroup {
+    COPY_CONSTRUCTOR(RegFileGroup);
 protected:
     Vector<List<OR*>*> m_group2orlist_map;
     Vector<INT> m_oridx2group_map;
@@ -56,7 +57,6 @@ public:
         m_is_init = false;
         init();
     }
-    COPY_CONSTRUCTOR(RegFileGroup);
     virtual ~RegFileGroup() { destroy(); }
 
     void addOR(OR * o, INT group);
