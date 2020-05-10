@@ -239,6 +239,32 @@ static CHAR * process_readgr(INT argc, CHAR * argv[], INT & i)
 }
 
 
+static bool process_thres_opt_bb_num(INT argc, CHAR * argv[], INT & i)
+{
+    CHAR * n = NULL;
+    if (i + 1 < argc && argv[i + 1] != NULL) {
+        n = argv[i + 1];
+    }
+    if (n == NULL) { return false; } 
+    xoc::g_thres_opt_bb_num = (UINT)xcom::xatoll(n, false);
+    i += 2;
+    return true;
+}
+
+
+static bool process_thres_opt_ir_num(INT argc, CHAR * argv[], INT & i)
+{
+    CHAR * n = NULL;
+    if (i + 1 < argc && argv[i + 1] != NULL) {
+        n = argv[i + 1];
+    }
+    if (n == NULL) { return false; } 
+    xoc::g_thres_opt_ir_num = (UINT)xcom::xatoll(n, false);
+    i += 2;
+    return true;
+}
+
+
 static bool process_g(INT argc, CHAR * argv[], INT & i)
 {
     DUMMYUSE(argc);
@@ -256,19 +282,6 @@ static bool process_g(INT argc, CHAR * argv[], INT & i)
         g_do_gra = false;
         return true;
     }
-    return true;
-}
-
-
-static bool process_t(INT argc, CHAR * argv[], INT & i)
-{
-    DUMMYUSE(argc);
-    CHAR * cmdstr = &argv[i][1];
-    if (xstrcmp(cmdstr, "time", 4) != 0) {
-        return false;
-    }
-    i++;
-    g_show_time = true;
     return true;
 }
 
@@ -313,11 +326,9 @@ bool processCmdLine(INT argc, CHAR * argv[])
                     usage();
                     return false;
                 }
-            } else if (cmdstr[0] == 't') {
-                if (!process_t(argc, argv, i)) {
-                    usage();
-                    return false;
-                }
+            } else if (!strcmp(cmdstr, "time")) {
+                g_show_time = true;
+                i++;
             } else if (!strcmp(cmdstr, "dump")) {
                 CHAR * n = process_d(argc, argv, i);
                 if (n == NULL) {
@@ -325,8 +336,26 @@ bool processCmdLine(INT argc, CHAR * argv[])
                     return false;
                 }
                 g_dump_file_name = n;
+            } else if (!strcmp(cmdstr, "nodce")) {
+                g_do_dce = false;
+                i++;            
+            } else if (!strcmp(cmdstr, "dce")) {
+                g_do_dce = true;
+                i++;            
             } else if (!strcmp(cmdstr, "nocg")) {
                 g_do_cg = false;
+                i++;
+            } else if (!strcmp(cmdstr, "mdssa")) {
+                g_do_md_ssa = true;
+                i++;
+            } else if (!strcmp(cmdstr, "prssa")) {
+                g_do_pr_ssa = true;
+                i++;
+            } else if (!strcmp(cmdstr, "redirect_stdout_to_dump_file")) {
+                g_redirect_stdout_to_dump_file = true;
+                i++;
+            } else if (!strcmp(cmdstr, "lower_to_pr_mode")) {
+                g_is_lower_to_pr_mode = true;
                 i++;
             } else if (!strcmp(cmdstr, "dump-cfg")) {
                 g_dump_opt.is_dump_cfg = true;
@@ -342,6 +371,9 @@ bool processCmdLine(INT argc, CHAR * argv[])
                 i++;
             } else if (!strcmp(cmdstr, "dump-mdssamgr")) {
                 g_dump_opt.is_dump_mdssamgr = true;
+                i++;
+            } else if (!strcmp(cmdstr, "dump-dce")) {
+                g_dump_opt.is_dump_dce = true;
                 i++;
             } else if (!strcmp(cmdstr, "dump-ra")) {
                 g_dump_opt.is_dump_ra = true;
@@ -361,6 +393,16 @@ bool processCmdLine(INT argc, CHAR * argv[])
             } else if (!strcmp(cmdstr, "dump-nothing")) {
                 g_dump_opt.is_dump_nothing = true;
                 i++;
+            } else if (!strcmp(cmdstr, "thres_opt_ir_num")) {
+                if (!process_thres_opt_ir_num(argc, argv, i)) {
+                    usage();
+                    return false;
+                }
+            } else if (!strcmp(cmdstr, "thres_opt_bb_num")) {
+                if (!process_thres_opt_bb_num(argc, argv, i)) {
+                    usage();
+                    return false;
+                }
             } else if (!strcmp(cmdstr, "readgr")) {
                 CHAR * n = process_readgr(argc, argv, i);
                 if (n == NULL) {
@@ -700,6 +742,39 @@ static void test_ru(RegionMgr * rm)
 #endif
 
 
+static void compileProgramRegion(Region * rg, CGMgr * cgmgr, FILE * asmh)
+{
+    cgmgr->GenAndPrtGlobalVariable(rg, asmh);
+    if (!g_is_dumpgr) { return; }
+
+    g_indent = 0;
+    ASSERT0(g_c_file_name || g_gr_file_name);
+    xcom::StrBuf b(64);
+    b.strcat(g_c_file_name != NULL ? g_c_file_name : g_gr_file_name);
+    b.strcat(".hir.gr");
+    UNLINK(b.buf);
+    FILE * gr = fopen(b.buf, "a");
+    FILE * oldvalue = g_tfile;
+    g_tfile = gr;
+    rg->dumpGR(true);
+    fclose(gr);
+    g_tfile = oldvalue;
+}
+
+
+static void compileFuncRegion(Region * rg,
+                              CLRegionMgr * rm,
+                              CGMgr * cgmgr,
+                              FILE * asmh)
+{
+    OptCtx * oc = rm->getAndGenOptCtx(rg->id());
+    bool s = rm->compileFuncRegion(rg, cgmgr, asmh, oc);
+    ASSERT0(s);
+    DUMMYUSE(s);
+    //rm->deleteRegion(rg); //Local region can be deleted if processed.
+}
+
+
 //Processing function unit one by one.
 //1. Construct Region.
 //2. Generate IR of Region.
@@ -717,39 +792,17 @@ static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr, FILE * asmh)
         if (rg == NULL) { continue; }
         if (rg->is_program()) {
             program = rg;
-            cgmgr->GenAndPrtGlobalVariable(rg, asmh);
-            if (g_is_dumpgr) {
-                g_indent = 0;
-                //rg->dump(true);
-                ASSERT0(g_c_file_name || g_gr_file_name);
-                xcom::StrBuf b(64);
-                b.strcat(g_c_file_name != NULL ?
-                    g_c_file_name : g_gr_file_name);
-                b.strcat(".hir.gr");
-                UNLINK(b.buf);
-                FILE * gr = fopen(b.buf, "a");
-                FILE * oldvalue = g_tfile;
-                g_tfile = gr;
-                rg->dumpGR(true);
-                fclose(gr);
-                g_tfile = oldvalue;
-            }
+            compileProgramRegion(rg, cgmgr, asmh);
             continue;
         }
         if (rg->is_blackbox()) {
             continue;
         }
-
         if (g_show_time) {
-            printf("\n====Start Process Region(id:%d)'%s' ====\n",
-               REGION_id(rg), rg->getRegionName());
+            xoc::prt2C("\n\n==== Start Process Region(id:%d)'%s' ====\n",
+                       rg->id(), rg->getRegionName());
         }
-
-        OptCtx * oc = rm->getAndGenOptCtx(rg->id());
-        bool s = rm->compileFuncRegion(rg, cgmgr, asmh, oc);
-        ASSERT0(s);
-        DUMMYUSE(s);
-        //rm->deleteRegion(rg); //Local region can be deleted if processed.
+        compileFuncRegion(rg, rm, cgmgr, asmh);
     }
 
     ASSERT0(program);
@@ -843,11 +896,10 @@ static void initCompile(
 }
 
 
-static void finiCompile(
-        CLRegionMgr * rm,
-        FILE * asmh,
-        CGMgr * cgmgr,
-        TargInfo * ti)
+static void finiCompile(CLRegionMgr * rm,
+                        FILE * asmh,
+                        CGMgr * cgmgr,
+                        TargInfo * ti)
 {
     if (rm != NULL) {
         delete rm;
@@ -872,7 +924,7 @@ bool compileGRFile(CHAR * gr_file_name)
     CLRegionMgr * rm = NULL;
     CGMgr * cgmgr = NULL;
     FILE * asmh = NULL;
-    START_TIMER(t, "Compile GR File");
+    START_TIMER_FMT(t, ("Compile GR File"));
     initCompile(&rm, &asmh, &cgmgr, &ti);
     xoc::initdump("tmp.log", true);
     bool succ = xoc::readGRAndConstructRegion(rm, gr_file_name);
@@ -919,6 +971,7 @@ bool compileCFile()
     initCompile(&rm, &asmh, &cgmgr, &ti);
     g_fe_sym_tab = rm->getSymTab();
     g_dbx_mgr = new CLDbxMgr();
+
     if (FrontEnd() != ST_SUCC) {
         res = false;
         goto FIN;

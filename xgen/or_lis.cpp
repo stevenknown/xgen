@@ -98,9 +98,9 @@ COMP_REDO:
          v != NULL; v = ddg.get_next_vertex(c)) {
         xcom::EdgeC * ck_lst;
         if (topdown)  {
-            ck_lst = VERTEX_in_list(v);
+            ck_lst = v->getInList();
         } else {
-            ck_lst = VERTEX_out_list(v);
+            ck_lst = v->getOutList();
         }
         if (ck_lst == NULL && !visited.get(VERTEX_id(v))) {
             OR * o = ddg.getOR(VERTEX_id(v));

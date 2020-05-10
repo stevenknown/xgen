@@ -7478,9 +7478,9 @@ bool LRA::partitionGroup(
         ASSERTN(v, ("o is not node of graph"));
 
         //Process all preds.
-        xcom::EdgeC * el = VERTEX_in_list(v);
+        xcom::EdgeC * el = v->getInList();
         while (el) {
-            xcom::Vertex * from = EDGE_from(EC_edge(el));
+            xcom::Vertex * from = el->getFrom();
             OR * pred = tmpddg->getOR(VERTEX_id(from));
             if (visited.get(OR_id(pred))) {
                 if (gm.get_or_group(pred) != gm.get_or_group(o)) {

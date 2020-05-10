@@ -1178,7 +1178,7 @@ void IR2OR::convertIRBBListToORList(OUT ORList & or_list)
     for (IRBB const* bb = ir_bb_list->get_head();
          bb != NULL; bb = ir_bb_list->get_next()) {
         convertLabel(bb, or_list, &cont);
-        xcom::C<IR*> * ct;
+        IRListIter ct;
         for (BB_irlist(bb).get_head(&ct);
              ct != BB_irlist(bb).end(); ct = BB_irlist(bb).get_next(ct)) {
             cont.clean();

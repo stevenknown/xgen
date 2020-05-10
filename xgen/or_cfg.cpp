@@ -158,11 +158,10 @@ ORBB * OR_CFG::getBB(UINT id) const
 void OR_CFG::get_succs(IN OUT List<ORBB*> & succs, ORBB const* bb)
 {
     xcom::Vertex * v = getVertex(ORBB_id(bb));
-    xcom::EdgeC * el = VERTEX_out_list(v);
+    xcom::EdgeC * el = v->getOutList();
     succs.clean();
-    if (el == NULL) return;
     while (el != NULL) {
-        ORBB * succ = getBB(VERTEX_id(EDGE_to(EC_edge(el))));
+        ORBB * succ = getBB(el->getToId());
         ASSERTN(succ, ("without bb corresponded"));
         succs.append_tail(succ);
         el = EC_next(el);
@@ -174,11 +173,10 @@ void OR_CFG::get_succs(IN OUT List<ORBB*> & succs, ORBB const* bb)
 void OR_CFG::get_preds(IN OUT List<ORBB*> & preds, ORBB const* bb)
 {
     xcom::Vertex * v = getVertex(ORBB_id(bb));
-    xcom::EdgeC * el = VERTEX_in_list(v);
-    preds.clean();
-    if (!el) return;
-    while (el) {
-        ORBB * pred = getBB(VERTEX_id(EDGE_from(EC_edge(el))));
+    xcom::EdgeC * el = v->getInList();
+    preds.clean();    
+    while (el != NULL) {
+        ORBB * pred = getBB(el->getFromId());
         ASSERTN(pred, ("without bb corresponded"));
         preds.append_tail(pred);
         el = EC_next(el);

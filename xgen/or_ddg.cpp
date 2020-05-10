@@ -211,10 +211,10 @@ void DataDepGraph::chainPredAndSucc(OR * o)
     xcom::EdgeC * pred_lst = VERTEX_in_list(v);
     xcom::EdgeC * succ_lst = VERTEX_out_list(v);
     while (pred_lst) {
-        OR * from = getOR(VERTEX_id(EDGE_from(EC_edge(pred_lst))));
+        OR * from = getOR(pred_lst->getFromId());
         xcom::EdgeC * tmp_succ_lst = succ_lst;
         while (tmp_succ_lst) {
-            OR * to = getOR(VERTEX_id(EDGE_to(EC_edge(tmp_succ_lst))));
+            OR * to = getOR(tmp_succ_lst->getToId());
             appendEdge(DEP_HYB, from, to);
             tmp_succ_lst = EC_next(tmp_succ_lst);
         }
@@ -1104,7 +1104,7 @@ void DataDepGraph::getPredsByOrder(IN OUT ORList & preds, IN OR * o)
     if (el == NULL) return;
 
     while (el != NULL) {
-        OR * pred = getOR(VERTEX_id(EDGE_from(EC_edge(el))));
+        OR * pred = getOR(el->getFromId());
         OR * marker;
         for (marker = preds.get_head(); marker; marker = preds.get_next()) {
             if (ORBB_orlist(m_bb)->is_or_precedes(pred, marker)) {
@@ -1133,7 +1133,7 @@ void DataDepGraph::getSuccsByOrder(IN OUT ORList & succs, IN OR * o)
     if (v == NULL) { return; }
 
     for (xcom::EdgeC * el = VERTEX_out_list(v); el != NULL; el = EC_next(el)) {
-        OR * succ = getOR(VERTEX_id(EDGE_to(EC_edge(el))));
+        OR * succ = getOR(el->getToId());
         ASSERTN(succ, ("DDG is invalid."));
         OR * marker;
         for (marker = succs.get_head(); marker; marker = succs.get_next()) {
@@ -1173,7 +1173,7 @@ void DataDepGraph::getPredsByOrderTraverseNode(
         xcom::Vertex * sv = worklst.remove_head();
         xcom::EdgeC * el2 = VERTEX_in_list(sv);
         while (el2 != NULL) {
-            xcom::Vertex * from = EDGE_from(EC_edge(el2));
+            xcom::Vertex * from = el2->getFrom();
             if (!visited.get(VERTEX_id(from))) {
                 worklst.append_tail(from);
                 visited.set(VERTEX_id(from), true);
@@ -1231,7 +1231,7 @@ void DataDepGraph::getSuccsByOrderTraverseNode(
         xcom::Vertex * sv = worklst.remove_head();
         xcom::EdgeC * el2 = VERTEX_out_list(sv);
         while (el2 != NULL) {
-            xcom::Vertex * to = EDGE_to(EC_edge(el2));
+            xcom::Vertex * to = el2->getTo();
             if (!visited.get(VERTEX_id(to))) {
                 worklst.append_tail(to);
                 visited.set(VERTEX_id(to), true);
@@ -1278,7 +1278,7 @@ void DataDepGraph::get_succs(IN OUT ORList & succs, OR const* o)
     if (el == NULL) return;
 
     while (el != NULL) {
-        OR * succ = getOR(VERTEX_id(EDGE_to(EC_edge(el))));
+        OR * succ = getOR(el->getToId());
         ASSERTN(succ != NULL, ("Illegal o list"));
         succs.append_tail(succ);
         el = EC_next(el);
@@ -1287,15 +1287,16 @@ void DataDepGraph::get_succs(IN OUT ORList & succs, OR const* o)
 
 
 //Return all predecessors.
-void DataDepGraph::get_preds(IN OUT List<xcom::Vertex*> & preds, IN xcom::Vertex * v)
+void DataDepGraph::get_preds(IN OUT List<xcom::Vertex*> & preds,
+                             IN xcom::Vertex * v)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     preds.clean();
-    if (v == NULL) return;
+    if (v == NULL) { return; }
     xcom::EdgeC * el = VERTEX_in_list(v);
-    if (el == NULL) return;
+    if (el == NULL) { return; }
     while (el != NULL) {
-        preds.append_tail(EDGE_from(EC_edge(el)));
+        preds.append_tail(el->getFrom());
         el = EC_next(el);
     }
 }
@@ -1313,7 +1314,7 @@ void DataDepGraph::get_preds(IN OUT ORList & preds, OR const* o)
     if (el == NULL) return;
 
     while (el != NULL) {
-        OR * pred = getOR(VERTEX_id(EDGE_from(EC_edge(el))));
+        OR * pred = getOR(el->getFromId());
         ASSERTN(pred != NULL, ("Illegal o list"));
         preds.append_tail(pred);
         el = EC_next(el);
@@ -1329,7 +1330,7 @@ void DataDepGraph::get_neighbors(IN OUT ORList & nis, OR const* o)
     xcom::EdgeC * el = VERTEX_out_list(v);
     if (el == NULL) return;
     while (el != NULL) {
-        OR * succ = getOR(VERTEX_id(EDGE_to(EC_edge(el))));
+        OR * succ = getOR(el->getToId());
         ASSERTN(succ, ("Illegal o list"));
         nis.append_tail(succ);
         el = EC_next(el);
@@ -1338,7 +1339,7 @@ void DataDepGraph::get_neighbors(IN OUT ORList & nis, OR const* o)
     el = VERTEX_in_list(v);
     if (el == NULL) return;
     while (el != NULL) {
-        OR * pred = getOR(VERTEX_id(EDGE_from(EC_edge(el))));
+        OR * pred = getOR(el->getFromId());
         ASSERTN(pred != NULL, ("Illegal o list"));
         nis.append_tail(pred);
         el = EC_next(el);
@@ -1392,12 +1393,12 @@ UINT DataDepGraph::computeEstartAndLstart(IN BBSimulator & sim, OUT OR ** fin_or
         //Scan pred nodes.
         xcom::EdgeC * el = VERTEX_in_list(v);
         while (el != NULL) {
-            xcom::Vertex * from = EDGE_from(EC_edge(el));
-            ASSERTN(visited.get(VERTEX_id(from)), ("illegal path in the graph"));
+            xcom::Vertex * from = el->getFrom();
+            ASSERTN(visited.get(from->id()), ("illegal path in the graph"));
             OR * o = getOR(VERTEX_id(from));
             estart = MAX(estart,
-                        (INT)m_estart_vec.get(VERTEX_id(from)) +
-                        (INT)sim.getMinLatency(o));
+                         (INT)m_estart_vec.get(VERTEX_id(from)) +
+                         (INT)sim.getMinLatency(o));
             el = EC_next(el);
         }
 
@@ -1420,7 +1421,7 @@ UINT DataDepGraph::computeEstartAndLstart(IN BBSimulator & sim, OUT OR ** fin_or
             }
         } else {
             while (el != NULL) {
-                xcom::Vertex * to = EDGE_to(EC_edge(el));
+                xcom::Vertex * to = el->getTo();
                 UINT in = in_degree.get(VERTEX_id(to));
                 ASSERT0(in > 0);
                 if (in == 1) {
@@ -1436,7 +1437,8 @@ UINT DataDepGraph::computeEstartAndLstart(IN BBSimulator & sim, OUT OR ** fin_or
     DUMMYUSE(max_estart);
 
     //Find anti-root nodes.
-    for (xcom::Vertex * v = get_first_vertex(c); v != NULL; v = get_next_vertex(c)) {
+    for (xcom::Vertex * v = get_first_vertex(c);
+         v != NULL; v = get_next_vertex(c)) {
         if (getOutDegree(v) == 0) {
             worklst.append_tail(v);
         }
@@ -1451,10 +1453,10 @@ UINT DataDepGraph::computeEstartAndLstart(IN BBSimulator & sim, OUT OR ** fin_or
         INT lstart = max_length - (INT)sim.getMinLatency(vor);
         ASSERT0(lstart >= 0);
         //Scan succ nodes to calculate 'lstart' of 'v'.
-        xcom::EdgeC * el = VERTEX_out_list(v);
+        xcom::EdgeC * el = v->getOutList();
         while (el != NULL) {
-            xcom::Vertex * to = EDGE_to(EC_edge(el));
-            lstart = MIN(lstart, ((INT)m_lstart_vec.get(VERTEX_id(to))) -
+            xcom::Vertex * to = el->getTo();
+            lstart = MIN(lstart, ((INT)m_lstart_vec.get(to->id())) -
                 (INT)sim.getMinLatency(vor));
             ASSERT0(lstart >= 0);
             el = EC_next(el);
@@ -1464,7 +1466,7 @@ UINT DataDepGraph::computeEstartAndLstart(IN BBSimulator & sim, OUT OR ** fin_or
         //Scan pred nodes.
         el = VERTEX_in_list(v);
         while (el != NULL) {
-            xcom::Vertex * from = EDGE_from(EC_edge(el));
+            xcom::Vertex * from = el->getFrom();
             UINT out = out_degree.get(VERTEX_id(from));
             ASSERT0(out > 0);
             if (out == 1) {

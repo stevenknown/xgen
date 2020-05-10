@@ -2943,7 +2943,7 @@ void CG::computeEntryAndExit(IN OR_CFG & cfg,
     INT c;
     for (xcom::Vertex * v = cfg.get_first_vertex(c);
          v != NULL; v = cfg.get_next_vertex(c)) {
-        ORBB * bb = cfg.getBB(VERTEX_id(v));
+        ORBB * bb = cfg.getBB(v->id());
         ASSERT0(bb);
         if (cfg.getInDegree(v) == 0) {
             ORBB_is_entry(bb) = true;
