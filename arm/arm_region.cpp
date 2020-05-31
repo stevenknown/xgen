@@ -270,7 +270,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
 
         getCFG()->performMiscOpt(oc);
     }
-
+    
     if (g_do_aa) {
         ASSERT0(g_cst_bb_list && OC_is_cfg_valid(oc));
         assignMD(false);
@@ -331,6 +331,8 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
 //4. Perform both classic DU chain and MDSSA DU chain.
 void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
 {
+    if (g_opt_level == OPT_LEVEL0) { return; }
+
     //START HACK CODE
     //Test code, to force recomputing AA and DUChain.
     //AA and DU Chain need not to be recompute, because
@@ -342,11 +344,10 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
     g_compute_classic_du_chain = true;    
     //END HACK CODE
 
-    if (g_opt_level > OPT_LEVEL0 &&
-        (!OC_is_aa_valid(oc) ||
-         !OC_is_ref_valid(oc) ||
-         !OC_is_pr_du_chain_valid(oc) ||
-         !OC_is_nonpr_du_chain_valid(oc))) {
+    if (!OC_is_aa_valid(oc) ||
+        !OC_is_ref_valid(oc) ||
+        !OC_is_pr_du_chain_valid(oc) ||
+        !OC_is_nonpr_du_chain_valid(oc)) {
         AliasAnalysis * aa = getAA();
         if (g_do_aa && aa != NULL &&
             (!OC_is_aa_valid(oc) || !OC_is_ref_valid(oc))) {
@@ -451,7 +452,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     MiddleProcessAggressiveAnalysis(oc);
 
     g_do_gcse = false;
-    if (g_do_gcse) {
+    if (g_do_gcse && g_opt_level > OPT_LEVEL0) {
         MDSSAMgr * mdssamgr = (MDSSAMgr*)getPassMgr()->registerPass(
             PASS_MD_SSA_MGR);
         ASSERT0(mdssamgr);
@@ -474,17 +475,17 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
             }
         }
     }
-    if (g_do_licm) {
+    if (g_do_licm && g_opt_level > OPT_LEVEL0) {
         LICM * pass = (LICM*)getPassMgr()->registerPass(PASS_LICM);
         if (pass->perform(oc)) {
             getPassMgr()->registerPass(PASS_MD_SSA_MGR)->perform(oc);
         }
     }
-    if (g_do_cp) {
+    if (g_do_cp && g_opt_level > OPT_LEVEL0) {
         CopyProp * pass = (CopyProp*)getPassMgr()->registerPass(PASS_CP);
         pass->perform(oc);
     }
-    if (g_do_dce) {
+    if (g_do_dce && g_opt_level > OPT_LEVEL0) {
         DeadCodeElim * pass = (DeadCodeElim*)getPassMgr()->registerPass(
             PASS_DCE);
         pass->perform(oc);

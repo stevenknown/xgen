@@ -169,17 +169,17 @@ public:
     IR * convertCVT(Tree * t, INT lineno, T2IRCtx * cont);
     IR * convertId(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertReturn(Tree * t, INT lineno, T2IRCtx * cont);
-    IR * convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont);
-    IR * convert_inc_dec(IN Tree * t, INT lineno, IN T2IRCtx * cont);
+    IR * convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont);
+    IR * convertIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont);
-    IR * convert_array(IN Tree * t, INT lineno, IN T2IRCtx * cont);
+    IR * convertArray(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertSelect(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx * cont);
-    IR * convertInDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx * cont);
+    IR * convertIndirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertDeref(IN Tree * t, INT lineno, IN T2IRCtx * cont);
-    IR * convert_pragma(IN Tree * t, INT lineno, IN T2IRCtx * cont);
+    IR * convertPragma(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convert(IN Tree * t, IN T2IRCtx * cont);
 };
 

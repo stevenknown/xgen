@@ -4,6 +4,7 @@ use strict;
 # these CAN be exported.
 our @EXPORT_OK = qw(
     abort 
+    abortex 
     computeDirFromFilePath
     computeOutputName
     compileGR 
@@ -20,14 +21,15 @@ our @EXPORT_OK = qw(
     computeAbsolutePathToXocRootDir
     clean
     runXOCC);
-our $g_base_cc;
-our $g_xocc;
+our $g_base_cc = "";
+our $g_xocc = "";
+our $g_xocc_flag = "";
 our $g_pacc = "pacc";
 our $g_as = "pacdsp-elf-as";
 our $g_ld = "pacdsp-elf-ld";
 our $g_simulator = "pacdsp-elf-run";
 our $g_cflags = "-O0"; 
-our $g_ld_flag;
+our $g_ld_flag = "";
 our $g_is_quit_early = 1; #finish test if error occurred.
 our $g_target; #indicate target machine.
 our $g_is_create_base_result = 0;
@@ -45,6 +47,7 @@ our $g_osname = $^O;
 our $g_xoc_root_path = "";
 our $g_single_testcase = ""; #record the single testcase
 our $g_override_xocc_path = "";
+our $g_override_xocc_flag = "";
 our $g_is_compare_dump = 0;
 
 sub findCurrent {
@@ -116,9 +119,7 @@ sub runArmToolChainToComputeBaseResult
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $g_ld FAILED!! RES:$retval\n";
-        if ($g_is_quit_early) {
-            abort($retval);
-        }
+        abortex($retval);
     }
 
 
@@ -223,13 +224,13 @@ sub generateGR
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE XOCC FAILED!! RES:$retval\n";
-        abort($retval);
+        abortex($retval);
     }
 
     if (!-e $grname) { 
         #Not equal
         print "\n$grname does not exist!\n";
-        abort();
+        abortex();
     }
     return;
 }
@@ -247,9 +248,7 @@ sub compileGR
     if (!-e $grname) { 
         #Not equal
         print "\n$grname does not exist!\n";
-        if ($g_is_quit_early) {
-            abort();
-        }
+        abortex();
     }
 
     #compile GR to asm
@@ -259,9 +258,7 @@ sub compileGR
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE XOCC FAILED!! RES:$retval\n";
-        if ($g_is_quit_early) {
-            abort($retval);
-        }
+        abortex($retval);
     }
 }
 
@@ -276,9 +273,7 @@ sub runAssembler
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $g_as FAILED!! RES:$retval\n";
-        if ($g_is_quit_early) {
-            abort($retval);
-        }
+        abortex($retval);
     }
 }
 
@@ -293,9 +288,7 @@ sub runLinker
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $g_ld FAILED!! RES:$retval\n";
-        if ($g_is_quit_early) {
-            abort($retval);
-        }
+        abortex($retval);
     }
 }
 
@@ -310,9 +303,7 @@ sub runBaseCC
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $g_ld FAILED!! RES:$retval\n";
-        if ($g_is_quit_early) {
-            abort($retval);
-        }
+        abortex($retval);
     }
 }
 
@@ -327,9 +318,7 @@ sub runPACC
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $g_ld FAILED!! RES:$retval\n";
-        if ($g_is_quit_early) {
-            abort($retval);
-        }
+        abortex($retval);
     }
 }
 
@@ -349,7 +338,7 @@ sub runXOCC
 
     #compile
     unlink($asmname);
-    $cmdline = "$g_xocc $g_cflags $src_fullpath -o $asmname";
+    $cmdline = "$g_xocc $g_cflags $src_fullpath -o $asmname $g_xocc_flag";
     if ($is_input_gr) {
         $cmdline = "$cmdline -readgr $src_fullpath";
     } else {
@@ -360,9 +349,7 @@ sub runXOCC
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE XOCC FAILED!! RES:$retval\n";
-        if ($g_is_quit_early) {
-            abort($retval);
-        }
+        abortex($retval);
     }
     if ($is_invoke_assembler) {
         runAssembler($asmname, $objname);
@@ -370,6 +357,18 @@ sub runXOCC
     if ($is_invoke_linker) {
         runLinker($outname, $objname); 
     }
+}
+
+sub abortex
+{
+    if (!$g_is_quit_early) {
+        return;
+    }
+    my $msg = $_[0];
+    if ($msg) { 
+        print "\n$msg\n";
+    }
+    exit(1);
 }
 
 sub abort
@@ -428,8 +427,13 @@ sub prolog
     if ($g_override_xocc_path ne "") {
         $g_xocc = $g_override_xocc_path;
     }
+    if ($g_override_xocc_flag ne "") {
+        $g_xocc_flag = $g_override_xocc_flag;
+    }
     printEnvVar();
-    checkExistence();
+
+    #Tools may be in enviroment path.
+    #checkExistence();
 }
 
 sub checkExistence
@@ -509,6 +513,18 @@ sub parseCmdLine
                 abort();
             }
             $g_override_xocc_path = $ARGV[$i];
+        } elsif ($ARGV[$i] eq "OverrideXoccFlag") {
+            $i++;
+            if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                usage();
+                abort();
+            }
+            $i++;
+            if (!$ARGV[$i]) {
+                usage();
+                abort();
+            }
+            $g_override_xocc_flag = $ARGV[$i];
         } else {
             abort("UNSUPPORT COMMAND LINE:'$ARGV[$i]'");
         }
@@ -535,6 +551,9 @@ sub printEnvVar
     }
     if ($g_override_xocc_path ne "") {
         print "\ng_override_xocc_path = $g_override_xocc_path";
+    }
+    if ($g_override_xocc_flag ne "") {
+        print "\ng_override_xocc_flag = $g_override_xocc_flag";
     }
     print "\n";
 }
@@ -563,24 +582,30 @@ sub selectTarget
            $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
         } elsif ($g_target eq "x86") {
            $g_xocc = "$g_xoc_root_path/src/xocc.x64.prj/debug/xocc.exe";
+        } else {
+            print "\nNOT RERER VALID TARGET!\n";
+            abort();
         }
     } else {
         if ($g_target eq "pac") {
-           $g_base_cc = "pacc";
-           $g_xocc = "$g_xoc_root_path/src/pac/xocc.exe";
-           $g_as = "pacdsp-elf-as --horizontaledit";
-           $g_ld = "pacdsp-elf-ld -L/home/zhenyu/gj310/install/linux/pacdsp-elf/lib/ -Tpac.ld /home/zhenyu/gj310/install/linux/pacdsp-elf/lib/crt1.o -lc -lsim -lm -lc -lgcc ";
-           $g_ld_flag = "-lc -lm -lgcc -lsim";
-           $g_simulator = "pacdsp-elf-run";
+            $g_base_cc = "pacc";
+            $g_xocc = "$g_xoc_root_path/src/pac/xocc.exe";
+            $g_as = "pacdsp-elf-as --horizontaledit";
+            $g_ld = "pacdsp-elf-ld -L/home/zhenyu/gj310/install/linux/pacdsp-elf/lib/ -Tpac.ld /home/zhenyu/gj310/install/linux/pacdsp-elf/lib/crt1.o -lc -lsim -lm -lc -lgcc ";
+            $g_ld_flag = "-lc -lm -lgcc -lsim";
+            $g_simulator = "pacdsp-elf-run";
         } elsif ($g_target eq "arm") {
-           $g_base_cc = "arm-linux-gnueabihf-gcc";
-           $g_xocc = "$g_xoc_root_path/src/arm/xocc.exe";
-           $g_as = "arm-linux-gnueabihf-as";
-           $g_ld = "arm-linux-gnueabihf-gcc";
-           $g_ld_flag = "";
-           $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
+            $g_base_cc = "arm-linux-gnueabihf-gcc";
+            $g_xocc = "$g_xoc_root_path/src/arm/xocc.exe";
+            $g_as = "arm-linux-gnueabihf-as";
+            $g_ld = "arm-linux-gnueabihf-gcc";
+            $g_ld_flag = "";
+            $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
         } elsif ($g_target eq "x86") {
-           $g_xocc = "$g_xoc_root_path/src/x86/xocc.exe";
+            $g_xocc = "$g_xoc_root_path/src/x86/xocc.exe";
+        } else {
+            print "\nNOT RERER VALID TARGET!\n";
+            abort();
         }
     }
     #$g_xocc = "/home/zhenyu/x/src.passed_all_execute_test_in_test_exec/xocc/xocc.exe";
@@ -598,6 +623,7 @@ sub usage
           "[TestGr] [ShowTime] [OnlyCompile] [Recur] [NotQuitEarly] [CompareDump] ",
           "[Case = your_test_file_name]  ",
           "[OverrideXoccPath = your_xocc_file_path] ",
+          "[OverrideXoccFlag = your_xocc_flag] ",
           "\n";
     print "\nMovePassed:        move passed testcase to 'passed' directory",
           "\n                   NOTE: do not delete testcase in 'passed' directory",
@@ -613,6 +639,8 @@ sub usage
           "\nCompareDump:       only compile and compare the dump file",
           "\nOverrideXoccPath = ...:",
           "\n                   refer xocc path",
+          "\nOverrideXoccFlag = ...:",
+          "\n                   xocc command line option",
           "\n";
 }
 
@@ -709,7 +737,7 @@ sub generateGRandCompile
     }
 }
 
-#Extract CFLAG from *.conf and append it to g_cflags.
+#Extract CFLAG from *.conf if exist and append it to g_cflags.
 sub extractAndSetCflag
 {
     #Record the configure file.

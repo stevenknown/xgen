@@ -66,8 +66,7 @@ void ARMPassMgr::performScalarOpt(OptCtx & oc)
     }
 
     if (g_do_dce) {
-        passlist.append_tail(registerPass(PASS_DCE));
-        ((DeadCodeElim*)registerPass(PASS_DCE))->set_elim_cfs(false);
+        passlist.append_tail(registerPass(PASS_DCE));        
     }
 
     if (g_do_licm) { passlist.append_tail(registerPass(PASS_LICM)); }

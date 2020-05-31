@@ -208,7 +208,7 @@ public:
 
     //Before removing bb, revising phi opnd if there are phis
     //in one of bb's successors.
-    void removeSuccessorPhiOpnd(CFG<ORBB, OR> * cfg) { DUMMYUSE(cfg); }
+    void removeAllSuccessorsPhiOpnd(CFG<ORBB, OR> * cfg) { DUMMYUSE(cfg); }
 };
 //END ORBB
 

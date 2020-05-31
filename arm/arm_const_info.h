@@ -134,7 +134,8 @@ typedef unsigned long long UINT128;
 //Defined the threshold of Dominator Frontier Density.
 //Higher Dominator Frontier Density might make SSAMgr inserting
 //ton of PHIs which will blow up memory.
-#define THRESHOLD_HIGH_DOMINATOR_FRONTIER_DENSITY 1000
+//This is an expirical value.
+#define THRESHOLD_HIGH_DOMINATOR_FRONTIER_DENSITY 70000
 
 //Defined macros to skip some special argument registers when passing
 //arguments.

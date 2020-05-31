@@ -16,7 +16,6 @@ our $g_is_invoke_linker;
 our $g_is_invoke_simulator;
 our $g_is_recur;
 our $g_target;
-our $g_xocc;
 our $g_base_cc;
 our $g_is_quit_early; #finish test if error occurred.
 our $g_osname;
@@ -68,49 +67,56 @@ sub TryCompileCompareDump
         my $fullpath = $_; 
 
         #Perform comparaion only if configure file exist.
-        my $conf_file = $fullpath.".conf";
-        if (!-e $conf_file) { 
-            #Baseline dump file does not exist.
-            next;
-        }
+        #my $conf_file = $fullpath.".conf";
+        #if (!-e $conf_file) { 
+        #    #Baseline dump file does not exist, but generate dump file always.
+        #    #next;
+        #}
 
         print "\n-------------------------------------------";
         my $path = substr($fullpath, 0, rindex($fullpath, "/") + 1);
 
         #The new result file.
-        my $xocc_dump = $fullpath.".xocc_dump.txt";
-        unlink($xocc_dump);
+        my $xocc_dump_file = $fullpath.".xocc_dump.txt";
+        unlink($xocc_dump_file);
+
+        #Backup original flags.
+        my $org_cflags = $g_cflags;
 
         #Extract CFLAG from *.conf and append it to g_cflags.
-        my $org_cflags = $g_cflags;
         extractAndSetCflag($fullpath);
-        #Add the dump file path of xocc.exe.
-        $g_cflags = $g_cflags." -dump $xocc_dump ";
+
+        #Add the dump file path to flags of xocc.exe.
+        $g_cflags = $g_cflags." -dump $xocc_dump_file ";
+
+        #Running XOCC.
         runXOCC($fullpath, 0, 0, 0); 
+
+        #Restore original flags.
         $g_cflags = $org_cflags;
        
         #Compare baseline dump and latest dump.
         #The baseline result file.
-        my $base_dump = $fullpath.".base_dump.txt";
-        if (!-e $base_dump) { 
+        my $base_dump_file = $fullpath.".base_dump.txt";
+        if (!-e $base_dump_file) {
             #Baseline dump file does not exist.
-            abort("Base dump '$base_dump' not exist.");
+            abortex("Base dump '$base_dump_file' not exist.");
         }
 
-        print("\nCMD>>compare $base_dump $xocc_dump\n");
-        if (compare($base_dump, $xocc_dump) == 0) {
+        print("\nCMD>>compare $base_dump_file $xocc_dump_file\n");
+        if (compare($base_dump_file, $xocc_dump_file) == 0) {
             #New result is euqal to baseline result.
             #New result is correct.
         } else {
             #Not equal
             #New result is incorrect!
             print "\nCOMPARE DUMP OF $fullpath FAILED! NOT EQUAL TO BASE DUMP!\n";
-            abort();
+            abortex();
         }
         if ($g_is_move_passed_case == 1) {
             #NOTE: Do NOT delete testcase file in 'passed' directory.
             print("\nCMD>>move $fullpath, $path/passed\n");
-            move($fullpath, $path."/passed") or abort();
+            move($fullpath, $path."/passed") or abortex();
         }
     }
 }
@@ -150,7 +156,7 @@ sub TryCompile
         if ($g_is_move_passed_case == 1) {
             #NOTE: Do NOT delete testcase file in 'passed' directory.
             print("\nCMD>>move $fullpath, $path/passed\n");
-            move($fullpath, $path."/passed") or abort();
+            move($fullpath, $path."/passed") or abortex();
         }
     }
 }

@@ -37,15 +37,16 @@ void bar (struct S, int);
 void add(int a, int b);
 void sps (int a, struct T b)
 {
-    //We should eliminate the branch condition here, loading from null is undefined:
+    //We should eliminate the branch condition here, loading from NULL is
+    //undefined!
     //typedef struct S PS;
     struct S * c;
     c = 0;
     //PS c;
-      if (a)
-          c = &b.s;
-      bar (*c, a); //To test CG: 16byte load.
-      add(a+b.s.x, a+b.s.x);
+    if (a)
+        c = &b.s;
+    bar (*c, a); //To test CG: 16byte load.
+    add(a+b.s.x, a+b.s.x);
 }
 
 

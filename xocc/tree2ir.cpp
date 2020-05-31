@@ -75,7 +75,7 @@ bool CTree2IR::is_istore_lhs(IN Tree * t)
 }
 
 
-IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
+IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 {
     //One of '='   '*='   '/='   '%='  '+='
     //       '-='  '<<='  '>>='  '&='  '^='  '|='
@@ -501,7 +501,7 @@ IR * CTree2IR::convert_assign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 // *++a=0 => a=a+1; *a=0;
 // b=*++a => a=a+1; b=*a;
 // b=++*a => *a=*a+1; b=*a;
-IR * CTree2IR::convert_inc_dec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
+IR * CTree2IR::convertIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 {
     //Generate base region IR node used into ST
     T2IRCtx ct;
@@ -576,7 +576,7 @@ IR * CTree2IR::convert_inc_dec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 }
 
 
-IR * CTree2IR::convert_array(Tree * t, INT lineno, IN T2IRCtx * cont)
+IR * CTree2IR::convertArray(Tree * t, INT lineno, IN T2IRCtx * cont)
 {
     //There are 3 situations need to resolve.
     //CASE 1. Regular array.
@@ -714,11 +714,18 @@ IR * CTree2IR::convert_array(Tree * t, INT lineno, IN T2IRCtx * cont)
 }
 
 
-IR * CTree2IR::convert_pragma(IN Tree *, INT lineno, IN T2IRCtx *)
+IR * CTree2IR::convertPragma(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 {
-    DUMMYUSE(lineno);
-    //ASSERTN(0, ("TODO"));
-    return NULL;
+    StrBuf buf(16);
+    for (TokenList * tl = TREE_pragma_token_lst(t);
+         tl != NULL; tl = TL_next(tl)) {
+        if (TL_str(tl) == NULL) { continue; }
+        buf.strcat(SYM_name(TL_str(tl)));
+        buf.strcat(" ");
+    }
+    IR * ir = m_rg->buildLabel(m_rg->genPragmaLabel(buf.buf));
+    setLineNum(ir, lineno, m_rg);
+    return ir;
 }
 
 
@@ -728,8 +735,10 @@ bool CTree2IR::is_readonly(VAR const* v)
     CHAR const* vname = SYM_name(VAR_name(v));
     if (strcmp(vname, "printf") == 0) {
         //CASE: If 'printf' is set to be READONLY, DeadCodeElim will remove
-        //the call-site if there is no use of printf's return value.
-        return true;
+        //the call-site if there is no use of printf's return value, thus
+        //test/exec will failed.
+        //return true;
+        return false;
     }
     return false;
 }
@@ -965,7 +974,8 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         //    ist(x) = ild(x) + 1
         //    return pr
         ASSERT0(ILD_base(inc_exp)->is_ptr());
-        xstpr = m_rg->buildStorePR(inc_exp->getType(), m_rg->dupIRTree(inc_exp));
+        xstpr = m_rg->buildStorePR(inc_exp->getType(),
+            m_rg->dupIRTree(inc_exp));
         xincst = m_rg->buildIStore(m_rg->dupIRTree(ILD_base(inc_exp)),
             addsub, inc_exp->getType());
     } else if (inc_exp->is_array()) {
@@ -1061,7 +1071,8 @@ IR * CTree2IR::convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx *)
 IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
 {
     Decl * base_decl = TREE_result_type(TREE_base_region(t));
-    ASSERTN(is_struct(base_decl) || is_union(base_decl), ("illegal base type"));
+    ASSERTN(is_struct(base_decl) || is_union(base_decl),
+            ("illegal base type"));
     ASSERTN(TREE_type(TREE_field(t)) == TR_ID, ("illegal offset type"));
 
     Decl * field_decl = TREE_result_type(TREE_field(t));
@@ -1077,7 +1088,8 @@ IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
     ASSERTN(TREE_type(TREE_field(t)) == TR_ID, ("illegal struct/union exp"));
     if (is_struct(base_decl)) {
         Struct * st = TYPE_struct_type(DECL_spec(base_decl));
-        field_ofst = get_struct_field_ofst(st, SYM_name(TREE_id(TREE_field(t))));
+        field_ofst = get_struct_field_ofst(st,
+            SYM_name(TREE_id(TREE_field(t))));
     }
 
     //Revise result type of ir accroding to 'field'.
@@ -1097,9 +1109,10 @@ IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
             ir->setOffset(ir->getOffset() + field_ofst);
         } else if (ir->is_array()) {
             //CASE: Both dmem's base and field are array.
-            //In this case, the base array will be simplified to address expression,
-            //and the simplification will performed by convert_array() if it
-            //check and found the base is also an array. Just return here.
+            //In this case, the base array will be simplified
+            //to address expression, and the simplification will
+            //performed by convert_array() if it check and found
+            //the base is also an array. Just return here.
             ;
         } else {
             ASSERT0(ir->is_ptr()); //dmem's base is indmem.
@@ -1128,10 +1141,13 @@ IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
 
 
 //Convert indirect memory access.
-IR * CTree2IR::convertInDirectMemAccess(Tree * t, INT lineno, IN T2IRCtx * cont)
+IR * CTree2IR::convertIndirectMemAccess(Tree * t,
+                                        INT lineno,
+                                        IN T2IRCtx * cont)
 {
     Decl * base_decl = TREE_result_type(TREE_base_region(t));
-    ASSERTN(is_struct(base_decl) || is_union(base_decl), ("illegal base type"));
+    ASSERTN(is_struct(base_decl) || is_union(base_decl),
+            ("illegal base type"));
     ASSERTN(TREE_type(TREE_field(t)) == TR_ID, ("illegal offset type"));
     ASSERTN(is_pointer(base_decl), ("'->' node must be pointer type"));
 
@@ -1139,7 +1155,8 @@ IR * CTree2IR::convertInDirectMemAccess(Tree * t, INT lineno, IN T2IRCtx * cont)
     UINT field_ofst = 0; //All Field of union start at offset 0.
     if (is_struct(base_decl)) {
         Struct * st = TYPE_struct_type(DECL_spec(base_decl));
-        field_ofst = get_struct_field_ofst(st, SYM_name(TREE_id(TREE_field(t))));
+        field_ofst = get_struct_field_ofst(st,
+            SYM_name(TREE_id(TREE_field(t))));
     }
 
     UINT sz;
@@ -1147,11 +1164,12 @@ IR * CTree2IR::convertInDirectMemAccess(Tree * t, INT lineno, IN T2IRCtx * cont)
     DATA_TYPE dt = D_UNDEF;
     IR * ir = NULL;
     IR * base = convert(TREE_base_region(t), NULL);
-    ASSERTN(base->is_ptr(), ("base of indirect memory access must be pointer."));
-
+    ASSERTN(base->is_ptr(),
+            ("base of indirect memory access must be pointer."));
     if (is_pointer(field_decl)) {
         Type const* type = m_tm->getPointerType(
             get_pointer_base_size(field_decl));
+        ASSERT0(type->verify(m_rg->getTypeMgr()));
         //CASE: generate ild to access field's value.
         //e.g: p->b, will generate,
         //t = ld(p)
@@ -1170,8 +1188,9 @@ IR * CTree2IR::convertInDirectMemAccess(Tree * t, INT lineno, IN T2IRCtx * cont)
             ir = base;
             if (field_ofst != 0) {
                 ir = m_rg->buildBinaryOpSimp(IR_ADD, base->getType(),
-                    base, m_rg->buildImmInt(field_ofst, m_tm->getSimplexTypeEx(
-                        m_tm->getPointerSizeDtype())));
+                    base, m_rg->buildImmInt(field_ofst,
+                        m_tm->getSimplexTypeEx(
+                            m_tm->getPointerSizeDtype())));
             }
         } else {
             ir = m_rg->buildILoad(base, m_tm->getMCType(sz));
@@ -1551,7 +1570,8 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
             //tree is the callee.
             ir = buildId(t);
         } else {
-            //In C, function name referrence can be represented as LDA operation.
+            //In C, function name referrence can be represented
+            //as LDA operation.
             //e.g: f take the address of hook.
             //void hook();
             //void foo() {
@@ -1628,7 +1648,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         INT lineno = TREE_lineno(t);
         switch (TREE_type(t)) {
         case TR_ASSIGN:
-            ir = convert_assign(t, lineno, cont);
+            ir = convertAssign(t, lineno, cont);
             break;
         case TR_ID:
             ir = convertId(t, lineno, cont);
@@ -1872,7 +1892,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                         get_pointer_base_size(TREE_result_type(t)));
                 } else {
                     UINT s = 0;
-                    DATA_TYPE dt = ::get_decl_dtype(TREE_result_type(t), &s, m_tm);
+                    DATA_TYPE dt = ::get_decl_dtype(TREE_result_type(t),
+                        &s, m_tm);
                     if (dt == D_MC) {
                         type = m_tm->getMCType(s);
                     } else {
@@ -1924,7 +1945,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 IR * det = convert(TREE_dowhile_det(t), &ct2);
                 det = only_left_last(det);
                 if (det == NULL) {
-                    det = m_rg->buildJudge(m_rg->buildImmInt(1, m_tm->getI32()));
+                    det = m_rg->buildJudge(m_rg->buildImmInt(1,
+                        m_tm->getI32()));
                 }
 
                 if (prolog != NULL) {
@@ -2106,7 +2128,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             break;
         case TR_INC:   //++a
         case TR_DEC:   //--a
-            ir = convert_inc_dec(t, lineno, cont);
+            ir = convertIncDec(t, lineno, cont);
             break;
         case TR_POST_INC: //a++  / (*a)++
         case TR_POST_DEC: //a--
@@ -2116,16 +2138,16 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             ir = convertDirectMemAccess(t, lineno, cont);
             break;
         case TR_INDMEM:
-            ir = convertInDirectMemAccess(t, lineno, cont);
+            ir = convertIndirectMemAccess(t, lineno, cont);
             break;
         case TR_ARRAY:
-            ir = convert_array(t, lineno, cont);
+            ir = convertArray(t, lineno, cont);
             break;
         case TR_CALL:
             ir = convertCall(t, lineno, cont);
             break;
         case TR_PRAGMA:
-            ir = convert_pragma(t, lineno, cont);
+            ir = convertPragma(t, lineno, cont);
             break;
         default: ASSERTN(0, ("unknown tree type:%d", TREE_type(t)));
         } //end switch
