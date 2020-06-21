@@ -28,6 +28,7 @@ our $g_ld;
 our $g_ld_flag;
 our $g_simulator;
 our $g_cflags;
+our $g_error_count;
 require "../util.pl";
 prolog();
 main();
@@ -38,6 +39,9 @@ sub main
     # mkpath(["log"]);
     # clean();
     TryCompileAsmLinkRunCompare($g_is_test_gr);
+    if ($g_error_count != 0) {
+        print "\nThere are $g_error_count error occurred!\n";
+    }
     print "\nTEST FINISH!\n";
 }
 
@@ -133,6 +137,7 @@ sub TryCompileAsmLinkRunCompare
             if (compare($base_output, $xocc_output) == 0) {
                 #New result is euqal to baseline result.
                 #New result is correct.
+                print "\nPASS!\n";
             } else {
                 #Not equal
                 #New result is incorrect!

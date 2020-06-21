@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#####!/usr/bin/perl -w
 
 use Cwd;
 use File::Find;
@@ -28,6 +28,7 @@ our $g_ld_flag;
 our $g_simulator;
 our $g_cflags;
 our $g_is_compare_dump;
+our $g_error_count;
 require "../util.pl";
 prolog();
 main();
@@ -41,7 +42,9 @@ sub main
     } else {
         TryCompile($g_is_test_gr);
     }
-
+    if ($g_error_count != 0) {
+        print "\nThere are $g_error_count error occurred!\n";
+    }
     print "\nTEST FINISH!\n";
 }
 
@@ -90,7 +93,7 @@ sub TryCompileCompareDump
         $g_cflags = $g_cflags." -dump $xocc_dump_file ";
 
         #Running XOCC.
-        runXOCC($fullpath, 0, 0, 0); 
+        runXOCC($fullpath, 0, 0, 0);
 
         #Restore original flags.
         $g_cflags = $org_cflags;
@@ -107,6 +110,7 @@ sub TryCompileCompareDump
         if (compare($base_dump_file, $xocc_dump_file) == 0) {
             #New result is euqal to baseline result.
             #New result is correct.
+            print "\nPASS!\n";
         } else {
             #Not equal
             #New result is incorrect!

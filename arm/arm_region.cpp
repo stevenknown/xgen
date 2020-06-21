@@ -105,6 +105,7 @@ IR * ARMRegion::insertCvtForFloat(IR * parent, IR * kid, bool & change)
 
 void ARMRegion::simplify(OptCtx & oc)
 {
+    //Note PRSSA and MDSSA are unavailable.
     if (getBBList() == NULL || getBBList()->get_elem_count() == 0) {
         return;
     }
@@ -130,7 +131,6 @@ void ARMRegion::simplify(OptCtx & oc)
     }
 
     simplifyBBlist(getBBList(), &simp);
-
     if (g_do_cfg &&
         g_cst_bb_list &&
         SIMP_need_recon_bblist(&simp) &&
@@ -270,10 +270,14 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
 
         getCFG()->performMiscOpt(oc);
     }
-    
+
+    //Make MD id more grouped together.
+    assignMD(false, true);
+    assignMD(true, false);
+
     if (g_do_aa) {
         ASSERT0(g_cst_bb_list && OC_is_cfg_valid(oc));
-        assignMD(false);
+
         checkValidAndRecompute(&oc, PASS_DOM, PASS_LOOP_INFO,
             PASS_AA, PASS_UNDEF);        
     }    
@@ -353,7 +357,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
             (!OC_is_aa_valid(oc) || !OC_is_ref_valid(oc))) {
             //Recompute and set MD reference to avoid AA's complaint.
             //Compute AA to build coarse-grained DU chain.
-            assignMD(false);
+            assignMD(true, true);
             if (!aa->is_init()) {
                 aa->initAliasAnalysis();
             }
@@ -380,7 +384,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
             }
             //checkValidAndRecompute(&oc, PASS_LOOP_INFO, PASS_UNDEF);
             //Recompute and set MD reference to avoid AA's complaint.
-            assignMD(false);
+            assignMD(true, true);
 
             //Compute the threshold to perform AA.
             UINT numir = 0;
@@ -429,10 +433,8 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
 
 bool ARMRegion::MiddleProcess(OptCtx & oc)
 {
-    if (g_opt_level == OPT_LEVEL0) {
-        assignMD(true);
-    }
-
+    assignMD(false, true);
+    assignMD(true, false);
     if (g_is_lower_to_pr_mode) {
         simplifyToPRmode(oc);
     } else {

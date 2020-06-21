@@ -1,3 +1,4 @@
+#pragma hint 
 int foo()
 {
     int x;

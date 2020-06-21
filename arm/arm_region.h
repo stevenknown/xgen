@@ -52,7 +52,7 @@ public:
     {
         bool res = Region::process(oc);
         if (!res) { return res; }
-
+        
         simplify(*oc);
         return true;
     }

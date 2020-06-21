@@ -20,9 +20,11 @@ our @EXPORT_OK = qw(
     computeRelatedPathToXocRootDir
     computeAbsolutePathToXocRootDir
     clean
+    runCPP
     runXOCC);
 our $g_base_cc = "";
 our $g_xocc = "";
+our $g_cpp = "cpp";
 our $g_xocc_flag = "";
 our $g_pacc = "pacc";
 our $g_as = "pacdsp-elf-as";
@@ -49,6 +51,7 @@ our $g_single_testcase = ""; #record the single testcase
 our $g_override_xocc_path = "";
 our $g_override_xocc_flag = "";
 our $g_is_compare_dump = 0;
+our $g_error_count = 0;
 
 sub findCurrent {
     my $dir = $_[0];
@@ -323,14 +326,39 @@ sub runPACC
 }
 
 
-#Use pacc to compile, assembly and link.
+#Use cpp to preprocess C file.
+#Output preprocessed file that postfix with *.i.
+sub runCPP
+{
+    my $cmdline;
+    my $src_fullpath = $_[0]; 
+    my $input_file_name = substr($src_fullpath, rindex($src_fullpath, "/") + 1);
+    my $preprocessed_name = $src_fullpath.".i";
+    my $outname = computeOutputName($src_fullpath);
+    my $objname = $src_fullpath.".o";
+
+    #preprcessing
+    unlink($preprocessed_name);
+    $cmdline = "$g_cpp $src_fullpath -o $preprocessed_name -C";
+    print("\nCMD>>", $cmdline, "\n");
+    my $retval = system($cmdline);
+    if ($retval != 0) {
+        print("\nCMD>>", $cmdline, "\n");
+        print "\nEXECUTE CPP FAILED!! RES:$retval\n";
+        abortex($retval);
+    }
+    return $preprocessed_name; 
+}
+
+
+#Use xocc to compile, assembly and link.
 sub runXOCC
 {
     my $cmdline;
     my $src_fullpath = $_[0]; 
+    my $input_file_name = substr($src_fullpath, rindex($src_fullpath, "/") + 1);
     my $is_invoke_assembler = $_[1]; 
     my $is_invoke_linker = $_[2]; 
-    my $fname = substr($src_fullpath, rindex($src_fullpath, "/") + 1);
     my $asmname = $src_fullpath.".asm";
     my $outname = computeOutputName($src_fullpath);
     my $objname = $src_fullpath.".o";
@@ -361,6 +389,7 @@ sub runXOCC
 
 sub abortex
 {
+    $g_error_count += 1;
     if (!$g_is_quit_early) {
         return;
     }

@@ -348,6 +348,9 @@ bool processCmdLine(INT argc, CHAR * argv[])
             } else if (!strcmp(cmdstr, "mdssa")) {
                 g_do_md_ssa = true;
                 i++;
+            } else if (!strcmp(cmdstr, "prmode")) {
+                g_is_lower_to_pr_mode = true;
+                i++;
             } else if (!strcmp(cmdstr, "prssa")) {
                 g_do_pr_ssa = true;
                 i++;

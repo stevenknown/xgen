@@ -76,7 +76,7 @@ void ARMPassMgr::performScalarOpt(OptCtx & oc)
     bool change;
     UINT count = 0;
     //dumpBBList(m_rg->getBBList(), m_rg, "before");
-    ASSERT0(verifySSAInfo(m_rg));
+    ASSERT0(verifyPRSSAInfo(m_rg));
     do {
         change = false;
         for (Pass * pass = passlist.get_head();
@@ -104,7 +104,7 @@ void ARMPassMgr::performScalarOpt(OptCtx & oc)
 
             ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
             ASSERT0(m_rg->getCFG()->verify());
-            ASSERT0(verifySSAInfo(m_rg));
+            ASSERT0(verifyPRSSAInfo(m_rg));
             ASSERT0(m_rg->verifyRPO(oc));
         }
         count++;

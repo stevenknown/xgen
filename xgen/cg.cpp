@@ -1115,7 +1115,7 @@ void CG::dumpPackage()
     if (xoc::g_tfile == NULL) { return; }
     g_indent = 0;
     note("\n==---- DUMP Package, Region(%d)'%s' ----==",
-         REGION_id(getRegion()),
+         getRegion()->id(),
          getRegion()->getRegionName() == NULL ?
              "--" : getRegion()->getRegionName());
 
@@ -3598,7 +3598,7 @@ void CG::computeMaxRealParamSpace()
     BBList * ir_bb_list = m_rg->getBBList();
     for (IRBB * bb = ir_bb_list->get_head();
          bb != NULL; bb = ir_bb_list->get_next()) {
-        xcom::C<xoc::IR*> * ct;
+        IRListIter ct;
         for (xoc::IR * ir = BB_irlist(bb).get_head(&ct); ir != NULL;
              ir = BB_irlist(bb).get_next(&ct)) {
             if (!ir->isCallStmt()) { continue; }
@@ -3992,7 +3992,7 @@ bool CG::perform()
         g_dump_opt.isDumpCG()) {
         g_indent = 0;
         xoc::note("\n==---- DUMP START CODE GENERATION (%d)'%s' ----==\n",
-            REGION_id(m_rg), m_rg->getRegionName());
+            m_rg->id(), m_rg->getRegionName());
         m_rg->dump(false);
     }
 

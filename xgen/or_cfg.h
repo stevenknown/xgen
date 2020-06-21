@@ -35,7 +35,6 @@ namespace xgen {
 
 typedef xcom::TMap<xoc::LabelInfo const*, ORBB*> Lab2ORBB;
 
-
 //NOTICE:
 //1. For accelerating perform operation of each vertex, e.g
 //   compute dominator, please try best to add vertex with
@@ -70,13 +69,14 @@ public:
     OR_CFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg);
     virtual ~OR_CFG() {}
     virtual void addBB(ORBB * bb);
+
     virtual void cf_opt();
+
     void dumpVCG(CHAR const* name = NULL, bool detail = true);
 
     virtual ORBB * findBBbyLabel(LabelInfo const* lab);
-    virtual void findTargetBBOfMulticondBranch(
-        OR const*,
-        OUT List<ORBB*>&)
+    virtual void findTargetBBOfMulticondBranch(OR const*,
+                                               OUT List<ORBB*>&)
     { ASSERTN(0, ("TODO")); }
     virtual void findTargetBBOfIndirectBranch(OR const*, OUT List<ORBB*>&)
     { ASSERTN(0, ("TODO")); }
