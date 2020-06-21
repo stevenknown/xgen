@@ -159,7 +159,7 @@ void CLDbxMgr::printSrcLine(xcom::StrBuf & output, Dbx const* dbx, PrtCtx * ctx)
 static void usage()
 {
     fprintf(stdout,
-            "\nXOCC Version 0.9.2"
+            "\nXOCC Version 0.11.0"
             "\nUsage: xoc [options] file"
             "\nOptions: "
             "\n  -O0,           compile without any optimization"
@@ -169,6 +169,7 @@ static void usage()
             "\n  -gra=<on|off>  switch for global register allocation"
             "\n  -ipa           enable IPA"
             "\n  -dumpgr        dump GR file"
+            "\n  -prmode        simplify to the lowest IR"
             "\n  -readgr <file> read GR file"
             "\n");
 }
