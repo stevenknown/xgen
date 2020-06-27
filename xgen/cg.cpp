@@ -3725,16 +3725,16 @@ void CG::preLS(IN ORBB * bb,
 }
 
 
-//This function does not handling SRs in bewteen stmt1 and stmt2,
+//This function does not handle SRs bewteen stmt1 and stmt2,
 //which include stmt1, not include stmt2.
-//e.g:
-// ... <- first_use
-// ...
+//e.g:   ... <- sr1 //first_use
+//       ...
 // first_def <- ... //stmt1
-// ... <- not_first_use
-// last_def <- ... //stmt2
-// ...
-// ... <- use
+//       ... <- not_first_use1
+//       ... <- not_first_use2
+// last_def  <- ... //stmt2
+//       ...
+//       ... <- use
 void CG::localizeBB(SR * sr, ORBB * bb)
 {
     ASSERT0(SR_is_reg(sr));

@@ -277,10 +277,9 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
 
     if (g_do_aa) {
         ASSERT0(g_cst_bb_list && OC_is_cfg_valid(oc));
-
         checkValidAndRecompute(&oc, PASS_DOM, PASS_LOOP_INFO,
             PASS_AA, PASS_UNDEF);        
-    }    
+    }
 
     if (g_do_md_du_analysis) {
         ASSERT0(g_cst_bb_list && OC_is_cfg_valid(oc) && OC_is_aa_valid(oc));
@@ -303,7 +302,6 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         } else {
             dumgr->perform(oc, f);
         }
-
 
         ASSERT0(OC_is_ref_valid(oc));
         if (g_do_pr_ssa) {

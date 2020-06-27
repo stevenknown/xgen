@@ -37,7 +37,6 @@ our $g_target; #indicate target machine.
 our $g_is_create_base_result = 0;
 our $g_is_move_passed_case = 0;
 our $g_is_test_gr = 0;
-our $g_is_input_gr = 0;
 our $g_is_invoke_assembler = 1;
 our $g_is_invoke_linker = 1;
 our $g_is_invoke_simulator = 1;
@@ -255,7 +254,7 @@ sub compileGR
     }
 
     #compile GR to asm
-    $cmdline = "$g_xocc $g_cflags $fullpath -readgr $grname -o $asmname";
+    $cmdline = "$g_xocc $g_cflags $grname -o $asmname";
     print("\nCMD>>", $cmdline, "\n");
     $retval = system($cmdline);
     if ($retval != 0) {
@@ -362,16 +361,11 @@ sub runXOCC
     my $asmname = $src_fullpath.".asm";
     my $outname = computeOutputName($src_fullpath);
     my $objname = $src_fullpath.".o";
-    my $is_input_gr = $_[3]; 
 
     #compile
     unlink($asmname);
     $cmdline = "$g_xocc $g_cflags $src_fullpath -o $asmname $g_xocc_flag";
-    if ($is_input_gr) {
-        $cmdline = "$cmdline -readgr $src_fullpath";
-    } else {
-        $cmdline = "$cmdline $src_fullpath";
-    }
+    $cmdline = "$cmdline $src_fullpath";
     print("\nCMD>>", $cmdline, "\n");
     my $retval = system($cmdline);
     if ($retval != 0) {
@@ -500,8 +494,6 @@ sub parseCmdLine
             $g_is_move_passed_case = 1;
         } elsif ($ARGV[$i] eq "TestGr") {
             $g_is_test_gr = 1;
-        } elsif ($ARGV[$i] eq "InputGr") {
-            $g_is_input_gr = 1;
         } elsif ($ARGV[$i] eq "ShowTime") {
             $g_cflags .= " -time";
         } elsif ($ARGV[$i] eq "Recur") {
@@ -573,7 +565,6 @@ sub printEnvVar
     print "\ng_ld = $g_ld";
     print "\ng_ld_flag = $g_ld_flag";
     print "\ng_is_test_gr = $g_is_test_gr";
-    print "\ng_is_input_gr = $g_is_input_gr";
     print "\ng_xoc_root_path = $g_xoc_root_path";
     if ($g_single_testcase ne "") {
         print "\ng_single_testcase = $g_single_testcase";
@@ -659,7 +650,6 @@ sub usage
           "\nCreateBaseResult:  generate result if there is no one",
           "\n                   NOTE: deleting the exist one will regenerate base result",
           "\nTestGr:            generate GR for related C file and test GR file",
-          "\nInputGr:           inpute file is GR file",
           "\nShowTime:          show compiling time for each compiler pass",
           "\nOnlyCompile:       only compile and assemble testcase",
           "\nRecur:             perform test recursively",

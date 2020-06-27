@@ -10,13 +10,11 @@ use strict;
 our $g_is_create_base_result;
 our $g_is_move_passed_case;
 our $g_is_test_gr;
-our $g_is_input_gr;
 our $g_is_invoke_assembler;
 our $g_is_invoke_linker;
 our $g_is_invoke_simulator;
 our $g_is_recur;
 our $g_target;
-our $g_xocc;
 our $g_base_cc;
 our $g_is_quit_early; #finish test if error occurred.
 our $g_osname;
@@ -28,16 +26,20 @@ our $g_ld;
 our $g_ld_flag;
 our $g_simulator;
 our $g_cflags;
+our $g_is_compare_dump;
+our $g_error_count;
 require "../util.pl";
 prolog();
 main();
-
 #############################################################
 sub main 
 {
     # mkpath(["log"]);
     # clean();
     TryCompileAsmLinkRunCompare($g_is_test_gr);
+    if ($g_error_count != 0) {
+        print "\nThere are $g_error_count error occurred!\n";
+    }
     print "\nTEST FINISH!\n";
 }
 
@@ -53,17 +55,9 @@ sub TryCompileAsmLinkRunCompare
     if ($g_single_testcase ne "") {
         @f = findFileRecursively($curdir, $g_single_testcase);
     } elsif ($g_is_recur) {
-        if ($g_is_input_gr) {
-            @f = findRecursively($curdir, 'gr'); 
-        } else {
-            @f = findRecursively($curdir, 'c'); 
-        }
+        @f = findRecursively($curdir, 'gr'); 
     } else {
-        if ($g_is_input_gr) {
-            @f = findCurrent($curdir, 'gr'); 
-        } else {
-            @f = findCurrent($curdir, 'c'); 
-        }
+        @f = findCurrent($curdir, 'gr'); 
     }
     #my @f = `find -name "*.c"`;
 
@@ -81,7 +75,7 @@ sub TryCompileAsmLinkRunCompare
                         $fullpath, "base.out", $base_output);
                 } else {
                     print "\nUNKNOWN TARGET: $g_target!\n";
-                    abort();
+                    abortex();
                 }
              }
         }
@@ -95,8 +89,7 @@ sub TryCompileAsmLinkRunCompare
 
         my $org_cflags = $g_cflags;
         extractAndSetCflag($fullpath);
-        runXOCC($fullpath, $g_is_invoke_assembler, $g_is_invoke_linker,
-                $g_is_input_gr); 
+        runXOCC($fullpath, $g_is_invoke_assembler, $g_is_invoke_linker); 
         $g_cflags = $org_cflags;
 
         if ($is_test_gr == 1) {
@@ -155,9 +148,7 @@ sub TryCompileAsmLinkRunCompare
                 }
             }
             print("\nCMD>>move $fullpath, $path/passed\n");
-            move($fullpath, $path."/passed/") or
-                #die "move failed: $!";
-                abort();
+            move($fullpath, $path."/passed") or abortex();
         }
     }
 }
