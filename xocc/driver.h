@@ -40,7 +40,7 @@ extern CHAR * g_dump_file_name;
 
 bool compileCFile();
 bool compileGRFile(CHAR * gr_file_name);
-VAR * mapDecl2VAR(Decl * decl);
-Decl * mapVAR2Decl(VAR * var);
+Var * mapDecl2VAR(Decl * decl);
+Decl * mapVAR2Decl(Var * var);
 bool processCmdLine(INT argc, CHAR *argv[]);
 #endif

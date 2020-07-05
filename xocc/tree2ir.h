@@ -111,7 +111,7 @@ protected:
     Decl const* m_return_type;
     Region * m_rg;
     TypeMgr * m_tm;
-    VAR * m_retval_buf;
+    Var * m_retval_buf;
     List<CaseValue*> * m_case_list; //for switch/case used only
     Stack<List<CaseValue*>*> m_case_list_stack; //for switch/case used only
     SMemPool * m_pool;
@@ -147,11 +147,11 @@ public:
     LabelInfo * getUniqueLabel(LabelInfo * lab)
     { return m_labtab.append_and_retrieve(lab); }
 
-    //Generate a VAR if the bytesize of RETURN is bigger than total size of
+    //Generate a Var if the bytesize of RETURN is bigger than total size of
     //return-registers.
     //e.g: Given 32bit target machine, the return register is a0, a1,
     //If the return type is structure whose size is bigger than 64bit, we need
-    //to generate an implcitly VAR to indicate the stack buffer which used
+    //to generate an implcitly Var to indicate the stack buffer which used
     //to hold the return value.
     IR * genReturnValBuf(IR * ir);
     BYTE getMantissaNum(CHAR const* fpval);
@@ -161,8 +161,8 @@ public:
     IR * buildLoad(IN Tree * t);
 
     bool is_istore_lhs(IN Tree * t);
-    bool is_readonly(VAR const* v);
-    bool is_alloc_heap(VAR const* v);
+    bool is_readonly(Var const* v);
+    bool is_alloc_heap(Var const* v);
 
     xoc::Type const* checkAndGenCVTType(Decl const* tgt, Decl const* src);
     IR * convertLDA(Tree * t, INT lineno, T2IRCtx * cont);

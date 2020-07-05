@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //And calculate the byte-size of identifier.
 IR * CTree2IR::buildId(IN Decl * id)
 {
-    VAR * var_info = mapDecl2VAR(id);
+    Var * var_info = mapDecl2VAR(id);
     ASSERT0(var_info);
     return m_rg->buildId(var_info);
 }
@@ -60,7 +60,7 @@ IR * CTree2IR::buildLoad(IN Tree * t)
     ASSERTN(TREE_type(t) == TR_ID, ("illegal tree node , expected TR_ID"));
     Decl * decl = TREE_id_decl(t);
     ASSERT0(decl);
-    VAR * var_info = mapDecl2VAR(decl);
+    Var * var_info = mapDecl2VAR(decl);
     ASSERT0(var_info);
     return m_rg->buildLoad(var_info);
 }
@@ -730,7 +730,7 @@ IR * CTree2IR::convertPragma(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 
 
 //Return true if function do not modify any variable.
-bool CTree2IR::is_readonly(VAR const* v)
+bool CTree2IR::is_readonly(Var const* v)
 {
     CHAR const* vname = SYM_name(VAR_name(v));
     if (strcmp(vname, "printf") == 0) {
@@ -745,7 +745,7 @@ bool CTree2IR::is_readonly(VAR const* v)
 
 
 //Return true if function allocate memory from heap.
-bool CTree2IR::is_alloc_heap(VAR const* v)
+bool CTree2IR::is_alloc_heap(Var const* v)
 {
     CHAR const* vname = SYM_name(VAR_name(v));
     if (strcmp(vname, "malloc") == 0 ||
@@ -837,7 +837,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     //transfering its address as the first implict parameter to
     //the call.
     IR * callarglist = NULL;
-    VAR * retval_buf = NULL;
+    Var * retval_buf = NULL;
     UINT return_val_size = m_tm->getByteSize(rettype);
     if (return_val_size > NUM_OF_RETURN_VAL_REGISTERS *
                           GENERAL_REGISTER_SIZE) {
@@ -846,10 +846,10 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         //WorkAround: We always translate TR_ID into LD(ID),
         //here it is callee actually.
         ASSERT0(callee->is_id());
-        VAR * v = ID_info(callee);
+        Var * v = ID_info(callee);
         ASSERT0(v);
         tmp.sprint("$retval_buf_of_%d_bytes", return_val_size);
-        SYM const* name = m_rg->getRegionMgr()->addToSymbolTab(tmp.buf);
+        Sym const* name = m_rg->getRegionMgr()->addToSymbolTab(tmp.buf);
         retval_buf = m_rg->getVarMgr()->findVarByName(name);
         if (retval_buf == NULL) {
             retval_buf = m_rg->getVarMgr()->registerVar(SYM_name(name),
@@ -875,7 +875,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     IR * call = NULL;
     if (is_direct) {
         ASSERT0(callee->is_id());
-        VAR * v = ID_info(callee);
+        Var * v = ID_info(callee);
         call = m_rg->buildCall(v, callarglist, 0, m_tm->getAny());
         if (is_readonly(v)) {
             CALL_is_readonly(call) = true;
@@ -1316,11 +1316,11 @@ IR * CTree2IR::convertSelect(Tree * t, INT lineno, T2IRCtx * cont)
 }
 
 
-//Generate a VAR if the bytesize of RETURN is bigger than total size of
+//Generate a Var if the bytesize of RETURN is bigger than total size of
 //return-registers.
 //e.g: Given 32bit target machine, the return register is a0, a1,
 //If the return type is structure whose size is bigger than 64bit, we need
-//to generate an implcitly VAR to indicate the stack buffer which used
+//to generate an implcitly Var to indicate the stack buffer which used
 //to hold the return value.
 IR * CTree2IR::genReturnValBuf(IR * ir)
 {
@@ -1578,7 +1578,7 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
             //    typedef void (*F)();
             //    F f = hook;
             //}
-            VAR * var = mapDecl2VAR(TREE_id_decl(t));
+            Var * var = mapDecl2VAR(TREE_id_decl(t));
             ASSERT0(var && VAR_is_func_decl(var));
             ir = m_rg->buildLda(var);
         }
@@ -1683,7 +1683,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             //Convert string to hex value , that is in order to generate
             //single load instruction to load float point value during
             //Code Generator.
-            SYM * fp = TREE_fp_str_val(t);
+            Sym * fp = TREE_fp_str_val(t);
 
             //Default float point type is 64bit.
             ir = m_rg->buildImmFp(::atof(SYM_name(fp)),
@@ -2159,7 +2159,7 @@ static void scanScopeDeclList(SCOPE * s, OUT xoc::Region * rg, bool scan_sib)
             decl = DECL_next(decl);
             continue;
         }
-        xoc::VAR * v = mapDecl2VAR(decl);
+        xoc::Var * v = mapDecl2VAR(decl);
         ASSERTN(v, ("NULL variable correspond to"));
         if (VAR_is_global(v)) {
             xoc::Region * topru = rg->getTopRegion();
@@ -2271,7 +2271,7 @@ xoc::DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, xoc::TypeMgr * tm)
 //    2. building IR type descriptor
 //    3. simplifing Tree into IR.
 //NOTICE:
-//    Before the converting, declaration of Tree must wire up a VAR.
+//    Before the converting, declaration of Tree must wire up a Var.
 static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
 {
     ASSERT0(DECL_is_fun_def(dcl));
@@ -2373,7 +2373,7 @@ bool generateRegion(RegionMgr * rm)
                 }
             } else {
                 //function declaration, not definition.
-                VAR * v = mapDecl2VAR(dcl);
+                Var * v = mapDecl2VAR(dcl);
                 ASSERT0(v);
                 SET_FLAG(VAR_flag(v), VAR_FUNC_DECL);
                 topru->addToVarTab(v);

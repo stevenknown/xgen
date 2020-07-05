@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../opt/cominc.h"
 #include "feinc.h"
 
-#undef DEBUG_XOC
+//#undef DEBUG_XOC
 #ifdef DEBUG_XOC
 INT main(INT argcc, CHAR * argvc[])
 {
@@ -119,7 +119,24 @@ INT main(INT argcc, CHAR * argvc[])
         "..\\..\\test\\compile\\failed\\cfe\\forward_union_decl.c",
         "..\\..\\test\\compile\\failed\\cfe\\zero-strct-5.c",
         "..\\..\\test\\exec\\struct_decl.c",
-        "..\\..\\test\\exec\\alias.c",        
+        "..\\..\\test\\compile\\aa.i",
+        "..\\..\\test\\compile\\pragma.c.i",        
+        "..\\..\\test\\compile\\place_phi.c",
+        "..\\..\\test\\compile\\lib_headers.c.i",        
+        "..\\..\\test\\compile\\20020116-1.c.i",        
+        "..\\..\\test\\compile\\20020116-1.c",                
+        "..\\..\\test\\compile\\20020604-1.c.i", //why it crashed? It has passed in home test.        
+        "..\\..\\test\\compile\\20020604-1.c", //why it crashed? It has passed in home test.
+        "..\\..\\test\\exec\\cse.c",
+        "..\\..\\test\\exec\\qsort.c",
+        "..\\..\\test\\compile\\cfg3.c",
+        "..\\..\\test\\exec\\alias.c",
+        "..\\..\\test\\exec\\permute2.c",
+        "..\\..\\test\\exec\\c4.c",
+        "..\\..\\test\\compile\\20020120-1.c",
+        "..\\..\\test\\compile\\rp2.c",
+        "..\\..\\test\\compile\\rp3.c",
+        "..\\..\\test\\compile\\rp.c",
 #endif
         #ifdef _DEBUG_
         //"-dumpgr",
@@ -127,33 +144,46 @@ INT main(INT argcc, CHAR * argvc[])
         #endif
         "-dump","tmp.log",
         "-O3",
-        "-dce",
+        //"-dce",
+        "-rp",
+        "-rce",
+        "-dump-rp",
         "-prssa",
+        //"-prmode",
         "-mdssa",
-        //"-time",
+        "-time",
         //"-dump-aa",
         "-nocg",
-        //"-dump-dumgr",
+        "-dumpgr",
         //"-redirect_stdout_to_dump_file",
         //"-lower_to_pr_mode",
         //"-dump-cfg",
         //"-dump-dumgr",
-        "-dump-all", //DUMP FrontEnd scope
-        //"-dump-mdssamgr",
-        //"-dump-dce",
+        //"-dump-all", //DUMP FrontEnd scope
+        "-dump-mdssamgr",
+        "-dump-dce",
         //"-dump-refine-duchain",
         //"-thres_opt_ir_num", "0xFFFFffff",
         //"-thres_opt_bb_num", "0xFFFFffff",
-        //"-readgr", "d:\\x\\src\\reader\\test.gr",
-        //"-readgr", "d:\\x\\test\\exec.gr\\inner_region.gr",
-        //"-readgr", "d:\\x\\test\\exec.gr\\string.gr",
-        //"-readgr", "d:\\x\\test\\exec.gr\\setelem.gr", //unsuppport on CG
-        //"-readgr", "d:\\x\\test\\compile.gr\\array.gr",
-        //"-readgr", "d:\\x\\test\\compile.gr\\cfg_opt.gr",
-        //"-readgr", "d:\\x\\test\\compile.gr\\array_and_compute_sensitive_code.array_mode.gr",
-        //"-readgr", "d:\\x\\test\\compile.gr\\array_and_compute_sensitive_code.set_key.gr",
-        //"-readgr", "d:\\x\\test\\compile.gr\\array_and_compute_sensitive_code.pr_mode.gr",
-        //"-readgr", "d:\\x\\test\\compile.gr\\array_and_compute_sensitive_code.encrypt.gr",
+
+        //"d:\\x\\src\\reader\\test.gr",
+        //"d:\\x\\test\\exec.gr\\inner_region.gr",
+        //"d:\\x\\test\\exec.gr\\string.gr",
+        //"d:\\x\\test\\exec.gr\\setelem.gr", //unsuppport on CG
+        //"d:\\x\\test\\compile.gr\\array.gr",
+        //"d:\\x\\test\\compile.gr\\cfg_opt.gr",
+   
+        //"d:\\x\\test\\compile.gr\\array_and_compute_sensitive_code.set_key.gr",
+        //"d:\\x\\test\\compile.gr\\array_and_compute_sensitive_code.pr_mode.gr",
+        //"d:\\x\\test\\compile.gr\\array_and_compute_sensitive_code.encrypt.gr",
+        //"d:\\x\\test\\compile.gr\\ssa.gr",
+        //"d:\\x\\test\\compile.gr\\mdssa.gr",
+        //"d:\\x\\test\\compile.gr\\ssa2.gr",
+        //"d:\\x\\test\\compile.gr\\alias_loop_carry.gr",
+        //"d:\\x\\test\\compile.gr\\rce.gr",
+        //"d:\\x\\test\\compile.gr\\array_and_compute_sensitive_code.array_mode.gr",
+        //"d:\\x\\test\\compile.gr\\rp.gr",
+        //"d:\\x\\test\\compile.gr\\rp2.gr",
     };
     INT argc = sizeof(argv)/sizeof(argv[0]);
 #else
@@ -167,6 +197,7 @@ INT main(INT argc, CHAR * argv[])
         xoc::initdump(g_dump_file_name, true);
     }
     if (g_gr_file_name != NULL) {
+        //If both GR and C file are input, prefer GR file.
         g_c_file_name = NULL;
         bool res = compileGRFile(g_gr_file_name);
         xoc::finidump();

@@ -49,11 +49,11 @@ UINT const g_formal_parameter_start = 1;
 //Print assembly in horizontal manner.
 bool g_prt_asm_horizontal = true;
 
-static TMap<Decl*, VAR*> g_decl2var_map;
-static TMap<VAR*, Decl*> g_var2decl_map;
+static TMap<Decl*, Var*> g_decl2var_map;
+static TMap<Var*, Decl*> g_var2decl_map;
 
 #ifdef _DEBUG_
-void resetMapBetweenVARandDecl(VAR * v)
+void resetMapBetweenVARandDecl(Var * v)
 {
     Decl * decl = g_var2decl_map.get(v);
     if (decl != NULL) {
@@ -175,12 +175,25 @@ static void usage()
 }
 
 
-static bool is_c_source_file(CHAR * fn)
+static bool is_c_source_file(CHAR const* fn)
 {
-    size_t len = strlen(fn) + 1;
+    UINT len = (UINT)strlen(fn) + 1;
     CHAR * buf = (CHAR*)ALLOCA(len);
-    upper(getfilesuffix(fn, buf, (UINT)strlen(fn) + 1));
+    upper(getfilesuffix(fn, buf, (UINT)len));
     if (strcmp(buf, "C") == 0 ||
+        strcmp(buf, "I") == 0) {
+        return true;
+    }
+    return false;
+}
+
+
+static bool is_gr_source_file(CHAR const* fn)
+{
+    UINT len = (UINT)strlen(fn) + 2;
+    CHAR * buf = (CHAR*)ALLOCA(len);
+    upper(getfilesuffix(fn, buf, len));
+    if (strcmp(buf, "GR") == 0 ||
         strcmp(buf, "I") == 0) {
         return true;
     }
@@ -300,135 +313,155 @@ static bool process_i(INT argc, CHAR * argv[], INT & i)
 }
 
 
-bool processCmdLine(INT argc, CHAR * argv[])
+static bool processOneLevelCmdLine(INT argc, CHAR * argv[], INT & i)
 {
-    INT i = 1;
-    if (argc <= 1) { usage(); return false; }
-    while (i < argc) {
-        if (argv[i][0] == '-') {
-            CHAR const* cmdstr = &argv[i][1];
-            if (cmdstr[0] == 'O') {
-                if (!process_O(argc, argv, i)) {
-                    usage();
-                    return false;
-                }
-            } else if (cmdstr[0] == 'o') {
-                if (!process_o(argc, argv, i)) {
-                    usage();
-                    return false;
-                }
-            } else if (cmdstr[0] == 'g') {
-                if (!process_g(argc, argv, i)) {
-                    usage();
-                    return false;
-                }
-            } else if (cmdstr[0] == 'i') {
-                if (!process_i(argc, argv, i)) {
-                    usage();
-                    return false;
-                }
-            } else if (!strcmp(cmdstr, "time")) {
-                g_show_time = true;
-                i++;
-            } else if (!strcmp(cmdstr, "dump")) {
-                CHAR * n = process_d(argc, argv, i);
-                if (n == NULL) {
-                    usage();
-                    return false;
-                }
-                g_dump_file_name = n;
-            } else if (!strcmp(cmdstr, "nodce")) {
-                g_do_dce = false;
-                i++;            
-            } else if (!strcmp(cmdstr, "dce")) {
-                g_do_dce = true;
-                i++;            
-            } else if (!strcmp(cmdstr, "nocg")) {
-                g_do_cg = false;
-                i++;
-            } else if (!strcmp(cmdstr, "mdssa")) {
-                g_do_md_ssa = true;
-                i++;
-            } else if (!strcmp(cmdstr, "prmode")) {
-                g_is_lower_to_pr_mode = true;
-                i++;
-            } else if (!strcmp(cmdstr, "prssa")) {
-                g_do_pr_ssa = true;
-                i++;
-            } else if (!strcmp(cmdstr, "redirect_stdout_to_dump_file")) {
-                g_redirect_stdout_to_dump_file = true;
-                i++;
-            } else if (!strcmp(cmdstr, "lower_to_pr_mode")) {
-                g_is_lower_to_pr_mode = true;
-                i++;
-            } else if (!strcmp(cmdstr, "dump-cfg")) {
-                g_dump_opt.is_dump_cfg = true;
-                i++;
-            } else if (!strcmp(cmdstr, "dump-aa")) {
-                g_dump_opt.is_dump_aa = true;
-                i++;
-            } else if (!strcmp(cmdstr, "dump-dumgr")) {
-                g_dump_opt.is_dump_dumgr = true;
-                i++;
-            } else if (!strcmp(cmdstr, "dump-prssamgr")) {
-                g_dump_opt.is_dump_prssamgr = true;
-                i++;
-            } else if (!strcmp(cmdstr, "dump-mdssamgr")) {
-                g_dump_opt.is_dump_mdssamgr = true;
-                i++;
-            } else if (!strcmp(cmdstr, "dump-dce")) {
-                g_dump_opt.is_dump_dce = true;
-                i++;
-            } else if (!strcmp(cmdstr, "dump-ra")) {
-                g_dump_opt.is_dump_ra = true;
-                i++;
-            } else if (!strcmp(cmdstr, "dump-cg")) {
-                g_dump_opt.is_dump_cg = true;
-                i++;
-            } else if (!strcmp(cmdstr, "dump-simplification")) {
-                g_dump_opt.is_dump_simplification = true;
-                i++;
-            } else if (!strcmp(cmdstr, "dump-refine-duchain")) {
-                g_dump_opt.is_dump_refine_duchain = true;
-                i++;
-            } else if (!strcmp(cmdstr, "dump-all")) {
-                g_dump_opt.is_dump_all = true;
-                i++;
-            } else if (!strcmp(cmdstr, "dump-nothing")) {
-                g_dump_opt.is_dump_nothing = true;
-                i++;
-            } else if (!strcmp(cmdstr, "thres_opt_ir_num")) {
-                if (!process_thres_opt_ir_num(argc, argv, i)) {
-                    usage();
-                    return false;
-                }
-            } else if (!strcmp(cmdstr, "thres_opt_bb_num")) {
-                if (!process_thres_opt_bb_num(argc, argv, i)) {
-                    usage();
-                    return false;
-                }
-            } else if (!strcmp(cmdstr, "readgr")) {
-                CHAR * n = process_readgr(argc, argv, i);
-                if (n == NULL) {
-                    usage();
-                    return false;
-                }
-            } else if (!strcmp(cmdstr, "dumpgr")) {
-                g_is_dumpgr = true;
-                i++;
-            } else {
-                usage();
-                return false;
-            }
-        } else if (is_c_source_file(argv[i])) {
-            g_c_file_name = argv[i];
-            i++;
-        } else {
-            //Unsupport option.
-            usage();
+    CHAR const* cmdstr = &argv[i][1];
+    if (cmdstr[0] == 'O') {
+        if (!process_O(argc, argv, i)) {
             return false;
         }
+    } else if (cmdstr[0] == 'o') {
+        if (!process_o(argc, argv, i)) {
+            return false;
+        }
+    } else if (cmdstr[0] == 'g') {
+        if (!process_g(argc, argv, i)) {
+            return false;
+        }
+    } else if (cmdstr[0] == 'i') {
+        if (!process_i(argc, argv, i)) {
+            return false;
+        }
+    } else if (!strcmp(cmdstr, "time")) {
+        g_show_time = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump")) {
+        CHAR * n = process_d(argc, argv, i);
+        if (n == NULL) {
+            return false;
+        }
+        g_dump_file_name = n;
+    } else if (!strcmp(cmdstr, "nodce")) {
+        g_do_dce = false;
+        i++;
+    } else if (!strcmp(cmdstr, "rp")) {
+        g_do_rp = true;
+        i++;
+    } else if (!strcmp(cmdstr, "rce")) {
+        g_do_rce = true;
+        i++;            
+    } else if (!strcmp(cmdstr, "dce")) {
+        g_do_dce = true;
+        i++;
+    } else if (!strcmp(cmdstr, "nocg")) {
+        g_do_cg = false;
+        i++;
+    } else if (!strcmp(cmdstr, "mdssa")) {
+        g_do_md_ssa = true;
+        i++;
+    } else if (!strcmp(cmdstr, "prmode")) {
+        g_is_lower_to_pr_mode = true;
+        i++;
+    } else if (!strcmp(cmdstr, "prssa")) {
+        g_do_pr_ssa = true;
+        i++;
+    } else if (!strcmp(cmdstr, "redirect_stdout_to_dump_file")) {
+        g_redirect_stdout_to_dump_file = true;
+        i++;
+    } else if (!strcmp(cmdstr, "lower_to_pr_mode")) {
+        g_is_lower_to_pr_mode = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-cfg")) {
+        g_dump_opt.is_dump_cfg = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-aa")) {
+        g_dump_opt.is_dump_aa = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-dumgr")) {
+        g_dump_opt.is_dump_dumgr = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-prssamgr")) {
+        g_dump_opt.is_dump_prssamgr = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-mdssamgr")) {
+        g_dump_opt.is_dump_mdssamgr = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-dce")) {
+        g_dump_opt.is_dump_dce = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-rp")) {
+        g_dump_opt.is_dump_rp = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-rce")) {
+        g_dump_opt.is_dump_rce = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-ra")) {
+        g_dump_opt.is_dump_ra = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-cg")) {
+        g_dump_opt.is_dump_cg = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-simplification")) {
+        g_dump_opt.is_dump_simplification = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-refine-duchain")) {
+        g_dump_opt.is_dump_refine_duchain = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-all")) {
+        g_dump_opt.is_dump_all = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-nothing")) {
+        g_dump_opt.is_dump_nothing = true;
+        i++;
+    } else if (!strcmp(cmdstr, "thres_opt_ir_num")) {
+        if (!process_thres_opt_ir_num(argc, argv, i)) {
+            return false;
+        }
+    } else if (!strcmp(cmdstr, "thres_opt_bb_num")) {
+        if (!process_thres_opt_bb_num(argc, argv, i)) {
+            return false;
+        }
+    } else if (!strcmp(cmdstr, "dumpgr")) {
+        g_is_dumpgr = true;
+        i++;
+    } else {
+        return false;
     }
+    return true;
+}
+
+
+bool processCmdLine(INT argc, CHAR * argv[])
+{
+    if (argc <= 1) { usage(); return false; }
+
+    INT i = 1;
+    while (i < argc) {
+        if (argv[i][0] == '-') {
+            if (!processOneLevelCmdLine(argc, argv, i)) {
+                usage();
+                return false; 
+            }
+            continue;
+        }
+
+        if (is_c_source_file(argv[i])) {
+            g_c_file_name = argv[i];
+            i++;
+            continue;
+        }
+
+        if (is_gr_source_file(argv[i])) {
+            g_gr_file_name = argv[i];
+            i++;
+            continue;
+        }
+
+        //Unsupport option.
+        usage();
+        return false;
+    }
+
     if (g_c_file_name != NULL) {
         g_hsrc = fopen(g_c_file_name, "rb");
         if (g_hsrc == NULL) {
@@ -467,21 +500,21 @@ bool processCmdLine(INT argc, CHAR * argv[])
 }
 
 
-VAR * mapDecl2VAR(Decl * decl)
+Var * mapDecl2VAR(Decl * decl)
 {
     return g_decl2var_map.get(decl);
 }
 
 
-Decl * mapVAR2Decl(VAR * var)
+Decl * mapVAR2Decl(Var * var)
 {
     return g_var2decl_map.get(var);
 }
 
 
-//Transforming Decl into VAR.
+//Transforming Decl into Var.
 //'decl': variable declaration in front end.
-static VAR * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
+static Var * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
 {
     ASSERTN(DECL_dt(decl) == DCL_DECLARATION, ("unsupported"));
     UINT flag = 0;
@@ -511,7 +544,7 @@ static VAR * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
     }
 
     if (is_initialized(decl)) {
-        //TODO: record initial value in VAR at CTree2IR.
+        //TODO: record initial value in Var at CTree2IR.
         //SET_FLAG(flag, VAR_HAS_INIT_VAL);
     }
 
@@ -551,7 +584,7 @@ static VAR * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
     ASSERT0(type);
 
     CHAR * var_name = SYM_name(get_decl_sym(decl));
-    VAR * v = var_mgr->registerVar(var_name, type,
+    Var * v = var_mgr->registerVar(var_name, type,
         (UINT)xcom::ceil_align(MAX(DECL_align(decl), STACK_ALIGNMENT),
             STACK_ALIGNMENT), flag);
     if (VAR_is_global(v)) {
@@ -570,7 +603,7 @@ static VAR * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
 }
 
 
-//Constructing a variable table to map each of DECLARATIONs to an unique VAR.
+//Constructing a variable table to map each of DECLARATIONs to an unique Var.
 //Scanning SCOPE trees to construct such table.
 //e.g: SCOPE tree
 //    SCOPE0
@@ -590,12 +623,12 @@ static void scanAndInitVar(SCOPE * s, VarMgr * vm, TypeMgr * tm)
                 if (DECL_is_fun_def(decl)) {
                     //Function definition
                     ASSERT0(DECL_decl_scope(decl) == s);
-                    VAR * v = addDecl(decl, vm, tm);
+                    Var * v = addDecl(decl, vm, tm);
                     VAR_is_func_decl(v) = true;
                 } else {
                     //Function declaration
                     if (mapDecl2VAR(decl) == NULL) {
-                        VAR * v = addDecl(decl, vm, tm);
+                        Var * v = addDecl(decl, vm, tm);
 
                         //Function declaration should not be fake, since
                         //it might be taken address.
@@ -616,7 +649,7 @@ static void scanAndInitVar(SCOPE * s, VarMgr * vm, TypeMgr * tm)
             //General variable declaration decl.
             if (mapDecl2VAR(decl) == NULL &&
                 !(DECL_is_formal_para(decl) && get_decl_sym(decl) == NULL)) {
-                //No need to generate VAR for parameter that does not
+                //No need to generate Var for parameter that does not
                 //have a name.
                 //e.g: parameter of foo(char*)
                 addDecl(decl, vm, tm);
@@ -724,7 +757,7 @@ static void test_ru(RegionMgr * rm)
     ASSERT0(func);
 
     INT i = 0;
-    VAR * v = func->getRegionVar();
+    Var * v = func->getRegionVar();
     Region * x = new Region(REGION_FUNC, rm);
     while (i < 10000) {
         x->init(REGION_FUNC, rm);
