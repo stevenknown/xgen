@@ -58,7 +58,7 @@ CHAR const* ARMVar::dumpVARDecl(StrBuf & buf) const
 //
 //START ARMVarMgr
 //
-VAR * ARMVarMgr::allocVAR()
+Var * ARMVarMgr::allocVAR()
 {
     return new ARMVar();
 }

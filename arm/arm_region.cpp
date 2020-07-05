@@ -38,7 +38,7 @@ author: Su Zhenyu
 #include "../opt/util.h"
 #include "../opt/ir_mdssa.h"
 
-extern void resetMapBetweenVARandDecl(VAR * v);
+extern void resetMapBetweenVARandDecl(Var * v);
 
 void ARMRegion::destroy()
 {
@@ -46,7 +46,7 @@ void ARMRegion::destroy()
     //This map info only used in dump().
     VarTabIter c;
     VarTab * vartab = getVarTab();
-    for (VAR * v = vartab->get_first(c);
+    for (Var * v = vartab->get_first(c);
          v != NULL; v = vartab->get_next(c)) {
         resetMapBetweenVARandDecl(v);
     }

@@ -179,7 +179,7 @@ public:
             BYTE is_reload:1; //Is OR reloading operation?
             BYTE is_terminate_control_flow:1; //Is OR terminate control flow?
 
-            //Set to true if OR has a dummy offset which indicated by VAR.
+            //Set to true if OR has a dummy offset which indicated by Var.
             //And the offset should be caclulated to be an integer
             //before emiting assembly.
             BYTE need_to_compute_var_ofst:1;

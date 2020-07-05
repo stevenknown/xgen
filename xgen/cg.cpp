@@ -220,7 +220,7 @@ void CG::buildMemcpy(SR * tgt,
 
 
 void CG::buildStore(SR * store_val,
-                    xoc::VAR const* base,
+                    xoc::Var const* base,
                     HOST_INT ofst,
                     OUT ORList & ors,
                     IN IOC * cont)
@@ -234,7 +234,7 @@ void CG::buildStore(SR * store_val,
 //Build spilling operation.
 //This function generate memory store operation to the spill location.
 void CG::buildSpill(IN SR * store_val,
-                    IN xoc::VAR * spill_var,
+                    IN xoc::Var * spill_var,
                     IN ORBB *,
                     OUT ORList & ors)
 {
@@ -257,7 +257,7 @@ void CG::buildSpill(IN SR * store_val,
 //Build reloading operation.
 //This function generate memory load operation from the spill location.
 void CG::buildReload(IN SR * result_val,
-                     IN xoc::VAR * reload_var,
+                     IN xoc::Var * reload_var,
                      IN ORBB *,
                      OUT ORList & ors)
 {
@@ -342,8 +342,8 @@ void CG::buildSub(SR * src1,
         buildAddRegImm(src1, src2, sr_size, is_sign, ors, cont);
         return;
     } else {
-        //May be the VAR is an offset that will be computed lazy.
-        ASSERTN(!SR_is_var(src2), ("subtract VAR is unsupport"));
+        //May be the Var is an offset that will be computed lazy.
+        ASSERTN(!SR_is_var(src2), ("subtract Var is unsupport"));
     }
     buildAddRegReg(false, src1, src2, sr_size, is_sign, ors, cont);
 }
@@ -444,7 +444,7 @@ void CG::buildTypeCvt(xoc::IR const* tgt,
 
 //Generate operations: reg = &var + lda_ofst
 //lda_ofst: the offset based to var.
-void CG::buildLda(xoc::VAR const* var,
+void CG::buildLda(xoc::Var const* var,
                   HOST_INT lda_ofst,
                   Dbx const* dbx,
                   OUT ORList & ors,
@@ -669,7 +669,7 @@ UINT CG::computeTotalParameterStackSize(xoc::IR * ir)
 
 
 //Calculate section and corresponding offset for 'sym' in object space.
-void CG::computeAndUpdateGlobalVarLayout(xoc::VAR const* var,
+void CG::computeAndUpdateGlobalVarLayout(xoc::Var const* var,
                                          OUT SR ** base,
                                          OUT SR ** base_ofst)
 {
@@ -687,7 +687,7 @@ void CG::computeAndUpdateGlobalVarLayout(xoc::VAR const* var,
 
     VarDesc * vd;
     if (!SECT_var_list(section).find(var)) {
-        //Add VAR into var-list of 'section'.
+        //Add Var into var-list of 'section'.
         vd = (VarDesc*)xmalloc(sizeof(VarDesc));
         SECT_size(section) = ceil_align(SECT_size(section), VAR_align(var));
         VD_ofst(vd) = (ULONG)SECT_size(section);
@@ -724,7 +724,7 @@ UnitSet const* CG::computeORUnit(OR const* o, OUT UnitSet * us)
 
 //Allocate 'sym' at stack.
 //'base' may be SP or FP.
-void CG::computeAndUpdateStackVarLayout(xoc::VAR const* var,
+void CG::computeAndUpdateStackVarLayout(xoc::Var const* var,
                                         OUT SR ** base, //stack pointer
                                         OUT SR ** base_ofst)
 {
@@ -780,7 +780,7 @@ void CG::computeAndUpdateStackVarLayout(xoc::VAR const* var,
 
 
 //Compute and append parameter into PARAM-Section.
-void CG::computeParamLayout(xoc::VAR const* var,
+void CG::computeParamLayout(xoc::Var const* var,
                             OUT SR ** base,
                             OUT SR ** ofst)
 {
@@ -824,7 +824,7 @@ void CG::computeParamLayout(xoc::VAR const* var,
 SR * CG::computeAndUpdateOffset(SR * sr)
 {
     ASSERT0(sr);
-    xoc::VAR const* var = SR_var(sr);
+    xoc::Var const* var = SR_var(sr);
 
     if (VAR_is_formal_param(var)) {
         ASSERTN(m_param_sect_start_offset != -1,
@@ -900,7 +900,7 @@ void CG::relocateStackVarOffset()
 }
 
 
-void CG::computeVarBaseOffset(xoc::VAR const* var,
+void CG::computeVarBaseOffset(xoc::Var const* var,
                               ULONGLONG var_ofst,
                               OUT SR ** base,
                               OUT SR ** ofst)
@@ -925,7 +925,7 @@ void CG::computeVarBaseOffset(xoc::VAR const* var,
 }
 
 
-xoc::VAR const* CG::computeSpillVar(OR * o)
+xoc::Var const* CG::computeSpillVar(OR * o)
 {
     if (OR_is_load(o) || OR_is_store(o)) {
         return mapOR2Var(o);
@@ -966,11 +966,11 @@ void CG::initFuncUnit()
     //Initializing formal parameter section.
     ASSERT0(m_rg->getRegionVar());
 
-    List<xoc::VAR const*> param_list;
+    List<xoc::Var const*> param_list;
     m_rg->findFormalParam(param_list, true);
 
     UINT i = 0;
-    for (xoc::VAR const* v = param_list.get_head();
+    for (xoc::Var const* v = param_list.get_head();
          v != NULL; v = param_list.get_next()) {
          //Append parameter into PARAM-Section in turn.
          computeParamLayout(v, NULL, NULL);
@@ -1037,11 +1037,11 @@ void CG::initSections(VarMgr * vm)
 
 void CG::initGlobalVar(VarMgr * vm)
 {
-    //Record global VAR in .data section.
+    //Record global Var in .data section.
     VarVec * varvec = vm->get_var_vec();
     SR * base, * ofst;
     for (INT i = 0; i <= varvec->get_last_idx(); i++) {
-        xoc::VAR * v = varvec->get(i);
+        xoc::Var * v = varvec->get(i);
         if (v == NULL) { continue; }
 
         if (v->is_global() &&
@@ -1167,7 +1167,7 @@ void CG::dumpPackage()
 void CG::dumpSection()
 {
     if (xoc::g_tfile == NULL) { return; }
-    note("\n==---- DUMP Section VAR info ----==\n");
+    note("\n==---- DUMP Section Var info ----==\n");
     m_code_sect.dump(this);
     m_data_sect.dump(this);
     m_rodata_sect.dump(this);
@@ -1178,7 +1178,7 @@ void CG::dumpSection()
 }
 
 
-void CG::setMapOR2Mem(OR * o, xoc::VAR const* m)
+void CG::setMapOR2Mem(OR * o, xoc::Var const* m)
 {
     if (OR_is_load(o) || OR_is_store(o)) {
         CG_or2memaddr_map(this).set(o, m);
@@ -1188,7 +1188,7 @@ void CG::setMapOR2Mem(OR * o, xoc::VAR const* m)
 }
 
 
-xoc::VAR const* CG::mapOR2Var(OR * o)
+xoc::Var const* CG::mapOR2Var(OR * o)
 {
     if (OR_is_load(o) || OR_is_store(o)) {
         return CG_or2memaddr_map(this).get(o);
@@ -1542,18 +1542,18 @@ bool CG::isSREqual(SR const* sr1, SR const* sr2) const
 //spill location.
 bool CG::isSameSpillLoc(OR const* or1, OR const* or2)
 {
-    xoc::VAR const* or1loc = computeSpillVar(const_cast<OR*>(or1));
+    xoc::Var const* or1loc = computeSpillVar(const_cast<OR*>(or1));
     return isSameSpillLoc(or1loc, or1, or2);
 }
 
 
 //Return true if both or1 and or2 are spill operation, as well as the
 //spill location.
-bool CG::isSameSpillLoc(xoc::VAR const* or1loc, OR const* or1, OR const* or2)
+bool CG::isSameSpillLoc(xoc::Var const* or1loc, OR const* or1, OR const* or2)
 {
     ASSERT0(OR_is_mem(or1) && OR_is_mem(or2));
 
-    xoc::VAR const* or2loc = computeSpillVar(const_cast<OR*>(or2));
+    xoc::Var const* or2loc = computeSpillVar(const_cast<OR*>(or2));
 
     if (or1loc != or2loc) { return false; }
 
@@ -2475,7 +2475,7 @@ SR * CG::genLabel(LabelInfo const* li)
 
 
 //Generate variable.
-SR * CG::genVAR(xoc::VAR const* var)
+SR * CG::genVAR(xoc::Var const* var)
 {
     ASSERT0(var != NULL && getSRMgr() != NULL);
     SR * sr = getSRMgr()->genSR();
@@ -2989,7 +2989,7 @@ void CG::generateFuncUnitDedicatedCode()
         if (has_call) {
             ors.clean();
             SR * sr = genReturnAddr();
-            xoc::VAR * loc = genSpillVar(sr);
+            xoc::Var * loc = genSpillVar(sr);
             ASSERT0(loc != NULL);
 
             IOC cont1;
@@ -3025,7 +3025,7 @@ void CG::generateFuncUnitDedicatedCode()
         if (has_call) {
             ors.clean();
             SR * sr = genReturnAddr();
-            xoc::VAR * loc = genSpillVar(sr);
+            xoc::Var * loc = genSpillVar(sr);
             ASSERT0(loc != NULL);
 
             IOC cont2;
@@ -3076,19 +3076,19 @@ void CG::setCluster(ORList & ors, CLUST clust)
 }
 
 
-void CG::addBBLevelNewVar(IN xoc::VAR * var)
+void CG::addBBLevelNewVar(IN xoc::Var * var)
 {
     m_bb_level_internal_var_list.append_tail(var);
 }
 
 
-void CG::addFuncLevelNewVar(IN xoc::VAR * var)
+void CG::addFuncLevelNewVar(IN xoc::Var * var)
 {
     m_func_level_internal_var_list.append_tail(var);
 }
 
 
-//Construct a name for VAR that will lived in a ORBB.
+//Construct a name for Var that will lived in a ORBB.
 CHAR const* CG::genBBLevelNewVarName(OUT xcom::StrBuf & name)
 {
     name.sprint("bb_level_var_%d",
@@ -3100,14 +3100,14 @@ CHAR const* CG::genBBLevelNewVarName(OUT xcom::StrBuf & name)
 //Generate spill location that same like 'sr'.
 //Or return the spill location if exist.
 //'sr': the referrence SR.
-xoc::VAR * CG::genSpillVar(SR * sr)
+xoc::Var * CG::genSpillVar(SR * sr)
 {
     ASSERT0(SR_is_reg(sr));
     if (SR_spill_var(sr) != NULL) {
         return SR_spill_var(sr);
     }
 
-    xoc::VAR * v;
+    xoc::Var * v;
     xoc::Type const* type = m_tm->getSimplexTypeEx(
         m_tm->getDType(WORD_BITSIZE, false));
 
@@ -3154,11 +3154,11 @@ void CG::reviseFormalParamAccess(UINT lv_size)
 
 
 UINT CG::calcSizeOfParameterPassedViaRegister(
-    List<VAR const*> const* param_lst) const
+    List<Var const*> const* param_lst) const
 {
     RegSet const* phyregset = tmGetRegSetOfArgument();
     ASSERT0(phyregset);
-    C<VAR const*> * ct = NULL;
+    C<Var const*> * ct = NULL;
     param_lst->get_head(&ct);
     if (ct == NULL) {
         return 0;
@@ -3197,7 +3197,7 @@ void CG::storeRegisterParameterBackToStack(List<ORBB*> * entry_lst,
         return;
     }
     ASSERT0(tmGetRegSetOfArgument());
-    List<VAR const*> param_lst;
+    List<Var const*> param_lst;
     m_rg->findFormalParam(param_lst, true);
 
     ASSERT0(entry_lst);
@@ -3212,7 +3212,7 @@ void CG::storeRegisterParameterBackToStack(List<ORBB*> * entry_lst,
         ORCt * orct = NULL;
         ORBB_orlist(bb)->find(spadj, &orct);
         ASSERTN(orct, ("not find spadjust in BB"));
-        VAR const* param = param_lst.get_head();
+        Var const* param = param_lst.get_head();
         ASSERT0(param);
 
         ors.clean();
@@ -3286,7 +3286,7 @@ void CG::reviseFormalParameterAndSpadjust()
     if (isPassArgumentThroughRegister()) {
         RegSet const* phyregset = tmGetRegSetOfArgument();
         ASSERT0(phyregset);
-        List<VAR const*> param_list;
+        List<Var const*> param_list;
         m_rg->findFormalParam(param_list, true);
         UINT bytesize_of_arg_passed_via_reg =
             calcSizeOfParameterPassedViaRegister(&param_list);
@@ -3382,7 +3382,7 @@ FIN:
 }
 
 
-//Construct a name for VAR that will lived in Region.
+//Construct a name for Var that will lived in Region.
 CHAR const* CG::genFuncLevelNewVarName(OUT xcom::StrBuf & name)
 {
     name.sprint("func_level_var_%d",
@@ -3391,19 +3391,19 @@ CHAR const* CG::genFuncLevelNewVarName(OUT xcom::StrBuf & name)
 }
 
 
-xoc::VAR * CG::genTempVar(xoc::Type const* type, UINT align, bool func_level)
+xoc::Var * CG::genTempVar(xoc::Type const* type, UINT align, bool func_level)
 {
     xcom::StrBuf name(64);
     xoc::Region * fu = m_rg->getFuncRegion();
     if (func_level) {
-        xoc::VAR * v = fu->getVarMgr()->registerVar(
+        xoc::Var * v = fu->getVarMgr()->registerVar(
             genFuncLevelNewVarName(name),
             type, align, VAR_LOCAL);
         addFuncLevelNewVar(v);
         fu->addToVarTab(v); //v is local-used in current func-region.
         return v;
     }
-    xoc::VAR * v = m_bb_level_internal_var_list.get_free();
+    xoc::Var * v = m_bb_level_internal_var_list.get_free();
     if (v == NULL) {
         v = fu->getVarMgr()->registerVar(
             genBBLevelNewVarName(name),
@@ -3582,7 +3582,7 @@ bool CG::isAlloca(xoc::IR const* ir) const
 {
     if (!ir->is_call()) { return false; }
 
-    xoc::VAR const* var = CALL_idinfo(ir);
+    xoc::Var const* var = CALL_idinfo(ir);
     ASSERT0(var);
     if (strcmp(SYM_name(var->get_name()), "alloca") == 0) {
         return true;

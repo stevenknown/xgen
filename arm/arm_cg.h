@@ -53,59 +53,59 @@ protected:
     virtual void initBuiltin();
 
 public:
-    VAR const* m_builtin_uimod;
-    VAR const* m_builtin_imod;
-    VAR const* m_builtin_uidiv;
-    VAR const* m_builtin_ashldi3;
-    VAR const* m_builtin_lshrdi3;
-    VAR const* m_builtin_ashrdi3;
-    VAR const* m_builtin_modsi3;
-    VAR const* m_builtin_umodsi3;
-    VAR const* m_builtin_moddi3;
-    VAR const* m_builtin_umoddi3;
-    VAR const* m_builtin_addsf3;
-    VAR const* m_builtin_adddf3;
-    VAR const* m_builtin_subsf3;
-    VAR const* m_builtin_subdf3;
-    VAR const* m_builtin_divsi3;
-    VAR const* m_builtin_udivsi3;
-    VAR const* m_builtin_divsf3;
-    VAR const* m_builtin_divdi3;
-    VAR const* m_builtin_udivdi3;
-    VAR const* m_builtin_divdf3;
-    VAR const* m_builtin_muldi3;
-    VAR const* m_builtin_mulsf3;
-    VAR const* m_builtin_muldf3;
-    VAR const* m_builtin_ltsf2;
-    VAR const* m_builtin_gtsf2;
-    VAR const* m_builtin_gesf2;
-    VAR const* m_builtin_eqsf2;
-    VAR const* m_builtin_nesf2;
-    VAR const* m_builtin_lesf2;
-    VAR const* m_builtin_ltdf2;
-    VAR const* m_builtin_gtdf2;
-    VAR const* m_builtin_gedf2;
-    VAR const* m_builtin_eqdf2;
-    VAR const* m_builtin_nedf2;
-    VAR const* m_builtin_ledf2;
-    VAR const* m_builtin_fixsfsi;
-    VAR const* m_builtin_fixdfsi;
-    VAR const* m_builtin_fixunssfsi;
-    VAR const* m_builtin_fixunsdfsi;
-    VAR const* m_builtin_fixunssfdi;
-    VAR const* m_builtin_fixunsdfdi;
-    VAR const* m_builtin_truncdfsf2;
-    VAR const* m_builtin_floatsisf;
-    VAR const* m_builtin_floatdisf;
-    VAR const* m_builtin_floatsidf;
-    VAR const* m_builtin_floatdidf;
-    VAR const* m_builtin_fixsfdi;
-    VAR const* m_builtin_fixdfdi;
-    VAR const* m_builtin_floatunsisf;
-    VAR const* m_builtin_floatundisf;
-    VAR const* m_builtin_floatunsidf;
-    VAR const* m_builtin_floatundidf;
-    VAR const* m_builtin_extendsfdf2;
+    Var const* m_builtin_uimod;
+    Var const* m_builtin_imod;
+    Var const* m_builtin_uidiv;
+    Var const* m_builtin_ashldi3;
+    Var const* m_builtin_lshrdi3;
+    Var const* m_builtin_ashrdi3;
+    Var const* m_builtin_modsi3;
+    Var const* m_builtin_umodsi3;
+    Var const* m_builtin_moddi3;
+    Var const* m_builtin_umoddi3;
+    Var const* m_builtin_addsf3;
+    Var const* m_builtin_adddf3;
+    Var const* m_builtin_subsf3;
+    Var const* m_builtin_subdf3;
+    Var const* m_builtin_divsi3;
+    Var const* m_builtin_udivsi3;
+    Var const* m_builtin_divsf3;
+    Var const* m_builtin_divdi3;
+    Var const* m_builtin_udivdi3;
+    Var const* m_builtin_divdf3;
+    Var const* m_builtin_muldi3;
+    Var const* m_builtin_mulsf3;
+    Var const* m_builtin_muldf3;
+    Var const* m_builtin_ltsf2;
+    Var const* m_builtin_gtsf2;
+    Var const* m_builtin_gesf2;
+    Var const* m_builtin_eqsf2;
+    Var const* m_builtin_nesf2;
+    Var const* m_builtin_lesf2;
+    Var const* m_builtin_ltdf2;
+    Var const* m_builtin_gtdf2;
+    Var const* m_builtin_gedf2;
+    Var const* m_builtin_eqdf2;
+    Var const* m_builtin_nedf2;
+    Var const* m_builtin_ledf2;
+    Var const* m_builtin_fixsfsi;
+    Var const* m_builtin_fixdfsi;
+    Var const* m_builtin_fixunssfsi;
+    Var const* m_builtin_fixunsdfsi;
+    Var const* m_builtin_fixunssfdi;
+    Var const* m_builtin_fixunsdfdi;
+    Var const* m_builtin_truncdfsf2;
+    Var const* m_builtin_floatsisf;
+    Var const* m_builtin_floatdisf;
+    Var const* m_builtin_floatsidf;
+    Var const* m_builtin_floatdidf;
+    Var const* m_builtin_fixsfdi;
+    Var const* m_builtin_fixdfdi;
+    Var const* m_builtin_floatunsisf;
+    Var const* m_builtin_floatundisf;
+    Var const* m_builtin_floatunsidf;
+    Var const* m_builtin_floatundidf;
+    Var const* m_builtin_extendsfdf2;
 
 public:
     explicit ARMCG(Region * rg, CGMgr * cgmgr) : CG(rg, cgmgr)
@@ -262,7 +262,7 @@ public:
             bool is_signed,
             OUT ORList & ors,
             IN OUT IOC * cont);
-    void buildCall(VAR const* callee,
+    void buildCall(Var const* callee,
             UINT ret_val_size,
             OUT ORList & ors,
             IOC * cont);
@@ -384,7 +384,7 @@ public:
 
     //True if current argument register should be bypassed.
     virtual bool skipArgRegister(
-            VAR const* param,
+            Var const* param,
             RegSet const* regset,
             REG reg) const;
 };

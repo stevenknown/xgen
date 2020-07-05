@@ -31,7 +31,7 @@ author: Su Zhenyu
 #ifndef _ARM_REGION_H_
 #define _ARM_REGION_H_
 
-typedef TMap<xoc::VAR*, MD*> Var2XX;
+typedef TMap<xoc::Var*, MD*> Var2XX;
 class ARMRegion : public Region {
 protected:
     void simplify(OptCtx & oc);

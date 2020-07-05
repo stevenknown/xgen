@@ -181,8 +181,8 @@ public:
     virtual void build();
     void buildRegDep();
     void buildMemFlowDep(OR * from, OR * to);
-    void buildMemOutDep(OR * from, OR * to, VAR const* from_loc);
-    void buildMemInDep(OR * from, OR * to, VAR const* from_loc);
+    void buildMemOutDep(OR * from, OR * to, Var const* from_loc);
+    void buildMemInDep(OR * from, OR * to, Var const* from_loc);
     void buildMemVolatileDep(OR * from, OR * to);
     void buildMemDep();
 

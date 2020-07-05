@@ -38,18 +38,18 @@ void Section::dump(CG const* cg)
     note("\nSection:size:%d,", (UINT)SECT_size(this));
     note("%s", sect_var->dump(buf, tm));
     note("\n  VarLayOut:");
-    List<xoc::VAR const*> layout;
-    for (xoc::VAR const* v = var_list.get_head();
+    List<xoc::Var const*> layout;
+    for (xoc::Var const* v = var_list.get_head();
          v != NULL; v = var_list.get_next()) {
         VarDesc * vd = var2vdesc_map.get(v);
-        ASSERTN(vd, ("No VarDesc correspond to xoc::VAR"));
+        ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
 
-        xcom::C<xoc::VAR const*> * ct;
+        xcom::C<xoc::Var const*> * ct;
         bool find = false;
-        for (xoc::VAR const* v2 = layout.get_head(&ct);
+        for (xoc::Var const* v2 = layout.get_head(&ct);
              v2 != NULL; v2 = layout.get_next(&ct)) {
             VarDesc * vd2 = var2vdesc_map.get(v2);
-            ASSERTN(vd2, ("No VarDesc correspond to xoc::VAR"));
+            ASSERTN(vd2, ("No VarDesc correspond to xoc::Var"));
 
             if (VD_ofst(vd) < VD_ofst(vd2)) {
                 layout.insert_before(v, ct);
@@ -61,11 +61,11 @@ void Section::dump(CG const* cg)
         if (!find) { layout.append_tail(v); }
     }
 
-    for (xoc::VAR const* v = layout.get_tail();
+    for (xoc::Var const* v = layout.get_tail();
          v != NULL; v = layout.get_prev()) {
         VarDesc * vd = var2vdesc_map.get(v);
         buf.clean();
-        ASSERTN(vd, ("No VarDesc correspond to xoc::VAR"));
+        ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
         note("\n  (%u)%s", (UINT)VD_ofst(vd), v->dump(buf, tm));
     }
 }
@@ -84,18 +84,18 @@ void StackSection::dump(CG const* cg)
     fprintf(xoc::g_tfile, "%s", sect_var->dump(buf, tm));
 
     fprintf(xoc::g_tfile, "\n  VarLayOut:");
-    List<xoc::VAR const*> layout;
-    for (xoc::VAR const* v = var_list.get_head();
+    List<xoc::Var const*> layout;
+    for (xoc::Var const* v = var_list.get_head();
          v != NULL; v = var_list.get_next()) {
         VarDesc * vd = var2vdesc_map.get(v);
-        ASSERTN(vd, ("No VarDesc correspond to xoc::VAR"));
+        ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
 
-        xcom::C<xoc::VAR const*> * ct;
+        xcom::C<xoc::Var const*> * ct;
         bool find = false;
-        for (xoc::VAR const* v2 = layout.get_head(&ct);
+        for (xoc::Var const* v2 = layout.get_head(&ct);
              v2 != NULL; v2 = layout.get_next(&ct)) {
             VarDesc * vd2 = var2vdesc_map.get(v2);
-            ASSERTN(vd2, ("No VarDesc correspond to xoc::VAR"));
+            ASSERTN(vd2, ("No VarDesc correspond to xoc::Var"));
 
             if (VD_ofst(vd) < VD_ofst(vd2)) {
                 layout.insert_before(v, ct);
@@ -107,10 +107,10 @@ void StackSection::dump(CG const* cg)
         if (!find) { layout.append_tail(v); }
     }
 
-    for (xoc::VAR const* v = layout.get_tail();
+    for (xoc::Var const* v = layout.get_tail();
          v != NULL; v = layout.get_prev()) {
         VarDesc * vd = var2vdesc_map.get(v);
-        ASSERTN(vd, ("No VarDesc correspond to xoc::VAR"));
+        ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
         buf.clean();
         fprintf(xoc::g_tfile, "\n  (%u)%s",
             (UINT)VD_ofst(vd) + cg->getMaxArgSectionSize(), v->dump(buf, tm));

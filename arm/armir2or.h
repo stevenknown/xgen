@@ -54,10 +54,10 @@ protected:
             bool is_signed);
     ARMCG * getCG() { return (ARMCG*)m_cg; }
 
-    VAR const* fp2fp(IR const* tgt, IR const* src);
-    VAR const* fp2int(IR const* tgt, IR const* src);
+    Var const* fp2fp(IR const* tgt, IR const* src);
+    Var const* fp2int(IR const* tgt, IR const* src);
 
-    VAR const* int2fp(IR const* tgt, IR const* src);
+    Var const* int2fp(IR const* tgt, IR const* src);
     void invertBoolValue(Dbx * dbx, SR * val, OUT ORList & ors);
 public:
     ARMIR2OR(CG * cg) : IR2OR(cg) {}
@@ -67,7 +67,7 @@ public:
     //Interface function.
     virtual void convertBinaryOp(IR const* ir, OUT ORList & ors, IN IOC * cont);
     virtual void convertLda(
-            VAR const* var,
+            Var const* var,
             HOST_INT lda_ofst,
             Dbx const* dbx,
             OUT ORList & ors,

@@ -45,9 +45,9 @@ namespace xgen {
 typedef xcom::TMap<SR*, SR*> SR2SR;
 typedef xcom::DMap<SR*, SR*, SR2SR, SR2SR> SR2SR_DMAP;
 
-//EList of VAR
-typedef xcom::EList<xoc::VAR const*,
-    xcom::TMap<xoc::VAR const*, xcom::C<xoc::VAR const*>*> > VarElist;
+//EList of Var
+typedef xcom::EList<xoc::Var const*,
+    xcom::TMap<xoc::Var const*, xcom::C<xoc::Var const*>*> > VarElist;
 
 #define VD_ofst(m)            (m)->ofst
 class VarDesc {

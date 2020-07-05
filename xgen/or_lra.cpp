@@ -3413,7 +3413,7 @@ void LRA::genSpill(
         LifeTime * lt,
         SR * oldsr,
         INT pos,
-        xoc::VAR * spill_var,
+        xoc::Var * spill_var,
         LifeTimeMgr & mgr,
         bool is_rename,
         ORList * sors)
@@ -3491,7 +3491,7 @@ void LRA::genSpill(
 
 
 //Build new sr that same like 'oldsr' for reloading.
-SR * LRA::genNewReloadSR(SR * oldsr, xoc::VAR * spill_var)
+SR * LRA::genNewReloadSR(SR * oldsr, xoc::Var * spill_var)
 {
     SR * newsr = NULL;
     if (SR_is_global(oldsr) || SR_is_dedicated(oldsr)) {
@@ -3526,7 +3526,7 @@ SR * LRA::genReload(
         IN LifeTime * lt,
         IN SR * oldsr,
         INT pos,
-        IN xoc::VAR * spill_var,
+        IN xoc::Var * spill_var,
         IN LifeTimeMgr & mgr,
         OUT ORList * ors)
 {
@@ -3608,7 +3608,7 @@ void LRA::spillPassthroughGSR(LifeTime * lt, LifeTimeMgr & mgr)
     ASSERTN(SR_is_global(LT_sr(lt)), ("Spilling local register."));
 
     //Get temporary memory from stack.
-    xoc::VAR * spill_var = m_cg->genSpillVar(LT_sr(lt));
+    xoc::Var * spill_var = m_cg->genSpillVar(LT_sr(lt));
     ASSERTN(spill_var, ("Not any spill loc."));
 
     //Prepend store tor of bb
@@ -3637,7 +3637,7 @@ void LRA::spillGSR(LifeTime * lt, LifeTimeMgr & mgr)
     }
 
     //Get temporary memory from stack.
-    xoc::VAR * spill_var = m_cg->genSpillVar(LT_sr(lt));
+    xoc::Var * spill_var = m_cg->genSpillVar(LT_sr(lt));
     ASSERTN(spill_var, ("Not any spill loc."));
 
     //Prepend spill code top of bb
@@ -3731,7 +3731,7 @@ void LRA::spillLSR(LifeTime * lt, LifeTimeMgr & mgr)
     ASSERTN(lt, ("getOccCount:lt is NULL"));
     ASSERTN(mgr.getOccCount(lt), ("Empty life time."));
     //Get temporary memory from stack.
-    xoc::VAR * spill_var = m_cg->genSpillVar(LT_sr(lt));
+    xoc::Var * spill_var = m_cg->genSpillVar(LT_sr(lt));
     ASSERTN(spill_var, ("Not any spill loc."));
     ASSERTN(LT_pos(lt)->get_first() != LT_FIRST_POS,
             ("Illegal local sr life time."));
@@ -4164,7 +4164,7 @@ void LRA::splitLTAt(INT start,
     ORList spill_ors;
 
     //spill var is gra_spill_var if sr is global reg.
-    xoc::VAR * spill_var = m_cg->genSpillVar(sr);
+    xoc::Var * spill_var = m_cg->genSpillVar(sr);
     ASSERTN(spill_var, ("Not any spill loc."));
     if (start != -1) {
         if (start == LT_FIRST_POS) {
@@ -4284,7 +4284,7 @@ bool LRA::splitTwoLTContained(
         }
 
         //spill var is gra_spill_var if sr is global reg.
-        xoc::VAR * spill_var = m_cg->genSpillVar(sr);
+        xoc::Var * spill_var = m_cg->genSpillVar(sr);
         ASSERTN(spill_var, ("Not any spill loc."));
         if (is_def) {
             if (pos != LT_FIRST_POS) {
@@ -4366,7 +4366,7 @@ bool LRA::splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
         }
 
         //spill var is gra_spill_var if sr is global reg.
-        xoc::VAR * spill_var = m_cg->genSpillVar(sr);
+        xoc::Var * spill_var = m_cg->genSpillVar(sr);
         ASSERTN(spill_var, ("Not any spill loc."));
         if (is_def) {
             if (pos != LT_FIRST_POS) {
@@ -4408,7 +4408,7 @@ bool LRA::splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
         }
 
         //spill var is gra_spill_var if sr is global reg.
-        xoc::VAR * spill_var = m_cg->genSpillVar(sr);
+        xoc::Var * spill_var = m_cg->genSpillVar(sr);
         ASSERTN(spill_var, ("Not any spill loc."));
         if (is_def) {
             if (pos != LT_FIRST_POS) {
@@ -4475,7 +4475,7 @@ bool LRA::spillFirstDef(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
         ASSERTN(m_cg->mayDef(o, LT_sr(lt1)), ("Illegal o mapping."));
     }
     //spill var is gra_spill_var if sr is global reg.
-    xoc::VAR * spill_var = m_cg->genSpillVar(LT_sr(lt1));
+    xoc::Var * spill_var = m_cg->genSpillVar(LT_sr(lt1));
     ASSERTN(spill_var, ("Not any spill loc."));
 
     genSpill(lt1, LT_sr(lt1), defpos, spill_var, mgr, false, NULL);
@@ -4702,7 +4702,7 @@ bool LRA::mergeRedundantStoreLoad(
         OR * succ,
         ORList & remainder_succs,
         ORBB * bb,
-        xoc::VAR const* spill_var,
+        xoc::Var const* spill_var,
         DataDepGraph & ddg)
 {
     ASSERTN(OR_is_store(o) &&
@@ -4740,7 +4740,7 @@ bool LRA::mergeRedundantStoreLoad(
         }
     }
 
-    //Checking for global xoc::VAR referencing.
+    //Checking for global xoc::Var referencing.
     if (m_ramgr != NULL) {
         RefORBBList * rbl = RAMGR_var2or_map(m_ramgr).get(spill_var);
         ASSERT0(m_ramgr->getBBList());
@@ -4812,7 +4812,7 @@ bool LRA::removeRedundantStoreLoadAfterLoad(
         OR * o,
         ORList & succs,
         ORBB * bb,
-        xoc::VAR const* spill_var,
+        xoc::Var const* spill_var,
         DataDepGraph & ddg)
 {
     bool has_def = false, has_use = false; //record reg DU info.
@@ -4933,7 +4933,7 @@ bool LRA::elimRedundantStoreLoad(DataDepGraph & ddg)
         if (OR_is_load(o)) {
             if (m_cg->isMultiLoad(OR_code(o), 2)) { continue; }
 
-            xoc::VAR const* ld_spill_loc = m_cg->computeSpillVar(o);
+            xoc::Var const* ld_spill_loc = m_cg->computeSpillVar(o);
             if (ld_spill_loc != NULL) { //o is a spilling.
                 bool case_succ = false;
                 ASSERTN(o->get_result(0) && SR_is_reg(o->get_result(0)),
@@ -4954,7 +4954,7 @@ bool LRA::elimRedundantStoreLoad(DataDepGraph & ddg)
                 continue;
             }
 
-            xoc::VAR const* st_spill_loc = m_cg->computeSpillVar(o);
+            xoc::Var const* st_spill_loc = m_cg->computeSpillVar(o);
             if (st_spill_loc == NULL ||
                 //[rn] = xxx, keep the OR for conservative.
                 //[.data+N] = xxx, keep the OR for conservative
@@ -6383,7 +6383,7 @@ void LRA::coalesceCopy(OR * o, DataDepGraph & ddg, bool * is_resch)
 
                 //CASE: t1(D1) = t2(D1)     (o)
                 //      sw val, t1(D1), 100 (succ)
-                //t1, is the base register of LD/VAR,
+                //t1, is the base register of LD/Var,
                 //and may be assigned illegal regfile during
                 //assignRegFile(), and avoid the
                 //illegal copy. Check it out.
@@ -8217,7 +8217,7 @@ REG LRA::chooseAvailSpillLoc(
 
 //Check if there are global references of spill location to
 //determine whether it can be removed.
-bool LRA::checkSpillCanBeRemoved(xoc::VAR const* spill_loc)
+bool LRA::checkSpillCanBeRemoved(xoc::Var const* spill_loc)
 {
     bool spill_can_be_removed = true;
 
@@ -8246,7 +8246,7 @@ bool LRA::checkSpillCanBeRemoved(xoc::VAR const* spill_loc)
 void LRA::findFollowedLoad(
         OUT ORList & followed_lds,
         IN OR * o,
-        xoc::VAR const* spill_loc,
+        xoc::Var const* spill_loc,
         IN OUT bool & spill_can_be_removed,
         IN DataDepGraph & ddg)
 {
@@ -8338,7 +8338,7 @@ bool LRA::hoistSpillLocForStore(
         return false;
     }
 
-    xoc::VAR const* st_spill_loc = m_cg->computeSpillVar(o);
+    xoc::Var const* st_spill_loc = m_cg->computeSpillVar(o);
     if (st_spill_loc == NULL || //[rn] = xxx, keep the OR for conservative.
         //[.data+N] = xxx, keep the OR for conservative unless IPA
         //tell us the refferrence detail.
@@ -8687,7 +8687,7 @@ void LRA::resetGSRSpillLocation()
         ASSERT0(SR_is_reg(gsr));
         if (SR_spill_var(gsr) == NULL) { continue; }
 
-        xoc::VAR * v = SR_spill_var(gsr);
+        xoc::Var * v = SR_spill_var(gsr);
         if (CG_bb_level_internal_var_list(m_cg).find(v)) {
             SR_spill_var(gsr) = NULL;
         }

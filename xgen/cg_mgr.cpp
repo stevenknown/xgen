@@ -47,7 +47,7 @@ bool CGMgr::GenAndPrtGlobalVariable(Region * rg, FILE * asmh)
     CG * cg = allocCG(rg);
     VarVec * varvec = rg->getVarMgr()->get_var_vec();
     for (INT i = 0; i <= varvec->get_last_idx(); i++) {
-        VAR * v = varvec->get(i);
+        Var * v = varvec->get(i);
         if (v == NULL ||
             !v->is_global() ||
             v->is_fake() ||

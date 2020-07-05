@@ -147,10 +147,10 @@ public:
             UINT symbol_regid; //symbol register id, start at 1.
             REGFILE regfile; //physical register file.
             REG phy_regid; //physical register id, start at 1.
-            xoc::VAR * spill_var; //xoc::VAR to hold spilled register.
+            xoc::Var * spill_var; //xoc::Var to hold spilled register.
         } u2; //SR is register
 
-        xoc::SYM * str; //present a const string
+        xoc::Sym * str; //present a const string
 
         struct {
             union {
@@ -164,7 +164,7 @@ public:
         } u3;
 
         struct {
-            xoc::VAR const* var; //represent memory.
+            xoc::Var const* var; //represent memory.
             UINT ofst; //offset base on var.
 
             //Record the corresponding IR at middle-end if

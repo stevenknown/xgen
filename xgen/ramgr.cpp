@@ -100,7 +100,7 @@ void RaMgr::preBuild()
     for (ORBB * bb = m_bb_list->get_head();
          bb != NULL; bb = m_bb_list->get_next()) {
         for (OR * o = ORBB_first_or(bb); o != NULL; o = ORBB_next_or(bb)) {
-            xoc::VAR const* spill_var = m_cg->computeSpillVar(o);
+            xoc::Var const* spill_var = m_cg->computeSpillVar(o);
             if (spill_var != NULL) { //o is a spilling-o.
                 addVARRefList(bb, o, spill_var);
             }
@@ -142,7 +142,7 @@ void RaMgr::postBuild()
     //Finializing the SYMBOL list.
     VAR2ORIter iter;
     RefORBBList * ref_bb_list = NULL;
-    for (xoc::VAR const* sym = m_var2or_map.get_first(iter, &ref_bb_list);
+    for (xoc::Var const* sym = m_var2or_map.get_first(iter, &ref_bb_list);
          sym != NULL; sym = m_var2or_map.get_next(iter)) {
         ASSERT0(ref_bb_list);
         ref_bb_list->destroy();
@@ -177,13 +177,13 @@ void RaMgr::dumpGlobalVAR2OR()
 {
     FILE * h = xoc::g_tfile;
     fprintf(h,
-        "\n==---- DUMP Mapping from Global xoc::VAR to OR, Region:%s ----==",
+        "\n==---- DUMP Mapping from Global xoc::Var to OR, Region:%s ----==",
         m_rg->getRegionName());
     INT i = 0;
     xcom::StrBuf buf(64);
     VAR2ORIter iter;
     RefORBBList * ref_bb_list = NULL;
-    for (xoc::VAR const* var = m_var2or_map.get_first(iter, &ref_bb_list);
+    for (xoc::Var const* var = m_var2or_map.get_first(iter, &ref_bb_list);
          var != NULL; var = m_var2or_map.get_next(iter, &ref_bb_list)) {
         fprintf(h, "\n\tVAR%d", i++);
         fprintf(h, "\n\t\t%s", var->dump(buf, m_rg->getTypeMgr()));
@@ -259,7 +259,7 @@ void RaMgr::saveCalleePredicateAtEntry(
         IN ORBB * entry,
         IN RegSet used_callee_regs[],
         OUT List<ORBB*> & bblist,
-        OUT xcom::TMap<REG, xoc::VAR*> &)
+        OUT xcom::TMap<REG, xoc::Var*> &)
 {
     DUMMYUSE(bblist);
     DUMMYUSE(regfile);
@@ -290,7 +290,7 @@ void RaMgr::saveCalleeFPRegisterAtEntry(
         IN ORBB * entry,
         IN RegSet used_callee_regs[],
         OUT List<ORBB*> & bblist,
-        OUT xcom::TMap<REG, xoc::VAR*> & reg2var)
+        OUT xcom::TMap<REG, xoc::Var*> & reg2var)
 {
     ASSERT0(tmIsFloatRegFile(regfile));
     RegSet * used_regs = &used_callee_regs[regfile];
@@ -316,7 +316,7 @@ void RaMgr::saveCalleeFPRegisterAtEntry(
         }
 
         CLUST clust = m_cg->mapReg2Cluster(reg);
-        xoc::VAR * loc = m_cg->genSpillVar(sr);
+        xoc::Var * loc = m_cg->genSpillVar(sr);
         reg2var.set(reg, loc);
 
         IOC tc;
@@ -363,7 +363,7 @@ void RaMgr::saveCalleeFPRegisterAtExit(
         IN ORBB * exit,
         IN RegSet used_callee_regs[],
         OUT List<ORBB*> & bblist,
-        xcom::TMap<REG, xoc::VAR*> const& reg2var)
+        xcom::TMap<REG, xoc::Var*> const& reg2var)
 {
     ASSERT0(tmIsFloatRegFile(regfile));
     RegSet * used_regs = &used_callee_regs[regfile];
@@ -389,7 +389,7 @@ void RaMgr::saveCalleeFPRegisterAtExit(
 
         CLUST clust = m_cg->mapReg2Cluster(reg);
 
-        xoc::VAR * v = reg2var.get(reg);
+        xoc::Var * v = reg2var.get(reg);
         ASSERT0(v);
 
         IOC tc;
@@ -441,7 +441,7 @@ void RaMgr::saveCalleeIntRegisterAtEntry(
         IN ORBB * entry,
         IN RegSet used_callee_regs[],
         OUT List<ORBB*> & bblist,
-        OUT xcom::TMap<REG, xoc::VAR*> & reg2var)
+        OUT xcom::TMap<REG, xoc::Var*> & reg2var)
 {
     ASSERT0(tmIsIntRegFile(regfile));
     RegSet * used_regs = &used_callee_regs[regfile];
@@ -465,7 +465,7 @@ void RaMgr::saveCalleeIntRegisterAtEntry(
         }
 
         CLUST clust = m_cg->mapReg2Cluster(reg);
-        xoc::VAR * loc = m_cg->genSpillVar(sr);
+        xoc::Var * loc = m_cg->genSpillVar(sr);
         reg2var.set(reg, loc);
 
         IOC tc;
@@ -511,7 +511,7 @@ void RaMgr::saveCalleeRegFileAtEntry(
         IN ORBB * entry,
         IN RegSet used_callee_regs[],
         OUT List<ORBB*> & bblist,
-        xcom::TMap<REG, xoc::VAR*> & reg2var)
+        xcom::TMap<REG, xoc::Var*> & reg2var)
 {
     if (tmIsPredicateRegFile(regfile)) {
         //Predicate regfile always be special.
@@ -534,7 +534,7 @@ void RaMgr::saveCalleeRegFileAtExit(
         IN ORBB * exit,
         IN RegSet used_callee_regs[],
         OUT List<ORBB*> & bblist,
-        xcom::TMap<REG, xoc::VAR*> const& reg2var)
+        xcom::TMap<REG, xoc::Var*> const& reg2var)
 {
     if (tmIsPredicateRegFile(regfile)) {
         //Predicated regfile always be special.
@@ -557,7 +557,7 @@ void RaMgr::saveCalleeIntRegisterAtExit(
         IN ORBB * exit,
         IN RegSet used_callee_regs[],
         OUT List<ORBB*> & bblist,
-        xcom::TMap<REG, xoc::VAR*> const& reg2var)
+        xcom::TMap<REG, xoc::Var*> const& reg2var)
 {
     RegSet * used_regs = &used_callee_regs[regfile];
     OR * sp_adj = ORBB_exit_spadjust(exit);
@@ -580,7 +580,7 @@ void RaMgr::saveCalleeIntRegisterAtExit(
         }
 
         CLUST clust = m_cg->mapReg2Cluster(reg);
-        xoc::VAR * v = reg2var.get(reg);
+        xoc::Var * v = reg2var.get(reg);
         ASSERT0(v);
 
         IOC tc;
@@ -631,7 +631,7 @@ void RaMgr::saveCalleePredicateAtExit(
         IN ORBB * exit,
         IN RegSet used_callee_regs[],
         OUT List<ORBB*> & bblist,
-        xcom::TMap<REG, xoc::VAR*> const&)
+        xcom::TMap<REG, xoc::Var*> const&)
 {
     DUMMYUSE(regfile);
     DUMMYUSE(used_callee_regs);
@@ -665,7 +665,7 @@ void RaMgr::saveCallee(RegSet used_callee_regs[])
     List<ORBB*> exit_bbs;
     m_cg->computeEntryAndExit(*m_cg->getORCfg(), entry_bbs, exit_bbs);
 
-    xcom::TMap<REG, xoc::VAR*> reg2var;
+    xcom::TMap<REG, xoc::Var*> reg2var;
     for (ORBB * bb = entry_bbs.get_head();
          bb != NULL; bb = entry_bbs.get_next()) {
         ASSERTN(ORBB_is_entry(bb) , ("not an entry BB"));
@@ -699,8 +699,8 @@ void RaMgr::saveCallee(RegSet used_callee_regs[])
 }
 
 
-//Record xoc::VAR referred in bb.
-void RaMgr::addVARRefList(ORBB * bb, OR * o, xoc::VAR const* loc)
+//Record xoc::Var referred in bb.
+void RaMgr::addVARRefList(ORBB * bb, OR * o, xoc::Var const* loc)
 {
     RefORBBList * ref_bb_list = m_var2or_map.get(loc);
     if (ref_bb_list == NULL) {

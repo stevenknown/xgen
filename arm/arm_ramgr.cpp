@@ -43,7 +43,7 @@ void ARMRaMgr::saveCalleePredicateAtEntry(
         IN ORBB * entry,
         IN RegSet used_callee_regs[],
         OUT List<ORBB*> & bblist,
-        OUT xcom::TMap<REG, VAR*> &)
+        OUT xcom::TMap<REG, Var*> &)
 {
     return;
 }
@@ -57,7 +57,7 @@ void ARMRaMgr::saveCalleePredicateAtExit(
         IN ORBB * exit,
         IN RegSet used_callee_regs[],
         OUT List<ORBB*> & bblist,
-        xcom::TMap<REG, VAR*> const&)
+        xcom::TMap<REG, Var*> const&)
 {
     return;
 }
@@ -70,7 +70,7 @@ void ARMRaMgr::saveCalleeRegFileAtEntry(
         IN ORBB * entry,
         IN RegSet used_callee_regs[],
         OUT List<ORBB*> & bblist,
-        OUT xcom::TMap<REG, VAR*> & reg2var)
+        OUT xcom::TMap<REG, Var*> & reg2var)
 {
     RaMgr::saveCalleeRegFileAtEntry(regfile,
         entry, used_callee_regs, bblist, reg2var);
@@ -84,7 +84,7 @@ void ARMRaMgr::saveCalleeRegFileAtExit(
         IN ORBB * exit,
         IN RegSet used_callee_regs[],
         OUT List<ORBB*> & bblist,
-        xcom::TMap<REG, VAR*> const& reg2var)
+        xcom::TMap<REG, Var*> const& reg2var)
 {
     RaMgr::saveCalleeRegFileAtExit(regfile,
         exit, used_callee_regs, bblist, reg2var);

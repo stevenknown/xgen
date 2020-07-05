@@ -42,10 +42,10 @@ namespace xgen {
 class Section {
 public:
     INT id;
-    xoc::VAR * sect_var;
+    xoc::Var * sect_var;
     ULONGLONG size;
     VarElist var_list;
-    TMap<xoc::VAR const*, VarDesc*> var2vdesc_map;
+    TMap<xoc::Var const*, VarDesc*> var2vdesc_map;
 
 public:
     Section()
@@ -58,7 +58,7 @@ public:
 
     void clean()
     {
-        //Clean xoc::VAR, VDDESC, etc func-unit related info
+        //Clean xoc::Var, VDDESC, etc func-unit related info
         //which should be initialized to new func unit.
         SECT_var_list(this).clean();
         SECT_size(this) = 0;

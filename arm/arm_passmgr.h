@@ -35,8 +35,9 @@ class ARMPassMgr : public PassMgr {
 public:
     ARMPassMgr(Region * rg) : PassMgr(rg) {}
     virtual ~ARMPassMgr() {}
+
     virtual Pass * allocDUMgr();
-    virtual void performScalarOpt(OptCtx & oc);
+    virtual Pass * allocScalarOpt();
 };
 
 #endif

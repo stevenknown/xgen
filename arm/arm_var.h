@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 author: Su Zhenyu
 @*/
 
-class ARMVar : public VAR {
+class ARMVar : public Var {
 public:
     virtual CHAR const* dumpVARDecl(OUT StrBuf & buf) const;
 };
@@ -38,5 +38,5 @@ public:
 class ARMVarMgr : public VarMgr {
 public:
     ARMVarMgr(RegionMgr * rm) : VarMgr(rm) {}
-    virtual VAR * allocVAR();
+    virtual Var * allocVAR();
 };

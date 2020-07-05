@@ -28,47 +28,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-#ifndef __XGEN_INC_H__
-#define __XGEN_INC_H__
+#ifndef _ARM_SCALAR_OPT_H_
+#define _ARM_SCALAR_OPT_H_
 
-//Common included files
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
-#include "../opt/cominc.h"
-#include "../opt/comopt.h"
-#include "xgenoption.h"
-#include "equortype.h"
-#include "scheinfo.h"
-#include "targ_interface.h"
-#include "reg.h"
-#include "regfile.h"
-#include "regfilegroup.h"
-#include "sr.h"
-#include "srdesc.h"
-#include "or.h"
-#include "issue_package.h"
-#include "or_bb.h"
-#include "or_util.h"
-#include "or_cfg.h"
-#include "or_ddg.h"
-#include "or_sim.h"
-#include "or_lis.h"
-#include "or_lra.h"
-#include "or_gra.h"
-#include "ramgr.h"
-#include "asminfo.h"
-#include "section.h"
-#include "emit_asm.h"
-#include "cg_mgr.h"
-#include "ir2or.h"
-#include "cg.h"
-#include "parallel_part_mgr.h"
-#include "cl_region_mgr.h"
-#include "cl_dbg.h"
+class ARMScalarOpt : public ScalarOpt {
+public:
+    ARMScalarOpt(Region * rg) : ScalarOpt(rg) {}
+    virtual ~ARMScalarOpt() {}
+    virtual bool perform(OptCtx &);
+};
 
-using namespace xgen;
-
-#include "targ_hook.h"
 #endif

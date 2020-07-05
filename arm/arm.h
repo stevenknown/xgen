@@ -52,5 +52,6 @@ author: Su Zhenyu
 #include "../arm/arm_cgmgr.h"
 #include "../arm/arm_var.h"
 #include "../arm/arm_dumgr.h"
+#include "../arm/arm_scalar_opt.h"
 
 #endif

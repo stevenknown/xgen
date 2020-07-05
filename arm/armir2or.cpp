@@ -92,7 +92,7 @@ void ARMIR2OR::convertBinaryOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
 //Generate operations: reg = &var
 void ARMIR2OR::convertLda(
-        VAR const* var,
+        Var const* var,
         HOST_INT lda_ofst,
         Dbx const* dbx,
         OUT ORList & ors,
@@ -114,13 +114,13 @@ void ARMIR2OR::convertStoreVar(IR const* ir, OUT ORList & ors, IN IOC * cont)
     ASSERT0(ST_rhs(ir)->is_ld());
     ASSERT0(((HOST_INT)ST_rhs(ir)->getTypeSize(m_tm)) == resbytesize);
 
-    //Load the address of target VAR into register.
+    //Load the address of target Var into register.
     cont->clean_bottomup();
     convertLda(ST_idinfo(ir), ST_ofst(ir), ::getDbx(ir), ors, cont);
     SR * tgt = cont->get_reg(0);
     ASSERT0(tgt && SR_is_reg(tgt));
 
-    //Load the address of source VAR into register.
+    //Load the address of source Var into register.
     cont->clean_bottomup();
     convertLda(LD_idinfo(ST_rhs(ir)), LD_ofst(ST_rhs(ir)),
         ::getDbx(ST_rhs(ir)), ors, cont);
@@ -140,7 +140,7 @@ void ARMIR2OR::convertStoreVar(IR const* ir, OUT ORList & ors, IN IOC * cont)
 void ARMIR2OR::convertLda(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
     ASSERT0(ir->is_lda());
-    VAR * v = LDA_idinfo(ir);
+    Var * v = LDA_idinfo(ir);
     ASSERT0(v);
     ASSERTN(!VAR_is_unallocable(v), ("var must be allocable during CG"));
     convertLda(v, LDA_ofst(ir), ::getDbx(ir), ors, cont);
@@ -165,7 +165,7 @@ void ARMIR2OR::convertReturnValue(IR const* ir, OUT ORList & ors, IN IOC * cont)
             getCG()->gen_r1());
     } else {
         //Get the first formal parameter, it is the return buffer of the value.
-        VAR const* v = getCG()->get_param_vars().get(0);
+        Var const* v = getCG()->get_param_vars().get(0);
         ASSERT0(v);
         DUMMYUSE(v);
         ASSERTN(!g_gen_code_for_big_return_value, ("TODO"));
@@ -258,7 +258,7 @@ void ARMIR2OR::convertRem(IR const* ir, OUT ORList & ors, IN IOC * cont)
     //Intrinsic Call.
     ORList tors;
     UINT retv_sz = ir->getTypeSize(m_tm);
-    VAR const* builtin = NULL;
+    Var const* builtin = NULL;
     if (retv_sz <= 4) {
         if (ir->is_uint()) {
             //builtin = getCG()->m_builtin_uimod;
@@ -321,7 +321,7 @@ void ARMIR2OR::convertAddSubFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Intrinsic Call.
     UINT retv_sz = ir->getTypeSize(m_tm);
-    VAR const* builtin = NULL;
+    Var const* builtin = NULL;
     if (retv_sz <= 4) {
         if (ir->is_add()) {
             builtin = getCG()->m_builtin_addsf3;
@@ -377,7 +377,7 @@ void ARMIR2OR::convertDiv(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Intrinsic Call.
     UINT retv_sz = ir->getTypeSize(m_tm);
-    VAR const* builtin = NULL;
+    Var const* builtin = NULL;
     if (retv_sz <= 4) {
         if (op0->is_uint()) {
             builtin = getCG()->m_builtin_udivsi3;
@@ -519,7 +519,7 @@ void ARMIR2OR::convertMulofFloat(IR const* ir, OUT ORList & ors, IN IOC * cont)
     m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
     //Intrinsic Call.
-    VAR const* builtin;
+    Var const* builtin;
     if (op0->getTypeSize(m_tm) <= 4) {
         builtin = getCG()->m_builtin_mulsf3;
     } else {
@@ -1039,7 +1039,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors, IN IOC * cont
     //And revise SP-adjust operation afterwards.
     m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
-    VAR const* builtin = NULL;
+    Var const* builtin = NULL;
     if (opnd0->getByteSize() == GENERAL_REGISTER_SIZE) {
         switch (ir->getCode()) {
         case IR_LT: builtin = getCG()->m_builtin_ltsf2; break;
@@ -1292,7 +1292,7 @@ void ARMIR2OR::convertTruebr(IR const* ir, OUT ORList & ors, IN IOC * cont)
 }
 
 
-VAR const* ARMIR2OR::fp2int(IR const* tgt, IR const* src)
+Var const* ARMIR2OR::fp2int(IR const* tgt, IR const* src)
 {
     ASSERT0(src->is_fp() && tgt->is_int());
     if (tgt->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE) {
@@ -1343,7 +1343,7 @@ VAR const* ARMIR2OR::fp2int(IR const* tgt, IR const* src)
 }
 
 
-VAR const* ARMIR2OR::int2fp(IR const* tgt, IR const* src)
+Var const* ARMIR2OR::int2fp(IR const* tgt, IR const* src)
 {
     ASSERT0(src->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE * 2
         && tgt->is_fp());
@@ -1399,7 +1399,7 @@ VAR const* ARMIR2OR::int2fp(IR const* tgt, IR const* src)
 }
 
 
-VAR const* ARMIR2OR::fp2fp(IR const* tgt, IR const* src)
+Var const* ARMIR2OR::fp2fp(IR const* tgt, IR const* src)
 {
     ASSERT0(src->is_fp() && tgt->is_fp());
     UINT tgtsz = tgt->getTypeSize(m_tm);
@@ -1442,7 +1442,7 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
     //And revise SP-adjust operation afterwards.
     m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
-    VAR const* builtin = NULL;
+    Var const* builtin = NULL;
     if (ir->is_int()) {
         builtin = fp2int(ir, CVT_exp(ir));
     } else if (ir->is_fp()) {
@@ -1505,7 +1505,7 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT ORList & ors, IN IOC * cont)
         ASSERT0(srcaddr && SR_is_reg(srcaddr));
 
         //Copy return-value to buffer.
-        VAR const* retbuf = m_rg->findFormalParam(0);
+        Var const* retbuf = m_rg->findFormalParam(0);
         ASSERT0(retbuf &&
             retbuf->getByteSize(m_tm) == exp->getTypeSize(m_tm));
         tmp.clean_bottomup();

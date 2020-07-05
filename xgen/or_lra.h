@@ -71,9 +71,9 @@ class LifeTime;
 class LifeTimeMgr;
 class RefORBBList;
 
-typedef xcom::TMapIter<xoc::VAR const*, RefORBBList*> VAR2ORIter;
-typedef xcom::TMap<xoc::VAR const*, RefORBBList*> VAR2OR;
-typedef xcom::TMap<xoc::VAR const*, RefORBBList*> VAR2OR;
+typedef xcom::TMapIter<xoc::Var const*, RefORBBList*> VAR2ORIter;
+typedef xcom::TMap<xoc::Var const*, RefORBBList*> VAR2OR;
+typedef xcom::TMap<xoc::Var const*, RefORBBList*> VAR2OR;
 typedef xcom::TMap<LifeTime*, SR*> LifeTime2SR;
 typedef xcom::TMap<LifeTime*, List<LifeTime*>*> LifeTime2SibList;
 typedef xcom::TMap<SR*, LifeTime*> SR2LifeTime;
@@ -282,7 +282,7 @@ public:
 };
 
 
-//Record the relation in between VAR, and BB, OR which referred the VAR.
+//Record the relation in between Var, and BB, OR which referred the Var.
 class RefORBBList : public List<ORBBUnit*> {
     SMemPool * m_pool;
 
@@ -752,7 +752,7 @@ protected:
     List<SR*> m_spilled_gsr;
 
 protected:
-    bool checkSpillCanBeRemoved(xoc::VAR const* spill_loc);
+    bool checkSpillCanBeRemoved(xoc::Var const* spill_loc);
 
     void genSRWith2opnds(OR_TYPE src,
                          CLUST clust,
@@ -764,7 +764,7 @@ protected:
 
     void findFollowedLoad(OUT ORList & followed_lds,
                           IN OR * o,
-                          xoc::VAR const* spill_loc,
+                          xoc::Var const* spill_loc,
                           IN OUT bool & spill_can_be_removed,
                           IN DataDepGraph & ddg);
     SR * findAvailPhyRegFromLoadList(IN OR * o,
@@ -943,7 +943,7 @@ public:
     void genSpill(IN LifeTime * lt,
                   IN SR * oldsr,
                   INT pos,
-                  IN xoc::VAR * spill_var,
+                  IN xoc::Var * spill_var,
                   IN LifeTimeMgr & mgr,
                   bool is_rename,
                   OUT ORList * sors);
@@ -953,11 +953,11 @@ public:
                    SR * tgt,
                    SR * pd,
                    ORList & ors);
-    SR * genNewReloadSR(SR * oldsr, xoc::VAR * spill_var);
+    SR * genNewReloadSR(SR * oldsr, xoc::Var * spill_var);
     SR * genReload(IN LifeTime * lt,
                    IN SR * oldsr,
                    INT pos,
-                   IN xoc::VAR * spill_var,
+                   IN xoc::Var * spill_var,
                    IN LifeTimeMgr &mgr,
                    OUT ORList * ors);
 
@@ -1008,7 +1008,7 @@ public:
                                  OR * succ,
                                  ORList & remainder_succs,
                                  ORBB * bb,
-                                 xoc::VAR const* spill_var,
+                                 xoc::Var const* spill_var,
                                  DataDepGraph & ddg);
     void chooseBestRegFileFromMultipleCand(IN LifeTime * lt,
                                            IN List<REGFILE> & regfile_cand,
@@ -1087,7 +1087,7 @@ public:
     virtual bool removeRedundantStoreLoadAfterLoad(OR * o,
                                                    ORList & succs,
                                                    ORBB * bb,
-                                                   xoc::VAR const* spill_var,
+                                                   xoc::Var const* spill_var,
                                                    DataDepGraph & ddg);
     virtual void resetLifeTimeAllocated(LifeTimeMgr & mgr);
     virtual bool reassignRegFile(LifeTime * lt,

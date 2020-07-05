@@ -363,7 +363,7 @@ void ARMCG::buildLoad(
 {
     ASSERT0(load_val && base && ofst && cont);
     ASSERT0(SR_is_int_imm(ofst));
-    VAR const* v = NULL;
+    Var const* v = NULL;
     SR * sr_ofst = NULL;
     if (SR_is_var(base)) {
         SR * sr_base;
@@ -454,7 +454,7 @@ void ARMCG::buildStore(
     ASSERT0(SR_is_int_imm(ofst) && (SR_is_reg(base) || SR_is_var(base)));
     ASSERTN(SR_is_reg(store_val), ("store_val can only be register on ARM"));
     ASSERT0(SR_is_int_imm(ofst));
-    VAR const* v = NULL;
+    Var const* v = NULL;
     SR * sr_ofst = NULL;
     if (SR_is_var(base)) {
         SR * sr_base;
@@ -887,7 +887,7 @@ void ARMCG::buildICall(
 
 
 void ARMCG::buildCall(
-        VAR const* callee,
+        Var const* callee,
         UINT ret_val_size,
         OUT ORList & ors,
         IOC * cont)
@@ -2623,10 +2623,10 @@ void ARMCG::expandFakeMov32(IN OR * o, OUT IssuePackageList * ipl)
             (HOST_INT)((SR_int_imm(from) >> 16) & 0xFFFF), true));
         high->set_pred(o->get_pred());
     } else if (SR_type(from) == SR_VAR) {
-        // mov32 rd = SYM
+        // mov32 rd = Sym
         //=>
-        // movw rd, SYM
-        // movt rd, SYM
+        // movw rd, Sym
+        // movt rd, Sym
         low = genOR(OR_movw_i);
         low->set_mov_to(to);
         low->set_mov_from(genVAR(SR_var(from)));
@@ -2796,7 +2796,7 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
 }
 
 
-bool ARMCG::skipArgRegister(VAR const* param,
+bool ARMCG::skipArgRegister(Var const* param,
                             RegSet const* regset,
                             REG reg) const
 {

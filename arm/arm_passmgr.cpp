@@ -42,72 +42,7 @@ Pass * ARMPassMgr::allocDUMgr()
 }
 
 
-void ARMPassMgr::performScalarOpt(OptCtx & oc)
+Pass * ARMPassMgr::allocScalarOpt()
 {
-    ASSERT0(OC_is_cfg_valid(oc));
-    ASSERT0(m_rg && m_rg->getCFG()->verify());
-
-    List<Pass*> passlist; //A list of Optimization.
-
-    if (g_do_ivr) { passlist.append_tail(registerPass(PASS_IVR)); }
-
-    if (g_do_cp) {
-        passlist.append_tail(registerPass(PASS_CP));
-        ((CopyProp*)registerPass(PASS_CP))->setPropagationKind(CP_PROP_SIMPLEX);
-    }
-
-    if (g_do_rce) { passlist.append_tail(registerPass(PASS_RCE)); }
-    if (g_do_rp) { passlist.append_tail(registerPass(PASS_RP)); }
-    if (g_do_gcse) { passlist.append_tail(registerPass(PASS_GCSE)); }
-
-    if (g_do_cp) {
-        passlist.append_tail(registerPass(PASS_CP));
-        ((CopyProp*)queryPass(PASS_CP))->setPropagationKind(CP_PROP_SIMPLEX);
-    }
-
-    if (g_do_dce) {
-        passlist.append_tail(registerPass(PASS_DCE));        
-    }
-
-    if (g_do_licm) { passlist.append_tail(registerPass(PASS_LICM)); }
-    if (g_do_dse) { passlist.append_tail(registerPass(PASS_DSE)); }
-    if (g_do_loop_convert) { passlist.append_tail(registerPass(PASS_LOOP_CVT)); }
-
-    bool change;
-    UINT count = 0;
-    //dumpBBList(m_rg->getBBList(), m_rg, "before");
-    ASSERT0(verifyPRSSAInfo(m_rg));
-    do {
-        change = false;
-        for (Pass * pass = passlist.get_head();
-             pass != NULL; pass = passlist.get_next()) {
-            CHAR const* passname = pass->getPassName();
-            DUMMYUSE(passname);
-
-            ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
-            ULONGLONG t = getusec();
-
-            //dumpBBList(m_rg->getBBList(), m_rg, "before");
-            //m_rg->getCFG()->dumpVCG("before.vcg", true, true);
-            bool doit = pass->perform(oc);
-
-            //dumpBBList(m_rg->getBBList(), m_rg, "after");
-            //m_rg->getCFG()->dumpVCG("after.vcg", true, true);
-
-            appendTimeInfo(pass->getPassName(), getusec() - t);
-            if (doit) {
-                //RefineCtx rf;
-                //RC_insert_cvt(rf) = false;
-                //m_rg->refineBBlist(m_rg->getBBList(), rf);
-                change = true;
-            }
-
-            ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
-            ASSERT0(m_rg->getCFG()->verify());
-            ASSERT0(verifyPRSSAInfo(m_rg));
-            ASSERT0(m_rg->verifyRPO(oc));
-        }
-        count++;
-    } while (change && count < 20);
-    ASSERT0(!change);
+    return new ARMScalarOpt(m_rg);
 }

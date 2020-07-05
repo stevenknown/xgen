@@ -1,4 +1,4 @@
-int foo(short b, short a)
+int main()
 {
     //Promote x[2], *q, and *(p+2) into same PR.
     int x[10];
@@ -13,5 +13,5 @@ int foo(short b, short a)
         //*(p+2) exactly alias with x[2]
         *(p+2) = x[3] + x[2] + *q;
     }
+    return x[2];
 }
-

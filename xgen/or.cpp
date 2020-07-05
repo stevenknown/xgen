@@ -287,14 +287,14 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
 
     //assistant info
     if (OR_is_store(this)) {
-        xoc::VAR const* var = cg->mapOR2Var(pthis);
+        xoc::Var const* var = cg->mapOR2Var(pthis);
         if (var != NULL) {
             buf.strcat("  //store to '");
             var->dump(buf, cg->getRegion()->getTypeMgr());
             buf.strcat("'");
         }
     } else if (OR_is_load(this)) {
-        xoc::VAR const* var = cg->mapOR2Var(pthis);
+        xoc::Var const* var = cg->mapOR2Var(pthis);
         if (var != NULL) {
             buf.strcat("  //load from '");
             var->dump(buf, cg->getRegion()->getTypeMgr());

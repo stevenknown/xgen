@@ -48,25 +48,25 @@ public:
                     IN ORBB * entry,
                     IN RegSet used_callee_regs[],
                     OUT List<ORBB*> & bblist,
-                    OUT xcom::TMap<REG, VAR*> & reg2var);
+                    OUT xcom::TMap<REG, Var*> & reg2var);
     virtual void saveCalleePredicateAtExit(
                     REGFILE regfile,
                     IN ORBB * exit,
                     IN RegSet used_callee_regs[],
                     OUT List<ORBB*> & bblist,
-                    xcom::TMap<REG, VAR*> const& reg2var);
+                    xcom::TMap<REG, Var*> const& reg2var);
     virtual void saveCalleeRegFileAtEntry(
                     REGFILE regfile,
                     IN ORBB * entry,
                     IN RegSet used_callee_regs[],
                     OUT List<ORBB*> & bblist,
-                    OUT xcom::TMap<REG, VAR*> & reg2var);
+                    OUT xcom::TMap<REG, Var*> & reg2var);
     virtual void saveCalleeRegFileAtExit(
                     REGFILE regfile,
                     IN ORBB * exit,
                     IN RegSet used_callee_regs[],
                     OUT List<ORBB*> & bblist,
-                    xcom::TMap<REG, VAR*> const& reg2var);
+                    xcom::TMap<REG, Var*> const& reg2var);
 };
 
 #endif

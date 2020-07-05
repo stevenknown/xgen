@@ -38,7 +38,7 @@ author: Su Zhenyu
 
 //Compute the alignment for specifical var, and return
 //the power of 2.
-static UINT computeAlignIsPowerOf2(VAR const* v)
+static UINT computeAlignIsPowerOf2(Var const* v)
 {
     UINT byte_align = VAR_align(v);
     switch (byte_align) {
@@ -272,7 +272,7 @@ void ARMAsmPrinter::printBss(FILE * asmh, Section & sect)
 
     StrBuf buf(64);
     ASSERT0(SECT_var(&sect));
-    for (VAR const* v = SECT_var_list(&sect).get_head();
+    for (Var const* v = SECT_var_list(&sect).get_head();
          v != NULL; v = SECT_var_list(&sect).get_next()) {
         if (m_asmprtmgr->getPrintedVARTab().find(v) || VAR_is_func_decl(v)) {
             continue;
@@ -294,12 +294,12 @@ void ARMAsmPrinter::printData(FILE * asmh, Section & sect)
 {
     if (SECT_var_list(&sect).get_elem_count() == 0) { return; }
 
-    VAR * sect_var = SECT_var(&sect);
+    Var * sect_var = SECT_var(&sect);
     ASSERT0(sect_var);
 
     StrBuf buf(128);
     bool first = true;
-    for (VAR const* v = SECT_var_list(&sect).get_head();
+    for (Var const* v = SECT_var_list(&sect).get_head();
          v != NULL; v = SECT_var_list(&sect).get_next()) {
         if (m_asmprtmgr->getPrintedVARTab().find(v)) {
             continue;

@@ -929,7 +929,7 @@ void DataDepGraph::buildMemDep()
          ct != mem_ors.end(); ct = mem_ors.get_next(ct)) {
         ORCt * to_ct = ct;
         OR * from = ct->val();
-        VAR const* from_loc = m_cg->computeSpillVar(from);
+        Var const* from_loc = m_cg->computeSpillVar(from);
         for (OR * to = mem_ors.get_next(&to_ct);
              to != NULL; to = mem_ors.get_next(&to_ct)) {
             if (m_ddg_param.mem_flow_dep) { //flow-dependence
@@ -959,9 +959,9 @@ void DataDepGraph::buildMemDep()
 #endif
 
 
-void DataDepGraph::buildMemOutDep(OR * from, OR * to, VAR const* from_loc)
+void DataDepGraph::buildMemOutDep(OR * from, OR * to, Var const* from_loc)
 {
-    VAR const* to_loc = m_cg->computeSpillVar(to);
+    Var const* to_loc = m_cg->computeSpillVar(to);
 
     if (from_loc != NULL && to_loc != NULL) {
         if (from_loc != to_loc) {
@@ -985,7 +985,7 @@ void DataDepGraph::buildMemFlowDep(OR * from, OR * to)
 }
 
 
-void DataDepGraph::buildMemInDep(OR *, OR *, VAR const*)
+void DataDepGraph::buildMemInDep(OR *, OR *, Var const*)
 {
     ASSERTN(0, ("TODO"));
 }

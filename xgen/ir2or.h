@@ -178,7 +178,7 @@ public:
     virtual void convertFalsebr(IR const* ir, OUT ORList & ors, IN IOC * cont);
     //Generate operations: reg = &var
     virtual void convertLda(
-            VAR const* var,
+            Var const* var,
             HOST_INT lda_ofst,
             Dbx const* dbx,
             OUT ORList & ors,
@@ -386,7 +386,7 @@ public:
             bool is_signed) = 0;
 
     //Register local variable that will be allocated in memory.
-    VAR * registerLocalVar(IR const* pr);
+    Var * registerLocalVar(IR const* pr);
 
     //Return true if whole ir has been passed through registers, otherwise
     //return false.

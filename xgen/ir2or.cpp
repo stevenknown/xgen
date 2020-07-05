@@ -410,7 +410,7 @@ void IR2OR::convertGeneralLoadPR(IR const* ir, OUT ORList & ors, IN IOC * cont)
         SR * mm2 = m_cg->genReg();
         m_cg->setMapPR2SR(PR_no(ir), mm2);
     } else {
-        VAR * v = m_rg->mapPR2Var(PR_no(ir));
+        Var * v = m_rg->mapPR2Var(PR_no(ir));
         ASSERT0(v != NULL);
         ASSERT0(ir->getTypeSize(m_tm) == v->getByteSize(m_tm));
         m_cg->setMapPR2SR(PR_no(ir), m_cg->genVAR(v));
@@ -461,7 +461,7 @@ void IR2OR::convertCopyPR(
         //must be transferd through memory.
 
         //Store to local-variable(memory) instead of register.
-        VAR * loc = m_rg->mapPR2Var(tgtprno);
+        Var * loc = m_rg->mapPR2Var(tgtprno);
         if (loc == NULL) {
             loc = registerLocalVar(tgt);
         } else {
@@ -513,7 +513,7 @@ void IR2OR::convertStorePR(IR const* ir, OUT ORList & ors, IN IOC * cont)
             m_cg->setMapPR2SR(STPR_no(ir), m_cg->genReg());
         } else {
             //Store to local-variable(memory) instead of register.
-            VAR * v = m_rg->mapPR2Var(STPR_no(ir));
+            Var * v = m_rg->mapPR2Var(STPR_no(ir));
             if (v == NULL) {
                 v = registerLocalVar(ir);
             } else {
@@ -529,17 +529,17 @@ void IR2OR::convertStorePR(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
 
 //Register local variable that will be allocated in memory.
-VAR * IR2OR::registerLocalVar(IR const* pr)
+Var * IR2OR::registerLocalVar(IR const* pr)
 {
     ASSERT0(pr->is_pr() || pr->is_stpr() || pr->isCallStmt());
 
-    //Create a new PR VAR.
+    //Create a new PR Var.
     CHAR name[128];
     UINT prno = pr->getPrno();
     sprintf(name, "pr%d", prno);
     ASSERT0(strlen(name) < 128);
 
-    VAR * var = m_rg->getVarMgr()->registerVar(
+    Var * var = m_rg->getVarMgr()->registerVar(
         name, pr->getType(), 0, VAR_LOCAL|VAR_IS_PR);
 
     //Add it to region's var-tab and it will be

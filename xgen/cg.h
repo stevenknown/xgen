@@ -44,15 +44,15 @@ public:
 };
 
 
-class BBVarList : public List<xoc::VAR*> {
-    List<xoc::VAR*> m_free_list;
+class BBVarList : public List<xoc::Var*> {
+    List<xoc::Var*> m_free_list;
 public:
-    xoc::VAR * get_free() { return m_free_list.remove_tail(); }
+    xoc::Var * get_free() { return m_free_list.remove_tail(); }
 
     void free()
     {
         UINT i = 0;
-        for (xoc::VAR * v = get_head(); i < get_elem_count();
+        for (xoc::Var * v = get_head(); i < get_elem_count();
              i++, v = get_next()) {
             m_free_list.append_tail(v);
         }
@@ -281,7 +281,7 @@ protected:
     List<BBSimulator*> m_simm_list;
     List<LIS*> m_lis_list;
     Vector<ParallelPartMgr*> * m_ppm_vec; //Record parallel part for CG.
-    Vector<xoc::VAR const*> m_params; //record the formal parameter.
+    Vector<xoc::Var const*> m_params; //record the formal parameter.
     ORBBMgr * m_or_bb_mgr; //manage BB of IR.
     UINT m_or_bb_idx; //take count of ORBB.
     RegSetMgr m_regset_mgr;
@@ -317,7 +317,7 @@ protected:
     UINT compute_pad();
     SR * computeAndUpdateOffset(SR * sr);
     UINT calcSizeOfParameterPassedViaRegister(
-        List<VAR const*> const* param_lst) const;
+        List<Var const*> const* param_lst) const;
 
     void * xmalloc(INT size)
     {
@@ -339,25 +339,25 @@ protected:
 
 public:
     //Mapping from STORE/LOAD operation to the target address.
-    xcom::TMap<OR*, xoc::VAR const*> m_or2memaddr_map;
+    xcom::TMap<OR*, xoc::Var const*> m_or2memaddr_map;
 
     BBVarList m_bb_level_internal_var_list; //record local pr at OR.
-    List<xoc::VAR*> m_func_level_internal_var_list; //record global pr at OR.
+    List<xoc::Var*> m_func_level_internal_var_list; //record global pr at OR.
 
     //Builtin function should be initialized in initBuiltin().
-    xoc::VAR const* m_builtin_memcpy;
+    xoc::Var const* m_builtin_memcpy;
 
 public:
     CG(xoc::Region * rg, CGMgr * cgmgr);
     virtual ~CG();
 
-    void addBBLevelNewVar(IN xoc::VAR * var);
-    void addFuncLevelNewVar(IN xoc::VAR * var);
+    void addBBLevelNewVar(IN xoc::Var * var);
+    void addFuncLevelNewVar(IN xoc::Var * var);
     void appendReload(ORBB * bb, ORList & ors);
-    inline xoc::VAR * addBuiltinVar(CHAR const* buildin_name)
+    inline xoc::Var * addBuiltinVar(CHAR const* buildin_name)
     {
         ASSERT0(m_rg);
-        xoc::SYM * s = m_rg->getRegionMgr()->addToSymbolTab(buildin_name);
+        xoc::Sym * s = m_rg->getRegionMgr()->addToSymbolTab(buildin_name);
         return m_rg->getVarMgr()->registerStringVar(
             buildin_name, s, MEMORY_ALIGNMENT);
     }
@@ -389,11 +389,11 @@ public:
     virtual OR * buildOR(OR_TYPE orty, IN SRList & result, IN SRList & opnd);
     virtual void buildSpadjust(OUT ORList & ors, IN IOC * cont);
     virtual void buildSpill(IN SR * store_val,
-                            IN xoc::VAR * spill_loc,
+                            IN xoc::Var * spill_loc,
                             IN ORBB * bb,
                             OUT ORList & ors);
     virtual void buildReload(IN SR * result_val,
-                             IN xoc::VAR * reload_loc,
+                             IN xoc::Var * reload_loc,
                              IN ORBB * bb,
                              OUT ORList & ors);
 
@@ -474,7 +474,7 @@ public:
                                OUT ORList & ors) = 0;
 
     //Build function call instruction.
-    virtual void buildCall(xoc::VAR const* callee,
+    virtual void buildCall(xoc::Var const* callee,
                            UINT ret_val_size,
                            OUT ORList & ors,
                            IOC * cont) = 0;
@@ -490,12 +490,12 @@ public:
 
     //Build load-address instruction.
     virtual void buildStore(SR * store_val,
-                            xoc::VAR const* base,
+                            xoc::Var const* base,
                             HOST_INT ofst,
                             OUT ORList & ors,
                             IN IOC * cont);
     virtual void buildLoad(SR * load_val,
-                           xoc::VAR const* base,
+                           xoc::Var const* base,
                            HOST_INT ofst,
                            OUT ORList & ors,
                            IN IOC * cont)
@@ -528,7 +528,7 @@ public:
                      IN IOC * cont);
 
     //Generate operations: reg = &var
-    virtual void buildLda(xoc::VAR const* var,
+    virtual void buildLda(xoc::Var const* var,
                           HOST_INT lda_ofst,
                           Dbx const* dbx,
                           OUT ORList & ors,
@@ -619,17 +619,17 @@ public:
     INT computeOpndIdx(OR * o, SR const* opnd);
     INT computeResultIdx(OR * o, SR const* res);
     void computeMaxRealParamSpace();
-    virtual void computeAndUpdateGlobalVarLayout(xoc::VAR const* var,
+    virtual void computeAndUpdateGlobalVarLayout(xoc::Var const* var,
                                                  OUT SR ** base,
                                                  OUT SR ** base_ofst);
-    virtual void computeAndUpdateStackVarLayout(xoc::VAR const* var,
+    virtual void computeAndUpdateStackVarLayout(xoc::Var const* var,
                                                 OUT SR ** sp, //stack pointer
                                                 OUT SR ** sp_ofst);
-    virtual void computeParamLayout(xoc::VAR const* id,
+    virtual void computeParamLayout(xoc::Var const* id,
                                     OUT SR ** base,
                                     OUT SR ** ofst);
     virtual UINT computeTotalParameterStackSize(IR * ir);
-    virtual void computeVarBaseOffset(xoc::VAR const* var,
+    virtual void computeVarBaseOffset(xoc::Var const* var,
                                       ULONGLONG var_ofst,
                                       OUT SR ** base,
                                       OUT SR ** ofst);
@@ -686,7 +686,7 @@ public:
         ASSERTN(0, ("Target Dependent Code"));
         return 0;
     }
-    xoc::VAR const* computeSpillVar(OR * o);
+    xoc::Var const* computeSpillVar(OR * o);
 
     //Change the function unit and related cluster of 'o'.
     //If is_test is true, this function only check whether the given
@@ -762,7 +762,7 @@ public:
         return m_ppm_vec;
     }
 
-    SR * genVAR(xoc::VAR const* var);
+    SR * genVAR(xoc::Var const* var);
     SR * genLabel(LabelInfo const* li);
     SR * genSR();
     SR * genSR(REG reg, REGFILE regfile);
@@ -796,19 +796,19 @@ public:
     //Generate spill location that same like 'sr'.
     //Or return the spill location if exist.
     //'sr': the referrence SR.
-    xoc::VAR * genSpillVar(SR * sr);
+    xoc::Var * genSpillVar(SR * sr);
     void generateFuncUnitDedicatedCode();
     OR_CFG * getORCfg() const { return m_or_cfg; }
     xoc::TypeMgr * getTypeMgr() const { return m_tm; }
     List<ORBB*> * getORBBList() { return &m_or_bb_list; }
 
-    //Construct a name for VAR that will lived in a ORBB.
+    //Construct a name for Var that will lived in a ORBB.
     CHAR const* genBBLevelNewVarName(OUT xcom::StrBuf & name);
 
-    //Construct a name for VAR that will lived in Region.
+    //Construct a name for Var that will lived in Region.
     CHAR const* genFuncLevelNewVarName(OUT xcom::StrBuf & name);
     UINT getMaxArgSectionSize() const { return CG_max_real_arg_size(this); }
-    xoc::VAR * genTempVar(xoc::Type const* type, UINT align, bool func_level);
+    xoc::Var * genTempVar(xoc::Type const* type, UINT align, bool func_level);
     OR * getOR(UINT id);
     OR * genOR(OR_TYPE ort) { return m_cgmgr->getORMgr()->genOR(ort, this); }
     Section * getRodataSection() { return &m_rodata_sect; }
@@ -819,7 +819,7 @@ public:
     Section * getParamSection() { return &m_param_sect; }
     virtual REGFILE getRflagRegfile() const = 0;
     virtual REGFILE getPredicateRegfile() const;
-    Vector<xoc::VAR const*> const& get_param_vars() const
+    Vector<xoc::Var const*> const& get_param_vars() const
     {
         return m_params;
     }
@@ -956,7 +956,7 @@ public:
     virtual bool isRecalcOR(OR *) = 0;
 
     bool isSameSpillLoc(OR const* or1, OR const* or2);
-    bool isSameSpillLoc(xoc::VAR const* or1loc, OR const* or1, OR const* or2);
+    bool isSameSpillLoc(xoc::Var const* or1loc, OR const* or1, OR const* or2);
     virtual bool isReduction(OR * o);
     virtual bool isSameCondExec(OR * prev, OR * next, BBORList const* or_list);
 
@@ -1021,7 +1021,7 @@ public:
                        IN ORList & ors);
     bool mayDef(IN OR * o, SR const* sr);
     bool mayUse(IN OR * o, SR const* sr);
-    virtual xoc::VAR const* mapOR2Var(OR * o);
+    virtual xoc::Var const* mapOR2Var(OR * o);
     virtual bool mapRegSet2RegFile(OUT Vector<INT> & regfilev,
                                    RegSet const* regs);
     virtual UNIT mapSR2Unit(OR const* o, SR const* sr);
@@ -1148,7 +1148,7 @@ public:
                                            UINT param_start);
 
     //True if current argument register should be bypassed.
-    virtual bool skipArgRegister(VAR const* param,
+    virtual bool skipArgRegister(Var const* param,
                                  RegSet const* regset,
                                  REG reg) const
     {
@@ -1161,7 +1161,7 @@ public:
 
     virtual void setORListWithSamePredicate(ORList & ops, OR * o);
     virtual void setSpadjustOffset(OR * spadj, INT size);
-    virtual void setMapOR2Mem(OR * o, xoc::VAR const* mid_opt);
+    virtual void setMapOR2Mem(OR * o, xoc::Var const* mid_opt);
 
     void localize();
 
