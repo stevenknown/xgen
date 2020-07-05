@@ -12,5 +12,6 @@ ARM_OBJS +=\
 ../arm/arm_ramgr.o\
 ../arm/arm_region.o\
 ../arm/arm_region_mgr.o\
+../arm/arm_scalar_opt.o\
 ../arm/arm_sr.o\
 ../arm/arm_var.o
