@@ -77,27 +77,39 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     bool res = false;
     bool change;
     UINT count = 0;
-    ASSERT0(verifyPRSSAInfo(m_rg));
+    ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg));
     do {
         change = false;
         for (Pass * pass = passlist.get_head();
              pass != NULL; pass = passlist.get_next()) {
-            CHAR const* passname = pass->getPassName();
-            DUMMYUSE(passname);
             ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
             bool doit = pass->perform(oc);
             if (doit) {
                 //RefineCtx rf;
                 //RC_insert_cvt(rf) = false;
-                //m_rg->refineBBlist(m_rg->getBBList(), rf);
+                //m_rg->getRefine()->refineBBlist(m_rg->getBBList(), rf);
                 change = true;
             }
             res |= doit;
 
+            ASSERT0(m_rg->verifyMDRef());
+            if (OC_is_pr_du_chain_valid(oc) ||
+                OC_is_nonpr_du_chain_valid(oc)) {
+                //DU reference and du chain has maintained.
+                UINT flag = 0;
+                if (OC_is_pr_du_chain_valid(oc)) {
+                    SET_FLAG(flag, DUOPT_COMPUTE_PR_DU);
+                }
+                if (OC_is_nonpr_du_chain_valid(oc)) {
+                    SET_FLAG(flag, DUOPT_COMPUTE_NONPR_DU);
+                }
+                ASSERT0(m_rg->getDUMgr());
+                ASSERT0(m_rg->getDUMgr()->verifyMDDUChain(flag));
+            }            
             ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
             ASSERT0(m_rg->getCFG()->verify());
-            ASSERT0(verifyPRSSAInfo(m_rg));
-            ASSERT0(verifyMDSSAInfo(m_rg));
+            ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg));
+            ASSERT0(MDSSAMgr::verifyMDSSAInfo(m_rg));
             ASSERT0(m_rg->verifyRPO(oc));
         }
         count++;

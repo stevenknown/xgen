@@ -28,32 +28,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-#ifndef _ARM_REGION_H_
-#define _ARM_REGION_H_
+#ifndef _ARM_REFINE_H_
+#define _ARM_REFINE_H_
 
-typedef TMap<xoc::Var*, MD*> Var2XX;
-class ARMRegion : public Region {
-protected:
-    void simplify(OptCtx & oc);
-    void HighProcessImpl(OptCtx & oc);
-    void MiddleProcessAggressiveAnalysis(OptCtx & oc);
-    bool ARMHighProcess(OptCtx & oc);
+class ARMRefine : public Refine {
 public:
-    ARMRegion(REGION_TYPE rt, RegionMgr * rm) : Region(rt, rm) {}
-    virtual void destroy();
-    virtual PassMgr * allocPassMgr();
+    ARMRefine(Region * rg) : Refine(rg) {}
+    virtual ~ARMRefine() {}
 
-    bool simplifyToPRmode(OptCtx & oc);
-    virtual bool HighProcess(OptCtx & oc);
-    virtual bool MiddleProcess(OptCtx & oc);
-    virtual bool process(OptCtx * oc)
-    {
-        bool res = Region::process(oc);
-        if (!res) { return res; }
-        
-        simplify(*oc);
-        return true;
-    }
+    //Insert CVT for float if necessary.
+    virtual IR * insertCvtForFloat(IR * parent, IR * kid, bool & change);
 };
 
 #endif

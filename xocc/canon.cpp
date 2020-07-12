@@ -263,9 +263,9 @@ IR * Canon::handle_stmt_list(IR * ir_list, bool & change)
             }
 
             CanonCtx cc;
-            IR * allocIR = handle_stmt(ir, lchange, &cc);
+            IR * allocir = handle_stmt(ir, lchange, &cc);
             xcom::add_next(&new_list, &last, cc.new_stmts);
-            xcom::add_next(&new_list, &last, allocIR);
+            xcom::add_next(&new_list, &last, allocir);
         }
         change |= lchange;
         ir_list = new_list;

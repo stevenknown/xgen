@@ -28,32 +28,51 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-#ifndef _ARM_REGION_H_
-#define _ARM_REGION_H_
 
-typedef TMap<xoc::Var*, MD*> Var2XX;
-class ARMRegion : public Region {
-protected:
-    void simplify(OptCtx & oc);
-    void HighProcessImpl(OptCtx & oc);
-    void MiddleProcessAggressiveAnalysis(OptCtx & oc);
-    bool ARMHighProcess(OptCtx & oc);
-public:
-    ARMRegion(REGION_TYPE rt, RegionMgr * rm) : Region(rt, rm) {}
-    virtual void destroy();
-    virtual PassMgr * allocPassMgr();
+#include "../opt/cominc.h"
+#include "../opt/comopt.h"
+#include "../opt/cfs_opt.h"
+#include "../opt/liveness_mgr.h"
+#include "../xgen/xgeninc.h"
+#include "../cfe/cfexport.h"
+#include "../opt/util.h"
 
-    bool simplifyToPRmode(OptCtx & oc);
-    virtual bool HighProcess(OptCtx & oc);
-    virtual bool MiddleProcess(OptCtx & oc);
-    virtual bool process(OptCtx * oc)
-    {
-        bool res = Region::process(oc);
-        if (!res) { return res; }
-        
-        simplify(*oc);
-        return true;
+//Insert CVT for float if necessary.
+IR * ARMRefine::insertCvtForFloat(IR * parent, IR * kid, bool & change)
+{
+    ASSERT0(parent->is_fp() || kid->is_fp());
+    UINT tgt_size = parent->getTypeSize(m_tm);
+    UINT src_size = kid->getTypeSize(m_tm);
+
+    bool build = false;
+    if (parent->is_fp()) {
+        if (kid->getType()->is_int()) {
+            build = true;
+        } else if (kid->is_fp()) {
+            if (tgt_size != src_size) {
+                build = true;
+            }
+        } else {
+            ASSERTN(0, ("incompatible types in convertion"));
+        }
+    } else {
+        if (parent->getType()->is_int()) {
+            build = true;
+        } else if (parent->is_fp()) {
+            if (tgt_size != src_size) {
+                build = true;
+            }
+        } else {
+            ASSERTN(0, ("incompatible types in convertion"));
+        }
     }
-};
 
-#endif
+    if (build) {
+        IR * new_kid = m_rg->buildCvt(kid, parent->getType());
+        copyDbx(new_kid, kid, m_rg);
+        change = true;
+        return new_kid;
+    }
+
+    return kid;
+}

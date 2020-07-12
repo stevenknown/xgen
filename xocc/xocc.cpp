@@ -45,97 +45,6 @@ INT main(INT argcc, CHAR * argvc[])
         #ifndef _ON_WINDOWS_
         "../testsuite/cp.c",
         #else
-        //"..\\..\\testsuite\\active\\test_for_loop.c", //fail in VRP. deadlock.
-        //"..\\..\\testsuite\\active\\t4.c", //pass, failedin CG, need generate REM.
-        //"..\\..\\testsuite\\active\\array.c", //failed in VRP
-        //"..\\..\\testsuite\\active\\struct_field.c", //failed in VRP
-        //"..\\..\\testsuite\\active\\cvt.c", //failed in VRP
-        //"..\\..\\testsuite\\active\\ddot.c", //failed in VRP
-        //"..\\..\\testsuite\\active\\alias_2.c", //failed in VRP
-        //"..\\..\\testsuite\\active\\loop_construct.c", //failed in VRP
-        //"..\\..\\testsuite\\active\\caffmark_logicatom.c",//failed in VRP
-        //"..\\..\\testsuite\\active\\alias_analysis.c", //pass, failed in GCSE.
-        //"..\\..\\testsuite\\active\\scalar_replace.c", //failed in VRP
-        //"..\\..\\testsuite\\active\\ivr.c", //pass, failed in GCSE.
-        //"..\\..\\testsuite\\active\\cond_exe.c", //fail in PRE, deadlock.
-        //"..\\..\\testsuite\\active\\atol.c", //fail in PRE, deadlock.
-        //"..\\..\\testsuite\\active\\icall.c", //fail in PRE, deadlock.
-        //"..\\..\\testsuite\\active\\simp_typeinfer.c", //fail in PRE, deadlock.
-        //"..\\..\\testsuite\\active\\array.c", //failed in VRP
-        ////NOTE: !! Modify refineSwtich() to disrefine SWITCH_body to enable the extremly pressure test.
-        //"..\\..\\test\\compile\\licm2.c", //pass, failed in GCSE.
-        //"..\\..\\test\\exec\\big.switch.c", //Out of mem
-        //"..\\..\\test\\exec\\array.assignment.c", //flow sensitive cost too much memory.
-        //"..\\..\\test\\exec\\big.switch.org.c", //Out of mem
-        //"..\\..\\test\\exec\\stackoverflow.c", //cfe failed!
-        //"..\\..\\test\\exec\\loop_preheader.c",
-        //"..\\..\\test\\compile\\cfg.c",
-        //"..\\..\\test\\compile\\refine_duchain.c",
-        //"..\\..\\test\\compile\\array3.c",
-        //"..\\..\\test\\compile\\duref.c",
-        //"..\\..\\test\\compile\\cfg2.c",
-        //"..\\..\\test\\compile\\bug.c",
-        //"..\\..\\test\\compile\\20020110.c",
-        //"..\\..\\test\\compile\\alias10.c",
-        //"..\\..\\test\\compile\\alias11_2.c",
-        //"..\\..\\test\\compile\\alias11.c",        
-        //"..\\..\\test\\compile\\dce.c", //fail in CG, TODO: support ::memcpy to local-tmp-var
-        //"..\\..\\test\\compile\\dce3.c",
-        //"..\\..\\test\\compile\\dce4.c",
-        //    "..\\..\\test\\compile\\dce5.c",
-        //"..\\..\\test\\compile\\dce6.c",
-        //"..\\..\\test\\compile\\dce7.c",
-        //"..\\..\\test\\compile\\dce8.c",
-        //"..\\..\\test\\compile\\20020116-1.c",        
-        //"..\\..\\test\\compile\\20020120-1.c",
-        //"..\\..\\test2\\compile\\pr29250.c",
-        //"..\\..\\test2\\compile\\20020304-1.c",
-        //"..\\..\\test2\\compile\\du_chain2.c",
-        //"..\\..\\test2\\compile\\linpack.c",
-        //"..\\..\\test2\\compile\\linpack.c",
-        //"..\\..\\test\\bigmethod\\array_and_compute_sensitive_code.c", //Disable CG's LRA.
-        //"..\\..\\test2\\compile\\block.c",
-        //"..\\..\\test2\\compile\\lib_headers.c",        
-        //"..\\..\\test\\compile\\20020309-2.c",
-        //"..\\..\\test\\compile\\20020304-1.c",
-        //"..\\..\\test\\compile\\alias11.c",
-        //"..\\..\\test\\compile\\ansic.c",
-        "..\\..\\test\\compile\\cvt.c",
-        "..\\..\\test\\compile\\alias10.c",
-        "..\\..\\test\\compile\\20020309-2.c",
-        "..\\..\\test\\compile\\array3.c",
-        "..\\..\\test\\compile\\place_phi_pressure_test.c",
-        "..\\..\\test\\exec\\inc_array.c",
-        "..\\..\\test\\exec\\20041218-1.c",
-        "..\\..\\test\\compile\\20020304-1.c",
-        "..\\..\\test\\compile\\20020320-1.c",
-        "..\\..\\test\\compile\\20020116-1.c",
-        "..\\..\\test\\compile\\20020604-1.c",
-        "..\\..\\test\\compile\\relation.c",
-        "..\\..\\test\\exec\\20010915-1.c",
-        "..\\..\\test\\compile\\20020116-1.c",
-        //"..\\..\\test\\compile\\alias12.c",
-        "..\\..\\test\\compile\\failed\\cfe\\forward_struct_decl.c",
-        "..\\..\\test\\compile\\failed\\cfe\\forward_union_decl.c",
-        "..\\..\\test\\compile\\failed\\cfe\\zero-strct-5.c",
-        "..\\..\\test\\exec\\struct_decl.c",
-        "..\\..\\test\\compile\\aa.i",
-        "..\\..\\test\\compile\\pragma.c.i",        
-        "..\\..\\test\\compile\\place_phi.c",
-        "..\\..\\test\\compile\\lib_headers.c.i",        
-        "..\\..\\test\\compile\\20020116-1.c.i",        
-        "..\\..\\test\\compile\\20020116-1.c",                
-        "..\\..\\test\\compile\\20020604-1.c.i", //why it crashed? It has passed in home test.        
-        "..\\..\\test\\compile\\20020604-1.c", //why it crashed? It has passed in home test.
-        "..\\..\\test\\exec\\cse.c",
-        "..\\..\\test\\exec\\qsort.c",
-        "..\\..\\test\\compile\\cfg3.c",
-        "..\\..\\test\\exec\\alias.c",
-        "..\\..\\test\\exec\\permute2.c",
-        "..\\..\\test\\exec\\c4.c",
-        "..\\..\\test\\compile\\20020120-1.c",
-        "..\\..\\test\\compile\\rp2.c",
-        "..\\..\\test\\compile\\rp3.c",
         "..\\..\\test\\compile\\rp.c",
 #endif
         #ifdef _DEBUG_
@@ -149,6 +58,8 @@ INT main(INT argcc, CHAR * argvc[])
         "-rce",
         "-dump-rp",
         "-prssa",
+        "-prdu",        
+        "-nonprdu",
         //"-prmode",
         "-mdssa",
         "-time",

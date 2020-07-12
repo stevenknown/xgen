@@ -62,47 +62,6 @@ PassMgr * ARMRegion::allocPassMgr()
 }
 
 
-//Insert CVT for float if necessary.
-IR * ARMRegion::insertCvtForFloat(IR * parent, IR * kid, bool & change)
-{
-    ASSERT0(parent->is_fp() || kid->is_fp());
-    UINT tgt_size = parent->getTypeSize(getTypeMgr());
-    UINT src_size = kid->getTypeSize(getTypeMgr());
-
-    bool build = false;
-    if (parent->is_fp()) {
-        if (kid->getType()->is_int()) {
-            build = true;
-        } else if (kid->is_fp()) {
-            if (tgt_size != src_size) {
-                build = true;
-            }
-        } else {
-            ASSERTN(0, ("incompatible types in convertion"));
-        }
-    } else {
-        if (parent->getType()->is_int()) {
-            build = true;
-        } else if (parent->is_fp()) {
-            if (tgt_size != src_size) {
-                build = true;
-            }
-        } else {
-            ASSERTN(0, ("incompatible types in convertion"));
-        }
-    }
-
-    if (build) {
-        IR * new_kid = buildCvt(kid, parent->getType());
-        copyDbx(new_kid, kid, this);
-        change = true;
-        return new_kid;
-    }
-
-    return kid;
-}
-
-
 void ARMRegion::simplify(OptCtx & oc)
 {
     //Note PRSSA and MDSSA are unavailable.
@@ -290,20 +249,18 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         if (g_compute_region_imported_defuse_md) {
             f |= DUOPT_SOL_REGION_REF;
         }
-
-        //g_compute_classic_du_chain = 1;
-        if (g_compute_classic_du_chain) {
-            //Compute du chain in non-ssa form.
-            f |= DUOPT_SOL_REACH_DEF|DUOPT_COMPUTE_NONPR_DU|
-                 DUOPT_COMPUTE_PR_DU;
-            if (dumgr->perform(oc, f) && OC_is_ref_valid(oc)) {
-                dumgr->computeMDDUChain(oc, false, f);
-            }
-        } else {
-            dumgr->perform(oc, f);
+        if (g_compute_pr_du_chain) {
+            f |= DUOPT_SOL_REACH_DEF|DUOPT_COMPUTE_PR_DU;
+        }
+        if (g_compute_nonpr_du_chain) {
+            f |= DUOPT_SOL_REACH_DEF|DUOPT_COMPUTE_NONPR_DU;
+        }
+        bool succ = dumgr->perform(oc, f);
+        ASSERT0(OC_is_ref_valid(oc));
+        if (HAVE_FLAG(f, DUOPT_SOL_REACH_DEF) && succ) {
+            dumgr->computeMDDUChain(oc, false, f);
         }
 
-        ASSERT0(OC_is_ref_valid(oc));
         if (g_do_pr_ssa) {
             ((PRSSAMgr*)getPassMgr()->registerPass(PASS_PR_SSA_MGR))->
                 construction(oc);
@@ -315,7 +272,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         if (g_do_refine_duchain) {
             RefineDUChain * refdu = (RefineDUChain*)getPassMgr()->
                 registerPass(PASS_REFINE_DUCHAIN);
-            if (g_compute_classic_du_chain) {
+            if (g_compute_pr_du_chain && g_compute_nonpr_du_chain) {
                 refdu->setUseGvn(true);
                 GVN * gvn = (GVN*)getPassMgr()->registerPass(PASS_GVN);
                 gvn->perform(oc);
@@ -339,11 +296,13 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
     //Test code, to force recomputing AA and DUChain.
     //AA and DU Chain need not to be recompute, because
     //simplification maintained them.
-    bool org_compute_classic_du_chain = g_compute_classic_du_chain;
+    bool org_compute_pr_du_chain = g_compute_pr_du_chain;
+    bool org_compute_nonpr_du_chain = g_compute_nonpr_du_chain;
     OC_is_ref_valid(oc) = false;
     OC_is_pr_du_chain_valid(oc) = false;
     OC_is_nonpr_du_chain_valid(oc) = false;
-    g_compute_classic_du_chain = true;    
+    g_compute_pr_du_chain = true;
+    g_compute_nonpr_du_chain = true;
     //END HACK CODE
 
     if (!OC_is_aa_valid(oc) ||
@@ -371,7 +330,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
                 PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->registerPass(
                     PASS_PR_SSA_MGR);
                 ASSERT0(ssamgr);
-                if (!ssamgr->isSSAConstructed()) {
+                if (!ssamgr->is_valid()) {
                     ssamgr->construction(oc);
                 }
             } else if (getDUMgr() != NULL) {
@@ -396,26 +355,16 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
 
         DUMgr * dumgr = getDUMgr();
         if (g_do_md_du_analysis && dumgr != NULL) {
-            if (g_compute_classic_du_chain) {
-                dumgr->perform(oc, DUOPT_COMPUTE_PR_REF|
-                    DUOPT_COMPUTE_NONPR_REF|
-                    DUOPT_SOL_REACH_DEF|DUOPT_COMPUTE_PR_DU|
-                    DUOPT_COMPUTE_NONPR_DU);
-                if (OC_is_ref_valid(oc) && OC_is_reach_def_valid(oc)) {
-                    UINT flag = DUOPT_COMPUTE_NONPR_DU;
-                    //If PRs have already been in SSA form, compute
-                    //DU chain doesn't make any sense.
-                    if (getPassMgr() != NULL) {
-                        PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->queryPass(
-                            PASS_PR_SSA_MGR);
-                        if (ssamgr == NULL) {
-                            flag |= DUOPT_COMPUTE_PR_DU;
-                        }
-                    } else {
-                        flag |= DUOPT_COMPUTE_PR_DU;
-                    }
-                    dumgr->computeMDDUChain(oc, false, flag);
-                }
+            UINT flag = DUOPT_COMPUTE_PR_REF|DUOPT_COMPUTE_NONPR_REF;
+            if (g_compute_pr_du_chain) {
+                SET_FLAG(flag, DUOPT_SOL_REACH_DEF|DUOPT_COMPUTE_PR_DU);
+            }
+            if (g_compute_nonpr_du_chain) {
+                SET_FLAG(flag, DUOPT_SOL_REACH_DEF|DUOPT_COMPUTE_NONPR_DU);
+            }
+            dumgr->perform(oc, flag);
+            if (OC_is_ref_valid(oc) && OC_is_reach_def_valid(oc)) {
+                dumgr->computeMDDUChain(oc, false, flag);
             }
             if (g_do_md_ssa) {
                 //MDSSA have to be recomputed when DURef and overlap set
@@ -425,7 +374,8 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
             }
         }
     }
-    g_compute_classic_du_chain = org_compute_classic_du_chain;
+    g_compute_pr_du_chain = org_compute_pr_du_chain;
+    g_compute_nonpr_du_chain = org_compute_nonpr_du_chain;
 }
 
 
@@ -456,7 +406,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         MDSSAMgr * mdssamgr = (MDSSAMgr*)getPassMgr()->registerPass(
             PASS_MD_SSA_MGR);
         ASSERT0(mdssamgr);
-        if (!mdssamgr->isMDSSAConstructed()) {
+        if (!mdssamgr->is_valid()) {
             mdssamgr->construction(oc);
         }
         if (getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
@@ -498,7 +448,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
                                             DUOPT_COMPUTE_NONPR_DU));
     }
     PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->queryPass(PASS_PR_SSA_MGR);
-    if (ssamgr != NULL && ssamgr->isSSAConstructed()) {
+    if (ssamgr != NULL && ssamgr->is_valid()) {
         //NOTE: ssa destruction might violate classic DU chain.
         ssamgr->destruction(&oc);
     }
@@ -512,7 +462,8 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     g_do_refine_auto_insert_cvt = true;
     RefineCtx rf;
     RC_insert_cvt(rf) = g_do_refine_auto_insert_cvt;
-    refineBBlist(getBBList(), rf, oc);
+    Refine * refine = (Refine*)getPassMgr()->registerPass(PASS_REFINE);
+    refine->refineBBlist(getBBList(), rf, oc);
     return true;
 }
 

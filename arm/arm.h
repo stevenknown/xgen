@@ -53,5 +53,6 @@ author: Su Zhenyu
 #include "../arm/arm_var.h"
 #include "../arm/arm_dumgr.h"
 #include "../arm/arm_scalar_opt.h"
+#include "../arm/arm_refine.h"
 
 #endif

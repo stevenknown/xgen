@@ -2089,13 +2089,13 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         case TR_PLUS:  // +123
             ir = convert(TREE_lchild(t), cont);
             break;
-        case TR_MINUS: // -123
-            ir = m_rg->allocIR(IR_NEG);
-            UNA_opnd(ir) = convert(TREE_lchild(t), cont);
-            IR_dt(ir) = UNA_opnd(ir)->getType();
+        case TR_MINUS: { // -123
+            IR * opnd = convert(TREE_lchild(t), cont);
+            ir = m_rg->buildUnaryOp(IR_NEG, opnd->getType(), opnd);
             setLineNum(ir, lineno, m_rg);
             ir->setParentPointer(false);
             break;
+        }
         case TR_REV: { // Reverse
             IR * opnd = convert(TREE_lchild(t), cont);
             ir = m_rg->buildUnaryOp(IR_BNOT, opnd->getType(), opnd);
@@ -2328,7 +2328,9 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     RC_refine_div_const(rc) = false;
     RC_refine_mul_const(rc) = false;
     change = false;
-    irs = r->refineIRlist(irs, change, rc);
+    r->initPassMgr();
+    Refine * rf = (Refine*)r->getPassMgr()->registerPass(PASS_REFINE);
+    irs = rf->refineIRlist(irs, change, rc);
     ASSERT0(xoc::verifyIRList(irs, NULL, r));
     r->setIRList(irs);
     if (xoc::g_dump_opt.isDumpALL()) {

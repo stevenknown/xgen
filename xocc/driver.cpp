@@ -241,18 +241,6 @@ static CHAR * process_d(INT argc, CHAR * argv[], INT & i)
 }
 
 
-static CHAR * process_readgr(INT argc, CHAR * argv[], INT & i)
-{
-    CHAR * n = NULL;
-    if (i + 1 < argc && argv[i + 1] != NULL) {
-        n = argv[i + 1];
-    }
-    g_gr_file_name = n;
-    i += 2;
-    return n;
-}
-
-
 static bool process_thres_opt_bb_num(INT argc, CHAR * argv[], INT & i)
 {
     CHAR * n = NULL;
@@ -347,6 +335,9 @@ static bool processOneLevelCmdLine(INT argc, CHAR * argv[], INT & i)
     } else if (!strcmp(cmdstr, "rp")) {
         g_do_rp = true;
         i++;
+    } else if (!strcmp(cmdstr, "cp")) {
+        g_do_cp = true;
+        i++;
     } else if (!strcmp(cmdstr, "rce")) {
         g_do_rce = true;
         i++;            
@@ -361,6 +352,12 @@ static bool processOneLevelCmdLine(INT argc, CHAR * argv[], INT & i)
         i++;
     } else if (!strcmp(cmdstr, "prmode")) {
         g_is_lower_to_pr_mode = true;
+        i++;
+    } else if (!strcmp(cmdstr, "prdu")) {
+        g_compute_pr_du_chain = true;
+        i++;
+    } else if (!strcmp(cmdstr, "nonprdu")) {
+        g_compute_nonpr_du_chain = true;
         i++;
     } else if (!strcmp(cmdstr, "prssa")) {
         g_do_pr_ssa = true;
@@ -490,7 +487,8 @@ bool processCmdLine(INT argc, CHAR * argv[])
         g_is_support_dynamic_type = false;
         g_do_md_ssa = false;
         g_do_pr_ssa = false;
-        g_compute_classic_du_chain = false;
+        g_compute_pr_du_chain = false;
+        g_compute_nonpr_du_chain = false;        
         g_do_refine = false;
         g_do_refine_auto_insert_cvt = false;
         g_do_call_graph = false;
@@ -883,7 +881,8 @@ static CLRegionMgr * initRegionMgr()
     //Retain CFG, DU info for IPA used.
     g_compute_region_imported_defuse_md = true;
     g_retain_pass_mgr_for_region = true;
-    g_compute_classic_du_chain = false;
+    //g_compute_pr_du_chain = false;
+    //g_compute_nonpr_du_chain = false;
     //g_do_call_graph = true;
     //g_do_ipa = true;
     g_is_support_dynamic_type = true;
@@ -982,7 +981,7 @@ bool compileGRFile(CHAR * gr_file_name)
         if (r->getPassMgr() != NULL) {
             xoc::PRSSAMgr * ssamgr = (PRSSAMgr*)r->
                 getPassMgr()->queryPass(PASS_PR_SSA_MGR);
-            if (ssamgr != NULL && ssamgr->isSSAConstructed()) {
+            if (ssamgr != NULL && ssamgr->is_valid()) {
                 OptCtx * oc = rm->getAndGenOptCtx(r->id());
                 ssamgr->destruction(oc);
             }
