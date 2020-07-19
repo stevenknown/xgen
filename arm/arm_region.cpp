@@ -124,7 +124,7 @@ void ARMRegion::simplify(OptCtx & oc)
 //g_is_lower_to_pr_mode = true;
 bool ARMRegion::simplifyToPRmode(OptCtx & oc)
 {
-    ASSERT0(verifyRPO(oc));
+    ASSERT0(getCFG()->verifyRPO(oc));
     ASSERT0(getPassMgr());
     BBList * bbl = getBBList();
     if (bbl->get_elem_count() == 0) {

@@ -124,7 +124,8 @@ typedef unsigned long long UINT128;
 #define SPADJUST_OFFSET_INDX 1
 
 //Define the max/min integer value range of target machine.
-#define MIN_INT_VALUE 0x80000000
+#define MIN_HOST_INT_VALUE 0x80000000
+#define MAX_HOST_INT_VALUE 0x7fffFFFF
 #define EPSILON 0.000001
 
 //Display/dump integer literal with hex if it is

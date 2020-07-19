@@ -43,7 +43,9 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     List<Pass*> passlist; //A list of Optimization.
 
     if (g_do_ivr) { passlist.append_tail(m_pass_mgr->registerPass(PASS_IVR)); }
-
+    if (g_do_licm) {
+        passlist.append_tail(m_pass_mgr->registerPass(PASS_LICM));
+    }
     if (g_do_cp) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_CP));
         ((CopyProp*)m_pass_mgr->registerPass(PASS_CP))->setPropagationKind(
@@ -66,9 +68,6 @@ bool ARMScalarOpt::perform(OptCtx & oc)
         passlist.append_tail(m_pass_mgr->registerPass(PASS_DCE));        
     }
 
-    if (g_do_licm) {
-        passlist.append_tail(m_pass_mgr->registerPass(PASS_LICM));
-    }
     if (g_do_dse) { passlist.append_tail(m_pass_mgr->registerPass(PASS_DSE)); }
     if (g_do_loop_convert) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_LOOP_CVT));
@@ -110,7 +109,7 @@ bool ARMScalarOpt::perform(OptCtx & oc)
             ASSERT0(m_rg->getCFG()->verify());
             ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg));
             ASSERT0(MDSSAMgr::verifyMDSSAInfo(m_rg));
-            ASSERT0(m_rg->verifyRPO(oc));
+            ASSERT0(m_cfg->verifyRPO(oc));
         }
         count++;
     } while (change && count < 20);
