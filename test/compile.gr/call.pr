@@ -1,0 +1,7 @@
+region program @"program" () {
+    var foo:any:(readonly, func_decl, align(4));
+    region func main () {
+        call:(readonly) $ret = foo();
+        return $ret;
+    };
+}

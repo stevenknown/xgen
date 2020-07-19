@@ -9025,9 +9025,9 @@ bool LRA::perform()
     START_TIMER_FMT(t, ("Perform Local Register Allocation for ORBB%d",
         ORBB_id(m_bb)));
     if (ORBB_ornum(m_bb) > MAX_OR_BB_OPT_BB_LEN) {
-        interwarn("During LRA: Length of ORBB%d is larger "
-            "than %d, optimizations are disabled!",
-            ORBB_id(m_bb), MAX_OR_BB_OPT_BB_LEN);
+        xoc::interwarn("During LRA: Length of ORBB%d is larger "
+                       "than %d, optimizations are disabled!",
+                       ORBB_id(m_bb), MAX_OR_BB_OPT_BB_LEN);
     }
     preLRA();
     elimRedundantCopy(m_cg->isGRAEnable());

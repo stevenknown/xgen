@@ -8,18 +8,20 @@ our @EXPORT_OK = qw(
     computeDirFromFilePath
     computeOutputName
     compileGR 
+    computeRelatedPathToXocRootDir
+    computeAbsolutePathToXocRootDir
+    compareDumpFile
+    clean
     findCurrent 
-    runSimulator 
     findRecursively 
     findFileRecursively
     generateGR 
+    moveToPassed
+    runSimulator 
     runHostExe
     runArmToolChainToComputeBaseResult
     runPACC 
-    runBaseCC 
-    computeRelatedPathToXocRootDir
-    computeAbsolutePathToXocRootDir
-    clean
+    runBaseCC
     runCPP
     runXOCC);
 our $g_base_cc = "";
@@ -123,7 +125,6 @@ sub runArmToolChainToComputeBaseResult
         print "\nEXECUTE $g_ld FAILED!! RES:$retval\n";
         abortex($retval);
     }
-
 
     #Run generated binary.
     $cmdline = "qemu-arm -L /usr/arm-linux-gnueabihf/ $outputfilename";
@@ -767,7 +768,7 @@ sub extractAndSetCflag
     my $pattern = qr/World/;
     # read file content
     open my $file, '<', $configure_file_path or
-        abort("Error openning file: $!\n");
+        abortex("Error openning file: $!\n");
     while (defined(my $line = <$file>)) {
         chomp $line;
         $g_cflags = $g_cflags." ".$line;
@@ -779,4 +780,55 @@ sub extractAndSetCflag
     }
     close ($file);
 }
+
+sub compareDumpFile
+{
+    my $fullpath = $_[0]; #path to src file.
+    my $xocc_dump_file = $_[1]; #new dump file to be compared.
+
+    #Compare baseline dump and latest dump.
+    #The baseline result file.
+    my $base_dump_file = $fullpath.".base_dump.txt";
+    if (!-e $base_dump_file) {
+        #Baseline dump file does not exist.
+        abortex("Base dump file '$base_dump_file' not exist.");
+    }
+
+    print("\nCMD>>compare dump-file $base_dump_file $xocc_dump_file\n");
+    if (compare($base_dump_file, $xocc_dump_file) == 0) {
+        #New result is euqal to baseline result.
+        #New result is correct.
+        print "\nPASS!\n";
+    } else {
+        #Not equal
+        #New result is incorrect!
+        print "\nCOMPARE DUMP OF $fullpath FAILED! NOT EQUAL TO BASE DUMP!\n";
+        abortex();
+    }
+}
+
+sub moveToPassed
+{
+    my $fullpath = $_[0]; #path to src file.
+    my $path = substr($fullpath, 0, rindex($fullpath, "/") + 1);
+    my $passedpath = "$path/passed/";
+
+    #Create passed directory.
+    my $cmdline;
+    $cmdline = "mkdir -p $passedpath";
+    my $retval = system($cmdline);
+    if ($retval != 0) {
+        print("\nCMD>>", $cmdline, "\n");
+        print "\nEXECUTE $cmdline FAILED!! RES:$retval\n";
+        if ($g_is_quit_early) {
+            abortex();
+        }
+    }
+
+    #Move passed C/GR file to directory $fullpath/passed.
+    #NOTE: Do NOT delete testcase file in 'passed' directory.
+    print("\nCMD>>move $fullpath, $passedpath\n");
+    move($fullpath, $passedpath) or abortex();
+}
+
 1;

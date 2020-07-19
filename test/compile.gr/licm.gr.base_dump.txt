@@ -1,0 +1,172 @@
+
+==---- DUMP LICM Analysis Result 'case1' ----==
+-- Invariant Expression (num=6) -- :
+   add:*<1> id:11       
+       $5:void id:9       
+       intconst:i32 10|0xa id:10
+   mul:u32 id:29       
+       $6:u64 id:12       
+       intconst:u32 6|0x6 id:28
+   ld:mc<191> 'm' id:4
+   add:u32 id:31       
+       $7:u32 id:35       
+       intconst:u32 2|0x2 id:30
+   add:void id:15       
+       $2:void id:13       
+       ld:mc<191> 'm' id:14
+   add:*<4> id:34       
+       $6:*<1> id:32       
+       $8:u32 id:37
+   -- Invariant Statement (num=4) -- :
+   stpr $6:*<1> id:33       
+       add:*<1> id:11           
+           $5:void id:9           
+           intconst:i32 10|0xa id:10
+   stpr $7:u32 id:36       
+       mul:u32 id:29           
+           $6:u64 id:12           
+           intconst:u32 6|0x6 id:28
+   $2:void = call 'foo'  id:5 readonly
+       ld:mc<191> 'm' param0 id:4
+   stpr $8:u32 id:38       
+       add:u32 id:31           
+           $7:u32 id:35           
+           intconst:u32 2|0x2 id:30
+   ==---- DUMP IRBBList region 'case1' ----==
+   ----- BB10 --- rpo:0 -----
+   ATTR:entry_bb 
+   STMT NUM:0
+   
+   ----- BB11 --- rpo:4 -----
+   ATTR:fall_through 
+   STMT NUM:6
+      stpr $9:*<1> id:41          
+          add:*<1> id:11              
+              $5:void id:9              
+              intconst:i32 10|0xa id:10
+      stpr $10:u32 id:43          
+          mul:u32 id:29              
+              $6:u64 id:12              
+              intconst:u32 6|0x6 id:28
+      stpr $11:mc<191> id:45          
+          ld:mc<191> 'm' id:4
+      stpr $7:u32 id:36          
+          $10:u32 id:42
+      stpr $12:u32 id:47          
+          add:u32 id:31              
+              $7:u32 id:35              
+              intconst:u32 2|0x2 id:30
+      $2:void = call 'foo'  id:5 readonly
+          $11:mc<191> param0 id:44
+   
+   ----- BB12 --- rpo:-1 -----
+   ATTR:
+   STMT NUM:4
+      stpr $13:void id:49          
+          add:void id:15              
+              $2:void id:13              
+              ld:mc<191> 'm' id:14
+      stpr $6:*<1> id:33          
+          $9:*<1> id:40
+      stpr $8:u32 id:38          
+          $12:u32 id:46
+      stpr $14:*<4> id:51          
+          add:*<4> id:34              
+              $6:*<1> id:32              
+              $8:u32 id:37
+   
+   ----- BB2 --- rpo:5 -----
+   LABEL:_L1 
+   ATTR:fall_through branch_target 
+   STMT NUM:1
+      falsebr label _L2 id:21          
+          eq:bool id:3              
+              intconst:i32 1|0x1 id:1              
+              intconst:i32 1|0x1 id:2
+   
+   ----- BB4 --- rpo:20 -----
+   ATTR:fall_through 
+   STMT NUM:1
+      falsebr label _L1 id:22          
+          eq:bool id:8              
+              $3:void id:6              
+              $4:void id:7
+   
+   ----- BB5 --- rpo:25 -----
+   ATTR:
+   STMT NUM:2
+      ist:i32 id:39          
+          $14:*<4> base id:50          
+          $13:void id:48
+      goto label _L1 id:27
+   
+   ----- BB8 --- rpo:10 -----
+   LABEL:_L2 
+   ATTR:fall_through branch_target 
+   STMT NUM:1
+      return id:20
+          $3:void id:19
+   
+   ==---- DUMP LICM Analysis Result 'case1' ----==
+
+   
+   ==---- DUMP LICM Analysis Result 'case1' ----==
+
+   
+==---- DUMP LICM Analysis Result 'case2' ----==
+-- Invariant Expression (num=1) -- :
+   ld:mc<191> 'm' id:4
+   
+   ==---- DUMP IRBBList region 'case2' ----==
+   ----- BB8 --- rpo:0 -----
+   ATTR:entry_bb 
+   STMT NUM:0
+   
+   ----- BB9 --- rpo:4 -----
+   ATTR:fall_through 
+   STMT NUM:1
+      stpr $2:mc<191> id:18          
+          ld:mc<191> 'm' id:4
+   
+   ----- BB2 --- rpo:5 -----
+   LABEL:_L5 
+   ATTR:fall_through branch_target 
+   STMT NUM:1
+      falsebr label _L6 id:13          
+          eq:bool id:3              
+              intconst:i32 1|0x1 id:1              
+              intconst:i32 1|0x1 id:2
+   
+   ----- BB3 --- rpo:15 -----
+   ATTR:fall_through 
+   STMT NUM:1
+      $2:void = call 'foo'  id:5 readonly
+          $2:mc<191> param0 id:17
+   
+   ----- BB4 --- rpo:20 -----
+   ATTR:
+   STMT NUM:2
+      stpr $2:void id:9          
+          add:void id:8              
+              $2:void id:6              
+              ld:mc<191> 'm' id:7
+      goto label _L5 id:14
+   
+   ----- BB6 --- rpo:10 -----
+   LABEL:_L6 
+   ATTR:fall_through branch_target 
+   STMT NUM:1
+      return id:12
+          $3:void id:11
+   
+   ==---- DUMP LICM Analysis Result 'case2' ----==
+
+   
+   ==---- DUMP LICM Analysis Result 'case2' ----==
+
+   
+==---- DUMP LICM Analysis Result 'case3' ----==
+
+
+==---- DUMP LICM Analysis Result 'case3' ----==
+

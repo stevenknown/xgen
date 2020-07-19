@@ -1402,7 +1402,7 @@ bool CG::changeORType(OR * o,
             //ASSERTN(tgt == mapReg2Cluster(SR_phy_regid(sr)),
             //       ("Unmatch info"));
             if (tgt != mapReg2Cluster(SR_phy_regid(sr))) {
-                interwarn("Unmatch info, may generate redundant copy.");
+                xoc::interwarn("Unmatch info, may generate redundant copy.");
                 return false;
             }
             continue;

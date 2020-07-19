@@ -1,0 +1,19 @@
+region program @"program" () {
+    region func main () {
+        while (eq 1, 1) {
+            stpr $v = array:i32:2:(dim[1])
+                        add:*<1> $sp, 10, //base
+                        ($e:u32); //subexp
+            if (eq $a, $b) {
+                starray:i32:2:(dim[1]) =
+                  add:*<1> $sp, 10,
+                  ($e:u32), //subexp
+                  20; //rhs
+            }
+            stpr $y = array:i32:0:(dim[1])
+                         add:*<1> $sp, 10, //base
+                         ($e:u32); //subexp;
+        }
+        return $v;
+    };
+}

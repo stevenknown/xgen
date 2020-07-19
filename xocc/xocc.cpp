@@ -46,6 +46,7 @@ INT main(INT argcc, CHAR * argvc[])
         "../testsuite/cp.c",
         #else
         "..\\..\\test\\compile\\rp.c",
+        "..\\..\\test\\compile.gr\\licm.gr",
 #endif
         #ifdef _DEBUG_
         //"-dumpgr",
@@ -77,24 +78,6 @@ INT main(INT argcc, CHAR * argvc[])
         //"-thres_opt_ir_num", "0xFFFFffff",
         //"-thres_opt_bb_num", "0xFFFFffff",
 
-        //"d:\\x\\src\\reader\\test.gr",
-        //"d:\\x\\test\\exec.gr\\inner_region.gr",
-        //"d:\\x\\test\\exec.gr\\string.gr",
-        //"d:\\x\\test\\exec.gr\\setelem.gr", //unsuppport on CG
-        //"d:\\x\\test\\compile.gr\\array.gr",
-        //"d:\\x\\test\\compile.gr\\cfg_opt.gr",
-   
-        //"d:\\x\\test\\compile.gr\\array_and_compute_sensitive_code.set_key.gr",
-        //"d:\\x\\test\\compile.gr\\array_and_compute_sensitive_code.pr_mode.gr",
-        //"d:\\x\\test\\compile.gr\\array_and_compute_sensitive_code.encrypt.gr",
-        //"d:\\x\\test\\compile.gr\\ssa.gr",
-        //"d:\\x\\test\\compile.gr\\mdssa.gr",
-        //"d:\\x\\test\\compile.gr\\ssa2.gr",
-        //"d:\\x\\test\\compile.gr\\alias_loop_carry.gr",
-        //"d:\\x\\test\\compile.gr\\rce.gr",
-        //"d:\\x\\test\\compile.gr\\array_and_compute_sensitive_code.array_mode.gr",
-        //"d:\\x\\test\\compile.gr\\rp.gr",
-        //"d:\\x\\test\\compile.gr\\rp2.gr",
     };
     INT argc = sizeof(argv)/sizeof(argv[0]);
 #else

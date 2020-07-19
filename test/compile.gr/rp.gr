@@ -1,0 +1,12 @@
+region program @"program" () {
+    region func main () {
+        while (eq 1, 1) {
+            stpr $v = ild add:*<1> $sp, 10;
+            if (eq $a, $b) {
+                ist = add:*<1> $sp, 10, 20;
+            }
+            stpr $y = ild add:*<1> $sp, 10;
+        }
+        return $v;
+    };
+}

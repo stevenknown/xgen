@@ -75,7 +75,7 @@ INT report_location(CHAR const* file, INT line)
 
 #ifdef _DEBUG_
 #define WARN(parmlist)  (report_location(__FILE__, __LINE__), \
-                         interwarn parmlist)
+                         xoc::interwarn parmlist)
 #else
 #define WARN(parmlist)
 #endif
@@ -332,6 +332,9 @@ static bool processOneLevelCmdLine(INT argc, CHAR * argv[], INT & i)
     } else if (!strcmp(cmdstr, "nodce")) {
         g_do_dce = false;
         i++;
+    } else if (!strcmp(cmdstr, "licm")) {
+        g_do_licm = true;
+        i++;
     } else if (!strcmp(cmdstr, "rp")) {
         g_do_rp = true;
         i++;
@@ -388,6 +391,9 @@ static bool processOneLevelCmdLine(INT argc, CHAR * argv[], INT & i)
         i++;
     } else if (!strcmp(cmdstr, "dump-rp")) {
         g_dump_opt.is_dump_rp = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-licm")) {
+        g_dump_opt.is_dump_licm = true;
         i++;
     } else if (!strcmp(cmdstr, "dump-rce")) {
         g_dump_opt.is_dump_rce = true;
@@ -962,7 +968,6 @@ bool compileGRFile(CHAR * gr_file_name)
     FILE * asmh = NULL;
     START_TIMER_FMT(t, ("Compile GR File"));
     initCompile(&rm, &asmh, &cgmgr, &ti);
-    xoc::initdump("tmp.log", true);
     bool succ = xoc::readGRAndConstructRegion(rm, gr_file_name);
     if (!succ) {
         res = false;
@@ -990,7 +995,6 @@ bool compileGRFile(CHAR * gr_file_name)
 FIN:
     END_TIMER_FMT(t, ("Total Time To Compile '%s'", gr_file_name));
     finiCompile(rm, asmh, cgmgr, ti);
-    xoc::finidump();
     return res;
 }
 

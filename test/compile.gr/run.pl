@@ -36,20 +36,22 @@ sub main
 {
     # mkpath(["log"]);
     # clean();
-    TryCompileAsmLinkRunCompare($g_is_test_gr);
+    tryCompileAsmLinkRunCompare($g_is_test_gr);
     if ($g_error_count != 0) {
         print "\nThere are $g_error_count error occurred!\n";
     }
     print "\nTEST FINISH!\n";
 }
 
-sub TryCompileAsmLinkRunCompare
+sub tryCompileAsmLinkRunCompare
 {   
     #$is_test_gr is true to generate GR and compile GR to asm, then compare the
     #latest output with the base result.
     my $is_test_gr = $_[0];
-    #my @f = `find -maxdepth 1 -name "*.c"`;
     my $curdir = getcwd;
+
+    #Collect files that need to test.
+    #my @f = `find -maxdepth 1 -name "*.c"`;
     #my @f = findCurrent($curdir, 'c'); 
     my @f; 
     if ($g_single_testcase ne "") {
@@ -85,12 +87,30 @@ sub TryCompileAsmLinkRunCompare
         chomp;
         my $fullpath = $_; 
         print "\n-------------------------------------------";
-        my $path = substr($fullpath, 0, rindex($fullpath, "/") + 1);
-
         my $org_cflags = $g_cflags;
+
+        #Apply *.conf file.
         extractAndSetCflag($fullpath);
+
+        #The new dump file.
+        my $xocc_dump_file = $fullpath.".xocc_dump.txt";
+        unlink($xocc_dump_file);
+
+        if ($g_is_compare_dump == 1) {
+            #Add the dump file path to flags of xocc.exe.
+            $g_cflags = $g_cflags." -dump $xocc_dump_file ";
+        }
+
+        #Running XOCC.
         runXOCC($fullpath, $g_is_invoke_assembler, $g_is_invoke_linker); 
+
+        #Restore original flags.
         $g_cflags = $org_cflags;
+
+        #Compare the new dump file.
+        if ($g_is_compare_dump == 1) {
+            compareDumpFile($fullpath, $xocc_dump_file);
+        }
 
         if ($is_test_gr == 1) {
             generateGRandCompile($fullpath);
@@ -135,20 +155,7 @@ sub TryCompileAsmLinkRunCompare
         }
 
         if ($g_is_move_passed_case == 1) {
-            #Move passed C file to ./passed.
-            #NOTE: Do NOT delete testcase file in 'passed' directory.
-            my $cmdline;
-            $cmdline = "mkdir -p $path/passed/";
-            my $retval = system($cmdline);
-            if ($retval != 0) {
-                print("\nCMD>>", $cmdline, "\n");
-                print "\nEXECUTE $cmdline FAILED!! RES:$retval\n";
-                if ($g_is_quit_early) {
-                    abort();
-                }
-            }
-            print("\nCMD>>move $fullpath, $path/passed\n");
-            move($fullpath, $path."/passed") or abortex();
+            moveToPassed($fullpath);
         }
     }
 }

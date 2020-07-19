@@ -85,7 +85,7 @@ sub TryCompileAsmLinkRunCompare
                         $fullpath, "base.out", $base_output);
                 } else {
                     print "\nUNKNOWN TARGET: $g_target!\n";
-                    abort();
+                    abortex();
                 }
              }
         }
@@ -142,27 +142,12 @@ sub TryCompileAsmLinkRunCompare
                 #Not equal
                 #New result is incorrect!
                 print "\nCOMPARE RESULT OF $fullpath FAILED! NOT EQUAL TO BASE RESULT!\n";
-                abort();
+                abortex();
             }
         }
 
         if ($g_is_move_passed_case == 1) {
-            #Move passed C file to ./passed.
-            #NOTE: Do NOT delete testcase file in 'passed' directory.
-            my $cmdline;
-            $cmdline = "mkdir -p $path/passed/";
-            my $retval = system($cmdline);
-            if ($retval != 0) {
-                print("\nCMD>>", $cmdline, "\n");
-                print "\nEXECUTE $cmdline FAILED!! RES:$retval\n";
-                if ($g_is_quit_early) {
-                    abort();
-                }
-            }
-            print("\nCMD>>move $fullpath, $path/passed\n");
-            move($fullpath, $path."/passed/") or
-                #die "move failed: $!";
-                abort();
+            moveToPassed($fullpath);
         }
     }
 }

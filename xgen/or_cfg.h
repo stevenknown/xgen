@@ -74,7 +74,7 @@ public:
 
     void dumpVCG(CHAR const* name = NULL, bool detail = true);
 
-    virtual ORBB * findBBbyLabel(LabelInfo const* lab);
+    virtual ORBB * findBBbyLabel(LabelInfo const* lab) const;
     virtual void findTargetBBOfMulticondBranch(OR const*,
                                                OUT List<ORBB*>&)
     { ASSERTN(0, ("TODO")); }

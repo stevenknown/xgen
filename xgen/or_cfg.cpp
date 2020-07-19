@@ -215,7 +215,7 @@ OR * OR_CFG::get_first_xr(ORBB * bb)
 }
 
 
-ORBB * OR_CFG::findBBbyLabel(xoc::LabelInfo const* lab)
+ORBB * OR_CFG::findBBbyLabel(xoc::LabelInfo const* lab) const
 {
     ORBB * bb = m_lab2bb.get(lab);
     ASSERT0(bb);
@@ -247,14 +247,11 @@ void OR_CFG::dump_node(FILE * h, bool detail)
             "fontname:\"%s\" scaling:%d label:\"",
             bb->id(), vertical_order++, shape, color, font, scale);
         fprintf(h, "   BB%d", bb->id());
-        if (VERTEX_rpo(v) != 0) {
-            fprintf(h, " rpo:%d", VERTEX_rpo(v));
-        }
+        fprintf(h, " rpo:%d", bb->rpo());
         fprintf(h, "\n");
 
         if (detail) {
-            for (OR * o = ORBB_first_or(bb);
-                 o != NULL; o = ORBB_next_or(bb)) {
+            for (OR * o = ORBB_first_or(bb); o != NULL; o = ORBB_next_or(bb)) {
                 buf.clean();
                 fprintf(h, "%s\n", o->dump(buf, m_cg));
             }
