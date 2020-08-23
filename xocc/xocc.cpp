@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "feinc.h"
 
 INT main(INT argc, CHAR * argv[])
+{
     if (!processCmdLine(argc, argv)) {
         return 1;
     }
