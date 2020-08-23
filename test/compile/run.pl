@@ -67,8 +67,8 @@ sub tryCompile
 
         print "\n-------------------------------------------";
         #The new dump file.
-        my $xocc_dump_file = $fullpath.".xocc_dump.txt";
-        unlink($xocc_dump_file);
+        my $dump_file = getDumpFilePath($fullpath);
+        unlink($dump_file);
 
         #Backup original flags.
         my $org_cflags = $g_cflags;
@@ -78,20 +78,20 @@ sub tryCompile
 
         if ($g_is_compare_dump == 1) {
             #Add the dump file path to flags of xocc.exe.
-            $g_cflags = $g_cflags." -dump $xocc_dump_file ";
+            $g_cflags = $g_cflags." -dump $dump_file ";
         }
 
         #Running CPP.
-        $fullpath = runCPP($fullpath);
+        my $fullpathaftercpp = runCPP($fullpath);
 
         #Running XOCC.
-        runXOCC($fullpath, 0, 0, 0);
+        runXOCC($fullpathaftercpp, 0, 0, 0);
 
         #Restore original flags.
         $g_cflags = $org_cflags;
        
         if ($g_is_compare_dump == 1) {
-            compareDumpFile($fullpath, $xocc_dump_file);
+            compareDumpFile($fullpath, $dump_file);
         }
 
         if ($g_is_move_passed_case == 1) {

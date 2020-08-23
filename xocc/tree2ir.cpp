@@ -2327,6 +2327,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     xoc::RefineCtx rc;
     RC_refine_div_const(rc) = false;
     RC_refine_mul_const(rc) = false;
+    RC_update_mdref(rc) = false;
     change = false;
     r->initPassMgr();
     Refine * rf = (Refine*)r->getPassMgr()->registerPass(PASS_REFINE);

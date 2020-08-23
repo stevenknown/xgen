@@ -1,0 +1,20 @@
+region program @"program" () {
+    region func main () {
+        region func inner_region() {
+            var i:i32:(readonly, align(4));
+            var w:i32:(readonly, align(4));
+            if eq $8, $6 {
+                st w = 20;
+            }
+            if (le $77, $7) {
+                st w = 10:i64;
+                label L1;
+            } else {
+                stpr $3 = ld:i32 w;
+                label L2;
+            }
+        }
+        call inner_region();
+        return $ret;
+    };
+}

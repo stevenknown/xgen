@@ -392,9 +392,9 @@ static void markGSR(ORBB const* bb, bool is_clear)
                     g_sr2bbset_map.set(res, bs);
                 }
                 if (is_clear) {
-                    bs->diff(BB_id(bb));
+                    bs->diff(bb->id());
                 } else {
-                    bs->bunion(BB_id(bb));
+                    bs->bunion(bb->id());
                 }
             }
         }//end for
@@ -407,9 +407,9 @@ static void markGSR(ORBB const* bb, bool is_clear)
                     g_sr2bbset_map.set(opnd, bs);
                 }
                 if (is_clear) {
-                    bs->diff(BB_id(bb));
+                    bs->diff(bb->id());
                 } else {
-                    bs->bunion(BB_id(bb));
+                    bs->bunion(bb->id());
                 }
             }
         }
@@ -846,7 +846,7 @@ xoc::LoopInfo * findLoopInfo(ORBB const* bb)
     for (xoc::LoopInfo * loop_info = g_loopdesc_list.get_head();
          loop_info != NULL;
          loop_info = g_loopdesc_list.get_next()) {
-        if (bb == LI_loop_head(loop_info)) {
+        if (bb == loop_info->getLoopHead()) {
             return loop_info;
         }
     }
@@ -916,7 +916,7 @@ static bool parallelBB(ORBB * bb, ParallelPartMgrVec & ppm_vec)
     }
 
     ParallelPartMgr * ppm = new ParallelPartMgr(bb); //delete it after Lra()
-    ppm_vec.set(BB_id(bb), ppm);
+    ppm_vec.set(bb->id(), ppm);
     ppm->computeNumOfParallelPart();
     if (ppm->numOfParallelPart() == 0) {
         return false;

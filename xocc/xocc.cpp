@@ -29,61 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../opt/cominc.h"
 #include "feinc.h"
 
-//#undef DEBUG_XOC
-#ifdef DEBUG_XOC
-INT main(INT argcc, CHAR * argvc[])
-{
-    DUMMYUSE(argcc);
-    DUMMYUSE(argvc);
-
-    CHAR * argv[] = {
-        "xocc.exe", "-gra=off", "-o","a.asm",
-        //#ifdef _DEBUG_
-        "-dump","tmp.log",
-        //#endif
-        //"-ipa", "test1.c",
-        #ifndef _ON_WINDOWS_
-        "../testsuite/cp.c",
-        #else
-        "..\\..\\test\\compile\\rp.c",
-        "..\\..\\test\\compile.gr\\licm.gr",
-#endif
-        #ifdef _DEBUG_
-        //"-dumpgr",
-        
-        #endif
-        "-dump","tmp.log",
-        "-O3",
-        //"-dce",
-        "-rp",
-        "-rce",
-        "-dump-rp",
-        "-prssa",
-        "-prdu",        
-        "-nonprdu",
-        //"-prmode",
-        "-mdssa",
-        "-time",
-        //"-dump-aa",
-        "-nocg",
-        "-dumpgr",
-        //"-redirect_stdout_to_dump_file",
-        //"-lower_to_pr_mode",
-        //"-dump-cfg",
-        //"-dump-dumgr",
-        //"-dump-all", //DUMP FrontEnd scope
-        "-dump-mdssamgr",
-        "-dump-dce",
-        //"-dump-refine-duchain",
-        //"-thres_opt_ir_num", "0xFFFFffff",
-        //"-thres_opt_bb_num", "0xFFFFffff",
-
-    };
-    INT argc = sizeof(argv)/sizeof(argv[0]);
-#else
 INT main(INT argc, CHAR * argv[])
-{
-#endif
     if (!processCmdLine(argc, argv)) {
         return 1;
     }

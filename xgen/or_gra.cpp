@@ -63,7 +63,7 @@ void OR_DF_MGR::dump()
     StrBuf buf(64);
     note("\n==---- DUMP Set Info of OR_DF_MGR ----==\n");
     List<ORBB*> * bbl = m_cg->getORBBList();
-    g_indent = 2;
+    g_indent += 2;
     for (ORBB * bb = bbl->get_head(); bb != NULL; bb = bbl->get_next()) {
         note("\n--- BB%d ---", ORBB_id(bb));
         xcom::BitSet * live_in = &ORBB_livein(bb);
@@ -108,6 +108,7 @@ void OR_DF_MGR::dump()
             prt("%s, ", sr->get_name(buf, m_cg));
         }
     }
+    g_indent -= 2;
     fflush(g_tfile);
 }
 

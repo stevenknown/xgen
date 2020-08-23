@@ -166,10 +166,9 @@ bool ARMRegion::simplifyToPRmode(OptCtx & oc)
 
 bool ARMRegion::ARMHighProcess(OptCtx & oc)
 {
-    g_indent = 0;
     SimpCtx simp;
     if (g_do_cfs_opt) {
-        IR_CFS_OPT co(this);
+        CfsOpt co(this);
         co.perform(simp);
         ASSERT0(verifyIRList(getIRList(), NULL, this));
     }
@@ -237,7 +236,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
     if (g_do_aa) {
         ASSERT0(g_cst_bb_list && OC_is_cfg_valid(oc));
         checkValidAndRecompute(&oc, PASS_DOM, PASS_LOOP_INFO,
-            PASS_AA, PASS_UNDEF);        
+                               PASS_AA, PASS_UNDEF);        
     }
 
     if (g_do_md_du_analysis) {
@@ -277,7 +276,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
                 GVN * gvn = (GVN*)getPassMgr()->registerPass(PASS_GVN);
                 gvn->perform(oc);
             }
-            refdu->perform(oc);            
+            refdu->perform(oc);
         }
     }
 }
@@ -381,8 +380,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
 
 bool ARMRegion::MiddleProcess(OptCtx & oc)
 {
-    assignMD(false, true);
-    assignMD(true, false);
+    //Must and May MD reference should be available now.
     if (g_is_lower_to_pr_mode) {
         simplifyToPRmode(oc);
     } else {
@@ -436,8 +434,8 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         pass->perform(oc);
     }
     if (g_do_dce && g_opt_level > OPT_LEVEL0) {
-        DeadCodeElim * pass = (DeadCodeElim*)getPassMgr()->registerPass(
-            PASS_DCE);
+        DeadCodeElim * pass = (DeadCodeElim*)getPassMgr()->
+                                  registerPass(PASS_DCE);
         pass->perform(oc);
     }
     ASSERT0((!g_do_md_du_analysis && !g_do_md_ssa) || verifyMDRef());

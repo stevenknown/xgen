@@ -1113,6 +1113,7 @@ UINT CG::compute_pad()
 void CG::dumpPackage()
 {
     if (xoc::g_tfile == NULL) { return; }
+    INT org = g_indent;
     g_indent = 0;
     note("\n==---- DUMP Package, Region(%d)'%s' ----==",
          getRegion()->id(),
@@ -1160,6 +1161,7 @@ void CG::dumpPackage()
             g_indent -= 4;
         }
     }
+    g_indent = org;
     fflush(xoc::g_tfile);
 }
 
@@ -3986,13 +3988,12 @@ bool CG::verifyOR(OR const* o)
 bool CG::perform()
 {
     ASSERTN(isPowerOf2(STACK_ALIGNMENT),
-        ("Stack alignment should be power of 2"));
+            ("Stack alignment should be power of 2"));
 
     if ((g_is_dump_after_pass || g_is_dump_before_pass) &&
         g_dump_opt.isDumpCG()) {
-        g_indent = 0;
         xoc::note("\n==---- DUMP START CODE GENERATION (%d)'%s' ----==\n",
-            m_rg->id(), m_rg->getRegionName());
+                  m_rg->id(), m_rg->getRegionName());
         m_rg->dump(false);
     }
 

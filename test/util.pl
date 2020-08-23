@@ -11,6 +11,7 @@ our @EXPORT_OK = qw(
     computeRelatedPathToXocRootDir
     computeAbsolutePathToXocRootDir
     compareDumpFile
+    getDumpFilePath
     clean
     findCurrent 
     findRecursively 
@@ -23,7 +24,8 @@ our @EXPORT_OK = qw(
     runPACC 
     runBaseCC
     runCPP
-    runXOCC);
+    runXOCC
+    tryCreateDir);
 our $g_base_cc = "";
 our $g_xocc = "";
 our $g_cpp = "cpp";
@@ -491,6 +493,7 @@ sub parseCmdLine
             $g_is_create_base_result = 1;
             next;
         } elsif ($ARGV[$i] eq "CompareNewResult") {
+            #nothing to do
         } elsif ($ARGV[$i] eq "MovePassed") {
             $g_is_move_passed_case = 1;
         } elsif ($ARGV[$i] eq "TestGr") {
@@ -781,10 +784,19 @@ sub extractAndSetCflag
     close ($file);
 }
 
+#This function compose and return new file path to dump file.
+sub getDumpFilePath
+{
+    my $fullpath = $_[0]; #path to src file.
+    my $dumpfilepath = $fullpath.".xocc_dump.txt";
+    return $dumpfilepath;
+}
+
+#This function compare the dump file and base file.
 sub compareDumpFile
 {
     my $fullpath = $_[0]; #path to src file.
-    my $xocc_dump_file = $_[1]; #new dump file to be compared.
+    my $dump_file = $_[1]; #new dump file to be compared.
 
     #Compare baseline dump and latest dump.
     #The baseline result file.
@@ -794,8 +806,8 @@ sub compareDumpFile
         abortex("Base dump file '$base_dump_file' not exist.");
     }
 
-    print("\nCMD>>compare dump-file $base_dump_file $xocc_dump_file\n");
-    if (compare($base_dump_file, $xocc_dump_file) == 0) {
+    print("\nCMD>>compare dump-file $base_dump_file $dump_file\n");
+    if (compare($base_dump_file, $dump_file) == 0) {
         #New result is euqal to baseline result.
         #New result is correct.
         print "\nPASS!\n";
@@ -807,23 +819,31 @@ sub compareDumpFile
     }
 }
 
+sub tryCreateDir
+{
+    my $path = $_[0]; #path to directory.
+    if (-e $path) { return; }
+    mkdir($path) or abortex("Can not create directory '$path'");
+}
+
 sub moveToPassed
 {
     my $fullpath = $_[0]; #path to src file.
     my $path = substr($fullpath, 0, rindex($fullpath, "/") + 1);
-    my $passedpath = "$path/passed/";
+    my $passedpath = "$path\/passed\/";
 
     #Create passed directory.
-    my $cmdline;
-    $cmdline = "mkdir -p $passedpath";
-    my $retval = system($cmdline);
-    if ($retval != 0) {
-        print("\nCMD>>", $cmdline, "\n");
-        print "\nEXECUTE $cmdline FAILED!! RES:$retval\n";
-        if ($g_is_quit_early) {
-            abortex();
-        }
-    }
+    tryCreateDir($passedpath);
+    #my $cmdline;
+    #$cmdline = "mkdir -p $passedpath";
+    #my $retval = system($cmdline);
+    #if ($retval != 0) {
+    #    print("\nCMD>>", $cmdline, "\n");
+    #    print "\nEXECUTE $cmdline FAILED!! RES:$retval\n";
+    #    if ($g_is_quit_early) {
+    #        abortex();
+    #    }
+    #}
 
     #Move passed C/GR file to directory $fullpath/passed.
     #NOTE: Do NOT delete testcase file in 'passed' directory.

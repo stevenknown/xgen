@@ -165,7 +165,7 @@ public:
     bool isDownBoundary(OR * o);
     bool is_bb_exit() const { return ORBB_is_exit(this); }
     bool hasLabel(LabelInfo const* o);
-    inline bool is_boundary(OR * o)
+    bool isBoundary(OR * o)
     { return (isUpperBoundary(o) || isDownBoundary(o)); }
     bool isUpperBoundary(OR * o) { return o->is_label_or(); }
     bool hasCall();
@@ -177,7 +177,7 @@ public:
         ORBB * pthis = const_cast<ORBB*>(this);
         for (LabelInfo const* li = pthis->getLabelList().get_head();
              li != NULL; li = pthis->getLabelList().get_next()) {
-            if (LABEL_INFO_is_catch_start(li)) {
+            if (LABELINFO_is_catch_start(li)) {
                 return true;
             }
         }
@@ -189,7 +189,7 @@ public:
         ORBB * pthis = const_cast<ORBB*>(this);
         for (LabelInfo const* li = pthis->getLabelList().get_head();
              li != NULL; li = pthis->getLabelList().get_next()) {
-            if (LABEL_INFO_is_terminate(li)) {
+            if (LABELINFO_is_terminate(li)) {
                 return true;
             }
         }

@@ -404,6 +404,9 @@ static bool processOneLevelCmdLine(INT argc, CHAR * argv[], INT & i)
     } else if (!strcmp(cmdstr, "dump-cg")) {
         g_dump_opt.is_dump_cg = true;
         i++;
+    } else if (!strcmp(cmdstr, "dump-cdg")) {
+        g_dump_opt.is_dump_cdg = true;
+        i++;
     } else if (!strcmp(cmdstr, "dump-simplification")) {
         g_dump_opt.is_dump_simplification = true;
         i++;
@@ -588,9 +591,10 @@ static Var * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
     ASSERT0(type);
 
     CHAR * var_name = SYM_name(get_decl_sym(decl));
-    Var * v = var_mgr->registerVar(var_name, type,
+    Var * v = var_mgr->registerVar(
+        var_name, type,
         (UINT)xcom::ceil_align(MAX(DECL_align(decl), STACK_ALIGNMENT),
-            STACK_ALIGNMENT), flag);
+                               STACK_ALIGNMENT), flag);
     if (VAR_is_global(v)) {
         //For conservative purpose.
         VAR_is_addr_taken(v) = true;
@@ -787,8 +791,7 @@ static void compileProgramRegion(Region * rg, CGMgr * cgmgr, FILE * asmh)
 {
     cgmgr->GenAndPrtGlobalVariable(rg, asmh);
     if (!g_is_dumpgr) { return; }
-
-    g_indent = 0;
+    
     ASSERT0(g_c_file_name || g_gr_file_name);
     xcom::StrBuf b(64);
     b.strcat(g_c_file_name != NULL ? g_c_file_name : g_gr_file_name);
@@ -848,7 +851,6 @@ static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr, FILE * asmh)
 
     ASSERT0(program);
     //if (g_is_dumpgr) {
-    //    g_indent = 0;
     //    //rg->dump(true);
     //    ASSERT0(g_c_file_name || g_gr_file_name);
     //    xcom::StrBuf b(64);
@@ -906,7 +908,6 @@ static void dumpRegionMgrGR(RegionMgr * rm, CHAR * srcname)
         Region * r = rm->getRegion(i);
         if (r == NULL) { continue; }
         if (r->is_program()) {
-            g_indent = 0;
             //r->dump(true);
             ASSERT0(srcname);
             xcom::StrBuf b(64);
@@ -924,11 +925,10 @@ static void dumpRegionMgrGR(RegionMgr * rm, CHAR * srcname)
 }
 
 
-static void initCompile(
-        CLRegionMgr ** rm,
-        FILE ** asmh,
-        CGMgr ** cgmgr,
-        TargInfo ** ti)
+static void initCompile(CLRegionMgr ** rm,
+                        FILE ** asmh,
+                        CGMgr ** cgmgr,
+                        TargInfo ** ti)
 {
     *rm = initRegionMgr();
     *cgmgr = xgen::allocCGMgr();
@@ -982,7 +982,7 @@ bool compileGRFile(CHAR * gr_file_name)
     compileRegionSet(rm, cgmgr, asmh);
     for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
         Region * r = rm->getRegion(i);
-        if (r == NULL) { continue; }
+        if (r == NULL || r->is_blackbox()) { continue; }
         if (r->getPassMgr() != NULL) {
             xoc::PRSSAMgr * ssamgr = (PRSSAMgr*)r->
                 getPassMgr()->queryPass(PASS_PR_SSA_MGR);

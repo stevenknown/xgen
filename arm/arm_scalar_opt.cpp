@@ -84,6 +84,7 @@ bool ARMScalarOpt::perform(OptCtx & oc)
             ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
             bool doit = pass->perform(oc);
             if (doit) {
+                CHAR const* passname = pass->getPassName();
                 //RefineCtx rf;
                 //RC_insert_cvt(rf) = false;
                 //m_rg->getRefine()->refineBBlist(m_rg->getBBList(), rf);

@@ -739,10 +739,10 @@ public:
         CHAR const* prefix = NULL;
         prefix = SYM_name(m_rg->getRegionVar()->get_name());
         buf.strcat("%s_", prefix);
-        if (LABEL_INFO_type(lab) == L_ILABEL) {
+        if (LABELINFO_type(lab) == L_ILABEL) {
             buf.strcat(ILABEL_STR_FORMAT, ILABEL_CONT(lab));
         }
-        else if (LABEL_INFO_type(lab) == L_CLABEL) {
+        else if (LABELINFO_type(lab) == L_CLABEL) {
             buf.strcat(CLABEL_STR_FORMAT, CLABEL_CONT(lab));
         }
         else {
