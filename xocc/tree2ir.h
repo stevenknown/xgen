@@ -30,9 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __TREE_TO_IR_H__
 #define __TREE_TO_IR_H__
 
-#define CASEV_lab(c)               (c)->label
-#define CASEV_constv(c)            (c)->constv
-#define CASEV_is_def(c)            (c)->is_default
+#define CASEV_lab(c) (c)->label
+#define CASEV_constv(c) (c)->constv
+#define CASEV_is_def(c) (c)->is_default
 class CaseValue {
 public:
     LabelInfo const* label;
@@ -41,12 +41,12 @@ public:
 };
 
 
-#define CONT_toplirlist(s)         ((s)->top_level_irlist)
-#define CONT_epilogirlist(s)       ((s)->epilog_ir_list)
-#define CONT_is_lvalue(s)          ((s)->is_lvalue)
-#define CONT_is_parse_callee(s)    ((s)->is_parse_callee)
-#define CONT_is_record_epilog(s)   ((s)->is_record_epilog)
-#define CONT_is_compute_addr(s)    ((s)->is_compute_addr)
+#define CONT_toplirlist(s) ((s)->top_level_irlist)
+#define CONT_epilogirlist(s) ((s)->epilog_ir_list)
+#define CONT_is_lvalue(s) ((s)->is_lvalue)
+#define CONT_is_parse_callee(s) ((s)->is_parse_callee)
+#define CONT_is_record_epilog(s) ((s)->is_record_epilog)
+#define CONT_is_compute_addr(s) ((s)->is_compute_addr)
 class T2IRCtx {
 public:
     //Top level of current ir list.
@@ -97,10 +97,7 @@ public:
     //    x = ild(t, ofst(b))
     bool is_compute_addr;
 
-    T2IRCtx()
-    {
-        ::memset(this, 0, sizeof(T2IRCtx));
-    }
+    T2IRCtx() { ::memset(this, 0, sizeof(T2IRCtx)); }
 };
 
 

@@ -472,7 +472,8 @@ public:
     void freeLifeTime(LifeTime * lt);
     void freeAllLifeTime();
 
-    CG * getCG() { return m_cg; }
+    Region * getRegion() const { return m_rg; }
+    CG * getCG() const { return m_cg; }
     SibMgr * getSibMgr() { return &m_sibmgr; }
     OR * getOR(UINT pos);
     OR * getORByIdx(INT oridx);
@@ -929,6 +930,7 @@ public:
     void freeRFAffineList();
     void finalLRAOpt(LifeTimeMgr * mgr, InterfGraph * ig, DataDepGraph * ddg);
 
+    Region * getRegion() const { return m_rg; }
     bool getResideinHole(OUT INT * startpos,
                          OUT INT * endpos,
                          IN LifeTime * owner,

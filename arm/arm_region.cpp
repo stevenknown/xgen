@@ -139,9 +139,7 @@ bool ARMRegion::simplifyToPRmode(OptCtx & oc)
     simp.setSimpILdISt();
     simp.setSimpToLowestHeight();
     ASSERT0(verifyIRandBB(getBBList(), this));
-    ASSERT0(getDUMgr() &&
-            getDUMgr()->verifyMDDUChain(DUOPT_COMPUTE_PR_DU|
-                                        DUOPT_COMPUTE_NONPR_DU));
+    ASSERT0(verifyMDDUChain(this));
     simplifyBBlist(bbl, &simp);
     if (SIMP_need_recon_bblist(&simp) && g_cst_bb_list &&
         reconstructBBList(oc)) {
@@ -429,27 +427,43 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
             getPassMgr()->registerPass(PASS_MD_SSA_MGR)->perform(oc);
         }
     }
+
     if (g_do_cp && g_opt_level > OPT_LEVEL0) {
         CopyProp * pass = (CopyProp*)getPassMgr()->registerPass(PASS_CP);
         pass->perform(oc);
     }
+
     if (g_do_dce && g_opt_level > OPT_LEVEL0) {
         DeadCodeElim * pass = (DeadCodeElim*)getPassMgr()->
                                   registerPass(PASS_DCE);
         pass->perform(oc);
     }
+
     ASSERT0((!g_do_md_du_analysis && !g_do_md_ssa) || verifyMDRef());
     ASSERT0(verifyIRandBB(getBBList(), this));
     if (OC_is_pr_du_chain_valid(oc) || OC_is_nonpr_du_chain_valid(oc)) {
-        ASSERT0(getDUMgr() == NULL ||
-                getDUMgr()->verifyMDDUChain(DUOPT_COMPUTE_PR_DU|
-                                            DUOPT_COMPUTE_NONPR_DU));
+        ASSERT0(verifyMDDUChain(this));
     }
+
     PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->queryPass(PASS_PR_SSA_MGR);
     if (ssamgr != NULL && ssamgr->is_valid()) {
         //NOTE: ssa destruction might violate classic DU chain.
         ssamgr->destruction(&oc);
+
+        //Note PRSSA will change PR no during PRSSA destruction.
+        //If classic DU chain is valid meanwhile, it might be disrupted
+        //as well. A better way is user
+        //maintain the classic DU chain, alternatively a conservative way to
+        //avoid subsequent verification complaining is set the prdu invalid.
+        //WORKAROUND: use better way to update classic DU chain rather
+        //than invalid them.
+        OC_is_pr_du_chain_valid(oc) = false;
+        OC_is_nonpr_du_chain_valid(oc) = false;
     }
+
+    UINT duflag = OC_is_pr_du_chain_valid(oc) ? DUOPT_COMPUTE_PR_DU : 0;
+    duflag |= OC_is_nonpr_du_chain_valid(oc) ? DUOPT_COMPUTE_NONPR_DU : 0;
+    ASSERT0(verifyMDDUChain(this, duflag));
 
     ///////////////////////////////////////////////////
     //DO NOT DO OPTIMIZATION ANY MORE AFTER THIS LINE//

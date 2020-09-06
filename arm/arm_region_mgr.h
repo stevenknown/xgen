@@ -32,13 +32,13 @@ author: Su Zhenyu
 #define _ARM_REGION_MGR_H_
 
 class ARMRegionMgr : public CLRegionMgr {
+    COPY_CONSTRUCTOR(ARMRegionMgr);
 protected:
     AsmPrinterMgr m_asmprtmgr;
     FILE * m_asmfile; //assembly file handler.
 
 public:
     ARMRegionMgr() { m_asmfile = NULL; }
-    COPY_CONSTRUCTOR(ARMRegionMgr);
     virtual ~ARMRegionMgr() {}
 
     virtual Region * allocRegion(REGION_TYPE rt);

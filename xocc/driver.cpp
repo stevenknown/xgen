@@ -83,26 +83,23 @@ INT report_location(CHAR const* file, INT line)
 void CLDbxMgr::printSrcLine(Dbx const* dbx, PrtCtx * ctx)
 {
     ASSERT0(ctx && dbx);
-    if (ctx->handler == NULL) { return; }
-
-    FILE * old = g_tfile;
-    g_tfile = ctx->handler;
+    if (ctx->logmgr == NULL) { return; }
 
     UINT lineno = getLineNum(dbx);
     if (lineno == m_cur_lineno) {
         //It is dispensable that print the same souce file multiple times.
-        goto FIN;
+        return;
     }
 
     m_cur_lineno = lineno;
     if (lineno == 0) {
         //No line number info recorded.
         if (ctx != NULL && ctx->prefix != NULL) {
-            note("\n%s[0]\n", ctx->prefix);
+            note(ctx->logmgr, "\n%s[0]\n", ctx->prefix);
         } else {
-            note("\n[0]\n");
+            note(ctx->logmgr, "\n[0]\n");
         }
-        goto FIN;
+        return;
     }
 
     if (g_hsrc != NULL) {
@@ -110,14 +107,14 @@ void CLDbxMgr::printSrcLine(Dbx const* dbx, PrtCtx * ctx)
         fseek(g_hsrc, g_ofst_tab[m_cur_lineno], SEEK_SET);
         if (fgets(g_cur_line, g_cur_line_len, g_hsrc) != NULL) {
             if (ctx != NULL && ctx->prefix != NULL) {
-                note("\n\n%s[%u]%s", ctx->prefix, m_cur_lineno, g_cur_line);
+                note(ctx->logmgr, "\n\n%s[%u]%s",
+                     ctx->prefix, m_cur_lineno, g_cur_line);
             } else {
-                note("\n\n[%u]%s", m_cur_lineno, g_cur_line);
+                note(ctx->logmgr, "\n\n[%u]%s",
+                     m_cur_lineno, g_cur_line);
             }
         }
     }
-FIN:
-    g_tfile = old;
 }
 
 
@@ -413,6 +410,9 @@ static bool processOneLevelCmdLine(INT argc, CHAR * argv[], INT & i)
     } else if (!strcmp(cmdstr, "dump-refine-duchain")) {
         g_dump_opt.is_dump_refine_duchain = true;
         i++;
+    } else if (!strcmp(cmdstr, "dump-gvn")) {
+        g_dump_opt.is_dump_gvn = true;
+        i++;
     } else if (!strcmp(cmdstr, "dump-all")) {
         g_dump_opt.is_dump_all = true;
         i++;
@@ -591,10 +591,10 @@ static Var * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
     ASSERT0(type);
 
     CHAR * var_name = SYM_name(get_decl_sym(decl));
-    Var * v = var_mgr->registerVar(
-        var_name, type,
-        (UINT)xcom::ceil_align(MAX(DECL_align(decl), STACK_ALIGNMENT),
-                               STACK_ALIGNMENT), flag);
+    Var * v = var_mgr->registerVar(var_name, type,
+                                   (UINT)xcom::ceil_align(MAX(DECL_align(decl),
+                                                          STACK_ALIGNMENT),
+                                   STACK_ALIGNMENT), flag);
     if (VAR_is_global(v)) {
         //For conservative purpose.
         VAR_is_addr_taken(v) = true;
@@ -670,9 +670,11 @@ static void scanAndInitVar(SCOPE * s, VarMgr * vm, TypeMgr * tm)
 }
 
 
-UINT FrontEnd()
+UINT FrontEnd(RegionMgr * rm)
 {
     START_TIMER(t, "CFE");
+
+    setLogMgr(rm->getLogMgr());
 
 //#define LR0_FE
 #ifdef LR0_FE
@@ -706,7 +708,7 @@ static FILE * createAsmFileHandler()
     if (g_output_file_name != NULL) {
         asmh = fopen(g_output_file_name, "a+");
         if (asmh == NULL) {
-            prt2C("Can not create assembly file %s", g_output_file_name);
+            xoc::prt2C("Can not create assembly file %s", g_output_file_name);
         }
         return asmh;
     }
@@ -714,35 +716,31 @@ static FILE * createAsmFileHandler()
     StrBuf buf(128);
     ASSERT0(g_c_file_name || g_gr_file_name);
     buf.sprint("%s.asm", g_c_file_name != NULL ?
-        g_c_file_name : g_gr_file_name);
+                         g_c_file_name : g_gr_file_name);
     asmh = fopen(buf.buf, "a+");
     if (asmh == NULL) {
-        prt2C("Can not create assembly file %s", buf.buf);
+        xoc::prt2C("Can not create assembly file %s", buf.buf);
     }
     return asmh;
 }
 
 
-static void dumpPoolUsage()
+static void dumpPoolUsage(RegionMgr * rm)
 {
-    #define KB 1024
     #ifdef _DEBUG_
-    if (g_tfile == NULL) { return; }
-
-    note("\n== Situation of pool used==");
-    note("\n ****** gerenal pool %lu KB ********",
-                    (ULONG)smpoolGetPoolSize(g_pool_general_used)/KB);
-    note("\n ****** tree pool %lu KB ********",
-                    (ULONG)smpoolGetPoolSize(g_pool_tree_used)/KB);
-    note("\n ****** st pool %lu KB ********",
-                    (ULONG)smpoolGetPoolSize(g_pool_st_used)/KB);
-    note("\n ****** tmp pool %lu KB ********",
-                    (ULONG)smpoolGetPoolSize(xoc::get_tmp_pool())/KB);
-    note("\n ****** total mem query size : %lu KB\n",
-                    (ULONG)g_stat_mem_size/KB);
-
-    note("\n===========================\n");
-    fflush(g_tfile);
+    #define KB 1024
+    note(rm, "\n== Situation of pool used==");
+    note(rm, "\n ****** gerenal pool %lu KB ********",
+             (ULONG)smpoolGetPoolSize(g_pool_general_used)/KB);
+    note(rm, "\n ****** tree pool %lu KB ********",
+             (ULONG)smpoolGetPoolSize(g_pool_tree_used)/KB);
+    note(rm, "\n ****** st pool %lu KB ********",
+             (ULONG)smpoolGetPoolSize(g_pool_st_used)/KB);
+    note(rm, "\n ****** tmp pool %lu KB ********",
+             (ULONG)smpoolGetPoolSize(xoc::get_tmp_pool())/KB);
+    note(rm, "\n ****** total mem query size : %lu KB\n",
+             (ULONG)g_stat_mem_size/KB);
+    note(rm, "\n===========================\n");
     #endif
 }
 
@@ -797,12 +795,13 @@ static void compileProgramRegion(Region * rg, CGMgr * cgmgr, FILE * asmh)
     b.strcat(g_c_file_name != NULL ? g_c_file_name : g_gr_file_name);
     b.strcat(".hir.gr");
     UNLINK(b.buf);
-    FILE * gr = fopen(b.buf, "a");
-    FILE * oldvalue = g_tfile;
-    g_tfile = gr;
+
+    FILE * gr = ::fopen(b.buf, "a");
+    ASSERT0(gr);
+    rg->getLogMgr()->push(gr, "");
     rg->dumpGR(true);
-    fclose(gr);
-    g_tfile = oldvalue;
+    rg->getLogMgr()->pop();
+    ::fclose(gr);
 }
 
 
@@ -848,30 +847,14 @@ static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr, FILE * asmh)
         }
         compileFuncRegion(rg, rm, cgmgr, asmh);
     }
-
     ASSERT0(program);
-    //if (g_is_dumpgr) {
-    //    //rg->dump(true);
-    //    ASSERT0(g_c_file_name || g_gr_file_name);
-    //    xcom::StrBuf b(64);
-    //    b.strcat(g_c_file_name != NULL ?
-    //        g_c_file_name : g_gr_file_name);
-    //    b.strcat(".cg.gr");
-    //    UNLINK(b.buf);
-    //    FILE * gr = fopen(b.buf, "a");
-    //    FILE * oldvalue = g_tfile;
-    //    g_tfile = gr;
-    //    program->dumpGR(true);
-    //    fclose(gr);
-    //    g_tfile = oldvalue;
-    //}
 
     OptCtx * oc = rm->getAndGenOptCtx(program->id());
     bool s = rm->processProgramRegion(program, oc);
     ASSERT0(s);
     DUMMYUSE(s);
     if (g_dump_opt.isDumpALL()) {
-        dumpPoolUsage();
+        dumpPoolUsage(rm);
     }
 }
 
@@ -905,9 +888,9 @@ static void dumpRegionMgrGR(RegionMgr * rm, CHAR * srcname)
 {
     ASSERT0(rm);
     for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
-        Region * r = rm->getRegion(i);
-        if (r == NULL) { continue; }
-        if (r->is_program()) {
+        Region * rg = rm->getRegion(i);
+        if (rg == NULL) { continue; }
+        if (rg->is_program()) {
             //r->dump(true);
             ASSERT0(srcname);
             xcom::StrBuf b(64);
@@ -915,11 +898,11 @@ static void dumpRegionMgrGR(RegionMgr * rm, CHAR * srcname)
             b.strcat(".gr");
             UNLINK(b.buf);
             FILE * gr = fopen(b.buf, "a");
-            FILE * oldvalue = g_tfile;
-            g_tfile = gr;
-            r->dumpGR(true);
-            fclose(gr);
-            g_tfile = oldvalue;
+            ASSERT0(gr);
+            rg->getLogMgr()->push(gr, b.buf);
+            rg->dumpGR(true);
+            rg->getLogMgr()->pop();
+            ::fclose(gr);
         }
     }
 }
@@ -1011,8 +994,15 @@ bool compileCFile()
     initCompile(&rm, &asmh, &cgmgr, &ti);
     g_fe_sym_tab = rm->getSymTab();
     g_dbx_mgr = new CLDbxMgr();
+    if (g_dump_file_name != NULL) {
+        rm->getLogMgr()->init(g_dump_file_name, true);
+    }
+    if (g_redirect_stdout_to_dump_file) {
+        g_unique_dumpfile = rm->getLogMgr()->getFileHandler();
+        ASSERT0(g_unique_dumpfile);
+    }
 
-    if (FrontEnd() != ST_SUCC) {
+    if (FrontEnd(rm) != ST_SUCC) {
         res = false;
         goto FIN;
     }
@@ -1040,9 +1030,8 @@ FIN:
     show_err();
     show_warn();
     fprintf(stdout, "\n%s - (%d) error(s), (%d) warnging(s)\n",
-        g_c_file_name, g_err_msg_list.get_elem_count(),
-        g_warn_msg_list.get_elem_count());
+            g_c_file_name, g_err_msg_list.get_elem_count(),
+            g_warn_msg_list.get_elem_count());
     finiParser();
-    //xoc::finidump will be invoked after the function return.
     return res;
 }

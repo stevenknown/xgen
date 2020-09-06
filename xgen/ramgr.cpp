@@ -175,7 +175,7 @@ void RaMgr::updateCallee(REGFILE regfile, REG reg)
 //Dump spill location var and relevant ors.
 void RaMgr::dumpGlobalVAR2OR()
 {
-    FILE * h = xoc::g_tfile;
+    FILE * h = m_rg->getLogMgr()->getFileHandler();
     fprintf(h,
         "\n==---- DUMP Mapping from Global xoc::Var to OR, Region:%s ----==",
         m_rg->getRegionName());
@@ -209,14 +209,14 @@ void RaMgr::dumpGlobalVAR2OR()
 
 void RaMgr::dumpBBList()
 {
-    dumpORBBList(*m_bb_list);
+    dumpORBBList(*m_bb_list, getCG());
 }
 
 
 //Dump callee registers used by GRA.
 void RaMgr::dumpCalleeRegUsedByGra()
 {
-    FILE * h = xoc::g_tfile;
+    FILE * h = m_rg->getLogMgr()->getFileHandler();
     if (h == NULL) { return; }
 
     fprintf(h, "\n==---- DUMP GRA Used Callee Regs, Region:%s: ",

@@ -34,18 +34,13 @@ INT main(INT argc, CHAR * argv[])
     if (!processCmdLine(argc, argv)) {
         return 1;
     }
-    if (g_dump_file_name != NULL) {
-        xoc::initdump(g_dump_file_name, true);
-    }
     if (g_gr_file_name != NULL) {
         //If both GR and C file are input, prefer GR file.
         g_c_file_name = NULL;
         bool res = compileGRFile(g_gr_file_name);
-        xoc::finidump();
         return res ? 0 : 2;
     } else if (g_c_file_name != NULL) {
         bool res = compileCFile();
-        xoc::finidump();
         return res ? 0 : 3;
     }
 

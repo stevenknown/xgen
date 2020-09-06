@@ -234,7 +234,7 @@ public:
 
 
 //Exported Functions
-extern void dumpORBBList(List<ORBB*> & bbl);
+extern void dumpORBBList(List<ORBB*> & bbl, CG * cg);
 
 } //namespace xgen
 #endif

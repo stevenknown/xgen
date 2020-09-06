@@ -61,55 +61,60 @@ xcom::BitSet * OR_DF_MGR::get_use_var(ORBB * bb)
 void OR_DF_MGR::dump()
 {
     StrBuf buf(64);
-    note("\n==---- DUMP Set Info of OR_DF_MGR ----==\n");
+    note(getRegion(), "\n==---- DUMP Set Info of OR_DF_MGR ----==\n");
     List<ORBB*> * bbl = m_cg->getORBBList();
-    g_indent += 2;
+    getRegion()->getLogMgr()->incIndent(2);
     for (ORBB * bb = bbl->get_head(); bb != NULL; bb = bbl->get_next()) {
-        note("\n--- BB%d ---", ORBB_id(bb));
+        note(getRegion(), "\n--- BB%d ---", ORBB_id(bb));
         xcom::BitSet * live_in = &ORBB_livein(bb);
         xcom::BitSet * live_out = &ORBB_liveout(bb);
         xcom::BitSet * def = get_def_var(bb);
         xcom::BitSet * use = get_use_var(bb);
         INT i;
 
-        note("\nLIVE-IN SR: ");
+        note(getRegion(), "\nLIVE-IN SR: ");
         for (i = live_in->get_first(); i != -1; i = live_in->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr);
 
             buf.clean();
-            prt("%s, ", sr->get_name(buf, m_cg));
+            prt(getRegion(), "%s, ", sr->get_name(buf, m_cg));
         }
 
-        note("\nLIVE-OUT SR: ");
+        note(getRegion(), "\nLIVE-OUT SR: ");
         for (i = live_out->get_first(); i != -1; i = live_out->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr != NULL);
 
             buf.clean();
-            prt("%s, ", sr->get_name(buf, m_cg));
+            prt(getRegion(), "%s, ", sr->get_name(buf, m_cg));
         }
 
-        note("\nDEF SR: ");
+        note(getRegion(), "\nDEF SR: ");
         for (i = def->get_first(); i != -1; i = def->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr != NULL);
 
             buf.clean();
-            prt("%s, ", sr->get_name(buf, m_cg));
+            prt(getRegion(), "%s, ", sr->get_name(buf, m_cg));
         }
 
-        note("\nUSE SR: ");
+        note(getRegion(), "\nUSE SR: ");
         for (i = use->get_first(); i != -1; i = use->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr != NULL);
 
             buf.clean();
-            prt("%s, ", sr->get_name(buf, m_cg));
+            prt(getRegion(), "%s, ", sr->get_name(buf, m_cg));
         }
     }
-    g_indent -= 2;
-    fflush(g_tfile);
+    getRegion()->getLogMgr()->decIndent(2);
+}
+
+
+Region * OR_DF_MGR::getRegion() const
+{
+    return m_cg->getRegion();
 }
 
 
@@ -217,11 +222,17 @@ GLT_MGR::~GLT_MGR()
 }
 
 
+Region * GLT_MGR::getRegion() const
+{
+    return m_cg->getRegion();
+}
+
+
 void GLT_MGR::dump()
 {
     UINT max_name_len = 0;
     StrBuf buf(64);
-    if (g_tfile == NULL) { return; }
+    if (!getRegion()->isLogMgrInit()) { return; }
     xcom::BitSet srbs;
     List<ORBB*> * bbl = m_cg->getORBBList();
     for (ORBB * bb = bbl->get_head(); bb != NULL; bb = bbl->get_next()) {
@@ -248,8 +259,8 @@ void GLT_MGR::dump()
         }
     }
 
-    note("\n==---- DUMP Global LIFE TIME ----==\n");
-    prt("---- SR lived BB\n");
+    note(getRegion(), "\n==---- DUMP Global LIFE TIME ----==\n");
+    prt(getRegion(), "---- SR lived BB\n");
     for (INT i = srbs.get_first(); i >= 0; i = srbs.get_next(i)) {
         SR * sr = m_cg->mapSymbolReg2SR(i);
         ASSERT0(sr != NULL);
@@ -257,11 +268,11 @@ void GLT_MGR::dump()
 
         //Print SR name.
         buf.clean();
-        note("\n%s", sr->get_name(buf, m_cg));
+        note(getRegion(), "\n%s", sr->get_name(buf, m_cg));
         for (UINT v = 0; v < max_name_len - buf.strlen(); v++) {
-            prt(" ");
+            prt(getRegion(), " ");
         }
-        prt(":");
+        prt(getRegion(), ":");
 
         //Print live BB.
         if (livebbs == NULL || livebbs->is_empty()) { continue; }
@@ -270,14 +281,13 @@ void GLT_MGR::dump()
             for (INT j = start; j < u; j++) {
                 buf.sprint("%d,", j);
                 for (UINT k = 0; k < buf.strlen(); k++) {
-                    prt(" ");
+                    prt(getRegion(), " ");
                 }
             }
-            prt("%d,", u);
+            prt(getRegion(), "%d,", u);
             start = u + 1;
         }
     }
-    fflush(g_tfile);
 }
 
 

@@ -42,6 +42,12 @@ AsmPrinter::AsmPrinter(CG * cg, AsmPrinterMgr * apmgr)
 }
 
 
+Region * AsmPrinter::getRegion() const
+{
+    return m_cg->getRegion();
+}
+
+
 //Print instructions to assembly file.
 void AsmPrinter::printCode(FILE * asmfile)
 {

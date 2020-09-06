@@ -48,6 +48,8 @@ public:
     COPY_CONSTRUCTOR(AsmPrinter);
     virtual ~AsmPrinter() {}
 
+    Region * getRegion() const;
+
     virtual CHAR * printOR(OR * o, xcom::StrBuf & buf)
     {
         ASSERTN(0, ("Target Dependent Code"));

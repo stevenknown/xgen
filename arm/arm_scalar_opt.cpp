@@ -82,9 +82,10 @@ bool ARMScalarOpt::perform(OptCtx & oc)
         for (Pass * pass = passlist.get_head();
              pass != NULL; pass = passlist.get_next()) {
             ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
+            CHAR const* passname = pass->getPassName();
+            DUMMYUSE(passname);
             bool doit = pass->perform(oc);
             if (doit) {
-                CHAR const* passname = pass->getPassName();
                 //RefineCtx rf;
                 //RC_insert_cvt(rf) = false;
                 //m_rg->getRefine()->refineBBlist(m_rg->getBBList(), rf);
@@ -104,7 +105,7 @@ bool ARMScalarOpt::perform(OptCtx & oc)
                     SET_FLAG(flag, DUOPT_COMPUTE_NONPR_DU);
                 }
                 ASSERT0(m_rg->getDUMgr());
-                ASSERT0(m_rg->getDUMgr()->verifyMDDUChain(flag));
+                ASSERT0(verifyMDDUChain(m_rg, flag));
             }            
             ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
             ASSERT0(m_rg->getCFG()->verify());

@@ -892,10 +892,11 @@ void CG::relocateStackVarOffset()
     END_TIMER(t0, "Relocate Stack Variable Offset");
 
     if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
-        xoc::note("\n==---- DUMP AFTER RELOCATE STACK OFFSET ----==");
+        xoc::note(getRegion(),
+                  "\n==---- DUMP AFTER RELOCATE STACK OFFSET ----==");
         getParamSection()->dump(this);
         getStackSection()->dump(this);
-        dumpORBBList(m_or_bb_list);
+        dumpORBBList(m_or_bb_list, this);
     }
 }
 
@@ -1112,10 +1113,10 @@ UINT CG::compute_pad()
 
 void CG::dumpPackage()
 {
-    if (xoc::g_tfile == NULL) { return; }
-    INT org = g_indent;
-    g_indent = 0;
-    note("\n==---- DUMP Package, Region(%d)'%s' ----==",
+    if (!getRegion()->isLogMgrInit()) { return; }
+    INT org = getRegion()->getLogMgr()->getIndent();
+    getRegion()->getLogMgr()->setIndent(0);
+    note(getRegion(), "\n==---- DUMP Package, Region(%d)'%s' ----==",
          getRegion()->id(),
          getRegion()->getRegionName() == NULL ?
              "--" : getRegion()->getRegionName());
@@ -1127,56 +1128,54 @@ void CG::dumpPackage()
         IssuePackageList * ipl = m_ipl_vec.get(bbid);
         if (ipl == NULL) { continue; }
 
-        note("\n-- BB%d --", bbid);
+        note(getRegion(), "\n-- BB%d --", bbid);
         xcom::C<IssuePackage*> * ipct;
         for (ipl->get_head(&ipct); ipct != ipl->end();
              ipct = ipl->get_next(ipct)) {
-            note("\n{");
+            note(getRegion(), "\n{");
             IssuePackage * ip = ipct->val();
             for (SLOT s = FIRST_SLOT; s <= LAST_SLOT; s = (SLOT)(s + 1)) {
-                if (s != FIRST_SLOT) { note("|"); }
+                if (s != FIRST_SLOT) { note(getRegion(), "|"); }
 
                 OR * o = ip->get(s);
                 if (o == NULL) {
-                    prt(format.buf, " ");
+                    prt(getRegion(), format.buf, " ");
                 } else {
-                    prt(format.buf, OR_code_name(o));
+                    prt(getRegion(), format.buf, OR_code_name(o));
                 }
             }
 
-            note("}");
+            note(getRegion(), "}");
 
             //Dump instruction details.
-            g_indent += 4;
+            getRegion()->getLogMgr()->incIndent(4);
             for (SLOT s = FIRST_SLOT; s <= LAST_SLOT; s = (SLOT)(s + 1)) {
-                if (s != FIRST_SLOT) { note("|"); }
+                if (s != FIRST_SLOT) { note(getRegion(), "|"); }
 
                 OR * o = ip->get(s);
                 if (o == NULL) {
-                    note("\nnop");
+                    note(getRegion(), "\nnop");
                 } else {
                     o->dump(this);
                 }
             }
-            g_indent -= 4;
+            getRegion()->getLogMgr()->decIndent(4);
         }
     }
-    g_indent = org;
-    fflush(xoc::g_tfile);
+    getRegion()->getLogMgr()->setIndent(org);
 }
 
 
 void CG::dumpSection()
 {
-    if (xoc::g_tfile == NULL) { return; }
-    note("\n==---- DUMP Section Var info ----==\n");
+    if (!getRegion()->isLogMgrInit()) { return; }
+    note(getRegion(), "\n==---- DUMP Section Var info ----==\n");
     m_code_sect.dump(this);
     m_data_sect.dump(this);
     m_rodata_sect.dump(this);
     m_bss_sect.dump(this);
     m_stack_sect.dump(this);
     m_param_sect.dump(this);
-    fflush(xoc::g_tfile);
 }
 
 
@@ -2341,7 +2340,7 @@ void CG::package(Vector<BBSimulator*> & simvec)
         /////////////////////////////////////
         //DO NOT DUMP BB LIST AFTER PACKAGE//
         /////////////////////////////////////
-        xoc::note("\n==---- DUMP AFTER PACKAGE ----==");
+        xoc::note(getRegion(), "\n==---- DUMP AFTER PACKAGE ----==");
         dumpPackage();
     }
     ASSERT0(verifyPackageList());
@@ -3339,8 +3338,8 @@ void CG::reviseFormalParameterAndSpadjust()
     }
 
     if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
-        xoc::note("\n==---- DUMP AFTER REVISE SPADJUST ----==");
-        dumpORBBList(m_or_bb_list);
+        xoc::note(getRegion(), "\n==---- DUMP AFTER REVISE SPADJUST ----==");
+        dumpORBBList(m_or_bb_list, this);
     }
 }
 
@@ -3485,9 +3484,9 @@ void CG::constructORBBList(IN ORList & or_list)
     #endif
 
     if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
-        xoc::note("\n==---- DUMP AFTER IR2OR CONVERT %s ----==",
-            m_rg->getRegionName());
-        dumpORBBList(m_or_bb_list);
+        xoc::note(getRegion(), "\n==---- DUMP AFTER IR2OR CONVERT %s ----==",
+                  m_rg->getRegionName());
+        dumpORBBList(m_or_bb_list, this);
     }
 }
 
@@ -3496,9 +3495,10 @@ void CG::constructORBBList(IN ORList & or_list)
 RaMgr * CG::performRA()
 {
     if (g_is_dump_before_pass && g_dump_opt.isDumpRA()) {
-        xoc::note("\n==---- DUMP BEFORE REGISTER ALLOCATION of '%s' ----==",
-            m_rg->getRegionName());
-        dumpORBBList(m_or_bb_list);
+        xoc::note(getRegion(), 
+                  "\n==---- DUMP BEFORE REGISTER ALLOCATION of '%s' ----==",
+                  m_rg->getRegionName());
+        dumpORBBList(m_or_bb_list, this);
     }
     START_TIMER(t, "Perform Register Allocation");
     RaMgr * lm = allocRaMgr(getORBBList(), m_rg->is_function());
@@ -3516,9 +3516,10 @@ RaMgr * CG::performRA()
     lm->performLRA();
     END_TIMER(t, "Perform Register Allocation");
     if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
-        xoc::note("\n==---- DUMP AFTER REGISTER ALLOCATION %s ----==",
-            m_rg->getRegionName());
-        dumpORBBList(m_or_bb_list);
+        xoc::note(getRegion(), 
+                  "\n==---- DUMP AFTER REGISTER ALLOCATION %s ----==",
+                  m_rg->getRegionName());
+        dumpORBBList(m_or_bb_list, this);
     }
     return lm;
 }
@@ -3919,8 +3920,8 @@ void CG::localize()
     }
     END_TIMER(t0, "CG Localization");
     if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
-        note("\n==---- DUMP AFTER LOCALIZE ----==");
-        dumpORBBList(m_or_bb_list);
+        note(getRegion(), "\n==---- DUMP AFTER LOCALIZE ----==");
+        dumpORBBList(m_or_bb_list, this);
     }
 }
 
@@ -3992,7 +3993,8 @@ bool CG::perform()
 
     if ((g_is_dump_after_pass || g_is_dump_before_pass) &&
         g_dump_opt.isDumpCG()) {
-        xoc::note("\n==---- DUMP START CODE GENERATION (%d)'%s' ----==\n",
+        xoc::note(getRegion(), 
+                  "\n==---- DUMP START CODE GENERATION (%d)'%s' ----==\n",
                   m_rg->id(), m_rg->getRegionName());
         m_rg->dump(false);
     }

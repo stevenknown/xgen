@@ -346,7 +346,7 @@ sub runCPP
     my $retval = system($cmdline);
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
-        print "\nEXECUTE CPP FAILED!! RES:$retval\n";
+        print "\nFAILED! -- EXECUTE CPP FAILED!! RES:$retval\n";
         abortex($retval);
     }
     return $preprocessed_name; 
@@ -373,7 +373,7 @@ sub runXOCC
     my $retval = system($cmdline);
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
-        print "\nEXECUTE XOCC FAILED!! RES:$retval\n";
+        print "\nFAILED! -- EXECUTE XOCC FAILED!! RES:$retval\n";
         abortex($retval);
     }
     if ($is_invoke_assembler) {
@@ -546,8 +546,9 @@ sub parseCmdLine
             }
             $i++;
             if (!$ARGV[$i]) {
+                #Note ""(empty string) and undef are both in the case.
                 usage();
-                abort();
+                abortex();
             }
             $g_override_xocc_flag = $ARGV[$i];
         } else {
@@ -771,7 +772,7 @@ sub extractAndSetCflag
     my $pattern = qr/World/;
     # read file content
     open my $file, '<', $configure_file_path or
-        abortex("Error openning file: $!\n");
+        abortex("FAILED! -- ERROR OPENNING FILE: $!\n");
     while (defined(my $line = <$file>)) {
         chomp $line;
         $g_cflags = $g_cflags." ".$line;
@@ -814,7 +815,7 @@ sub compareDumpFile
     } else {
         #Not equal
         #New result is incorrect!
-        print "\nCOMPARE DUMP OF $fullpath FAILED! NOT EQUAL TO BASE DUMP!\n";
+        print "\nFAILED! -- COMPARE DUMP OF $fullpath FAILED! NOT EQUAL TO BASE DUMP!\n";
         abortex();
     }
 }

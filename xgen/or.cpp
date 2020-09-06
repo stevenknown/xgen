@@ -65,9 +65,9 @@ void ORList::dump(CG * cg)
     for (OR * o = get_head(); o != NULL; o = get_next()) {
         buf.clean();
         o->dump(buf, cg);
-        note("\n%s", buf.buf);
+        note(cg->getRegion(), "\n%s", buf.buf);
     }
-    note("\n");
+    note(cg->getRegion(), "\n");
 }
 //END ORList
 
@@ -143,7 +143,7 @@ void OR::dump(CG * cg) const
 {
     xcom::StrBuf buf(128);
     dump(buf, cg);
-    note("\n%s", buf.buf);
+    note(cg->getRegion(), "\n%s", buf.buf);
 }
 
 

@@ -2272,24 +2272,24 @@ xoc::DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, xoc::TypeMgr * tm)
 //    3. simplifing Tree into IR.
 //NOTICE:
 //    Before the converting, declaration of Tree must wire up a Var.
-static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
+static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
 {
     ASSERT0(DECL_is_fun_def(dcl));
 
     //Generate region for function.
-    xoc::Region * r = rumgr->newRegion(xoc::REGION_FUNC);
+    xoc::Region * r = rm->newRegion(xoc::REGION_FUNC);
     r->setRegionVar(mapDecl2VAR(dcl));
     ASSERTN(r->getRegionVar(), ("Region miss var"));
 
     REGION_is_expect_inline(r) = is_inline(dcl);
-    rumgr->addToRegionTab(r);
+    rm->addToRegionTab(r);
 
-    ASSERT0(rumgr->get_program());
-    REGION_parent(r) = rumgr->get_program();
+    ASSERT0(rm->get_program());
+    REGION_parent(r) = rm->get_program();
     REGION_parent(r)->addToVarTab(r->getRegionVar());
-    xoc::IR * lst = rumgr->get_program()->getIRList();
-    xcom::add_next(&lst, rumgr->get_program()->buildRegion(r));
-    rumgr->get_program()->setIRList(lst);
+    xoc::IR * lst = rm->get_program()->getIRList();
+    xcom::add_next(&lst, rm->get_program()->buildRegion(r));
+    rm->get_program()->setIRList(lst);
 
     //Itertive scanning scope to collect and append
     //all local-variable into VarTab.
@@ -2306,7 +2306,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
         return ST_ERR;
     }
     if (xoc::g_dump_opt.isDumpALL()) {
-        xoc::note("\n==---- AFTER TREE2IR CONVERT '%s' -----==",
+        xoc::note(rm, "\n==---- AFTER TREE2IR CONVERT '%s' -----==",
                   get_decl_name(dcl));
         xoc::dumpIRList(irs, r);
     }
@@ -2316,7 +2316,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
 
     //Reshape IR tree to well formed outlook.
     if (xoc::g_dump_opt.isDumpALL()) {
-        xoc::note("\n==---- AFTER RESHAPE IR -----==", get_decl_name(dcl));
+        xoc::note(rm, "\n==---- AFTER RESHAPE IR -----==", get_decl_name(dcl));
         xoc::dumpIRList(irs, r);
     }
     Canon ic(r);
@@ -2335,7 +2335,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rumgr)
     ASSERT0(xoc::verifyIRList(irs, NULL, r));
     r->setIRList(irs);
     if (xoc::g_dump_opt.isDumpALL()) {
-        xoc::note("\n==---- AFTER REFINE IR -----==", get_decl_name(dcl));
+        xoc::note(rm, "\n==---- AFTER REFINE IR -----==", get_decl_name(dcl));
         xoc::dumpIRList(irs, r);
         //rg->dumpVARInRegion();
     }

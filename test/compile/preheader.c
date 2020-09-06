@@ -8,8 +8,8 @@ int main(int b)
  LOOP_START: 
    n = 10;
 LOOP_HEAD:
-  //Should insert guard BB to control preheader.
-  g = b;
+  //There is no need to insert guard BB.
+  g = b; //only LD b can be hoisted.
   if (b > 0) { goto LOOP_START; }
   return g;
 }

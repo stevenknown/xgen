@@ -1,0 +1,193 @@
+
+==---- DUMP LICM Analysis Result : LoopInfo1 : 'main' ----==
+
+
+==---- DUMP LICM Analysis Result : LoopInfo2 : 'main' ----==
+-- Invariant Expression (num=2) -- :
+   ild:i32 id:26 attachinfo:Dbx       
+       ld:*<4> 'pd0' decl:struct defs  *  pd0  id:25 attachinfo:Dbx
+   intconst:i32 1|0x1 id:29 attachinfo:Dbx
+-- Invariant Statement (num=2) -- :
+
+   [14]    for (j = 0; j < pd0->ubits; j++) //pd0->ubits is loop invariant.
+
+   stpr $5:i32 id:61 attachinfo:Dbx       
+       ild:i32 id:26 attachinfo:Dbx           
+           ld:*<4> 'pd0' decl:struct defs  *  pd0  id:25 attachinfo:Dbx
+
+   [15]      lrc = 1;
+
+   st:i32 'lrc' decl:int  lrc  id:30 attachinfo:Dbx       
+       intconst:i32 1|0x1 id:29 attachinfo:Dbx
+==---- DUMP LICM Analysis Result : LoopInfo3 : 'main' ----==
+-- Invariant Expression (num=4) -- :
+   intconst:i32 0|0x0 id:22 attachinfo:Dbx
+   ild:i32 id:26 attachinfo:Dbx       
+       ld:*<4> 'pd0' decl:struct defs  *  pd0  id:25 attachinfo:Dbx
+   ild:i32 id:19 attachinfo:Dbx       
+       ld:*<4> 'pd0' decl:struct defs  *  pd0  id:18 attachinfo:Dbx
+   intconst:i32 1|0x1 id:29 attachinfo:Dbx
+-- Invariant Statement (num=3) -- :
+
+   [13]  for (k = 0; k < pd0->ubits; k++) //pd0->ubits is loop invariant.
+
+   stpr $4:i32 id:59 attachinfo:Dbx       
+       ild:i32 id:19 attachinfo:Dbx           
+           ld:*<4> 'pd0' decl:struct defs  *  pd0  id:18 attachinfo:Dbx
+
+   [14]    for (j = 0; j < pd0->ubits; j++) //pd0->ubits is loop invariant.
+
+   stpr $5:i32 id:61 attachinfo:Dbx       
+       ild:i32 id:26 attachinfo:Dbx           
+           ld:*<4> 'pd0' decl:struct defs  *  pd0  id:25 attachinfo:Dbx
+
+   [15]      lrc = 1;
+
+   st:i32 'lrc' decl:int  lrc  id:30 attachinfo:Dbx       
+       intconst:i32 1|0x1 id:29 attachinfo:Dbx
+==---- DUMP Loop Invariant Code Motion 'main' ----==
+==---- DUMP IRBBList 'main' ----==
+----- BB15 --- rpo:0 -----
+ATTR:entry_bb fall_through 
+STMT NUM:0
+
+----- BB1 --- rpo:5 -----
+ATTR:
+STMT NUM:1
+
+   [10]  while (*pt = *ps) { //Because ps may alias to pt, *ps is NOT loop invariant.
+
+   ist:i8 id:6 attachinfo:Dbx       
+       ld:*<1> 'pt' decl:char  *  pt  base id:3 attachinfo:Dbx       
+       ild:i8 id:5 attachinfo:Dbx           
+           ld:*<1> 'ps' decl:char  *  ps  id:4 attachinfo:Dbx
+
+----- BB2 --- rpo:10 -----
+LABEL:_L1 
+ATTR:fall_through branch_target 
+STMT NUM:2
+   stpr $3:i8 id:57 attachinfo:Dbx       
+       ild:i8 id:2 attachinfo:Dbx           
+           ld:*<1> 'ps' decl:char  *  ps  id:1 attachinfo:Dbx
+   truebr label _L2 id:45 attachinfo:Dbx       
+       eq:bool id:12 attachinfo:Dbx           
+           $3:i8 id:56 attachinfo:Dbx           
+           intconst:i8 0|0x0 id:11
+
+----- BB3 --- rpo:50 -----
+ATTR:
+STMT NUM:2
+   ist:i8 id:7 attachinfo:Dbx       
+       ld:*<1> 'pt' decl:char  *  pt  base id:8 attachinfo:Dbx       
+       ild:i8 id:9 attachinfo:Dbx           
+           ld:*<1> 'ps' decl:char  *  ps  id:10 attachinfo:Dbx
+   goto label _L1 id:31
+
+----- BB17 --- rpo:14 -----
+LABEL:_L2 
+ATTR:fall_through 
+STMT NUM:1
+   falsebr label _L3 id:69       
+       lt:bool id:66 attachinfo:Dbx           
+           ld:i32 'k' decl:int  k  id:67 attachinfo:Dbx           
+           $4:i32 id:68 attachinfo:Dbx
+
+----- BB5 --- rpo:15 -----
+ATTR:branch_target 
+STMT NUM:4
+
+   [13]  for (k = 0; k < pd0->ubits; k++) //pd0->ubits is loop invariant.
+
+   st:i32 'k' decl:int  k  id:16 attachinfo:Dbx       
+       intconst:i32 0|0x0 id:15 attachinfo:Dbx
+
+   [14]    for (j = 0; j < pd0->ubits; j++) //pd0->ubits is loop invariant.
+
+   stpr $5:i32 id:61 attachinfo:Dbx       
+       ild:i32 id:26 attachinfo:Dbx           
+           ld:*<4> 'pd0' decl:struct defs  *  pd0  id:25 attachinfo:Dbx
+
+   [13]  for (k = 0; k < pd0->ubits; k++) //pd0->ubits is loop invariant.
+
+   stpr $4:i32 id:59 attachinfo:Dbx       
+       ild:i32 id:19 attachinfo:Dbx           
+           ld:*<4> 'pd0' decl:struct defs  *  pd0  id:18 attachinfo:Dbx
+
+   [15]      lrc = 1;
+
+   st:i32 'lrc' decl:int  lrc  id:30 attachinfo:Dbx       
+       intconst:i32 1|0x1 id:29 attachinfo:Dbx
+
+----- BB6 --- rpo:20 -----
+LABEL:_L3 
+ATTR:fall_through branch_target 
+STMT NUM:1
+
+   [13]  for (k = 0; k < pd0->ubits; k++) //pd0->ubits is loop invariant.
+
+   falsebr label _L4 id:37 attachinfo:Dbx       
+       lt:bool id:20 attachinfo:Dbx           
+           ld:i32 'k' decl:int  k  id:14 attachinfo:Dbx           
+           $4:i32 id:58 attachinfo:Dbx
+
+----- BB16 --- rpo:29 -----
+ATTR:fall_through 
+STMT NUM:1
+   falsebr label _L5 id:65       
+       lt:bool id:62 attachinfo:Dbx           
+           ld:i32 'j' decl:int  j  id:63 attachinfo:Dbx           
+           $5:i32 id:64 attachinfo:Dbx
+
+----- BB7 --- rpo:30 -----
+ATTR:
+STMT NUM:1
+
+   [14]    for (j = 0; j < pd0->ubits; j++) //pd0->ubits is loop invariant.
+
+   st:i32 'j' decl:int  j  id:23 attachinfo:Dbx       
+       intconst:i32 0|0x0 id:22 attachinfo:Dbx
+
+----- BB8 --- rpo:35 -----
+LABEL:_L5 
+ATTR:fall_through branch_target 
+STMT NUM:1
+   falsebr label _L6 id:51 attachinfo:Dbx       
+       lt:bool id:27 attachinfo:Dbx           
+           ld:i32 'j' decl:int  j  id:21 attachinfo:Dbx           
+           $5:i32 id:60 attachinfo:Dbx
+
+----- BB9 --- rpo:45 -----
+ATTR:
+STMT NUM:3
+   stpr $1:i32 id:35 attachinfo:Dbx       
+       ld:i32 'j' decl:int  j  id:34
+   st:i32 'j' decl:int  j  id:36 attachinfo:Dbx       
+       add:i32 id:33           
+           ld:i32 'j' decl:int  j  id:28 attachinfo:Dbx           
+           intconst:i32 1|0x1 id:32
+   goto label _L5 id:24
+
+----- BB11 --- rpo:40 -----
+LABEL:_L6 
+ATTR:branch_target 
+STMT NUM:3
+
+   [13]  for (k = 0; k < pd0->ubits; k++) //pd0->ubits is loop invariant.
+
+   stpr $2:i32 id:43 attachinfo:Dbx       
+       ld:i32 'k' decl:int  k  id:42
+   st:i32 'k' decl:int  k  id:44 attachinfo:Dbx       
+       add:i32 id:41           
+           ld:i32 'k' decl:int  k  id:39 attachinfo:Dbx           
+           intconst:i32 1|0x1 id:40
+   goto label _L3 id:17
+
+----- BB13 --- rpo:25 -----
+LABEL:_L4 
+ATTR:fall_through branch_target 
+STMT NUM:1
+
+   [16]  return rc;
+
+   return id:48 attachinfo:Dbx
+       ld:i32 'rc' decl:int  rc  id:47 attachinfo:Dbx

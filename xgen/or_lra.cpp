@@ -909,21 +909,22 @@ void LifeTime::dump(LifeTimeMgr * mgr)
 {
     ASSERT0(mgr);
     xcom::StrBuf buf(6);
-    xoc::note("\n==-- LT(%3d)[%s] --==", LT_id(this),
-        LT_sr(this)->get_name(buf, mgr->getCG()));
+    xoc::note(mgr->getRegion(), "\n==-- LT(%3d)[%s] --==", LT_id(this),
+              LT_sr(this)->get_name(buf, mgr->getCG()));
     buf.clean();
     for (INT i = LT_pos(this)->get_first();
          i >= 0; i = LT_pos(this)->get_next(i)) {
         PosInfo * pi = LT_desc(this).get(i);
         if (pi == NULL) { continue; }
-        xoc::note("\n=- POS%d[%s]:", i, POSINFO_is_def(pi) ? "def" : "use");
+        xoc::note(mgr->getRegion(),
+                  "\n=- POS%d[%s]:", i, POSINFO_is_def(pi) ? "def" : "use");
         OR const* o = mgr->getOR(i);
         ASSERT0(o);
         buf.clean();
         o->dump(buf, mgr->getCG());
-        xoc::prt("%s", buf.buf);
+        xoc::prt(mgr->getRegion(), "%s", buf.buf);
     }
-    xoc::note("\n");
+    xoc::note(mgr->getRegion(), "\n");
 }
 //END LifeTime
 
@@ -2645,9 +2646,10 @@ void GroupMgr::union_group(INT tgt, INT src)
 
 void GroupMgr::dump()
 {
-    FILE * h = xoc::g_tfile;
+    FILE * h = m_cg->getRegion()->getLogMgr()->getFileHandler();
+    ASSERT0(h);
     fprintf(h, "\nCur_Func:%s, ORBB:%d, Group Info: ",
-        m_cg->getRegion()->getRegionName(), m_bb->id());
+            m_cg->getRegion()->getRegionName(), m_bb->id());
 
     StrBuf buf(64);
     for (INT i = 0; i <= m_groupidx2ors_map.get_last_idx(); i++) {
@@ -3098,12 +3100,12 @@ LRA::LRA(ORBB * bb, RaMgr * ra_mgr)
 //Display phase name
 void LRA::show_phase(CHAR * phase_name)
 {
-    if (!g_dump_opt.isDumpRA() || xoc::g_tfile == NULL) { return; }
-    note("\nREGION(%d)%s, ORBB(%d)Len(%d), PHASE:%s",
+    if (!g_dump_opt.isDumpRA() || !getRegion()->isLogMgrInit()) { return; }
+    note(getRegion(), "\nREGION(%d)%s, ORBB(%d)Len(%d), PHASE:%s",
          m_rg->id(),
          m_rg->getRegionName() != NULL ? m_rg->getRegionName() : "",
          m_bb->id(), ORBB_ornum(m_bb), phase_name);
-    note("\nREGION(%d)%s, ORBB(%d)Len(%d), PHASE:%s",
+    note(getRegion(), "\nREGION(%d)%s, ORBB(%d)Len(%d), PHASE:%s",
          m_rg->id(),
          m_rg->getRegionName() != NULL ? m_rg->getRegionName() : "",
          m_bb->id(), ORBB_ornum(m_bb), phase_name);
@@ -3114,11 +3116,10 @@ void LRA::show_phase(CHAR * phase_name)
 //policy that the selecting should obviate choose identical
 //register with those registers which are other ors at same
 //layer with the first occurrence o of 'lt'.
-REG LRA::chooseByRegFileGroup(
-        RegSet & regs,
-        LifeTime * lt,
-        LifeTimeMgr & mgr,
-        RegFileGroup * rfg)
+REG LRA::chooseByRegFileGroup(RegSet & regs,
+                              LifeTime * lt,
+                              LifeTimeMgr & mgr,
+                              RegFileGroup * rfg)
 {
     if (rfg == NULL) {
         return REG_UNDEF;
@@ -6283,20 +6284,20 @@ void LRA::buildPriorityList(
 
 void LRA::dumpPrioList(List<LifeTime*> & prio_list)
 {
-    if (xoc::g_tfile == NULL) { return; }
+    if (!getRegion()->isLogMgrInit()) { return; }
     StrBuf buf(64);
-    note("\nBB%d, Priority List:", m_bb->id());
+    note(getRegion(), "\nBB%d, Priority List:", m_bb->id());
     UINT i = 0;
     while (i < prio_list.get_elem_count()) {
         LifeTime * lt = prio_list.get_head_nth(i);
-        note("\n  LT(%d):%f ", LT_id(lt), LT_prio(lt));
+        note(getRegion(), "\n  LT(%d):%f ", LT_id(lt), LT_prio(lt));
 
         buf.clean();
-        note("[%s]", LT_sr(lt)->get_name(buf, m_cg));
+        note(getRegion(), "[%s]", LT_sr(lt)->get_name(buf, m_cg));
 
         i++;
     }
-    note("\n");
+    note(getRegion(), "\n");
 }
 
 
@@ -6306,7 +6307,8 @@ void LRA::resetLifeTimeAllocated(LifeTimeMgr & mgr)
 {
     LifeTime * lt;
     INT c;
-    for (lt = mgr.getFirstLifeTime(c); lt != NULL; lt = mgr.getNextLifeTime(c)) {
+    for (lt = mgr.getFirstLifeTime(c);
+         lt != NULL; lt = mgr.getNextLifeTime(c)) {
         SR * sr = LT_sr(lt);
         if (SR_is_dedicated(sr) ||
             SR_is_global(sr) ||

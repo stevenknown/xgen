@@ -381,8 +381,11 @@ void ARMAsmPrinter::printCodeSequentially(IssuePackageList * ipl,
     CHAR const* format = "%s%19s";
     CHAR const* code_indent = "";
     DbxMgr::PrtCtx prtctx;
+
+    LogMgr asm_lm;
+    asm_lm.push(asmh, "");
     prtctx.prefix = "#";
-    prtctx.handler = asmh;
+    prtctx.logmgr = &asm_lm;
     for (IssuePackage const* ip = ipl->get_head();
          ip != NULL; ip = ipl->get_next()) {
         fprintf(asmh, "\n");
@@ -398,6 +401,9 @@ void ARMAsmPrinter::printCodeSequentially(IssuePackageList * ipl,
         }
         fprintf(asmh, "\n ");
     }
+
+    //Clean handler info to prevent logmgr close asmh in this function.
+    asm_lm.pop();
 }
 
 

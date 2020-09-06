@@ -40,10 +40,7 @@ class OR_DF_MGR {
     Vector<xcom::BitSet*> m_use_var_set;
 
 public:
-    OR_DF_MGR(CG * cg)
-    {
-        m_cg = cg;
-    }
+    OR_DF_MGR(CG * cg) { m_cg = cg; }
 
     void computeLocalLiveness(ORBB * bb);
     void computeGlobalLiveness();
@@ -53,15 +50,16 @@ public:
 
     xcom::BitSet * get_use_var(ORBB * bb);
     xcom::BitSet * get_def_var(ORBB * bb);
+    Region * getRegion() const;
 };
 
 
 //
 //START G_LIFE_TIME
 //
-#define GLT_id(g)            ((g)->id)
-#define GLT_sr(g)            ((g)->sr)
-#define GLT_livebbs(g)        ((g)->livebbs)
+#define GLT_id(g) ((g)->id)
+#define GLT_sr(g) ((g)->sr)
+#define GLT_livebbs(g) ((g)->livebbs)
 class G_LIFE_TIME {
 public:
     UINT id;
@@ -73,11 +71,10 @@ public:
 
 typedef HMap<SR*, G_LIFE_TIME*> SR2GLT_MAP;
 
-
 //GLT_MGR
-#define GLT_MGR_ra_mgr(gm)            ((gm).m_ramgr)
-#define GLT_MGR_ru(gm)                ((gm).rg)
-#define GLT_MGR_sr2glt_map(gm)        ((gm).m_sr2glt_map)
+#define GLT_MGR_ra_mgr(gm) ((gm).m_ramgr)
+#define GLT_MGR_ru(gm) ((gm).rg)
+#define GLT_MGR_sr2glt_map(gm) ((gm).m_sr2glt_map)
 class GLT_MGR {
 protected:
     SMemPool * m_pool;
@@ -105,19 +102,24 @@ public:
     GLT_MGR(RaMgr * ra_mgr, CG * cg);
     ~GLT_MGR();
 
+    void build(IN OR_DF_MGR & df_mgr);
+
     void dump();
+
+    G_LIFE_TIME * get_glt(UINT id);
+    Region * getRegion() const;
+
     xcom::BitSet * map_sr2livebbs(SR * sr);
     LifeTimeMgr * map_bb2ltmgr(ORBB * bb);
-    G_LIFE_TIME * get_glt(UINT id);
+
     G_LIFE_TIME * new_glt(SR * sr);
-    void build(IN OR_DF_MGR & df_mgr);
 };
 
 
 //G_INTERF_GRAPH
-#define GIG_ru(g)            ((g)->m_rg)
-#define GIG_ra_mgr(g)        ((g)->m_ramgr)
-#define GIG_glt_mgr(g)        ((g)->m_glt_mgr)
+#define GIG_ru(g) ((g)->m_rg)
+#define GIG_ra_mgr(g) ((g)->m_ramgr)
+#define GIG_glt_mgr(g) ((g)->m_glt_mgr)
 
 class G_INTERF_GRAPH : public xcom::Graph {
 public:
@@ -136,12 +138,12 @@ public:
 
 
 //G_ACTION
-#define G_ACTION_NON                     0
-#define G_ACTION_SPILL                     1
-#define G_ACTION_SPLIT                     2
-#define G_ACTION_DFS_REASSIGN_REGFILE    3
-#define G_ACTION_BFS_REASSIGN_REGFILE    4
-#define G_ACTION_MOVE_HOUSE             5
+#define G_ACTION_NON 0
+#define G_ACTION_SPILL 1
+#define G_ACTION_SPLIT 2
+#define G_ACTION_DFS_REASSIGN_REGFILE 3
+#define G_ACTION_BFS_REASSIGN_REGFILE 4
+#define G_ACTION_MOVE_HOUSE 5
 class G_ACTION {
     Vector<UINT> m_lt2action;
 public:
@@ -153,8 +155,8 @@ public:
 
 
 //GRA
-#define GRA_ru(g)            ((g)->m_rg)
-#define GRA_ra_mgr(g)        ((g)->m_ramgr)
+#define GRA_ru(g) ((g)->m_rg)
+#define GRA_ra_mgr(g) ((g)->m_ramgr)
 class GRA {
 protected:
     CG * m_cg;
@@ -174,12 +176,12 @@ public:
                           OUT List<G_LIFE_TIME*> & uncolored_list,
                           IN G_INTERF_GRAPH & ig);
     void buildPriorityList(OUT List<G_LIFE_TIME*> & prio_list,
-                             IN G_INTERF_GRAPH & ig);
+                           IN G_INTERF_GRAPH & ig);
     RegSet * get_used_callee_save_regs() { return m_used_callee_save_regs; }
     void solveConflict(OUT List<G_LIFE_TIME*> & uncolored_list,
-                        OUT List<G_LIFE_TIME*> & prio_list,
-                        IN G_INTERF_GRAPH & ig,
-                        G_ACTION & action);
+                       OUT List<G_LIFE_TIME*> & prio_list,
+                       IN G_INTERF_GRAPH & ig,
+                       G_ACTION & action);
     void perform();
 };
 

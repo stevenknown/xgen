@@ -245,7 +245,7 @@ CHAR const* SR::get_name(StrBuf & buf, CG * cg) const
 void SR::dump(CG * cg) const
 {
     StrBuf buf(64);
-    note("%s:", get_name(buf, cg));
+    note(cg->getRegion(), "%s:", get_name(buf, cg));
     //TODO: dump more info
 }
 
@@ -253,11 +253,11 @@ void SR::dump(CG * cg) const
 bool SR::is_equal(SR const* sr)
 {
     return type == sr->type &&
-        u2.bitflags == sr->u2.bitflags &&
-        SR_int_imm(this) == SR_int_imm(sr) &&
-        SR_imm_size(this) == SR_imm_size(sr) &&
-        SR_spill_var(this) == SR_spill_var(sr) &&
-        SR_vec(this) == SR_vec(sr);
+           u2.bitflags == sr->u2.bitflags &&
+           SR_int_imm(this) == SR_int_imm(sr) &&
+           SR_imm_size(this) == SR_imm_size(sr) &&
+           SR_spill_var(this) == SR_spill_var(sr) &&
+           SR_vec(this) == SR_vec(sr);
 }
 //END SR
 

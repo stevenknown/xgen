@@ -88,6 +88,7 @@ public:
     virtual void get_succs(IN OUT List<ORBB*> & succs, ORBB const* bb);
     OR * get_first_xr(ORBB * bb);
     OR * get_last_xr(ORBB * bb);
+    CG * getCG() const { return m_cg; }
 
     virtual bool isRegionEntry(ORBB * bb) { return ORBB_is_entry(bb); }
     virtual bool isRegionExit(ORBB * bb) { return ORBB_is_exit(bb); }

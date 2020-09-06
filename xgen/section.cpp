@@ -32,12 +32,12 @@ author: Su Zhenyu
 
 void Section::dump(CG const* cg)
 {
-    if (xoc::g_tfile == NULL) { return; }
+    if (!cg->getRegion()->isLogMgrInit()) { return; }
     xoc::TypeMgr const* tm = cg->getTypeMgr();
     xcom::StrBuf buf(64);
-    note("\nSection:size:%d,", (UINT)SECT_size(this));
-    note("%s", sect_var->dump(buf, tm));
-    note("\n  VarLayOut:");
+    note(cg->getRegion(), "\nSection:size:%d,", (UINT)SECT_size(this));
+    note(cg->getRegion(), "%s", sect_var->dump(buf, tm));
+    note(cg->getRegion(), "\n  VarLayOut:");
     List<xoc::Var const*> layout;
     for (xoc::Var const* v = var_list.get_head();
          v != NULL; v = var_list.get_next()) {
@@ -66,7 +66,8 @@ void Section::dump(CG const* cg)
         VarDesc * vd = var2vdesc_map.get(v);
         buf.clean();
         ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
-        note("\n  (%u)%s", (UINT)VD_ofst(vd), v->dump(buf, tm));
+        note(cg->getRegion(), "\n  (%u)%s",
+             (UINT)VD_ofst(vd), v->dump(buf, tm));
     }
 }
 
@@ -76,14 +77,15 @@ void Section::dump(CG const* cg)
 //
 void StackSection::dump(CG const* cg)
 {
-    if (xoc::g_tfile == NULL) { return; }
+    if (!cg->getRegion()->isLogMgrInit()) { return; }
     xoc::TypeMgr const* tm = cg->getTypeMgr();
     xcom::StrBuf buf(64);
-    fprintf(xoc::g_tfile, "\nSection:size:%d,",
-        (UINT)SECT_size(this) + cg->getMaxArgSectionSize());
-    fprintf(xoc::g_tfile, "%s", sect_var->dump(buf, tm));
+    FILE * h = cg->getRegion()->getLogMgr()->getFileHandler();
+    fprintf(h, "\nSection:size:%d,",
+            (UINT)SECT_size(this) + cg->getMaxArgSectionSize());
+    fprintf(h, "%s", sect_var->dump(buf, tm));
 
-    fprintf(xoc::g_tfile, "\n  VarLayOut:");
+    fprintf(h, "\n  VarLayOut:");
     List<xoc::Var const*> layout;
     for (xoc::Var const* v = var_list.get_head();
          v != NULL; v = var_list.get_next()) {
@@ -112,14 +114,15 @@ void StackSection::dump(CG const* cg)
         VarDesc * vd = var2vdesc_map.get(v);
         ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
         buf.clean();
-        fprintf(xoc::g_tfile, "\n  (%u)%s",
-            (UINT)VD_ofst(vd) + cg->getMaxArgSectionSize(), v->dump(buf, tm));
+        fprintf(h, "\n  (%u)%s",
+                (UINT)VD_ofst(vd) + cg->getMaxArgSectionSize(),
+                v->dump(buf, tm));
     }
 
     if (cg->getMaxArgSectionSize() > 0) {
-        fprintf(xoc::g_tfile, "\n  (%u)%s", 0, "real-param");
+        fprintf(h, "\n  (%u)%s", 0, "real-param");
     }
 
-    fflush(xoc::g_tfile);
+    fflush(h);
 }
 //END StackSection

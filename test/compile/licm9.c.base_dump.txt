@@ -1,0 +1,64 @@
+
+==---- DUMP LICM Analysis Result : LoopInfo1 : 'main' ----==
+-- Invariant Expression (num=2) -- :
+   intconst:i32 20|0x14 id:8 attachinfo:Dbx
+   ld:i32 'b' decl:int  b  id:12 attachinfo:Dbx
+-- Invariant Statement (num=2) -- :
+
+   [10]    i = 20; //should be hoisted.
+
+   st:i32 'i' decl:int  i  id:9 attachinfo:Dbx       
+       intconst:i32 20|0x14 id:8 attachinfo:Dbx
+
+   [12]    g = b; //should be hoisted.
+
+   st:i32 'g' decl:int  g  id:13 attachinfo:Dbx       
+       ld:i32 'b' decl:int  b  id:12 attachinfo:Dbx
+==---- DUMP Loop Invariant Code Motion 'main' ----==
+==---- DUMP IRBBList 'main' ----==
+----- BB8 --- rpo:0 -----
+ATTR:entry_bb fall_through 
+STMT NUM:0
+
+----- BB1 --- rpo:5 -----
+ATTR:
+STMT NUM:3
+
+   [7]  n = 10;
+
+   st:i32 'n' decl:int  n  id:3 attachinfo:Dbx       
+       intconst:i32 10|0xa id:2 attachinfo:Dbx
+
+   [10]    i = 20; //should be hoisted.
+
+   st:i32 'i' decl:int  i  id:9 attachinfo:Dbx       
+       intconst:i32 20|0x14 id:8 attachinfo:Dbx
+
+   [12]    g = b; //should be hoisted.
+
+   st:i32 'g' decl:int  g  id:13 attachinfo:Dbx       
+       ld:i32 'b' decl:int  b  id:12 attachinfo:Dbx
+
+----- BB2 --- rpo:10 -----
+LABEL:_L1 
+ATTR:fall_through branch_target 
+STMT NUM:1
+
+   [9]  while (n > 0) {
+
+   truebr label _L1 id:7 attachinfo:Dbx       
+       gt:bool id:6 attachinfo:Dbx           
+           ld:i32 'n' decl:int  n  id:1 attachinfo:Dbx           
+           intconst:i32 0|0x0 id:5 attachinfo:Dbx
+
+----- BB6 --- rpo:15 -----
+LABEL:PLACE_HOLDER_LABEL _L2 
+ATTR:fall_through branch_target 
+STMT NUM:1
+
+   [14]  return g + n;
+
+   return id:18 attachinfo:Dbx
+       add:i32 id:17 attachinfo:Dbx           
+           ld:i32 'g' decl:int  g  id:15 attachinfo:Dbx           
+           ld:i32 'n' decl:int  n  id:16 attachinfo:Dbx

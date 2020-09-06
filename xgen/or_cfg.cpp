@@ -326,22 +326,21 @@ void OR_CFG::dumpVCG(CHAR const* name, bool detail)
 
     //Print comment
     fprintf(h, "\n/*");
-    FILE * old = xoc::g_tfile;
-    xoc::g_tfile = h;
-    bool old_cg_dump_src_line = g_cg_dump_src_line;
+    LogCtx lc;
+    lc.logfile = h;
+    lc.logfile_name = name;
+    lc.prt_srcline = false;
+    m_cg->getRegion()->getLogMgr()->push(lc);
 
     //Some source code string may incur VCG parser reporting error,
     //e.g: the dissociate char '"' will lead to syntax error.
     g_cg_dump_src_line = false;
-    dumpORBBList(*m_bb_list);
-    xoc::g_tfile = old;
+
+    dumpORBBList(*m_bb_list, getCG());
+    m_cg->getRegion()->getLogMgr()->pop();
     fprintf(h, "\n*/\n");
 
     dump_head(h);
-
-    old = xoc::g_tfile;
-    xoc::g_tfile = h;
-
     //Print Region name.
     fprintf(h,
             "\nnode: {title:\"\" vertical_order:0 shape:box color:turquoise "
@@ -350,9 +349,8 @@ void OR_CFG::dumpVCG(CHAR const* name, bool detail)
             m_cg->getRegion()->getRegionName());
     dump_node(h, detail);
     dump_edge(h);
-    xoc::g_tfile = old;
     fprintf(h, "\n}\n");
-    g_cg_dump_src_line = old_cg_dump_src_line;
+    m_cg->getRegion()->getLogMgr()->pop();
     fclose(h);
 }
 

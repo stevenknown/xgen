@@ -143,9 +143,9 @@ void RegFileGroup::addOR(OR * o, INT layer)
 
 void RegFileGroup::dump()
 {
-    FILE * h = xoc::g_tfile;
+    FILE * h = m_cg->getRegion()->getLogMgr()->getFileHandler();
     fprintf(h, "\nRegion:%s, ORBB:%d, RegFileGroup: ",
-        m_cg->getRegion()->getRegionName(), m_bb->id());
+            m_cg->getRegion()->getRegionName(), m_bb->id());
 
     StrBuf buf(64);
     for (INT i = 0; i <= m_group2orlist_map.get_last_idx(); i++) {

@@ -1,0 +1,6 @@
+
+==---- DUMP LICM Analysis Result : LoopInfo1 : 'test' ----==
+
+
+==---- DUMP LICM Analysis Result : LoopInfo2 : 'test' ----==
+

@@ -36,25 +36,24 @@ namespace xgen {
 class CGMgr;
 
 class CLRegionMgr : public xoc::RegionMgr {
+    COPY_CONSTRUCTOR(CLRegionMgr);
 protected:
     xoc::Region * m_program;
 
 public:
     CLRegionMgr() {}
-    COPY_CONSTRUCTOR(CLRegionMgr);
     virtual ~CLRegionMgr() {}
 
     xoc::Region * get_program() { return m_program; }
     void set_program(xoc::Region * r) { m_program = r; }
 
-    virtual bool compileFuncRegion(
-        xoc::Region * func,
-        CGMgr * cgmgr,
-        FILE * asmh,
-        xoc::OptCtx * oc);
+    virtual bool compileFuncRegion(xoc::Region * func,
+                                   CGMgr * cgmgr,
+                                   FILE * asmh,
+                                   xoc::OptCtx * oc);
 };
 
-
 CLRegionMgr * allocRegionMgr();
+
 } //namespace xgen
 #endif

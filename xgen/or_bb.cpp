@@ -413,7 +413,7 @@ OR * BBORList::get_prev(OR * marker)
 
 void BBORList::dump(CG * cg)
 {
-    if (xoc::g_tfile == NULL) { return; }
+    if (!cg->getRegion()->isLogMgrInit()) { return; }
     xcom::StrBuf buf(64);
     ORCt * cm = NULL;
     for (OR * o = get_head(); o != NULL; o = get_next()) {
@@ -424,8 +424,8 @@ void BBORList::dump(CG * cg)
 
         buf.clean();
         o->dump(buf, cg);
-        note("%s", buf.buf);
-        note("\n");
+        note(cg->getRegion(), "%s", buf.buf);
+        note(cg->getRegion(), "\n");
     }
 }
 //END BBORList
@@ -560,31 +560,31 @@ void ORBB::mergeLabeInfoList(ORBB * from)
 
 void ORBB::dump()
 {
-    note("\n------ BB%d ------", ORBB_id(this));
+    note(m_cg->getRegion(), "\n------ BB%d ------", ORBB_id(this));
 
     //Label Info list
     LabelInfo const* li = getLabelList().get_head();
     if (li != NULL) {
-        note("\nLABEL:");
+        note(m_cg->getRegion(), "\nLABEL:");
     }
 
     StrBuf buf(32);
     for (; li != NULL; li = getLabelList().get_next()) {
-        note("%s ", m_cg->formatLabelName(li, buf));
+        note(m_cg->getRegion(), "%s ", m_cg->formatLabelName(li, buf));
     }
 
     //Attributes
-    note("\nATTR:");
+    note(m_cg->getRegion(), "\nATTR:");
     if (ORBB_is_exit(this)) {
-        note("exit_bb ");
+        note(m_cg->getRegion(), "exit_bb ");
     }
 
     //OR list
-    note("\nOR NUM:%d\n", ORBB_ornum(this));
-    g_indent += 3;
+    note(m_cg->getRegion(), "\nOR NUM:%d\n", ORBB_ornum(this));
+    m_cg->getRegion()->getLogMgr()->incIndent(3);
     ORBB_orlist(this)->dump(m_cg);
-    g_indent -= 3;
-    note("\n");
+    m_cg->getRegion()->getLogMgr()->decIndent(3);
+    note(m_cg->getRegion(), "\n");
 }
 
 
@@ -598,10 +598,10 @@ bool ORBB::isDownBoundary(OR * o)
 //END ORBB
 
 
-void dumpORBBList(List<ORBB*> & bbl)
+void dumpORBBList(List<ORBB*> & bbl, CG * cg)
 {
-    if (xoc::g_tfile == NULL) { return; }
-    note("\n==---- DUMP ORBB List ----==");
+    if (!cg->getRegion()->getLogMgr()->is_init()) { return; }
+    note(cg->getRegion(), "\n==---- DUMP ORBB List ----==");
     if (g_dbx_mgr != NULL) {
         g_dbx_mgr->doPrepareWorkBeforePrint();
     }
@@ -609,7 +609,6 @@ void dumpORBBList(List<ORBB*> & bbl)
     for (ORBB * bb = bbl.get_head(); bb != NULL; bb = bbl.get_next()) {
         bb->dump();
     }
-    fflush(xoc::g_tfile);
 }
 
 } //namespace xgen
