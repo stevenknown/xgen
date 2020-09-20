@@ -54,6 +54,7 @@ our $g_single_testcase = ""; #record the single testcase
 our $g_override_xocc_path = "";
 our $g_override_xocc_flag = "";
 our $g_is_compare_dump = 0;
+our $g_is_basedumpfile_must_exist = 0;
 our $g_error_count = 0;
 
 sub findCurrent {
@@ -526,6 +527,13 @@ sub parseCmdLine
             $g_is_invoke_linker = 0; 
             $g_is_invoke_simulator = 0;
             $g_is_compare_dump = 1; 
+            $g_is_basedumpfile_must_exist = 1;
+        } elsif ($ARGV[$i] eq "CompareDumpIfExist") {
+            $g_is_invoke_assembler = 0; 
+            $g_is_invoke_linker = 0; 
+            $g_is_invoke_simulator = 0;
+            $g_is_compare_dump = 1; 
+            $g_is_basedumpfile_must_exist = 0;
         } elsif ($ARGV[$i] eq "OverrideXoccPath") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
@@ -646,6 +654,7 @@ sub usage
     print "NOTE: You have to make sure the file name of testcase is unqiue.\n";
     print "USAGE: ./run.pl pac|x64|arm [CreateBaseResult] [MovePassed] ",
           "[TestGr] [ShowTime] [OnlyCompile] [Recur] [NotQuitEarly] [CompareDump] ",
+          "[CompareDumpIfExist] ",
           "[Case = your_test_file_name]  ",
           "[OverrideXoccPath = your_xocc_file_path] ",
           "[OverrideXoccFlag = your_xocc_flag] ",
@@ -798,13 +807,19 @@ sub compareDumpFile
 {
     my $fullpath = $_[0]; #path to src file.
     my $dump_file = $_[1]; #new dump file to be compared.
+    my $is_basedumpfile_must_exist = $_[2];
 
     #Compare baseline dump and latest dump.
     #The baseline result file.
     my $base_dump_file = $fullpath.".base_dump.txt";
     if (!-e $base_dump_file) {
-        #Baseline dump file does not exist.
-        abortex("Base dump file '$base_dump_file' not exist.");
+        if ($is_basedumpfile_must_exist) {
+            #Baseline dump file does not exist.
+            abortex("Base dump file '$base_dump_file' not exist.");
+        } else {
+            print "\nPASS! NOTE:base dump file '$base_dump_file' not exist.\n";
+            return;
+        }
     }
 
     print("\nCMD>>compare dump-file $base_dump_file $dump_file\n");

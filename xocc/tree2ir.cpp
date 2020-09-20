@@ -2356,7 +2356,8 @@ bool generateRegion(RegionMgr * rm)
     rm->addToRegionTab(topru);
     ((CLRegionMgr*)rm)->set_program(topru);
     topru->setRegionVar(topru->getVarMgr()->registerVar(".program",
-        rm->getTypeMgr()->getMCType(0), 1, VAR_GLOBAL|VAR_FAKE));
+                        rm->getTypeMgr()->getMCType(0),
+                        1, VAR_GLOBAL|VAR_FAKE));
 
     //In the file scope, generate function region.
     if (g_dump_opt.isDumpALL()) {

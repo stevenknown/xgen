@@ -1,0 +1,123 @@
+
+==---- DUMP Dead Code Eliminiation 'foo' ----==
+==-- Ineffect BB --==
+--0- BB3		ineffect BB!
+--0- BB1
+
+==---- DUMP IRBBList 'foo' ----==
+----- BB3 --- rpo:0 -----
+ATTR:entry_bb fall_through 
+STMT NUM:0
+
+----- BB1 --- rpo:5 -----
+ATTR:fall_through 
+STMT NUM:1
+   return id:1
+
+==---- DUMP PRSSA Manager 'foo' ----==
+==---- DUMP PRSSAMgr:VPR 'foo' ----==
+
+--- BB3 ---
+--- BB1 ---
+    ------------------
+    return id:1
+    VP:-- <= --
+==---- DUMP MDSSA Manager 'foo' ----==
+--- BB3 ---
+--- BB1 ---
+
+return id:1
+==---- DUMP Dead Code Eliminiation 'foo' ----==
+==-- Ineffect BB --==
+--0- BB3		ineffect BB!
+--0- BB1
+
+==---- DUMP IRBBList 'foo' ----==
+----- BB3 --- rpo:0 -----
+ATTR:entry_bb fall_through 
+STMT NUM:0
+
+----- BB1 --- rpo:5 -----
+ATTR:fall_through 
+STMT NUM:1
+   return id:1
+
+==---- DUMP PRSSA Manager 'foo' ----==
+==---- DUMP PRSSAMgr:VPR 'foo' ----==
+
+--- BB3 ---
+--- BB1 ---
+    ------------------
+    return id:1
+    VP:-- <= --
+==---- DUMP MDSSA Manager 'foo' ----==
+--- BB3 ---
+--- BB1 ---
+
+return id:1
+==---- DUMP Dead Code Eliminiation '.program' ----==
+==-- Ineffect BB --==
+--0- BB3		ineffect BB!
+--0- BB1		ineffect BB!
+
+==---- DUMP IRBBList '.program' ----==
+----- BB3 --- rpo:0 -----
+ATTR:entry_bb fall_through 
+STMT NUM:0
+
+----- BB1 --- rpo:5 -----
+ATTR:fall_through 
+STMT NUM:0
+
+==---- DUMP PRSSA Manager '.program' ----==
+==---- DUMP PRSSAMgr:VPR '.program' ----==
+
+--- BB3 ---
+--- BB1 ---
+==---- DUMP MDSSA Manager '.program' ----==
+--- BB3 ---
+--- BB1 ---
+==---- DUMP Dead Code Eliminiation '.program' ----==
+==-- Ineffect BB --==
+--0- BB3		ineffect BB!
+--0- BB1		ineffect BB!
+
+==---- DUMP IRBBList '.program' ----==
+----- BB3 --- rpo:0 -----
+ATTR:entry_bb fall_through 
+STMT NUM:0
+
+----- BB1 --- rpo:5 -----
+ATTR:fall_through 
+STMT NUM:0
+
+==---- DUMP PRSSA Manager '.program' ----==
+==---- DUMP PRSSAMgr:VPR '.program' ----==
+
+--- BB3 ---
+--- BB1 ---
+==---- DUMP MDSSA Manager '.program' ----==
+--- BB3 ---
+--- BB1 ---
+==---- DUMP Dead Code Eliminiation '.program' ----==
+==-- Ineffect BB --==
+--0- BB3		ineffect BB!
+--0- BB1		ineffect BB!
+
+==---- DUMP IRBBList '.program' ----==
+----- BB3 --- rpo:0 -----
+ATTR:entry_bb fall_through 
+STMT NUM:0
+
+----- BB1 --- rpo:5 -----
+ATTR:fall_through 
+STMT NUM:0
+
+==---- DUMP PRSSA Manager '.program' ----==
+==---- DUMP PRSSAMgr:VPR '.program' ----==
+
+--- BB3 ---
+--- BB1 ---
+==---- DUMP MDSSA Manager '.program' ----==
+--- BB3 ---
+--- BB1 ---

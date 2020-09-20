@@ -103,15 +103,18 @@ void CLDbxMgr::printSrcLine(Dbx const* dbx, PrtCtx * ctx)
     }
 
     if (g_hsrc != NULL) {
-        ASSERTN(m_cur_lineno < OFST_TAB_LINE_SIZE, ("unexpected src line"));
-        fseek(g_hsrc, g_ofst_tab[m_cur_lineno], SEEK_SET);
+        UINT srcline = mapRealLineToSrcLine(m_cur_lineno);
+        if (srcline == 0) {
+            srcline = m_cur_lineno;
+        }
+        ASSERTN(srcline < OFST_TAB_LINE_SIZE, ("unexpected src line"));
+        fseek(g_hsrc, g_ofst_tab[srcline], SEEK_SET);
         if (fgets(g_cur_line, g_cur_line_len, g_hsrc) != NULL) {
             if (ctx != NULL && ctx->prefix != NULL) {
                 note(ctx->logmgr, "\n\n%s[%u]%s",
                      ctx->prefix, m_cur_lineno, g_cur_line);
             } else {
-                note(ctx->logmgr, "\n\n[%u]%s",
-                     m_cur_lineno, g_cur_line);
+                note(ctx->logmgr, "\n\n[%u]%s", m_cur_lineno, g_cur_line);
             }
         }
     }
@@ -138,12 +141,16 @@ void CLDbxMgr::printSrcLine(xcom::StrBuf & output, Dbx const* dbx, PrtCtx * ctx)
     }
 
     if (g_hsrc != NULL) {
-        ASSERTN(m_cur_lineno < OFST_TAB_LINE_SIZE, ("unexpected src line"));
-        fseek(g_hsrc, g_ofst_tab[m_cur_lineno], SEEK_SET);
+        UINT srcline = mapRealLineToSrcLine(m_cur_lineno);
+        if (srcline == 0) {
+            srcline = m_cur_lineno;
+        }
+        ASSERTN(srcline < OFST_TAB_LINE_SIZE, ("unexpected src line"));
+        fseek(g_hsrc, g_ofst_tab[srcline], SEEK_SET);
         if (fgets(g_cur_line, g_cur_line_len, g_hsrc) != NULL) {
             if (ctx != NULL && ctx->prefix != NULL) {
                 output.strcat("\n\n%s[%u]%s", ctx->prefix,
-                    m_cur_lineno, g_cur_line);
+                              m_cur_lineno, g_cur_line);
             } else {
                 output.strcat("\n\n[%u]%s", m_cur_lineno, g_cur_line);
             }

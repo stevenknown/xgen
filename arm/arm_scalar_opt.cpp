@@ -90,9 +90,11 @@ bool ARMScalarOpt::perform(OptCtx & oc)
                 //RC_insert_cvt(rf) = false;
                 //m_rg->getRefine()->refineBBlist(m_rg->getBBList(), rf);
                 change = true;
-            }
-            res |= doit;
+                
 
+            }
+
+            res |= doit;
             ASSERT0(m_rg->verifyMDRef());
             if (OC_is_pr_du_chain_valid(oc) ||
                 OC_is_nonpr_du_chain_valid(oc)) {

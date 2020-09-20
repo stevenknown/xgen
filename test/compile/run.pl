@@ -28,6 +28,7 @@ our $g_ld_flag;
 our $g_simulator;
 our $g_cflags;
 our $g_is_compare_dump;
+our $g_is_basedumpfile_must_exist;
 our $g_error_count;
 require "../util.pl";
 prolog();
@@ -91,7 +92,8 @@ sub tryCompile
         $g_cflags = $org_cflags;
        
         if ($g_is_compare_dump == 1) {
-            compareDumpFile($fullpath, $dump_file);
+            compareDumpFile($fullpath, $dump_file,
+                            $g_is_basedumpfile_must_exist);
         }
 
         if ($g_is_move_passed_case == 1) {

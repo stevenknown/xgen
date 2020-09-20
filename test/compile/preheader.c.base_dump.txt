@@ -1,0 +1,55 @@
+
+==---- DUMP LICM Analysis Result 'main' ----==
+-- Invariant Expression (num=2) -- :
+   intconst:i32 10|0xa id:4 attachinfo:Dbx
+   ld:i32 'b' decl:int  b  id:8 attachinfo:Dbx
+-- Invariant Statement (num=2) -- :
+
+   [10]   n = 10;
+
+   st:i32 'n' decl:int  n  id:5 attachinfo:Dbx       
+       intconst:i32 10|0xa id:4 attachinfo:Dbx
+
+   [13]  g = b;
+
+   st:i32 'g' decl:int  g  id:9 attachinfo:Dbx       
+       ld:i32 'b' decl:int  b  id:8 attachinfo:Dbx
+==---- DUMP Loop Invariant Code Motion 'main' ----==
+==---- DUMP IRBBList 'main' ----==
+----- BB9 --- rpo:0 -----
+ATTR:entry_bb fall_through 
+STMT NUM:0
+
+----- BB10 --- rpo:10 -----
+LABEL:_L4 
+ATTR:
+STMT NUM:2
+
+   [10]   n = 10;
+
+   st:i32 'n' decl:int  n  id:5 attachinfo:Dbx       
+       intconst:i32 10|0xa id:4 attachinfo:Dbx
+
+   [13]  g = b;
+
+   st:i32 'g' decl:int  g  id:9 attachinfo:Dbx       
+       ld:i32 'b' decl:int  b  id:8 attachinfo:Dbx
+
+----- BB5 --- rpo:20 -----
+LABEL:LOOP_HEAD _L3 
+ATTR:fall_through branch_target 
+STMT NUM:1
+   truebr label LOOP_HEAD id:14       
+       gt:bool id:6 attachinfo:Dbx           
+           ld:i32 'b' decl:int  b  id:3 attachinfo:Dbx           
+           intconst:i32 0|0x0 id:17 attachinfo:Dbx
+
+----- BB7 --- rpo:25 -----
+LABEL:_L2 
+ATTR:fall_through branch_target 
+STMT NUM:1
+
+   [15]  return g;
+
+   return id:16 attachinfo:Dbx
+       ld:i32 'g' decl:int  g  id:15 attachinfo:Dbx
