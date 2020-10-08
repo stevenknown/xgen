@@ -37,10 +37,10 @@ namespace xgen {
 //
 xcom::BitSet * OR_DF_MGR::get_def_var(ORBB * bb)
 {
-    xcom::BitSet * set = m_def_var_set.get(ORBB_id(bb));
+    xcom::BitSet * set = m_def_var_set.get(bb->id());
     if (set == NULL) {
         set = m_bs_mgr.create();
-        m_def_var_set.set(ORBB_id(bb), set);
+        m_def_var_set.set(bb->id(), set);
     }
     return set;
 }
@@ -48,10 +48,10 @@ xcom::BitSet * OR_DF_MGR::get_def_var(ORBB * bb)
 
 xcom::BitSet * OR_DF_MGR::get_use_var(ORBB * bb)
 {
-    xcom::BitSet * set = m_use_var_set.get(ORBB_id(bb));
+    xcom::BitSet * set = m_use_var_set.get(bb->id());
     if (set == NULL) {
         set = m_bs_mgr.create();
-        m_use_var_set.set(ORBB_id(bb), set);
+        m_use_var_set.set(bb->id(), set);
     }
     return set;
 }
@@ -65,7 +65,7 @@ void OR_DF_MGR::dump()
     List<ORBB*> * bbl = m_cg->getORBBList();
     getRegion()->getLogMgr()->incIndent(2);
     for (ORBB * bb = bbl->get_head(); bb != NULL; bb = bbl->get_next()) {
-        note(getRegion(), "\n--- BB%d ---", ORBB_id(bb));
+        note(getRegion(), "\n--- BB%d ---", bb->id());
         xcom::BitSet * live_in = &ORBB_livein(bb);
         xcom::BitSet * live_out = &ORBB_liveout(bb);
         xcom::BitSet * def = get_def_var(bb);
@@ -129,13 +129,13 @@ void OR_DF_MGR::computeLocalLiveness(ORBB * bb)
         for (i = 0; i < o->result_num(); i++) {
             SR * sr = o->get_result(i);
             ASSERT0(sr != NULL);
-            if (!SR_is_reg(sr)) { continue; }
+            if (!sr->is_reg()) { continue; }
             gen->bunion(SR_sregid(sr));
         }
         use->diff(*gen);
         for (i = 0; i < o->opnd_num(); i++) {
             SR * sr = o->get_opnd(i);
-            if (!SR_is_reg(sr)) { continue; }
+            if (!sr->is_reg()) { continue; }
             ASSERT0(sr != NULL);
             use->bunion(SR_sregid(sr));
         }
@@ -241,7 +241,7 @@ void GLT_MGR::dump()
             for (i = 0; i < o->opnd_num(); i++) {
                 SR * sr = o->get_opnd(i);
                 ASSERT0(sr != NULL);
-                if (!SR_is_reg(sr)) { continue; }
+                if (!sr->is_reg()) { continue; }
 
                 buf.clean();
                 sr->get_name(buf, m_cg);
@@ -251,7 +251,7 @@ void GLT_MGR::dump()
             for (i = 0; i < o->result_num(); i++) {
                 SR * sr = o->get_result(i);
                 ASSERT0(sr != NULL);
-                if (!SR_is_reg(sr)) { continue; }
+                if (!sr->is_reg()) { continue; }
                 sr->get_name(buf, m_cg);
                 max_name_len = MAX(max_name_len, (UINT)buf.strlen());
                 srbs.bunion(SR_sregid(sr));
@@ -304,11 +304,11 @@ xcom::BitSet * GLT_MGR::map_sr2livebbs(IN SR * sr)
 
 LifeTimeMgr * GLT_MGR::map_bb2ltmgr(ORBB * bb)
 {
-    LifeTimeMgr * ltmgr = m_map_bb2ltmgr.get(ORBB_id(bb));
+    LifeTimeMgr * ltmgr = m_map_bb2ltmgr.get(bb->id());
     if (ltmgr == NULL) {
         //Allocated object managed by RaMgr, and do not delete it youself.
         ltmgr = GLT_MGR_ra_mgr(*this)->allocLifeTimeMgr();
-        m_map_bb2ltmgr.set(ORBB_id(bb), ltmgr);
+        m_map_bb2ltmgr.set(bb->id(), ltmgr);
     }
     return ltmgr;
 }
@@ -354,7 +354,7 @@ void GLT_MGR::build(IN OR_DF_MGR & df_mgr)
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr != NULL);
             xcom::BitSet * livebbs = map_sr2livebbs(sr);
-            livebbs->bunion(ORBB_id(bb));
+            livebbs->bunion(bb->id());
             if (livebbs->get_elem_count() > 1) {
                 G_LIFE_TIME * glt = new_glt(sr);
                 GLT_livebbs(glt) = livebbs;
@@ -364,7 +364,7 @@ void GLT_MGR::build(IN OR_DF_MGR & df_mgr)
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr != NULL);
             xcom::BitSet * livebbs = map_sr2livebbs(sr);
-            livebbs->bunion(ORBB_id(bb));
+            livebbs->bunion(bb->id());
             if (livebbs->get_elem_count() > 1) {
                 G_LIFE_TIME * glt = new_glt(sr);
                 GLT_livebbs(glt) = livebbs;
@@ -469,12 +469,11 @@ void G_INTERF_GRAPH::dump(IN CHAR * name)
 }
 
 
-bool G_INTERF_GRAPH::isInterferred(
-        IN G_LIFE_TIME * glt1,
-        IN G_LIFE_TIME * glt2)
+bool G_INTERF_GRAPH::isInterferred(IN G_LIFE_TIME * glt1,
+                                   IN G_LIFE_TIME * glt2)
 {
-    ASSERTN(SR_is_reg(GLT_sr(glt1)) && SR_is_reg(GLT_sr(glt2)),
-        ("sr is not register"));
+    ASSERTN(GLT_sr(glt1)->is_reg() && GLT_sr(glt2)->is_reg(),
+            ("sr must be register"));
     if (GLT_id(glt1) == GLT_id(glt2)) return true;
     if (!GLT_livebbs(glt1)->is_intersect(*GLT_livebbs(glt2))) return false;
     OR_CFG * cfg = m_cg->getORCfg();

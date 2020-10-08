@@ -36,11 +36,11 @@ namespace xgen {
 class RegFileSet;
 
 //SR Descriptor
-#define SRD_valid_regfile_set(sd)  ((sd)->valid_regfile_set)
-#define SRD_valid_reg_set(sd)      ((sd)->valid_regset)
-#define SRD_is_imm(sd)             ((sd)->is_imm)
-#define SRD_bitsize(sd)            ((sd)->bitsize)
-#define SRD_is_signed(sd)          ((sd)->is_signed)
+#define SRD_valid_regfile_set(sd) ((sd)->valid_regfile_set)
+#define SRD_valid_reg_set(sd) ((sd)->valid_regset)
+#define SRD_is_imm(sd) ((sd)->is_imm)
+#define SRD_bitsize(sd) ((sd)->bitsize)
+#define SRD_is_signed(sd) ((sd)->is_signed)
 typedef struct SRDesc {
     RegFileSet const* valid_regfile_set;
     RegSet const* valid_regset;
@@ -74,7 +74,6 @@ public:
 
         va_list ptr;
         va_start(ptr, opndnum);
-
         for (UINT i = 0; i < resnum + opndnum; i++) {
             sd_group[i] = va_arg(ptr, SRDesc*);
         }

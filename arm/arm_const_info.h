@@ -85,6 +85,15 @@ typedef unsigned long long UINT128;
 //Bit size of word length of target machine.
 #define WORD_LENGTH_OF_TARGET_MACHINE (GENERAL_REGISTER_SIZE * BIT_PER_BYTE)
 
+//Bit size of double word length of target machine.
+#define DWORD_LENGTH_OF_TARGET_MACHINE (WORD_LENGTH_OF_TARGET_MACHINE * 2)
+
+//Byte size of word of target machine.
+#define BYTESIZE_OF_WORD (GENERAL_REGISTER_SIZE)
+
+//Byte size of double word of target machine.
+#define BYTESIZE_OF_DWORD (BYTESIZE_OF_WORD * 2)
+
 //If the number of OR of one BB is larger than following value,
 //all local optimizations are disabled.
 #define MAX_OR_BB_OPT_BB_LEN 1000

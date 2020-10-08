@@ -38,7 +38,7 @@ author: Su Zhenyu
 
 bool ARMScalarOpt::perform(OptCtx & oc)
 {
-    ASSERT0(OC_is_cfg_valid(oc));
+    ASSERT0(oc.is_cfg_valid());
     ASSERT0(m_rg && m_rg->getCFG()->verify());
     List<Pass*> passlist; //A list of Optimization.
 
@@ -96,14 +96,14 @@ bool ARMScalarOpt::perform(OptCtx & oc)
 
             res |= doit;
             ASSERT0(m_rg->verifyMDRef());
-            if (OC_is_pr_du_chain_valid(oc) ||
-                OC_is_nonpr_du_chain_valid(oc)) {
+            if (oc.is_pr_du_chain_valid() ||
+                oc.is_nonpr_du_chain_valid()) {
                 //DU reference and du chain has maintained.
                 UINT flag = 0;
-                if (OC_is_pr_du_chain_valid(oc)) {
+                if (oc.is_pr_du_chain_valid()) {
                     SET_FLAG(flag, DUOPT_COMPUTE_PR_DU);
                 }
-                if (OC_is_nonpr_du_chain_valid(oc)) {
+                if (oc.is_nonpr_du_chain_valid()) {
                     SET_FLAG(flag, DUOPT_COMPUTE_NONPR_DU);
                 }
                 ASSERT0(m_rg->getDUMgr());

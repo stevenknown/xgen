@@ -483,7 +483,7 @@ bool ORBB::hasLabel(LabelInfo const* lab)
 
 void ORBB::setLiveOut(SR * sr)
 {
-    ASSERT0(SR_is_reg(sr));
+    ASSERT0(sr->is_reg());
     SR_is_global(sr) = 1;
     ORBB_liveout(this).bunion(SR_sregid(sr));
 }
@@ -491,7 +491,7 @@ void ORBB::setLiveOut(SR * sr)
 
 void ORBB::setLiveIn(SR * sr)
 {
-    ASSERT0(SR_is_reg(sr));
+    ASSERT0(sr->is_reg());
     SR_is_global(sr) = 1;
     ORBB_livein(this).bunion(SR_sregid(sr));
 }
@@ -499,8 +499,8 @@ void ORBB::setLiveIn(SR * sr)
 
 bool ORBB::isLiveIn(SR * sr)
 {
-    ASSERT0(SR_is_reg(sr));
-    if (SR_is_global(sr) &&
+    ASSERT0(sr->is_reg());
+    if (sr->is_global() &&
         (ORBB_livein(this).is_contain(SR_sregid(sr)))) {
         return true;
     }
@@ -510,7 +510,7 @@ bool ORBB::isLiveIn(SR * sr)
 
 bool ORBB::isLiveOut(SR * sr)
 {
-    if (SR_is_global(sr) &&
+    if (sr->is_global() &&
         (ORBB_liveout(this).is_contain(SR_sregid(sr)))) {
         return true;
     }

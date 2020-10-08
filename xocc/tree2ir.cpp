@@ -2274,12 +2274,16 @@ xoc::DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, xoc::TypeMgr * tm)
 //    Before the converting, declaration of Tree must wire up a Var.
 static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
 {
+    
     ASSERT0(DECL_is_fun_def(dcl));
 
     //Generate region for function.
     xoc::Region * r = rm->newRegion(xoc::REGION_FUNC);
     r->setRegionVar(mapDecl2VAR(dcl));
     ASSERTN(r->getRegionVar(), ("Region miss var"));
+
+    START_TIMER_FMT(t, ("GenerateFuncRegion '%s'",
+                        r->getRegionVar()->get_name()->getStr()));
 
     REGION_is_expect_inline(r) = is_inline(dcl);
     rm->addToRegionTab(r);
@@ -2334,6 +2338,10 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
     irs = rf->refineIRlist(irs, change, rc);
     ASSERT0(xoc::verifyIRList(irs, NULL, r));
     r->setIRList(irs);
+
+    END_TIMER_FMT(t, ("GenerateFuncRegion '%s'",
+                        r->getRegionVar()->get_name()->getStr()));
+
     if (xoc::g_dump_opt.isDumpALL()) {
         xoc::note(rm, "\n==---- AFTER REFINE IR -----==", get_decl_name(dcl));
         xoc::dumpIRList(irs, r);

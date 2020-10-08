@@ -36,6 +36,114 @@ author: Su Zhenyu
 //
 class ARMCG : public CG {
 private:
+    void buildStoreCase1(IN SR * store_val,
+                         IN SR * base,
+                         IN SR * sr_ofst,
+                         Var const* v,
+                         OUT ORList & ors,
+                         IN IOC * cont);
+    void buildStoreCase2(IN SR * store_val,
+                         IN SR * base,
+                         IN SR * sr_ofst,
+                         Var const* v,
+                         OUT ORList & ors,
+                         IN IOC * cont);
+    void buildShiftRightCase1(IN SR * src,
+                              ULONG sr_size,
+                              IN SR * shift_ofst,
+                              bool is_signed,
+                              OUT ORList & ors,
+                              IN OUT IOC * cont);
+    void buildShiftRightCase2(IN SR * src,
+                              ULONG sr_size,
+                              IN SR * shift_ofst,
+                              bool is_signed,
+                              OUT ORList & ors,
+                              IN OUT IOC * cont);
+    void buildShiftRightCase3(IN SR * src,
+                              ULONG sr_size,
+                              IN SR * shift_ofst,
+                              bool is_signed,
+                              OUT ORList & ors,
+                              IN OUT IOC * cont);
+    void buildShiftRightCase3_1(IN SR * src,
+                                ULONG sr_size,
+                                IN SR * shift_ofst,
+                                bool is_signed,
+                                OUT ORList & ors,
+                                IN OUT IOC * cont);
+    void buildShiftRightCase3_2(IN SR * src,
+                                ULONG sr_size,
+                                IN SR * shift_ofst,
+                                bool is_signed,
+                                OUT ORList & ors,
+                                IN OUT IOC * cont);
+    void buildShiftRightCase3_3(IN SR * src,
+                                ULONG sr_size,
+                                IN SR * shift_ofst,
+                                bool is_signed,
+                                OUT ORList & ors,
+                                IN OUT IOC * cont);
+    //This is an util function.
+    //Build several [tgt] <- [src] operations accroding unrolling factor.
+    //e.g: given unrolling factor is 2, two memory assignments will be generated:
+    //     [tgt] <- [src];
+    //     src <- src + GENERAL_REGISTER_SIZE;
+    //     tgt <- tgt + GENERAL_REGISTER_SIZE;
+    //     [tgt] <- [src];
+    //tgt: target memory address register.
+    //src: source memory address register.
+    void buildMemAssignUnroll(SR * tgt,
+                              SR * src,
+                              UINT unroll_factor,
+                              OUT ORList & ors,
+                              IN IOC * cont);
+
+    //This is an util function.
+    //Build [tgt] <- [src] operation.
+    //tgt: target memory address register.
+    //src: source memory address register.
+    void buildMemAssign(SR * tgt,
+                        SR * src,
+                        OUT ORList & ors,
+                        IN IOC * cont);
+
+    //This is an util function.
+    //Build [tgt] <- [src] operation.
+    //tgt: target memory address register.
+    //src: source memory address register.
+    //bytesize: assigned bytesize that customized by caller.
+    void buildMemAssignBySize(SR * tgt,
+                              SR * src,
+                              UINT bytesize,
+                              OUT ORList & ors,
+                              IN IOC * cont);
+    //Increase 'reg' by 'val'.
+    virtual void buildIncReg(SR * reg, UINT val, OUT ORList & ors, IOC * cont);
+    //Decrease 'reg' by 'val'.
+    virtual void buildDecReg(SR * reg, UINT val, OUT ORList & ors, IOC * cont);
+
+    //This is an util function.
+    //Build several [tgt] <- [src] operations accroding unrolling factor.
+    //Generate loop to copy from src to tgt.
+    //e.g: given tgt address register, src address register, bytesize:
+    //  srt2 = bytesize
+    //  LOOP_START:
+    //  x = [src]
+    //  [tgt] = x
+    //  src = src + 4byte
+    //  tgt = tgt + 4byte
+    //  srt2 = srt2 - 4byte
+    //  teq_i, cpsr = srt2, 0
+    //  b.ne, LOOP_START
+    //tgt: target memory address register.
+    //src: source memory address register.
+    void buildMemAssignLoop(SR * tgt,
+                            SR * src,
+                            UINT bytesize,
+                            OUT ORList & ors,
+                            IN IOC * cont);
+
     void expandFakeShift(IN OR * o, OUT IssuePackageList * ipl);
     void expandFakeStore(IN OR * o, OUT IssuePackageList * ipl);
     void expandFakeSpadjust(IN OR * o, OUT IssuePackageList * ipl);
@@ -110,11 +218,11 @@ public:
 public:
     explicit ARMCG(Region * rg, CGMgr * cgmgr) : CG(rg, cgmgr)
     {
-        m_sp = genSP();
+        m_sp = getSP();
         //TODO
-        //m_fp = genFP();
-        //m_gp = genGP();
-        m_true_pred = genTruePred();
+        //m_fp = getFP();
+        //m_gp = getGP();
+        m_true_pred = getTruePred();
 
         //Xocfe will generate code for big return-value like:
         //extern struct _S {int a ; int b ; int c ; int d ; } foo ();
@@ -126,11 +234,15 @@ public:
     COPY_CONSTRUCTOR(ARMCG);
     virtual ~ARMCG() {}
 
+    virtual SR * getSP() const;
+    virtual SR * getFP() const;
+    virtual SR * getGP() const;
+    virtual SR * getReturnAddr() const;
+    virtual SR * getRflag() const;
+    virtual SR * getTruePred() const;
     virtual SR * genSP();
     virtual SR * genFP();
     virtual SR * genGP();
-    SR * gen_one();
-    SR * gen_zero();
     SR * gen_r0();
     SR * gen_r1();
     SR * gen_r2();
@@ -309,8 +421,10 @@ public:
 
     virtual void expandFakeOR(IN OR * o, OUT IssuePackageList * ipl);
 
+    virtual void initDedicatedSR();
     virtual bool isPassArgumentThroughRegister() { return true; }
-    virtual bool isValidRegInSRVec(OR * o, SR * sr, UINT idx, bool is_result);
+    virtual bool isValidRegInSRVec(OR const* o, SR const* sr,
+                                   UINT idx, bool is_result) const;
     virtual bool isValidResultRegfile(
             OR_TYPE ortype,
             INT resnum,
@@ -319,26 +433,25 @@ public:
             OR_TYPE ortype,
             INT opndnum,
             REGFILE regfile) const;
-    virtual bool isSPUnit(UNIT unit);
-    virtual bool isIntRegSR(
-            OR * o,
-            SR const* sr,
-            UINT idx,
-            bool is_result) const;
-    virtual bool isBusCluster(CLUST clust);
-    virtual bool isBusSR(SR const* sr);
-    virtual bool isRecalcOR(OR * o);
+    virtual bool isSPUnit(UNIT unit) const;
+    virtual bool isIntRegSR(OR const* o,
+                            SR const* sr,
+                            UINT idx,
+                            bool is_result) const;
+    virtual bool isBusCluster(CLUST clust) const;
+    virtual bool isBusSR(SR const* sr) const;
+    virtual bool isRecalcOR(OR const* o) const;
     virtual bool isSameCluster(SLOT slot1, SLOT slot2) const;
-    virtual bool isSameLikeCluster(SLOT slot1, SLOT slot2);
-    virtual bool isSameLikeCluster(OR const* or1, OR const* or2);
-    virtual bool isMultiResultOR(OR_TYPE ortype, UINT res_num);
-    virtual bool isMultiResultOR(OR_TYPE ortype);
-    virtual bool isMultiStore(OR_TYPE ortype, INT opnd_num);
-    virtual bool isMultiLoad(OR_TYPE ortype, INT res_num);
-    virtual bool isCopyOR(OR * o);
-    virtual bool isStackPointerValueEqu(SR const* base1, SR const* base2);
+    virtual bool isSameLikeCluster(SLOT slot1, SLOT slot2) const;
+    virtual bool isSameLikeCluster(OR const* or1, OR const* or2) const;
+    virtual bool isMultiResultOR(OR_TYPE ortype, UINT res_num) const;
+    virtual bool isMultiResultOR(OR_TYPE ortype) const;
+    virtual bool isMultiStore(OR_TYPE ortype, INT opnd_num) const;
+    virtual bool isMultiLoad(OR_TYPE ortype, INT res_num) const;
+    virtual bool isCopyOR(OR const* o) const;
+    virtual bool isStackPointerValueEqu(SR const* base1, SR const* base2) const;
     virtual bool isSP(SR const* sr) const;
-    virtual bool isReduction(OR * o);
+    virtual bool isReduction(OR const* o) const;
     virtual bool isEvenReg(REG reg) const;
     virtual OR_TYPE invertORType(OR_TYPE ot)
     {
@@ -350,32 +463,34 @@ public:
         return OR_UNDEF;
     }
 
-    virtual UnitSet & mapRegFile2UnitSet(
-            REGFILE regfile,
-            SR const* sr,
-            OUT UnitSet & us);
-    //virtual UNIT mapSR2Unit(OR const* o, SR const* sr);
+    virtual OR_TYPE mapIRType2ORType(IR_TYPE ir_type,
+                                     UINT ir_opnd_size,
+                                     IN SR * opnd0,
+                                     IN SR * opnd1,
+                                     bool is_signed);
+    virtual UnitSet & mapRegFile2UnitSet(REGFILE regfile,
+                                         SR const* sr,
+                                         OUT UnitSet & us) const;
     virtual CLUST mapSlot2Cluster(SLOT slot);
-    virtual UNIT mapSlot2Unit(SLOT slot);
+    virtual UNIT mapSlot2Unit(SLOT slot) const;
     virtual List<REGFILE> & mapCluster2RegFileList(
-            CLUST clust,
-            OUT List<REGFILE> & regfiles);
+        CLUST clust,
+        OUT List<REGFILE> & regfiles) const;
     virtual List<REGFILE> & mapUnitSet2RegFileList(
-            IN UnitSet & us,
-            OUT List<REGFILE> & regfiles);
-    virtual SLOT mapUnit2Slot(UNIT unit, CLUST clst);
-    virtual CLUST mapRegFile2Cluster(REGFILE regfile, SR const* sr);
-    virtual CLUST mapReg2Cluster(REG reg);
-    virtual CLUST mapSR2Cluster(OR * o, SR const* sr);
+        UnitSet const& us,
+        OUT List<REGFILE> & regfiles) const;
+    virtual SLOT mapUnit2Slot(UNIT unit, CLUST clst) const;
+    virtual CLUST mapRegFile2Cluster(REGFILE regfile, SR const* sr) const;
+    virtual CLUST mapReg2Cluster(REG reg) const;
+    virtual CLUST mapSR2Cluster(OR const* o, SR const* sr) const;
 
-    virtual LIS * allocLIS(
-            ORBB * bb,
-            DataDepGraph * ddg,
-            BBSimulator * sim,
-            UINT sch_mode,
-            bool change_slot,
-            bool change_cluster,
-            bool is_log);
+    virtual LIS * allocLIS(ORBB * bb,
+                           DataDepGraph * ddg,
+                           BBSimulator * sim,
+                           UINT sch_mode,
+                           bool change_slot,
+                           bool change_cluster,
+                           bool is_log);
     virtual IR2OR * allocIR2OR();
     virtual BBSimulator * allocBBSimulator(ORBB * bb, bool is_log);
     RaMgr * allocRaMgr(List<ORBB*> * bblist, bool is_func);

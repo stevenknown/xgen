@@ -63,7 +63,7 @@ protected:
 protected:
     ORDesc * allocORDesc();
 
-    INT computeDependentResultIndex(OR const* def, OR const* use);
+    INT computeDependentResultIndex(OR const* def, OR const* use) const;
 
     //Allocate ordesc container
     void freeordesc(ORDesc * ord)
@@ -86,7 +86,7 @@ public:
     BBSimulator(ORBB * bb);
     virtual ~BBSimulator() { destroy(); }
 
-    virtual bool canBeIssued(OR const* o, SLOT slot, DataDepGraph & ddg);
+    virtual bool canBeIssued(OR const* o, SLOT slot, DataDepGraph & ddg) const;
 
     void destroy();
     bool done();
@@ -102,19 +102,19 @@ public:
 
     void init();
     virtual bool isMemResourceConflict(DEP_TYPE deptype,
-                                       ORDesc * ck_ord,
-                                       OR const* cand_or);
+                                       ORDesc const* ck_ord,
+                                       OR const* cand_or) const;
     virtual bool isRegResourceConflict(DEP_TYPE deptype,
-                                       ORDesc * ck_ord,
-                                       OR const* cand_or);
-    virtual bool isResourceConflict(ORDesc * ck_ord,
+                                       ORDesc const* ck_ord,
+                                       OR const* cand_or) const;
+    virtual bool isResourceConflict(ORDesc const* ck_ord,
                                     OR const* cand_or,
-                                    DataDepGraph & ddg);
+                                    DataDepGraph const& ddg) const;
     virtual bool isInShadow(ORDesc const* ord) const;
     virtual bool issue(OR * o, SLOT slot);
 
-    virtual UINT getShadow(OR const* o);
-    virtual UINT getExecCycle(OR const* o);
+    virtual UINT getShadow(OR const* o) const;
+    virtual UINT getExecCycle(OR const* o) const;
     virtual UINT getMinLatency(OR * o);
 
     virtual UINT numOfMemResult(OR const*) const

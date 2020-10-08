@@ -44,7 +44,7 @@ void ARMLifeTimeMgr::considerSpecialConstraints(
 {
     ASSERTN(o && sr, ("NULL input"));
     ARMCG * armcg = (ARMCG*)m_cg;
-    switch (OR_code(o)) {
+    switch (o->getCode()) {
     case OR_strd:
     case OR_strd_i8: {
         //First Rs must be even number register.
@@ -101,15 +101,15 @@ void ARMLifeTimeMgr::considerSpecialConstraints(
 //Record the preference register information at neighbour life time.
 void ARMLifeTimeMgr::handlePreferredReg(OR const* o)
 {
-    if (!m_cg->isMultiLoad(OR_code(o), 2) &&
-        !m_cg->isMultiStore(OR_code(o), 2)) {
+    if (!m_cg->isMultiLoad(o->getCode(), 2) &&
+        !m_cg->isMultiStore(o->getCode(), 2)) {
         return;
     }
 
     SR * low = NULL;
     SR * high = NULL;
     bool is_result = false;
-    if (m_cg->isMultiLoad(OR_code(o), 2)) {
+    if (m_cg->isMultiLoad(o->getCode(), 2)) {
         low = const_cast<OR*>(o)->get_load_val(0);
         high = const_cast<OR*>(o)->get_load_val(1);
         is_result = true;
@@ -119,7 +119,7 @@ void ARMLifeTimeMgr::handlePreferredReg(OR const* o)
         is_result = false;
     }
 
-    ASSERTN(low && high && SR_is_reg(low) && SR_is_reg(high),
+    ASSERTN(low && high && low->is_reg() && high->is_reg(),
             ("Does it paired o?"));
     LifeTime * lowlt = (LifeTime*)m_sr2lt_map.get(low);
     LifeTime * highlt = (LifeTime*)m_sr2lt_map.get(high);
@@ -127,19 +127,19 @@ void ARMLifeTimeMgr::handlePreferredReg(OR const* o)
 
     getSibMgr()->setSib(lowlt, highlt);
 
-    if (SR_phy_regid(low) != REG_UNDEF && SR_phy_regid(high) == REG_UNDEF) {
-        ASSERTN(!SR_is_global(high),
+    if (SR_phy_reg(low) != REG_UNDEF && SR_phy_reg(high) == REG_UNDEF) {
+        ASSERTN(!high->is_global(),
             ("Global sr should be assigned register during GRA."));
         ASSERT0(m_cg->isValidRegInSRVec(
             const_cast<OR*>(o), low, 0, is_result));
-        LT_preferred_reg(highlt) = SR_phy_regid(low) + 1;
+        LT_preferred_reg(highlt) = SR_phy_reg(low) + 1;
     }
 
-    if (SR_phy_regid(high) != REG_UNDEF && SR_phy_regid(low) == REG_UNDEF) {
-        ASSERTN(!SR_is_global(low),
+    if (SR_phy_reg(high) != REG_UNDEF && SR_phy_reg(low) == REG_UNDEF) {
+        ASSERTN(!low->is_global(),
             ("Global sr should be assigned register during GRA."));
         ASSERT0(m_cg->isValidRegInSRVec(
             const_cast<OR*>(o), high, 1, is_result));
-        LT_preferred_reg(lowlt) = SR_phy_regid(high) - 1;
+        LT_preferred_reg(lowlt) = SR_phy_reg(high) - 1;
     }
 }

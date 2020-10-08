@@ -156,7 +156,7 @@ bool LIS::isIssueCand(OR * o)
 //Check the usage of function unit.
 bool LIS::isFuncUnitOccupied(UnitSet const& us,
                              CLUST clst,
-                             OR const* const issue_ors [SLOT_NUM])
+                             OR const* const issue_ors [SLOT_NUM]) const
 {
     for (INT i = us.get_first(); i != -1; i = us.get_next(i)) {
         SLOT s = m_cg->mapUnit2Slot((UNIT)i, clst);
@@ -172,11 +172,11 @@ bool LIS::isFuncUnitOccupied(UnitSet const& us,
 //Verficiation of instruction hazard, and change slot of o if possible.
 //Return true if 'o' can be issued at 'to_slot'.
 //The verification includes hardware resource, instrcution hazard, etc.
-bool LIS::canBeIssued(OR * o,
-                      OR * issue_ors[SLOT_NUM],
-                      SLOT to_slot,
-                      bool is_change_slot,
-                      OR * conflict_ors[SLOT_NUM])
+bool LIS::makeIssued(OR * o,
+                     OR * issue_ors[SLOT_NUM],
+                     SLOT to_slot,
+                     bool is_change_slot,
+                     OR * conflict_ors[SLOT_NUM])
 {
     ASSERT0(m_cg->mapSlot2Cluster(to_slot) != CLUST_UNDEF);
     UNIT to_slot_unit = m_cg->mapSlot2Unit(to_slot);
@@ -243,18 +243,17 @@ OR * LIS::selectBestOR(OR_HASH & cand_hash, SLOT slot)
 //'change_slot': set to true indicate the routine allows modification
 //  of operations in other slot. Note that the modification may
 //  change the function unit of operation.
-bool LIS::selectIssueOR(
-        IN ORList & cand_list,
-        SLOT slot,
-        OUT OR * issue_ors[SLOT_NUM],
-        bool change_slot)
+bool LIS::selectIssueOR(IN ORList & cand_list,
+                        SLOT slot,
+                        OUT OR * issue_ors[SLOT_NUM],
+                        bool change_slot)
 {
     ASSERTN(m_pool, ("uninitialized"));
     OR_HASH valid_cands;
     OR * cflct_ors[SLOT_NUM] = {0}; //record conflict ors.
     for (OR * o = cand_list.get_head();
          o != NULL; o = cand_list.get_next()) {
-        if (canBeIssued(o, issue_ors, slot, change_slot, cflct_ors)) {
+        if (makeIssued(o, issue_ors, slot, change_slot, cflct_ors)) {
             valid_cands.append(o);
         }
     }
@@ -272,11 +271,10 @@ bool LIS::selectIssueOR(
 
 //Mark and update candidate-list of OR to record which operation
 //has been selected to be issued subsequently.
-void LIS::updateIssueORs(
-        IN OUT ORList & cand_list,
-        SLOT slot,
-        IN OR * issue_or,
-        IN OUT OR * issue_ors[SLOT_NUM])
+void LIS::updateIssueORs(IN OUT ORList & cand_list,
+                         SLOT slot,
+                         IN OR * issue_or,
+                         IN OUT OR * issue_ors[SLOT_NUM])
 {
     issue_ors[slot - FIRST_SLOT] = issue_or;
     cand_list.remove(issue_or);

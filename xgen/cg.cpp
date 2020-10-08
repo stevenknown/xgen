@@ -129,9 +129,7 @@ CG::~CG()
         delete m_or_bb_mgr;
         m_or_bb_mgr = NULL;
     }
-
     smpoolDelete(m_pool);
-
     finiFuncUnit();
 }
 
@@ -157,7 +155,7 @@ OR * CG::buildOR(OR_TYPE orty, UINT resnum, UINT opndnum, ...)
     while (i < opndnum) {
         SR * sr = va_arg(ptr, SR*);
         if (i == 0 && HAS_PREDICATE_REGISTER) {
-            ASSERTN(SR_is_pred(sr), ("first operand must be predicate SR"));
+            ASSERTN(sr->is_pred(), ("first operand must be predicate SR"));
         }
         o->set_opnd(i, sr);
         i++;
@@ -181,7 +179,7 @@ OR * CG::buildOR(OR_TYPE orty, IN SRList & result, IN SRList & opnd)
     for (SR * sr = opnd.get_head(); sr != NULL;
         sr = opnd.get_next(), i++) {
         if (i == 0 && HAS_PREDICATE_REGISTER) {
-            ASSERT0(SR_is_pred(sr));
+            ASSERT0(sr->is_pred());
         }
         o->set_opnd(i, sr);
     }
@@ -203,9 +201,9 @@ void CG::buildMemcpy(SR * tgt,
     buildMove(immreg, genIntImm((HOST_INT)bytesize, false), ors, cont);
     ArgDescMgr argdescmgr;
     passArgVariant(&argdescmgr, ors, 3,
-        tgt, NULL, tgt->getByteSize(), NULL,
-        src, NULL, src->getByteSize(), NULL,
-        immreg, NULL, immreg->getByteSize(), NULL);
+                   tgt, NULL, tgt->getByteSize(), NULL,
+                   src, NULL, src->getByteSize(), NULL,
+                   immreg, NULL, immreg->getByteSize(), NULL);
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-djust operation afterwards.
@@ -225,7 +223,7 @@ void CG::buildStore(SR * store_val,
                     OUT ORList & ors,
                     IN IOC * cont)
 {
-    ASSERT0(SR_is_reg(store_val));
+    ASSERT0(store_val->is_reg());
     SR * mem_base_addr = genVAR(base);
     buildStore(store_val, mem_base_addr, genIntImm(ofst, true), ors, cont);
 }
@@ -238,13 +236,12 @@ void CG::buildSpill(IN SR * store_val,
                     IN ORBB *,
                     OUT ORList & ors)
 {
-    ASSERT0(SR_is_reg(store_val) && VAR_is_spill(spill_var));
+    ASSERT0(store_val->is_reg() && VAR_is_spill(spill_var));
     SR * mem_base_addr = genVAR(spill_var);
 
     IOC tc;
     IOC_mem_byte_size(&tc) = store_val->getByteSize();
-    buildStore(store_val, mem_base_addr,
-        genIntImm((HOST_INT)0, false), ors, &tc);
+    buildStore(store_val, mem_base_addr, genZero(), ors, &tc);
 
     for (OR * o = ors.get_head(); o != NULL; o = ors.get_next()) {
         if (OR_is_store(o)) {
@@ -261,7 +258,7 @@ void CG::buildReload(IN SR * result_val,
                      IN ORBB *,
                      OUT ORList & ors)
 {
-    ASSERT0(SR_is_reg(result_val) && VAR_is_spill(reload_var));
+    ASSERT0(result_val->is_reg() && VAR_is_spill(reload_var));
     IOC tc;
     IOC_mem_byte_size(&tc) = result_val->getByteSize();
     buildLoad(result_val, reload_var, 0, ors, &tc);
@@ -285,6 +282,75 @@ void CG::buildLabel(LabelInfo const* li, OUT ORList & ors, IN IOC *)
 }
 
 
+//This function build OR according to given 'code'.
+//Implement the target dependent version if needed.
+//'sr_size': The number of integral multiple of byte-size of single SR.
+void CG::buildBinaryOR(IR_TYPE code,
+                       SR * opnd0,
+                       SR * opnd1,
+                       bool is_signed,
+                       OUT ORList & ors,
+                       IN IOC * cont)
+{
+    //Result's type-size might be not same as opnd. e,g: a < b,
+    //result type is BOOL, opnd type is INT.
+    OR_TYPE orty = mapIRType2ORType(code, opnd0->getByteSize(),
+                                    opnd0, opnd1, is_signed);
+    ASSERTN(orty != OR_UNDEF, ("mapIRType2ORType() should be overloaded"));    
+    SR * res = genReg();
+
+    //Load immediate into register if target-machine needed.
+    UINT opnd0_idx = HAS_PREDICATE_REGISTER + 0;
+    UINT opnd1_idx = HAS_PREDICATE_REGISTER + 1;
+    if (opnd0->is_int_imm() &&
+        !isValidImmOpnd(orty, opnd0_idx, opnd0->getInt())) {
+        //Bit width is not big enough to hold operand value, load it
+        //into register instead.
+        buildGeneralLoad(opnd0, 0, ors, cont);
+        opnd0 = cont->getResult();
+        ASSERT0(opnd0);
+
+        orty = mapIRType2ORType(code, opnd0->getByteSize(),
+                                opnd0, opnd1, is_signed);
+        ASSERTN(orty != OR_UNDEF, ("mapIRType2ORType() should be overloaded"));
+    }
+
+    if (opnd1->is_int_imm() &&
+        !isValidImmOpnd(orty, opnd1_idx, opnd1->getInt())) {
+        //Bit width is not big enough to hold operand value, load it
+        //into register instead.
+        buildGeneralLoad(opnd1, 0, ors, cont);
+        opnd1 = cont->getResult();
+        ASSERT0(opnd1);
+
+        orty = mapIRType2ORType(code, opnd0->getByteSize(),
+                                opnd0, opnd1, is_signed);
+        ASSERTN(orty != OR_UNDEF, ("mapIRType2ORType() should be overloaded"));
+    }
+
+    //Build OR.
+    SRList res_list;
+    SRList opnd_list;
+    res_list.append_tail(res);
+    if (HAS_PREDICATE_REGISTER) {
+        opnd_list.append_tail(getTruePred()); //0th operand
+    }
+    opnd_list.append_tail(opnd0);
+    opnd_list.append_tail(opnd1);
+    OR * o = buildOR(orty, res_list, opnd_list);
+
+    ASSERT0(!opnd0->is_int_imm() ||
+            isValidImmOpnd(o->getCode(), opnd0_idx, opnd0->getInt()));
+    ASSERT0(!opnd1->is_int_imm() ||
+            isValidImmOpnd(o->getCode(), opnd1_idx, opnd1->getInt()));
+
+    //Set result SR.
+    ASSERT0(cont != NULL);
+    cont->set_reg(0, res);
+    ors.append_tail(o);
+}
+
+
 //'sr_size': The number of byte-size of SR.
 void CG::buildAdd(SR * src1,
                   SR * src2,
@@ -293,16 +359,16 @@ void CG::buildAdd(SR * src1,
                   OUT ORList & ors,
                   IN IOC * cont)
 {
-    if (SR_is_int_imm(src1) && SR_is_int_imm(src2)) {
-        SR * result = genIntImm((HOST_INT)(SR_int_imm(src1) +
-            SR_int_imm(src2)), true);
+    if (src1->is_int_imm() && src2->is_int_imm()) {
+        SR * result = genIntImm((HOST_INT)(src1->getInt() +
+                                src2->getInt()), true);
         ASSERT0(cont != NULL);
         cont->set_reg(0, result);
         return;
-    } else if (SR_is_int_imm(src1)) {
+    } else if (src1->is_int_imm()) {
         buildAdd(src2, src1, sr_size, is_sign, ors, cont);
         return;
-    } else if (SR_is_int_imm(src2) || SR_is_var(src2)) {
+    } else if (src2->is_int_imm() || src2->is_var()) {
         buildAddRegImm(src1, src2, sr_size, is_sign, ors, cont);
         return;
     }
@@ -318,13 +384,13 @@ void CG::buildSub(SR * src1,
                   OUT ORList & ors,
                   IN IOC * cont)
 {
-    if (SR_is_int_imm(src1) && SR_is_int_imm(src2)) {
-        SR * result = genIntImm((HOST_INT)(SR_int_imm(src1) -
-            SR_int_imm(src2)), true);
+    if (src1->is_int_imm() && src2->is_int_imm()) {
+        SR * result = genIntImm((HOST_INT)(src1->getInt() -
+                                src2->getInt()), true);
         ASSERT0(cont != NULL);
         cont->set_reg(0, result);
         return;
-    } else if (SR_is_int_imm(src1)) {
+    } else if (src1->is_int_imm()) {
         ASSERT0(sr_size <= 8);
         SR * newsrc1 = genReg();
         buildMove(newsrc1, src1, ors, cont);
@@ -337,15 +403,43 @@ void CG::buildSub(SR * src1,
             getSRVecMgr()->genSRVec(2, newsrc1, t);
         }
         src1 = newsrc1;
-    } else if (SR_is_int_imm(src2)) {
-        SR_int_imm(src2) = -SR_int_imm(src2);
-        buildAddRegImm(src1, src2, sr_size, is_sign, ors, cont);
+    } else if (src2->is_int_imm()) {
+        buildAddRegImm(src1, genIntImm(-src2->getInt(), true),
+                       sr_size, is_sign, ors, cont);
         return;
     } else {
         //May be the Var is an offset that will be computed lazy.
-        ASSERTN(!SR_is_var(src2), ("subtract Var is unsupport"));
+        ASSERTN(!src2->is_var(), ("subtract Var is unsupport"));
     }
     buildAddRegReg(false, src1, src2, sr_size, is_sign, ors, cont);
+}
+
+
+//Increase 'reg' by 'val'.
+void CG::buildIncReg(SR * reg, UINT val, OUT ORList & ors, IOC * cont)
+{
+    ASSERT0(reg->is_reg());
+    if (val == 0) { return; }
+
+    buildAdd(reg, genIntImm((HOST_INT)val, false), GENERAL_REGISTER_SIZE,
+             false, ors, cont);
+    ASSERT0(ors.get_tail()->get_result(0)->is_reg());
+    //Change the operation to in-situ operation.
+    ors.get_tail()->set_result(0, reg);
+}
+
+
+//Decrease 'reg' by 'val'.
+void CG::buildDecReg(SR * reg, UINT val, OUT ORList & ors, IOC * cont)
+{
+    ASSERT0(reg->is_reg());
+    if (val == 0) { return; }
+
+    buildSub(reg, genIntImm((HOST_INT)val, false), GENERAL_REGISTER_SIZE,
+             false, ors, cont);
+    ASSERT0(ors.get_tail()->get_result(0)->is_reg());
+    //Change the operation to in-situ operation.
+    ors.get_tail()->set_result(0, reg);
 }
 
 
@@ -363,14 +457,14 @@ void CG::buildMod(CLUST clust,
     DUMMYUSE(sr_size);
     OR_TYPE orty = OR_UNDEF;
     ASSERTN(0, ("Target Dependent Code"));
-    if (SR_is_int_imm(src1) && SR_is_int_imm(src2)) {
-        *result = genIntImm((HOST_INT)(SR_int_imm(src1) % SR_int_imm(src2)),
-            true);
+    if (src1->is_int_imm() && src2->is_int_imm()) {
+        *result = genIntImm((HOST_INT)(src1->getInt() % src2->getInt()),
+                            true);
         return;
     }
 
     ASSERTN(!SR_is_int_imm(*result), ("Not allocate result sr"));
-    OR * o = buildOR(orty, 1, 3, *result, genTruePred(), src1, src2);
+    OR * o = buildOR(orty, 1, 3, *result, getTruePred(), src1, src2);
     OR_clust(o) = clust;
     ors.append_tail(o);
 }
@@ -380,12 +474,12 @@ void CG::buildMod(CLUST clust,
 void CG::buildSpadjust(OUT ORList & ors, IN IOC * cont)
 {
     OR * o = genOR(OR_spadjust);
-    ASSERT0(OR_is_fake(o));
-    o->set_result(0, genSP());
-    o->set_opnd(HAS_PREDICATE_REGISTER + 0, genSP());
+    ASSERT0(o->is_fake());
+    o->set_result(0, getSP());
+    o->set_opnd(HAS_PREDICATE_REGISTER + 0, getSP());
     ASSERT0(cont != NULL);
     o->set_opnd(HAS_PREDICATE_REGISTER + 1,
-        genIntImm((HOST_INT)IOC_int_imm(cont), true));
+                genIntImm((HOST_INT)IOC_int_imm(cont), true));
     ors.append_tail(o);
 }
 
@@ -415,14 +509,13 @@ void CG::buildTypeCvt(xoc::IR const* tgt,
                 //Regard src >> 31(arithmatic shift right)
                 //as the sign extension.
                 buildShiftRight(tgt_low, GENERAL_REGISTER_SIZE,
-                    genIntImm((HOST_INT)31, false), true, tors, &tmp);
+                                genIntImm((HOST_INT)31, false),
+                                true, tors, &tmp);
                 tgt_high = tmp.get_reg(0);
                 ASSERT0(tgt_high != NULL);
             } else {
                 tgt_high = genReg();
-                buildMove(tgt_high,
-                    genIntImm((HOST_INT)0, false),
-                    tors, &tmp);
+                buildMove(tgt_high, genZero(), tors, &tmp);
             }
             tors.copyDbx(tgt);
             ors.append_tail(tors);
@@ -453,7 +546,7 @@ void CG::buildLda(xoc::Var const* var,
     SR * base, * ofst;
     computeVarBaseOffset(var, lda_ofst, &base, &ofst);
 
-    if (SR_is_reg(base)) {
+    if (base->is_reg()) {
         //Get variable's address: reg = base reg + offset.
         ORList tors;
         IOC tmp;
@@ -472,7 +565,7 @@ void CG::buildLda(xoc::Var const* var,
     }
 
     //Get variable's address: reg = _variable_symbol_address_.
-    ASSERT0(SR_is_var(base));
+    ASSERT0(base->is_var());
     ORList tors;
     SR * addr = genReg();
     if (VAR_is_global(var)) {
@@ -483,8 +576,8 @@ void CG::buildLda(xoc::Var const* var,
         buildMove(addr, v, tors, cont);
     } else {
         buildMove(addr, base, tors, cont);
-        ASSERT0(SR_is_int_imm(ofst));
-        if (SR_int_imm(ofst) > 0) {
+        ASSERT0(ofst->is_int_imm());
+        if (ofst->getInt() > 0) {
             IOC tmp;
             buildAdd(addr, ofst, GENERAL_REGISTER_SIZE, false, tors, &tmp);
             addr = tmp.get_reg(0);
@@ -506,58 +599,45 @@ void CG::buildGeneralLoad(IN SR * val,
                           OUT ORList & ors,
                           IN IOC * cont)
 {
-    if (SR_is_int_imm(val)) {
+    if (val->is_int_imm()) {
         SR * res = genReg();
         buildMove(res, val, ors, cont);
         cont->set_reg(0, res);
         return;
     }
 
-    if (SR_is_var(val) || SR_is_reg(val)) {
-        SR * load_val = NULL;
-        SR * addr;
-        switch (IOC_mem_byte_size(cont)) {
-        case 0:
-            ASSERTN(0, ("invalid mem size"));
-            break;
-        case 1: //1byte
-        case 2:
-        case 4:
-            load_val = genReg();
-            break;
-        case 8:
-            load_val = genReg();
-            if (GENERAL_REGISTER_SIZE == 4) {
-                load_val = getSRVecMgr()->genSRVec(2, load_val, genReg());
-                break;
-            } else if (GENERAL_REGISTER_SIZE == 8) {
-                break;
-            }
-            ASSERTN(0, ("unsupport"));
-            break;
-        default:
-            addr = NULL;
-            if (SR_is_reg(val)) {
+    if (val->is_var() || val->is_reg()) {
+        ASSERTN(IOC_mem_byte_size(cont) > 0, ("redundant mem size"));
+        if (IOC_mem_byte_size(cont) > GENERAL_REGISTER_SIZE * 2) {
+            //Load too large value into register, convert the load to
+            //memory copy, return the begin address of copy.
+            SR * addr = NULL;
+            if (val->is_reg()) {
                 addr = val;
             } else {
-                ASSERT0(SR_is_var(val));
+                ASSERT0(val->is_var());
                 buildLda(SR_var(val), SR_var_ofst(val) + ofst, NULL, ors, cont);
                 addr = cont->get_reg(0);
             }
-
             ASSERT0(addr);
             cont->clean_regvec();
             cont->set_addr(addr);
             return;
         }
 
+        SR * load_val = NULL;
+        if (IOC_mem_byte_size(cont) <= GENERAL_REGISTER_SIZE) {
+            load_val = genReg();
+        } else if (IOC_mem_byte_size(cont) <= GENERAL_REGISTER_SIZE * 2) {
+            load_val = genReg();
+            load_val = getSRVecMgr()->genSRVec(2, load_val, genReg());
+        } else { UNREACHABLE(); }
         ASSERT0(load_val);
         buildLoad(load_val, val, genIntImm(ofst, true), ors, cont);
         ASSERT0(cont);
         cont->set_reg(0, load_val);
         return;
     }
-
     UNREACHABLE();
 }
 
@@ -590,7 +670,7 @@ void CG::buildStoreAndAssignRegister(SR * reg,
                                      IOC * cont)
 {
     SR * sr_offset = genIntImm((HOST_INT)offset, false);
-    buildStore(reg, genSP(), sr_offset, ors, cont);
+    buildStore(reg, getSP(), sr_offset, ors, cont);
 }
 
 
@@ -628,8 +708,7 @@ bool CG::isGRAEnable() const
 
 OR_CFG * CG::allocORCFG()
 {
-    OR_CFG * cfg = new OR_CFG(C_SEME, getORBBList(), this);
-    return cfg;
+    return new OR_CFG(C_SEME, getORBBList(), this);
 }
 
 
@@ -703,7 +782,7 @@ void CG::computeAndUpdateGlobalVarLayout(xoc::Var const* var,
     }
 
     if (base_ofst != NULL) {
-        *base_ofst = genIntImm((HOST_INT)VD_ofst(vd), false);
+        *base_ofst = genIntImm((HOST_INT)vd->getOfst(), false);
     }
 }
 
@@ -711,7 +790,7 @@ void CG::computeAndUpdateGlobalVarLayout(xoc::Var const* var,
 //Return the combination of all of available function unit of 'o'.
 UnitSet const* CG::computeORUnit(OR const* o, OUT UnitSet * us)
 {
-    ORTypeDesc const* otd = tmGetORTypeDesc(OR_code(o));
+    ORTypeDesc const* otd = tmGetORTypeDesc(o->getCode());
     if (us != NULL) {
         us->bunion(OTD_unit(otd));
         return us;
@@ -742,9 +821,8 @@ void CG::computeAndUpdateStackVarLayout(xoc::Var const* var,
 
         //Do not perform aligning for stack-variables.
         VD_ofst(vd) = (ULONG)SECT_size(section);
-        SECT_size(section) +=
-            ceil_align(var->getByteSize(m_tm), STACK_ALIGNMENT);
-
+        SECT_size(section) += xcom::ceil_align(var->getByteSize(m_tm),
+                                               STACK_ALIGNMENT);
         SECT_var2vdesc_map(section).set(var, vd);
         SECT_var_list(section).append_tail(var);
     } else {
@@ -753,24 +831,24 @@ void CG::computeAndUpdateStackVarLayout(xoc::Var const* var,
 
     if (m_is_use_fp) {
         if (base != NULL) {
-            *base = genFP();
+            *base = getFP();
         }
 
         if (base_ofst != NULL) {
             if (m_is_compute_sect_offset) {
-                *base_ofst = genIntImm((HOST_INT)-(LONG)VD_ofst(vd), true);
+                *base_ofst = genIntImm((HOST_INT)-(LONG)vd->getOfst(), true);
             } else {
                 *base_ofst = genVAR(var);
             }
         }
     } else {
         if (base != NULL) {
-            *base = genSP();
+            *base = getSP();
         }
 
         if (base_ofst != NULL) {
             if (m_is_compute_sect_offset) {
-                *base_ofst = genIntImm((HOST_INT)VD_ofst(vd), false);
+                *base_ofst = genIntImm((HOST_INT)vd->getOfst(), false);
             } else {
                 *base_ofst = genVAR(var);
             }
@@ -793,8 +871,8 @@ void CG::computeParamLayout(xoc::Var const* var,
 
         //Do not perform aligning for stack-variables.
         VD_ofst(vd) = (ULONG)SECT_size(section);
-        SECT_size(section) += ceil_align(
-            var->getByteSize(m_tm), STACK_ALIGNMENT);
+        SECT_size(section) += xcom::ceil_align(var->getByteSize(m_tm),
+                                               STACK_ALIGNMENT);
         SECT_var2vdesc_map(section).set(var, vd);
         SECT_var_list(section).append_tail(var);
     } else {
@@ -805,15 +883,15 @@ void CG::computeParamLayout(xoc::Var const* var,
     if (base != NULL) {
         //*base = genParamPointer();
         if (m_is_use_fp) {
-            *base = genFP();
+            *base = getFP();
         } else {
-            *base = genSP();
+            *base = getSP();
         }
     }
 
     if (ofst != NULL) {
         if (m_is_compute_sect_offset) {
-            *ofst = genIntImm((HOST_INT)VD_ofst(vd), false);
+            *ofst = genIntImm((HOST_INT)vd->getOfst(), false);
         } else {
             *ofst = genVAR(var);
         }
@@ -830,15 +908,15 @@ SR * CG::computeAndUpdateOffset(SR * sr)
         ASSERTN(m_param_sect_start_offset != -1,
             ("should have been computed at reviseFormalParameterAndSpadjust"));
         VarDesc const* vd = SECT_var2vdesc_map(&m_param_sect).get(var);
-        HOST_UINT l = m_param_sect_start_offset + (HOST_UINT)VD_ofst(vd) +
-            (HOST_UINT)SR_var_ofst(sr);
+        HOST_UINT l = m_param_sect_start_offset + (HOST_UINT)vd->getOfst() +
+                      (HOST_UINT)SR_var_ofst(sr);
         return genIntImm((HOST_INT)l, false);
     }
 
     VarDesc * vd = SECT_var2vdesc_map(&m_stack_sect).get(var);
     ASSERT0(vd);
     HOST_UINT x = (HOST_UINT)getMaxArgSectionSize() +
-        (HOST_UINT)VD_ofst(vd) + (HOST_UINT)SR_var_ofst(sr);
+                  (HOST_UINT)vd->getOfst() + (HOST_UINT)SR_var_ofst(sr);
     return genIntImm((HOST_INT)x, false);
 }
 
@@ -859,28 +937,28 @@ void CG::relocateStackVarOffset()
             if (OR_is_load(o)) {
                 SR * ofst = o->get_load_ofst();
                 ASSERT0(ofst);
-                if (!SR_is_var(ofst)) { continue; }
+                if (!ofst->is_var()) { continue; }
 
                 o->set_load_ofst(computeAndUpdateOffset(ofst));
                 OR_is_need_compute_var_ofst(o) = false;
             } else if (OR_is_store(o)) {
                 SR * ofst = o->get_store_ofst();
                 ASSERT0(ofst);
-                if (!SR_is_var(ofst)) { continue; }
+                if (!ofst->is_var()) { continue; }
 
                 o->set_store_ofst(computeAndUpdateOffset(ofst));
                 OR_is_need_compute_var_ofst(o) = false;
-            } else if (o->isNeedComputeVAROfst()) {
+            } else if (o->needComputeVAROfst()) {
                 for (UINT i = 0; i < o->result_num(); i++) {
                     SR * res = o->get_result(i);
-                    if (!SR_is_var(res)) { continue; }
+                    if (!res->is_var()) { continue; }
 
                     o->set_result(i, computeAndUpdateOffset(res));
                 }
 
                 for (UINT i = 0; i < o->opnd_num(); i++) {
                     SR * opnd = o->get_opnd(i);
-                    if (!SR_is_var(opnd)) { continue; }
+                    if (!opnd->is_var()) { continue; }
 
                     o->set_opnd(i, computeAndUpdateOffset(opnd));
                 }
@@ -915,7 +993,7 @@ void CG::computeVarBaseOffset(xoc::Var const* var,
             ASSERTN(SR_is_int_imm(*ofst), ("offset must be imm"));
             SR_int_imm(*ofst) += (HOST_INT)var_ofst;
         } else {
-            ASSERTN(SR_is_var(*ofst), ("offset must be var"));
+            ASSERTN((*ofst)->is_var(), ("offset must be var"));
             SR_var_ofst(*ofst) += (UINT)var_ofst;
         }
     } else if (VAR_is_global(var)) {
@@ -958,6 +1036,17 @@ void CG::initBuiltin()
 }
 
 
+void CG::initDedicatedSR()
+{
+    genSP();
+    genFP();
+    genGP();
+    genTruePred();
+    genRflag();
+    genParamPointer();
+}
+
+
 //Initialize machine info before compiling function unit.
 //e.g: stack info, parameter info.
 void CG::initFuncUnit()
@@ -993,43 +1082,43 @@ void CG::initSections(VarMgr * vm)
     xoc::Type const* type = m_tm->getMCType(4);
 
     //.code
-    SECT_var(&m_code_sect) = vm->registerVar(".code",
-        type, 1, VAR_GLOBAL|VAR_FAKE);
+    SECT_var(&m_code_sect) = vm->registerVar(".code", type, 1,
+                                             VAR_GLOBAL|VAR_FAKE);
     VAR_is_unallocable(SECT_var(&m_code_sect)) = true;
     SECT_size(&m_code_sect) = 0;
     SECT_id(&m_code_sect) = m_sect_count++;
 
     //.data
-    SECT_var(&m_data_sect) = vm->registerVar(".data",
-        type, 1, VAR_GLOBAL|VAR_FAKE);
+    SECT_var(&m_data_sect) = vm->registerVar(".data", type, 1,
+                                             VAR_GLOBAL|VAR_FAKE);
     VAR_is_unallocable(SECT_var(&m_data_sect)) = true;
     SECT_size(&m_data_sect) = 0;
     SECT_id(&m_data_sect) = m_sect_count++;
 
     //.rodata
-    SECT_var(&m_rodata_sect) = vm->registerVar(".rodata",
-        type, 1, VAR_GLOBAL|VAR_FAKE);
+    SECT_var(&m_rodata_sect) = vm->registerVar(".rodata", type, 1,
+                                               VAR_GLOBAL|VAR_FAKE);
     SECT_size(&m_rodata_sect) = 0;
     SECT_id(&m_rodata_sect) = m_sect_count++;
     VAR_is_unallocable(SECT_var(&m_rodata_sect)) = true;
 
     //.bss
-    SECT_var(&m_bss_sect) = vm->registerVar(".bss",
-        type, 1, VAR_GLOBAL|VAR_FAKE);
+    SECT_var(&m_bss_sect) = vm->registerVar(".bss", type, 1,
+                                            VAR_GLOBAL|VAR_FAKE);
     SECT_size(&m_bss_sect) = 0;
     SECT_id(&m_bss_sect) = m_sect_count++;
     VAR_is_unallocable(SECT_var(&m_bss_sect)) = true;
 
     //.stack
-    SECT_var(&m_stack_sect) = vm->registerVar(".stack",
-        type, 1, VAR_GLOBAL|VAR_FAKE);
+    SECT_var(&m_stack_sect) = vm->registerVar(".stack", type, 1,
+                                              VAR_GLOBAL|VAR_FAKE);
     SECT_size(&m_stack_sect) = 0;
     SECT_id(&m_stack_sect) = m_sect_count++;
     VAR_is_unallocable(SECT_var(&m_stack_sect)) = true;
 
     //.param section
-    SECT_var(&m_param_sect) = vm->registerVar(".param_sect",
-        type, 1, VAR_GLOBAL|VAR_FAKE);
+    SECT_var(&m_param_sect) = vm->registerVar(".param_sect", type, 1,
+                                              VAR_GLOBAL|VAR_FAKE);
     SECT_size(&m_param_sect) = 0;
     SECT_id(&m_param_sect) = m_sect_count++;
     VAR_is_unallocable(SECT_var(&m_param_sect)) = true;
@@ -1045,10 +1134,7 @@ void CG::initGlobalVar(VarMgr * vm)
         xoc::Var * v = varvec->get(i);
         if (v == NULL) { continue; }
 
-        if (v->is_global() &&
-            !v->is_unallocable() &&
-            !v->is_fake() &&
-
+        if (v->is_global() && !v->is_unallocable() && !v->is_fake() &&
             //Do not add file-region-private-var
             //into DATA section ahead of time.
             !v->is_private()) {
@@ -1075,7 +1161,7 @@ void CG::finiFuncUnit()
 OR * CG::dupOR(OR const* o)
 {
     ASSERT0(o);
-    OR * n = genOR(OR_code(o));
+    OR * n = genOR(o->getCode());
     n->clone(o);
     return n;
 }
@@ -1189,19 +1275,18 @@ void CG::setMapOR2Mem(OR * o, xoc::Var const* m)
 }
 
 
-xoc::Var const* CG::mapOR2Var(OR * o)
+xoc::Var const* CG::mapOR2Var(OR const* o) const
 {
     if (OR_is_load(o) || OR_is_store(o)) {
-        return CG_or2memaddr_map(this).get(o);
+        return CG_or2memaddr_map(this).get(const_cast<OR*>(o));
     }
     return NULL;
 }
 
 
 //Compute regfile set that 'regs' indicated.
-bool CG::mapRegSet2RegFile(
-        IN OUT Vector<INT> & regfilev,
-        RegSet const* regs)
+bool CG::mapRegSet2RegFile(IN OUT Vector<INT> & regfilev,
+                           RegSet const* regs)
 {
     for (INT reg = regs->get_first(); reg != -1; reg = regs->get_next(reg)) {
         ASSERTN(reg > 0, ("First register number starts from zero at least."));
@@ -1213,11 +1298,11 @@ bool CG::mapRegSet2RegFile(
 }
 
 
-UNIT CG::mapSR2Unit(IN OR const*, SR const* sr)
+UNIT CG::mapSR2Unit(OR const*, SR const* sr) const
 {
-    if (SR_is_reg(sr) && SR_regfile(sr) != RF_UNDEF) {
+    if (sr->is_reg() && sr->getRegFile() != RF_UNDEF) {
         UnitSet us;
-        return mapRegFile2UnitSet(SR_regfile(sr), sr, us).checkAndGet();
+        return mapRegFile2UnitSet(sr->getRegFile(), sr, us).checkAndGet();
     }
     return UNIT_UNDEF;
 }
@@ -1244,7 +1329,7 @@ bool CG::changeORUnit(OR * o,
     ASSERTN(o && to_unit != 0 && to_clust != CLUST_UNDEF, ("o is NULL"));
 
     //Get corresponding opcode.
-    OR_TYPE new_opc = computeEquivalentORType(OR_code(o), to_unit, to_clust);
+    OR_TYPE new_opc = computeEquivalentORType(o->getCode(), to_unit, to_clust);
     if (new_opc == OR_UNDEF) {
         return false;
     }
@@ -1263,19 +1348,19 @@ bool CG::changeORUnit(OR * o,
                 continue;
             }
 
-            if (SR_is_reg(sr) && regfile_unique.get(SR_sregid(sr))) {
+            if (sr->is_reg() && regfile_unique.get(SR_sregid(sr))) {
                 //Even if regfile of 'sr' has been marked as UNIQUE,
                 //but some of them still have chance to change to other
                 //function unit when the new function unit could also
                 //use the regfile of 'sr'.
-                ASSERTN(SR_regfile(sr) != RF_UNDEF, ("illegal unique regfile"));
+                ASSERTN(sr->getRegFile() != RF_UNDEF, ("illegal unique regfile"));
                 //First handle the specical case.
-                if (sr == genSP()) {
+                if (sr == getSP()) {
                     if (!isSPUnit(to_unit))  {
                         return false;
                     }
-                } else if (isValidResultRegfile(new_opc, i, SR_regfile(sr))) {
-                    if (mapRegFile2Cluster(SR_regfile(sr), sr) != to_clust) {
+                } else if (isValidResultRegfile(new_opc, i, sr->getRegFile())) {
+                    if (mapRegFile2Cluster(sr->getRegFile(), sr) != to_clust) {
                         //Each cluster have their own general
                         //register file, and the cluster can only access their
                         //own general register file.
@@ -1293,16 +1378,16 @@ bool CG::changeORUnit(OR * o,
             if (isBusSR(sr)) {
                 continue;
             }
-            if (SR_is_reg(sr) && regfile_unique.get(SR_sregid(sr))) {
-                ASSERTN(SR_regfile(sr) != RF_UNDEF,
+            if (sr->is_reg() && regfile_unique.get(SR_sregid(sr))) {
+                ASSERTN(sr->getRegFile() != RF_UNDEF,
                         ("Regfile unique sr should alloated regfile"));
                 //First handle the specical case.
-                if (sr == genSP()) {
+                if (sr == getSP()) {
                     if (!isSPUnit(to_unit))  {
                         return false;
                     }
-                } else if (isValidOpndRegfile(new_opc, i, SR_regfile(sr))) {
-                    if (mapRegFile2Cluster(SR_regfile(sr), sr) != to_clust) {
+                } else if (isValidOpndRegfile(new_opc, i, sr->getRegFile())) {
+                    if (mapRegFile2Cluster(sr->getRegFile(), sr) != to_clust) {
                         //Each cluster have their own general
                         //register file, and the cluster can only access their
                         //own general register file.
@@ -1339,9 +1424,9 @@ bool CG::changeORCluster(OR * o,
                          Vector<bool> const& regfile_unique,
                          bool is_test)
 {
-    if (OR_is_bus(o) ||
-        OR_is_asm(o) ||
-        OR_is_fake(o) ||
+    if (o->is_bus() ||
+        o->is_asm() ||
+        o->is_fake() ||
         to_clust == CLUST_UNDEF) {
         return false;
     }
@@ -1363,7 +1448,7 @@ bool CG::changeORType(OR * o,
     //Performing verification and substitution certainly.
     for (i = 0; i < o->result_num(); i++) {
         SR * sr = o->get_result(i);
-        if (!SR_is_reg(sr) || SR_is_pred(sr)) { continue; }
+        if (!sr->is_reg() || sr->is_pred()) { continue; }
 
         //Handle dedicated SR.
         if (SR_is_dedicated(sr)) {
@@ -1372,21 +1457,21 @@ bool CG::changeORType(OR * o,
         }
 
         //Handle general SR.
-        if (SR_phy_regid(sr) != REG_UNDEF) {
-            ASSERTN(SR_regfile(sr) != RF_UNDEF, ("Loss regfile info"));
-            ASSERTN(tgt == mapReg2Cluster(SR_phy_regid(sr)),
+        if (sr->getPhyReg() != REG_UNDEF) {
+            ASSERTN(sr->getRegFile() != RF_UNDEF, ("Loss regfile info"));
+            ASSERTN(tgt == mapReg2Cluster(sr->getPhyReg()),
                     ("Unmatch info"));
             continue;
         }
         if (!regfile_unique.get(SR_sregid(sr))) {
-            SR_phy_regid(sr) = REG_UNDEF;
+            SR_phy_reg(sr) = REG_UNDEF;
             SR_regfile(sr) = RF_UNDEF;
         }
     }
 
     for (i = 0; i < o->opnd_num(); i++) {
         SR * sr = o->get_opnd(i);
-        if (!SR_is_reg(sr) || SR_is_pred(sr)) { continue; }
+        if (!sr->is_reg() || sr->is_pred()) { continue; }
 
         //Handle dedicated sr.
         if (SR_is_dedicated(sr)) {
@@ -1395,21 +1480,21 @@ bool CG::changeORType(OR * o,
         }
 
         //Handle general sr.
-        if (SR_phy_regid(sr) != REG_UNDEF) {
-            ASSERTN(SR_regfile(sr) != RF_UNDEF, ("Loss regfile info"));
+        if (sr->getPhyReg() != REG_UNDEF) {
+            ASSERTN(sr->getRegFile() != RF_UNDEF, ("Loss regfile info"));
 
             //When 'sr' has been assigned register, the 'tgt' cluster
             //must be as same as the cluster which 'sr' correlated to.
-            //ASSERTN(tgt == mapReg2Cluster(SR_phy_regid(sr)),
+            //ASSERTN(tgt == mapReg2Cluster(sr->getPhyReg()),
             //       ("Unmatch info"));
-            if (tgt != mapReg2Cluster(SR_phy_regid(sr))) {
+            if (tgt != mapReg2Cluster(sr->getPhyReg())) {
                 xoc::interwarn("Unmatch info, may generate redundant copy.");
                 return false;
             }
             continue;
         }
         if (!regfile_unique.get(SR_sregid(sr))) {
-            SR_phy_regid(sr) = REG_UNDEF;
+            SR_phy_reg(sr) = REG_UNDEF;
             SR_regfile(sr) = RF_UNDEF;
         }
     }
@@ -1446,7 +1531,7 @@ bool CG::isValidRegFile(OR * o,
     if (is_result) {
         for (UINT i = 0; i < o->result_num(); i++) {
             if (isSREqual(o->get_result(i), opnd)) {
-                if (isValidResultRegfile(OR_code(o), i, regfile)) {
+                if (isValidResultRegfile(o->getCode(), i, regfile)) {
                     is_valid = true;
                 } else {
                     return false;
@@ -1457,7 +1542,7 @@ bool CG::isValidRegFile(OR * o,
     } else {
         for (UINT i = 0; i < o->opnd_num(); i++) {
             if (isSREqual(opnd, o->get_opnd(i))) {
-                if (isValidOpndRegfile(OR_code(o), i, regfile)) {
+                if (isValidOpndRegfile(o->getCode(), i, regfile)) {
                     is_valid = true;
                 } else {
                     return false;
@@ -1478,19 +1563,19 @@ bool CG::isConsistentRegFileForCopy(REGFILE rf1, REGFILE rf2)
 }
 
 
-bool CG::isCompareOR(OR const* o)
+bool CG::isCompareOR(OR const* o) const
 {
     return OR_is_eq(o) || OR_is_lt(o) || OR_is_gt(o);
 }
 
 
 //Is o predicated by TRUE condition?
-bool CG::isCondExecOR(OR * o)
+bool CG::isCondExecOR(OR const* o) const
 {
     if (OR_is_predicated(o)) {
-        SR * sr = o->get_pred();
+        SR * sr = const_cast<OR*>(o)->get_pred();
         ASSERT0(sr);
-        if (sr != genTruePred()) {
+        if (sr != getTruePred()) {
             return true;
         }
     }
@@ -1499,7 +1584,7 @@ bool CG::isCondExecOR(OR * o)
 
 
 //TODO: support integer multiplication, logical operation, etc.
-bool CG::isReductionOR(OR * o)
+bool CG::isReductionOR(OR const* o) const
 {
     ASSERTN(0, ("Target Dependent Code"));
     DUMMYUSE(o);
@@ -1511,12 +1596,13 @@ bool CG::isReductionOR(OR * o)
 //If 'prev' is must-execute, 'next' is cond-execute, we say that is
 //safe to optimize.
 //Since must-execute operation is the dominator in execute-path.
-bool CG::isSafeToOptimize(OR * prev, OR * next)
+//Otherwise is not absolutely safe.
+bool CG::isSafeToOptimize(OR const* prev, OR const* next) const
 {
     DUMMYUSE(prev);
     DUMMYUSE(next);
-    SR * p1 = prev->get_pred();
-    if (p1 == NULL || p1 == genTruePred()) {
+    SR * p1 = const_cast<OR*>(prev)->get_pred();
+    if (p1 == NULL || p1 == getTruePred()) {
         return true;
     }
     return false;
@@ -1528,11 +1614,11 @@ bool CG::isSREqual(SR const* sr1, SR const* sr2) const
     if (sr1 == sr2) {
         return true;
     }
-    if (SR_is_reg(sr1) && SR_is_reg(sr2) &&
+    if (sr1->is_reg() && sr2->is_reg() &&
         SR_regfile(sr1) == SR_regfile(sr2) &&
-        SR_phy_regid(sr1) != REG_UNDEF &&
-        SR_phy_regid(sr2) != REG_UNDEF &&
-        SR_phy_regid(sr1) == SR_phy_regid(sr2)) {
+        SR_phy_reg(sr1) != REG_UNDEF &&
+        SR_phy_reg(sr2) != REG_UNDEF &&
+        SR_phy_reg(sr1) == SR_phy_reg(sr2)) {
         return true;
     }
     return false;
@@ -1576,13 +1662,13 @@ bool CG::isSameSpillLoc(xoc::Var const* or1loc, OR const* or1, OR const* or2)
     }
     ASSERT0(or2ofst);
 
-    if ((SR_is_var(or1ofst) &&
-         SR_is_var(or2ofst) &&
+    if ((or1ofst->is_var() &&
+         or2ofst->is_var() &&
          SR_var(or1ofst) == SR_var(or2ofst) &&
          SR_var_ofst(or1ofst) == SR_var_ofst(or2ofst)) ||
-        (SR_is_int_imm(or1ofst) &&
-         SR_is_int_imm(or2ofst) &&
-         SR_int_imm(or1ofst) == SR_int_imm(or2ofst))) {
+        (or1ofst->is_int_imm() &&
+         or2ofst->is_int_imm() &&
+         or1ofst->getInt() == or2ofst->getInt())) {
         return true;
     }
 
@@ -1601,8 +1687,8 @@ bool CG::isSameCondExec(OR * prev, OR * next, BBORList const* or_list)
     if (!p1 && !p2) {
         return true;
     }
-    if (isSREqual(p1, genTruePred()) &&
-        isSREqual(p2, genTruePred())) {
+    if (isSREqual(p1, getTruePred()) &&
+        isSREqual(p2, getTruePred())) {
         return true;
     }
 
@@ -1671,7 +1757,8 @@ bool CG::isValidOpndRegfile(OR_TYPE ortype,
 //'sr':
 //'idx': opnd/result index of 'sr'.
 //'is_result': it is true if 'sr' being the result of 'o'.
-bool CG::isValidRegInSRVec(OR *, SR * sr, UINT idx, bool is_result)
+bool CG::isValidRegInSRVec(OR const*, SR const* sr,
+                           UINT idx, bool is_result) const
 {
     DUMMYUSE(is_result);
     DUMMYUSE(idx);
@@ -1702,16 +1789,16 @@ bool CG::isValidResultRegfile(OR_TYPE ortype, INT resnum, REGFILE regfile) const
 //1.Find the DEF of induction variable.
 //2.Induction variable should be global register.
 //3.Matching the reduction opcode.
-bool CG::isReduction(OR * o)
+bool CG::isReduction(OR const* o) const
 {
     if (isCondExecOR(o)) { return false; }
 
     INT reduct_opnd = 0;
     for (UINT i = 0; i < o->opnd_num(); i++) {
         SR * opnd = o->get_opnd(i);
-        if (!SR_is_reg(opnd) ||
-            !SR_is_global(opnd) ||
-            opnd == genTruePred()) {
+        if (!opnd->is_reg() ||
+            !opnd->is_global() ||
+            opnd == getTruePred()) {
             continue;
         }
 
@@ -1753,7 +1840,7 @@ bool CG::isRflagRegister(OR_TYPE ot, UINT idx, bool is_result) const
 //Return true if specified immediate operand is in valid range.
 bool CG::isValidImmOpnd(OR const* o) const
 {
-    OR_TYPE ot = OR_code(o);
+    OR_TYPE ot = o->getCode();
     ORTypeDesc const* otd = tmGetORTypeDesc(ot);
     SRDescGroup<> const* sdg = OTD_srd_group(otd);
     for (UINT i = 0; i < tmGetOpndNum(ot); i++) {
@@ -1761,11 +1848,11 @@ bool CG::isValidImmOpnd(OR const* o) const
         ASSERT0(sr_desc);
         if (!SRD_is_imm(sr_desc)) { continue; }
         SR * imm_opnd = o->get_opnd(i);
-        if (SR_is_var(imm_opnd) || SR_is_label(imm_opnd)) {
+        if (imm_opnd->is_var() || imm_opnd->is_label()) {
             continue;
         }
-        ASSERT0(imm_opnd && SR_is_int_imm(imm_opnd));
-        if (!isValidImmOpnd(ot, i, SR_int_imm(imm_opnd))) {
+        ASSERT0(imm_opnd && imm_opnd->is_int_imm());
+        if (!isValidImmOpnd(ot, i, imm_opnd->getInt())) {
             return false;
         }
     }
@@ -1816,7 +1903,7 @@ bool CG::isValidImm(UINT bitsize, HOST_INT imm) const
 //Calculate the cluster for inline-assembly operation.
 CLUST CG::computeAsmCluster(IN OR * o)
 {
-    if (!OR_is_asm(o)) {
+    if (!o->is_asm()) {
         return CLUST_UNDEF;
     }
 
@@ -1832,7 +1919,7 @@ CLUST CG::computeAsmCluster(IN OR * o)
     CLUST res_clust = CLUST_UNDEF;
     for (i = 0; i < o->result_num(); i++) {
         sr = o->get_result(i);
-        if (!SR_is_reg(sr)) { continue; }
+        if (!sr->is_reg()) { continue; }
 
         //Check clobber set.
         //TODO: To determine is it actually necessary?
@@ -1871,7 +1958,7 @@ CLUST CG::computeAsmCluster(IN OR * o)
     CLUST opnd_clust = CLUST_UNDEF;
     for (i = 0; i < o->opnd_num(); i++) {
         sr = o->get_opnd(i);
-        if (!SR_is_reg(sr)) {
+        if (!sr->is_reg()) {
             continue;
         }
 
@@ -1956,7 +2043,7 @@ void CG::flattenInVec(SR * argval, Vector<SR*> * vec)
     ASSERT0(argval && vec);
     UINT vec_count = 0;
 
-    if (SR_is_vec(argval)) {
+    if (argval->is_vec()) {
         ASSERTN(SR_vec_idx(argval) == 0, ("expect first element"));
         for (INT j = 0; j <= SR_vec(argval)->get_last_idx(); j++) {
             vec->set(vec_count, SR_vec(argval)->get(j));
@@ -1983,8 +2070,9 @@ bool CG::skipArgRegister(UINT sz, OUT ArgDescMgr * argdescmgr)
             return false;
         }
         if (!isEvenReg(first_reg) || //bypass odd register
-            rs->get_elem_count() < CONTINUOUS_REG_NUM) { //not enough
-                                              //continuous arg register
+
+            //There are not enough continuous arg registers.
+            rs->get_elem_count() < CONTINUOUS_REG_NUM) {
             argdescmgr->dropArgRegister();
             return true;
         }
@@ -2022,17 +2110,16 @@ bool CG::passArgInMemory(SR * argaddr,
         }
         tmp_cont.clean();
         IOC_mem_byte_size(&tmp_cont) = transfer_size;
-        buildLoad(argreg, argaddr,
-            genIntImm(i * transfer_size, false),
-            ors, &tmp_cont);
+        buildLoad(argreg, argaddr, genIntImm(i * transfer_size, false),
+                  ors, &tmp_cont);
         (*argsz) -= transfer_size;
         argdescmgr->updatePassedArgInRegister(transfer_size);
     }
 
     //There is still remaining data have to be passed through stack.
     if (*argsz > 0) {
-        argdescmgr->addAddrDesc(argaddr,
-            NULL, STACK_ALIGNMENT, *argsz, total_size - *argsz);
+        argdescmgr->addAddrDesc(argaddr, NULL, STACK_ALIGNMENT, *argsz,
+                                total_size - *argsz);
         return false;
     }
     return true;
@@ -2086,8 +2173,8 @@ bool CG::passArgInRegister(SR * argval,
         for (INT remaining_irsize = *sz; remaining_irsize > 0; i++) {
             SR * arg = vec.get(i);
             ASSERT0(arg);
-            argdescmgr->addValueDesc(arg, NULL,
-                STACK_ALIGNMENT, transfer_size, 0);
+            argdescmgr->addValueDesc(arg, NULL, STACK_ALIGNMENT,
+                                     transfer_size, 0);
             remaining_irsize -= transfer_size;
         }
         return false;
@@ -2167,7 +2254,7 @@ void CG::passArg(SR * argval,
         argdescmgr->getNumOfAvailArgReg() > 0) {
         //Try to pass argval or data in argaddr through register.
         if (!tryPassArgThroughRegister(argval, argaddr, &argsz,
-                argdescmgr, ors, cont)) {
+                                       argdescmgr, ors, cont)) {
             //Fail to pass argument through registers.
             ASSERT0(argsz != 0);
         }
@@ -2209,38 +2296,40 @@ void CG::storeArgToStack(ArgDescMgr * argdescmgr,
     for (ArgDesc const* desc = argdescmgr->pullOutDesc();
          desc != NULL; desc = argdescmgr->pullOutDesc()) {
         tors.clean();
-        //Compute the address of parameter should be computed base
-        //on SP.
+        //Compute the address of parameter should be computed base on SP.
         //e.g: tgt = src + callee_param_section_byte_ofst;
         if (desc->is_record_addr) {
+            //Current argument is bigger than general register bytesize.
+            //We build an internal copy to copy argument value into
+            //callee's parameter slot.
             tc.clean();
-            SR * tgt = genSP();
+            SR * tgt = getSP();
             SR * src = desc->src_startaddr;
             if (desc->src_ofst != 0) {
+                //Generate source address of COPY.
                 //src = src_addr + src_ofst;
-                if (src == genSP()) {
+                if (src == getSP()) {
                     //Do not modify SP.
                     tc.clean();
                     SR * res = genReg();
                     buildMove(res, src, tors, &tc);
                     tc.clean();
                 }
-                buildAdd(src,
-                    genIntImm((HOST_INT)desc->src_ofst, false),
-                    GENERAL_REGISTER_SIZE,
-                    false, tors, &tc);
+                buildAdd(src, genIntImm((HOST_INT)desc->src_ofst, false),
+                         GENERAL_REGISTER_SIZE, false, tors, &tc);
                 src = tc.get_reg(0);
             }
 
             tc.clean();
             if (desc->tgt_ofst != 0) {
+                //Generate target address of COPY.
                 //tgt = SP + tgt_ofst;
-                buildAdd(tgt,
-                    genIntImm((HOST_INT)desc->tgt_ofst, false),
-                    GENERAL_REGISTER_SIZE,
-                    false, tors, &tc);
+                buildAdd(tgt, genIntImm((HOST_INT)desc->tgt_ofst, false),
+                         GENERAL_REGISTER_SIZE,
+                         false, tors, &tc);
                 tgt = tc.get_reg(0);
             } else {
+                //Generate target address of COPY.
                 //Do not modify SP.
                 //tgt = SP;
                 SR * res = genReg();
@@ -2248,20 +2337,24 @@ void CG::storeArgToStack(ArgDescMgr * argdescmgr,
                 tgt = res;
             }
 
+            //Copy argument value into callee's parameter slot.
             //copy(x, parameter_start_addr, copy_size);
-            ASSERT0(src && tgt && SR_is_reg(tgt) && SR_is_reg(src));
+            ASSERT0(src && tgt && tgt->is_reg() && src->is_reg());
             tc.clean();
-            buildMemcpyInternal(tgt, src,
-                desc->arg_size, tors, &tc);
+            buildMemcpyInternal(tgt, src, desc->arg_size, tors, &tc);
         } else {
+            //Current argument is small enough to reside in a general register
+            //We build a normal memory store to copy argument value into
+            //callee's parameter slot.
             //[sp + tgt_ofst] = %rx;
-            ASSERTN(desc->arg_size <= 8, ("TODO"));
+            ASSERTN(desc->arg_size <= 8,
+                    ("TODO: expose the value to user for custormize"));
             ASSERT0(desc->src_value);
             tc.clean();
             IOC_mem_byte_size(&tc) = desc->arg_size;
-            buildStore(desc->src_value, genSP(),
-                genIntImm((HOST_INT)desc->tgt_ofst, false),
-                tors, &tc);
+            buildStore(desc->src_value, getSP(),
+                       genIntImm((HOST_INT)desc->tgt_ofst, false),
+                       tors, &tc);
         }
         if (desc->arg_dbx != NULL) {
             tors.copyDbx(desc->arg_dbx);
@@ -2274,18 +2367,17 @@ void CG::storeArgToStack(ArgDescMgr * argdescmgr,
 void CG::expandSpadjust(OR * o, OUT IssuePackageList * ipl)
 {
     ASSERT0(o->isSpadjust());
-    SR * ofst = o->get_opnd(HAS_PREDICATE_REGISTER +
-                            SPADJUST_OFFSET_INDX);
-    ASSERT0(SR_is_int_imm(ofst));
+    SR * ofst = o->get_opnd(HAS_PREDICATE_REGISTER + SPADJUST_OFFSET_INDX);
+    ASSERT0(ofst->is_int_imm());
     IssuePackage * ip = allocIssuePackage();
     ORList ors;
     IOC cont;
 
     //sp = sp - SIZE_OF_STACK
-    buildAdd(genSP(), ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
+    buildAdd(getSP(), ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
     ASSERT0(ors.get_elem_count() == 1);
     OR * addi = ors.get_tail();
-    addi->set_result(0, genSP()); //replace result-register with SP.
+    addi->set_result(0, getSP()); //replace result-register with SP.
 
     ip->set(FIRST_SLOT, addi);
     ipl->append_tail(ip);
@@ -2294,8 +2386,8 @@ void CG::expandSpadjust(OR * o, OUT IssuePackageList * ipl)
 
 void CG::expandFakeOR(OR * o, OUT IssuePackageList * ipl)
 {
-    ASSERT0(OR_is_fake(o));
-    switch (OR_code(o)) {
+    ASSERT0(o->is_fake());
+    switch (o->getCode()) {
     case OR_spadjust:
         expandSpadjust(o, ipl);
         break;
@@ -2310,11 +2402,13 @@ void CG::package(Vector<BBSimulator*> & simvec)
     START_TIMER(t0, "Perform Packaging");
     List<ORBB*> * bblst = getORBBList();
     for (ORBB * bb = bblst->get_head(); bb != NULL; bb = bblst->get_next()) {
-        BBSimulator * sim = simvec.get(ORBB_id(bb));
+        if (bb->getORNum() == 0) { continue; }
+
+        BBSimulator * sim = simvec.get(bb->id());
         ASSERT0(sim != NULL);
 
         IssuePackageList * ipl = new IssuePackageList();
-        m_ipl_vec.set(ORBB_id(bb), ipl);
+        m_ipl_vec.set(bb->id(), ipl);
 
         UINT cyc = sim->getCurCycle();
         ORVec const* ss = sim->getExecSnapshot();
@@ -2324,7 +2418,7 @@ void CG::package(Vector<BBSimulator*> & simvec)
             for (UINT i = 0; i < cyc; i++) {
                 OR * o = ss[s].get(i);
                 if (o == NULL) { continue; }
-                if (OR_is_fake(o)) {
+                if (o->is_fake()) {
                     expandFakeOR(o, ipl);
                 } else {
                     IssuePackage * ip = allocIssuePackage();
@@ -2349,6 +2443,14 @@ void CG::package(Vector<BBSimulator*> & simvec)
 
 //Generate TRUE predicate register.
 SR * CG::genTruePred()
+{
+    ASSERTN(0, ("Target dependent"));
+    return NULL;
+}
+
+
+//Get TRUE predicate register.
+SR * CG::getTruePred() const
 {
     ASSERTN(0, ("Target dependent"));
     return NULL;
@@ -2394,6 +2496,40 @@ SR * CG::genParamPointer()
 }
 
 
+SR * CG::getRflag() const
+{
+    ASSERTN(0, ("Target dependent"));
+    return NULL;
+}
+
+
+SR * CG::getSP() const
+{
+    ASSERTN(0, ("Target dependent"));
+    return NULL;
+}
+
+
+SR * CG::getFP() const
+{
+    ASSERTN(0, ("Target dependent"));
+    return NULL;
+}
+
+
+SR * CG::getGP() const
+{
+    ASSERTN(0, ("Target dependent"));
+    return NULL;
+}
+
+
+SR * CG::getParamPointer() const
+{
+    return m_param_pointer;
+}
+
+
 //Generate a SR if bytes_size not more than GENERAL_REGISTER_SIZE,
 //otherwise generate a vector or SR.
 //Return the first register if vector generated.
@@ -2411,7 +2547,7 @@ SR * CG::genReg(UINT bytes_size)
             SR_type(sr) = SR_REG;
             SR_sregid(sr) = ++m_reg_count;
             setMapSymbolReg2SR(SR_sregid(sr), sr);
-            SR_phy_regid(sr) = REG_UNDEF;
+            SR_phy_reg(sr) = REG_UNDEF;
             SR_regfile(sr) = RF_UNDEF;
             ls.append_tail(sr);
         }
@@ -2421,7 +2557,7 @@ SR * CG::genReg(UINT bytes_size)
         SR_type(first) = SR_REG;
         SR_sregid(first) = ++m_reg_count;
         setMapSymbolReg2SR(SR_sregid(first), first);
-        SR_phy_regid(first) = REG_UNDEF;
+        SR_phy_reg(first) = REG_UNDEF;
         SR_regfile(first) = RF_UNDEF;
     }
     return first;
@@ -2439,6 +2575,13 @@ SR * CG::genReg(SymRegId regid)
 }
 
 
+//Get dedicated register by specified physical register.
+SR * CG::getDedicatedReg(REG phy_reg) const
+{
+    return const_cast<CG*>(this)->m_dedicate_sr_tab.get(phy_reg);
+}
+
+
 //Generate dedicated register by specified physical register.
 SR * CG::genDedicatedReg(REG phy_reg)
 {
@@ -2446,8 +2589,8 @@ SR * CG::genDedicatedReg(REG phy_reg)
     if (sr == NULL) {
         sr = genReg();
         SR_regfile(sr) = tmMapReg2RegFile(phy_reg);
-        ASSERTN(SR_regfile(sr) != RF_UNDEF, ("incomplete target info"));
-        SR_phy_regid(sr) = phy_reg;
+        ASSERTN(sr->getRegFile() != RF_UNDEF, ("incomplete target info"));
+        SR_phy_reg(sr) = phy_reg;
         SR_is_dedicated(sr) = true;
         SR_is_global(sr) = true;
         m_dedicate_sr_tab.set(phy_reg, sr);
@@ -2516,7 +2659,7 @@ SR * CG::genFpImm(HOST_FP val)
 SR * CG::genSR(REG reg, REGFILE regfile)
 {
     SR * sr = genReg((UINT)GENERAL_REGISTER_SIZE);
-    SR_phy_regid(sr) = reg;
+    SR_phy_reg(sr) = reg;
     SR_regfile(sr) = regfile;
     return sr;
 }
@@ -2581,6 +2724,18 @@ SR * CG::getDedicatedSRForPhyReg(REG reg)
 }
 
 
+//Generate and return the mask code that used to reserved the lower
+//'bytesize' bytes.
+HOST_UINT CG::getMaskByByte(UINT bytesize)
+{
+    HOST_UINT mask = 0;
+    for (UINT i = 0; i < bytesize * BIT_PER_BYTE; i++) {
+        mask |= ((HOST_UINT)1) << i;
+    }
+    return mask;
+}
+
+
 REGFILE CG::getPredicateRegfile() const
 {
     ASSERT0_DUMMYUSE(HAS_PREDICATE_REGISTER);
@@ -2597,7 +2752,7 @@ void CG::setORListWithSamePredicate(IN OUT ORList & ops, IN OR * o)
     }
     SR * pd = o->get_pred();
     if (pd == NULL) {
-        pd = genTruePred();
+        pd = getTruePred();
     }
     for (OR * tmpor = ops.get_head(); tmpor != NULL; tmpor = ops.get_next()) {
         tmpor->set_pred(pd);
@@ -2754,11 +2909,11 @@ void CG::renameOpndAndResultInRange(SR * oldsr,
 }
 
 
-bool CG::isRegflowDep(OR * from, OR * to)
+bool CG::isRegflowDep(OR const* from, OR const* to) const
 {
     for (UINT i = 0; i < from->result_num(); i++) {
         SR * sr = from->get_result(i);
-        if (!SR_is_reg(sr) || SR_is_pred(sr)) {
+        if (!sr->is_reg() || sr->is_pred()) {
             continue;
         }
         if (mayUse(to, sr)) {
@@ -2769,11 +2924,11 @@ bool CG::isRegflowDep(OR * from, OR * to)
 }
 
 
-bool CG::isRegoutDep(OR * from, OR * to)
+bool CG::isRegoutDep(OR const* from, OR const* to) const
 {
     for (UINT i = 0; i < from->result_num(); i++) {
         SR * sr = from->get_result(i);
-        if (!SR_is_reg(sr) || SR_is_pred(sr)) {
+        if (!sr->is_reg() || sr->is_pred()) {
             continue;
         }
         if (mayDef(to, sr)) {
@@ -2787,9 +2942,9 @@ bool CG::isRegoutDep(OR * from, OR * to)
 //Check asm-o clobber set.
 bool CG::mustAsmDef(OR const* o, SR const* sr) const
 {
-    ASSERTN(OR_is_asm(o), ("expect asm-o"));
-    ASSERTN(SR_is_reg(sr), ("sr is not register"));
-    if (SR_phy_regid(sr) == REG_UNDEF) {
+    ASSERTN(o->is_asm(), ("expect asm-o"));
+    ASSERTN(sr->is_reg(), ("sr is not register"));
+    if (SR_phy_reg(sr) == REG_UNDEF) {
         return false;
     }
 
@@ -2801,7 +2956,7 @@ bool CG::mustAsmDef(OR const* o, SR const* sr) const
     //Check DEF register set.
     for (UINT i = 0; i < o->result_num(); i++) {
         SR * sr1 = o->get_result(i);
-        if (!SR_is_reg(sr1)) {
+        if (!sr1->is_reg()) {
             continue;
         }
 
@@ -2824,7 +2979,7 @@ bool CG::mustAsmDef(OR const* o, SR const* sr) const
         for (REGFILE rf = (REGFILE)rfs->get_first();
              rf != RF_UNDEF; rf = (REGFILE)rfs->get_next(rf)) {
             RegSet const* rs = tmMapRegFile2RegSet(rf);
-            if (rs->is_contain(SR_phy_regid(sr1))) {
+            if (rs->is_contain(SR_phy_reg(sr1))) {
                 return true;
             }
         } //end for each regfile
@@ -2838,7 +2993,7 @@ bool CG::mustAsmDef(OR const* o, SR const* sr) const
 //override some registers. So 'mustAsmDef()' need to do more inspection.
 bool CG::mustDef(OR const* o, SR const* sr) const
 {
-    if (!SR_is_reg(sr)) {
+    if (!sr->is_reg()) {
         return false;
     }
 
@@ -2849,11 +3004,11 @@ bool CG::mustDef(OR const* o, SR const* sr) const
         }
     }
 
-    if (isSP(sr) && OR_code(o) == OR_spadjust) {
+    if (isSP(sr) && o->getCode() == OR_spadjust) {
         return true;
     }
 
-    if (OR_is_asm(o) && mustAsmDef(o, sr)) {
+    if (o->is_asm() && mustAsmDef(o, sr)) {
         return true;
     }
     return false;
@@ -2862,7 +3017,7 @@ bool CG::mustDef(OR const* o, SR const* sr) const
 
 bool CG::mustUse(OR const* o, SR const* sr) const
 {
-    if (!SR_is_reg(sr)) {
+    if (!sr->is_reg()) {
         return false;
     }
     for (UINT i = 0; i < o->opnd_num(); i++) {
@@ -2871,7 +3026,7 @@ bool CG::mustUse(OR const* o, SR const* sr) const
             return true;
         }
     }
-    if (SR_phy_regid(sr) == REG_UNDEF) {
+    if (SR_phy_reg(sr) == REG_UNDEF) {
         return false;
     }
     return false;
@@ -2895,7 +3050,7 @@ bool CG::mayDefInRange(SR const* sr,
 }
 
 
-bool CG::mayDef(OR * o, SR const* sr)
+bool CG::mayDef(OR const* o, SR const* sr) const
 {
     if (mustDef(o, sr)) {
         return true;
@@ -2904,7 +3059,7 @@ bool CG::mayDef(OR * o, SR const* sr)
 }
 
 
-bool CG::mayUse(IN OR * o, SR const* sr)
+bool CG::mayUse(OR const* o, SR const* sr) const
 {
     if (mustUse(o, sr)) {
         return true;
@@ -3093,7 +3248,7 @@ void CG::addFuncLevelNewVar(IN xoc::Var * var)
 CHAR const* CG::genBBLevelNewVarName(OUT xcom::StrBuf & name)
 {
     name.sprint("bb_level_var_%d",
-        m_bb_level_internal_var_list.get_elem_count());
+                m_bb_level_internal_var_list.get_elem_count());
     return name.buf;
 }
 
@@ -3103,7 +3258,7 @@ CHAR const* CG::genBBLevelNewVarName(OUT xcom::StrBuf & name)
 //'sr': the referrence SR.
 xoc::Var * CG::genSpillVar(SR * sr)
 {
-    ASSERT0(SR_is_reg(sr));
+    ASSERT0(sr->is_reg());
     if (SR_spill_var(sr) != NULL) {
         return SR_spill_var(sr);
     }
@@ -3115,7 +3270,7 @@ xoc::Var * CG::genSpillVar(SR * sr)
     //Generate spill-loc for life time that belonged to whole func unit if v is
     //global variable, or else generate spill-loc for life time that only
     //lived in a single BB.
-    v = genTempVar(type, STACK_ALIGNMENT, SR_is_global(sr));
+    v = genTempVar(type, STACK_ALIGNMENT, sr->is_global());
     ASSERT0(v);
 
     VAR_is_spill(v) = true;
@@ -3136,16 +3291,16 @@ void CG::reviseFormalParamAccess(UINT lv_size)
         for (OR * o = ORBB_first_or(bb); o != NULL; o = ORBB_next_or(bb)) {
             if (OR_is_load(o)) {
                 if (o->get_load_base() == genParamPointer()) {
-                    o->set_load_base(genSP());
+                    o->set_load_base(getSP());
                     SR * offset = o->get_load_ofst();
-                    ASSERT0(SR_is_int_imm(offset) && SR_int_imm(offset) >= 0);
+                    ASSERT0(offset->is_int_imm() && offset->getInt() >= 0);
                     SR_int_imm(offset) += lv_size;
                 }
             } else if (OR_is_store(o)) {
                 if (o->get_store_base() == genParamPointer()) {
-                    o->set_store_base(genSP());
+                    o->set_store_base(getSP());
                     SR * offset = o->get_store_ofst();
-                    ASSERT0(SR_is_int_imm(offset) && SR_int_imm(offset) >= 0);
+                    ASSERT0(offset->is_int_imm() && offset->getInt() >= 0);
                     SR_int_imm(offset) += lv_size;
                 }
             }
@@ -3207,7 +3362,7 @@ void CG::storeRegisterParameterBackToStack(List<ORBB*> * entry_lst,
     ORList ors;
     IOC tc;
     for (ORBB * bb = entry_lst->get_head();
-        bb != NULL; bb = entry_lst->get_next()) {
+         bb != NULL; bb = entry_lst->get_next()) {
         OR * spadj = ORBB_entry_spadjust(bb);
         if (spadj == NULL) { continue; }
         ORCt * orct = NULL;
@@ -3238,8 +3393,8 @@ void CG::storeRegisterParameterBackToStack(List<ORBB*> * entry_lst,
             ASSERT0(sr_phyreg);
             IOC_mem_byte_size(&tc) = GENERAL_REGISTER_SIZE;
             buildStoreAndAssignRegister(sr_phyreg,
-                param_start + passed_total_paramsz,
-                ors, &tc);
+                                        param_start + passed_total_paramsz,
+                                        ors, &tc);
             passed_total_paramsz += GENERAL_REGISTER_SIZE;
             passed_paramsz += GENERAL_REGISTER_SIZE;
             if (passed_paramsz == param->getByteSize(m_tm)) {
@@ -3263,9 +3418,9 @@ void CG::reviseFormalParameterAndSpadjust()
 
     //Adjust size by stack alignment.
     ASSERTN(isPowerOf2(STACK_ALIGNMENT),
-        ("For the convenience of generating double load/store"));
+            ("For the convenience of generating double load/store"));
     ASSERTN(isPowerOf2(SPADJUST_ALIGNMENT),
-        ("For the convenience of generating double load/store"));
+            ("For the convenience of generating double load/store"));
     ASSERTN(SPADJUST_ALIGNMENT - 1 <= 0xFFFF, ("Stack alignment is too big"));
 
     framesize = (INT)xcom::ceil_align(framesize, SPADJUST_ALIGNMENT);
@@ -3344,14 +3499,14 @@ void CG::reviseFormalParameterAndSpadjust()
 }
 
 
-//Return true if 'test_tn' is the one of operands of 'o' ,
+//Return true if 'test_sr' is the one of operands of 'o' ,
 //it is also the results.
-//'test_tn': can be NULL. And if it is NULL, we only try to
-//get the index-info of the same opnd and result.
-bool CG::isOpndSameWithResult(SR const* test_tn,
-                              IN OR * o,
+//'test_sr': can be NULL. If it is NULL, we only try to
+//           get the index-info of the same opnd and result.
+bool CG::isOpndSameWithResult(SR const* test_sr,
+                              OR const* o,
                               OUT INT * opndnum,
-                              OUT INT * resnum)
+                              OUT INT * resnum) const
 {
     INT o1, o2;
     if (opndnum == NULL) { opndnum = &o1;}
@@ -3359,23 +3514,26 @@ bool CG::isOpndSameWithResult(SR const* test_tn,
     *opndnum = -1;
     *resnum = -1;
     //Find the sr with 'same_res' property.
-    SR * the_tn = NULL;
+    SR * the_sr = NULL;
     for (UINT resn = 0; resn < o->result_num(); resn++) {
         for (UINT opndn = 0; opndn < o->opnd_num(); opndn++) {
             SR * res = o->get_result(resn);
             if (res == o->get_opnd(opndn)) {
+                ASSERT0(res);
+                //Find the same opnd and result.
                 *opndnum = opndn;
                 *resnum = resn;
-                the_tn = res;
+                the_sr = res;
                 goto FIN;
             }
         }
     }
 FIN:
-    if (*opndnum >= 0) {
-        if (test_tn == NULL) {
+    if (the_sr != NULL) {
+        if (test_sr == NULL) {
             return true;
-        } else if (test_tn == the_tn) {
+        }
+        if (test_sr == the_sr) {
             return true;
         }
     }
@@ -3387,7 +3545,7 @@ FIN:
 CHAR const* CG::genFuncLevelNewVarName(OUT xcom::StrBuf & name)
 {
     name.sprint("func_level_var_%d",
-        m_func_level_internal_var_list.get_elem_count());
+                m_func_level_internal_var_list.get_elem_count());
     return name.buf;
 }
 
@@ -3398,8 +3556,7 @@ xoc::Var * CG::genTempVar(xoc::Type const* type, UINT align, bool func_level)
     xoc::Region * fu = m_rg->getFuncRegion();
     if (func_level) {
         xoc::Var * v = fu->getVarMgr()->registerVar(
-            genFuncLevelNewVarName(name),
-            type, align, VAR_LOCAL);
+            genFuncLevelNewVarName(name), type, align, VAR_LOCAL);
         addFuncLevelNewVar(v);
         fu->addToVarTab(v); //v is local-used in current func-region.
         return v;
@@ -3407,8 +3564,7 @@ xoc::Var * CG::genTempVar(xoc::Type const* type, UINT align, bool func_level)
     xoc::Var * v = m_bb_level_internal_var_list.get_free();
     if (v == NULL) {
         v = fu->getVarMgr()->registerVar(
-            genBBLevelNewVarName(name),
-            type, align, VAR_LOCAL);
+            genBBLevelNewVarName(name), type, align, VAR_LOCAL);
         addBBLevelNewVar(v);
         fu->addToVarTab(v); //v is local-used in current func-region.
     }
@@ -3549,7 +3705,7 @@ void CG::performIS(IN OUT Vector<BBSimulator*> & simvec, IN RaMgr * ra_mgr)
     List<ORBB*> * bblist = getORBBList();
     for (ORBB * bb = bblist->get_head();
          bb != NULL; bb = bblist->get_next()) {
-        if (ORBB_ornum(bb) <= 0) { continue; }
+        if (bb->getORNum() == 0) { continue; }
 
         DataDepGraph * ddg = NULL;
         BBSimulator * sim = NULL;
@@ -3557,7 +3713,7 @@ void CG::performIS(IN OUT Vector<BBSimulator*> & simvec, IN RaMgr * ra_mgr)
         preLS(bb, ra_mgr, &ddg, &sim, &lis);
         ASSERT0(ddg && sim && lis);
 
-        simvec.set(ORBB_id(bb), sim); //record sim that need by package().
+        simvec.set(bb->id(), sim); //record sim that need by package().
 
         if (g_do_lis) {
             ddg->build();
@@ -3699,10 +3855,11 @@ void CG::preLS(IN ORBB * bb,
     //Init DDG
     DataDepGraph * tddg = allocDDG(true);
     tddg->setParam(INC_PHY_REG, NO_MEM_READ,
-        INC_MEM_FLOW, INC_MEM_OUT, NO_CONTROL, NO_REG_READ, INC_REG_ANTI,
-        INC_MEM_ANTI, INC_SYM_REG);
+                   INC_MEM_FLOW, INC_MEM_OUT, NO_CONTROL,
+                   NO_REG_READ, INC_REG_ANTI,
+                   INC_MEM_ANTI, INC_SYM_REG);
     Vector<ParallelPartMgr*> * ppm_vec = ra_mgr->getParallelPartMgrVec();
-    ParallelPartMgr * ppm = ppm_vec == NULL ? NULL : ppm_vec->get(ORBB_id(bb));
+    ParallelPartMgr * ppm = ppm_vec == NULL ? NULL : ppm_vec->get(bb->id());
     tddg->init(bb);
     tddg->setParallelPartMgr(ppm);
 
@@ -3740,7 +3897,7 @@ void CG::preLS(IN ORBB * bb,
 //       ... <- use
 void CG::localizeBB(SR * sr, ORBB * bb)
 {
-    ASSERT0(SR_is_reg(sr));
+    ASSERT0(sr->is_reg());
     ASSERTN(!SR_is_dedicated(sr),
         ("rename dedicated register may incur illegal instruction format"));
     ASSERT0(sr && bb);
@@ -3792,24 +3949,24 @@ void CG::localizeBB(SR * sr, ORBB * bb)
 
         if (first_defstmt_ct != NULL) {
             ASSERT0(first_usestmt_ct == first_defstmt_ct ||
-                ORBB_orlist(bb)->is_or_precedes(
-                    first_usestmt_ct->val(), first_defstmt_ct->val()));
+                    ORBB_orlist(bb)->is_or_precedes(first_usestmt_ct->val(),
+                                                    first_defstmt_ct->val()));
         }
 
         if (first_usestmt_ct == first_defstmt_ct) {
             renameOpnd(first_usestmt_ct->val(), sr, newsr, false);
         } else if (first_defstmt_ct != NULL &&
-                   ORBB_orlist(bb)->is_or_precedes(
-                       first_usestmt_ct->val(), first_defstmt_ct->val())) {
-            renameOpndAndResultInRange(sr, newsr,
-                first_usestmt_ct, first_defstmt_ct, ORBB_orlist(bb));
+                   ORBB_orlist(bb)->is_or_precedes(first_usestmt_ct->val(),
+                                                   first_defstmt_ct->val())) {
+            renameOpndAndResultInRange(sr, newsr, first_usestmt_ct,
+                                       first_defstmt_ct, ORBB_orlist(bb));
         } else {
             //USE live through BB.
             // <-use
             // ...
             // <-use
-            renameOpndAndResultFollowed(sr, newsr,
-                first_usestmt_ct, ORBB_orlist(bb));
+            renameOpndAndResultFollowed(sr, newsr, first_usestmt_ct,
+                                        ORBB_orlist(bb));
         }
     }
 
@@ -3828,8 +3985,8 @@ void CG::localizeBB(SR * sr, ORBB * bb)
         }
 
         ORBB_orlist(bb)->append_tail_ex(ors);
-        renameOpndAndResultFollowed(sr, newsr,
-            last_defstmt_ct, ORBB_orlist(bb));
+        renameOpndAndResultFollowed(sr, newsr, last_defstmt_ct,
+                                    ORBB_orlist(bb));
     }
 }
 
@@ -3868,7 +4025,7 @@ void CG::localize()
             for (UINT i = 0; i < o->result_num(); i++) {
                 SR * sr = o->get_result(i);
                 ASSERT0(sr);
-                if (!SR_is_reg(sr) || SR_is_dedicated(sr)) { continue; }
+                if (!sr->is_reg() || SR_is_dedicated(sr)) { continue; }
 
                 ORBB * tgtbb = NULL;
                 if ((tgtbb = sr2bb.get(sr)) == NULL) {
@@ -3890,7 +4047,7 @@ void CG::localize()
             for (UINT i = 0; i < o->opnd_num(); i++) {
                 SR * sr = o->get_opnd(i);
                 ASSERT0(sr);
-                if (!SR_is_reg(sr) || SR_is_dedicated(sr)) { continue; }
+                if (!sr->is_reg() || SR_is_dedicated(sr)) { continue; }
 
                 ORBB * tgtbb = NULL;
                 if ((tgtbb = sr2bb.get(sr)) == NULL) {
@@ -3956,27 +4113,27 @@ bool CG::verifyOR(OR const* o)
     for (UINT i = 0; i < o->result_num(); i++) {
         SR * sr = o->get_result(i);
         ASSERT0(sr);
-        if (SR_is_reg(sr)) {
-            ASSERTN(SR_phy_regid(sr) != REG_UNDEF,
-                ("SR is not assigned physical register"));
-            ASSERTN(SR_regfile(sr) != RF_UNDEF,
-                ("SR is not assigned register file"));
+        if (sr->is_reg()) {
+            ASSERTN(sr->getPhyReg() != REG_UNDEF,
+                    ("SR is not assigned physical register"));
+            ASSERTN(sr->getRegFile() != RF_UNDEF,
+                    ("SR is not assigned register file"));
         }
-        if (SR_is_int_imm(sr)) {
-            ASSERT0(isValidImmOpnd(OR_code(o), SR_int_imm(sr)));
+        if (sr->is_int_imm()) {
+            ASSERT0(isValidImmOpnd(o->getCode(), sr->getInt()));
         }
     }
     for (UINT i = 0; i < o->opnd_num(); i++) {
         SR * sr = o->get_opnd(i);
         ASSERT0(sr);
-        if (SR_is_reg(sr)) {
-            ASSERTN(SR_phy_regid(sr) != REG_UNDEF,
-                ("SR is not assigned physical register"));
-            ASSERTN(SR_regfile(sr) != RF_UNDEF,
-                ("SR is not assigned register file"));
+        if (sr->is_reg()) {
+            ASSERTN(sr->getPhyReg() != REG_UNDEF,
+                    ("SR is not assigned physical register"));
+            ASSERTN(sr->getRegFile() != RF_UNDEF,
+                    ("SR is not assigned register file"));
         }
-        if (SR_is_int_imm(sr)) {
-            ASSERT0(isValidImmOpnd(OR_code(o), i, SR_int_imm(sr)));
+        if (sr->is_int_imm()) {
+            ASSERT0(isValidImmOpnd(o->getCode(), i, sr->getInt()));
         }
     }
 

@@ -49,14 +49,14 @@ CHAR const* ARMSR::getAsmName(StrBuf & buf, CG * cg)
     case SR_VAR:
         if (SR_var_ofst(this) != 0) {
             buf.strcat("%s+%d", SYM_name(SR_var(this)->get_name()),
-                SR_var_ofst(this));
+                       SR_var_ofst(this));
             return buf.buf;
         } else {
             buf.strcat("%s", SYM_name(SR_var(this)->get_name()));
             return buf.buf;
         }
     case SR_REG:
-        if (SR_is_sp(this)) {
+        if (is_sp()) {
             buf.strcat("sp");
             return buf.buf;
         }
@@ -77,8 +77,8 @@ CHAR const* ARMSR::get_name(StrBuf & buf, CG * cg) const
         return SR::get_name(buf, cg);
 
         //Print physical register id and register file.
-        if (SR_phy_regid(this) != REG_UNDEF) {
-            buf.strcat("(%s)", tmGetRegName(SR_phy_regid(this)));
+        if (SR_phy_reg(this) != REG_UNDEF) {
+            buf.strcat("(%s)", tmGetRegName(SR_phy_reg(this)));
         }
         if (SR_regfile(this) != RF_UNDEF) {
             buf.strcat("(%s)", tmGetRegFileName(SR_regfile(this)));

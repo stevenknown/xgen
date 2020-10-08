@@ -41,17 +41,24 @@ protected:
     void convertMulofInt(IR const* ir, OUT ORList & ors, IN IOC * cont);
     void convertReturnValue(IR const* ir, OUT ORList & ors, IN IOC * cont);
     void convertTruebrFp(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    virtual void convertStoreVar(
-            IR const* ir,
-            OUT ORList & ors,
-            IN IOC * cont);
+    virtual void convertStoreVar(IR const* ir,
+                                 OUT ORList & ors,
+                                 IN IOC * cont);
     void convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont);
 
-    void getResultPredByIRTYPE(
-            IR_TYPE code,
-            SR ** truepd,
-            SR ** falsepd,
-            bool is_signed);
+    //Convert Bitwise NOT into OR list. bnot is unary operation.
+    //e.g BNOT(0x0001) = 0xFFFE
+    //Note ONLY thumb supports ORN logical OR NOT operation.
+    //This implementation is just used to verify the function of BNOT,
+    //in the sake of excessive redundant operations has been generated.
+    void convertBitNotLowPerformance(IR const* ir,
+                                     OUT ORList & ors,
+                                     IN IOC * cont);
+
+    void getResultPredByIRTYPE(IR_TYPE code,
+                               SR ** truepd,
+                               SR ** falsepd,
+                               bool is_signed);
     ARMCG * getCG() { return (ARMCG*)m_cg; }
 
     Var const* fp2fp(IR const* tgt, IR const* src);
@@ -59,6 +66,7 @@ protected:
 
     Var const* int2fp(IR const* tgt, IR const* src);
     void invertBoolValue(Dbx * dbx, SR * val, OUT ORList & ors);
+    IR * insertCvt(IR const* ir);
 public:
     ARMIR2OR(CG * cg) : IR2OR(cg) {}
     COPY_CONSTRUCTOR(ARMIR2OR);
@@ -66,12 +74,11 @@ public:
 
     //Interface function.
     virtual void convertBinaryOp(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    virtual void convertLda(
-            Var const* var,
-            HOST_INT lda_ofst,
-            Dbx const* dbx,
-            OUT ORList & ors,
-            IN IOC * cont);
+    virtual void convertLda(Var const* var,
+                            HOST_INT lda_ofst,
+                            Dbx const* dbx,
+                            OUT ORList & ors,
+                            IN IOC * cont);
     virtual void convertLda(IR const* ir, OUT ORList & ors, IN IOC * cont);
     virtual void convertICall(IR const* ir, OUT ORList & ors, IN IOC * cont)
     { convertCall(ir, ors, cont); }
@@ -82,25 +89,24 @@ public:
     virtual void convertNeg(IR const* ir, OUT ORList & ors, IN IOC * cont);
     void convertRelationOpFp(IR const* ir, OUT ORList & ors, IN IOC * cont);
     void convertRelationOpDWORD(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    virtual void convertRelationOp(IR const* ir, OUT ORList & ors, IN IOC * cont);
+    virtual void convertRelationOp(IR const* ir, OUT ORList & ors,
+                                   IN IOC * cont);
+    
+    //Bitwise NOT.
+    //e.g BNOT(0x0001) = 0xFFFE
+    //Note ONLY thumb supports ORN logical OR NOT operation.
+    virtual void convertBitNot(IR const* ir, OUT ORList & ors, IN IOC * cont);
     virtual void convertIgoto(IR const* ir, OUT ORList & ors, IN IOC *);
     virtual void convertSelect(IR const* ir, OUT ORList & ors, IN IOC * cont);
     virtual void convertReturn(IR const* ir, OUT ORList & ors, IN IOC * cont);
     virtual void convertTruebr(IR const* ir, OUT ORList & ors, IN IOC * cont);
+    virtual void convert(IR const* ir, OUT ORList & ors, IN IOC * cont);
 
-    virtual OR_TYPE mapIRType2ORType(
-            IR_TYPE ir_type,
-            UINT ir_opnd_size,
-            IN SR * opnd0,
-            IN SR * opnd1,
-            bool is_signed);
-
-    void recordRelationOpResult(
-            IR const* ir,
-            SR * truepd,
-            SR * falsepd,
-            SR * result_pred,
-            OUT ORList & ors,
-            IN OUT IOC * cont);
+    void recordRelationOpResult(IR const* ir,
+                                SR * truepd,
+                                SR * falsepd,
+                                SR * result_pred,
+                                OUT ORList & ors,
+                                IN OUT IOC * cont);
 };
 #endif

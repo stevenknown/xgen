@@ -99,7 +99,7 @@ public:
     //Verficiation of instruction hazard, and change slot of o if possible.
     //Return true if 'o' can be issued at 'to_slot'.
     //The verification includes hardware resource, instrcution hazard, etc.
-    bool canBeIssued(OR * o,
+    bool makeIssued(OR * o,
                      OR * issue_ors[SLOT_NUM],
                      SLOT to_slot,
                      bool is_change_slot,
@@ -142,7 +142,7 @@ public:
     virtual bool isIssueCand(OR * o);
     bool isFuncUnitOccupied(UnitSet const& us,
                             CLUST clst,
-                            OR const* const issue_ors [SLOT_NUM]);
+                            OR const* const issue_ors [SLOT_NUM]) const;
 
     virtual SLOT rollBackORs(bool be_changed[SLOT_NUM],
                              OR * issue_ors[SLOT_NUM],

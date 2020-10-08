@@ -34,17 +34,20 @@ INT main(INT argc, CHAR * argv[])
     if (!processCmdLine(argc, argv)) {
         return 1;
     }
+
+    bool res = true;
     if (g_gr_file_name != NULL) {
-        //If both GR and C file are input, prefer GR file.
-        g_c_file_name = NULL;
-        bool res = compileGRFile(g_gr_file_name);
-        return res ? 0 : 2;
-    } else if (g_c_file_name != NULL) {
-        bool res = compileCFile();
-        return res ? 0 : 3;
+        res |= compileGRFile(g_gr_file_name);
+    }
+    
+    if (g_c_file_name != NULL) {
+        res |= compileCFile();
     }
 
-    fprintf(stdout, "xocc.exe: no input files\n");
-    fflush(stdout);
-    return 4;
+    if (g_gr_file_name == NULL && g_c_file_name == NULL) {
+        fprintf(stdout, "xocc.exe: no input files\n");
+        fflush(stdout);
+        return 4;
+    }
+    return res ? 0 : 3;
 }

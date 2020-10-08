@@ -33,14 +33,14 @@ author: Su Zhenyu
 
 namespace xgen {
 
-#define MAX_ST                5
-#define MAX_INPUT             10
-#define MIN_IOR_NUM           0.85  //minimal factor of percent to assign regfile.
+#define MAX_ST 5
+#define MAX_INPUT 10
+#define MIN_IOR_NUM 0.85  //minimal factor of percent to assign regfile.
 //base factor that must be added to estimation in cyc-estimate
-#define SL_BASE_FACTOR        0.5
-#define INFINITE              0x7FFFFFFF //Pseudo finitesimal I supposed
-#define EPSILON               0.000001 //Pseudo infinitesimal I supposed
-#define UNBALANCE_RATE        9999999.5  //Used in register bank partitioning
+#define SL_BASE_FACTOR 0.5
+#define INFINITE 0x7FFFFFFF //Pseudo finitesimal I supposed
+#define EPSILON 0.000001 //Pseudo infinitesimal I supposed
+#define UNBALANCE_RATE 9999999.5  //Used in register bank partitioning
 
 typedef xcom::TMap<SR*, SR*> SR2SR;
 typedef xcom::DMap<SR*, SR*, SR2SR, SR2SR> SR2SR_DMAP;
@@ -49,10 +49,12 @@ typedef xcom::DMap<SR*, SR*, SR2SR, SR2SR> SR2SR_DMAP;
 typedef xcom::EList<xoc::Var const*,
     xcom::TMap<xoc::Var const*, xcom::C<xoc::Var const*>*> > VarElist;
 
-#define VD_ofst(m)            (m)->ofst
+#define VD_ofst(m) (m)->m_ofst
 class VarDesc {
 public:
-    size_t ofst;
+    size_t m_ofst;
+
+    size_t getOfst() const { return m_ofst; }
 };
 
 

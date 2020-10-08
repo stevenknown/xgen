@@ -194,11 +194,11 @@ void RegFileGroup::computeGroup()
         for (UINT i = 0; i < o->result_num(); i++) {
             SR * sr = o->get_result(i);
             ASSERT0(sr);
-            if (SR_is_reg(sr) &&
-                SR_regfile(sr) != RF_UNDEF &&
-                !m_cg->isRflagRegister(OR_code(o), i, true) &&
+            if (sr->is_reg() &&
+                sr->getRegFile() != RF_UNDEF &&
+                !m_cg->isRflagRegister(o->getCode(), i, true) &&
                 !m_cg->isDedicatedSR(sr)) {
-                addOR(o, SR_regfile(sr));
+                addOR(o, sr->getRegFile());
             }
         }
     }

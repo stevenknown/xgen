@@ -54,7 +54,7 @@ protected:
     void remove_bb_impl(ORBB * bb)
     {
         ASSERT0(bb);
-        m_bb_vec.set(ORBB_id(bb), NULL);
+        m_bb_vec.set(bb->id(), NULL);
 
         //C<LabelInfo const*> * ct;
         //for (lablst.get_head(&ct);
@@ -62,7 +62,7 @@ protected:
         //    m_lab2bb.remove(ct->val());
         //}
 
-        removeVertex(ORBB_id(bb));
+        removeVertex(bb->id());
     }
 
 public:

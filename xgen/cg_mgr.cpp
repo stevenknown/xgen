@@ -91,6 +91,7 @@ bool CGMgr::CodeGen(Region * region, FILE * asmh)
     CG * cg = allocCG(region);
     cg->initFuncUnit();
     cg->initBuiltin();
+    cg->initDedicatedSR();
     //cg->initGlobalVar(m_rg->getVarMgr());
     cg->perform();
     if (region->is_function()) {

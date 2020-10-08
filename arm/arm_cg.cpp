@@ -96,17 +96,25 @@ void ARMCG::initBuiltin()
 }
 
 
-LIS * ARMCG::allocLIS(
-        ORBB * bb,
-        DataDepGraph * ddg,
-        BBSimulator * sim,
-        UINT sch_mode,
-        bool change_slot,
-        bool change_cluster,
-        bool is_log)
+void ARMCG::initDedicatedSR()
+{
+    genSP();
+    genTruePred();
+    genRflag();
+    genParamPointer();
+}
+
+
+LIS * ARMCG::allocLIS(ORBB * bb,
+                      DataDepGraph * ddg,
+                      BBSimulator * sim,
+                      UINT sch_mode,
+                      bool change_slot,
+                      bool change_cluster,
+                      bool is_log)
 {
     ARMLIS * p = new ARMLIS(bb, *ddg, sim, sch_mode,
-        change_slot, change_cluster);
+                            change_slot, change_cluster);
     if (is_log) {
         m_lis_list.append_tail(p);
     }
@@ -175,18 +183,40 @@ SR * ARMCG::genRflag()
     return sr;
 }
 
-SR * ARMCG::gen_one() {
-    return genIntImm((HOST_INT)1, false);
+
+//Get stack pointer.
+SR * ARMCG::getSP() const
+{
+    return getDedicatedReg(REG_SP);
 }
 
-SR * ARMCG::gen_zero() {
-    return genIntImm((HOST_INT)0, false);
+
+//Get global register pointer.
+SR * ARMCG::getGP() const
+{
+    ASSERT0(0); //TODO
+    return getDedicatedReg(0);
 }
+
+
+//Get frame pointer.
+SR * ARMCG::getFP() const
+{
+    ASSERTN(0, ("TODO"));
+    return getDedicatedReg(0);
+}
+
+
+SR * ARMCG::getRflag() const
+{
+    return getDedicatedReg(REG_RFLAG_REGISTER);
+}
+
 
 SR * ARMCG::gen_r0()
 {
     SR * sr = genDedicatedReg(REG_R0);
-    SR_regfile(sr) = tmMapReg2RegFile(SR_phy_regid(sr));
+    SR_regfile(sr) = tmMapReg2RegFile(sr->getPhyReg());
     return sr;
 }
 
@@ -194,7 +224,7 @@ SR * ARMCG::gen_r0()
 SR * ARMCG::gen_r1()
 {
     SR * sr = genDedicatedReg(REG_R1);
-    SR_regfile(sr) = tmMapReg2RegFile(SR_phy_regid(sr));
+    SR_regfile(sr) = tmMapReg2RegFile(sr->getPhyReg());
     return sr;
 }
 
@@ -202,7 +232,7 @@ SR * ARMCG::gen_r1()
 SR * ARMCG::gen_r2()
 {
     SR * sr = genDedicatedReg(REG_R2);
-    SR_regfile(sr) = tmMapReg2RegFile(SR_phy_regid(sr));
+    SR_regfile(sr) = tmMapReg2RegFile(sr->getPhyReg());
     return sr;
 }
 
@@ -210,7 +240,7 @@ SR * ARMCG::gen_r2()
 SR * ARMCG::gen_r3()
 {
     SR * sr = genDedicatedReg(REG_R3);
-    SR_regfile(sr) = tmMapReg2RegFile(SR_phy_regid(sr));
+    SR_regfile(sr) = tmMapReg2RegFile(sr->getPhyReg());
     return sr;
 }
 
@@ -218,7 +248,7 @@ SR * ARMCG::gen_r3()
 SR * ARMCG::gen_r12()
 {
     SR * sr = genDedicatedReg(REG_R12);
-    SR_regfile(sr) = tmMapReg2RegFile(SR_phy_regid(sr));
+    SR_regfile(sr) = tmMapReg2RegFile(sr->getPhyReg());
     return sr;
 }
 
@@ -228,6 +258,12 @@ SR * ARMCG::genTruePred()
     SR * sr = genDedicatedReg(REG_TRUE_PRED);
     SR_is_pred(sr) = true;
     return sr;
+}
+
+
+SR * ARMCG::getTruePred() const
+{
+    return getDedicatedReg(REG_TRUE_PRED);
 }
 
 
@@ -354,32 +390,38 @@ SR * ARMCG::genReturnAddr()
 }
 
 
-void ARMCG::buildLoad(
-        IN SR * load_val,
-        IN SR * base,
-        IN SR * ofst,
-        OUT ORList & ors,
-        IN IOC * cont)
+//Get function return address register.
+SR * ARMCG::getReturnAddr() const
+{
+    return getDedicatedReg(REG_RETURN_ADDRESS_REGISTER);
+}
+
+
+void ARMCG::buildLoad(IN SR * load_val,
+                      IN SR * base,
+                      IN SR * ofst,
+                      OUT ORList & ors,
+                      IN IOC * cont)
 {
     ASSERT0(load_val && base && ofst && cont);
-    ASSERT0(SR_is_int_imm(ofst));
+    ASSERT0(ofst->is_int_imm());
     Var const* v = NULL;
     SR * sr_ofst = NULL;
-    if (SR_is_var(base)) {
+    if (base->is_var()) {
         SR * sr_base;
         v = SR_var(base);
         computeVarBaseOffset(SR_var(base),
-            SR_int_imm(ofst), &sr_base, &sr_ofst);
-        if (VAR_is_global(v) && !SR_is_reg(sr_base)) {
+            ofst->getInt(), &sr_base, &sr_ofst);
+        if (VAR_is_global(v) && !sr_base->is_reg()) {
             //ARM does not support load value from memory label directly.
-            SR_var_ofst(base) += (UINT)SR_int_imm(ofst);
+            SR_var_ofst(base) += (UINT)ofst->getInt();
             SR * res = genReg();
 
-            if (SR_is_int_imm(sr_ofst)) {
+            if (sr_ofst->is_int_imm()) {
                 SR_int_imm(sr_ofst) = SR_var_ofst(base);
             } else {
                 ASSERT0(m_is_compute_sect_offset);
-                ASSERT0(SR_is_var(sr_ofst));
+                ASSERT0(sr_ofst->is_var());
             }
 
             //Load address of memory symbol into base register and
@@ -387,7 +429,7 @@ void ARMCG::buildLoad(
             buildMove(res, base, ors, cont);
             base = res;
         } else {
-            ASSERT0(SR_is_reg(sr_base));
+            ASSERT0(sr_base->is_reg());
             base = sr_base;
         }
     } else {
@@ -425,7 +467,7 @@ void ARMCG::buildLoad(
     } else if (IOC_mem_byte_size(cont) <= 8) {
         OR * o = genOR(OR_ldrd);
         ASSERT0(load_val->getByteSize() == 8);
-        ASSERT0(SR_is_vec(load_val));
+        ASSERT0(load_val->is_vec());
         ASSERT0(SR_vec(load_val)->get(0) && SR_vec(load_val)->get(1));
         o->set_load_val(SR_vec(load_val)->get(0), 0);
         o->set_load_val(SR_vec(load_val)->get(1), 1);
@@ -442,41 +484,291 @@ void ARMCG::buildLoad(
 }
 
 
+void ARMCG::buildStoreCase1(IN SR * store_val,
+                            IN SR * base,
+                            IN SR * sr_ofst,
+                            Var const* v,
+                            OUT ORList & ors,
+                            IN IOC * cont)
+{
+    ASSERT0(IOC_mem_byte_size(cont) <= 4);
+    OR_TYPE code = OR_UNDEF;
+    switch (IOC_mem_byte_size(cont)) {
+    case 1:
+        if (sr_ofst->is_int_imm()) {
+            if (isValidImmOpnd(OR_strb_i12, sr_ofst->getInt())) {
+                code = OR_strb_i12;
+            } else {
+                //base + ofst
+                //=>
+                //t = base + ofst
+                //base = t
+                IOC tc;
+                buildAdd(base, sr_ofst, IOC_mem_byte_size(cont),
+                         false, ors, &tc);
+                base = tc.get_reg(0);
+                ASSERT0(base && base->is_reg());
+                code = OR_strb;
+                sr_ofst = genIntImm(0, false);
+            }
+        } else if (sr_ofst->is_var()) {
+            code = OR_strb;
+        } else {
+            UNREACHABLE();
+        }
+        break;
+    case 2:
+        if (sr_ofst->is_int_imm()) {
+            if (isValidImmOpnd(OR_strh_i8, sr_ofst->getInt())) {
+                code = OR_strh_i8;
+            } else {
+                IOC tc;
+                buildAdd(base, sr_ofst, IOC_mem_byte_size(cont),
+                         false, ors, &tc);
+                base = tc.get_reg(0);
+                ASSERT0(base && base->is_reg());
+                code = OR_str;
+                sr_ofst = genIntImm(0, false);
+            }
+        } else if (sr_ofst->is_var()) {
+            code = OR_strh;
+        } else {
+            UNREACHABLE();
+        }
+        break;
+    case 4:
+        if (sr_ofst->is_int_imm()) {
+            if (isValidImmOpnd(OR_str_i12, sr_ofst->getInt())) {
+                code = OR_str_i12;
+            } else {
+                IOC tc;
+                buildAdd(base, sr_ofst, IOC_mem_byte_size(cont),
+                    false, ors, &tc);
+                base = tc.get_reg(0);
+                ASSERT0(base && base->is_reg());
+                code = OR_str;
+                sr_ofst = genIntImm(0, false);
+            }
+        } else if (sr_ofst->is_var()) {
+            code = OR_str;
+        } else {
+            UNREACHABLE();
+        }
+        break;
+    default: UNREACHABLE();
+    }
+    OR * o = genOR(code);
+    o->set_store_val(store_val);
+    o->set_store_base(base);
+
+    //If the bitsize of sr_ofst exceeded the capacity of operation,
+    //use R12 the scatch register to record the offset.
+    o->set_store_ofst(sr_ofst);
+
+    //Mapping from LD OR to corresponnd variable. Used by OR::dump()
+    setMapOR2Mem(o, v);
+    ors.append_tail(o);
+}
+
+
+void ARMCG::buildStoreCase2(IN SR * store_val,
+                            IN SR * base,
+                            IN SR * sr_ofst,
+                            Var const* v,
+                            OUT ORList & ors,
+                            IN IOC * cont)
+{
+    ASSERT0(IOC_mem_byte_size(cont) > 4 && IOC_mem_byte_size(cont) <= 8);
+    OR_TYPE code = OR_UNDEF;
+    if (sr_ofst->is_int_imm()) {
+        if (isValidImmOpnd(OR_strd_i8, sr_ofst->getInt())) {
+            code = OR_strd_i8;
+        } else {
+            IOC tc;
+            buildAdd(base, sr_ofst, IOC_mem_byte_size(cont),
+                     false, ors, &tc);
+            base = tc.get_reg(0);
+            ASSERT0(base && base->is_reg());
+            code = OR_str;
+            sr_ofst = genIntImm(0, false);
+        }
+    } else if (sr_ofst->is_var()) {
+        code = OR_strd;
+    } else {
+        UNREACHABLE();
+    }
+    OR * o = genOR(code);
+    ASSERT0(store_val->getByteSize() == 8);
+    ASSERT0(store_val->is_vec());
+    ASSERT0(SR_vec(store_val)->get(0) &&
+            SR_vec(store_val)->get(1));
+    o->set_store_val(SR_vec(store_val)->get(0), 0);
+    o->set_store_val(SR_vec(store_val)->get(1), 1);
+    o->set_store_base(base);
+
+    //If the bitsize of sr_ofst exceeded the capacity of operation,
+    //use R12 the scatch register to record the offset.
+    o->set_store_ofst(sr_ofst);
+
+    setMapOR2Mem(o, v);
+    ors.append_tail(o);
+}
+
+
+//Some target machine applys comparing instruction to calculate boolean.
+//e.g:
+//    r1 = 0x2,
+//    r2 = 0x2,
+//    r0 = eq, r1, r2 ;then r0 is 1.
+OR_TYPE ARMCG::mapIRType2ORType(IR_TYPE ir_type,
+                                UINT ir_opnd_size,
+                                IN SR * opnd0,
+                                IN SR * opnd1,
+                                bool is_signed)
+{
+    DUMMYUSE(opnd0);
+    OR_TYPE orty = OR_UNDEF;
+    switch (ir_type) {
+    case IR_ADD:
+        ASSERT0(opnd0->is_reg() && opnd1);
+        if (opnd1->is_reg()) {
+            if (is_signed) {
+                orty = OR_add;
+            } else {
+                orty = OR_add;
+            }
+        } else if (opnd1->is_int_imm()) {
+            if (isValidImmOpnd(OR_add_i, opnd1->is_int_imm())) {
+                orty = OR_add_i;
+            }
+        }
+        break;
+    case IR_SUB:
+        ASSERT0(opnd0->is_reg() && opnd1);
+        if (opnd1->is_reg()) {
+            if (is_signed) {
+                orty = OR_sub;
+            } else {
+                orty = OR_sub;
+            }
+        } else if (opnd1->is_int_imm()) {
+            if (isValidImmOpnd(OR_sub_i, opnd1->is_int_imm())) {
+                orty = OR_sub_i;
+            }
+        }
+        break;
+    case IR_MUL:
+        ASSERT0(opnd0->is_reg() && opnd1);
+        if (opnd1->is_reg()) {
+            if (ir_opnd_size > BYTE_PER_SHORT) {
+                orty = OR_UNDEF;
+                break;
+            }
+            if (is_signed) {
+                orty = OR_mul;
+            } else {
+                orty = OR_mul;
+            }
+        }
+        break;
+    case IR_DIV:
+    case IR_REM:
+    case IR_MOD:
+        break;
+    case IR_BAND:
+        ASSERT0(opnd0->is_reg() && opnd1);
+        if (opnd1->is_reg()) {
+            orty = OR_and;
+        } else if (opnd1->is_int_imm()) {
+            if (isValidImmOpnd(OR_and_i, opnd1->is_int_imm())) {
+                orty = OR_and_i;
+            }
+        }
+        break;
+    case IR_BOR:
+        ASSERT0(opnd0->is_reg() && opnd1);
+        if (opnd1->is_reg()) {
+            orty = OR_orr;
+        } else if (opnd1->is_int_imm()) {
+            if (isValidImmOpnd(OR_orr_i, opnd1->is_int_imm())) {
+                orty = OR_orr_i;
+            }
+        }
+        break;
+    case IR_XOR:
+        ASSERT0(opnd0->is_reg() && opnd1);
+        if (opnd1->is_reg()) {
+            orty = OR_eor;
+        } else if (opnd1->is_int_imm()) {
+            orty = OR_eor_i;
+        }
+        break;
+    case IR_BNOT:
+        break;
+    case IR_NEG:
+        if (opnd0->is_reg()) {
+            orty = OR_neg;
+        }
+        break;
+    case IR_LT:
+        ASSERT0(opnd0->is_reg() && opnd1);
+        break;
+    case IR_LE:
+        break;
+    case IR_GT:
+        break;
+    case IR_GE:
+        break;
+    case IR_EQ:
+        break;
+    case IR_NE:
+        break;
+    case IR_IGOTO:
+        orty = OR_bx;
+        break;
+    case IR_GOTO:
+        orty = OR_b;
+        break;
+    default: ASSERTN(0, ("unsupport"));
+    }
+    return orty;
+}
+
+
 //[base + ofst] = store_val
-void ARMCG::buildStore(
-        IN SR * store_val,
-        IN SR * base,
-        IN SR * ofst,
-        OUT ORList & ors,
-        IN IOC * cont)
+void ARMCG::buildStore(IN SR * store_val,
+                       IN SR * base,
+                       IN SR * ofst,
+                       OUT ORList & ors,
+                       IN IOC * cont)
 {
     ASSERT0(store_val && base && ofst);
-    ASSERT0(SR_is_int_imm(ofst) && (SR_is_reg(base) || SR_is_var(base)));
-    ASSERTN(SR_is_reg(store_val), ("store_val can only be register on ARM"));
-    ASSERT0(SR_is_int_imm(ofst));
+    ASSERT0(ofst->is_int_imm() && (base->is_reg() || base->is_var()));
+    ASSERTN(store_val->is_reg(), ("store_val can only be register on ARM"));
+    ASSERT0(ofst->is_int_imm());
     Var const* v = NULL;
     SR * sr_ofst = NULL;
-    if (SR_is_var(base)) {
+    if (base->is_var()) {
         SR * sr_base;
         v = SR_var(base);
-        computeVarBaseOffset(SR_var(base), SR_int_imm(ofst),
-            &sr_base, &sr_ofst);
-        if (VAR_is_global(v) && !SR_is_reg(sr_base)) {
+        computeVarBaseOffset(SR_var(base), ofst->getInt(),
+                             &sr_base, &sr_ofst);
+        if (VAR_is_global(v) && !sr_base->is_reg()) {
             //ARM does not support load value from memory label directly.
-            SR_var_ofst(base) += (UINT)SR_int_imm(ofst);
+            SR_var_ofst(base) += (UINT)ofst->getInt();
             SR * res = genReg();
             buildMove(res, base, ors, cont);
 
-            if (SR_is_int_imm(sr_ofst)) {
+            if (sr_ofst->is_int_imm()) {
                 SR_int_imm(sr_ofst) = SR_var_ofst(base);
             } else {
                 ASSERT0(m_is_compute_sect_offset);
-                ASSERT0(SR_is_var(sr_ofst));
+                ASSERT0(sr_ofst->is_var());
             }
 
             base = res;
         } else {
-            ASSERT0(SR_is_reg(sr_base));
+            ASSERT0(sr_base->is_reg());
             base = sr_base;
         }
     } else {
@@ -487,116 +779,9 @@ void ARMCG::buildStore(
     OR * o = NULL;
     ASSERT0(cont != NULL);
     if (IOC_mem_byte_size(cont) <= 4) {
-        OR_TYPE code = OR_UNDEF;
-        switch (IOC_mem_byte_size(cont)) {
-        case 1:
-            if (SR_is_int_imm(sr_ofst)) {
-                if (isValidImmOpnd(OR_strb_i12, SR_int_imm(sr_ofst))) {
-                    code = OR_strb_i12;
-                } else {
-                    //base + ofst
-                    //=>
-                    //t = base + ofst
-                    //base = t
-                    IOC tc;
-                    buildAdd(base, sr_ofst, IOC_mem_byte_size(cont),
-                        false, ors, &tc);
-                    base = tc.get_reg(0);
-                    ASSERT0(base && SR_is_reg(base));
-                    code = OR_strb;
-                    sr_ofst = genIntImm(0, false);
-                }
-            } else if (SR_is_var(sr_ofst)) {
-                code = OR_strb;
-            } else {
-                UNREACHABLE();
-            }
-            break;
-        case 2:
-            if (SR_is_int_imm(sr_ofst)) {
-                if (isValidImmOpnd(OR_strh_i8, SR_int_imm(sr_ofst))) {
-                    code = OR_strh_i8;
-                } else {
-                    IOC tc;
-                    buildAdd(base, sr_ofst, IOC_mem_byte_size(cont),
-                        false, ors, &tc);
-                    base = tc.get_reg(0);
-                    ASSERT0(base && SR_is_reg(base));
-                    code = OR_str;
-                    sr_ofst = genIntImm(0, false);
-                }
-            } else if (SR_is_var(sr_ofst)) {
-                code = OR_strh;
-            } else {
-                UNREACHABLE();
-            }
-            break;
-        case 4:
-            if (SR_is_int_imm(sr_ofst)) {
-                if (isValidImmOpnd(OR_str_i12, SR_int_imm(sr_ofst))) {
-                    code = OR_str_i12;
-                } else {
-                    IOC tc;
-                    buildAdd(base, sr_ofst, IOC_mem_byte_size(cont),
-                        false, ors, &tc);
-                    base = tc.get_reg(0);
-                    ASSERT0(base && SR_is_reg(base));
-                    code = OR_str;
-                    sr_ofst = genIntImm(0, false);
-                }
-            } else if (SR_is_var(sr_ofst)) {
-                code = OR_str;
-            } else {
-                UNREACHABLE();
-            }
-            break;
-        default: UNREACHABLE();
-        }
-        o = genOR(code);
-        o->set_store_val(store_val);
-        o->set_store_base(base);
-
-        //If the bitsize of sr_ofst exceeded the capacity of operation,
-        //use R12 the scatch register to record the offset.
-        o->set_store_ofst(sr_ofst);
-
-        //Mapping from LD OR to corresponnd variable. Used by OR::dump()
-        setMapOR2Mem(o, v);
-        ors.append_tail(o);
+        buildStoreCase1(store_val, base, sr_ofst, v, ors, cont);
     } else if (IOC_mem_byte_size(cont) <= 8) {
-        OR_TYPE code = OR_UNDEF;
-        if (SR_is_int_imm(sr_ofst)) {
-            if (isValidImmOpnd(OR_strd_i8, SR_int_imm(sr_ofst))) {
-                code = OR_strd_i8;
-            } else {
-                IOC tc;
-                buildAdd(base, sr_ofst, IOC_mem_byte_size(cont),
-                    false, ors, &tc);
-                base = tc.get_reg(0);
-                ASSERT0(base && SR_is_reg(base));
-                code = OR_str;
-                sr_ofst = genIntImm(0, false);
-            }
-        } else if (SR_is_var(sr_ofst)) {
-            code = OR_strd;
-        } else {
-            UNREACHABLE();
-        }
-        o = genOR(code);
-        ASSERT0(store_val->getByteSize() == 8);
-        ASSERT0(SR_is_vec(store_val));
-        ASSERT0(SR_vec(store_val)->get(0) &&
-                SR_vec(store_val)->get(1));
-        o->set_store_val(SR_vec(store_val)->get(0), 0);
-        o->set_store_val(SR_vec(store_val)->get(1), 1);
-        o->set_store_base(base);
-
-        //If the bitsize of sr_ofst exceeded the capacity of operation,
-        //use R12 the scatch register to record the offset.
-        o->set_store_ofst(sr_ofst);
-
-        setMapOR2Mem(o, v);
-        ors.append_tail(o);
+        buildStoreCase2(store_val, base, sr_ofst, v, ors, cont);
     } else {
         UNREACHABLE();
     }
@@ -604,165 +789,280 @@ void ARMCG::buildStore(
 
 
 //Build copy-operation with predicate register.
-void ARMCG::buildCopyPred(
-        CLUST clust,
-        UNIT unit,
-        SR * to,
-        SR * from,
-        SR * pd,
-        ORList & ors)
+void ARMCG::buildCopyPred(CLUST clust,
+                          UNIT unit,
+                          SR * to,
+                          SR * from,
+                          SR * pd,
+                          ORList & ors)
 {
-    ASSERT0(to && SR_is_reg(to) && from && SR_is_reg(from));
+    ASSERT0(to && to->is_reg() && from && from->is_reg());
     buildCopy(clust, unit, to, from, ors);
     if (pd != NULL) {
         OR * o = ors.get_head();
-        ASSERT0(ors.get_elem_count() == 1 && isCopyOR(o) && SR_is_pred(pd));
+        ASSERT0(ors.get_elem_count() == 1 && isCopyOR(o) && pd->is_pred());
         o->set_pred(pd);
     }
 }
 
 
-//Implement memory block copy.
-//Note tgt and src should not overlap.
-void ARMCG::buildMemcpyInternal(
-            SR * tgt,
-            SR * src,
-            UINT bytesize,
-            OUT ORList & ors,
-            IN IOC * cont)
+//This is an util function.
+//Build [tgt] <- [src] operation.
+//tgt: target memory address register.
+//src: source memory address register.
+//bytesize: assigned bytesize that customized by caller.
+void ARMCG::buildMemAssignBySize(SR * tgt,
+                                 SR * src,
+                                 UINT bytesize,
+                                 OUT ORList & ors,
+                                 IN IOC * cont)
 {
-    ASSERT0(src && SR_is_reg(src));
-    ASSERT0(tgt && SR_is_reg(tgt));
-    ASSERTN(bytesize > GENERAL_REGISTER_SIZE,
-        ("use SR move instead of block copy"));
-    //Generate loop to copy from src to tgt.
-    //e.g:
-    // srt2 = bytesize
-    // LOOP_START:
-    // x = [SRsrc]
-    // [SRtgt] = x
-    // SRsrc = SRsrc + 4byte
-    // SRtgt = SRtgt + 4byte
-    // srt2 = srt2 - 4byte
-    // teq_i, cpsr = srt2, 0
-    // b.ne, LOOP_START
-    IOC tc;
-    SR * zero = genIntImm((HOST_INT)0, true);
-    SR * sz = genIntImm((HOST_INT)GENERAL_REGISTER_SIZE, true);
-    if (bytesize % GENERAL_REGISTER_SIZE != 0) {
-        UINT rest = bytesize % GENERAL_REGISTER_SIZE;
-        buildGeneralLoad(
-            genIntImm((HOST_INT)rest, true),
-            0, ors, cont);
-        SR * srt2 = cont->get_reg(0);
-        ASSERT0(srt2 && SR_is_reg(srt2));
-
-        IOC_mem_byte_size(&tc) = rest;
+    ASSERT0(bytesize <= src->getByteSize());
+    SR * loadval = NULL;
+    if (bytesize == 3) {
+        IOC tc;
+        //Bytesize of 1,2,4, has been handled, just leave 3 unsupport.
+        //Current support for 3 byte loading is that load 4 bytes data,
+        //then reserve the lower 3 bytes.
+        ASSERT0(3 == GENERAL_REGISTER_SIZE - 1);
+        IOC_mem_byte_size(&tc) = GENERAL_REGISTER_SIZE;
         buildGeneralLoad(src, 0, ors, &tc);
-
-        SR * srt1 = tc.get_reg(0);
-        ASSERT0(srt1 && SR_is_reg(srt1));
-
-        IOC_mem_byte_size(&tc) = rest;
-        buildStore(srt1, tgt, zero, ors, &tc);
-
-        SR * sz2 = genIntImm((HOST_INT)rest, true);
+        loadval = tc.getResult();
+        ASSERT0(loadval && loadval->is_reg());
+        
         tc.clean_bottomup();
-        buildAdd(src, sz2, GENERAL_REGISTER_SIZE, false, ors, &tc);
-        ASSERT0(OR_code(ors.get_tail()) == OR_add ||
-                OR_code(ors.get_tail()) == OR_add_i);
-        ASSERT0(SR_is_reg(ors.get_tail()->get_result(0)));
-        ors.get_tail()->set_result(0, src);
-        //buildMove(src, tc.get_reg(0), ors, &tc);
-
-        tc.clean_bottomup();
-        buildAdd(tgt, sz2, GENERAL_REGISTER_SIZE, false, ors, &tc);
-        ASSERT0(OR_code(ors.get_tail()) == OR_add ||
-                OR_code(ors.get_tail()) == OR_add_i);
-        ASSERT0(SR_is_reg(ors.get_tail()->get_result(0)));
-        ors.get_tail()->set_result(0, tgt);
-        //buildMove(tgt, tc.get_reg(0), ors, &tc);
-
-        tc.clean_bottomup();
-        buildSub(srt2, sz2, GENERAL_REGISTER_SIZE, false, ors, &tc);
-        ASSERT0(OR_code(ors.get_tail()) == OR_add ||
-                OR_code(ors.get_tail()) == OR_add_i);
-        ASSERT0(SR_is_reg(ors.get_tail()->get_result(0)));
-        ors.get_tail()->set_result(0, srt2);
-        //buildMove(srt2, tc.get_reg(0), ors, &tc);
-
-        bytesize -= rest;
+        buildBinaryOR(IR_BAND, loadval,
+                      genIntImm(getMaskByByte(bytesize), false),
+                      false, ors, &tc);
+        loadval = tc.getResult();
+        ASSERT0(loadval && loadval->is_reg());
+        bytesize = GENERAL_REGISTER_SIZE;
+    } else {
+        IOC tc;
+        IOC_mem_byte_size(&tc) = bytesize;
+        buildGeneralLoad(src, 0, ors, &tc);
+        loadval = tc.getResult();
     }
+    ASSERT0(loadval && loadval->is_reg());
+    IOC tc;
+    IOC_mem_byte_size(&tc) = bytesize;
+    buildStore(loadval, tgt, genZero(), ors, &tc);
+}
 
+
+//This is an util function.
+//Build [tgt] <- [src] operation.
+//tgt: target memory address register.
+//src: source memory address register.
+void ARMCG::buildMemAssign(SR * tgt,
+                           SR * src,
+                           OUT ORList & ors,
+                           IN IOC * cont)
+{
+    ASSERT0(tgt->getByteSize() == src->getByteSize());
+    buildMemAssignBySize(tgt, src, src->getByteSize(), ors, cont);
+}
+
+
+//This is an util function.
+//Build several [tgt] <- [src] operations accroding unrolling factor.
+//e.g: given unrolling factor is 2, two memory assignments will be generated:
+//     [tgt] <- [src];
+//     src <- src + GENERAL_REGISTER_SIZE;
+//     tgt <- tgt + GENERAL_REGISTER_SIZE;
+//     [tgt] <- [src];
+//tgt: target memory address register.
+//src: source memory address register.
+void ARMCG::buildMemAssignUnroll(SR * tgt,
+                                 SR * src,
+                                 UINT unroll_factor,
+                                 OUT ORList & ors,
+                                 IN IOC * cont)
+{
+    SR * sz = genIntImm((HOST_INT)GENERAL_REGISTER_SIZE, true);
+    IOC tc;
+    for (UINT i = 0; i < unroll_factor; i++) {
+        buildMemAssign(tgt, src, ors, cont);
+
+        if (i == unroll_factor - 1) { continue; }
+
+        //Increase the address of src pointer and tgt pointer.
+        //src = src + size.
+        tc.clean_bottomup();
+        buildAdd(src, sz, GENERAL_REGISTER_SIZE, false, ors, &tc);
+        ASSERT0(OR_code(ors.get_tail()) == OR_add ||
+                OR_code(ors.get_tail()) == OR_add_i);
+        ASSERT0(ors.get_tail()->get_result(0)->is_reg());
+        ors.get_tail()->set_result(0, src);
+
+        //tgt = tgt + size.
+        tc.clean_bottomup();
+        buildAdd(tgt, sz, GENERAL_REGISTER_SIZE, false, ors, &tc);
+        ASSERT0(OR_code(ors.get_tail()) == OR_add ||
+                OR_code(ors.get_tail()) == OR_add_i);
+        ASSERT0(ors.get_tail()->get_result(0)->is_reg());
+        ors.get_tail()->set_result(0, tgt);
+    }
+}
+
+
+//This is an util function.
+//Build several [tgt] <- [src] operations accroding unrolling factor.
+//Generate loop to copy from src to tgt.
+//e.g: given tgt address register, src address register, bytesize:
+//  1. iv = bytesize
+//  2. LOOP_START:
+//  3. x = [src]
+//  4. [tgt] = x
+//  5. src = src + GENERAL_REGISTER_SIZE
+//  6. tgt = tgt + GENERAL_REGISTER_SIZE
+//  7. iv = iv - GENERAL_REGISTER_SIZE
+//  8. teq_i, cpsr = iv, 0
+//  9. b.ne, LOOP_START
+//tgt: target memory address register.
+//src: source memory address register.
+void ARMCG::buildMemAssignLoop(SR * tgt,
+                               SR * src,
+                               UINT bytesize,
+                               OUT ORList & ors,
+                               IN IOC * cont)
+{
+    IOC tc;
     tc.clean_bottomup();
+    //1. iv = bytesize
     buildGeneralLoad(genIntImm((HOST_INT)bytesize, true), 0, ors, &tc);
-    SR * srt2 = tc.get_reg(0);
-    ASSERT0(srt2 && SR_is_reg(srt2));
+    SR * iv = tc.get_reg(0);
+    ASSERT0(iv && iv->is_reg());
 
+    //2. LOOP_START
     SR * loop_start_lab = genLabel(m_rg->buildIlabel()->getLabel());
     buildLabel(SR_label(loop_start_lab), ors, &tc);
 
+    //3. x = [src]
     IOC_mem_byte_size(&tc) = src->getByteSize();
     tc.clean_bottomup();
     buildGeneralLoad(src, 0, ors, &tc);
 
     SR * srt1 = tc.get_reg(0);
-    ASSERT0(srt1 && SR_is_reg(srt1));
+    ASSERT0(srt1 && srt1->is_reg());
 
-    IOC_mem_byte_size(&tc) = src->getByteSize();
-    buildStore(srt1, tgt, zero, ors, &tc);
+    //4. [tgt] = x
+    IOC_mem_byte_size(&tc) = src->getByteSize();    
+    buildStore(srt1, tgt, genZero(), ors, &tc);
 
     ASSERT0(GENERAL_REGISTER_SIZE == src->getByteSize());
     ASSERT0(GENERAL_REGISTER_SIZE == tgt->getByteSize());
 
-    //src = src + size.
+    //5. src = src + GENERAL_REGISTER_SIZE
     tc.clean_bottomup();
+    SR * sz = genIntImm((HOST_INT)GENERAL_REGISTER_SIZE, true);
     buildAdd(src, sz, GENERAL_REGISTER_SIZE, false, ors, &tc);
     ASSERT0(OR_code(ors.get_tail()) == OR_add ||
             OR_code(ors.get_tail()) == OR_add_i);
-    ASSERT0(SR_is_reg(ors.get_tail()->get_result(0)));
+    ASSERT0(ors.get_tail()->get_result(0)->is_reg());
     ors.get_tail()->set_result(0, src);
-    //buildMove(src, tc.get_reg(0), ors, &tc);
 
-    //tgt = tgt + size.
+    //6. tgt = tgt + GENERAL_REGISTER_SIZE
     tc.clean_bottomup();
     buildAdd(tgt, sz, GENERAL_REGISTER_SIZE, false, ors, &tc);
     ASSERT0(OR_code(ors.get_tail()) == OR_add ||
             OR_code(ors.get_tail()) == OR_add_i);
-    ASSERT0(SR_is_reg(ors.get_tail()->get_result(0)));
+    ASSERT0(ors.get_tail()->get_result(0)->is_reg());
     ors.get_tail()->set_result(0, tgt);
-    //buildMove(tgt, tc.get_reg(0), ors, &tc);
 
     //Update loop_counter
+    //7. iv = iv - GENERAL_REGISTER_SIZE
     //total_size = total_size - GENERAL_REGISTER_SIZE.
     tc.clean_bottomup();
-    SR * sz3 = genIntImm((HOST_INT)GENERAL_REGISTER_SIZE, true);
-    buildSub(srt2, sz3, GENERAL_REGISTER_SIZE, false, ors, &tc);
+    buildSub(iv, sz, GENERAL_REGISTER_SIZE, false, ors, &tc);
     ASSERT0(OR_code(ors.get_tail()) == OR_add ||
             OR_code(ors.get_tail()) == OR_add_i);
-    ASSERT0(SR_is_reg(ors.get_tail()->get_result(0)));
-    ors.get_tail()->set_result(0, srt2);
-    //buildMove(srt2, tc.get_reg(0), ors, &tc);
+    ASSERT0(ors.get_tail()->get_result(0)->is_reg());
+    ors.get_tail()->set_result(0, iv);
+    //buildMove(iv, tc.get_reg(0), ors, &tc);
 
+    //8. teq_i, cpsr = iv, 0
     tc.clean_bottomup();
     ORList tors;
-    buildCompare(OR_teq_i, true, srt2, zero, tors, &tc);
+    buildCompare(OR_teq_i, true, iv, genZero(), tors, &tc);
     ASSERT0(tors.get_elem_count() == 1);
     ors.append_tail(tors);
 
+    //9. b.ne, LOOP_START
     cont->set_pred(genNEPred());
     buildCondBr(loop_start_lab, ors, cont);
 }
 
 
-void ARMCG::buildCopy(
-        CLUST clust,
-        UNIT unit,
-        SR * to,
-        SR * from,
-        ORList & ors)
+//Implement memory block copy.
+//Note tgt and src should not overlap.
+void ARMCG::buildMemcpyInternal(SR * tgt,
+                                SR * src,
+                                UINT bytesize,
+                                OUT ORList & ors,
+                                IN IOC * cont)
 {
-    ASSERT0(SR_is_reg(to) && SR_is_reg(from));
+    ASSERT0(src && src->is_reg());
+    ASSERT0(tgt && tgt->is_reg());
+    IOC tc;
+    if (bytesize % GENERAL_REGISTER_SIZE != 0) {
+        //Generate memory assignment for remainder data.
+        UINT rest = bytesize % GENERAL_REGISTER_SIZE;
+        buildMemAssignBySize(tgt, src, rest, ors, cont);
+
+        //Increase source address pointer.
+        //src = src + rest
+        tc.clean_bottomup();
+        buildIncReg(src, rest, ors, &tc);
+
+        //Increase target address pointer.
+        //tgt = tgt + rest
+        tc.clean_bottomup();
+        buildIncReg(tgt, rest, ors, &tc);
+
+        bytesize -= rest;
+    }
+
+    if (bytesize == 0) { return; }
+
+    if (bytesize <= GENERAL_REGISTER_SIZE * 2) {
+        //Use SR move instead of block copy.
+        ASSERT0(bytesize % GENERAL_REGISTER_SIZE == 0);
+        buildMemAssignUnroll(tgt, src, bytesize / GENERAL_REGISTER_SIZE,
+                             ors, cont);
+    } else {
+        buildMemAssignLoop(tgt, src, bytesize, ors, cont);
+    }
+}
+
+
+//Increase 'reg' by 'val'.
+void ARMCG::buildIncReg(SR * reg, UINT val, OUT ORList & ors, IOC * cont)
+{
+    if (val == 0) { return; }
+    CG::buildIncReg(reg, val, ors, cont);
+    ASSERT0(OR_code(ors.get_tail()) == OR_add ||
+            OR_code(ors.get_tail()) == OR_add_i);
+}
+
+
+//Decrease 'reg' by 'val'.
+void ARMCG::buildDecReg(SR * reg, UINT val, OUT ORList & ors, IOC * cont)
+{
+    if (val == 0) { return; }
+    CG::buildDecReg(reg, val, ors, cont);
+    //On ARM, decrement is also use ADD.
+    ASSERT0(OR_code(ors.get_tail()) == OR_add ||
+            OR_code(ors.get_tail()) == OR_add_i);
+}
+
+void ARMCG::buildCopy(CLUST clust,
+                      UNIT unit,
+                      SR * to,
+                      SR * from,
+                      ORList & ors)
+{
+    ASSERT0(to->is_reg() && from->is_reg());
     OR_TYPE ot = computeEquivalentORType(OR_mov, unit, clust);
     OR * o = genOR(ot);
     o->set_copy_to(to);
@@ -774,11 +1074,11 @@ void ARMCG::buildCopy(
 
 void ARMCG::buildMove(SR * to, SR * from, OUT ORList & ors, IN IOC *)
 {
-    ASSERT0(SR_is_reg(to));
-    ASSERT0(SR_is_reg(from) ||
-            SR_is_var(from) ||
-            SR_is_int_imm(from) ||
-            SR_is_fp_imm(from));
+    ASSERT0(to->is_reg());
+    ASSERT0(from->is_reg() ||
+            from->is_var() ||
+            from->is_int_imm() ||
+            from->is_fp_imm());
     switch (SR_type(from)) {
     case SR_REG:
         buildCopy(CLUST_FIRST, UNIT_A, to, from, ors);
@@ -786,7 +1086,7 @@ void ARMCG::buildMove(SR * to, SR * from, OUT ORList & ors, IN IOC *)
     case SR_INT_IMM: {
         OR * o = genOR(OR_mov32_i);
         o->set_mov_to(to);
-        o->set_mov_from(genIntImm(SR_int_imm(from), true));
+        o->set_mov_from(genIntImm(from->getInt(), true));
         ors.append_tail(o);
 
         //Decompose OR_mov32_i into OR_movw_i and OR_movt_i after RA,
@@ -794,13 +1094,13 @@ void ARMCG::buildMove(SR * to, SR * from, OUT ORList & ors, IN IOC *)
         //OR * o = genOR(OR_movw_i);
         //o->set_mov_to(to);
         //o->set_mov_from(genIntImm(
-        //    (HOST_INT)(SR_int_imm(from) & 0xFFFF), true));
+        //    (HOST_INT)(from->getInt() & 0xFFFF), true));
         //ors.append_tail(o);
-        //if (isInteger32bit(SR_int_imm(from))) {
+        //if (isInteger32bit(from->getInt())) {
         //    o = genOR(OR_movt_i);
         //    o->set_mov_to(to);
         //    o->set_mov_from(genIntImm(
-        //        (HOST_INT)((SR_int_imm(from) >> 16) & 0xFFFF), true));
+        //        (HOST_INT)((from->getInt() >> 16) & 0xFFFF), true));
         //    ors.append_tail(o);
         //}
         return;
@@ -840,7 +1140,7 @@ void ARMCG::setSpadjustOffset(OR * spadj, INT size)
     DUMMYUSE(size);
     ASSERT0(spadj && OR_code(spadj) == OR_spadjust);
     spadj->set_opnd(HAS_PREDICATE_REGISTER + SPADJUST_OFFSET_INDX,
-        genIntImm((HOST_INT)size, true));
+                    genIntImm((HOST_INT)size, true));
 }
 
 
@@ -848,29 +1148,28 @@ void ARMCG::setSpadjustOffset(OR * spadj, INT size)
 void ARMCG::buildSpadjust(OUT ORList & ors, IN IOC * cont)
 {
     OR * o = genOR(OR_spadjust);
-    ASSERT0(OR_is_fake(o));
-    o->set_result(0, genSP());
+    ASSERT0(o->is_fake());
+    o->set_result(0, getSP());
     o->set_result(1, gen_r12());
-    o->set_opnd(HAS_PREDICATE_REGISTER + 0, genSP());
+    o->set_opnd(HAS_PREDICATE_REGISTER + 0, getSP());
     ASSERT0(cont);
     o->set_opnd(HAS_PREDICATE_REGISTER + 1,
-        genIntImm((HOST_INT)IOC_int_imm(cont), true));
+                genIntImm((HOST_INT)IOC_int_imm(cont), true));
     ors.append_tail(o);
 }
 
 
-void ARMCG::buildICall(
-        SR * callee,
-        UINT ret_val_size,
-        OUT ORList & ors,
-        IOC * cont)
+void ARMCG::buildICall(SR * callee,
+                       UINT ret_val_size,
+                       OUT ORList & ors,
+                       IOC * cont)
 {
-    ASSERT0(callee && SR_is_reg(callee));
+    ASSERT0(callee && callee->is_reg());
     //Function-Call will violate SP,FP,GP, RFLAG register,
     //return-value register, return address register.
     OR * o = buildOR(OR_blx, 1, 2,
                      genReturnAddr(),
-                     genTruePred(),
+                     getTruePred(),
                      callee);
     ors.append_tail(o);
 
@@ -886,18 +1185,17 @@ void ARMCG::buildICall(
 }
 
 
-void ARMCG::buildCall(
-        Var const* callee,
-        UINT ret_val_size,
-        OUT ORList & ors,
-        IOC * cont)
+void ARMCG::buildCall(Var const* callee,
+                      UINT ret_val_size,
+                      OUT ORList & ors,
+                      IOC * cont)
 {
     //Function-Call will violate SP,FP,GP,
     //RFLAG register, return-value register,
     //return address register.
     OR * o = buildOR(OR_bl, 1, 2,
                      genReturnAddr(),
-                     genTruePred(),
+                     getTruePred(),
                      genVAR(callee));
     ors.append_tail(o);
 
@@ -926,7 +1224,7 @@ CLUST ARMCG::mapSlot2Cluster(SLOT slot)
 //Return the regisiter-file set which 'clust' corresponded with.
 List<REGFILE> & ARMCG::mapCluster2RegFileList(
         CLUST clust,
-        OUT List<REGFILE> & regfiles)
+        OUT List<REGFILE> & regfiles) const
 {
     switch (clust) {
     case CLUST_FIRST:
@@ -941,8 +1239,8 @@ List<REGFILE> & ARMCG::mapCluster2RegFileList(
 //Return register-file set which the unit set corresponded with.
 //'units': function unit set
 List<REGFILE> & ARMCG::mapUnitSet2RegFileList(
-        IN xgen::UnitSet & us,
-        OUT List<REGFILE> & regfiles)
+    xgen::UnitSet const& us,
+    OUT List<REGFILE> & regfiles) const
 {
     regfiles.append_tail(RF_R);
     return regfiles;
@@ -950,7 +1248,7 @@ List<REGFILE> & ARMCG::mapUnitSet2RegFileList(
 
 
 //Mapping from single unit to its corresponed cluster.
-SLOT ARMCG::mapUnit2Slot(UNIT unit, CLUST clst)
+SLOT ARMCG::mapUnit2Slot(UNIT unit, CLUST clst) const
 {
     switch (unit) {
     case UNIT_A: return SLOT_G;
@@ -962,7 +1260,7 @@ SLOT ARMCG::mapUnit2Slot(UNIT unit, CLUST clst)
 
 //Mapping from single issue slot(for multi-issue architecture) to
 //its corresponed function unit.
-UNIT ARMCG::mapSlot2Unit(SLOT slot)
+UNIT ARMCG::mapSlot2Unit(SLOT slot) const
 {
     switch (slot) {
     case SLOT_G: return UNIT_A;
@@ -973,7 +1271,7 @@ UNIT ARMCG::mapSlot2Unit(SLOT slot)
 
 
 //Return the cluster which owns 'regfile'.
-CLUST ARMCG::mapRegFile2Cluster(REGFILE regfile, SR const*)
+CLUST ARMCG::mapRegFile2Cluster(REGFILE regfile, SR const*) const
 {
     switch (regfile) {
     case RF_UNDEF:
@@ -990,7 +1288,7 @@ CLUST ARMCG::mapRegFile2Cluster(REGFILE regfile, SR const*)
 
 
 //Return the cluster which owns 'reg'
-CLUST ARMCG::mapReg2Cluster(REG reg)
+CLUST ARMCG::mapReg2Cluster(REG reg) const
 {
     for (INT c = CLUST_UNDEF + 1; c < CLUST_NUM; c++) {
         if (tmMapCluster2RegSet((CLUST)c)->is_contain(reg)) {
@@ -1003,7 +1301,9 @@ CLUST ARMCG::mapReg2Cluster(REG reg)
 
 
 //Return the function unit which can operate on 'regfile'
-UnitSet & ARMCG::mapRegFile2UnitSet(REGFILE regfile, SR const* sr, UnitSet & us)
+UnitSet & ARMCG::mapRegFile2UnitSet(REGFILE regfile,
+                                    SR const* sr,
+                                    UnitSet & us) const
 {
     switch (regfile) {
     case RF_R:
@@ -1017,22 +1317,22 @@ UnitSet & ARMCG::mapRegFile2UnitSet(REGFILE regfile, SR const* sr, UnitSet & us)
 
 
 //Return the cluster that is the correct function unit of 'sr'.
-CLUST ARMCG::mapSR2Cluster(OR * o, SR const* sr)
+CLUST ARMCG::mapSR2Cluster(OR const* o, SR const* sr) const
 {
-    if (!SR_is_reg(sr) || SR_regfile(sr) == RF_UNDEF) {
+    if (!sr->is_reg() || sr->getRegFile() == RF_UNDEF) {
         return CLUST_UNDEF;
     }
-    if (SR_phy_regid(sr) != REG_UNDEF) {
-        return mapReg2Cluster(SR_phy_regid(sr));
+    if (sr->getPhyReg() != REG_UNDEF) {
+        return mapReg2Cluster(sr->getPhyReg());
     }
-    if (SR_regfile(sr) != RF_UNDEF) {
-        return mapRegFile2Cluster(SR_regfile(sr), sr);
+    if (sr->getRegFile() != RF_UNDEF) {
+        return mapRegFile2Cluster(sr->getRegFile(), sr);
     }
 
     CLUST clust = CLUST_UNDEF;
-    switch (OR_code(o)) {
+    switch (o->getCode()) {
     case OR_spadjust:
-        //Disable ASSERT0(sr == genSP() || sr == genGP() || sr == genFP());
+        //Disable ASSERT0(sr == getSP() || sr == getGP() || sr == getFP());
         //Because alloca generate spadjust operation, such as:
         //    foo (alloca ((int)&main));
         //and generated OR are:
@@ -1040,7 +1340,7 @@ CLUST ARMCG::mapSR2Cluster(OR * o, SR const* sr)
         //    t234 :- add_i t97(p0) t233 (0x3)
         //    t235[A1] :- and_i t97(p0) TN234 (0xfffffffc)
         //    t49(sp) :- spadjust t97(p0) t235[A1] ; spadjust_minus
-        //Here t235 is not a genSP().
+        //Here t235 is not a getSP().
         clust = CLUST_FIRST;
         break;
     default:
@@ -1064,7 +1364,7 @@ OR * ARMCG::buildNop(UNIT unit, CLUST clust)
     OR * nop = NULL;
     switch (unit) {
     case UNIT_A:
-        nop = buildOR(OR_nop, 0, 1, genTruePred());
+        nop = buildOR(OR_nop, 0, 1, getTruePred());
         break;
     default: UNREACHABLE();
     }
@@ -1082,32 +1382,31 @@ CLUST ARMCG::computeORCluster(OR const*) const
 
 //Change 'or' to 'ortype', modifing all operands and results.
 //Performing verification and substitution certainly.
-bool ARMCG::changeORType(
-        IN OUT OR * o,
-        OR_TYPE ortype,
-        CLUST src,
-        CLUST tgt,
-        Vector<bool> const& regfile_unique)
+bool ARMCG::changeORType(IN OUT OR * o,
+                         OR_TYPE ortype,
+                         CLUST src,
+                         CLUST tgt,
+                         Vector<bool> const& regfile_unique)
 {
     DUMMYUSE(src);
     ASSERTN(tgt != CLUST_UNDEF, ("need cluster info"));
     for (UINT i = 0; i < o->result_num(); i++) {
         SR * sr = o->get_result(i);
-        if (!SR_is_reg(sr) ||
-            SR_is_pred(sr) ||
+        if (!sr->is_reg() ||
+            sr->is_pred() ||
             SR_is_dedicated(sr)) {
             continue;
         }
 
         //Handle general sr.
-        if (SR_phy_regid(sr) != REG_UNDEF) {
-            ASSERTN(SR_regfile(sr) != RF_UNDEF, ("Loss regfile info"));
-            ASSERTN(tgt == mapReg2Cluster(SR_phy_regid(sr)), ("Unmatch info"));
+        if (sr->getPhyReg() != REG_UNDEF) {
+            ASSERTN(sr->getRegFile() != RF_UNDEF, ("Loss regfile info"));
+            ASSERTN(tgt == mapReg2Cluster(sr->getPhyReg()), ("Unmatch info"));
         } else {
-            //ASSERTN(SR_phy_regid(sr) == REG_UNDEF &&
-            //       SR_regfile(sr) == RF_UNDEF, ("sr has allocated"));
+            //ASSERTN(sr->getPhyReg() == REG_UNDEF &&
+            //        sr->getRegFile() == RF_UNDEF, ("sr has allocated"));
             if (!regfile_unique.get(SR_sregid(sr))) {
-                SR_phy_regid(sr) = REG_UNDEF;
+                SR_phy_reg(sr) = REG_UNDEF;
                 SR_regfile(sr) = RF_UNDEF;
             }
         }
@@ -1115,28 +1414,27 @@ bool ARMCG::changeORType(
 
     for (UINT i = 0; i < o->opnd_num(); i++) {
         SR * sr = o->get_opnd(i);
-        if (!SR_is_reg(sr) ||
-            SR_is_pred(sr) ||
+        if (!sr->is_reg() ||
+            sr->is_pred() ||
             SR_is_dedicated(sr)) {
             continue;
         }
 
-        if (SR_phy_regid(sr) != REG_UNDEF) {
-            ASSERTN(SR_regfile(sr) != RF_UNDEF, ("Loss regfile info"));
+        if (sr->getPhyReg() != REG_UNDEF) {
+            ASSERTN(sr->getRegFile() != RF_UNDEF, ("Loss regfile info"));
             //When 'sr' has been assigned register, the 'tgt' cluster
             //must be as same as the cluster which 'sr' correlated to.
             //ASSERTN(tgt == mapReg2Cluster(
-            //    TN_register_class(sr), SR_phy_regid(sr)), ("Unmatch info"));
-
-            if (tgt != mapReg2Cluster(SR_phy_regid(sr))) {
+            //        TN_register_class(sr), sr->getPhyReg()),
+            //        ("Unmatch info"));
+            if (tgt != mapReg2Cluster(sr->getPhyReg())) {
                 return false;
             }
         } else {
             if (!regfile_unique.get(SR_sregid(sr))) {
-                //ASSERTN(SR_phy_regid(sr) == REG_UNDEF &&
-                //    SR_regfile(sr) == RF_UNDEF, ("sr has allocated"));
-
-                SR_phy_regid(sr) = REG_UNDEF;
+                //ASSERTN(sr->getPhyReg() == REG_UNDEF &&
+                //        sr->getRegFile() == RF_UNDEF, ("sr has allocated"));
+                SR_phy_reg(sr) = REG_UNDEF;
                 SR_regfile(sr) = RF_UNDEF;
             }
         }
@@ -1146,25 +1444,24 @@ bool ARMCG::changeORType(
 }
 
 
-void ARMCG::buildShiftLeft(
-        IN SR * src,
-        ULONG sr_size,
-        IN SR * shift_ofst,
-        OUT ORList & ors,
-        IN OUT IOC * cont)
+void ARMCG::buildShiftLeft(IN SR * src,
+                           ULONG sr_size,
+                           IN SR * shift_ofst,
+                           OUT ORList & ors,
+                           IN OUT IOC * cont)
 {
     if (sr_size <= 4) {
         //There is no different between signed and unsigned left shift.
         SR * res = genReg();
         OR_TYPE ort = OR_UNDEF;
-        if (SR_is_reg(shift_ofst)) {
+        if (shift_ofst->is_reg()) {
             ort = OR_lsl;
         } else if (SR_is_imm(shift_ofst)) {
             ort = OR_lsl_i32;
         } else {
             UNREACHABLE();
         }
-        OR * o = buildOR(ort, 1, 3, res, genTruePred(), src, shift_ofst);
+        OR * o = buildOR(ort, 1, 3, res, getTruePred(), src, shift_ofst);
         ors.append_tail(o);
         ASSERT0(cont);
         cont->set_reg(0, res);
@@ -1172,7 +1469,7 @@ void ARMCG::buildShiftLeft(
     }
 
     ASSERTN(sr_size <= 8, ("TODO"));
-    if (SR_is_reg(shift_ofst)) {
+    if (shift_ofst->is_reg()) {
         //e.g:long long a,b; int j;
         //    a = b << j;
         //  generated code:
@@ -1197,45 +1494,45 @@ void ARMCG::buildShiftLeft(
         //    rsb r6, j, #32
         SR * r6 = genReg();
         OR * o = buildOR(OR_rsb_i, 1, 3, r6,
-            genTruePred(), shift_ofst, genIntImm(32, false));
+                         getTruePred(), shift_ofst, genIntImm(32, false));
         ors.append_tail(o);
 
         //    sub r1, j, #32
         SR * r1 = genReg();
         o = buildOR(OR_sub_i, 1, 3, r1,
-            genTruePred(), shift_ofst, genIntImm(32, false));
+                    getTruePred(), shift_ofst, genIntImm(32, false));
         ors.append_tail(o);
 
         //    lsl r5, a_hi, j
         SR * r5 = genReg();
         o = buildOR(OR_lsl, 1, 3, r5,
-            genTruePred(), hi, shift_ofst);
+                    getTruePred(), hi, shift_ofst);
         ors.append_tail(o);
 
         //    lsr r6, a_lo, r6
         o = buildOR(OR_lsr, 1, 3, r6,
-            genTruePred(), lo, r6);
+                    getTruePred(), lo, r6);
         ors.append_tail(o);
 
         //    lsl r4, a_lo, r1
         SR * r4 = genReg();
         o = buildOR(OR_lsl, 1, 3, r4,
-            genTruePred(), lo, r1);
+                    getTruePred(), lo, r1);
         ors.append_tail(o);
 
         //    orrs r5, r5, r6
-        o = buildOR(OR_orrs, 2, 3, r5, genRflag(),
-            genTruePred(), r5, r6);
+        o = buildOR(OR_orrs, 2, 3, r5, getRflag(),
+                    getTruePred(), r5, r6);
         ors.append_tail(o);
 
         //    lsl res_lo, a_lo, j
         o = buildOR(OR_lsl, 1, 3, res_lo,
-            genTruePred(), lo, shift_ofst);
+                    getTruePred(), lo, shift_ofst);
         ors.append_tail(o);
 
         //    ands res_hi, r5, r1, asr #32
-        o = buildOR(OR_ands_asr_i, 2, 4, res_hi, genRflag(),
-            genTruePred(), r5, r1, genIntImm(32, false));
+        o = buildOR(OR_ands_asr_i, 2, 4, res_hi, getRflag(),
+                    getTruePred(), r5, r1, genIntImm(32, false));
         ors.append_tail(o);
 
         //    movcc res_hi, r4
@@ -1247,7 +1544,7 @@ void ARMCG::buildShiftLeft(
         cont->set_reg(0, res_lo);
         return;
     } else if (SR_is_imm(shift_ofst)) {
-        if (SR_int_imm(shift_ofst) <= 31) {
+        if (shift_ofst->getInt() <= 31) {
             //hi <- hi << ofst
             //t <- lo << (32 - ofst)
             //hi <- hi | t
@@ -1255,30 +1552,29 @@ void ARMCG::buildShiftLeft(
             SR * hi = SR_vec(src)->get(1);
             SR * lo = SR_vec(src)->get(0);
             ASSERT0(hi && lo);
-            OR * o = buildOR(OR_lsl_i, 1, 3, hi, genTruePred(),
-                hi, shift_ofst);
+            OR * o = buildOR(OR_lsl_i, 1, 3, hi, getTruePred(),
+                             hi, shift_ofst);
             ors.append_tail(o);
-            o = buildOR(OR_orr_lsr_i, 1, 4, hi, genTruePred(),
-                hi, lo, genIntImm(32 - SR_int_imm(shift_ofst), false));
+            o = buildOR(OR_orr_lsr_i, 1, 4, hi, getTruePred(),
+                        hi, lo, genIntImm(32 - shift_ofst->getInt(), false));
             ors.append_tail(o);
-            o = buildOR(OR_lsl_i, 1, 3, lo, genTruePred(),
-                lo, shift_ofst);
+            o = buildOR(OR_lsl_i, 1, 3, lo, getTruePred(),
+                        lo, shift_ofst);
             ors.append_tail(o);
             ASSERT0(cont);
             cont->set_reg(0, lo);
             //cont->set_reg(0, hi);
             return;
-        } else if (SR_int_imm(shift_ofst) <= 63) {
+        } else if (shift_ofst->getInt() <= 63) {
             //hi <- lo << (ofst - 32)
             //lo <- 0
             SR * hi = SR_vec(src)->get(1);
             SR * lo = SR_vec(src)->get(0);
             ASSERT0(hi && lo);
-            OR * o = buildOR(OR_lsl_i, 1, 3, hi, genTruePred(),
-                lo, genIntImm(SR_int_imm(shift_ofst) - 32, false));
+            OR * o = buildOR(OR_lsl_i, 1, 3, hi, getTruePred(),
+                             lo, genIntImm(shift_ofst->getInt() - 32, false));
             ors.append_tail(o);
-            o = buildOR(OR_mov_i, 1, 2, lo, genTruePred(),
-                genIntImm((HOST_INT)0, true));
+            o = buildOR(OR_mov_i, 1, 2, lo, getTruePred(), genZero(), true);
             ors.append_tail(o);
             ASSERT0(cont);
             cont->set_reg(0, lo);
@@ -1289,10 +1585,10 @@ void ARMCG::buildShiftLeft(
             ASSERT0(hi && lo);
             // hi <- 0
             OR * set_high = buildOR(OR_mov_i, 1, 2, hi,
-                genTruePred(), genIntImm(0, true));
+                                    getTruePred(), genIntImm(0, true));
             // lo <- 0
             OR * set_low = buildOR(OR_mov_i, 1, 2, lo,
-                genTruePred(), genIntImm(0, true));
+                                   getTruePred(), genIntImm(0, true));
             ASSERT0(set_high && set_low);
             ors.append_tail(set_high);
             ors.append_tail(set_low);
@@ -1306,232 +1602,294 @@ void ARMCG::buildShiftLeft(
 }
 
 
-void ARMCG::buildShiftRight(
-        IN SR * src,
-        ULONG sr_size,
-        IN SR * shift_ofst,
-        bool is_signed,
-        OUT ORList & ors,
-        IN OUT IOC * cont)
+void ARMCG::buildShiftRightCase1(IN SR * src,
+                                 ULONG sr_size,
+                                 IN SR * shift_ofst,
+                                 bool is_signed,
+                                 OUT ORList & ors,
+                                 IN OUT IOC * cont)
+{
+    SR * res = genReg();
+    OR_TYPE ort = OR_UNDEF;
+    if (is_signed) {
+        if (shift_ofst->is_reg()) { ort = OR_asr; }
+        else if (SR_is_imm(shift_ofst)) { ort = OR_asr_i32; }
+        else { UNREACHABLE(); }
+    } else {
+        if (shift_ofst->is_reg()) { ort = OR_lsr; }
+        else if (SR_is_imm(shift_ofst)) { ort = OR_lsr_i32; }
+        else { UNREACHABLE(); }
+    }
+    OR * o = buildOR(ort, 1, 3, res, getTruePred(), src, shift_ofst);
+    ors.append_tail(o);
+    ASSERT0(cont);
+    cont->set_reg(0, res);
+}
+
+
+void ARMCG::buildShiftRightCase2(IN SR * src,
+                                 ULONG sr_size,
+                                 IN SR * shift_ofst,
+                                 bool is_signed,
+                                 OUT ORList & ors,
+                                 IN OUT IOC * cont)
+{
+    //e.g:long long res;
+    //    long long src;
+    //    int shift_ofst;
+    //    void foo() {
+    //        res = src >> shift_ofst;
+    //    }
+    //
+    //Algo:
+    //    sub r5 <- shift_ofst, #32
+    //    asr r6 <- src_hi, r5
+    //    rsb ip <- shift_ofst, #32
+    //    lsl ip <- src_hi, ip
+    //    lsr r2 <- src_lo, shift_ofst
+    //    orr res_lo <- ip, r2
+    //    cmp r5, #0
+    //    it ge      #must exist if ISA is thumb.
+    //    movge res_lo <- r6
+    //    asr res_hi <- src_hi, r4
+    //    strd {res_lo,res_hi} -> result
+    OR_TYPE ort = OR_UNDEF;
+    if (is_signed) {
+        ort = OR_asr;
+    } else {
+        ort = OR_lsr;
+    }
+
+    SR * src_hi = SR_vec(src)->get(1);
+    SR * src_lo = SR_vec(src)->get(0);
+    ASSERT0(src_hi && src_lo);
+    SR * res_lo = genReg();
+    SR * res_hi = genReg();
+    getSRVecMgr()->genSRVec(2, res_lo, res_hi);
+
+    //    sub r5, shift_ofst, #32
+    SR * r5 = genReg();
+    OR * o = buildOR(OR_sub_i, 1, 3, r5,
+                     getTruePred(), shift_ofst, genIntImm(32, false));
+    ors.append_tail(o);
+
+    //    asr/lsr r6, src_hi, r5
+    SR * r6 = genReg();
+    o = buildOR(ort, 1, 3, r6, getTruePred(), src_hi, r5);
+    ors.append_tail(o);
+
+    //    rsb ip, shift_ofst, #32
+    SR * ip = genReg();
+    o = buildOR(OR_rsb_i, 1, 3, ip,
+                getTruePred(), shift_ofst, genIntImm(32, false));
+    ors.append_tail(o);
+
+    //    lsl ip, src_hi, ip
+    o = buildOR(OR_lsl, 1, 3, ip, getTruePred(), src_hi, ip);
+    ors.append_tail(o);
+
+    //    lsr r2, src_lo, shift_ofst
+    SR * r2 = genReg();
+    o = buildOR(OR_lsr, 1, 3, r2, getTruePred(), src_lo, shift_ofst);
+    ors.append_tail(o);
+
+    //    orr res_lo, ip, r2
+    o = buildOR(OR_orr, 1, 3, res_lo, getTruePred(), ip, r2);
+    ors.append_tail(o);
+
+    //    cmp r5, #0
+    o = buildOR(OR_cmp_i, 1, 3, getRflag(),
+                getTruePred(), r5, genIntImm(0, false));
+    ors.append_tail(o);
+
+    //    mov_ge  res_lo, r6
+    o = buildOR(OR_mov, 1, 2, res_lo, genGEPred(), r6);
+    ors.append_tail(o);
+
+    //    asr/lsr res_hi, src_hi, shift_ofst
+    o = buildOR(ort, 1, 3, res_hi, getTruePred(), src_hi, shift_ofst);
+    ors.append_tail(o);
+
+    //    strd res_lo, res_hi ->[b_lo, b_hi]
+    ASSERT0(cont);
+    cont->set_reg(0, res_lo);
+    return;
+}
+
+
+void ARMCG::buildShiftRightCase3_1(IN SR * src,
+                                   ULONG sr_size,
+                                   IN SR * shift_ofst,
+                                   bool is_signed,
+                                   OUT ORList & ors,
+                                   IN OUT IOC * cont)
+{
+    //Algo:
+    //lo = lo >>(lsr) shift_ofst
+    //lo = lo | (hi <<(lsl) (32 - shift_ofst))
+    //hi = hi >> shift_ofst
+
+    SR * hi = SR_vec(src)->get(1);
+    SR * lo = SR_vec(src)->get(0);
+    ASSERT0(hi && lo);
+
+    //NOTE: Need LOGICAL shift to reserve space to
+    //hold residual part of high-part.
+    //DO NOT USE ARITH-SHIFT.
+    //lo = lo >>(lsr) shift_ofst
+    OR * o = buildOR(OR_lsr_i, 1, 3, lo, getTruePred(), lo, shift_ofst);
+    ors.append_tail(o);
+
+    //lo = lo | (hi <<(lsl) (32 - shift_ofst))
+    o = buildOR(OR_orr_lsl_i, 1, 4, lo,
+                getTruePred(),
+                lo, hi, genIntImm(32 - shift_ofst->getInt(), false));
+    ors.append_tail(o);
+
+    //hi = hi >> shift_ofst
+    OR_TYPE ort = OR_lsr_i;
+    if (is_signed) {
+        ort = OR_asr_i;
+    } else {
+        ort = OR_lsr_i;
+    }
+    o = buildOR(ort, 1, 3, hi, getTruePred(), hi, shift_ofst);
+    ors.append_tail(o);
+
+    ASSERT0(cont);
+    cont->set_reg(0, lo);
+    //cont->set_reg(1, hi);
+}
+
+
+void ARMCG::buildShiftRightCase3_2(IN SR * src,
+                                   ULONG sr_size,
+                                   IN SR * shift_ofst,
+                                   bool is_signed,
+                                   OUT ORList & ors,
+                                   IN OUT IOC * cont)
+{
+    //Algo:
+    //lo <- hi asr (ofst - 32)
+    //if (is_signed) {
+    //    hi <- hi asr shift_ofst
+    //} else {
+    //    hi <- 0
+    //}
+
+    OR_TYPE ort = OR_UNDEF;
+    if (is_signed) {
+        ort = OR_asr_i;
+    }
+    else {
+        ort = OR_lsr_i;
+    }
+
+    SR * hi = SR_vec(src)->get(1);
+    SR * lo = SR_vec(src)->get(0);
+    ASSERT0(hi && lo);
+    //Do we need asr_i here?
+    //lo <- hi asr (ofst - 32)
+    OR * set_low = buildOR(ort, 1, 3, lo,
+                           getTruePred(), hi,
+                           genIntImm(shift_ofst->getInt() - 32, true));
+    ors.append_tail(set_low);
+
+    OR * set_high = NULL;
+    if (is_signed) {
+        //DO WE NEED ASR_I HERE ??
+        //    hi <- hi asr shift_ofst
+        set_high = buildOR(OR_asr_i, 1, 3, hi,
+                           getTruePred(), hi, genIntImm(31, true));
+    } else {
+        //    hi <- 0
+        set_high = buildOR(OR_mov_i, 1, 2, hi,
+                           getTruePred(), genIntImm(0, true));
+    }
+    ors.append_tail(set_high);
+    ASSERT0(cont);
+    cont->set_reg(0, hi);
+    //cont->set_reg(1, hi);
+}
+
+
+void ARMCG::buildShiftRightCase3(IN SR * src,
+                                 ULONG sr_size,
+                                 IN SR * shift_ofst,
+                                 bool is_signed,
+                                 OUT ORList & ors,
+                                 IN OUT IOC * cont)
+{
+    if (shift_ofst->getInt() <= 31) {
+        buildShiftRightCase3_1(src, sr_size, shift_ofst, is_signed, ors, cont);
+        return;
+    }
+
+    if (shift_ofst->getInt() <= 63) {
+        buildShiftRightCase3_2(src, sr_size, shift_ofst, is_signed, ors, cont);
+        return;
+    }
+
+    //Algo:
+    //if (is_signed) {
+    //    lo <- hi asr 31
+    //    hi <- hi asr 31
+    //} else {
+    //    lo <- 0
+    //    hi <- 0
+    //}
+
+    SR * hi = SR_vec(src)->get(1);
+    SR * lo = SR_vec(src)->get(0);
+    ASSERT0(hi && lo);
+    OR * set_high = NULL;
+    OR * set_low = NULL;
+    if (is_signed) {
+        //Do we need asrs_i here?
+        //    lo <- hi asr 31
+        set_high = buildOR(OR_asr_i, 1, 3, lo,
+                           getTruePred(), hi, genIntImm(31, true));
+        //    hi <- hi asr 31
+        set_low = buildOR(OR_asr_i, 1, 3, hi,
+                          getTruePred(), hi, genIntImm(31, true));
+    } else {
+        //    hi <- 0
+        set_high = buildOR(OR_mov_i, 1, 2, hi,
+                           getTruePred(), genIntImm(0, true));
+        //    lo <- 0
+        set_low = buildOR(OR_mov_i, 1, 2, lo,
+                          getTruePred(), genIntImm(0, true));
+    }
+    ASSERT0(set_high && set_low);
+    ors.append_tail(set_high);
+    ors.append_tail(set_low);
+    ASSERT0(cont);
+    cont->set_reg(0, hi);
+    //cont->set_reg(1, hi);
+}
+
+
+void ARMCG::buildShiftRight(IN SR * src,
+                            ULONG sr_size,
+                            IN SR * shift_ofst,
+                            bool is_signed,
+                            OUT ORList & ors,
+                            IN OUT IOC * cont)
 {
     if (sr_size <= 4) {
-        SR * res = genReg();
-        OR_TYPE ort = OR_UNDEF;
-        if (is_signed) {
-            if (SR_is_reg(shift_ofst)) { ort = OR_asr; }
-            else if (SR_is_imm(shift_ofst)) { ort = OR_asr_i32; }
-            else { UNREACHABLE(); }
-        } else {
-            if (SR_is_reg(shift_ofst)) { ort = OR_lsr; }
-            else if (SR_is_imm(shift_ofst)) { ort = OR_lsr_i32; }
-            else { UNREACHABLE(); }
-        }
-        OR * o = buildOR(ort, 1, 3, res, genTruePred(), src, shift_ofst);
-        ors.append_tail(o);
-        ASSERT0(cont);
-        cont->set_reg(0, res);
+        buildShiftRightCase1(src, sr_size, shift_ofst, is_signed, ors, cont);
         return;
     }
 
     ASSERTN(sr_size <= 8, ("TODO"));
-    if (SR_is_reg(shift_ofst)) {
-        //e.g:long long res;
-        //    long long src;
-        //    int shift_ofst;
-        //    void foo() {
-        //        res = src >> shift_ofst;
-        //    }
-        //
-        //    sub r5 <- shift_ofst, #32
-        //    asr r6 <- src_hi, r5
-        //    rsb ip <- shift_ofst, #32
-        //    lsl ip <- src_hi, ip
-        //    lsr r2 <- src_lo, shift_ofst
-        //    orr res_lo <- ip, r2
-        //    cmp r5, #0
-        //    it ge      #must exist if ISA is thumb.
-        //    movge res_lo <- r6
-        //    asr res_hi <- src_hi, r4
-        //    strd {res_lo,res_hi} -> result
-
-        OR_TYPE ort = OR_UNDEF;
-        if (is_signed) {
-            ort = OR_asr;
-        } else {
-            ort = OR_lsr;
-        }
-
-        SR * src_hi = SR_vec(src)->get(1);
-        SR * src_lo = SR_vec(src)->get(0);
-        ASSERT0(src_hi && src_lo);
-        SR * res_lo = genReg();
-        SR * res_hi = genReg();
-        getSRVecMgr()->genSRVec(2, res_lo, res_hi);
-
-        //    sub r5, shift_ofst, #32
-        SR * r5 = genReg();
-        OR * o = buildOR(OR_sub_i, 1, 3, r5,
-            genTruePred(), shift_ofst, genIntImm(32, false));
-        ors.append_tail(o);
-
-        //    asr/lsr r6, src_hi, r5
-        SR * r6 = genReg();
-        o = buildOR(ort, 1, 3, r6, genTruePred(), src_hi, r5);
-        ors.append_tail(o);
-
-        //    rsb ip, shift_ofst, #32
-        SR * ip = genReg();
-        o = buildOR(OR_rsb_i, 1, 3, ip,
-            genTruePred(), shift_ofst, genIntImm(32, false));
-        ors.append_tail(o);
-
-        //    lsl ip, src_hi, ip
-        o = buildOR(OR_lsl, 1, 3, ip, genTruePred(), src_hi, ip);
-        ors.append_tail(o);
-
-        //    lsr r2, src_lo, shift_ofst
-        SR * r2 = genReg();
-        o = buildOR(OR_lsr, 1, 3, r2, genTruePred(), src_lo, shift_ofst);
-        ors.append_tail(o);
-
-        //    orr res_lo, ip, r2
-        o = buildOR(OR_orr, 1, 3, res_lo, genTruePred(), ip, r2);
-        ors.append_tail(o);
-
-        //    cmp r5, #0
-        o = buildOR(OR_cmp_i, 1, 3, genRflag(),
-            genTruePred(), r5, genIntImm(0, false));
-        ors.append_tail(o);
-
-        //    mov_ge  res_lo, r6
-        o = buildOR(OR_mov, 1, 2, res_lo, genGEPred(), r6);
-        ors.append_tail(o);
-
-        //    asr/lsr res_hi, src_hi, shift_ofst
-        o = buildOR(ort, 1, 3, res_hi, genTruePred(), src_hi, shift_ofst);
-        ors.append_tail(o);
-
-        //    strd res_lo, res_hi ->[b_lo, b_hi]
-        ASSERT0(cont);
-        cont->set_reg(0, res_lo);
+    if (shift_ofst->is_reg()) {
+        buildShiftRightCase2(src, sr_size, shift_ofst, is_signed, ors, cont);
         return;
-    } else if (SR_is_imm(shift_ofst)) {
-        if (SR_int_imm(shift_ofst) <= 31) {
-            //lo = lo >>(lsr) shift_ofst
-            //lo = lo | (hi <<(lsl) (32 - shift_ofst))
-            //hi = hi >> shift_ofst
-
-            SR * hi = SR_vec(src)->get(1);
-            SR * lo = SR_vec(src)->get(0);
-            ASSERT0(hi && lo);
-
-            //NOTE: Need LOGICAL shift to reserve space to
-            //hold residual part of high-part.
-            //DO NOT USE ARITH-SHIFT.
-            //lo = lo >>(lsr) shift_ofst
-            OR * o = buildOR(OR_lsr_i, 1, 3, lo, genTruePred(), lo, shift_ofst);
-            ors.append_tail(o);
-
-            //lo = lo | (hi <<(lsl) (32 - shift_ofst))
-            o = buildOR(OR_orr_lsl_i, 1, 4, lo,
-                genTruePred(),
-                lo, hi, genIntImm(32 - SR_int_imm(shift_ofst), false));
-            ors.append_tail(o);
-
-            //hi = hi >> shift_ofst
-            OR_TYPE ort = OR_lsr_i;
-            if (is_signed) {
-                ort = OR_asr_i;
-            } else {
-                ort = OR_lsr_i;
-            }
-            o = buildOR(ort, 1, 3, hi, genTruePred(), hi, shift_ofst);
-            ors.append_tail(o);
-
-            ASSERT0(cont);
-            cont->set_reg(0, lo);
-            //cont->set_reg(1, hi);
-            return;
-        } else if (SR_int_imm(shift_ofst) <= 63) {
-            //lo <- hi asr (ofst - 32)
-            //if (is_signed) {
-            //    hi <- hi asr shift_ofst
-            //} else {
-            //    hi <- 0
-            //}
-
-            OR_TYPE ort = OR_UNDEF;
-            if (is_signed) {
-                ort = OR_asr_i;
-            }
-            else {
-                ort = OR_lsr_i;
-            }
-
-            SR * hi = SR_vec(src)->get(1);
-            SR * lo = SR_vec(src)->get(0);
-            ASSERT0(hi && lo);
-            //Do we need asr_i here?
-            //lo <- hi asr (ofst - 32)
-            OR * set_low = buildOR(ort, 1, 3, lo,
-                genTruePred(), hi,
-                genIntImm(SR_int_imm(shift_ofst) - 32, true));
-            ors.append_tail(set_low);
-
-            OR * set_high = NULL;
-            if (is_signed) {
-                //DO WE NEED ASR_I HERE ??
-                //    hi <- hi asr shift_ofst
-                set_high = buildOR(OR_asr_i, 1, 3, hi,
-                    genTruePred(), hi, genIntImm(31, true));
-            } else {
-                //    hi <- 0
-                set_high = buildOR(OR_mov_i, 1, 2, hi,
-                    genTruePred(), genIntImm(0, true));
-            }
-            ors.append_tail(set_high);
-            ASSERT0(cont);
-            cont->set_reg(0, hi);
-            //cont->set_reg(1, hi);
-            return;
-        } else {
-            //if (is_signed) {
-            //    lo <- hi asr 31
-            //    hi <- hi asr 31
-            //} else {
-            //    lo <- 0
-            //    hi <- 0
-            //}
-
-            SR * hi = SR_vec(src)->get(1);
-            SR * lo = SR_vec(src)->get(0);
-            ASSERT0(hi && lo);
-            OR * set_high = NULL;
-            OR * set_low = NULL;
-            if (is_signed) {
-                //Do we need asrs_i here?
-                //    lo <- hi asr 31
-                set_high = buildOR(OR_asr_i, 1, 3, lo,
-                    genTruePred(), hi, genIntImm(31, true));
-                //    hi <- hi asr 31
-                set_low = buildOR(OR_asr_i, 1, 3, hi,
-                    genTruePred(), hi, genIntImm(31, true));
-            } else {
-                //    hi <- 0
-                set_high = buildOR(OR_mov_i, 1, 2, hi,
-                    genTruePred(), genIntImm(0, true));
-                //    lo <- 0
-                set_low = buildOR(OR_mov_i, 1, 2, lo,
-                    genTruePred(), genIntImm(0, true));
-            }
-            ASSERT0(set_high && set_low);
-            ors.append_tail(set_high);
-            ors.append_tail(set_low);
-            ASSERT0(cont);
-            cont->set_reg(0, hi);
-            //cont->set_reg(1, hi);
-            return;
-        }
+    }
+    if (shift_ofst->is_imm()) {
+        ASSERTN(shift_ofst->getInt() != 0, ("a >> 0, redundant operation"));
+        buildShiftRightCase3(src, sr_size, shift_ofst, is_signed, ors, cont);
+        return;
     }
     UNREACHABLE();
 }
@@ -1539,12 +1897,11 @@ void ARMCG::buildShiftRight(
 
 //Generate inter-cluster copy operation.
 //Copy from 'src' in 'src_clust' to 'tgt' of in 'tgt_clust'.
-OR * ARMCG::buildBusCopy(
-        IN SR * src,
-        IN SR * tgt,
-        IN SR *, //predicate register.
-        CLUST src_clust,
-        CLUST tgt_clust)
+OR * ARMCG::buildBusCopy(IN SR * src,
+                         IN SR * tgt,
+                         IN SR *, //predicate register.
+                         CLUST src_clust,
+                         CLUST tgt_clust)
 {
     ASSERTN(0, ("Unsupport"));
     return NULL;
@@ -1552,34 +1909,33 @@ OR * ARMCG::buildBusCopy(
 
 
 //'sr_size': The number of byte-size of SR.
-void ARMCG::buildAddRegImm(
-        SR * src,
-        SR * imm,
-        UINT sr_size,
-        bool is_sign,
-        OUT ORList & ors,
-        IN IOC * cont)
+void ARMCG::buildAddRegImm(SR * src,
+                           SR * imm,
+                           UINT sr_size,
+                           bool is_sign,
+                           OUT ORList & ors,
+                           IN IOC * cont)
 {
     DUMMYUSE(is_sign);
-    ASSERT0(SR_is_reg(src));
-    ASSERT0(SR_is_int_imm(imm) ||
-            (!m_is_compute_sect_offset || SR_is_var(imm)));
+    ASSERT0(src->is_reg());
+    ASSERT0(imm->is_int_imm() ||
+            (!m_is_compute_sect_offset || imm->is_var()));
     if (sr_size <= 4) { //< 4bytes
-        if (isValidImmOpnd(OR_add_i, SR_is_int_imm(imm))) {
+        if (isValidImmOpnd(OR_add_i, imm->is_int_imm())) {
             SR * res = genReg();
             OR * o = buildOR(OR_add_i, 1, 3, res,
-                genTruePred(), src, imm);
+                             getTruePred(), src, imm);
             cont->set_reg(0, res);
             ors.append_tail(o);
             return;
         }
 
         SR * t = genReg();
-        buildMove(t, genIntImm((HOST_INT)(SR_int_imm(imm)), true), ors, NULL);
+        buildMove(t, genIntImm((HOST_INT)(imm->getInt()), true), ors, NULL);
 
         SR * res = genReg();
         OR * o = buildOR(OR_add, 1, 3, res,
-            genTruePred(), src, t);
+                         getTruePred(), src, t);
         cont->set_reg(0, res);
         ors.append_tail(o);
     } else if (sr_size <= 8) {
@@ -1588,26 +1944,26 @@ void ARMCG::buildAddRegImm(
 
         //load low 32bit imm
         SR * t = genReg();
-        buildMove(t, genIntImm(
-            (HOST_INT)(SR_int_imm(imm) & 0xFFFFFFFF), true), ors, NULL);
+        buildMove(t, genIntImm((HOST_INT)(imm->getInt() & 0xFFFFFFFF), true),
+                  ors, NULL);
         SR * t2 = genReg();
-        buildMove(t2,
-            genIntImm((HOST_INT)((SR_int_imm(imm) >> 32) & 0xFFFFFFFF), true),
-            ors, NULL);
+        buildMove(t2, genIntImm((HOST_INT)
+                                ((imm->getInt() >> 32) & 0xFFFFFFFF), true),
+                  ors, NULL);
 
         SR * res = genReg();
         SR * res2 = genReg();
         getSRVecMgr()->genSRVec(2, res, res2);
         ASSERT0(res == SR_vec(res)->get(0) && res2 == SR_vec(res)->get(1));
 
-        OR * o = buildOR(OR_adds, 2, 3, res, genRflag(),
-            genTruePred(), src, t);
+        OR * o = buildOR(OR_adds, 2, 3, res, getRflag(),
+                         getTruePred(), src, t);
         ors.append_tail(o);
 
         SR * src2 = sv->get(1);
         ASSERT0(src2);
         o = buildOR(OR_adc, 1, 4, res2,
-            genTruePred(), src2, t2, genRflag());
+                    getTruePred(), src2, t2, getRflag());
         ors.append_tail(o);
 
         ASSERT0(cont);
@@ -1620,21 +1976,20 @@ void ARMCG::buildAddRegImm(
 
 
 //'sr_size': The number of byte-size of SR.
-void ARMCG::buildMul(
-        SR * src1,
-        SR * src2,
-        UINT sr_size,
-        bool is_sign,
-        OUT ORList & ors,
-        IN IOC * cont)
+void ARMCG::buildMul(SR * src1,
+                     SR * src2,
+                     UINT sr_size,
+                     bool is_sign,
+                     OUT ORList & ors,
+                     IN IOC * cont)
 {
-    if (SR_is_int_imm(src1) && SR_is_int_imm(src2)) {
-        SR * result = genIntImm((HOST_INT)(SR_int_imm(src1) *
-            SR_int_imm(src2)), true);
+    if (src1->is_int_imm() && src2->is_int_imm()) {
+        SR * result = genIntImm((HOST_INT)
+                                (src1->getInt() * src2->getInt()), true);
         ASSERT0(cont);
         cont->set_reg(0, result);
         return;
-    } else if (SR_is_reg(src2) && SR_is_reg(src2)) {
+    } else if (src2->is_reg() && src2->is_reg()) {
         buildMulRegReg(src1, src2, sr_size, is_sign, ors, cont);
         return;
     }
@@ -1643,20 +1998,19 @@ void ARMCG::buildMul(
 
 
 //'sr_size': The number of byte-size of SR.
-void ARMCG::buildMulRegReg(
-        SR * src1,
-        SR * src2,
-        UINT sr_size,
-        bool is_sign,
-        OUT ORList & ors,
-        IN IOC * cont)
+void ARMCG::buildMulRegReg(SR * src1,
+                           SR * src2,
+                           UINT sr_size,
+                           bool is_sign,
+                           OUT ORList & ors,
+                           IN IOC * cont)
 {
-    ASSERT0(SR_is_reg(src1) && SR_is_reg(src2));
+    ASSERT0(src1->is_reg() && src2->is_reg());
     if (sr_size <= 4) { //< 4bytes
         DUMMYUSE(is_sign);
         SR * res = genReg();
         //Both signed and unsigned uses the opcode.
-        OR * o = buildOR(OR_mul, 1, 3, res, genTruePred(), src1, src2);
+        OR * o = buildOR(OR_mul, 1, 3, res, getTruePred(), src1, src2);
         cont->set_reg(0, res);
         ors.append_tail(o);
         return;
@@ -1665,16 +2019,15 @@ void ARMCG::buildMulRegReg(
 }
 
 
-void ARMCG::buildAddRegReg(
-        bool is_add,
-        SR * src1,
-        SR * src2,
-        UINT sr_size,
-        bool is_sign,
-        OUT ORList & ors,
-        IN IOC * cont)
+void ARMCG::buildAddRegReg(bool is_add,
+                           SR * src1,
+                           SR * src2,
+                           UINT sr_size,
+                           bool is_sign,
+                           OUT ORList & ors,
+                           IN IOC * cont)
 {
-    ASSERT0(SR_is_reg(src1) && SR_is_reg(src2));
+    ASSERT0(src1->is_reg() && src2->is_reg());
     if (sr_size <= 4) { //< 4bytes
         OR_TYPE orty = OR_UNDEF;
         if (is_add) {
@@ -1683,7 +2036,7 @@ void ARMCG::buildAddRegReg(
             orty = OR_sub;
         }
         SR * res = genReg();
-        OR * o = buildOR(orty, 1, 3, res, genTruePred(), src1, src2);
+        OR * o = buildOR(orty, 1, 3, res, getTruePred(), src1, src2);
         cont->set_reg(0, res);
         ors.append_tail(o);
     } else if (sr_size <= 8) {
@@ -1708,10 +2061,10 @@ void ARMCG::buildAddRegReg(
             orty = OR_adds;
             orty2 = OR_adc;
             reslst.append_tail(res_2);
-            opndlst.append_tail(genTruePred());
+            opndlst.append_tail(getTruePred());
             opndlst.append_tail(src1_2);
             opndlst.append_tail(src2_2);
-            opndlst.append_tail(genRflag());
+            opndlst.append_tail(getRflag());
             ASSERT0(::tmGetResultNum(orty) == 2);
             ASSERT0(::tmGetOpndNum(orty) == 3);
             ASSERT0(::tmGetResultNum(orty2) == 1);
@@ -1720,18 +2073,18 @@ void ARMCG::buildAddRegReg(
             orty = OR_subs;
             orty2 = OR_sbc;
             reslst.append_tail(res_2);
-            opndlst.append_tail(genTruePred());
+            opndlst.append_tail(getTruePred());
             opndlst.append_tail(src1_2);
             opndlst.append_tail(src2_2);
-            opndlst.append_tail(genRflag());
+            opndlst.append_tail(getRflag());
             ASSERT0(::tmGetResultNum(orty) == 2);
             ASSERT0(::tmGetOpndNum(orty) == 3);
             ASSERT0(::tmGetResultNum(orty2) == 1);
             ASSERT0(::tmGetOpndNum(orty2) == 4);
         }
 
-        OR * o1 = buildOR(orty, 2, 3, res, genRflag(),
-            genTruePred(), src1, src2);
+        OR * o1 = buildOR(orty, 2, 3, res, getRflag(),
+            getTruePred(), src1, src2);
         ors.append_tail(o1);
 
         OR * o2 = buildOR(orty2, reslst, opndlst);
@@ -1749,16 +2102,16 @@ void ARMCG::buildAddRegReg(
             ////  if (al < bl) {
             ////      ch = ch - 1
             ////  }
-            //ASSERT0(SR_is_reg(src1) && SR_is_reg(src2));
+            //ASSERT0(src1->is_reg() && src2->is_reg());
             ////Build: al < bl
-            //buildARMCmp(OR_cmp, genTruePred(),
+            //buildARMCmp(OR_cmp, getTruePred(),
             //    src1, src2, ors, cont);
             //
             ////Build: ch = ch - 1 to compute high-part 32bit value.
             //ORList tors;
             //IOC tmp;
             //buildSub(res_2, genIntImm((HOST_INT)1, false),
-            //    GENERAL_REGISTER_SIZE, is_sign, tors, &tmp);
+            //         GENERAL_REGISTER_SIZE, is_sign, tors, &tmp);
             //ASSERT0(tors.get_elem_count() == 1);
             //res_2 = tmp.get_reg(0); //update the high-part SR.
             //tors.get_head()->set_pred(genLTPred());
@@ -1776,41 +2129,39 @@ void ARMCG::buildAddRegReg(
 }
 
 
-void ARMCG::buildARMCmp(
-        OR_TYPE cmp_ot,
-        IN SR * pred,
-        IN SR * opnd0,
-        IN SR * opnd1,
-        OUT ORList & ors,
-        IN IOC *)
+void ARMCG::buildARMCmp(OR_TYPE cmp_ot,
+                        IN SR * pred,
+                        IN SR * opnd0,
+                        IN SR * opnd1,
+                        OUT ORList & ors,
+                        IN IOC *)
 {
-    ors.append_tail(buildOR(cmp_ot, 1, 3, genRflag(),
+    ors.append_tail(buildOR(cmp_ot, 1, 3, getRflag(),
                             pred, opnd0, opnd1));
 }
 
 
 void ARMCG::buildUncondBr(IN SR * tgt_lab, OUT ORList & ors, IN IOC *)
 {
-    ASSERT0(tgt_lab && SR_is_label(tgt_lab));
+    ASSERT0(tgt_lab && tgt_lab->is_label());
     //OR_b with TruePred is unconditional branch.
     //ASSERT0(OTD_is_uncond_br(tmGetORTypeDesc(OR_b)));
     OR * o = genOR(OR_b);
     o->setLabel(tgt_lab);
-    o->set_pred(genTruePred());
+    o->set_pred(getTruePred());
     ors.append_tail(o);
 }
 
 
-void ARMCG::buildCompare(
-        OR_TYPE br_cond,
-        bool is_truebr,
-        IN SR * opnd0,
-        IN SR * opnd1,
-        OUT ORList & ors,
-        IN IOC * cont)
+void ARMCG::buildCompare(OR_TYPE br_cond,
+                         bool is_truebr,
+                         IN SR * opnd0,
+                         IN SR * opnd1,
+                         OUT ORList & ors,
+                         IN IOC * cont)
 {
     ASSERT0(opnd0 && opnd1);
-    buildARMCmp(br_cond, genTruePred(), opnd0, opnd1, ors, cont);
+    buildARMCmp(br_cond, getTruePred(), opnd0, opnd1, ors, cont);
     ASSERT0(cont);
 
     //ARM cmp operation does not produce result in register.
@@ -1823,10 +2174,10 @@ void ARMCG::buildCompare(
 //  condition the execution of Branch operation.
 void ARMCG::buildCondBr(IN SR * tgt_lab, OUT ORList & ors, IN IOC * cont)
 {
-    ASSERT0(tgt_lab && SR_is_label(tgt_lab));
+    ASSERT0(tgt_lab && tgt_lab->is_label());
     OR * o = genOR(OR_b); //conditional relative offset branch.
     SR * pred = cont->get_pred();
-    ASSERT0(pred && SR_is_pred(pred));
+    ASSERT0(pred && pred->is_pred());
     o->set_pred(pred);
     o->setLabel(tgt_lab);
     ors.append_tail(o);
@@ -1836,15 +2187,14 @@ void ARMCG::buildCondBr(IN SR * tgt_lab, OUT ORList & ors, IN IOC * cont)
 //Build memory store operation that store 'reg' into stack.
 //NOTE: user have to assign physical register manually if there is
 //new OR generated and need register allocation.
-void ARMCG::buildStoreAndAssignRegister(
-        SR * reg,
-        UINT offset,
-        ORList & ors,
-        IOC * cont)
+void ARMCG::buildStoreAndAssignRegister(SR * reg,
+                                        UINT offset,
+                                        ORList & ors,
+                                        IOC * cont)
 {
     SR * sr_offset = genIntImm((HOST_INT)offset, false);
     ORList tors;
-    buildStore(reg, genSP(), sr_offset, tors, cont);
+    buildStore(reg, getSP(), sr_offset, tors, cont);
     switch (tors.get_elem_count()) {
     case 1: break;
     case 2: {
@@ -1855,7 +2205,7 @@ void ARMCG::buildStoreAndAssignRegister(
         OR * st = tors.get_head_nth(1);
         ASSERT0(OR_code(st) == OR_str);
         SR * res = add->get_result(0);
-        ASSERT0(res && SR_phy_regid(res) == REG_UNDEF);
+        ASSERT0(res && SR_phy_reg(res) == REG_UNDEF);
 
         //Use scratch physical register.
         renameResult(add, res, gen_r12(), false);
@@ -1868,10 +2218,9 @@ void ARMCG::buildStoreAndAssignRegister(
 }
 
 
-bool ARMCG::isValidResultRegfile(
-        OR_TYPE ortype,
-        INT resnum,
-        REGFILE regfile) const
+bool ARMCG::isValidResultRegfile(OR_TYPE ortype,
+                                 INT resnum,
+                                 REGFILE regfile) const
 {
     if (!CG::isValidResultRegfile(ortype, resnum, regfile)) {
         RegFileSet const* rfs = getValidRegfileSet(ortype, resnum, true);
@@ -1886,10 +2235,9 @@ bool ARMCG::isValidResultRegfile(
 
 //Check 'regfile' to determine whether it is correct relatived to the 'opndnum'
 //operand of 'opcode'.
-bool ARMCG::isValidOpndRegfile(
-        OR_TYPE ortype,
-        INT opndnum,
-        REGFILE regfile) const
+bool ARMCG::isValidOpndRegfile(OR_TYPE ortype,
+                               INT opndnum,
+                               REGFILE regfile) const
 {
     if (!CG::isValidOpndRegfile(ortype, opndnum, regfile)) {
         RegFileSet const* rfs = getValidRegfileSet(ortype, opndnum, false);
@@ -1908,17 +2256,18 @@ bool ARMCG::isValidOpndRegfile(
 //'sr':
 //'idx': opnd/result index of 'sr'.
 //'is_result': it is true if 'sr' being the result of 'o'.
-bool ARMCG::isValidRegInSRVec(OR *, SR * sr, UINT idx, bool is_result)
+bool ARMCG::isValidRegInSRVec(OR const*, SR const* sr,
+                              UINT idx, bool is_result) const
 {
     DUMMYUSE(is_result);
     CHECK_DUMMYUSE(sr);
     ASSERT0(SR_vec(sr));
     if (idx == 0) {
-        ASSERTN(isEvenReg(SR_phy_regid(sr)),
-            ("Must be even number register."));
+        ASSERTN(isEvenReg(sr->getPhyReg()),
+                ("Must be even number register."));
     } else if (idx == 1) {
-        ASSERTN(!isEvenReg(SR_phy_regid(sr)),
-            ("Must NOT be even number register."));
+        ASSERTN(!isEvenReg(sr->getPhyReg()),
+                ("Must NOT be even number register."));
     } else {
         ASSERTN(0, ("unsupported"));
     }
@@ -1934,7 +2283,7 @@ bool ARMCG::isEvenReg(REG reg) const
 
 
 //If stack-base-pointer register could use 'unit', return true.
-bool ARMCG::isSPUnit(UNIT unit)
+bool ARMCG::isSPUnit(UNIT unit) const
 {
     return UNIT_A == unit;
 }
@@ -1943,14 +2292,15 @@ bool ARMCG::isSPUnit(UNIT unit)
 //Return true if 'sr' can be allocated with integer register.
 //'idx': idx of 'sr' in operand list of 'o'.
 //'is_result': true if 'sr' is result of 'o', otherwise be false.
-bool ARMCG::isIntRegSR(OR * o, SR const* sr, UINT idx, bool is_result) const
+bool ARMCG::isIntRegSR(OR const* o, SR const* sr,
+                       UINT idx, bool is_result) const
 {
-    if (!SR_is_reg(sr)) { return false; }
-    if (SR_regfile(sr) != RF_UNDEF) {
-        return tmIsIntRegFile(SR_regfile(sr));
+    if (!sr->is_reg()) { return false; }
+    if (sr->getRegFile() != RF_UNDEF) {
+        return tmIsIntRegFile(sr->getRegFile());
     }
     ASSERT0(o);
-    RegFileSet const* rfset = getValidRegfileSet(OR_code(o), idx, is_result);
+    RegFileSet const* rfset = getValidRegfileSet(o->getCode(), idx, is_result);
     if (rfset->is_contain(RF_R)) {
         return true;
     }
@@ -1958,7 +2308,7 @@ bool ARMCG::isIntRegSR(OR * o, SR const* sr, UINT idx, bool is_result) const
 }
 
 
-bool ARMCG::isBusCluster(CLUST clust)
+bool ARMCG::isBusCluster(CLUST clust) const
 {
     return false;
 }
@@ -1969,7 +2319,7 @@ bool ARMCG::isBusCluster(CLUST clust)
 //    rflags,
 //    system,
 //    cpointer,
-bool ARMCG::isBusSR(SR const* sr)
+bool ARMCG::isBusSR(SR const* sr) const
 {
     return false;
 }
@@ -1984,9 +2334,9 @@ bool ARMCG::isBusSR(SR const* sr)
 //  3. load constant parameter
 //  4. load from local data memory for simple(Always on ARM!!)
 //  5. load address of variable
-bool ARMCG::isRecalcOR(OR * o)
+bool ARMCG::isRecalcOR(OR const* o) const
 {
-    switch (OR_code(o)) {
+    switch (o->getCode()) {
     //Move constant/symbol operations.
     case OR_mov_i:
         //Instruction must execute unconditionally
@@ -1999,7 +2349,7 @@ bool ARMCG::isRecalcOR(OR * o)
         //The only referenced register must be Frame-Pointer.
         for (UINT i = 0; i < o->opnd_num(); i++) {
             SR * opnd = o->get_opnd(i);
-            if (SR_is_reg(opnd) && !SR_is_dedicated(opnd)) {
+            if (opnd->is_reg() && !SR_is_dedicated(opnd)) {
                 return false;
             }
         }
@@ -2017,7 +2367,7 @@ bool ARMCG::isRecalcOR(OR * o)
         //The only referenced register must be Frame-Pointer.
         for (UINT i = 0; i < o->opnd_num(); i++) {
             SR * opnd = o->get_opnd(i);
-            if (SR_is_reg(opnd) && !isDedicatedSR(opnd)) {
+            if (opnd->is_reg() && !isDedicatedSR(opnd)) {
                 return false;
             }
         }
@@ -2039,7 +2389,7 @@ bool ARMCG::isSameCluster(SLOT slot1, SLOT slot2) const
 
 
 //Return true if slot1 and slot2 use similar func-unit.
-bool ARMCG::isSameLikeCluster(SLOT slot1, SLOT slot2)
+bool ARMCG::isSameLikeCluster(SLOT slot1, SLOT slot2) const
 {
     return slot1 == SLOT_G && slot2 == SLOT_G;
 }
@@ -2047,14 +2397,14 @@ bool ARMCG::isSameLikeCluster(SLOT slot1, SLOT slot2)
 
 //Return true if the data BUS operation processed that was
 //using by other general operations.
-bool ARMCG::isSameLikeCluster(OR const* or1, OR const* or2)
+bool ARMCG::isSameLikeCluster(OR const* or1, OR const* or2) const
 {
     return true;
 }
 
 
 //Return true if or-type 'ortype' has the number of 'res_num' results.
-bool ARMCG::isMultiResultOR(OR_TYPE ortype, UINT res_num)
+bool ARMCG::isMultiResultOR(OR_TYPE ortype, UINT res_num) const
 {
     DUMMYUSE(res_num);
     if (isMultiLoad(ortype, 2)) {
@@ -2077,13 +2427,13 @@ bool ARMCG::isMultiResultOR(OR_TYPE ortype, UINT res_num)
 
 
 //Return true if or-type 'ortype' has the number of 'res_num' results.
-bool ARMCG::isMultiResultOR(OR_TYPE ortype)
+bool ARMCG::isMultiResultOR(OR_TYPE ortype) const
 {
     return isMultiResultOR(ortype, 2);
 }
 
 
-bool ARMCG::isMultiStore(OR_TYPE ortype, INT opnd_num)
+bool ARMCG::isMultiStore(OR_TYPE ortype, INT opnd_num) const
 {
     if (opnd_num == -1) {
         switch (ortype) {
@@ -2109,7 +2459,7 @@ bool ARMCG::isMultiStore(OR_TYPE ortype, INT opnd_num)
 }
 
 
-bool ARMCG::isMultiLoad(OR_TYPE ortype, INT res_num)
+bool ARMCG::isMultiLoad(OR_TYPE ortype, INT res_num) const
 {
     if (res_num == -1) {
         switch (ortype) {
@@ -2129,9 +2479,9 @@ bool ARMCG::isMultiLoad(OR_TYPE ortype, INT res_num)
 }
 
 
-bool ARMCG::isCopyOR(OR * o)
+bool ARMCG::isCopyOR(OR const* o) const
 {
-    switch (OR_code(o)) {
+    switch (o->getCode()) {
     case OR_add_i:
     case OR_orr_i:
     case OR_eor_i:
@@ -2165,7 +2515,7 @@ bool ARMCG::isCopyOR(OR * o)
 }
 
 
-bool ARMCG::isStackPointerValueEqu(SR const* base1, SR const* base2)
+bool ARMCG::isStackPointerValueEqu(SR const* base1, SR const* base2) const
 {
     return base1 == base2;
 }
@@ -2182,16 +2532,16 @@ bool ARMCG::isSP(SR const* sr) const
 //1.Find the DEF of induction variable.
 //2.Induction variable should be global register.
 //3.Matching the reduction opcode.
-bool ARMCG::isReduction(OR * o)
+bool ARMCG::isReduction(OR const* o) const
 {
     if (isCondExecOR(o)) { return false; }
 
     INT reduct_opnd = 0;
     for (UINT i = 0; i < o->opnd_num(); i++) {
         SR * opnd = o->get_opnd(i);
-        if (!SR_is_reg(opnd) ||
-            opnd == genTruePred() ||
-            !SR_is_global(opnd)) {
+        if (!opnd->is_reg() ||
+            opnd == getTruePred() ||
+            !opnd->is_global()) {
             continue;
         }
         if (mustDef(o, opnd)) {
@@ -2204,7 +2554,7 @@ bool ARMCG::isReduction(OR * o)
     }
 
     //OR should be formated as: sr = sr + 1
-    switch (OR_code(o)) {
+    switch (o->getCode()) {
     case OR_add_i:
     case OR_sub_i:
         return true;
@@ -2217,7 +2567,7 @@ bool ARMCG::isReduction(OR * o)
 //Return the index of copied source operand.
 INT ARMCG::computeCopyOpndIdx(OR * o)
 {
-    OR_TYPE opr = OR_code(o);
+    OR_TYPE opr = o->getCode();
     switch (opr) {
     case OR_add_i:
     case OR_orr_i:
@@ -2255,13 +2605,13 @@ INT ARMCG::computeCopyOpndIdx(OR * o)
 INT ARMCG::computeMemByteSize(OR * o)
 {
     ASSERTN(OR_is_mem(o), ("Need memory operation"));
-    switch (OR_code(o)) {
+    switch (o->getCode()) {
     case OR_ldm: {
         UINT sz = 0;
         for (UINT i = 0; i < o->result_num(); i++) {
             SR * sr = o->get_result(i);
-            if (!SR_is_reg(sr) ||
-                SR_is_pred(sr) ||
+            if (!sr->is_reg() ||
+                sr->is_pred() ||
                 SR_is_dedicated(sr)) {
                 continue;
             }
@@ -2273,8 +2623,8 @@ INT ARMCG::computeMemByteSize(OR * o)
         UINT sz = 0;
         for (UINT i = 0; i < o->opnd_num(); i++) {
             SR * sr = o->get_opnd(i);
-            if (!SR_is_reg(sr) ||
-                SR_is_pred(sr) ||
+            if (!sr->is_reg() ||
+                sr->is_pred() ||
                 SR_is_dedicated(sr)) {
                 continue;
             }
@@ -2321,7 +2671,7 @@ CLUST ARMCG::computeClusterOfBusOR(OR *)
 SLOT ARMCG::computeORSlot(OR const* o)
 {
     SLOT slot = FIRST_SLOT;
-    if (OR_is_bus(o) || OR_is_asm(o) || OR_code(o) == OR_spadjust) {
+    if (o->is_bus() || o->is_asm() || o->getCode() == OR_spadjust) {
         //BUS OR might occupy multiple func unit.
         slot = SLOT_G;
     } else if (OR_clust(o) == CLUST_FIRST) {
@@ -2342,7 +2692,7 @@ void ARMCG::expandFakeStore(IN OR * o, OUT IssuePackageList * ipl)
 {
     ASSERT0(o && ipl);
     OR_TYPE real_code = OR_UNDEF;
-    switch (OR_code(o)) {
+    switch (o->getCode()) {
     case OR_str: real_code = OR_str_i12; break;
     case OR_strd: real_code = OR_strd_i8; break;
     case OR_strb: real_code = OR_strb_i12; break;
@@ -2351,8 +2701,8 @@ void ARMCG::expandFakeStore(IN OR * o, OUT IssuePackageList * ipl)
     }
 
     SR * ofst = o->get_store_ofst();
-    ASSERT0(SR_is_int_imm(ofst));
-    if (isValidImmOpnd(real_code, SR_int_imm(ofst))) {
+    ASSERT0(ofst->is_int_imm());
+    if (isValidImmOpnd(real_code, ofst->getInt())) {
         IssuePackage * ip = allocIssuePackage();
         ip->set(SLOT_G, o);
         ipl->append_tail(ip);
@@ -2399,14 +2749,14 @@ void ARMCG::expandFakeStore(IN OR * o, OUT IssuePackageList * ipl)
 void ARMCG::expandFakeSpadjust(IN OR * o, OUT IssuePackageList * ipl)
 {
     SR * ofst = o->get_opnd(HAS_PREDICATE_REGISTER + 1);
-    ASSERT0(SR_is_int_imm(ofst));
+    ASSERT0(ofst->is_int_imm());
     ORList ors;
     IOC cont;
 
     // spadjust, SIZEOFSTACK
     //=>
     // sp = sp - SIZEOFSTACK
-    buildAdd(genSP(), ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
+    buildAdd(getSP(), ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
     ors.copyDbx(&OR_dbx(o));
 
     if (ors.get_elem_count() == 1) {
@@ -2414,10 +2764,10 @@ void ARMCG::expandFakeSpadjust(IN OR * o, OUT IssuePackageList * ipl)
         //=>
         // add sp <--PRED, sp, #Imm10
         OR * add = ors.get_head();
-        ASSERT0(add && SR_is_reg(add->get_result(0)));
+        ASSERT0(add && add->get_result(0)->is_reg());
 
         add->set_pred(o->get_pred());
-        add->set_result(0, genSP());
+        add->set_result(0, getSP());
 
         if (OR_is_fake(add)) {
             expandFakeOR(add, ipl);
@@ -2440,7 +2790,7 @@ void ARMCG::expandFakeSpadjust(IN OR * o, OUT IssuePackageList * ipl)
 
         OR * add = ors.get_head_nth(1);
         renameOpnd(add, res, o->get_result(1), false);
-        add->set_result(0, genSP());
+        add->set_result(0, getSP());
 
         for (OR * o2 = ors.get_head(); o2 != NULL; o2 = ors.get_next()) {
             IssuePackage * ip = allocIssuePackage();
@@ -2458,12 +2808,12 @@ void ARMCG::expandFakeSpadjust(IN OR * o, OUT IssuePackageList * ipl)
         // movw_i t <--tp, #65428
         // movt_i t <--tp, #65535
         // add sp <--tp, sp, t
-        ASSERT0(OR_is_movi(ors.get_head_nth(0)));
-        ASSERT0(OR_is_movi(ors.get_head_nth(1)));
-        ASSERT0(OR_code(ors.get_head_nth(2)) == OR_add);
+        ASSERT0(ors.get_head_nth(0)->is_movi());
+        ASSERT0(ors.get_head_nth(1)->is_movi());
+        ASSERT0(ors.get_head_nth(2)->getCode() == OR_add);
 
         OR * movi = ors.get_head_nth(0);
-        ASSERT0(!OR_is_fake(movi));
+        ASSERT0(!movi->is_fake());
 
         SR * res = movi->get_result(0);
         movi->set_mov_to(o->get_result(1));
@@ -2471,7 +2821,7 @@ void ARMCG::expandFakeSpadjust(IN OR * o, OUT IssuePackageList * ipl)
 
         OR * add = ors.get_head_nth(2);
         renameOpnd(add, res, o->get_result(1), false);
-        add->set_result(0, genSP());
+        add->set_result(0, getSP());
 
         for (OR * o2 = ors.get_head(); o2 != NULL; o2 = ors.get_next()) {
             IssuePackage * ip = allocIssuePackage();
@@ -2489,7 +2839,7 @@ void ARMCG::expandFakeLoad(IN OR * o, OUT IssuePackageList * ipl)
 {
     ASSERT0(o && ipl);
     OR_TYPE real_code = OR_UNDEF;
-    switch (OR_code(o)) {
+    switch (o->getCode()) {
     case OR_ldr: real_code = OR_ldr_i12; break;
     case OR_ldrb: real_code = OR_ldrb_i12; break;
     case OR_ldrh: real_code = OR_ldrh_i8; break;
@@ -2500,8 +2850,8 @@ void ARMCG::expandFakeLoad(IN OR * o, OUT IssuePackageList * ipl)
     }
 
     SR * ofst = o->get_load_ofst();
-    ASSERT0(SR_is_int_imm(ofst));
-    if (isValidImmOpnd(real_code, SR_int_imm(ofst))) {
+    ASSERT0(ofst->is_int_imm());
+    if (isValidImmOpnd(real_code, ofst->getInt())) {
         IssuePackage * ip = allocIssuePackage();
         ip->set(SLOT_G, o);
         ipl->append_tail(ip);
@@ -2514,7 +2864,7 @@ void ARMCG::expandFakeLoad(IN OR * o, OUT IssuePackageList * ipl)
     //  sr1 = [sr1]
     SR * sr1 = o->get_result(0);
     SR * sr3 = o->get_load_base();
-    ASSERT0(sr1 && sr3 && SR_is_reg(sr1) && SR_is_reg(sr3));
+    ASSERT0(sr1 && sr3 && sr1->is_reg() && sr3->is_reg());
     ASSERT0(ofst);
 
     ORList ors;
@@ -2524,10 +2874,10 @@ void ARMCG::expandFakeLoad(IN OR * o, OUT IssuePackageList * ipl)
 
     ASSERT0(ors.get_elem_count() == 1);
     OR * last = ors.remove_tail();
-    ASSERT0(last && (OR_code(last) == OR_add ||
-                     OR_code(last) == OR_add_i));
+    ASSERT0(last && (last->getCode() == OR_add ||
+                     last->getCode() == OR_add_i));
     last->set_result(0, sr1); //replace result-register with sr1.
-    if (OR_is_fake(last)) {
+    if (last->is_fake()) {
         expandFakeOR(last, ipl);
     } else {
         IssuePackage * ip = allocIssuePackage();
@@ -2554,12 +2904,12 @@ void ARMCG::expandFakeMultiLoad(IN OR * o, OUT IssuePackageList * ipl)
     SR * sr1 = o->get_result(0);
     SR * sr2 = o->get_result(1);
     SR * sr3 = o->get_load_base();
-    ASSERT0(sr1 && sr3 && SR_is_reg(sr1) && SR_is_reg(sr3));
+    ASSERT0(sr1 && sr3 && sr1->is_reg() && sr3->is_reg());
 
     SR * ofst = o->get_load_ofst();
     ASSERT0(ofst);
-    ASSERT0(SR_is_int_imm(ofst));
-    if (isValidImmOpnd(OR_ldrd_i8, SR_int_imm(ofst))) {
+    ASSERT0(ofst->is_int_imm());
+    if (isValidImmOpnd(OR_ldrd_i8, ofst->getInt())) {
         OR_code(o) = OR_ldrd_i8;
         IssuePackage * ip = allocIssuePackage();
         ip->set(SLOT_G, o);
@@ -2587,7 +2937,7 @@ void ARMCG::expandFakeMultiLoad(IN OR * o, OUT IssuePackageList * ipl)
     }
 
     OR * ldrd = buildOR(OR_ldrd_i8, 2, 3, sr1, sr2,
-        o->get_pred(), sr1, genIntImm(0, false));
+                        o->get_pred(), sr1, genIntImm(0, false));
     ldrd->set_pred(o->get_pred());
     OR_dbx(ldrd).copy(OR_dbx(o));
 
@@ -2613,14 +2963,15 @@ void ARMCG::expandFakeMov32(IN OR * o, OUT IssuePackageList * ipl)
         // movt rd, second_half_part(imm)
         low = genOR(OR_movw_i);
         low->set_mov_to(to);
-        low->set_mov_from(genIntImm(
-            (HOST_INT)(SR_int_imm(from) & 0xFFFF), true));
+        low->set_mov_from(genIntImm((HOST_INT)(from->getInt() & 0xFFFF),
+                                    true));
         low->set_pred(o->get_pred());
 
         high = genOR(OR_movt_i);
         high->set_mov_to(to);
-        high->set_mov_from(genIntImm(
-            (HOST_INT)((SR_int_imm(from) >> 16) & 0xFFFF), true));
+        high->set_mov_from(genIntImm((HOST_INT)
+                                     ((from->getInt() >> 16) & 0xFFFF),
+                                     true));
         high->set_pred(o->get_pred());
     } else if (SR_type(from) == SR_VAR) {
         // mov32 rd = Sym
@@ -2656,7 +3007,7 @@ void ARMCG::expandFakeShift(IN OR * o, OUT IssuePackageList * ipl)
 {
     OR_TYPE ckort = OR_UNDEF;
     OR_TYPE newort = OR_UNDEF;
-    switch (OR_code(o)) {
+    switch (o->getCode()) {
     case OR_lsr_i32:
         ckort = OR_lsr_i;
         newort = OR_lsr;
@@ -2671,9 +3022,10 @@ void ARMCG::expandFakeShift(IN OR * o, OUT IssuePackageList * ipl)
         break;
     default: UNREACHABLE();
     }
+
     SR * imm = o->get_opnd(2);
     ASSERT0(SR_is_imm(imm));
-    if (!isValidImmOpnd(ckort, 2, SR_int_imm(imm))) {
+    if (!isValidImmOpnd(ckort, 2, imm->getInt())) {
         // rd = rs + imm;
         //=>
         // r12 = imm;
@@ -2712,8 +3064,8 @@ void ARMCG::expandFakeShift(IN OR * o, OUT IssuePackageList * ipl)
 
 void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
 {
-    ASSERT0(OR_is_fake(o) && ipl);
-    switch (OR_code(o)) {
+    ASSERT0(o->is_fake() && ipl);
+    switch (o->getCode()) {
     case OR_str:
     case OR_strd:
     case OR_strb:
@@ -2748,7 +3100,7 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
     case OR_lsr_i: {
         SR * imm = o->get_opnd(2);
         ASSERT0(SR_is_imm(imm));
-        if (!isValidImmOpnd(OR_code(o), 2, SR_int_imm(imm))) {
+        if (!isValidImmOpnd(o->getCode(), 2, imm->getInt())) {
             // rd = rs + imm;
             //=>
             // r12 = imm;
@@ -2773,7 +3125,7 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
 
             //Change OR code from OR_xxx_i to OR_xxx.
             OR_TYPE newort = OR_UNDEF;
-            switch (OR_code(o)) {
+            switch (o->getCode()) {
             case OR_add_i: newort = OR_add; break;
             case OR_sub_i: newort = OR_sub; break;
             case OR_lsr_i: newort = OR_lsr; break;

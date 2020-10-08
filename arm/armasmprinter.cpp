@@ -61,7 +61,7 @@ static UINT computeAlignIsPowerOf2(Var const* v)
 CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
 {
     StrBuf tbuf(8);
-    switch (OR_code(o)) {
+    switch (o->getCode()) {
     case OR_ret:
     case OR_ret1:
     case OR_ret2:
@@ -82,13 +82,13 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     }
 
     //Print predicated register
-    if (o->get_pred() != m_cg->genTruePred()) {
+    if (o->get_pred() != m_cg->getTruePred()) {
         buf.strcat("%s", o->get_pred()->getAsmName(tbuf, m_cg));
     }
 
     buf.strcat(" ");
     tbuf.clean();
-    switch (OR_code(o)) {
+    switch (o->getCode()) {
     case OR_ands_asr_i:
         //ands Rd, Rs1, Rs2, lsr #imm
         buf.strcat("%s, ", o->get_result(0)->getAsmName(tbuf, m_cg));
@@ -237,7 +237,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     }
     bool print_result = false;
     for (UINT i = 0; i < o->result_num(); i++) {
-        if (o->get_result(i) == ((ARMCG*)m_cg)->genRflag()) {
+        if (o->get_result(i) == ((ARMCG*)m_cg)->getRflag()) {
             continue;
         }
         print_result = true;
@@ -252,7 +252,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     }
     for (UINT i = 0; i < o->opnd_num(); i++) {
         if ((i == 0 && HAS_PREDICATE_REGISTER) ||
-            o->get_opnd(i) == m_cg->genRflag()) {
+            o->get_opnd(i) == m_cg->getRflag()) {
             //nothing to do
             continue;
         }
@@ -422,13 +422,12 @@ void ARMAsmPrinter::printCode(FILE * asmh)
     fprintf(asmh, "\n");
     fflush(asmh);
 
-    Vector<IssuePackageList*> const* iplvec =
-        m_cg->getIssuePackageListVec();
+    Vector<IssuePackageList*> const* iplvec = m_cg->getIssuePackageListVec();
     List<ORBB*> * bblst = m_cg->getORBBList();
     ASSERT0(bblst);
     for (ORBB * bb = bblst->get_head(); bb != NULL; bb = bblst->get_next()) {
         //Print BB info
-        fprintf(asmh, "\n#START BB%d", ORBB_id(bb));
+        fprintf(asmh, "\n#START BB%d", bb->id());
         if (ORBB_is_entry(bb)) {
             fprintf(asmh, ", entry");
         }
@@ -441,15 +440,16 @@ void ARMAsmPrinter::printCode(FILE * asmh)
         //Print label
         for (LabelInfo const* li = bb->getLabelList().get_head();
              li != NULL; li = bb->getLabelList().get_next()) {
+            if (li->is_pragma()) { continue; }
             buf.clean();
             fprintf(asmh, "%s:\n", m_cg->formatLabelName(li, buf));
         }
 
         //Print instructions
-        if (ORBB_ornum(bb) == 0) { continue; }
+        if (bb->getORNum() == 0) { continue; }
 
         buf.clean();
-        printCodeSequentially(iplvec->get(ORBB_id(bb)), buf, asmh);
+        printCodeSequentially(iplvec->get(bb->id()), buf, asmh);
     }
     fprintf(asmh, "\n.size %s, .-%s\n", func_name, func_name);
 }

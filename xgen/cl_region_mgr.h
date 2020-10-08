@@ -35,6 +35,8 @@ namespace xgen {
 
 class CGMgr;
 
+//This class represents Computing Language specified region manager.
+//A computing languare always consist of concepts of function and program.
 class CLRegionMgr : public xoc::RegionMgr {
     COPY_CONSTRUCTOR(CLRegionMgr);
 protected:

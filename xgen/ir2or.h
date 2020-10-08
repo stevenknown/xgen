@@ -31,9 +31,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace xgen {
 
-#define RESULT_REGISTER_INDEX   0
-#define TRUE_PREDICATE_REGISTER_INDEX   1
-#define FALSE_PREDICATE_REGISTER_INDEX  2
+#define RESULT_REGISTER_INDEX 0
+#define TRUE_PREDICATE_REGISTER_INDEX 1
+#define FALSE_PREDICATE_REGISTER_INDEX 2
 
 class ArgDescMgr;
 
@@ -41,13 +41,13 @@ class ArgDescMgr;
 //START IOC
 //
 //Record information during convertion in between IR and OR.
-#define IOC_is_inverted(cont)      ((cont)->u2.s1.is_inverted)
-#define IOC_pred(cont)             ((cont)->pred)
-#define IOC_ortype(cont)           ((cont)->ortype)
-#define IOC_sr_vec(cont)           ((cont)->reg_vec)
-#define IOC_param_size(cont)       ((cont)->u1.param_size)
-#define IOC_mem_byte_size(cont)    ((cont)->u1.mem_byte_size)
-#define IOC_int_imm(cont)          ((cont)->u1.int_imm)
+#define IOC_is_inverted(cont) ((cont)->u2.s1.is_inverted)
+#define IOC_pred(cont) ((cont)->pred)
+#define IOC_ortype(cont) ((cont)->ortype)
+#define IOC_sr_vec(cont) ((cont)->reg_vec)
+#define IOC_param_size(cont) ((cont)->u1.param_size)
+#define IOC_mem_byte_size(cont) ((cont)->u1.mem_byte_size)
+#define IOC_int_imm(cont) ((cont)->u1.int_imm)
 class IOC {
 public:
     //Used as output result, set by convertRelationOp(),
@@ -123,6 +123,14 @@ public:
         ASSERT0(i >= 0);
         return reg_vec.get(i);
     }
+    //Return the result register that context recorded.
+    //The result register is either value or address.
+    SR * getResult() const
+    {
+        SR * val = get_reg(0);
+        if (val != NULL) { return val; }
+        return get_addr();        
+    }
     OR_TYPE get_ortype() const { return ortype; }
 
     void clean_regvec() { reg_vec.clean(); }
@@ -165,10 +173,9 @@ public:
     //The output registers in IOC are ResultSR,
     //TruePredicatedSR, FalsePredicatedSR.
     //The ResultSR record the boolean value of comparison of relation operation.
-    virtual void convertRelationOp(
-            IR const* ir,
-            OUT ORList & ors,
-            IN IOC * cont);
+    virtual void convertRelationOp(IR const* ir,
+                                   OUT ORList & ors,
+                                   IN IOC * cont);
     virtual void convertASR(IR const* ir, OUT ORList & ors, IN IOC * cont);
     virtual void convertLSR(IR const* ir, OUT ORList & ors, IN IOC * cont);
     virtual void convertLSL(IR const* ir, OUT ORList & ors, IN IOC * cont);
@@ -177,58 +184,47 @@ public:
     virtual void convertTruebr(IR const* ir, OUT ORList & ors, IN IOC * cont);
     virtual void convertFalsebr(IR const* ir, OUT ORList & ors, IN IOC * cont);
     //Generate operations: reg = &var
-    virtual void convertLda(
-            Var const* var,
-            HOST_INT lda_ofst,
-            Dbx const* dbx,
-            OUT ORList & ors,
-            IN IOC * cont) = 0;
+    virtual void convertLda(Var const* var,
+                            HOST_INT lda_ofst,
+                            Dbx const* dbx,
+                            OUT ORList & ors,
+                            IN IOC * cont) = 0;
     virtual void convertLda(IR const* ir, OUT ORList & ors, IN IOC * cont) = 0;
-    virtual void convertIgoto(
-            IR const* ir,
-            OUT ORList & ors,
-            IN IOC * cont) = 0;
-    virtual void convertReturn(
-            IR const* ir,
-            OUT ORList & ors,
-            IN IOC * cont) = 0;
-    virtual void convertSelect(
-            IR const* ir,
-            OUT ORList & ors,
-            IN IOC * cont) = 0;
+    virtual void convertIgoto(IR const* ir,
+                              OUT ORList & ors,
+                              IN IOC * cont) = 0;
+    virtual void convertReturn(IR const* ir,
+                               OUT ORList & ors,
+                               IN IOC * cont) = 0;
+    virtual void convertSelect(IR const* ir,
+                               OUT ORList & ors,
+                               IN IOC * cont) = 0;
     virtual void convertCall(IR const* ir, OUT ORList & ors, IN IOC * cont) = 0;
-    virtual void convertICall(
-            IR const* ir,
-            OUT ORList & ors,
-            IN IOC * cont) = 0;
-    virtual void convert(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    virtual void convertGeneralLoadPR(
-                    IR const* ir,
-                    OUT ORList & ors,
-                    IN IOC * cont);
-    virtual void convertGeneralLoad(
-                    IR const* ir,
-                    OUT ORList & ors,
-                    IN IOC * cont);
+    virtual void convertICall(IR const* ir,
+                              OUT ORList & ors,
+                              IN IOC * cont) = 0;
+    virtual void convertGeneralLoadPR(IR const* ir,
+                                      OUT ORList & ors,
+                                      IN IOC * cont);
+    virtual void convertGeneralLoad(IR const* ir,
+                                    OUT ORList & ors,
+                                    IN IOC * cont);
     //Store value that given by address 'src_addr' to 'tgtvar'.
     //ofst: offset from base of tgtvar.
-    virtual void convertStoreViaAddress(
-                    IN SR * src_addr,
-                    IN SR * tgtvar,
-                    HOST_INT ofst,
-                    OUT ORList & ors,
-                    IN IOC * cont);
-    virtual void convertStoreDecompose(
-                    IN SR * src,
-                    IN SR * tgtvar,
-                    HOST_INT ofst,
-                    OUT ORList & ors,
-                    IN IOC * cont);
-    virtual void convertCopyPR(
-                    IR const* tgt,
-                    IN SR * src,
-                    OUT ORList & ors,
-                    IN IOC * cont);
+    virtual void convertStoreViaAddress(IN SR * src_addr,
+                                        IN SR * tgtvar,
+                                        HOST_INT ofst,
+                                        OUT ORList & ors,
+                                        IN IOC * cont);
+    virtual void convertStoreDecompose(IN SR * src,
+                                       IN SR * tgtvar,
+                                       HOST_INT ofst,
+                                       OUT ORList & ors,
+                                       IN IOC * cont);
+    virtual void convertCopyPR(IR const* tgt,
+                               IN SR * src,
+                               OUT ORList & ors,
+                               IN IOC * cont);
     virtual void convertAdd(IR const* ir, OUT ORList & ors, IN IOC * cont)
     {
         ASSERTN(ir->is_add(), ("illegal ir"));
@@ -267,10 +263,9 @@ public:
     }
 
     //Logical AND
-    virtual void convertLogicalAnd(
-            IR const* ir,
-            OUT ORList & ors,
-            IN IOC * cont)
+    virtual void convertLogicalAnd(IR const* ir,
+                                   OUT ORList & ors,
+                                   IN IOC * cont)
     {
         ASSERTN(ir->is_land(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
@@ -313,10 +308,9 @@ public:
 
     //Boolean logical not.
     //e.g LNOT(non-zero) = 0, LNOT(0) = 1
-    virtual void convertLogicalNot(
-            IR const* ir,
-            OUT ORList & ors,
-            IN IOC * cont)
+    virtual void convertLogicalNot(IR const* ir,
+                                   OUT ORList & ors,
+                                   IN IOC * cont)
     {
         ASSERTN(ir->is_lnot(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
@@ -371,30 +365,17 @@ public:
     }
 
     void convertIRBBListToORList(OUT ORList & or_list);
-
-    //Map from IR type to OR type.
-    //Target may apply comparing instruction to calculate boolean value.
-    //e.g:
-    //     r1 <- 0x1,
-    //     r2 <- 0x2,
-    //     r0 <- eq, r1, r2 ;then r0 is 0
-    virtual OR_TYPE mapIRType2ORType(
-            IR_TYPE ir_type,
-            UINT ir_opnd_size,
-            IN SR * opnd0,
-            IN SR * opnd1,
-            bool is_signed) = 0;
+    virtual void convert(IR const* ir, OUT ORList & ors, IN IOC * cont);
 
     //Register local variable that will be allocated in memory.
     Var * registerLocalVar(IR const* pr);
 
     //Return true if whole ir has been passed through registers, otherwise
     //return false.
-    void processRealParamsThroughRegister(
-            IR const* ir,
-            ArgDescMgr * argdesc,
-            OUT ORList & ors,
-            IN IOC * cont);
+    void processRealParamsThroughRegister(IR const* ir,
+                                          ArgDescMgr * argdesc,
+                                          OUT ORList & ors,
+                                          IN IOC * cont);
     void processRealParams(IR const* ir, OUT ORList & ors, IN IOC * cont);
 };
 

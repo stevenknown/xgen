@@ -51,7 +51,7 @@ void Section::dump(CG const* cg)
             VarDesc * vd2 = var2vdesc_map.get(v2);
             ASSERTN(vd2, ("No VarDesc correspond to xoc::Var"));
 
-            if (VD_ofst(vd) < VD_ofst(vd2)) {
+            if (vd->getOfst() < vd2->getOfst()) {
                 layout.insert_before(v, ct);
                 find = true;
                 break;
@@ -67,7 +67,7 @@ void Section::dump(CG const* cg)
         buf.clean();
         ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
         note(cg->getRegion(), "\n  (%u)%s",
-             (UINT)VD_ofst(vd), v->dump(buf, tm));
+             (UINT)vd->getOfst(), v->dump(buf, tm));
     }
 }
 
@@ -99,7 +99,7 @@ void StackSection::dump(CG const* cg)
             VarDesc * vd2 = var2vdesc_map.get(v2);
             ASSERTN(vd2, ("No VarDesc correspond to xoc::Var"));
 
-            if (VD_ofst(vd) < VD_ofst(vd2)) {
+            if (vd->getOfst() < vd2->getOfst()) {
                 layout.insert_before(v, ct);
                 find = true;
                 break;
@@ -115,7 +115,7 @@ void StackSection::dump(CG const* cg)
         ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
         buf.clean();
         fprintf(h, "\n  (%u)%s",
-                (UINT)VD_ofst(vd) + cg->getMaxArgSectionSize(),
+                (UINT)vd->getOfst() + cg->getMaxArgSectionSize(),
                 v->dump(buf, tm));
     }
 

@@ -59,7 +59,7 @@ void AsmPrinter::printCode(FILE * asmfile)
     StrBuf buf(128);
     for (ORBB * bb = bblst->get_head();
         bb != NULL; bb = bblst->get_next()) {
-        IssuePackageList * ipl = ipcvec->get(ORBB_id(bb));
+        IssuePackageList * ipl = ipcvec->get(bb->id());
         ASSERT0(ipl != NULL);
         for (IssuePackage * ip = ipl->get_head();
             ip != NULL; ip = ipl->get_next()) {

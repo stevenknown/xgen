@@ -110,15 +110,14 @@ public:
     virtual INT getClusterIdx(CLUST clt) const;
     virtual UINT getFirstClusterIdx() const;
 
-    bool isReductionOR(OR * o);
+    bool isReductionOR(OR const* o) const;
 
     SR * findIV(OR * o);
-    virtual bool findMainIV(
-            ORBB * bb,
-            DataDepGraph & ddg,
-            OR ** red_or,
-            OR ** cmp_or,
-            SR ** iv);
+    virtual bool findMainIV(ORBB * bb,
+                            DataDepGraph & ddg,
+                            OR ** red_or,
+                            OR ** cmp_or,
+                            SR ** iv);
 
     bool hasPDomOcc(ORBB * bb, SR * gsr);
     bool hasParallelPart(CLUST clust) const;

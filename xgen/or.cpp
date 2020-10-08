@@ -118,14 +118,14 @@ SR * OR::get_imm_sr()
 {
     //Normally, operand 1 of 'mov imm to reg OR' should be literal.
     SR * sr = get_opnd(HAS_PREDICATE_REGISTER + 0);
-    ASSERTN(SR_is_constant(sr), ("operand of movi must be literal"));
+    ASSERTN(sr->is_constant(), ("operand of movi must be literal"));
     return sr;
 }
 
 
 bool OR::is_equal(OR const* o) const
 {
-    if (OR_code(this) == OR_code(o) &&
+    if (OR_code(this) == o->getCode() &&
         OR_bb(this) == OR_bb(o) &&
         OR_is_call(this) == OR_is_call(o) &&
         OR_is_cond_br(this) == OR_is_call(o) &&
@@ -176,10 +176,10 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
 
         //memory offset
         SR * ofst = pthis->get_store_ofst();
-        if (cg->isComputeStackOffset() || SR_is_int_imm(ofst)) {
-            ASSERT0(SR_is_int_imm(ofst));
-            if (SR_int_imm(ofst) != 0) {
-                if (SR_int_imm(ofst) > 0) {
+        if (cg->isComputeStackOffset() || ofst->is_int_imm()) {
+            ASSERT0(ofst->is_int_imm());
+            if (ofst->getInt() != 0) {
+                if (ofst->getInt() > 0) {
                     buf.strcat(" + ");
                 } else {
                     buf.strcat(" - ");
@@ -187,7 +187,7 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
                 ofst->get_name(buf, cg);
             }
         } else {
-            ASSERT0(SR_is_var(ofst));
+            ASSERT0(ofst->is_var());
             buf.strcat(" + ");
             buf.strcat("'");
             buf.strcat(SYM_name(VAR_name(SR_var(ofst))));
@@ -237,10 +237,10 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
 
         //memory offset
         SR * ofst = pthis->get_load_ofst();
-        if (cg->isComputeStackOffset() || SR_is_int_imm(ofst)) {
-            ASSERT0(SR_is_int_imm(ofst));
-            if (SR_int_imm(ofst) != 0) {
-                if (SR_int_imm(ofst) > 0) {
+        if (cg->isComputeStackOffset() || ofst->is_int_imm()) {
+            ASSERT0(ofst->is_int_imm());
+            if (ofst->getInt() != 0) {
+                if (ofst->getInt() > 0) {
                     buf.strcat(" + ");
                 } else {
                     buf.strcat(" - ");
@@ -248,7 +248,7 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
                 ofst->get_name(buf, cg);
             }
         } else {
-            ASSERT0(SR_is_var(ofst));
+            ASSERT0(ofst->is_var());
             buf.strcat(" + ");
             buf.strcat("'");
             buf.strcat(SYM_name(VAR_name(SR_var(ofst))));
@@ -384,7 +384,7 @@ OR * ORMgr::genOR(OR_TYPE ort, CG * cg)
     OR_code(o) = ort;
     if (HAS_PREDICATE_REGISTER) {
         ASSERT0(cg);
-        o->set_pred(cg->genTruePred());
+        o->set_pred(cg->getTruePred());
     }
     return o;
 }

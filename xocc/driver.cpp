@@ -40,6 +40,7 @@ CHAR * g_gr_file_name = NULL;
 CHAR * g_dump_file_name = NULL;
 static CHAR * g_output_file_name = NULL;
 bool g_is_dumpgr = false;
+static CHAR const* g_xocc_version = "1.0.0";
 
 //Record the start position of formal parameter.
 //The position 0 is reserved for hidden parameter which used for
@@ -74,8 +75,8 @@ INT report_location(CHAR const* file, INT line)
 }
 
 #ifdef _DEBUG_
-#define WARN(parmlist)  (report_location(__FILE__, __LINE__), \
-                         xoc::interwarn parmlist)
+#define WARN(parmlist) (report_location(__FILE__, __LINE__), \
+                        xoc::interwarn parmlist)
 #else
 #define WARN(parmlist)
 #endif
@@ -163,19 +164,25 @@ void CLDbxMgr::printSrcLine(xcom::StrBuf & output, Dbx const* dbx, PrtCtx * ctx)
 static void usage()
 {
     fprintf(stdout,
-            "\nXOCC Version 0.11.0"
-            "\nUsage: xoc [options] file"
-            "\nOptions: "
-            "\n  -O0,           compile without any optimization"
-            "\n  -O1,-O2,-O3    compile with optimizations"
-            "\n  -dump <file>   generate dump file and enable dump"
-            "\n  -o <file>      output file name"
-            "\n  -gra=<on|off>  switch for global register allocation"
-            "\n  -ipa           enable IPA"
-            "\n  -dumpgr        dump GR file"
-            "\n  -prmode        simplify to the lowest IR"
-            "\n  -readgr <file> read GR file"
-            "\n");
+    "\nXOCC Version %s"
+    "\nUsage: xocc [options] file"
+    "\nOptions: "
+    "\n  -O0,           compile without any optimization"
+    "\n  -O1,-O2,-O3    compile with optimizations"
+    "\n  -dump <file>   generate dump file and enable dump"
+    "\n  -o <file>      output file name"
+    "\n  -gra=<on|off>  switch for global register allocation"
+    "\n  -ipa           enable IPA"
+    "\n  -dumpgr        dump GR file"
+    "\n  -prmode        simplify to the lowest IR"
+    "\n  -readgr <file> read GR file"
+    "\n  -nolicm        disable loop invariant code motion optimization"
+    "\n  -nodce         disable dead code elimination optimization"
+    "\n  -norp          disable register promotion optimization"
+    "\n  -nocp          disable copy propagation optimization"
+    "\n  -nogcse        disable global common subexpression elimination optimization"
+    "\n  -nolcse        disable local common subexpression elimination optimization"
+    "\n", g_xocc_version);
 }
 
 
@@ -210,13 +217,44 @@ static bool process_O(INT argc, CHAR * argv[], INT & i)
     DUMMYUSE(argc);
     CHAR * cmdstr = &argv[i][1];
     switch (cmdstr[1]) {
-    case '0': g_opt_level = OPT_LEVEL0; break;
-    case '1': g_opt_level = OPT_LEVEL1; break;
-    case '2': g_opt_level = OPT_LEVEL2; break;
-    case '3': g_opt_level = OPT_LEVEL3; break;
-    case 's': g_opt_level = SIZE_OPT; break;
-    case 'S': g_opt_level = SIZE_OPT; break;
-    default: g_opt_level = OPT_LEVEL1;
+    case '0':
+        xoc::g_opt_level = OPT_LEVEL0;
+        break;
+    case '1':
+        xoc::g_opt_level = OPT_LEVEL1;
+        xoc::g_do_pr_ssa = true;
+        xoc::g_do_md_ssa = true;
+        //Only do refinement.
+        break;
+    case '2':
+        xoc::g_opt_level = OPT_LEVEL2;        
+        xoc::g_do_dce = true;
+        xoc::g_do_licm = true;
+        xoc::g_do_rp = true;
+        xoc::g_do_pr_ssa = true;
+        xoc::g_do_md_ssa = true;
+        break;    
+    case '3':
+        xoc::g_opt_level = OPT_LEVEL3;
+        xoc::g_do_dce = true;
+        xoc::g_do_licm = true;
+        xoc::g_do_rp = true;
+        xoc::g_do_pr_ssa = true;
+        xoc::g_do_md_ssa = true;
+        break;
+    case 's':
+    case 'S':
+        xoc::g_opt_level = SIZE_OPT;
+        xoc::g_do_dce = true;
+        xoc::g_do_licm = true;
+        xoc::g_do_rp = true;
+        xoc::g_do_pr_ssa = true;
+        xoc::g_do_md_ssa = true;
+        break;
+    default:
+        xoc::g_opt_level = OPT_LEVEL1;
+        xoc::g_do_pr_ssa = true;
+        xoc::g_do_md_ssa = true;
     }
     i++;
     return true;
@@ -958,6 +996,9 @@ bool compileGRFile(CHAR * gr_file_name)
     FILE * asmh = NULL;
     START_TIMER_FMT(t, ("Compile GR File"));
     initCompile(&rm, &asmh, &cgmgr, &ti);
+    if (g_dump_file_name != NULL) {
+        rm->getLogMgr()->init(g_dump_file_name, true);
+    }
     bool succ = xoc::readGRAndConstructRegion(rm, gr_file_name);
     if (!succ) {
         res = false;

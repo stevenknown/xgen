@@ -38,6 +38,7 @@ class CG;
 
 //This class prints assembly to text file.
 class AsmPrinter {
+    COPY_CONSTRUCTOR(AsmPrinter);
 protected:
     CG * m_cg;
     xoc::TypeMgr * m_tm;
@@ -45,7 +46,6 @@ protected:
 
 public:
     AsmPrinter(CG * cg, AsmPrinterMgr * apmgr);
-    COPY_CONSTRUCTOR(AsmPrinter);
     virtual ~AsmPrinter() {}
 
     Region * getRegion() const;

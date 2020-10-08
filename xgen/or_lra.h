@@ -104,10 +104,12 @@ public:
 };
 
 
-#define POSINFO_is_def(c) (c)->is_def
+#define POSINFO_is_def(c) (c)->m_is_def
 class PosInfo {
 public:
-    bool is_def;
+    bool m_is_def;
+
+    bool is_def() const { return m_is_def; }
 };
 
 
@@ -116,7 +118,7 @@ public:
 #define LT_desc(c) (c)->desc
 #define LT_sr(c) (c)->sr
 #define LT_cluster(c) (c)->cluster
-#define LT_has_allocated(c) (SR_phy_regid(LT_sr(c)) != REG_UNDEF)
+#define LT_has_allocated(c) (SR_phy_reg(LT_sr(c)) != REG_UNDEF)
 #define LT_prio(c) (c)->priority
 #define LT_has_may_def(c) (c)->has_may_def_point
 #define LT_has_may_use(c) (c)->has_may_use_point
@@ -547,15 +549,15 @@ public:
 
 
 //REG file dependence information
-#define RDGEI_exp_val(c) ((RDG_EDGE_INFO*)(c))->expected_value
-class RDG_EDGE_INFO {
+#define RDGEI_exp_val(c) ((RDGEdgeInfo*)(c))->expected_value
+class RDGEdgeInfo {
 public:
     INT expected_value;
 };
 
 
-#define RDGVI_val(c) ((RDG_VERTEX_INFO*)(c))->value
-class RDG_VERTEX_INFO {
+#define RDGVI_val(c) ((RDGVexInfo*)(c))->value
+class RDGVexInfo {
 public:
     INT value;
 };
@@ -599,7 +601,7 @@ public:
 
     virtual void build(LifeTimeMgr & mgr, DataDepGraph & ddg);
     void clone(RegFileAffinityGraph & rdg);
-    RDG_EDGE_INFO * getEdgeInfo(UINT start, UINT end);
+    RDGEdgeInfo * getEdgeInfo(UINT start, UINT end);
     ORBB * bb()
     {
         ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));

@@ -47,8 +47,8 @@ OR_CFG::OR_CFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
     ASSERT0(m_bb_vec.get_last_idx() == -1);
     for (ORBB * bb = m_bb_list->get_head();
          bb != NULL; bb = m_bb_list->get_next()) {
-        m_bb_vec.set(ORBB_id(bb), bb);
-        addVertex(ORBB_id(bb));
+        m_bb_vec.set(bb->id(), bb);
+        addVertex(bb->id());
         C<xoc::LabelInfo const*> * ct;
         for (bb->getLabelList().get_head(&ct);
              ct != bb->getLabelList().end();
@@ -110,9 +110,9 @@ List<ORBB*> * OR_CFG::getBBList()
 //the BB list should be modified out of this function.
 void OR_CFG::addBB(ORBB * bb)
 {
-    ASSERT0(bb && m_bb_vec.get(ORBB_id(bb)) == NULL);
-    m_bb_vec.set(ORBB_id(bb), bb);
-    addVertex(ORBB_id(bb));
+    ASSERT0(bb && m_bb_vec.get(bb->id()) == NULL);
+    m_bb_vec.set(bb->id(), bb);
+    addVertex(bb->id());
 }
 
 
@@ -157,7 +157,7 @@ ORBB * OR_CFG::getBB(UINT id) const
 //Return all successors.
 void OR_CFG::get_succs(IN OUT List<ORBB*> & succs, ORBB const* bb)
 {
-    xcom::Vertex * v = getVertex(ORBB_id(bb));
+    xcom::Vertex * v = getVertex(bb->id());
     xcom::EdgeC * el = v->getOutList();
     succs.clean();
     while (el != NULL) {
@@ -172,7 +172,7 @@ void OR_CFG::get_succs(IN OUT List<ORBB*> & succs, ORBB const* bb)
 //Return all predecessors.
 void OR_CFG::get_preds(IN OUT List<ORBB*> & preds, ORBB const* bb)
 {
-    xcom::Vertex * v = getVertex(ORBB_id(bb));
+    xcom::Vertex * v = getVertex(bb->id());
     xcom::EdgeC * el = v->getInList();
     preds.clean();    
     while (el != NULL) {
@@ -202,7 +202,7 @@ void OR_CFG::cf_opt()
 //Return the last operation of 'bb'.
 OR * OR_CFG::get_last_xr(ORBB * bb)
 {
-    ASSERT0(bb && m_bb_vec.get(ORBB_id(bb)));
+    ASSERT0(bb && m_bb_vec.get(bb->id()));
     return ORBB_last_or(bb);
 }
 
@@ -210,7 +210,7 @@ OR * OR_CFG::get_last_xr(ORBB * bb)
 //Return the first operation of 'bb'.
 OR * OR_CFG::get_first_xr(ORBB * bb)
 {
-    ASSERT0(bb && m_bb_vec.get(ORBB_id(bb)));
+    ASSERT0(bb && m_bb_vec.get(bb->id()));
     return ORBB_first_or(bb);
 }
 

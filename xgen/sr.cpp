@@ -35,21 +35,21 @@ namespace xgen {
 #ifdef _DEBUG_
 SR const* checkSRVAR(SR const* sr)
 {
-    ASSERT0(SR_is_var(sr));
+    ASSERT0(sr->is_var());
     return sr;
 }
 
 
 SR const* checkSRLAB(SR const* sr)
 {
-    ASSERT0(SR_is_label(sr));
+    ASSERT0(sr->is_label());
     return sr;
 }
 
 
 SR const* checkSRREG(SR const* sr)
 {
-    ASSERT0(SR_is_reg(sr));
+    ASSERT0(sr->is_reg());
     return sr;
 }
 
@@ -77,7 +77,7 @@ void SR::copy(SR const* sr, bool is_clone_vec, IN CG * cg)
     type = sr->type;
     u2.bitflags = sr->u2.bitflags;
     u1 = sr->u1;
-    if (is_clone_vec && SR_is_vec(sr)) {
+    if (is_clone_vec && sr->is_vec()) {
         ASSERT0(cg);
         List<SR*> l;
         for (UINT i = 0; i < SR_vec(sr)->get_elem_count(); i++) {
@@ -121,10 +121,10 @@ CHAR const* SR::getAsmName(StrBuf & buf, CG * cg)
             strformatx = "0x%llx";
             strformatd = "%lld";
         }
-        if (SR_int_imm(this) > THRESHOLD_DISPLAY_IN_HEX) {
-            buf.strcat(strformatx, SR_int_imm(this));
+        if (getInt() > THRESHOLD_DISPLAY_IN_HEX) {
+            buf.strcat(strformatx, getInt());
         } else {
-            buf.strcat(strformatd, SR_int_imm(this));
+            buf.strcat(strformatd, getInt());
         }
         break;
     case SR_FP_IMM:
@@ -133,14 +133,14 @@ CHAR const* SR::getAsmName(StrBuf & buf, CG * cg)
     case SR_VAR:
         if (SR_var_ofst(this) != 0) {
             buf.strcat("%s#+%d", SYM_name(SR_var(this)->get_name()),
-                SR_var_ofst(this));
+                       SR_var_ofst(this));
             break;
         } else {
             buf.strcat("%s#", SYM_name(SR_var(this)->get_name()));
             break;
         }
     case SR_REG:
-        return tmGetRegName(SR_phy_regid(this));
+        return tmGetRegName(getPhyReg());
     case SR_STR:
         return SYM_name(SR_str(this));
     case SR_LAB:
@@ -158,7 +158,7 @@ CHAR const* SR::get_name(StrBuf & buf, CG * cg) const
 {
     switch (SR_type(this)) {
     case SR_INT_IMM:
-        buf.strcat("#%lld", (LONGLONG)SR_int_imm(this));
+        buf.strcat("#%lld", (LONGLONG)getInt());
         break;
     case SR_FP_IMM:
         buf.strcat("#%f", SR_fp_imm(this));
@@ -183,36 +183,36 @@ CHAR const* SR::get_name(StrBuf & buf, CG * cg) const
         break;
     }
     case SR_REG:
-        if (SR_is_sp(this)) {
-            if (this == cg->genSP()) {
+        if (is_sp()) {
+            if (this == cg->getSP()) {
                 buf.strcat("sp");
             } else {
                 UNREACHABLE();
             }
-        } else if (SR_is_fp(this)) {
-            if (this == cg->genFP()) {
+        } else if (is_fp()) {
+            if (this == cg->getFP()) {
                 buf.strcat("fp");
             } else {
                 UNREACHABLE();
             }
-        } else if (SR_is_gp(this)) {
-            if (this == cg->genGP()) {
+        } else if (is_gp()) {
+            if (this == cg->getGP()) {
                 buf.strcat("gp");
             } else {
                 UNREACHABLE();
             }
-        } else if (SR_is_rflag(this)) {
+        } else if (is_rflag()) {
             //Rflag register
             buf.strcat("rflag");
-        } else if (SR_is_param_pointer(this)) {
+        } else if (is_param_pointer()) {
             //Parameter pointer.
             buf.strcat("sr%lu(PARAM)", (ULONG)SR_sregid(this));
-        } else if (HAS_PREDICATE_REGISTER && this == cg->genTruePred()) {
+        } else if (HAS_PREDICATE_REGISTER && this == cg->getTruePred()) {
             //True predicate register.
             buf.strcat("tp");
         } else {
             //General Purpose Register
-            if (SR_is_global(this)) {
+            if (is_global()) {
                 buf.strcat("gsr%lu", (ULONG)SR_sregid(this));
             } else {
                 buf.strcat("sr%lu", (ULONG)SR_sregid(this));
@@ -220,11 +220,11 @@ CHAR const* SR::get_name(StrBuf & buf, CG * cg) const
         }
 
         //Print physical register id and register file.
-        if (SR_phy_regid(this) != REG_UNDEF) {
-            buf.strcat("(%s)", tmGetRegName((REG)SR_phy_regid(this)));
+        if (getPhyReg() != REG_UNDEF) {
+            buf.strcat("(%s)", tmGetRegName((REG)getPhyReg()));
         }
-        if (SR_regfile(this) != RF_UNDEF) {
-            buf.strcat("(%s)", tmGetRegFileName(SR_regfile(this)));
+        if (getRegFile() != RF_UNDEF) {
+            buf.strcat("(%s)", tmGetRegFileName(getRegFile()));
         }
         break;
     case SR_STR: {
@@ -254,7 +254,7 @@ bool SR::is_equal(SR const* sr)
 {
     return type == sr->type &&
            u2.bitflags == sr->u2.bitflags &&
-           SR_int_imm(this) == SR_int_imm(sr) &&
+           getInt() == sr->getInt() &&
            SR_imm_size(this) == SR_imm_size(sr) &&
            SR_spill_var(this) == SR_spill_var(sr) &&
            SR_vec(this) == SR_vec(sr);
@@ -390,7 +390,7 @@ SR * SRVecMgr::genSRVec(List<SR*> & lst)
 //bytesize of each register-element in 'm_sr_vec'.
 UINT SR::getByteSize() const
 {
-    if (SR_is_vec(this)) {
+    if (is_vec()) {
         return (SR_vec(this)->get_last_idx() + 1) * GENERAL_REGISTER_SIZE;
     }
     return GENERAL_REGISTER_SIZE;

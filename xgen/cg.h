@@ -261,11 +261,11 @@ public:
 // management of register tuples and complex software pipelining
 // in case of clustered architectures tricks to reduce code size
 // or enhance code compressibility.
-#define CG_or2memaddr_map(r)               ((r)->m_or2memaddr_map)
-#define CG_max_real_arg_size(r)            ((r)->m_max_real_arg_size)
-#define CG_bb_level_internal_var_list(r)   ((r)->m_bb_level_internal_var_list)
+#define CG_or2memaddr_map(r) ((r)->m_or2memaddr_map)
+#define CG_max_real_arg_size(r) ((r)->m_max_real_arg_size)
+#define CG_bb_level_internal_var_list(r) ((r)->m_bb_level_internal_var_list)
 #define CG_func_level_internal_var_list(r) ((r)->m_func_level_internal_var_list)
-#define CG_builtin_memcpy(r)               ((r)->m_builtin_memcpy)
+#define CG_builtin_memcpy(r) ((r)->m_builtin_memcpy)
 class CG {
     COPY_CONSTRUCTOR(CG);
 protected:
@@ -358,8 +358,8 @@ public:
     {
         ASSERT0(m_rg);
         xoc::Sym * s = m_rg->getRegionMgr()->addToSymbolTab(buildin_name);
-        return m_rg->getVarMgr()->registerStringVar(
-            buildin_name, s, MEMORY_ALIGNMENT);
+        return m_rg->getVarMgr()->registerStringVar(buildin_name,
+                                                    s, MEMORY_ALIGNMENT);
     }
     ORBB * allocBB();
     RegSet * allocRegSet() { return m_regset_mgr.allocRegSet(); }
@@ -427,6 +427,16 @@ public:
         ASSERTN(0, ("Target Dependent Code"));
     }
 
+    //This function build OR according to given 'code'.
+    //Implement the target dependent version if needed.
+    //'sr_size': The number of integral multiple of byte-size of single SR.
+    virtual void buildBinaryOR(IR_TYPE code,
+                               SR * src1,
+                               SR * src2,
+                               bool is_signed,
+                               OUT ORList & ors,
+                               IN IOC * cont);
+
     //'sr_size': The number of integral multiple of byte-size of single SR.
     virtual void buildAdd(SR * src1,
                           SR * src2,
@@ -435,7 +445,7 @@ public:
                           OUT ORList & ors,
                           IN IOC * cont);
 
-    //'sr_size': The number of integral multiple of byte-size of single SR.
+    //'sr_size': The number of integral substract of byte-size of single SR.
     virtual void buildSub(SR * src1,
                           SR * src2,
                           UINT sr_size,
@@ -611,6 +621,10 @@ public:
                                              UINT offset,
                                              OUT ORList & ors,
                                              IN IOC * cont);
+    //Increase 'reg' by 'val'.
+    virtual void buildIncReg(SR * reg, UINT val, OUT ORList & ors, IOC * cont);
+    //Decrease 'reg' by 'val'.
+    virtual void buildDecReg(SR * reg, UINT val, OUT ORList & ors, IOC * cont);
 
     void constructORBBList(IN ORList  & or_list);
     void computeEntryAndExit(IN OR_CFG & cfg,
@@ -758,9 +772,7 @@ public:
     virtual void fixCluster(ORList & spill_ops, CLUST clust);
 
     Vector<ParallelPartMgr*> * getParallelPartMgrVec() const
-    {
-        return m_ppm_vec;
-    }
+    { return m_ppm_vec; }
 
     SR * genVAR(xoc::Var const* var);
     SR * genLabel(LabelInfo const* li);
@@ -778,9 +790,21 @@ public:
     //Generate SR that indicates const value.
     SR * genIntImm(HOST_INT val, bool is_signed);
     SR * genFpImm(HOST_FP val);
+    SR * genZero() { return genIntImm((HOST_INT)0, false); }
+    SR * genOne() { return genIntImm((HOST_INT)1, false); }
 
     //Generate dedicated register by specified physical register.
     SR * genDedicatedReg(REG phy_reg);
+    //Get dedicated register by specified physical register.
+    SR * getDedicatedReg(REG phy_reg) const;    
+    virtual SR * getSP() const;
+    virtual SR * getFP() const;
+    virtual SR * getGP() const;
+    virtual SR * getParamPointer() const;
+    virtual SR * getRflag() const; //Get flag register.
+    virtual SR * getTruePred() const; //Get TRUE predicate register.
+    //Get function return-address register.
+    virtual SR * getReturnAddr() const = 0;
     virtual SR * genSP();
     virtual SR * genFP();
     virtual SR * genGP();
@@ -788,7 +812,6 @@ public:
     virtual SR * genRflag(); //Generate flag register.
     virtual SR * genPredReg(); //Generate predicate register.
     virtual SR * genTruePred(); //Generate TRUE predicate register.
-
     //Generate function return-address register.
     virtual SR * genReturnAddr() = 0;
     xoc::Region * getRegion() const { return m_rg; }
@@ -819,37 +842,35 @@ public:
     Section * getParamSection() { return &m_param_sect; }
     virtual REGFILE getRflagRegfile() const = 0;
     virtual REGFILE getPredicateRegfile() const;
-    Vector<xoc::Var const*> const& get_param_vars() const
-    {
-        return m_params;
-    }
+    Vector<xoc::Var const*> const& get_param_vars() const { return m_params; }
     virtual ORAsmInfo * getAsmInfo(OR const*) const
     {
         ASSERTN(0, ("Target Dependent Code"));
         return NULL;
     }
 
-    virtual RegFileSet const* getValidRegfileSet(
-        OR_TYPE ortype,
-        UINT idx,
-        bool is_result) const;
-    virtual RegSet const* getValidRegSet(
-        OR_TYPE ortype,
-        UINT idx,
-        bool is_result) const;
+    virtual RegFileSet const* getValidRegfileSet(OR_TYPE ortype,
+                                                 UINT idx,
+                                                 bool is_result) const;
+    virtual RegSet const* getValidRegSet(OR_TYPE ortype,
+                                         UINT idx,
+                                         bool is_result) const;
     SRMgr * getSRMgr() { return m_cgmgr->getSRMgr(); }
     ORMgr * getORMgr() { return m_cgmgr->getORMgr(); }
     SRVecMgr * getSRVecMgr() { return m_cgmgr->getSRVecMgr(); }
-    Vector<IssuePackageList*> * getIssuePackageListVec()
-    {
-        return &m_ipl_vec;
-    }
+    Vector<IssuePackageList*> * getIssuePackageListVec() { return &m_ipl_vec; }
 
     //Map phsical register to dedicated symbol register if exist.
     SR * getDedicatedSRForPhyReg(REG reg);
 
+    //Generate and return the mask code that used to reserved the lower
+    //'bytesize' bytes.
+    static HOST_UINT getMaskByByte(UINT bytesize);
+
     virtual void initFuncUnit();
     virtual void initBuiltin();
+    //Generate dedicated SR for subsequent use.
+    virtual void initDedicatedSR();    
     virtual bool isPassArgumentThroughRegister() = 0;
     void initGlobalVar(VarMgr * vm);
     bool isComputeStackOffset() const { return m_is_compute_sect_offset; }
@@ -861,16 +882,21 @@ public:
         return (reg % 2) == 1;
     }
     //Return true if ORBB needs to be assigned cluster.
-    bool isAssignClust(ORBB *) const { return true; }
-    bool isRegflowDep(OR * from, OR * to);
-    bool isRegoutDep(OR * from, OR * to);
-    bool isOpndSameWithResult(SR const* test_tn,
-                              IN OR * o,
+    bool isAssignClust(ORBB const*) const { return true; }
+    bool isRegflowDep(OR const* from, OR const* to) const;
+    bool isRegoutDep(OR const* from, OR const* to) const;
+    
+    //Return true if 'test_sr' is the one of operands of 'o' ,
+    //it is also the results.
+    //'test_sr': can be NULL. If it is NULL, we only try to
+    //           get the index-info of the same opnd and result.
+    bool isOpndSameWithResult(SR const* test_sr,
+                              OR const* o,
                               OUT INT * opndnum,
-                              OUT INT * resnum);
+                              OUT INT * resnum) const;
     //Return true if specified operand or result is Rflag register.
     bool isRflagRegister(OR_TYPE ot, UINT idx, bool is_result) const;
-    virtual bool isReductionOR(OR * o);
+    virtual bool isReductionOR(OR const* o) const;
 
     //Return true if specified immediate operand is in valid range.
     bool isValidImmOpnd(OR_TYPE ot, UINT idx, HOST_INT imm) const;
@@ -894,32 +920,36 @@ public:
     virtual bool isConsistentRegFileForCopy(REGFILE rf1, REGFILE rf2);
 
     //If stack-base-pointer register could use 'unit', return true.
-    virtual bool isSPUnit(UNIT unit)
+    virtual bool isSPUnit(UNIT unit) const
     {
         DUMMYUSE(unit);
         ASSERTN(0, ("Target Dependent Code"));
         return false;
     }
 
-    virtual bool isSafeToOptimize(OR * prev, OR * next);
+    //Which case is safe to optimize?
+    //If 'prev' is must-execute, 'next' is cond-execute, we say that is
+    //safe to optimize.
+    //Since must-execute operation is the dominator in execute-path.
+    //Otherwise is not absolutely safe.
+    virtual bool isSafeToOptimize(OR const* prev, OR const* next) const;
     bool isReturnValueSR(SR const* sr) const
     {
-        return SR_phy_regid(sr) != REG_UNDEF &&
-            tmGetRegSetOfReturnValue()->is_contain(SR_phy_regid(sr));
+        return sr->getPhyReg() != REG_UNDEF &&
+               tmGetRegSetOfReturnValue()->is_contain(sr->getPhyReg());
     }
     bool isArgumentSR(SR const* sr) const
     {
-        return SR_phy_regid(sr) != REG_UNDEF &&
-            tmGetRegSetOfArgument()->is_contain(SR_phy_regid(sr));
+        return sr->getPhyReg() != REG_UNDEF &&
+               tmGetRegSetOfArgument()->is_contain(sr->getPhyReg());
     }
     bool isDedicatedSR(SR const* sr) const
-    {
-        return SR_is_dedicated(sr) || isReturnValueSR(sr);
-    }
+    { return SR_is_dedicated(sr) || isReturnValueSR(sr); }
     bool isSREqual(SR const* sr1, SR const* sr2) const;
 
     //Return true if SR is integer register.
-    virtual bool isIntRegSR(OR *, SR const*, UINT idx, bool is_result) const
+    virtual bool isIntRegSR(OR const*, SR const*,
+                            UINT idx, bool is_result) const
     {
         DUMMYUSE(idx);
         DUMMYUSE(is_result);
@@ -927,19 +957,14 @@ public:
         return false;
     }
 
-    virtual bool isOREqual(OR const* v1, OR const* v2)
-    {
-        return v1->is_equal(v2);
-    }
-
-    virtual bool isCompareOR(OR const* o);
-    virtual bool isCondExecOR(OR * o);
-    virtual bool isBusCluster(CLUST) = 0;
+    virtual bool isCompareOR(OR const* o) const;
+    virtual bool isCondExecOR(OR const* o) const;
+    virtual bool isBusCluster(CLUST) const = 0;
 
     //SR that can used on each clusters.
-    virtual bool isBusSR(SR const*) = 0;
+    virtual bool isBusSR(SR const*) const = 0;
 
-    virtual bool isCopyOR(OR *) = 0;
+    virtual bool isCopyOR(OR const*) const = 0;
 
     //Return true if sr is stack base pointer.
     virtual bool isSP(SR const*) const = 0;
@@ -953,11 +978,11 @@ public:
     //3. load constant parameter
     //4. load from local data memory for simple
     //5. load address of variable
-    virtual bool isRecalcOR(OR *) = 0;
+    virtual bool isRecalcOR(OR const*) const = 0;
 
     bool isSameSpillLoc(OR const* or1, OR const* or2);
     bool isSameSpillLoc(xoc::Var const* or1loc, OR const* or1, OR const* or2);
-    virtual bool isReduction(OR * o);
+    virtual bool isReduction(OR const* o) const;
     virtual bool isSameCondExec(OR * prev, OR * next, BBORList const* or_list);
 
     //Return true if both slot1 and slot2 belong to same cluster.
@@ -967,24 +992,24 @@ public:
     virtual bool isSameCluster(SLOT, SLOT) const = 0;
 
     //Return true if slot1 and slot2 use similar func-unit.
-    virtual bool isSameLikeCluster(SLOT, SLOT) = 0;
+    virtual bool isSameLikeCluster(SLOT, SLOT) const = 0;
 
     //Return true if the data BUS operation processed that was
     //using by other general operations.
-    virtual bool isSameLikeCluster(OR const*, OR const*) = 0;
+    virtual bool isSameLikeCluster(OR const*, OR const*) const = 0;
 
     //Return true if or-type has the number of 'res_num' results.
-    virtual bool isMultiResultOR(OR_TYPE, UINT res_num) = 0;
+    virtual bool isMultiResultOR(OR_TYPE, UINT res_num) const = 0;
 
     //Return true if or-type has multiple results.
-    virtual bool isMultiResultOR(OR_TYPE) = 0;
+    virtual bool isMultiResultOR(OR_TYPE) const = 0;
 
     //'opnd_num': -1 means return true if or-type has multiple storre-val.
-    virtual bool isMultiStore(OR_TYPE, INT opnd_num) = 0;
+    virtual bool isMultiStore(OR_TYPE, INT opnd_num) const = 0;
 
     //'res_num': -1 means return true if ot has multiple result SR.
     //    non -1 means return true if ot has the number of 'res_num' results.
-    virtual bool isMultiLoad(OR_TYPE, INT res_num) = 0;
+    virtual bool isMultiLoad(OR_TYPE, INT res_num) const = 0;
 
     virtual bool isValidOpndRegfile(OR_TYPE opcode,
                                     INT opndnum,
@@ -992,11 +1017,12 @@ public:
     virtual bool isValidResultRegfile(OR_TYPE opcode,
                                       INT resnum,
                                       REGFILE regfile) const;
-    virtual bool isValidRegInSRVec(OR * o, SR * sr, UINT idx, bool is_result);
+    virtual bool isValidRegInSRVec(OR  const* o, SR  const* sr,
+                                   UINT idx, bool is_result) const;
 
     //Return true if the runtime value of base1 is equal to base2.
     //Some target might use mulitple stack pointers.
-    virtual bool isStackPointerValueEqu(SR const* base1, SR const* base2)
+    virtual bool isStackPointerValueEqu(SR const* base1, SR const* base2) const
     {
         DUMMYUSE(base1);
         DUMMYUSE(base2);
@@ -1010,8 +1036,21 @@ public:
         return OR_UNDEF;
     }
 
-    SR * mapPR2SR(UINT prno) { return m_pr2sr_map.get(prno); }
-    SR * mapSymbolReg2SR(UINT regid) { return m_regid2sr_map.get(regid); }
+    //Map from IR type to OR type.
+    //Target may apply comparing instruction to calculate boolean value.
+    //e.g:
+    //     r1 <- 0x1,
+    //     r2 <- 0x2,
+    //     r0 <- eq, r1, r2 ;then r0 is 0
+    virtual OR_TYPE mapIRType2ORType(IR_TYPE ir_type,
+                                     UINT ir_opnd_size,
+                                     IN SR * opnd0,
+                                     IN SR * opnd1,
+                                     bool is_signed) = 0;
+    SR * mapPR2SR(UINT prno) const
+    { return const_cast<CG*>(this)->m_pr2sr_map.get(prno); }
+    SR * mapSymbolReg2SR(UINT regid) const
+    { return const_cast<CG*>(this)->m_regid2sr_map.get(regid); }
     bool mustAsmDef(OR const* o, SR const* sr) const;
     bool mustDef(OR const* o, SR const* sr) const;
     bool mustUse(OR const* o, SR const* sr) const;
@@ -1019,17 +1058,18 @@ public:
                        IN ORCt * start,
                        IN ORCt * end,
                        IN ORList & ors);
-    bool mayDef(IN OR * o, SR const* sr);
-    bool mayUse(IN OR * o, SR const* sr);
-    virtual xoc::Var const* mapOR2Var(OR * o);
+    bool mayDef(OR const* o, SR const* sr) const;
+    bool mayUse(OR const* o, SR const* sr) const;
+    virtual xoc::Var const* mapOR2Var(OR const* o) const;
     virtual bool mapRegSet2RegFile(OUT Vector<INT> & regfilev,
                                    RegSet const* regs);
-    virtual UNIT mapSR2Unit(OR const* o, SR const* sr);
+    virtual UNIT mapSR2Unit(OR const* o, SR const* sr) const;
     virtual CLUST mapSlot2Cluster(SLOT slot);
 
     //Return the regisiter-file set which 'clust' corresponded with.
-    virtual List<REGFILE> & mapCluster2RegFileList(CLUST clust,
-                                                   OUT List<REGFILE> & regfiles)
+    virtual List<REGFILE> & mapCluster2RegFileList(
+        CLUST clust,
+        OUT List<REGFILE> & regfiles) const
     {
         DUMMYUSE(clust);
         ASSERTN(0, ("Target Dependent Code"));
@@ -1038,8 +1078,9 @@ public:
 
     //Return register-file set which the unit set corresponded with.
     //'units': function unit set
-    virtual List<REGFILE> & mapUnitSet2RegFileList(IN UnitSet & us,
-                                                   OUT List<REGFILE> & regfiles)
+    virtual List<REGFILE> & mapUnitSet2RegFileList(
+        UnitSet const& us,
+        OUT List<REGFILE> & regfiles) const
     {
         DUMMYUSE(us);
         DUMMYUSE(regfiles);
@@ -1049,7 +1090,7 @@ public:
     }
 
     //Mapping from single unit to its corresponed cluster.
-    virtual SLOT mapUnit2Slot(UNIT unit, CLUST clst)
+    virtual SLOT mapUnit2Slot(UNIT unit, CLUST clst) const
     {
         DUMMYUSE(unit);
         DUMMYUSE(clst);
@@ -1059,7 +1100,7 @@ public:
 
     //Mapping from single issue slot(for multi-issue architecture) to
     //its corresponed function unit.
-    virtual UNIT mapSlot2Unit(SLOT slot)
+    virtual UNIT mapSlot2Unit(SLOT slot) const
     {
         DUMMYUSE(slot);
         ASSERTN(0, ("Target Dependent Code"));
@@ -1067,7 +1108,7 @@ public:
     }
 
     //Return the cluster which owns 'regfile'.
-    virtual CLUST mapRegFile2Cluster(REGFILE regfile, SR const* sr)
+    virtual CLUST mapRegFile2Cluster(REGFILE regfile, SR const* sr) const
     {
         DUMMYUSE(regfile);
         DUMMYUSE(sr);
@@ -1077,7 +1118,7 @@ public:
     }
 
     //Return the cluster which owns 'reg'
-    virtual CLUST mapReg2Cluster(REG)
+    virtual CLUST mapReg2Cluster(REG) const
     {
         ASSERTN(0, ("Target Dependent Code"));
         CLUST clust = CLUST_UNDEF;
@@ -1088,7 +1129,7 @@ public:
     //Return the function unit which can operate on 'regfile'.
     virtual UnitSet & mapRegFile2UnitSet(REGFILE regfile,
                                          SR const* sr,
-                                         OUT UnitSet & us)
+                                         OUT UnitSet & us) const
     {
         DUMMYUSE(regfile);
         DUMMYUSE(sr);
@@ -1098,9 +1139,10 @@ public:
     }
 
     //Return the cluster which owns 'sr'
-    virtual CLUST mapSR2Cluster(OR *, SR const*)
+    virtual CLUST mapSR2Cluster(OR const*, SR const*) const
     {
-        ASSERTN(0, ("Target Dependent Code")); return CLUST_UNDEF;
+        ASSERTN(0, ("Target Dependent Code"));
+        return CLUST_UNDEF;
     }
 
     void relocateStackVarOffset();
@@ -1139,7 +1181,8 @@ public:
     void setMapPR2SR(UINT prno, SR * sr) { m_pr2sr_map.set(prno, sr); }
     void setMapSymbolReg2SR(UINT regid, SR * sr)
     {
-        DUMMYUSE(regid); m_regid2sr_map.set(SR_sregid(sr), sr);
+        DUMMYUSE(regid);
+        m_regid2sr_map.set(SR_sregid(sr), sr);
     }
 
     void setCluster(ORList & ors, CLUST clust);

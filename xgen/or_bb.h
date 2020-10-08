@@ -130,19 +130,19 @@ public:
 class ORBB {
     COPY_CONSTRUCTOR(ORBB);
 public:
-    UINT m_id; //BB's id
-    xcom::BitSet m_live_in; //record live in SR id.
-    xcom::BitSet m_live_out; //record live out SR id.
-    BBORList * m_or_list; //OR list
-    ULONG m_attr; //BB attributes
-    List<LabelInfo const*> m_lab_list; //Record all of labels attached on BB
+    UINT m_id:29; //BB's id
     UINT m_is_exit:1; //bb is a region exit.
     UINT m_is_entry:1; //bb a region entry.
     UINT m_is_target:1; //bb is the jumping target.
+    INT m_rpo;    
+    BBORList * m_or_list; //OR list
     CG * m_cg;
     OR * m_entry_spadjust; //record sp-adjust OR if bb is entry bb.
     OR * m_exit_spadjust; //record sp-adjust OR if bb is exit bb.
-    INT m_rpo;
+    ULONG m_attr; //BB attributes
+    xcom::BitSet m_live_in; //record live in SR id.
+    xcom::BitSet m_live_out; //record live out SR id.
+    List<LabelInfo const*> m_lab_list; //Record all of labels attached on BB
 
 public:
     explicit ORBB(CG * cg);
@@ -158,12 +158,23 @@ public:
 
     void cleanLabelInfoList() { getLabelList().clean(); }
 
+    void dump();
+
     OR * getBranchOR();
     List<LabelInfo const*> & getLabelList() { return m_lab_list; }
+    BBORList * getORList() const { return ORBB_orlist(this); }
+    UINT getORNum() const { return ORBB_orlist(this)->get_elem_count(); }
+    OR * getFirstOR() const { return ORBB_first_or(this); }
+    OR * getNextOR() const { return ORBB_next_or(this); }
+    OR * getPrevOR() const { return ORBB_prev_or(this); }
+    OR * getLastOR() const { return ORBB_last_or(this); }
 
     UINT id() const { return ORBB_id(this); }
     bool isDownBoundary(OR * o);
     bool is_bb_exit() const { return ORBB_is_exit(this); }
+    bool is_entry() const { return ORBB_is_entry(this); }
+    bool is_exit() const { return ORBB_is_exit(this); }
+    bool is_target() const { return ORBB_is_target(this); }
     bool hasLabel(LabelInfo const* o);
     bool isBoundary(OR * o)
     { return (isUpperBoundary(o) || isDownBoundary(o)); }
@@ -183,7 +194,6 @@ public:
         }
         return false;
     }
-
     inline bool is_terminate() const
     {
         ORBB * pthis = const_cast<ORBB*>(this);
@@ -196,13 +206,12 @@ public:
         return false;
     }
 
-    void setLiveOut(SR * sr);
-    void setLiveIn(SR * sr);
     void mergeLabeInfoList(ORBB * from);
-    void dump();
 
     //Return true if one of bb's successor has a phi.
     bool successorHasPhi(CFG<ORBB, OR> * cfg) { DUMMYUSE(cfg); return false; }
+    void setLiveOut(SR * sr);
+    void setLiveIn(SR * sr);
 
     INT rpo() const { return ORBB_rpo(this); }
 

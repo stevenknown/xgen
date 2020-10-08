@@ -523,8 +523,8 @@ void DataDepGraph::handle_results(
 {
     for (UINT i = 0; i < o->result_num(); i++) {
         SR * sr = o->get_result(i);
-        if (sr == m_cg->genTruePred() ||
-            !SR_is_reg(sr)) {
+        if (sr == m_cg->getTruePred() ||
+            !sr->is_reg()) {
             continue;
         }
 
@@ -533,9 +533,9 @@ void DataDepGraph::handle_results(
             continue;
         }
 
-        if (m_ddg_param.phy_reg_dep && SR_phy_regid(sr) != REG_UNDEF) {
+        if (m_ddg_param.phy_reg_dep && sr->getPhyReg() != REG_UNDEF) {
             //Dep of physical register.
-            REG reg = SR_phy_regid(sr);
+            REG reg = sr->getPhyReg();
             List<OR*> * orlst = map_reg2defors.get(reg);
             if (orlst != NULL) {
                 for (OR * defor = orlst->get_head();
@@ -605,7 +605,7 @@ void DataDepGraph::handle_opnds(
 {
     for (UINT i = 0; i < o->opnd_num(); i++) {
         SR * sr = o->get_opnd(i);
-        if (sr == m_cg->genTruePred() || !SR_is_reg(sr)) {
+        if (sr == m_cg->getTruePred() || !sr->is_reg()) {
             continue;
         }
         if (m_cg->isDedicatedSR(sr) &&
@@ -613,9 +613,9 @@ void DataDepGraph::handle_opnds(
             continue;
         }
 
-        if (m_ddg_param.phy_reg_dep && SR_phy_regid(sr) != REG_UNDEF) {
+        if (m_ddg_param.phy_reg_dep && sr->getPhyReg() != REG_UNDEF) {
             //Dep of physical register.
-            REG reg = SR_phy_regid(sr);
+            REG reg = sr->getPhyReg();
             List<OR*> * orlst = map_reg2defors.get(reg);
             if (orlst != NULL) {
                 for (OR * defor = orlst->get_head();

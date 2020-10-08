@@ -20,3 +20,9 @@ notop (unsigned int x)
 {
   return ~x;
 }
+
+double
+notop2 (unsigned long long x)
+{
+  return ~x;
+}

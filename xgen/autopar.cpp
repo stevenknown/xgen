@@ -57,7 +57,7 @@ static bool FindMainIV(ORBB * bb, DataDepGraph & ddg,
     OR * branch = bb->getBranchOR();
     ASSERTN(branch, ("ORBB is not in loop end"));
     SR * predict_sr = branch->get_pred();
-    ASSERTN(predict_sr != m_cg->genTruePred(), ("illegal control flow"));
+    ASSERTN(predict_sr != m_cg->getTruePred(), ("illegal control flow"));
     List<OR*> preds;
 
     //Find compare operation.
@@ -95,8 +95,8 @@ static bool FindMainIV(ORBB * bb, DataDepGraph & ddg,
         for (INT i = 0; i < (*cmp_or)->opnd_num(); i++) {
             SR * opnd = (*cmp_or)->get_opnd(i);
             if (!m_cg->isIntRegSR(o, opnd, i, false) ||
-                opnd == m_cg->genTruePred() ||
-                !SR_is_global(opnd)) {
+                opnd == m_cg->getTruePred() ||
+                !opnd->is_global()) {
                 continue;
             }
             if (ORBB_cg(m_bb)->mustDef(*red_or, opnd) &&
@@ -136,17 +136,17 @@ static void fillBB1(OUT ORBB * bb1, //early exit from loop
     UINT branch_cond = 0;
     if (SR_is_const(trip_count_sr)) {
         //new_upperb = lowb + trip_count % num_para_part
-        INT new_trip_count_val = SR_int_imm(trip_count_sr) % num_para_part;
+        INT new_trip_count_val = trip_count_sr->getInt() % num_para_part;
         ASSERTN(new_trip_count_val > 0,
                ("unroll_make_remainder_loop: trip count is negative o zero"));
         branch_cond = V_BR_I4GE;
         if (SR_is_const(lb_sr)) {
             //new_upperb = lowb + new_tr
-            new_trip_count_val = new_trip_count_val + SR_int_imm(lb_sr);
+            new_trip_count_val = new_trip_count_val + lb_sr->getInt();
             *remaing_count =
                 m_cg->gen_imm(new_trip_count_val);
         } else {
-            ASSERT0(SR_is_reg(lb_sr));
+            ASSERT0(lb_sr->is_reg());
             *remaing_count = m_cg->dupSR(lb_sr);
             //new_upperb = lowb + new_tr
             IOC tmp;
@@ -165,7 +165,7 @@ static void fillBB1(OUT ORBB * bb1, //early exit from loop
 
         //new_tr = tr % n;
         IOC cont;
-        IOC_pred(&cont) = m_cg->genTruePred();
+        IOC_pred(&cont) = m_cg->getTruePred();
         m_cg->buildMod(CLUST_UNDEF,
                        remaing_count,
                        trip_count_sr,
@@ -206,18 +206,18 @@ static bool fullyUnrollBB(ORBB * bb, DataDepGraph & ddg)
 {
     SR * trip_count_sr = getTripCountSR(bb);
     if (!SR_is_const(trip_count_sr) ||
-        SR_int_imm(trip_count_sr) > TRIP_COUNT_ALLOW_FULLY_UNROLL_BB) {
+        trip_count_sr->getInt() > TRIP_COUNT_ALLOW_FULLY_UNROLL_BB) {
         return false;
     }
     OR * red_or = NULL, * cmp_or = NULL;
     SR * iv = NULL;
     FindMainIV(bb, ddg, &red_or, &cmp_or, &iv);
-    ASSERTN(red_or && iv && SR_is_global(iv), ("Cannot find iv"));
+    ASSERTN(red_or && iv && iv->is_global(), ("Cannot find iv"));
     OR * br_or = BB_xfer_op(bb);
     ORBB_orlist(bb).remove(br_or);
     ORBB_orlist(bb).remove(cmp_or);
 
-    for (INT i = 0; i < SR_int_imm(trip_count_sr) - 1; i++) {
+    for (INT i = 0; i < trip_count_sr->getInt() - 1; i++) {
         ORBB * tmpbb = Dup_Bb(bb, true);
         BB_Append_All(bb, tmpbb);
     }
@@ -230,7 +230,7 @@ static void modifyBB2(IN OUT ORBB * bb2, ORBB const* orig_bb,
 {
     //Modify ORBB info
     IR * orig_loopinfo = LOOPINFO_ir(getLoopInfo(orig_bb));
-    if (SR_is_reg(rem_count_sr)) {
+    if (rem_count_sr->is_reg()) {
         bb2->setLiveIn(rem_count_sr);
     }
     //Regenerate LOOPINFO for ORBB.
@@ -248,7 +248,7 @@ static void modifyBB2(IN OUT ORBB * bb2, ORBB const* orig_bb,
                             IR_loop_trip(orig_loopinfo)->getType());
     if (SR_is_const(rem_count_sr)) {
         LOOPINFO_trip_count_sr(loop_info) = rem_count_sr;
-        loop_trip = m_rg->buildConst(opc_intconst, SR_int_imm(rem_count_sr));
+        loop_trip = m_rg->buildConst(opc_intconst, rem_count_sr->getInt());
         IR_set_loop_trip(ir, loop_trip_ir);
         BB_Add_Annotation(bb2, ANNOT_LOOPINFO, loop_info);
     } else {
@@ -283,11 +283,11 @@ static void modifyBB2(IN OUT ORBB * bb2, ORBB const* orig_bb,
         OR * red_or = NULL, * cmp_or = NULL;
         SR * iv = NULL;
         FindMainIV(bb2, ddg, &red_or, &cmp_or, &iv);
-        ASSERTN(red_or && iv && SR_is_global(iv),
+        ASSERTN(red_or && iv && iv->is_global(),
                ("Cannot find iv"));
         ASSERTN(cmp_or && m_cg->isCompareOR(cmp_or),
                ("Not innermost loop"));
-        ASSERT0(cmp_or->get_opnd( 0) == m_cg->genTruePred());
+        ASSERT0(cmp_or->get_opnd( 0) == m_cg->getTruePred());
         OR * br_or = BB_xfer_op(bb2);
         if (cmp_or->get_opnd( 1) == iv) { //The comparation should be iv < UB
             ASSERT0(!m_cg->is_gt(cmp_or));
@@ -355,7 +355,7 @@ static void fillBB3(OUT ORBB * bb3, IN OUT ORBB * bb5,
 
 void replaceBranchCond(OR * br_or, SR * cond)
 {
-    ASSERT0(SR_is_pred(cond));
+    ASSERT0(cond->is_pred());
     switch (OR_code(br_or)) {
     case OR_b_b:
         br_or->set_pred(cond);
@@ -385,7 +385,7 @@ static void markGSR(ORBB const* bb, bool is_clear)
          o = ORBB_orlist(bb).get_next()) {
         for (INT i = 0;  i < o->result_num(); i++) {
             SR * res = o->get_result(i);
-            if (SR_is_global(res)) {
+            if (res->is_global()) {
                 xcom::BitSet * bs = g_sr2bbset_map.get(res);
                 if (bs == NULL) {
                     bs = g_bs_mgr.create();
@@ -400,7 +400,7 @@ static void markGSR(ORBB const* bb, bool is_clear)
         }//end for
         for (INT i = 0; i < o->opnd_num(); i++) {
             SR * opnd = o->get_opnd( i);
-            if (SR_is_global(opnd)) {
+            if (opnd->is_global()) {
                 xcom::BitSet * bs = g_sr2bbset_map.get(opnd);
                 if (bs == NULL) {
                     bs = g_bs_mgr.create();
@@ -436,7 +436,7 @@ static void modifyBB(IN OUT ORBB * bb,
                             IR_loop_trip(orig_loopinfo)->getType());
     if (SR_is_const(trip_count_sr)) {
         INT new_trip_count_val =
-            SR_int_imm(trip_count_sr) - SR_int_imm(trip_count_sr) % num_para_part;
+            trip_count_sr->getInt() - trip_count_sr->getInt() % num_para_part;
         LOOPINFO_trip_count_sr(orig_loop_info) =
             m_cg->gen_imm(new_trip_count_val, SR_size(trip_count_sr));
         //Generate new IR to describe actually trip count.
@@ -593,20 +593,20 @@ static SR * genLowBound(SR * iv, ORBB * bb, ORBB * imm_pred)
     if (m_cg->is_movi(def_iv)) {
         lb_sr = dupSR(def_iv->get_opnd( 1));
         ASSERT0(SR_is_const(lb_sr));
-        if ((UINT)SR_int_imm(lb_sr) > (UINT)0x7fffFFFF) {
+        if ((UINT)lb_sr->getInt() > (UINT)0x7fffFFFF) {
             ASSERTN(0, ("Low bound is too large!"));
         }
     } else if (m_cg->isCopyOR(def_iv)) {
         INT i = m_cg->computeCopyOpndIdx(def_iv);
         SR * def_iv_cp_opnd = def_iv->get_opnd( i);
         lb_sr = dupSR(def_iv_cp_opnd);
-        ASSERT0(SR_is_reg(lb_sr));
+        ASSERT0(lb_sr->is_reg());
 
         ORList ors;
         CLUST clst = m_cg->computeORCluster(def_iv);
         UNIT unit = m_cg->computeORUnit(def_iv)->checkAndGet();
         m_cg->buildCopyPred(clst, unit, def_iv_cp_opnd,
-            lb_sr, m_cg->genTruePred(), ors);
+            lb_sr, m_cg->getTruePred(), ors);
         ORCt * ct;
         ORBB_orlist(imm_pred).find(def_iv, &ct);
         ASSERT0(ct);
@@ -625,10 +625,10 @@ static SR * genLowBound(SR * iv, ORBB * bb, ORBB * imm_pred)
 static SR * genTripCount(IN SR * lb_sr, IN SR * ub_sr, IN OUT ORBB * bb)
 {
     SR * trip_count_sr = NULL;
-    if (SR_is_int_imm(lb_sr) && SR_is_int_imm(ub_sr)) {
+    if (lb_sr->is_int_imm() && ub_sr->is_int_imm()) {
         ASSERT0(SR_size(lb_sr) == SR_size(ub_sr));
         trip_count_sr =
-            m_cg->gen_imm(SR_int_imm(ub_sr) - SR_int_imm(lb_sr) + 1,
+            m_cg->gen_imm(ub_sr->getInt() - lb_sr->getInt() + 1,
                             SR_size(lb_sr));
         return trip_count_sr;
     } else if (!SR_is_const(lb_sr)) {
@@ -700,7 +700,7 @@ static bool LoopPeeling(IN ORBB * bb,
     ASSERT0(remainder_bb && parallel_bb && red_or && cmp_or && iv);
     SR * orig_trip_count_sr = getTripCountSR(bb);
     if (SR_is_const(orig_trip_count_sr)) {
-        if (SR_int_imm(orig_trip_count_sr) % num_para_part == 0) {
+        if (orig_trip_count_sr->getInt() % num_para_part == 0) {
             *remainder_bb = NULL;
             *parallel_bb = bb;
 
@@ -764,13 +764,13 @@ static bool LoopPeeling(IN ORBB * bb,
     //In BB3, if iv > UB, then branch to BB5, o else fall through to ORBB.
     SR * ub_sr = genUpperBound(*iv, *cmp_or, bb1);
     ASSERT0(ub_sr);
-    if (SR_is_reg(ub_sr)) {
+    if (ub_sr->is_reg()) {
         ORBB_cg(m_bb)->set_sr_liveout(bb1, ub_sr);
     }
     SR * trip_count_sr = genTripCount(lb_sr, ub_sr, bb1);
     if (SR_is_const(orig_trip_count_sr)) {
-        ASSERT0(SR_is_int_imm(orig_trip_count_sr));
-        ASSERT0(SR_int_imm(trip_count_sr) == SR_int_imm(orig_trip_count_sr));
+        ASSERT0(orig_trip_count_sr->is_int_imm());
+        ASSERT0(trip_count_sr->getInt() == orig_trip_count_sr->getInt());
     }
 
     //Padding BB1, BB2, BB3, BB5.
@@ -780,14 +780,14 @@ static bool LoopPeeling(IN ORBB * bb,
     modifyBB2(bb2, bb, remaing_count, num_para_part);
     if (SR_is_const(trip_count_sr) &&
         SR_is_const(remaing_count)) {
-        ASSERT0(SR_int_imm(trip_count_sr) >= SR_int_imm(remaing_count));
-        if (SR_int_imm(trip_count_sr) == SR_int_imm(remaing_count)) {
+        ASSERT0(trip_count_sr->getInt() >= remaing_count->getInt());
+        if (trip_count_sr->getInt() == remaing_count->getInt()) {
             bb.clean();
         } else {
             modifyBB(bb, trip_count_sr, num_para_part);
         }
     } else {
-        if (SR_is_reg(ub_sr)) {
+        if (ub_sr->is_reg()) {
             bb3->setLiveIn(ub_sr);
         }
         fillBB3(bb3, bb5, ub_sr, *iv);
@@ -1024,9 +1024,9 @@ ORBB * dupBB(ORBB * bb, bool rename_lcl_sr)
         if (rename_lcl_sr) {
             for (INT i = 0;  i < new_or->result_num(); i++) {
                 SR * res = new_or->get_result(i);
-                if (SR_is_reg(res) &&
+                if (res->is_reg() &&
                     !SR_is_dedicated(res) &&
-                    !SR_is_global(res)) {
+                    !res->is_global()) {
                     SR * newsr = dupSR(res);
                     dmap.setAlways(res, newsr);
 
@@ -1036,9 +1036,9 @@ ORBB * dupBB(ORBB * bb, bool rename_lcl_sr)
             }
             for (INT i = 0; i < new_or->opnd_num(); i++) {
                 SR * opnd = new_or->get_opnd( i);
-                if (SR_is_reg(opnd) &&
+                if (opnd->is_reg() &&
                     !SR_is_dedicated(opnd) &&
-                    !SR_is_global(opnd)) {
+                    !opnd->is_global()) {
                     SR * newsr = dmap.get(opnd);
                     ASSERTN(newsr, ("local sr must have DEF"));
                     //Rename operand sr of o for parallel part.

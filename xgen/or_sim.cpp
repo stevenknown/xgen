@@ -131,7 +131,7 @@ bool BBSimulator::issue(OR * o, SLOT slot)
             ORDesc * ord = allocORDesc();
             ORDESC_or(ord) = o;
             ORDESC_start_cyc(ord) = m_cyc_counter;
-            ORDESC_or_sche_info(ord) = tmGetORScheInfo(OR_code(o));
+            ORDESC_or_sche_info(ord) = tmGetORScheInfo(o->getCode());
             m_exec_tab[i].set(m_cyc_counter, o);
             m_slot_lst[i].append_tail(ord);
         }
@@ -151,7 +151,7 @@ void BBSimulator::getOccupiedSlot(OR const* o, OUT bool occ_slot[SLOT_NUM])
 //could be used attempt to issue other independent OR.
 //e.g:Load's shadow is 2 cycles because that the result
 //is available after 3 cycles.
-UINT BBSimulator::getShadow(OR const* o)
+UINT BBSimulator::getShadow(OR const* o) const
 {
     //On other compiler, result_available_cycle == shadow length.
     return getExecCycle(o) - 1;
@@ -164,9 +164,9 @@ UINT BBSimulator::getShadow(OR const* o)
 //Result_Available_Cycle = the total cycles from prefetch
 //                        stage to result writeback stage.
 //e.g:Load, return value is 3 cycles.
-UINT BBSimulator::getExecCycle(OR const* o)
+UINT BBSimulator::getExecCycle(OR const* o) const
 {
-    UINT cyc = ORSI_last_result_avail_cyc(tmGetORScheInfo(OR_code(o)));
+    UINT cyc = ORSI_last_result_avail_cyc(tmGetORScheInfo(o->getCode()));
     //CASE: Although asm("Just_a_Label:") is not executable,
     //but the asm-o also participated scheduling as a real opertion.
     //The correct format of this case should be asm("Just_a_Label:":::"memory");
@@ -181,7 +181,7 @@ UINT BBSimulator::getExecCycle(OR const* o)
 //used at the 4 cycle.
 UINT BBSimulator::getMinLatency(OR * o)
 {
-    ORScheInfo const* oi = tmGetORScheInfo(OR_code(o));
+    ORScheInfo const* oi = tmGetORScheInfo(o->getCode());
     return ORSI_first_result_avail_cyc(oi);
 }
 
@@ -199,8 +199,8 @@ bool BBSimulator::isInShadow(ORDesc const* ord) const
 
 
 bool BBSimulator::isMemResourceConflict(DEP_TYPE deptype,
-                                        ORDesc * ck_ord,
-                                        OR const* cand_or)
+                                        ORDesc const* ck_ord,
+                                        OR const* cand_or) const
 {
     DUMMYUSE(cand_or);
     UINT start_cyc = ORDESC_start_cyc(ck_ord);
@@ -213,7 +213,7 @@ bool BBSimulator::isMemResourceConflict(DEP_TYPE deptype,
         UINT last_mem_cyc = 0;
         for (UINT i = 0; i < numOfMemResult(ck_or); i++) {
             last_mem_cyc = MAX(last_mem_cyc,
-                ORSI_mem_result_avail_cyc(or_info, i));
+                               ORSI_mem_result_avail_cyc(or_info, i));
         }
         if (m_cyc_counter < (INT)(start_cyc + last_mem_cyc)) {
             return true;
@@ -225,8 +225,8 @@ bool BBSimulator::isMemResourceConflict(DEP_TYPE deptype,
 
 //NOTICE: Result register include PC register.
 bool BBSimulator::isRegResourceConflict(DEP_TYPE deptype,
-                                        ORDesc * ck_ord,
-                                        OR const* cand_or)
+                                        ORDesc const* ck_ord,
+                                        OR const* cand_or) const
 {
     DUMMYUSE(cand_or);
     UINT start_cyc = ORDESC_start_cyc(ck_ord);
@@ -242,7 +242,7 @@ bool BBSimulator::isRegResourceConflict(DEP_TYPE deptype,
 }
 
 
-INT BBSimulator::computeDependentResultIndex(OR const* def, OR const* use)
+INT BBSimulator::computeDependentResultIndex(OR const* def, OR const* use) const
 {
     for (UINT i = 0; i < def->result_num(); i++) {
         SR * res = def->get_result(i);
@@ -262,12 +262,12 @@ INT BBSimulator::computeDependentResultIndex(OR const* def, OR const* use)
 //Check if resource conflict exists. Return true if
 //the needed resource of 'cand_or' is conflict with 'ck_or'.
 //For now, the machine resource include memory and register.
-bool BBSimulator::isResourceConflict(ORDesc * ck_ord,
+bool BBSimulator::isResourceConflict(ORDesc const* ck_ord,
                                      OR const* cand_or,
-                                     DataDepGraph & ddg)
+                                     DataDepGraph const& ddg) const
 {
     OR * ck_or = ORDESC_or(ck_ord);
-    xcom::Edge * e = ddg.getEdge(OR_id(ck_or), OR_id(cand_or));
+    xcom::Edge const* e = ddg.getEdge(OR_id(ck_or), OR_id(cand_or));
     ORScheInfo const* or_info = ORDESC_or_sche_info(ck_ord);
     ASSERT0(or_info && e);
     DEP_TYPE deptype = (DEP_TYPE)DDGEI_deptype(EDGE_info(e));
@@ -298,7 +298,7 @@ bool BBSimulator::isResourceConflict(ORDesc * ck_ord,
 
 //Only aware of the data flow depdence, and neglected of resource conflict.
 //Because we try to change function unit whenever possible.
-bool BBSimulator::canBeIssued(OR const* o, SLOT slot, DataDepGraph & ddg)
+bool BBSimulator::canBeIssued(OR const* o, SLOT slot, DataDepGraph & ddg) const
 {
     DUMMYUSE(slot);
     ASSERTN(m_pool, ("not yet initialized."));
@@ -306,8 +306,9 @@ bool BBSimulator::canBeIssued(OR const* o, SLOT slot, DataDepGraph & ddg)
     ASSERTN(m_exec_tab[slot].get(m_cyc_counter) == NULL, ("slot has issued o"));
 
     for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {
-        for (ORDesc * ord = m_slot_lst[i].get_head(); ord != NULL;
-             ord = m_slot_lst[i].get_next()) {
+        C<ORDesc*> * ct;
+        for (ORDesc * ord = m_slot_lst[i].get_head(&ct); ord != NULL;
+             ord = m_slot_lst[i].get_next(&ct)) {
             OR * ckor = ORDESC_or(ord);
             if (getShadow(ckor) == 0) {
                 //'ckor' only execute one cycle, the result is certainly
@@ -384,7 +385,7 @@ void BBSimulator::dump(CHAR * name, bool is_del, bool dump_exec_detail)
     INT bbid = -1;
 
     if (m_bb != NULL) {
-        bbid = ORBB_id(m_bb);
+        bbid = m_bb->id();
     }
 
     ORVec const* ors_vec = getExecSnapshot();

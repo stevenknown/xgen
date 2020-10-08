@@ -43,9 +43,9 @@ ARMSim::ARMSim(ORBB * bb) : BBSimulator(bb)
 
 void ARMSim::getOccupiedSlot(OR const* o, OUT bool occ_slot[SLOT_NUM])
 {
-    if (OR_is_bus(o) ||
-        OR_is_asm(o) ||
-        OR_code(o) == OR_spadjust) {
+    if (o->is_bus() ||
+        o->is_asm() ||
+        o->getCode() == OR_spadjust) {
         for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {
             occ_slot[i] = true;
         }
@@ -55,10 +55,9 @@ void ARMSim::getOccupiedSlot(OR const* o, OUT bool occ_slot[SLOT_NUM])
 }
 
 
-bool ARMSim::isMemResourceConflict(
-        DEP_TYPE deptype,
-        ORDesc * ck_ord,
-        OR const* cand_or)
+bool ARMSim::isMemResourceConflict(DEP_TYPE deptype,
+                                   ORDesc const* ck_ord,
+                                   OR const* cand_or) const
 {
     DUMMYUSE(cand_or);
     UINT start_cyc = ORDESC_start_cyc(ck_ord);
@@ -79,8 +78,8 @@ bool ARMSim::isMemResourceConflict(
             //e.g:spadjust -> asm, etc.
             return true;
         }
-        if (m_cyc_counter < (INT)(start_cyc +
-                             ORSI_mem_result_avail_cyc(or_info, 0))) {
+        if (m_cyc_counter <
+            (INT)(start_cyc + ORSI_mem_result_avail_cyc(or_info, 0))) {
             return true;
         }
     }
@@ -105,10 +104,9 @@ bool ARMSim::isMemResourceConflict(
 //  1. t2 = t1 || t1 = 10
 //  2. t2 = t1 || nop
 //     nop     || t1 = 10
-bool ARMSim::isRegResourceConflict(
-        DEP_TYPE deptype,
-        ORDesc * ck_ord,
-        OR const* cand_or)
+bool ARMSim::isRegResourceConflict(DEP_TYPE deptype,
+                                   ORDesc const* ck_ord,
+                                   OR const* cand_or) const
 {
     UINT start_cyc = ORDESC_start_cyc(ck_ord);
     OR * ck_or = ORDESC_or(ck_ord);
@@ -127,7 +125,7 @@ bool ARMSim::isRegResourceConflict(
     if (HAVE_FLAG(deptype, DEP_REG_OUT)) {
         for (UINT i = 0; i < ck_or->result_num(); i++) {
             SR * res = ck_or->get_result(i);
-            if (res != m_cg->genRflag() &&
+            if (res != m_cg->getRflag() &&
                 m_cg->mustDef(cand_or, res) &&
                 m_cyc_counter < (INT)(start_cyc +
                                       ORSI_reg_result_avail_cyc(or_info, i))) {

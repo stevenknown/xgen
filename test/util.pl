@@ -44,7 +44,6 @@ our $g_is_test_gr = 0;
 our $g_is_invoke_assembler = 1;
 our $g_is_invoke_linker = 1;
 our $g_is_invoke_simulator = 1;
-our $g_is_only_compile = 0;
 #1 if user intend to run testcase recursively, otherwise only
 #test current directory.
 our $g_is_recur = 0;
@@ -54,6 +53,7 @@ our $g_single_testcase = ""; #record the single testcase
 our $g_override_xocc_path = "";
 our $g_override_xocc_flag = "";
 our $g_is_compare_dump = 0;
+our $g_is_nocg = 0;
 our $g_is_basedumpfile_must_exist = 0;
 our $g_error_count = 0;
 
@@ -448,7 +448,7 @@ sub prolog
     }
     parseCmdLine();
     selectTarget();
-    if ($g_is_only_compile or $g_is_compare_dump) {
+    if ($g_is_nocg) {
         $g_cflags = $g_cflags." -nocg ";
     }
     if ($g_override_xocc_path ne "") {
@@ -517,11 +517,23 @@ sub parseCmdLine
                 abort();
             }
             $g_single_testcase = $ARGV[$i];
-        } elsif ($ARGV[$i] eq "OnlyCompile") {
+        } elsif ($ARGV[$i] eq "NoCG") {
             $g_is_invoke_assembler = 0; 
             $g_is_invoke_linker = 0; 
             $g_is_invoke_simulator = 0;
-            $g_is_only_compile = 1;
+            $g_is_nocg = 1; 
+        } elsif ($ARGV[$i] eq "NoAsm") {
+            $g_is_invoke_assembler = 0; 
+            $g_is_invoke_linker = 0; 
+            $g_is_invoke_simulator = 0;
+        } elsif ($ARGV[$i] eq "NoLink") {
+            $g_is_invoke_assembler = 1; 
+            $g_is_invoke_linker = 0; 
+            $g_is_invoke_simulator = 0;
+        } elsif ($ARGV[$i] eq "NoRun") {
+            $g_is_invoke_assembler = 1; 
+            $g_is_invoke_linker = 1; 
+            $g_is_invoke_simulator = 0;
         } elsif ($ARGV[$i] eq "CompareDump") {
             $g_is_invoke_assembler = 0; 
             $g_is_invoke_linker = 0; 
@@ -653,8 +665,11 @@ sub usage
 {
     print "NOTE: You have to make sure the file name of testcase is unqiue.\n";
     print "USAGE: ./run.pl pac|x64|arm [CreateBaseResult] [MovePassed] ",
-          "[TestGr] [ShowTime] [OnlyCompile] [Recur] [NotQuitEarly] [CompareDump] ",
+          "[TestGr] [ShowTime] [Recur] [NotQuitEarly] [CompareDump] ",
           "[CompareDumpIfExist] ",
+          "[NoCG] ",
+          "[NoASM] ",
+          "[NoLINK] ",
           "[Case = your_test_file_name]  ",
           "[OverrideXoccPath = your_xocc_file_path] ",
           "[OverrideXoccFlag = your_xocc_flag] ",
@@ -665,7 +680,6 @@ sub usage
           "\n                   NOTE: deleting the exist one will regenerate base result",
           "\nTestGr:            generate GR for related C file and test GR file",
           "\nShowTime:          show compiling time for each compiler pass",
-          "\nOnlyCompile:       only compile and assemble testcase",
           "\nRecur:             perform test recursively",
           "\nNotQuitEarly:      perform test always even if there is failure",
           "\nCase = ...:        run single case",

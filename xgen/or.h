@@ -39,40 +39,40 @@ class ORBB;
 typedef xcom::C<OR*> ORCt; //OR container
 typedef Vector<OR*> ORVec; //OR vector
 
-#define OFST_STORE_BASE       0
-#define OFST_STORE_OFST       1
-#define OFST_STORE_VAL        2
-#define OFST_LOAD_BASE        0
-#define OFST_LOAD_OFST        1
+#define OFST_STORE_BASE 0
+#define OFST_STORE_OFST 1
+#define OFST_STORE_VAL 2
+#define OFST_LOAD_BASE 0
+#define OFST_LOAD_OFST 1
 
 //OR Descriptor
-#define OTD_code(o)             ((o)->code)
-#define OTD_name(o)             ((o)->name)
-#define OTD_unit(o)             ((o)->unit)
-#define OTD_equ_or_types(o)     ((o)->equ_or_types)
-#define OTD_srd_group(o)        ((o)->sr_desc_group)
-#define OTD_sche_info(o)        ((o)->sche_info)
-#define OTD_is_fake(o)          ((o)->is_fake)
-#define OTD_is_bus(o)           ((o)->is_bus)
-#define OTD_is_nop(o)           ((o)->is_nop)
-#define OTD_is_volatile(o)      ((o)->is_volatile)
-#define OTD_is_side_effect(o)   ((o)->is_side_effect)
-#define OTD_is_asm(o)           ((o)->is_asm)
-#define OTD_is_predicated(o)    ((o)->is_predicated)
-#define OTD_is_call(o)          ((o)->isCallStmt)
-#define OTD_is_cond_br(o)       ((o)->isConditionalBr)
-#define OTD_is_uncond_br(o)     ((o)->isUnconditionalBr)
-#define OTD_is_indirect_br(o)   ((o)->isIndirectBr)
-#define OTD_is_return(o)        ((o)->is_return)
-#define OTD_is_unaligned(o)     ((o)->is_unaligned)
-#define OTD_is_store(o)         ((o)->is_store)
-#define OTD_is_load(o)          ((o)->is_ld)
-#define OTD_is_eq(o)            ((o)->is_eq)
-#define OTD_is_lt(o)            ((o)->is_lt)
-#define OTD_is_gt(o)            ((o)->is_gt)
-#define OTD_is_movi(o)          ((o)->is_movi)
-#define OTD_is_addi(o)          ((o)->is_addi)
-#define OTD_is_subi(o)          ((o)->is_subi)
+#define OTD_code(o) ((o)->code)
+#define OTD_name(o) ((o)->name)
+#define OTD_unit(o) ((o)->unit)
+#define OTD_equ_or_types(o) ((o)->equ_or_types)
+#define OTD_srd_group(o) ((o)->sr_desc_group)
+#define OTD_sche_info(o) ((o)->sche_info)
+#define OTD_is_fake(o) ((o)->is_fake)
+#define OTD_is_bus(o) ((o)->is_bus)
+#define OTD_is_nop(o) ((o)->is_nop)
+#define OTD_is_volatile(o)  ((o)->is_volatile)
+#define OTD_is_side_effect(o) ((o)->is_side_effect)
+#define OTD_is_asm(o) ((o)->is_asm)
+#define OTD_is_predicated(o) ((o)->is_predicated)
+#define OTD_is_call(o) ((o)->isCallStmt)
+#define OTD_is_cond_br(o) ((o)->isConditionalBr)
+#define OTD_is_uncond_br(o) ((o)->isUnconditionalBr)
+#define OTD_is_indirect_br(o) ((o)->isIndirectBr)
+#define OTD_is_return(o) ((o)->is_return)
+#define OTD_is_unaligned(o) ((o)->is_unaligned)
+#define OTD_is_store(o) ((o)->is_store)
+#define OTD_is_load(o) ((o)->is_ld)
+#define OTD_is_eq(o) ((o)->is_eq)
+#define OTD_is_lt(o) ((o)->is_lt)
+#define OTD_is_gt(o) ((o)->is_gt)
+#define OTD_is_movi(o) ((o)->is_movi)
+#define OTD_is_addi(o) ((o)->is_addi)
+#define OTD_is_subi(o) ((o)->is_subi)
 class ORTypeDesc {
 public:
     OR_TYPE code;
@@ -115,45 +115,45 @@ public:
 
 
 //Target Operation Representation
-#define OR_code(o)              ((o)->code)
-#define OR_ct(o)                ((o)->container)
-#define OR_clust(o)             ((o)->clust)
-#define OR_id(o)                ((o)->id)
-#define OR_order(o)             ((o)->order)
-#define OR_bb(o)                ((o)->bb)
-#define OR_unit(o)              OTD_unit(tmGetORTypeDesc(OR_code(o)))
-#define OR_code_name(o)         OTD_name(tmGetORTypeDesc(OR_code(o)))
-#define OR_dbx(o)               ((o)->dbx)
-#define OR_is_call(o)           OTD_is_call(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_uncond_br(o)      OTD_is_uncond_br(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_indirect_br(o)    OTD_is_indirect_br(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_cond_br(o)        OTD_is_cond_br(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_return(o)         OTD_is_return(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_br(o)             (OR_is_cond_br(o) || OR_is_uncond_br(o) || \
-                                 OR_is_return(o) || OR_is_call(o))
-#define OR_is_predicated(o)     OTD_is_predicated(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_load(o)           OTD_is_load(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_store(o)          OTD_is_store(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_signed(o)         ((o)->u1.s1.is_signed)
-#define OR_is_spill(o)          ((o)->u1.s1.is_spill)
-#define OR_is_reload(o)         ((o)->u1.s1.is_reload)
-#define OR_is_terminate(o)      ((o)->u1.s1.is_terminate_control_flow)
+#define OR_code(o) ((o)->code)
+#define OR_ct(o) ((o)->container)
+#define OR_clust(o) ((o)->clust)
+#define OR_id(o) ((o)->id)
+#define OR_order(o) ((o)->order)
+#define OR_bb(o) ((o)->bb)
+#define OR_unit(o) OTD_unit(tmGetORTypeDesc(o->getCode()))
+#define OR_code_name(o) OTD_name(tmGetORTypeDesc(o->getCode()))
+#define OR_dbx(o) ((o)->dbx)
+#define OR_is_call(o) OTD_is_call(tmGetORTypeDesc(o->getCode()))
+#define OR_is_uncond_br(o) OTD_is_uncond_br(tmGetORTypeDesc(o->getCode()))
+#define OR_is_indirect_br(o) OTD_is_indirect_br(tmGetORTypeDesc(o->getCode()))
+#define OR_is_cond_br(o) OTD_is_cond_br(tmGetORTypeDesc(o->getCode()))
+#define OR_is_return(o) OTD_is_return(tmGetORTypeDesc(o->getCode()))
+#define OR_is_br(o) (OR_is_cond_br(o) || OR_is_uncond_br(o) || \
+                     OR_is_return(o) || OR_is_call(o))
+#define OR_is_predicated(o) OTD_is_predicated(tmGetORTypeDesc(o->getCode()))
+#define OR_is_load(o) OTD_is_load(tmGetORTypeDesc(o->getCode()))
+#define OR_is_store(o) OTD_is_store(tmGetORTypeDesc(o->getCode()))
+#define OR_is_signed(o) ((o)->u1.s1.is_signed)
+#define OR_is_spill(o) ((o)->u1.s1.is_spill)
+#define OR_is_reload(o) ((o)->u1.s1.is_reload)
+#define OR_is_terminate(o) ((o)->u1.s1.is_terminate_control_flow)
 #define OR_is_need_compute_var_ofst(o)  ((o)->u1.s1.need_to_compute_var_ofst)
-#define OR_is_mem(o)            (OR_is_store(o) || OR_is_load(o))
-#define OR_is_fake(o)           OTD_is_fake(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_bus(o)            OTD_is_bus(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_nop(o)            OTD_is_nop(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_volatile(o)       OTD_is_volatile(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_side_effect(o)    OTD_is_side_effect(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_asm(o)            OTD_is_asm(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_unaligned(o)      OTD_is_unaligned(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_eq(o)             OTD_is_eq(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_lt(o)             OTD_is_lt(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_gt(o)             OTD_is_gt(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_movi(o)           OTD_is_movi(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_addi(o)           OTD_is_addi(tmGetORTypeDesc(OR_code(o)))
-#define OR_is_subi(o)           OTD_is_subi(tmGetORTypeDesc(OR_code(o)))
-#define OR_flag(o)              ((o)->u1.s1byte)
+#define OR_is_mem(o) (OR_is_store(o) || OR_is_load(o))
+#define OR_is_fake(o) OTD_is_fake(tmGetORTypeDesc(o->getCode()))
+#define OR_is_bus(o) OTD_is_bus(tmGetORTypeDesc(o->getCode()))
+#define OR_is_nop(o) OTD_is_nop(tmGetORTypeDesc(o->getCode()))
+#define OR_is_volatile(o) OTD_is_volatile(tmGetORTypeDesc(o->getCode()))
+#define OR_is_side_effect(o) OTD_is_side_effect(tmGetORTypeDesc(o->getCode()))
+#define OR_is_asm(o) OTD_is_asm(tmGetORTypeDesc(o->getCode()))
+#define OR_is_unaligned(o) OTD_is_unaligned(tmGetORTypeDesc(o->getCode()))
+#define OR_is_eq(o) OTD_is_eq(tmGetORTypeDesc(o->getCode()))
+#define OR_is_lt(o) OTD_is_lt(tmGetORTypeDesc(o->getCode()))
+#define OR_is_gt(o) OTD_is_gt(tmGetORTypeDesc(o->getCode()))
+#define OR_is_movi(o) OTD_is_movi(tmGetORTypeDesc(o->getCode()))
+#define OR_is_addi(o) OTD_is_addi(tmGetORTypeDesc(o->getCode()))
+#define OR_is_subi(o) OTD_is_subi(tmGetORTypeDesc(o->getCode()))
+#define OR_flag(o) ((o)->u1.s1byte)
 class OR {
 protected:
     Vector<SR*, 2> m_opnd; //operand of micro operation
@@ -191,33 +191,20 @@ public:
 public:
     OR() { init(); }
     virtual ~OR() { destroy(); }
-    void init()
-    {
-        code = OR_UNDEF;
-        container = NULL;
-        clust = CLUST_UNDEF;
-        id = 0;
-        order = -1;
-        bb = NULL;
-        OR_flag(this) = 0;
-        m_opnd.init();
-        m_result.init();
-        dbx.clean();
-    }
+
+    void clean();
+    virtual void clone(OR const* o);
+    void copyDbx(IR const* ir);
 
     void destroy()
     {
         m_opnd.destroy();
         m_result.destroy();
     }
-
-    void clean();
-    virtual void clone(OR const* o);
-    void copyDbx(IR const* ir);
-
     virtual CHAR const* dump(StrBuf & buf, CG * cg) const;
     virtual void dump(CG * cg) const;
 
+    OR_TYPE getCode() const { return code; }
     SR * get_opnd(INT i) const
     {
         ASSERT0(i <= m_opnd.get_last_idx() && i >= 0);
@@ -333,6 +320,19 @@ public:
 
     bool hasSideEffect() const { return OR_is_side_effect(this); }
 
+    void init()
+    {
+        code = OR_UNDEF;
+        container = NULL;
+        clust = CLUST_UNDEF;
+        id = 0;
+        order = -1;
+        bb = NULL;
+        OR_flag(this) = 0;
+        m_opnd.init();
+        m_result.init();
+        dbx.clean();
+    }
     virtual bool is_equal(OR const* o) const;
     //Return true if 'o' depicted a label.
     bool is_label_or()
@@ -344,18 +344,42 @@ public:
         #endif
         return OR_code(this) == OR_label;
     }
-    bool isConditionalBr() { return OR_is_cond_br(this);    }
+    bool isConditionalBr() { return OR_is_cond_br(this); }
     bool isUnconditionalBr() const { return OR_is_uncond_br(this); }
     bool isIndirectBr() const { return OR_is_indirect_br(this); }
     bool is_return() const { return OR_is_return(this); }
     bool is_call() const { return OR_is_call(this); }
+    bool is_uncond_br() const { return OR_is_uncond_br(this); }
+    bool is_indirect_br() const { return OR_is_indirect_br(this); }
+    bool is_cond_br() const { return OR_is_cond_br(this); }
+    bool is_br() const { return OR_is_br(this); }
+    bool is_pred() const { return OR_is_predicated(this); }
+    bool is_load() const { return OR_is_load(this); }
+    bool is_store() const { return OR_is_store(this); }
+    bool is_signed() const { return OR_is_signed(this); }
+    bool is_spill() const { return OR_is_spill(this); }
+    bool is_reload() const { return OR_is_reload(this); }
+    bool is_mem() const { return OR_is_mem(this); }
+    bool is_fake() const { return OR_is_fake(this); }
+    bool is_bus() const { return OR_is_bus(this); }
+    bool is_nop() const { return OR_is_nop(this); }
+    bool is_volatile() const { return OR_is_volatile(this); }
+    bool is_side_effect() const { return OR_is_side_effect(this); }
+    bool is_asm() const { return OR_is_asm(this); }
+    bool is_unaligned() const { return OR_is_unaligned(this); }
+    bool is_eq() const { return OR_is_eq(this); }
+    bool is_lt() const { return OR_is_lt(this); }
+    bool is_gt() const { return OR_is_gt(this); }
+    bool is_movi() const { return OR_is_movi(this); }
+    bool is_addi() const { return OR_is_addi(this); }
+    bool is_subi() const { return OR_is_subi(this); }    
     bool isMultiConditionalBr() const { return false; }
-    bool isNeedComputeVAROfst() const
-    { return OR_is_need_compute_var_ofst(this); }
-
+    bool isSpadjust() const { return OR_code(this) == OR_spadjust; }
     //Return true if ir terminates the control flow.
     bool is_terminate() const { return OR_is_terminate(this); }
-    bool isSpadjust() const { return OR_code(this) == OR_spadjust; }
+
+    bool needComputeVAROfst() const
+    { return OR_is_need_compute_var_ofst(this); }
 
     //Set STORE VALUE, it should be a register, the default STORE
     //has one store-value opnd.

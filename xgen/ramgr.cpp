@@ -177,7 +177,7 @@ void RaMgr::dumpGlobalVAR2OR()
 {
     FILE * h = m_rg->getLogMgr()->getFileHandler();
     fprintf(h,
-        "\n==---- DUMP Mapping from Global xoc::Var to OR, Region:%s ----==",
+        "\n==---- DUMP Mapping from Global Var to OR, Region:%s ----==",
         m_rg->getRegionName());
     INT i = 0;
     xcom::StrBuf buf(64);
@@ -192,7 +192,7 @@ void RaMgr::dumpGlobalVAR2OR()
         for (ORBBUnit * bu = ref_bb_list->get_head(); bu;
              bu = ref_bb_list->get_next()) {
             ORBB * bb = OR_BBUNIT_bb(bu);
-            fprintf(h, "\n\t\tBB%d:", ORBB_id(bb));
+            fprintf(h, "\n\t\tBB%d:", bb->id());
             for (OR * o = OR_BBUNIT_or_list(bu)->get_head(); o != NULL;
                  o = OR_BBUNIT_or_list(bu)->get_next()) {
                 ASSERTN(o, ("Miss info"));
@@ -254,12 +254,11 @@ static bool verifyORS(ORList const& ors, ORBB * bb)
 
 //Save predicate register at entry BB
 //bblist: records BBs that need to reallocate register.
-void RaMgr::saveCalleePredicateAtEntry(
-        REGFILE regfile,
-        IN ORBB * entry,
-        IN RegSet used_callee_regs[],
-        OUT List<ORBB*> & bblist,
-        OUT xcom::TMap<REG, xoc::Var*> &)
+void RaMgr::saveCalleePredicateAtEntry(REGFILE regfile,
+                                       IN ORBB * entry,
+                                       IN RegSet used_callee_regs[],
+                                       OUT List<ORBB*> & bblist,
+                                       OUT xcom::TMap<REG, xoc::Var*> &)
 {
     DUMMYUSE(bblist);
     DUMMYUSE(regfile);
@@ -285,12 +284,11 @@ void RaMgr::saveCalleePredicateAtEntry(
 
 //Save float register at entry BB
 //'bblist': records BBs that need to reallocate register.
-void RaMgr::saveCalleeFPRegisterAtEntry(
-        REGFILE regfile,
-        IN ORBB * entry,
-        IN RegSet used_callee_regs[],
-        OUT List<ORBB*> & bblist,
-        OUT xcom::TMap<REG, xoc::Var*> & reg2var)
+void RaMgr::saveCalleeFPRegisterAtEntry(REGFILE regfile,
+                                        IN ORBB * entry,
+                                        IN RegSet used_callee_regs[],
+                                        OUT List<ORBB*> & bblist,
+                                        OUT xcom::TMap<REG, xoc::Var*> & reg2var)
 {
     ASSERT0(tmIsFloatRegFile(regfile));
     RegSet * used_regs = &used_callee_regs[regfile];
@@ -311,7 +309,7 @@ void RaMgr::saveCalleeFPRegisterAtEntry(
             //Dedicated SR has assigned reg already.
             sr = m_cg->genReg((UINT)GENERAL_REGISTER_SIZE);
             SR_regfile(sr) = tmMapReg2RegFile(reg);
-            SR_phy_regid(sr) = reg;
+            SR_phy_reg(sr) = reg;
             SR_is_global(sr) = true; //alloc function level var.
         }
 
@@ -358,12 +356,11 @@ void RaMgr::saveCalleeFPRegisterAtEntry(
 
 //Saving region-used callee registers.
 //'bblist': records BBs that need to reallocate register.
-void RaMgr::saveCalleeFPRegisterAtExit(
-        REGFILE regfile,
-        IN ORBB * exit,
-        IN RegSet used_callee_regs[],
-        OUT List<ORBB*> & bblist,
-        xcom::TMap<REG, xoc::Var*> const& reg2var)
+void RaMgr::saveCalleeFPRegisterAtExit(REGFILE regfile,
+                                       IN ORBB * exit,
+                                       IN RegSet used_callee_regs[],
+                                       OUT List<ORBB*> & bblist,
+                                       xcom::TMap<REG, xoc::Var*> const& reg2var)
 {
     ASSERT0(tmIsFloatRegFile(regfile));
     RegSet * used_regs = &used_callee_regs[regfile];
@@ -383,7 +380,7 @@ void RaMgr::saveCalleeFPRegisterAtExit(
             //Dedicated SR has assigned reg already.
             sr = m_cg->genReg((UINT)GENERAL_REGISTER_SIZE);
             SR_regfile(sr) = tmMapReg2RegFile(reg);
-            SR_phy_regid(sr) = reg;
+            SR_phy_reg(sr) = reg;
             SR_is_global(sr) = true; //alloc function level var.
         }
 
@@ -436,12 +433,11 @@ void RaMgr::saveCalleeFPRegisterAtExit(
 
 //Save integer register at entry BB
 //'bblist': records BBs that need to reallocate register.
-void RaMgr::saveCalleeIntRegisterAtEntry(
-        REGFILE regfile,
-        IN ORBB * entry,
-        IN RegSet used_callee_regs[],
-        OUT List<ORBB*> & bblist,
-        OUT xcom::TMap<REG, xoc::Var*> & reg2var)
+void RaMgr::saveCalleeIntRegisterAtEntry(REGFILE regfile,
+                                         IN ORBB * entry,
+                                         IN RegSet used_callee_regs[],
+                                         OUT List<ORBB*> & bblist,
+                                         OUT TMap<REG, xoc::Var*> & reg2var)
 {
     ASSERT0(tmIsIntRegFile(regfile));
     RegSet * used_regs = &used_callee_regs[regfile];
@@ -460,7 +456,7 @@ void RaMgr::saveCalleeIntRegisterAtEntry(
             //Dedicated SR has assigned reg already.
             sr = m_cg->genReg((UINT)GENERAL_REGISTER_SIZE);
             SR_regfile(sr) = tmMapReg2RegFile(reg);
-            SR_phy_regid(sr) = reg;
+            SR_phy_reg(sr) = reg;
             SR_is_global(sr) = true; //alloc function level var.
         }
 
@@ -475,7 +471,7 @@ void RaMgr::saveCalleeIntRegisterAtEntry(
         m_cg->fixCluster(ors, clust);
 
         //Need one/two memory operation by default.
-        ASSERTN (ors.get_elem_count() == 1 || //[sp + literal(<=24bits)] = t1
+        ASSERTN(ors.get_elem_count() == 1 || //[sp + literal(<=24bits)] = t1
                 ors.get_elem_count() == 2, //t2=sp+literal(>24bits),[t2]=t1
                 ("Too many spill code"));
         ORCt * orct = NULL;
@@ -506,58 +502,55 @@ void RaMgr::saveCalleeIntRegisterAtEntry(
 
 //Saving region-used callee registers.
 //'bblist': records BBs that need to reallocate register.
-void RaMgr::saveCalleeRegFileAtEntry(
-        REGFILE regfile,
-        IN ORBB * entry,
-        IN RegSet used_callee_regs[],
-        OUT List<ORBB*> & bblist,
-        xcom::TMap<REG, xoc::Var*> & reg2var)
+void RaMgr::saveCalleeRegFileAtEntry(REGFILE regfile,
+                                     IN ORBB * entry,
+                                     IN RegSet used_callee_regs[],
+                                     OUT List<ORBB*> & bblist,
+                                     xcom::TMap<REG, xoc::Var*> & reg2var)
 {
     if (tmIsPredicateRegFile(regfile)) {
         //Predicate regfile always be special.
-        saveCalleePredicateAtEntry(regfile, entry,
-            used_callee_regs, bblist, reg2var);
+        saveCalleePredicateAtEntry(regfile, entry, used_callee_regs,
+                                   bblist, reg2var);
     } else if (tmIsIntRegFile(regfile)) {
-        saveCalleeIntRegisterAtEntry(regfile, entry,
-            used_callee_regs, bblist, reg2var);
+        saveCalleeIntRegisterAtEntry(regfile, entry, used_callee_regs,
+                                     bblist, reg2var);
     } else if (tmIsFloatRegFile(regfile)) {
-        saveCalleeFPRegisterAtEntry(regfile, entry,
-            used_callee_regs, bblist, reg2var);
+        saveCalleeFPRegisterAtEntry(regfile, entry, used_callee_regs,
+                                    bblist, reg2var);
     }
 }
 
 
 //Saving region-used callee registers.
 //'bblist': records BBs that need to reallocate register.
-void RaMgr::saveCalleeRegFileAtExit(
-        REGFILE regfile,
-        IN ORBB * exit,
-        IN RegSet used_callee_regs[],
-        OUT List<ORBB*> & bblist,
-        xcom::TMap<REG, xoc::Var*> const& reg2var)
+void RaMgr::saveCalleeRegFileAtExit(REGFILE regfile,
+                                    IN ORBB * exit,
+                                    IN RegSet used_callee_regs[],
+                                    OUT List<ORBB*> & bblist,
+                                    xcom::TMap<REG, xoc::Var*> const& reg2var)
 {
     if (tmIsPredicateRegFile(regfile)) {
         //Predicated regfile always be special.
-        saveCalleePredicateAtExit(regfile, exit,
-            used_callee_regs, bblist, reg2var);
+        saveCalleePredicateAtExit(regfile, exit, used_callee_regs,
+                                  bblist, reg2var);
     } else if (tmIsIntRegFile(regfile)) {
-        saveCalleeIntRegisterAtExit(regfile, exit,
-            used_callee_regs, bblist, reg2var);
+        saveCalleeIntRegisterAtExit(regfile, exit, used_callee_regs,
+                                    bblist, reg2var);
     } else if (tmIsFloatRegFile(regfile)) {
-        saveCalleeFPRegisterAtExit(regfile, exit,
-            used_callee_regs, bblist, reg2var);
+        saveCalleeFPRegisterAtExit(regfile, exit, used_callee_regs,
+                                   bblist, reg2var);
     }
 }
 
 
 //Saving region-used callee registers.
 //'bblist': records BBs that need to reallocate register.
-void RaMgr::saveCalleeIntRegisterAtExit(
-        REGFILE regfile,
-        IN ORBB * exit,
-        IN RegSet used_callee_regs[],
-        OUT List<ORBB*> & bblist,
-        xcom::TMap<REG, xoc::Var*> const& reg2var)
+void RaMgr::saveCalleeIntRegisterAtExit(REGFILE regfile,
+                                        IN ORBB * exit,
+                                        IN RegSet used_callee_regs[],
+                                        OUT List<ORBB*> & bblist,
+                                        TMap<REG, xoc::Var*> const& reg2var)
 {
     RegSet * used_regs = &used_callee_regs[regfile];
     OR * sp_adj = ORBB_exit_spadjust(exit);
@@ -575,7 +568,7 @@ void RaMgr::saveCalleeIntRegisterAtExit(
             //Dedicated SR has assigned reg already.
             sr = m_cg->genReg((UINT)GENERAL_REGISTER_SIZE);
             SR_regfile(sr) = tmMapReg2RegFile(reg);
-            SR_phy_regid(sr) = reg;
+            SR_phy_reg(sr) = reg;
             SR_is_global(sr) = true; //alloc function level var.
         }
 
@@ -595,7 +588,7 @@ void RaMgr::saveCalleeIntRegisterAtExit(
         ASSERTN(ors.get_elem_count() == 1, ("Too many spill code"));
         addVARRefList(exit, ors.get_head(), v);
 
-        ASSERTN (ors.get_elem_count() == 1 || //t1=[sp + literal(<=24bits)]
+        ASSERTN(ors.get_elem_count() == 1 || //t1=[sp + literal(<=24bits)]
                 ors.get_elem_count() == 2, // t2=sp + literal(>24bits), t1=[t2]
                 ("Too many spilling code"));
 
@@ -626,12 +619,11 @@ void RaMgr::saveCalleeIntRegisterAtExit(
 
 //Save predicate register at exit BB
 //'bblist': records BBs that need to reallocate register.
-void RaMgr::saveCalleePredicateAtExit(
-        REGFILE regfile,
-        IN ORBB * exit,
-        IN RegSet used_callee_regs[],
-        OUT List<ORBB*> & bblist,
-        xcom::TMap<REG, xoc::Var*> const&)
+void RaMgr::saveCalleePredicateAtExit(REGFILE regfile,
+                                      IN ORBB * exit,
+                                      IN RegSet used_callee_regs[],
+                                      OUT List<ORBB*> & bblist,
+                                      xcom::TMap<REG, xoc::Var*> const&)
 {
     DUMMYUSE(regfile);
     DUMMYUSE(used_callee_regs);
@@ -671,7 +663,7 @@ void RaMgr::saveCallee(RegSet used_callee_regs[])
         ASSERTN(ORBB_is_entry(bb) , ("not an entry BB"));
         for(INT regfile = RF_UNDEF + 1; regfile < RF_NUM; regfile++) {
             saveCalleeRegFileAtEntry((REGFILE)regfile,
-                bb, used_callee_regs, bblist, reg2var);
+                                     bb, used_callee_regs, bblist, reg2var);
         }
     }
 
@@ -680,7 +672,7 @@ void RaMgr::saveCallee(RegSet used_callee_regs[])
         ASSERTN(ORBB_is_exit(bb), ("not an exit BB"));
         for(INT regfile = RF_UNDEF + 1; regfile < RF_NUM; regfile++) {
             saveCalleeRegFileAtExit((REGFILE)regfile,
-                bb, used_callee_regs, bblist, reg2var);
+                                    bb, used_callee_regs, bblist, reg2var);
         }
     }
 
@@ -688,7 +680,7 @@ void RaMgr::saveCallee(RegSet used_callee_regs[])
     for (ORBB * bb = bblist.get_head(); bb != NULL; bb = bblist.get_next()) {
         ParallelPartMgr * ppm = NULL;
         if (m_ppm_vec != NULL) {
-            ppm = m_ppm_vec->get(ORBB_id(bb));
+            ppm = m_ppm_vec->get(bb->id());
         }
         LRA * lra = allocLRA(bb, ppm, this);
         lra->perform();
@@ -724,7 +716,7 @@ void RaMgr::performLRA()
         ORBB * bb = ct->val();
         ParallelPartMgr * ppm = NULL;
         if (m_ppm_vec != NULL) {
-            ppm = m_ppm_vec->get(ORBB_id(bb));
+            ppm = m_ppm_vec->get(bb->id());
         }
         LRA * lra = allocLRA(bb, ppm, this);
         lra->setOptPhase(LRA_VERIFY_REG);
@@ -762,10 +754,9 @@ GRA * RaMgr::allocGRA()
 
 //'is_log': false value means that Caller will delete
 //    the object allocated utilmately.
-LRA * RaMgr::allocLRA(
-        IN ORBB * bb,
-        IN ParallelPartMgr * ppm,
-        IN RaMgr * ra_mgr)
+LRA * RaMgr::allocLRA(IN ORBB * bb,
+                      IN ParallelPartMgr * ppm,
+                      IN RaMgr * ra_mgr)
 {
     LRA * p = new LRA(bb, ra_mgr);
     p->setParallelPartMgr(ppm);
