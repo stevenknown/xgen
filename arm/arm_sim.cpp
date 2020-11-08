@@ -60,20 +60,20 @@ bool ARMSim::isMemResourceConflict(DEP_TYPE deptype,
                                    OR const* cand_or) const
 {
     DUMMYUSE(cand_or);
-    UINT start_cyc = ORDESC_start_cyc(ck_ord);
-    OR * ck_or = ORDESC_or(ck_ord);
-    ORScheInfo const* or_info = ORDESC_or_sche_info(ck_ord);
+    UINT start_cyc = ck_ord->getStartCycle();
+    OR const* ck_or = ck_ord->getOR();
+    ORScheInfo const* or_info = ck_ord->getScheInfo();
     if (HAVE_FLAG(deptype, DEP_MEM_FLOW)) {
         for (UINT i = 0; i < numOfMemResult(ck_or); i++) {
-            if (m_cyc_counter < (INT)(start_cyc +
-                                 ORSI_mem_result_avail_cyc(or_info, i))) {
+            if (m_cyc_counter <
+                (INT)(start_cyc + ORSI_mem_result_avail_cyc(or_info, i))) {
                 return true;
             }
         }
     }
 
     if (HAVE_FLAG(deptype, DEP_MEM_OUT) || HAVE_FLAG(deptype, DEP_MEM_FLOW)) {
-        if (ORSI_mem_result_cyc_buf(or_info) == NULL) {
+        if (ORSI_mem_result_cyc_buf(or_info) == nullptr) {
             //Dependency carried by special memory operation.
             //e.g:spadjust -> asm, etc.
             return true;
@@ -88,7 +88,7 @@ bool ARMSim::isMemResourceConflict(DEP_TYPE deptype,
         UINT last_mem_cyc = 0;
         for (UINT i = 0; i < numOfMemResult(ck_or); i++) {
             last_mem_cyc = MAX(last_mem_cyc,
-                ORSI_mem_result_avail_cyc(or_info, i));
+                               ORSI_mem_result_avail_cyc(or_info, i));
         }
         if (m_cyc_counter < (INT)(start_cyc + last_mem_cyc)) {
             return true;
@@ -108,9 +108,9 @@ bool ARMSim::isRegResourceConflict(DEP_TYPE deptype,
                                    ORDesc const* ck_ord,
                                    OR const* cand_or) const
 {
-    UINT start_cyc = ORDESC_start_cyc(ck_ord);
-    OR * ck_or = ORDESC_or(ck_ord);
-    ORScheInfo const* or_info = ORDESC_or_sche_info(ck_ord);
+    UINT start_cyc = ck_ord->getStartCycle();
+    OR const* ck_or = ck_ord->getOR();
+    ORScheInfo const* or_info = ck_ord->getScheInfo();
 
     if (HAVE_FLAG(deptype, DEP_REG_FLOW)) {
         for (UINT i = 0; i < ck_or->result_num(); i++) {
@@ -141,5 +141,5 @@ bool ARMSim::isRegResourceConflict(DEP_TYPE deptype,
 UINT ARMSim::numOfMemResult(OR const* o) const
 {
     //All of StoreMemory operations have one memory result.
-    return OR_is_store(o) ? 1 : 0;
+    return o->is_store() ? 1 : 0;
 }

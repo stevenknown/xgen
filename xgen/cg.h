@@ -87,10 +87,10 @@ public:
 
     void init()
     {
-        src_value = NULL;
-        src_startaddr = NULL;
+        src_value = nullptr;
+        src_startaddr = nullptr;
         is_record_addr = false;
-        arg_dbx = NULL;
+        arg_dbx = nullptr;
         arg_size = 0;
         src_ofst = 0;
         tgt_ofst = 0;
@@ -120,7 +120,7 @@ public:
     ArgDescMgr()
     {
         RegSet const* regs = tmGetRegSetOfArgument();
-        if (regs != NULL && regs->get_elem_count() != 0) {
+        if (regs != nullptr && regs->get_elem_count() != 0) {
             m_argregs.copy(*regs);
         }
         m_passed_arg_in_register_byte_size = 0;
@@ -268,7 +268,23 @@ public:
 #define CG_builtin_memcpy(r) ((r)->m_builtin_memcpy)
 class CG {
     COPY_CONSTRUCTOR(CG);
+public:
+    friend class OR;
+    friend class SR;
 protected:
+    class SimVec : public xcom::Vector<BBSimulator*> {
+    public:
+        ~SimVec() 
+        {
+            for (INT i = 0; i <= get_last_idx(); i++) {
+                BBSimulator * sim = get(i);
+                if (sim != nullptr) {
+                    delete sim;
+                }
+            }
+        }
+    };
+
     xoc::Region * m_rg;
     ORMgr * m_or_mgr;
     xoc::TypeMgr * m_tm;
@@ -277,9 +293,6 @@ protected:
     //Mapping from STORE/LOAD operation to the target address.
     List<ORBB*> m_or_bb_list; //descripting all basic blocks of the region.
     OR_CFG * m_or_cfg; //CFG of region
-    List<DataDepGraph*> m_ddg_list;
-    List<BBSimulator*> m_simm_list;
-    List<LIS*> m_lis_list;
     Vector<ParallelPartMgr*> * m_ppm_vec; //Record parallel part for CG.
     Vector<xoc::Var const*> m_params; //record the formal parameter.
     ORBBMgr * m_or_bb_mgr; //manage BB of IR.
@@ -300,7 +313,8 @@ protected:
     Section m_param_sect;
     INT m_param_sect_start_offset; //record the parameter start offset.
     UINT m_mmd_count;
-    Vector<IssuePackageList*> m_ipl_vec; //record IssuePackageList for each ORBB
+    IssuePackageListVector m_ipl_vec; //record IssuePackageList for each ORBB
+    IssuePackageMgr m_ip_mgr;
 
     //True if accessing local variable via [FP pointer - Offst].
     bool m_is_use_fp;
@@ -319,13 +333,15 @@ protected:
     UINT calcSizeOfParameterPassedViaRegister(
         List<Var const*> const* param_lst) const;
 
+    SMemPool * get_pool() const { return m_pool; }
+
     void * xmalloc(INT size)
     {
         ASSERTN(size > 0, ("xmalloc: size less zero!"));
         //return MEM_POOL_Alloc(&m_mempool, size);
-        ASSERTN(m_pool != NULL, ("need graph pool!!"));
+        ASSERTN(m_pool != nullptr, ("need graph pool!!"));
         void * p = smpoolMalloc(size, m_pool);
-        if (p == NULL) return NULL;
+        if (p == nullptr) return nullptr;
         ::memset(p, 0, size);
         return p;
     }
@@ -337,6 +353,15 @@ protected:
     void localizeBB(SR * sr, ORBB * bb);
     void localizeBBTab(SR * sr, xcom::TTab<ORBB*> * orbbtab);
 
+    //Destroy useless resource.
+    void postLS(LIS * lis, DataDepGraph * ddg);
+    void preLS(IN ORBB * bb,
+               IN RaMgr * ra_mgr,
+               OUT DataDepGraph ** ddg,
+               OUT BBSimulator ** sim,
+               OUT LIS ** lis);
+
+    CG * self() { return this; }
 public:
     //Mapping from STORE/LOAD operation to the target address.
     xcom::TMap<OR*, xoc::Var const*> m_or2memaddr_map;
@@ -363,19 +388,14 @@ public:
     }
     ORBB * allocBB();
     RegSet * allocRegSet() { return m_regset_mgr.allocRegSet(); }
-    virtual BBSimulator * allocBBSimulator(ORBB * bb, bool is_log = true);
-    virtual LIS * allocLIS(ORBB * bb,
-                           DataDepGraph * ddg,
-                           BBSimulator * sim,
-                           UINT sch_mode,
-                           bool change_slot,
-                           bool change_cluster,
-                           bool is_log = true);
-    virtual DataDepGraph * allocDDG(bool is_log = true);
+    virtual BBSimulator * allocBBSimulator(ORBB * bb);
+    virtual LIS * allocLIS(ORBB * bb, DataDepGraph * ddg,
+                           BBSimulator * sim, UINT sch_mode);
+    virtual DataDepGraph * allocDDG();
     void assembleSRVec(SRVec * srvec, SR * sr1, SR * sr2);
     virtual IR2OR * allocIR2OR() = 0;
     virtual OR_CFG * allocORCFG();
-    virtual IssuePackage * allocIssuePackage();
+    virtual IssuePackageMgr * allocIssuePackageMgr();
     virtual RaMgr * allocRaMgr(List<ORBB*> * bblist, bool is_func);
 
     //OR Builder
@@ -659,7 +679,7 @@ public:
     virtual INT computeMemByteSize(OR * o)
     {
         CHECK_DUMMYUSE(o);
-        ASSERTN(OR_is_mem(o), ("Need memory operation"));
+        ASSERTN(o->is_mem(), ("Need memory operation"));
         ASSERTN(0, ("Target Dependent Code"));
         return -1;
     }
@@ -700,7 +720,7 @@ public:
         ASSERTN(0, ("Target Dependent Code"));
         return 0;
     }
-    xoc::Var const* computeSpillVar(OR * o);
+    xoc::Var const* computeSpillVar(OR const* o) const;
 
     //Change the function unit and related cluster of 'o'.
     //If is_test is true, this function only check whether the given
@@ -708,7 +728,7 @@ public:
     virtual bool changeORUnit(OR * o,
                               UNIT to_unit,
                               CLUST to_clust,
-                              Vector<bool> const& regfile_unique,
+                              RegFileSet const* regfile_unique,
                               bool is_test /*only test purpose*/);
 
     //Return the combination of all of available function unit of 'o'.
@@ -716,28 +736,30 @@ public:
     virtual UnitSet const* computeORUnit(OR const*, OUT UnitSet*);
     virtual UnitSet const* computeORUnit(OR const* o)
     {
-        return computeORUnit(o, NULL);
+        return computeORUnit(o, nullptr);
     }
 
     //Change the correlated cluster of 'o'
     //If is_test is true, this function only check whether the given
     //OR can be changed.
+    //is_test: true to query whether need to change OR's cluster.
     virtual bool changeORCluster(OR * o,
                                  CLUST to_clust,
-                                 Vector<bool> const& regfile_unique,
-                                 bool is_test /*only test purpose*/);
+                                 RegFileSet const* regfile_unique,
+                                 bool is_test);
 
     //Change 'o' to 'ot', modifing all operands and results.
     virtual bool changeORType(OR * o,
                               OR_TYPE ot,
                               CLUST src,
                               CLUST tgt,
-                              Vector<bool> const& regfile_unique);
+                              RegFileSet const* regfile_unique);
 
     virtual SR * dupSR(SR const* sr);
     virtual OR * dupOR(OR const* o);
     virtual void dumpSection();
     void dumpPackage();
+    void dumpORBBList() const;
 
     //Expand pseudo SpAdjust operation to real target AddInteger instruction.
     //Note this function is target dependent.
@@ -750,7 +772,7 @@ public:
     //Format label name string in 'buf'.
     CHAR * formatLabelName(xoc::LabelInfo const* lab, OUT xcom::StrBuf & buf)
     {
-        CHAR const* prefix = NULL;
+        CHAR const* prefix = nullptr;
         prefix = SYM_name(m_rg->getRegionVar()->get_name());
         buf.strcat("%s_", prefix);
         if (LABELINFO_type(lab) == L_ILABEL) {
@@ -764,9 +786,6 @@ public:
         }
         return buf.buf;
     }
-    void freeDdgList();
-    void freeSimmList();
-    void freeLisList();
     void freeORBBList();
     virtual void freePackage();
     virtual void fixCluster(ORList & spill_ops, CLUST clust);
@@ -846,7 +865,7 @@ public:
     virtual ORAsmInfo * getAsmInfo(OR const*) const
     {
         ASSERTN(0, ("Target Dependent Code"));
-        return NULL;
+        return nullptr;
     }
 
     virtual RegFileSet const* getValidRegfileSet(OR_TYPE ortype,
@@ -858,7 +877,8 @@ public:
     SRMgr * getSRMgr() { return m_cgmgr->getSRMgr(); }
     ORMgr * getORMgr() { return m_cgmgr->getORMgr(); }
     SRVecMgr * getSRVecMgr() { return m_cgmgr->getSRVecMgr(); }
-    Vector<IssuePackageList*> * getIssuePackageListVec() { return &m_ipl_vec; }
+    IssuePackageListVector * getIssuePackageListVec() { return &m_ipl_vec; }
+    IssuePackageMgr * getIssuePackageMgr() { return &m_ip_mgr; }
 
     //Map phsical register to dedicated symbol register if exist.
     SR * getDedicatedSRForPhyReg(REG reg);
@@ -888,7 +908,7 @@ public:
     
     //Return true if 'test_sr' is the one of operands of 'o' ,
     //it is also the results.
-    //'test_sr': can be NULL. If it is NULL, we only try to
+    //'test_sr': can be nullptr. If it is nullptr, we only try to
     //           get the index-info of the same opnd and result.
     bool isOpndSameWithResult(SR const* test_sr,
                               OR const* o,
@@ -1221,11 +1241,6 @@ public:
     }
 
     void prependSpill(ORBB * bb, ORList & ors);
-    virtual void preLS(IN ORBB * bb,
-                       IN RaMgr * ra_mgr,
-                       OUT DataDepGraph ** ddg,
-                       OUT BBSimulator ** sim,
-                       OUT LIS ** lis);
 
     //Perform Instruction Scheduling.
     virtual void performIS(OUT Vector<BBSimulator*> & simvec,

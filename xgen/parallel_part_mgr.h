@@ -54,7 +54,7 @@ protected:
     List<List<OR*>*> m_para_part_redor_lst;
     //Map original sr to sr in each of parallel part.
     List<SR2SR_DMAP*> m_sr2sr_dmap_lst;
-    Vector<bool> m_regfile_unique;
+    RegFileSet m_regfile_unique;
     SRHash m_gsr;
     ReductionMgr m_red_mgr;
     ORBB * m_bb;
@@ -84,9 +84,7 @@ public:
 
     //Determine the number of clusters in which code can be distributed.
     virtual void computeNumOfParallelPart();
-    virtual void computeUniqueRegFile(
-            OR * o,
-            Vector<bool> & is_regfile_unique);
+    virtual void computeUniqueRegFile(OR * o, RegFileSet & is_regfile_unique);
 
     void destroy();
     void dupORForParallelPart();
@@ -96,7 +94,7 @@ public:
     void genReductionRestore(SR * red_var);
     List<OR*> * getClusterParallelPart(
             UINT n,
-            OUT xcom::BitSet ** oridx_lst = NULL);
+            OUT xcom::BitSet ** oridx_lst = nullptr);
     List<OR*> * getClusterReductionOR(UINT n);
     SR2SR_DMAP * getClusterDMap(UINT n);
     CLUST getCluster(UINT n) const;
@@ -164,7 +162,7 @@ public:
         if (!Vector<ParallelPartMgr*>::is_init()) { return; }
         for (INT i = 0; i <= get_last_idx(); i++) {
             ParallelPartMgr * ppm = get(i);
-            if (ppm != NULL) {
+            if (ppm != nullptr) {
                 ppm->destroy();
             }
         }

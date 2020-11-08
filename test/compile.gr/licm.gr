@@ -9,7 +9,7 @@ region program @"program" () {
                 starray:i32:2:(dim[1], elemtype:mc<6>) =
                   add:*<1> $sp, 10,
                   ($e:u64), //subexp
-                  add $ret, ld m; //rhs
+                  add $ret, ld:i32 m; //rhs
             }
         }
         return $a;
@@ -19,7 +19,7 @@ region program @"program" () {
         var m:mc<191>:(align(16));
         while (eq 1, 1) {
     	    call:(readonly) $ret = foo(ld m); //should be hoisted
-            stpr $i = add $ret, ld m;
+            stpr $i = add $ret, ld:i64 m;
         }
         return $a;
     };

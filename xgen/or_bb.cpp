@@ -75,7 +75,6 @@ ORCt * BBORList::append_tail(OR * o)
 void BBORList::append_tail(List<OR*> & list)
 {
     INT i = 0;
-
     if (get_elem_count() != 0) {
         i = OR_order(m_tail->val()) + OR_ORDER_INTERVAL;
     }
@@ -105,7 +104,7 @@ void BBORList::append_tail_ex(List<OR*> & list)
         }
     }
 
-    if (ct == NULL) {
+    if (ct == nullptr) {
         //BB is empty.
         append_tail(list);
     }
@@ -130,7 +129,7 @@ C<OR*> * BBORList::append_tail_ex(OR * o)
         }
     }
 
-    if (ct == NULL) {
+    if (ct == nullptr) {
         //BB is empty.
         return append_tail(o);
     }
@@ -159,7 +158,7 @@ void BBORList::append_head(List<OR*> & list)
     }
 
     for (OR * o = list.get_tail();
-         o != NULL; o = list.get_prev(), i -= OR_ORDER_INTERVAL) {
+         o != nullptr; o = list.get_prev(), i -= OR_ORDER_INTERVAL) {
         OR_order(o) = i;
         OR_bb(o) = m_bb;
     }
@@ -174,7 +173,7 @@ ORCt * BBORList::insert_before(OR * o, OR * marker)
     if (marker == m_head->val()) {
         OR_order(o) = OR_order(marker) - OR_ORDER_INTERVAL;
     } else {
-        ORCt * cm = NULL;
+        ORCt * cm = nullptr;
         bool b = xcom::EList<OR*, OR2Holder>::find(marker, &cm);
         CHECK_DUMMYUSE(b);
         ASSERT0(cm && C_prev(cm));
@@ -204,7 +203,7 @@ ORCt * BBORList::insert_before(OR * o, OR * marker)
 ORCt * BBORList::insert_before(OR * o, ORCt * marker)
 {
     ORCt * c = newc();
-    ASSERTN(c, ("newc return NULL"));
+    ASSERTN(c, ("newc return nullptr"));
     C_val(c) = o;
     insert_before(c, marker);
     return c;
@@ -242,7 +241,7 @@ void BBORList::insert_before(ORCt * cor, ORCt * marker)
 
 void BBORList::insert_after(IN List<OR*> & list, IN ORCt * marker)
 {
-    for (OR * o = list.get_head(); o != NULL; o = list.get_next()) {
+    for (OR * o = list.get_head(); o != nullptr; o = list.get_next()) {
         OR_bb(o) = m_bb;
         marker = insert_after(o, marker);
     }
@@ -251,7 +250,7 @@ void BBORList::insert_after(IN List<OR*> & list, IN ORCt * marker)
 
 void BBORList::insert_after(IN List<OR*> & list, IN OR * marker)
 {
-    for (OR * o = list.get_head(); o != NULL; o = list.get_next()) {
+    for (OR * o = list.get_head(); o != nullptr; o = list.get_next()) {
         OR_bb(o) = m_bb;
         insert_after(o, marker);
         marker = o;
@@ -261,7 +260,7 @@ void BBORList::insert_after(IN List<OR*> & list, IN OR * marker)
 
 void BBORList::insert_before(IN List<OR*> & list, IN OR * marker)
 {
-    for (OR * o = list.get_tail(); o != NULL; o = list.get_prev()) {
+    for (OR * o = list.get_tail(); o != nullptr; o = list.get_prev()) {
         OR_bb(o) = m_bb;
         insert_before(o, marker);
         marker = o;
@@ -271,7 +270,7 @@ void BBORList::insert_before(IN List<OR*> & list, IN OR * marker)
 
 void BBORList::insert_before(IN List<OR*> & list, IN ORCt * marker)
 {
-    for (OR * o = list.get_tail(); o != NULL; o = list.get_prev()) {
+    for (OR * o = list.get_tail(); o != nullptr; o = list.get_prev()) {
         OR_bb(o) = m_bb;
         marker = insert_before(o, marker);
     }
@@ -284,7 +283,7 @@ ORCt * BBORList::insert_after(OR * o, OR * marker)
     if (marker == m_tail->val()) {
         OR_order(o) = OR_order(marker) + OR_ORDER_INTERVAL;
     } else {
-        ORCt * cm = NULL;
+        ORCt * cm = nullptr;
         bool b = xcom::EList<OR*, OR2Holder>::find(marker, &cm);
         CHECK_DUMMYUSE(b);
         ASSERT0(cm && C_next(cm));
@@ -297,7 +296,7 @@ ORCt * BBORList::insert_after(OR * o, OR * marker)
             OR_order(o) = OR_order(marker) + OR_ORDER_INTERVAL;
             INT i = OR_order(o) + OR_ORDER_INTERVAL;
             ORCt * c = C_next(cm);
-            while (c != NULL) {
+            while (c != nullptr) {
                 OR_order(c->val()) = i;
                 i += OR_ORDER_INTERVAL;
                 c = C_next(c);
@@ -313,7 +312,7 @@ ORCt * BBORList::insert_after(OR * o, OR * marker)
 ORCt * BBORList::insert_after(OR * o, ORCt * marker)
 {
     ORCt * c = newc();
-    ASSERTN(c, ("newc return NULL"));
+    ASSERTN(c, ("newc return nullptr"));
     C_val(c) = o;
     insert_after(c, marker);
     return c;
@@ -322,7 +321,7 @@ ORCt * BBORList::insert_after(OR * o, ORCt * marker)
 
 OR * BBORList::remove(OR * o)
 {
-    OR_bb(o) = NULL;
+    OR_bb(o) = nullptr;
     return xcom::EList<OR*, OR2Holder>::remove(o);
 }
 
@@ -330,7 +329,7 @@ OR * BBORList::remove(OR * o)
 OR * BBORList::remove(ORCt * holder)
 {
     OR * o = xcom::EList<OR*, OR2Holder>::remove(holder);
-    OR_bb(o) = NULL;
+    OR_bb(o) = nullptr;
     return o;
 }
 
@@ -338,8 +337,8 @@ OR * BBORList::remove(ORCt * holder)
 OR * BBORList::remove_tail()
 {
     OR * o = xcom::EList<OR*, OR2Holder>::remove_tail();
-    if (o != NULL) {
-        OR_bb(o) = NULL;
+    if (o != nullptr) {
+        OR_bb(o) = nullptr;
     }
     return o;
 }
@@ -348,8 +347,8 @@ OR * BBORList::remove_tail()
 OR * BBORList::remove_head()
 {
     OR * o = xcom::EList<OR*, OR2Holder>::remove_head();
-    if (o != NULL) {
-        OR_bb(o) = NULL;
+    if (o != nullptr) {
+        OR_bb(o) = nullptr;
     }
     return o;
 }
@@ -415,9 +414,9 @@ void BBORList::dump(CG * cg)
 {
     if (!cg->getRegion()->isLogMgrInit()) { return; }
     xcom::StrBuf buf(64);
-    ORCt * cm = NULL;
-    for (OR * o = get_head(); o != NULL; o = get_next()) {
-        ASSERT0(OR_bb(o) == m_bb);
+    ORCt * cm = nullptr;
+    for (OR * o = get_head(); o != nullptr; o = get_next()) {
+        ASSERT0(o->getBB() == m_bb);
         bool b = xcom::EList<OR*, OR2Holder>::find(o, &cm);
         CHECK_DUMMYUSE(b);
         ASSERTN(cm, ("cannot find OR in list"));
@@ -449,7 +448,7 @@ ORBB::ORBB(CG * cg)
 ORBB::~ORBB()
 {
     delete m_or_list;
-    m_or_list = NULL;
+    m_or_list = nullptr;
 }
 
 
@@ -472,7 +471,7 @@ bool ORBB::hasCall()
 bool ORBB::hasLabel(LabelInfo const* lab)
 {
     for (LabelInfo const* li = getLabelList().get_head();
-         li != NULL; li = getLabelList().get_next()) {
+         li != nullptr; li = getLabelList().get_next()) {
         if (isSameLabel(li, lab)) {
             return true;
         }
@@ -538,19 +537,19 @@ bool ORBB::isLiveOutResult(OR * o)
 OR * ORBB::getBranchOR()
 {
     for (OR * o = ORBB_orlist(this)->get_tail();
-         o != NULL; o = ORBB_orlist(this)->get_prev()) {
+         o != nullptr; o = ORBB_orlist(this)->get_prev()) {
         if (OR_is_br(o)) {
             return o;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 
 void ORBB::mergeLabeInfoList(ORBB * from)
 {
     for (LabelInfo const* li = from->getLabelList().get_head();
-         li != NULL; li = from->getLabelList().get_next()) {
+         li != nullptr; li = from->getLabelList().get_next()) {
         if (!m_lab_list.find(li)) {
             m_lab_list.append_tail(li);
         }
@@ -564,12 +563,12 @@ void ORBB::dump()
 
     //Label Info list
     LabelInfo const* li = getLabelList().get_head();
-    if (li != NULL) {
+    if (li != nullptr) {
         note(m_cg->getRegion(), "\nLABEL:");
     }
 
     StrBuf buf(32);
-    for (; li != NULL; li = getLabelList().get_next()) {
+    for (; li != nullptr; li = getLabelList().get_next()) {
         note(m_cg->getRegion(), "%s ", m_cg->formatLabelName(li, buf));
     }
 
@@ -602,11 +601,11 @@ void dumpORBBList(List<ORBB*> & bbl, CG * cg)
 {
     if (!cg->getRegion()->getLogMgr()->is_init()) { return; }
     note(cg->getRegion(), "\n==---- DUMP ORBB List ----==");
-    if (g_dbx_mgr != NULL) {
+    if (g_dbx_mgr != nullptr) {
         g_dbx_mgr->doPrepareWorkBeforePrint();
     }
 
-    for (ORBB * bb = bbl.get_head(); bb != NULL; bb = bbl.get_next()) {
+    for (ORBB * bb = bbl.get_head(); bb != nullptr; bb = bbl.get_next()) {
         bb->dump();
     }
 }

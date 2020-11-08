@@ -50,8 +50,8 @@ typedef struct SRDesc {
 
     void init()
     {
-        valid_regfile_set = NULL;
-        valid_regset = NULL;
+        valid_regfile_set = nullptr;
+        valid_regset = nullptr;
         bitsize = 0;
         is_imm = false;
         is_signed = false;

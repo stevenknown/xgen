@@ -51,7 +51,7 @@ public:
     Section()
     {
         id = -1;
-        sect_var = NULL;
+        sect_var = nullptr;
         size = 0;
     }
     virtual ~Section() {}

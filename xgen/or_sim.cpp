@@ -34,7 +34,7 @@ namespace xgen {
 
 BBSimulator::BBSimulator(ORBB * bb)
 {
-    m_pool = NULL;
+    m_pool = nullptr;
     m_bb = bb;
     m_cg = ORBB_cg(bb);
     ASSERT0(m_cg);
@@ -45,7 +45,7 @@ BBSimulator::BBSimulator(ORBB * bb)
 
 void BBSimulator::init()
 {
-    if (m_pool != NULL) { return; }
+    if (m_pool != nullptr) { return; }
     ASSERTN_DUMMYUSE(FIRST_SLOT == 0, ("illegal slot type"));
     m_cyc_counter = 0;
     m_pool = smpoolCreate(256, MEM_COMM);
@@ -61,7 +61,7 @@ void BBSimulator::init()
 
 void BBSimulator::destroy()
 {
-    if (m_pool == NULL) { return; }
+    if (m_pool == nullptr) { return; }
     m_cyc_counter = 0;
     for (INT i = FIRST_SLOT; i < SLOT_NUM; i++) {
         m_slot_lst[i].destroy();
@@ -69,7 +69,7 @@ void BBSimulator::destroy()
     }
     //Need not clean free_list.
     smpoolDelete(m_pool);
-    m_pool = NULL;
+    m_pool = nullptr;
 }
 
 
@@ -101,7 +101,7 @@ ORDesc * BBSimulator::allocORDesc()
 {
     ASSERTN(m_pool, ("not yet initialized."));
     ORDesc * c = m_free_list.get_free_elem();
-    if (c == NULL) {
+    if (c == nullptr) {
         c = (ORDesc*)xmalloc(sizeof(ORDesc));
     }
     return c;
@@ -114,7 +114,7 @@ bool BBSimulator::issue(OR * o, SLOT slot)
     DUMMYUSE(slot);
     ASSERTN(m_pool, ("not yet initialized."));
     ASSERTN(slot >= FIRST_SLOT && slot <= LAST_SLOT, ("Unknown slot"));
-    ASSERTN(m_exec_tab[slot].get(m_cyc_counter) == NULL,
+    ASSERTN(m_exec_tab[slot].get(m_cyc_counter) == nullptr,
             ("slot has been occupied by other candidate-OR"));
 
     //result-available-cycle o execution-cycle should start
@@ -131,7 +131,7 @@ bool BBSimulator::issue(OR * o, SLOT slot)
             ORDesc * ord = allocORDesc();
             ORDESC_or(ord) = o;
             ORDESC_start_cyc(ord) = m_cyc_counter;
-            ORDESC_or_sche_info(ord) = tmGetORScheInfo(o->getCode());
+            ORDESC_sche_info(ord) = tmGetORScheInfo(o->getCode());
             m_exec_tab[i].set(m_cyc_counter, o);
             m_slot_lst[i].append_tail(ord);
         }
@@ -179,7 +179,7 @@ UINT BBSimulator::getExecCycle(OR const* o) const
 //executed to the cycle all of results were available.
 //e.g:given Load, return value is 3 cycles, the load value can be
 //used at the 4 cycle.
-UINT BBSimulator::getMinLatency(OR * o)
+UINT BBSimulator::getMinLatency(OR const* o) const
 {
     ORScheInfo const* oi = tmGetORScheInfo(o->getCode());
     return ORSI_first_result_avail_cyc(oi);
@@ -205,7 +205,7 @@ bool BBSimulator::isMemResourceConflict(DEP_TYPE deptype,
     DUMMYUSE(cand_or);
     UINT start_cyc = ORDESC_start_cyc(ck_ord);
     OR * ck_or = ORDESC_or(ck_ord);
-    ORScheInfo const* or_info = ORDESC_or_sche_info(ck_ord);
+    ORScheInfo const* or_info = ORDESC_sche_info(ck_ord);
     //Resource is available only if all of memory operands are ready.
     if (HAVE_FLAG(deptype, DEP_MEM_VOL) ||
         HAVE_FLAG(deptype, DEP_MEM_OUT) ||
@@ -230,7 +230,7 @@ bool BBSimulator::isRegResourceConflict(DEP_TYPE deptype,
 {
     DUMMYUSE(cand_or);
     UINT start_cyc = ORDESC_start_cyc(ck_ord);
-    ORScheInfo const* or_info = ORDESC_or_sche_info(ck_ord);
+    ORScheInfo const* or_info = ORDESC_sche_info(ck_ord);
     if (HAVE_FLAG(deptype, DEP_REG_OUT) ||
         HAVE_FLAG(deptype, DEP_REG_FLOW)) {
         if (m_cyc_counter <
@@ -267,8 +267,8 @@ bool BBSimulator::isResourceConflict(ORDesc const* ck_ord,
                                      DataDepGraph const& ddg) const
 {
     OR * ck_or = ORDESC_or(ck_ord);
-    xcom::Edge const* e = ddg.getEdge(OR_id(ck_or), OR_id(cand_or));
-    ORScheInfo const* or_info = ORDESC_or_sche_info(ck_ord);
+    xcom::Edge const* e = ddg.getEdge(ck_or->id(), cand_or->id());
+    ORScheInfo const* or_info = ORDESC_sche_info(ck_ord);
     ASSERT0(or_info && e);
     DEP_TYPE deptype = (DEP_TYPE)DDGEI_deptype(EDGE_info(e));
     if (HAVE_FLAG(deptype, DEP_HYB)) {
@@ -298,16 +298,17 @@ bool BBSimulator::isResourceConflict(ORDesc const* ck_ord,
 
 //Only aware of the data flow depdence, and neglected of resource conflict.
 //Because we try to change function unit whenever possible.
-bool BBSimulator::canBeIssued(OR const* o, SLOT slot, DataDepGraph & ddg) const
+bool BBSimulator::canBeIssued(OR const* o, SLOT slot,
+                              DataDepGraph const& ddg) const
 {
     DUMMYUSE(slot);
     ASSERTN(m_pool, ("not yet initialized."));
     ASSERTN(slot >= FIRST_SLOT && slot <= LAST_SLOT, ("Unknown slot"));
-    ASSERTN(m_exec_tab[slot].get(m_cyc_counter) == NULL, ("slot has issued o"));
+    ASSERTN(m_exec_tab[slot].get(m_cyc_counter) == nullptr, ("slot has issued o"));
 
     for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {
         C<ORDesc*> * ct;
-        for (ORDesc * ord = m_slot_lst[i].get_head(&ct); ord != NULL;
+        for (ORDesc * ord = m_slot_lst[i].get_head(&ct); ord != nullptr;
              ord = m_slot_lst[i].get_next(&ct)) {
             OR * ckor = ORDESC_or(ord);
             if (getShadow(ckor) == 0) {
@@ -337,8 +338,8 @@ void BBSimulator::runOneCycle(IN OUT ORList * finished_ors)
     ASSERTN(m_pool, ("not yet initialized."));
     m_cyc_counter++;
     for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {
-        ORDesc * next = NULL;
-        for (ORDesc * ord = m_slot_lst[i].get_head(); ord != NULL; ord = next) {
+        ORDesc * next = nullptr;
+        for (ORDesc * ord = m_slot_lst[i].get_head(); ord != nullptr; ord = next) {
             next = m_slot_lst[i].get_next();
             //Because cyc_counter start from cycle '0', if simm run
             //to cycle 1, namely, cyc_counter is '1', it has executed 1
@@ -346,11 +347,11 @@ void BBSimulator::runOneCycle(IN OUT ORList * finished_ors)
             //start at cycle 0 and result available time is one cycle
             //are finished.
             INT c = ORDESC_start_cyc(ord) +
-                    ORSI_last_result_avail_cyc(ORDESC_or_sche_info(ord));
+                    ORSI_last_result_avail_cyc(ORDESC_sche_info(ord));
             if (m_cyc_counter >= c) {
                 //Result is available now.
                 m_slot_lst[i].remove(ord);
-                if (finished_ors != NULL) {
+                if (finished_ors != nullptr) {
                     finished_ors->append_tail(ORDESC_or(ord));
                 }
                 freeordesc(ord);
@@ -360,12 +361,12 @@ void BBSimulator::runOneCycle(IN OUT ORList * finished_ors)
 }
 
 
-void BBSimulator::dump(CHAR * name, bool is_del, bool dump_exec_detail)
+void BBSimulator::dump(CHAR * name, bool is_del, bool dump_exec_detail) const
 {
     ASSERT0(m_pool);
     #define SIMM_DUMP_NAME "zsim.tmp"
 
-    if (name == NULL) {
+    if (name == nullptr) {
         name = SIMM_DUMP_NAME;
     }
 
@@ -375,7 +376,14 @@ void BBSimulator::dump(CHAR * name, bool is_del, bool dump_exec_detail)
 
     FILE * h = fopen(name,"a+");
     ASSERTN(h, ("%s create failed!!!", name));
+    dump(h, dump_exec_detail);
+    fclose(h);
+}
 
+
+void BBSimulator::dump(FILE * h, bool dump_exec_detail) const
+{
+    ASSERT0(h);
     //cyc may be zero
     INT cyc_counter = getCurCycle();
 
@@ -384,13 +392,14 @@ void BBSimulator::dump(CHAR * name, bool is_del, bool dump_exec_detail)
 
     INT bbid = -1;
 
-    if (m_bb != NULL) {
+    if (m_bb != nullptr) {
         bbid = m_bb->id();
     }
 
     ORVec const* ors_vec = getExecSnapshot();
 
-    fprintf(h, "\nRegion(%s), BB(%d)", m_rg->getRegionName(), bbid);
+    fprintf(h, "\n==---- DUMP SIM '%s' BB%d ----==",
+            m_rg->getRegionName(), bbid);
 
     //Preparing slot name buffer
     CHAR slot_name[SLOT_NUM][SLOT_NAME_MAX_LEN];
@@ -403,11 +412,11 @@ void BBSimulator::dump(CHAR * name, bool is_del, bool dump_exec_detail)
     if (dump_exec_detail) {
         StrBuf buf(64);
         for (INT i = 0; i <= cyc_counter; i++) {
-            fprintf(h, "\n\tCycle(%d):", i);
+            fprintf(h, "\n\tCYC%d:", i);
             for (UINT slot = FIRST_SLOT; slot < SLOT_NUM; slot++) {
                 fprintf(h, "\n\t\t%s: ", slot_name[slot]);
                 OR * o = ors_vec[slot].get(i);
-                if (o != NULL) {
+                if (o != nullptr) {
                     buf.clean();
                     fprintf(h, "%s", o->dump(buf, m_cg));
                 } else {
@@ -424,7 +433,7 @@ void BBSimulator::dump(CHAR * name, bool is_del, bool dump_exec_detail)
     StrBuf bundle(256);
 
     //Print slot name.
-    fprintf(h, "\n==---- CoarseView, BB(%d) ----==", bbid);
+    fprintf(h, "\n-- CoarseView, BB%d --", bbid);
 
     fprintf(h, "\n%-10s", " ");
     for (UINT slot2 = FIRST_SLOT; slot2 < SLOT_NUM; slot2++) {
@@ -434,13 +443,13 @@ void BBSimulator::dump(CHAR * name, bool is_del, bool dump_exec_detail)
 
     //Print abbreviated o name with its map-idx.
     for (INT i = 0; i <= cyc_counter; i++) {
-        fprintf(h, "\nCyc:%-4d:", i);
+        fprintf(h, "\nCYC%-4d:", i);
         fprintf(h, "{");
         bundle.clean();
         for (UINT s = FIRST_SLOT; s < SLOT_NUM; s++) {
             OR * o = ors_vec[s].get(i);
-            if (o != NULL) {
-                ornamebuf1.sprint("%s(%d)", OR_code_name(o), OR_id(o));
+            if (o != nullptr) {
+                ornamebuf1.sprint("%s(%d)", o->getCodeName(), o->id());
             } else {
                 ornamebuf1.sprint(" ");
             }
@@ -459,7 +468,7 @@ void BBSimulator::dump(CHAR * name, bool is_del, bool dump_exec_detail)
     }
 
     fprintf(h, "\n");
-    fclose(h);
+    fflush(h);
 }
 
 } //namespace xgen

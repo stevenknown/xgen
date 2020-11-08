@@ -47,7 +47,7 @@ void ARMRegion::destroy()
     VarTabIter c;
     VarTab * vartab = getVarTab();
     for (Var * v = vartab->get_first(c);
-         v != NULL; v = vartab->get_next(c)) {
+         v != nullptr; v = vartab->get_next(c)) {
         resetMapBetweenVARandDecl(v);
     }
     #endif
@@ -62,10 +62,11 @@ PassMgr * ARMRegion::allocPassMgr()
 }
 
 
+//To simply IR_SELECT etc, and Insert CVT if needed.
 void ARMRegion::simplify(OptCtx & oc)
 {
     //Note PRSSA and MDSSA are unavailable.
-    if (getBBList() == NULL || getBBList()->get_elem_count() == 0) {
+    if (getBBList() == nullptr || getBBList()->get_elem_count() == 0) {
         return;
     }
 
@@ -89,34 +90,47 @@ void ARMRegion::simplify(OptCtx & oc)
         simp.setSimpToPRmode();
     }
 
+    bool cfg_is_valid = getCFG() != nullptr && oc.is_cfg_valid();
     simplifyBBlist(getBBList(), &simp);
     if (g_do_cfg &&
         g_cst_bb_list &&
         SIMP_need_recon_bblist(&simp) &&
-        reconstructBBList(oc)) {
+        reconstructBBList(oc) &&
+        cfg_is_valid) {
 
         //Simplification may generate new memory operations.
         ASSERT0(verifyMDRef());
-
+        
         //Before CFG building.
         getCFG()->removeEmptyBB(oc);
-
+        
         getCFG()->rebuild(oc);
-
+        
         //After CFG building.
         //Remove empty bb when cfg rebuilted because
         //rebuilding cfg may generate redundant empty bb.
         //It disturbs the computation of entry and exit.
         getCFG()->removeEmptyBB(oc);
-
+        
         //Compute exit bb while cfg rebuilt.
         getCFG()->computeExitList();
         ASSERT0(getCFG()->verify());
-
+        
         getCFG()->performMiscOpt(oc);
     } else if (g_do_md_du_analysis || g_do_md_ssa) {
         ASSERT0(verifyMDRef());
     }
+
+    //Insert int32->int64, int32<->f32, int32<->f64, int64<->f32, int64<->f64
+    //for generated code.
+    ASSERTN(g_do_refine, ("inserting CVT is expected"));
+    RefineCtx rf;
+    RC_insert_cvt(rf) = g_do_refine_auto_insert_cvt;
+    if (getPassMgr() == nullptr) {
+        initPassMgr();
+    }
+    Refine * refine = (Refine*)getPassMgr()->registerPass(PASS_REFINE);
+    refine->refineBBlist(getBBList(), rf, oc);
 }
 
 
@@ -168,7 +182,7 @@ bool ARMRegion::ARMHighProcess(OptCtx & oc)
     if (g_do_cfs_opt) {
         CfsOpt co(this);
         co.perform(simp);
-        ASSERT0(verifyIRList(getIRList(), NULL, this));
+        ASSERT0(verifyIRList(getIRList(), nullptr, this));
     }
 
     //Simplify control-structure to build CFG.
@@ -182,16 +196,15 @@ bool ARMRegion::ARMHighProcess(OptCtx & oc)
     SIMP_continue(&simp) = true;
     setIRList(simplifyStmtList(getIRList(), &simp));
     ASSERT0(verifySimp(getIRList(), simp));
-    ASSERT0(verifyIRList(getIRList(), NULL, this));
+    ASSERT0(verifyIRList(getIRList(), nullptr, this));
     //partitionRegion(); //Split region.
 
     //Lower to middle in order to perform analysis.
     if (g_cst_bb_list) {
         constructBBList();
-
         ASSERT0(verifyIRandBB(getBBList(), this));
         ASSERT0(verifyBBlist(*getBBList()));
-        setIRList(NULL); //All IRs have been moved to each IRBB.
+        setIRList(nullptr); //All IRs have been moved to each IRBB.
     }
 
     initPassMgr();
@@ -290,6 +303,8 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
 {
     if (g_opt_level == OPT_LEVEL0) { return; }
 
+    START_TIMER(t, "Middle Process Aggressive Analysis");
+    
     //START HACK CODE
     //Test code, to force recomputing AA and DUChain.
     //AA and DU Chain need not to be recompute, because
@@ -299,8 +314,8 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
     OC_is_ref_valid(oc) = false;
     OC_is_pr_du_chain_valid(oc) = false;
     OC_is_nonpr_du_chain_valid(oc) = false;
-    g_compute_pr_du_chain = true;
-    g_compute_nonpr_du_chain = true;
+    //g_compute_pr_du_chain = true;
+    //g_compute_nonpr_du_chain = true;
     //END HACK CODE
 
     if (!oc.is_aa_valid() ||
@@ -308,7 +323,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
         !oc.is_pr_du_chain_valid() ||
         !oc.is_nonpr_du_chain_valid()) {
         AliasAnalysis * aa = getAA();
-        if (g_do_aa && aa != NULL &&
+        if (g_do_aa && aa != nullptr &&
             (!oc.is_aa_valid() || !oc.is_ref_valid())) {
             //Recompute and set MD reference to avoid AA's complaint.
             //Compute AA to build coarse-grained DU chain.
@@ -321,7 +336,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
         }
 
         //Opt phase may cause AA invalid.
-        if (g_do_aa && aa != NULL) {
+        if (g_do_aa && aa != nullptr) {
             //Compute PR's definition to improve AA precison.
             if (g_do_pr_ssa) {
                 ASSERT0(getPassMgr());
@@ -331,7 +346,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
                 if (!ssamgr->is_valid()) {
                     ssamgr->construction(oc);
                 }
-            } else if (getDUMgr() != NULL) {
+            } else if (getDUMgr() != nullptr) {
                 getDUMgr()->perform(oc, DUOPT_COMPUTE_PR_REF|
                     DUOPT_COMPUTE_NONPR_REF|DUOPT_SOL_REACH_DEF|
                     DUOPT_COMPUTE_PR_DU);
@@ -344,7 +359,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
             //Compute the threshold to perform AA.
             UINT numir = 0;
             for (IRBB * bb = getBBList()->get_head();
-                 bb != NULL; bb = getBBList()->get_next()) {
+                 bb != nullptr; bb = getBBList()->get_next()) {
                 numir += bb->getNumOfIR();
             }
             aa->set_flow_sensitive(numir < xoc::g_thres_opt_ir_num);
@@ -352,7 +367,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
         }
 
         DUMgr * dumgr = getDUMgr();
-        if (g_do_md_du_analysis && dumgr != NULL) {
+        if (g_do_md_du_analysis && dumgr != nullptr) {
             UINT flag = DUOPT_COMPUTE_PR_REF|DUOPT_COMPUTE_NONPR_REF;
             if (g_compute_pr_du_chain) {
                 SET_FLAG(flag, DUOPT_SOL_REACH_DEF|DUOPT_COMPUTE_PR_DU);
@@ -374,6 +389,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
     }
     g_compute_pr_du_chain = org_compute_pr_du_chain;
     g_compute_nonpr_du_chain = org_compute_nonpr_du_chain;
+    END_TIMER(t, "Middle Process Aggressive Analysis");
 }
 
 
@@ -384,7 +400,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         simplifyToPRmode(oc);
     } else {        
         Region::MiddleProcess(oc);
-        if (g_do_cp && getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
+        if (g_do_cp && getPassMgr()->queryPass(PASS_DU_MGR) != nullptr) {
             ((CopyProp*)getPassMgr()->registerPass(PASS_CP))->perform(oc);
         }
     }
@@ -406,7 +422,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         if (!mdssamgr->is_valid()) {
             mdssamgr->construction(oc);
         }
-        if (getPassMgr()->queryPass(PASS_DU_MGR) != NULL) {
+        if (getPassMgr()->queryPass(PASS_DU_MGR) != nullptr) {
             GCSE * pass = (GCSE*)getPassMgr()->registerPass(PASS_GCSE);
             bool changed = false;
             changed = pass->perform(oc);
@@ -430,7 +446,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     }
 
     PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->queryPass(PASS_PR_SSA_MGR);
-    if (ssamgr != NULL && ssamgr->is_valid()) {
+    if (ssamgr != nullptr && ssamgr->is_valid()) {
         //NOTE: ssa destruction might violate classic DU chain.
         ssamgr->destruction(&oc);
 
@@ -452,10 +468,10 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     ///////////////////////////////////////////////////
     //DO NOT DO OPTIMIZATION ANY MORE AFTER THIS LINE//
     ///////////////////////////////////////////////////
+
     //Finial refine to insert CVT if necessary when compile C/C++.
     //Insert int32->int64, int32<->f32, int32<->f64, int64<->f32, int64<->f64
     ASSERTN(g_do_refine, ("inserting CVT is expected"));
-    g_do_refine_auto_insert_cvt = true;
     RefineCtx rf;
     RC_insert_cvt(rf) = g_do_refine_auto_insert_cvt;
     Refine * refine = (Refine*)getPassMgr()->registerPass(PASS_REFINE);

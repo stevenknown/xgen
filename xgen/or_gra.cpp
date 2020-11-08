@@ -38,7 +38,7 @@ namespace xgen {
 xcom::BitSet * OR_DF_MGR::get_def_var(ORBB * bb)
 {
     xcom::BitSet * set = m_def_var_set.get(bb->id());
-    if (set == NULL) {
+    if (set == nullptr) {
         set = m_bs_mgr.create();
         m_def_var_set.set(bb->id(), set);
     }
@@ -49,7 +49,7 @@ xcom::BitSet * OR_DF_MGR::get_def_var(ORBB * bb)
 xcom::BitSet * OR_DF_MGR::get_use_var(ORBB * bb)
 {
     xcom::BitSet * set = m_use_var_set.get(bb->id());
-    if (set == NULL) {
+    if (set == nullptr) {
         set = m_bs_mgr.create();
         m_use_var_set.set(bb->id(), set);
     }
@@ -64,7 +64,7 @@ void OR_DF_MGR::dump()
     note(getRegion(), "\n==---- DUMP Set Info of OR_DF_MGR ----==\n");
     List<ORBB*> * bbl = m_cg->getORBBList();
     getRegion()->getLogMgr()->incIndent(2);
-    for (ORBB * bb = bbl->get_head(); bb != NULL; bb = bbl->get_next()) {
+    for (ORBB * bb = bbl->get_head(); bb != nullptr; bb = bbl->get_next()) {
         note(getRegion(), "\n--- BB%d ---", bb->id());
         xcom::BitSet * live_in = &ORBB_livein(bb);
         xcom::BitSet * live_out = &ORBB_liveout(bb);
@@ -84,7 +84,7 @@ void OR_DF_MGR::dump()
         note(getRegion(), "\nLIVE-OUT SR: ");
         for (i = live_out->get_first(); i != -1; i = live_out->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
-            ASSERT0(sr != NULL);
+            ASSERT0(sr != nullptr);
 
             buf.clean();
             prt(getRegion(), "%s, ", sr->get_name(buf, m_cg));
@@ -93,7 +93,7 @@ void OR_DF_MGR::dump()
         note(getRegion(), "\nDEF SR: ");
         for (i = def->get_first(); i != -1; i = def->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
-            ASSERT0(sr != NULL);
+            ASSERT0(sr != nullptr);
 
             buf.clean();
             prt(getRegion(), "%s, ", sr->get_name(buf, m_cg));
@@ -102,7 +102,7 @@ void OR_DF_MGR::dump()
         note(getRegion(), "\nUSE SR: ");
         for (i = use->get_first(); i != -1; i = use->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
-            ASSERT0(sr != NULL);
+            ASSERT0(sr != nullptr);
 
             buf.clean();
             prt(getRegion(), "%s, ", sr->get_name(buf, m_cg));
@@ -124,11 +124,11 @@ void OR_DF_MGR::computeLocalLiveness(ORBB * bb)
     xcom::BitSet * use = get_use_var(bb);
     gen->clean();
     use->clean();
-    for (OR * o = ORBB_last_or(bb); o != NULL; o = ORBB_prev_or(bb)) {
+    for (OR * o = ORBB_last_or(bb); o != nullptr; o = ORBB_prev_or(bb)) {
         UINT i;
         for (i = 0; i < o->result_num(); i++) {
             SR * sr = o->get_result(i);
-            ASSERT0(sr != NULL);
+            ASSERT0(sr != nullptr);
             if (!sr->is_reg()) { continue; }
             gen->bunion(SR_sregid(sr));
         }
@@ -136,7 +136,7 @@ void OR_DF_MGR::computeLocalLiveness(ORBB * bb)
         for (i = 0; i < o->opnd_num(); i++) {
             SR * sr = o->get_opnd(i);
             if (!sr->is_reg()) { continue; }
-            ASSERT0(sr != NULL);
+            ASSERT0(sr != nullptr);
             use->bunion(SR_sregid(sr));
         }
     }
@@ -146,7 +146,7 @@ void OR_DF_MGR::computeLocalLiveness(ORBB * bb)
 void OR_DF_MGR::computeGlobalLiveness()
 {
     List<ORBB*> * bbl = m_cg->getORBBList();
-    for (ORBB * bb = bbl->get_head(); bb != NULL; bb = bbl->get_next()) {
+    for (ORBB * bb = bbl->get_head(); bb != nullptr; bb = bbl->get_next()) {
         ORBB_livein(bb).clean();
         ORBB_liveout(bb).clean();
     }
@@ -157,7 +157,7 @@ void OR_DF_MGR::computeGlobalLiveness()
     List<ORBB*> succs;
     do {
         change = false;
-        for (ORBB * bb = bbl->get_tail(); bb != NULL; bb = bbl->get_prev()) {
+        for (ORBB * bb = bbl->get_tail(); bb != nullptr; bb = bbl->get_prev()) {
             //Compute live-in set of bb by unifying of
             //use-set and live through variable of bb.
             //    live_in = use¡È(live_out - def)
@@ -175,7 +175,7 @@ void OR_DF_MGR::computeGlobalLiveness()
             cfg->get_succs(succs, bb);
             xcom::BitSet * out = &ORBB_liveout(bb);
             out->clean();
-            for (ORBB * p = succs.get_head(); p != NULL; p = succs.get_next()) {
+            for (ORBB * p = succs.get_head(); p != nullptr; p = succs.get_next()) {
                 out->bunion(ORBB_livein(p));
             }
         }
@@ -188,7 +188,7 @@ void OR_DF_MGR::computeGlobalLiveness()
 void OR_DF_MGR::computeLiveness()
 {
     List<ORBB*> * bbl = m_cg->getORBBList();
-    for (ORBB * bb = bbl->get_head(); bb != NULL; bb = bbl->get_next()) {
+    for (ORBB * bb = bbl->get_head(); bb != nullptr; bb = bbl->get_next()) {
         computeLocalLiveness(bb);
     }
     computeGlobalLiveness();
@@ -214,7 +214,7 @@ GLT_MGR::~GLT_MGR()
 {
     for (INT i = 0; i <= m_map_bb2ltmgr.get_last_idx(); i++) {
         LifeTimeMgr * ltmgr = m_map_bb2ltmgr.get(i);
-        if (ltmgr != NULL) {
+        if (ltmgr != nullptr) {
             delete ltmgr;
         }
     }
@@ -235,12 +235,12 @@ void GLT_MGR::dump()
     if (!getRegion()->isLogMgrInit()) { return; }
     xcom::BitSet srbs;
     List<ORBB*> * bbl = m_cg->getORBBList();
-    for (ORBB * bb = bbl->get_head(); bb != NULL; bb = bbl->get_next()) {
-        for (OR * o = ORBB_first_or(bb); o != NULL; o = ORBB_next_or(bb)) {
+    for (ORBB * bb = bbl->get_head(); bb != nullptr; bb = bbl->get_next()) {
+        for (OR * o = ORBB_first_or(bb); o != nullptr; o = ORBB_next_or(bb)) {
             UINT i;
             for (i = 0; i < o->opnd_num(); i++) {
                 SR * sr = o->get_opnd(i);
-                ASSERT0(sr != NULL);
+                ASSERT0(sr != nullptr);
                 if (!sr->is_reg()) { continue; }
 
                 buf.clean();
@@ -250,7 +250,7 @@ void GLT_MGR::dump()
             }
             for (i = 0; i < o->result_num(); i++) {
                 SR * sr = o->get_result(i);
-                ASSERT0(sr != NULL);
+                ASSERT0(sr != nullptr);
                 if (!sr->is_reg()) { continue; }
                 sr->get_name(buf, m_cg);
                 max_name_len = MAX(max_name_len, (UINT)buf.strlen());
@@ -263,7 +263,7 @@ void GLT_MGR::dump()
     prt(getRegion(), "---- SR lived BB\n");
     for (INT i = srbs.get_first(); i >= 0; i = srbs.get_next(i)) {
         SR * sr = m_cg->mapSymbolReg2SR(i);
-        ASSERT0(sr != NULL);
+        ASSERT0(sr != nullptr);
         xcom::BitSet * livebbs = map_sr2livebbs(sr);
 
         //Print SR name.
@@ -275,7 +275,7 @@ void GLT_MGR::dump()
         prt(getRegion(), ":");
 
         //Print live BB.
-        if (livebbs == NULL || livebbs->is_empty()) { continue; }
+        if (livebbs == nullptr || livebbs->is_empty()) { continue; }
         INT start = 0;
         for (INT u = livebbs->get_first(); u >= 0; u = livebbs->get_next(u)) {
             for (INT j = start; j < u; j++) {
@@ -294,7 +294,7 @@ void GLT_MGR::dump()
 xcom::BitSet * GLT_MGR::map_sr2livebbs(IN SR * sr)
 {
     xcom::BitSet * bs = m_map_sr2livebb.get(SR_sregid(sr));
-    if (bs == NULL) {
+    if (bs == nullptr) {
         bs = m_bs_mgr.create();
         m_map_sr2livebb.set(SR_sregid(sr), bs);
     }
@@ -305,7 +305,7 @@ xcom::BitSet * GLT_MGR::map_sr2livebbs(IN SR * sr)
 LifeTimeMgr * GLT_MGR::map_bb2ltmgr(ORBB * bb)
 {
     LifeTimeMgr * ltmgr = m_map_bb2ltmgr.get(bb->id());
-    if (ltmgr == NULL) {
+    if (ltmgr == nullptr) {
         //Allocated object managed by RaMgr, and do not delete it youself.
         ltmgr = GLT_MGR_ra_mgr(*this)->allocLifeTimeMgr();
         m_map_bb2ltmgr.set(bb->id(), ltmgr);
@@ -325,7 +325,7 @@ G_LIFE_TIME * GLT_MGR::get_glt(UINT id)
 G_LIFE_TIME * GLT_MGR::new_glt(SR * sr)
 {
     G_LIFE_TIME * glt;
-    if ((glt = m_sr2glt_map.get(sr)) != NULL) {
+    if ((glt = m_sr2glt_map.get(sr)) != nullptr) {
         return glt;
     }
     glt = (G_LIFE_TIME*)xmalloc(sizeof(G_LIFE_TIME));
@@ -342,17 +342,17 @@ void GLT_MGR::build(IN OR_DF_MGR & df_mgr)
 {
     DUMMYUSE(df_mgr);
     List<ORBB*> * bbl = m_cg->getORBBList();
-    for (ORBB * bb = bbl->get_head(); bb != NULL; bb = bbl->get_next()) {
+    for (ORBB * bb = bbl->get_head(); bb != nullptr; bb = bbl->get_next()) {
         xcom::BitSet * livein = &ORBB_livein(bb);
         xcom::BitSet * liveout = &ORBB_liveout(bb);
-        if ((livein == NULL || livein->is_empty()) &&
-            (liveout == NULL || liveout->is_empty())) {
+        if ((livein == nullptr || livein->is_empty()) &&
+            (liveout == nullptr || liveout->is_empty())) {
                 continue;
         }
         //The sr which has occurred at more than two BBs will be gsr.
         for (INT i = livein->get_first(); i >= 0; i = livein->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
-            ASSERT0(sr != NULL);
+            ASSERT0(sr != nullptr);
             xcom::BitSet * livebbs = map_sr2livebbs(sr);
             livebbs->bunion(bb->id());
             if (livebbs->get_elem_count() > 1) {
@@ -362,7 +362,7 @@ void GLT_MGR::build(IN OR_DF_MGR & df_mgr)
         }
         for (INT i = liveout->get_first(); i >= 0; i = liveout->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
-            ASSERT0(sr != NULL);
+            ASSERT0(sr != nullptr);
             xcom::BitSet * livebbs = map_sr2livebbs(sr);
             livebbs->bunion(bb->id());
             if (livebbs->get_elem_count() > 1) {
@@ -386,7 +386,7 @@ void GLT_MGR::build(IN OR_DF_MGR & df_mgr)
 //
 G_INTERF_GRAPH::G_INTERF_GRAPH(IN RaMgr * ra_mgr, IN GLT_MGR * glt_mgr, CG * cg)
 {
-    ASSERT0(ra_mgr != NULL && glt_mgr != NULL);
+    ASSERT0(ra_mgr != nullptr && glt_mgr != nullptr);
     m_glt_mgr = glt_mgr;
     m_ramgr = ra_mgr;
     m_cg = cg;
@@ -403,7 +403,7 @@ void G_INTERF_GRAPH::rebuild()
 
 void G_INTERF_GRAPH::dump(IN CHAR * name)
 {
-    if (name == NULL) {
+    if (name == nullptr) {
         name = "zgif_graph.vcg";
     }
     UNLINK(name);
@@ -447,8 +447,8 @@ void G_INTERF_GRAPH::dump(IN CHAR * name)
     StrBuf buf(64);
     //Print node
     INT c;
-    for (xcom::Vertex const* v = m_vertices.get_first(c);
-         v != NULL;  v = m_vertices.get_next(c)) {
+    for (xcom::Vertex const* v = get_first_vertex(c);
+         v != nullptr;  v = get_next_vertex(c)) {
         G_LIFE_TIME * glt = m_glt_mgr->get_glt(VERTEX_id(v));
         buf.sprint("GLT%d:", VERTEX_id(v));
         GLT_sr(glt)->get_name(buf, m_cg);
@@ -458,8 +458,9 @@ void G_INTERF_GRAPH::dump(IN CHAR * name)
     }
 
     //Print edge
-    for (xcom::Edge const* e = m_edges.get_first(c);
-         e != NULL;  e = m_edges.get_next(c)) {
+    EdgeIter ite;
+    for (xcom::Edge const* e = get_first_edge(ite);
+         e != nullptr;  e = get_next_edge(ite)) {
         fprintf(h, "\nedge: { sourcename:\"%d\" targetname:\"%d\" %s}",
             VERTEX_id(EDGE_from(e)), VERTEX_id(EDGE_to(e)),
             m_is_direction ? "" : "arrowstyle:none" );
@@ -481,11 +482,11 @@ bool G_INTERF_GRAPH::isInterferred(IN G_LIFE_TIME * glt1,
     bs_intersect(*GLT_livebbs(glt1), *GLT_livebbs(glt2), inte);
     for (INT i = inte.get_first(); i >= 0; i = inte.get_next(i)) {
         ORBB * bb = cfg->getBB(i);
-        ASSERT0(bb != NULL);
+        ASSERT0(bb != nullptr);
         LifeTimeMgr * ltmgr = m_glt_mgr->map_bb2ltmgr(bb);
         LifeTime * lt1 = ltmgr->getLifeTime(GLT_sr(glt1));
         LifeTime * lt2 = ltmgr->getLifeTime(GLT_sr(glt2));
-        ASSERT0(lt1 != NULL && lt2 != NULL);
+        ASSERT0(lt1 != nullptr && lt2 != nullptr);
         if (LT_pos(lt1)->is_intersect(*LT_pos(lt2))) {
             return true;
         }
@@ -501,11 +502,11 @@ void G_INTERF_GRAPH::build()
         GLT_MGR_sr2glt_map(*m_glt_mgr).get_tgt_elem_vec();
     for (INT i = 0; i <= gltvec->get_last_idx(); i++) {
         G_LIFE_TIME * lt1 = gltvec->get(i);
-        ASSERT0(lt1 != NULL);
+        ASSERT0(lt1 != nullptr);
         addVertex(GLT_id(lt1));
         for (INT j = i + 1; j <= gltvec->get_last_idx(); j++) {
             G_LIFE_TIME * lt2 = gltvec->get(j);
-            ASSERT0(lt2 != NULL);
+            ASSERT0(lt2 != nullptr);
             if (isInterferred(lt1, lt2)) {
                 addEdge(GLT_id(lt1), GLT_id(lt2));
             }
@@ -604,7 +605,7 @@ void GRA::perform()
     if (!allocatePrioList(prio_list, uncolored_list, ig)) {
         G_ACTION action;
         for (G_LIFE_TIME * lt = uncolored_list.get_head();
-             lt != NULL; lt = uncolored_list.get_next()) {
+             lt != nullptr; lt = uncolored_list.get_next()) {
             action.set_action(lt, G_ACTION_SPLIT);
         }
 

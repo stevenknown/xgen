@@ -36,13 +36,11 @@ author: Su Zhenyu
 #include "../cfe/cfexport.h"
 #include "../opt/util.h"
 
-
-void ARMLifeTimeMgr::considerSpecialConstraints(
-        IN OR * o,
-        SR const* sr,
-        OUT RegSet & usable_regs)
+void ARMLifeTimeMgr::considerSpecialConstraints(IN OR * o,
+                                                SR const* sr,
+                                                OUT RegSet & usable_regs)
 {
-    ASSERTN(o && sr, ("NULL input"));
+    ASSERTN(o && sr, ("nullptr input"));
     ARMCG * armcg = (ARMCG*)m_cg;
     switch (o->getCode()) {
     case OR_strd:
@@ -106,8 +104,8 @@ void ARMLifeTimeMgr::handlePreferredReg(OR const* o)
         return;
     }
 
-    SR * low = NULL;
-    SR * high = NULL;
+    SR * low = nullptr;
+    SR * high = nullptr;
     bool is_result = false;
     if (m_cg->isMultiLoad(o->getCode(), 2)) {
         low = const_cast<OR*>(o)->get_load_val(0);
@@ -129,17 +127,16 @@ void ARMLifeTimeMgr::handlePreferredReg(OR const* o)
 
     if (SR_phy_reg(low) != REG_UNDEF && SR_phy_reg(high) == REG_UNDEF) {
         ASSERTN(!high->is_global(),
-            ("Global sr should be assigned register during GRA."));
-        ASSERT0(m_cg->isValidRegInSRVec(
-            const_cast<OR*>(o), low, 0, is_result));
+                ("Global sr should be assigned register during GRA."));
+        ASSERT0(m_cg->isValidRegInSRVec(const_cast<OR*>(o), low, 0, is_result));
         LT_preferred_reg(highlt) = SR_phy_reg(low) + 1;
     }
 
     if (SR_phy_reg(high) != REG_UNDEF && SR_phy_reg(low) == REG_UNDEF) {
         ASSERTN(!low->is_global(),
-            ("Global sr should be assigned register during GRA."));
-        ASSERT0(m_cg->isValidRegInSRVec(
-            const_cast<OR*>(o), high, 1, is_result));
+                ("Global sr should be assigned register during GRA."));
+        ASSERT0(m_cg->isValidRegInSRVec(const_cast<OR*>(o),
+                                        high, 1, is_result));
         LT_preferred_reg(lowlt) = SR_phy_reg(high) - 1;
     }
 }

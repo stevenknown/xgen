@@ -21,4 +21,5 @@ XGEN_OBJS +=\
 ../xgen/sr.o\
 ../xgen/xgenoption.o\
 ../xgen/regfilegroup.o\
+../xgen/issue_package.o\
 ../xgen/targ_interface.o

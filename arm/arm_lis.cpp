@@ -38,14 +38,13 @@ author: Su Zhenyu
 #include "../opt/util.h"
 
 //Return true if OR can be issued at given slot.
-bool ARMLIS::isValidResourceUsage(
-        IN OR * o,
-        SLOT slot,
-        OR * issue_ors[SLOT_NUM],
-        OR * conflict_ors[SLOT_NUM])
+bool ARMLIS::isValidResourceUsage(OR const* o,
+                                  SLOT slot,
+                                  OR * issue_ors[SLOT_NUM],
+                                  OR * conflict_ors[SLOT_NUM]) const
 {
     ASSERT0(m_cg->computeORSlot(o) == slot);
-    ASSERT0(issue_ors[slot] == NULL);
+    ASSERT0(issue_ors[slot] == nullptr);
     return true;
 }
 
@@ -57,13 +56,13 @@ bool ARMLIS::changeSlot(OR * o, SLOT to_slot)
     CLUST to_slot_clst = m_cg->mapSlot2Cluster(to_slot);
     ASSERT0(to_slot_clst != CLUST_UNDEF);
     if (or_clst != CLUST_UNDEF && or_clst != to_slot_clst) {
-        if (!m_is_change_cluster) {
+        if (!allowChangeCluster()) {
             return false;
         }
     }
 
     UNIT slot_unit = m_cg->mapSlot2Unit(to_slot);
     bool succ = m_cg->changeORUnit(o, slot_unit, to_slot_clst,
-        *m_is_regfile_unique, false);
+                                   m_is_regfile_unique, false);
     return succ;
 }

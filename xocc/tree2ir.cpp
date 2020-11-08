@@ -68,7 +68,7 @@ IR * CTree2IR::buildLoad(IN Tree * t)
 
 bool CTree2IR::is_istore_lhs(IN Tree * t)
 {
-    ASSERT0(t != NULL &&
+    ASSERT0(t != nullptr &&
             (TR_ASSIGN == TREE_type(TREE_parent(t))) &&
             t == TREE_lchild(TREE_parent(t)));
     return TREE_type(t) == TR_DEREF;
@@ -79,15 +79,15 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 {
     //One of '='   '*='   '/='   '%='  '+='
     //       '-='  '<<='  '>>='  '&='  '^='  '|='
-    IR * ist_mem_addr = NULL; //record mem_addr if 't' is an ISTORE
-    IR * epilog_ir_list = NULL;
+    IR * ist_mem_addr = nullptr; //record mem_addr if 't' is an ISTORE
+    IR * epilog_ir_list = nullptr;
     CONT_is_lvalue(cont) = true;
     CONT_is_record_epilog(cont) = true;
     CONT_epilogirlist(cont) = &epilog_ir_list;
     IR * l = convert(TREE_lchild(t), cont);
     bool is_ild_array_case = false;
-    ASSERTN(l != NULL && l->is_single(),
-            ("Lchild cannot be NULL and must be single"));
+    ASSERTN(l != nullptr && l->is_single(),
+            ("Lchild cannot be nullptr and must be single"));
     if (l->is_ild()) {
         //'lchild' is dereference, such as '*p', and
         //converted STORE IR tree is in the form:
@@ -98,7 +98,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         //The legitimate IR tree should be:
         //  IST ofst
         //  |-LD 'p'
-        ASSERT0(ILD_base(l) != NULL);
+        ASSERT0(ILD_base(l) != nullptr);
         if (ILD_base(l)->is_array()) {
             ist_mem_addr = m_rg->dupIRTree(ILD_base(l));
             is_ild_array_case = true;
@@ -113,13 +113,13 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             ist_mem_addr = m_rg->dupIRTree(ILD_base(l));
         }
     } else if (l->is_array()) {
-        ist_mem_addr = NULL;
+        ist_mem_addr = nullptr;
     } else {
-        ist_mem_addr = NULL; //current tree stmt 't' is NOT ISTORE.
+        ist_mem_addr = nullptr; //current tree stmt 't' is NOT ISTORE.
     }
 
     //Compute result type of ST|IST
-    Type const* rtype = NULL;
+    Type const* rtype = nullptr;
     if (is_pointer(TREE_result_type(t))) {
         rtype = m_tm->getPointerType(
             get_pointer_base_size(TREE_result_type(t)));
@@ -138,11 +138,11 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     //Convert RHS of tree.
     CONT_is_lvalue(cont) = false;
     IR * r = convert(TREE_rchild(t), cont);
-    IR * ir = NULL;
+    IR * ir = nullptr;
     switch (TREE_token(t)) {
     Type const* type;
     case T_ASSIGN:
-        if (ist_mem_addr != NULL) {
+        if (ist_mem_addr != nullptr) {
             if (is_ild_array_case) {
                 IR * tmpir = m_rg->buildStorePR(ist_mem_addr->getType(),
                     ist_mem_addr);
@@ -172,8 +172,8 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
                                        ((CArray*)l)->getDimNum(),
                                        ARR_elem_num_buf(l),
                                        r);
-            ARR_base(l) = NULL;
-            ARR_sub_list(l) = NULL;
+            ARR_base(l) = nullptr;
+            ARR_sub_list(l) = nullptr;
             ir->setOffset(ARR_ofst(l));
         } else {
             ASSERTN(0, ("unsupport lhs IR type."));
@@ -189,7 +189,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         }
 
         ir = m_rg->buildBinaryOp(IR_BAND, type, l, r);
-        if (ist_mem_addr != NULL) {
+        if (ist_mem_addr != nullptr) {
             ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else {
@@ -209,7 +209,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             //buildBinaryOp will inefer the type of result ir.
         }
         ir = m_rg->buildBinaryOp(IR_BOR, type, l, r);
-        if (ist_mem_addr != NULL) {
+        if (ist_mem_addr != nullptr) {
             ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else {
@@ -231,7 +231,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 
         ir = m_rg->buildBinaryOp(IR_ADD, type, l, r);
 
-        if (ist_mem_addr != NULL) {
+        if (ist_mem_addr != nullptr) {
             ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
@@ -261,7 +261,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             //buildBinaryOp will inefer the type of result ir.
         }
         ir = m_rg->buildBinaryOp(IR_SUB, type, l, r);
-        if (ist_mem_addr != NULL) {
+        if (ist_mem_addr != nullptr) {
             ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
@@ -291,7 +291,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             //buildBinaryOp will inefer the type of result ir.
         }
         ir = m_rg->buildBinaryOp(IR_MUL, type, l, r);
-        if (ist_mem_addr != NULL) {
+        if (ist_mem_addr != nullptr) {
             ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
@@ -321,7 +321,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             //buildBinaryOp will inefer the type of result ir.
         }
         ir = m_rg->buildBinaryOp(IR_DIV, type, l, r);
-        if (ist_mem_addr != NULL) {
+        if (ist_mem_addr != nullptr) {
             ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
@@ -351,7 +351,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             //buildBinaryOp will inefer the type of result ir.
         }
         ir = m_rg->buildBinaryOp(IR_XOR, type, l, r);
-        if (ist_mem_addr != NULL) {
+        if (ist_mem_addr != nullptr) {
             ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
@@ -391,7 +391,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             //buildBinaryOp will inefer the type of result ir.
         }
         ir = m_rg->buildBinaryOp(l->is_sint() ? IR_ASR : IR_LSR, type, l, r);
-        if (ist_mem_addr != NULL) {
+        if (ist_mem_addr != nullptr) {
             ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
@@ -420,7 +420,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             //buildBinaryOp will inefer the type of result ir.
         }
         ir = m_rg->buildBinaryOp(IR_LSL, type, l, r);
-        if (ist_mem_addr != NULL) {
+        if (ist_mem_addr != nullptr) {
             ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
@@ -450,7 +450,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         }
 
         ir = m_rg->buildBinaryOp(IR_REM, type, l, r);
-        if (ist_mem_addr != NULL) {
+        if (ist_mem_addr != nullptr) {
             ir = m_rg->buildIStore(ist_mem_addr, ir, rtype);
             ir->setOffset(ir->getOffset() + l->getOffset());
         } else if (l->is_ld()) {
@@ -593,7 +593,7 @@ IR * CTree2IR::convertArray(Tree * t, INT lineno, IN T2IRCtx * cont)
     //     char p[2][3];
     //     char * q = p[i]+1; //=> ST(q, LDA(p)+LD(i)+1)
 
-    IR * ir = NULL;
+    IR * ir = nullptr;
     if (is_pointer(TREE_result_type(TREE_array_base(t)))) {
         //We are handling a pointer object.
         //operator [] is a dereference of pointer.
@@ -611,7 +611,7 @@ IR * CTree2IR::convertArray(Tree * t, INT lineno, IN T2IRCtx * cont)
             IR_ADD, base->getType(), base, index);
         ASSERT0(mem_addr->is_ptr() &&
                 TY_ptr_base_size(mem_addr->getType()) != 0);
-        Type const* type = NULL;
+        Type const* type = nullptr;
         if (is_pointer(TREE_result_type(t))) {
             type = m_tm->getPointerType(
                 get_pointer_base_size(TREE_result_type(t)));
@@ -650,7 +650,7 @@ IR * CTree2IR::convertArray(Tree * t, INT lineno, IN T2IRCtx * cont)
             SIMP_ret_array_val(&cont2) = false;
             SIMP_array(&cont2) = true;
             base = m_rg->simplifyExpression(base, &cont2);
-            ASSERT0(SIMP_stmtlist(&cont2) == NULL);
+            ASSERT0(SIMP_stmtlist(&cont2) == nullptr);
         }
         ASSERT0(base->is_ptr());
 
@@ -658,8 +658,8 @@ IR * CTree2IR::convertArray(Tree * t, INT lineno, IN T2IRCtx * cont)
         Tree * lt = t;
         UINT dim = n - 1;
         TMWORD * elem_nums = (TMWORD*)::malloc(sizeof(TMWORD) * n);
-        IR * sublist = NULL;
-        IR * last = NULL;
+        IR * sublist = nullptr;
+        IR * last = nullptr;
         UINT i = 0;
         while (TREE_type(lt) == TR_ARRAY) {
             IR * subexp = convert(TREE_array_indx(lt), cont);
@@ -673,7 +673,7 @@ IR * CTree2IR::convertArray(Tree * t, INT lineno, IN T2IRCtx * cont)
 
         UINT size;
         DATA_TYPE rtype = ::get_decl_dtype(TREE_result_type(t), &size, m_tm);
-        Type const* type = NULL;
+        Type const* type = nullptr;
         if (is_pointer(TREE_result_type(t))) {
             type = m_tm->getPointerType(get_pointer_base_size(
                 TREE_result_type(t)));
@@ -718,8 +718,8 @@ IR * CTree2IR::convertPragma(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 {
     StrBuf buf(16);
     for (TokenList * tl = TREE_token_lst(t);
-         tl != NULL; tl = TL_next(tl)) {
-        if (TL_str(tl) == NULL) { continue; }
+         tl != nullptr; tl = TL_next(tl)) {
+        if (TL_str(tl) == nullptr) { continue; }
         buf.strcat(SYM_name(TL_str(tl)));
         buf.strcat(" ");
     }
@@ -760,7 +760,7 @@ bool CTree2IR::is_alloc_heap(Var const* v)
 IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 {
     //Generate return value type.
-    Type const* rettype = NULL;
+    Type const* rettype = nullptr;
     if (is_pointer(TREE_result_type(t))) {
         rettype = m_tm->getPointerType(
             get_pointer_base_size(TREE_result_type(t)));
@@ -836,8 +836,8 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     //return registers, generate a return-value-buffer and
     //transfering its address as the first implict parameter to
     //the call.
-    IR * callarglist = NULL;
-    Var * retval_buf = NULL;
+    IR * callarglist = nullptr;
+    Var * retval_buf = nullptr;
     UINT return_val_size = m_tm->getByteSize(rettype);
     if (return_val_size > NUM_OF_RETURN_VAL_REGISTERS *
                           GENERAL_REGISTER_SIZE) {
@@ -851,7 +851,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         tmp.sprint("$retval_buf_of_%d_bytes", return_val_size);
         Sym const* name = m_rg->getRegionMgr()->addToSymbolTab(tmp.buf);
         retval_buf = m_rg->getVarMgr()->findVarByName(name);
-        if (retval_buf == NULL) {
+        if (retval_buf == nullptr) {
             retval_buf = m_rg->getVarMgr()->registerVar(SYM_name(name),
                 rettype, STACK_ALIGNMENT, VAR_LOCAL);
             //retval_buf only used in current region.
@@ -872,7 +872,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     //----------
     //Convert the real parameter-expression.
     xcom::add_next(&callarglist, convert(TREE_para_list(t), cont));
-    IR * call = NULL;
+    IR * call = nullptr;
     if (is_direct) {
         ASSERT0(callee->is_id());
         Var * v = ID_info(callee);
@@ -892,7 +892,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     //----------
 
     //Generate return-exprssion.
-    IR * ret_exp = NULL;
+    IR * ret_exp = nullptr;
     if (return_val_size > NUM_OF_RETURN_VAL_REGISTERS *
                           GENERAL_REGISTER_SIZE) {
         ASSERT0(retval_buf);
@@ -940,7 +940,7 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         type = inc_exp->getType();
     }
 
-    IR * imm1 = NULL;
+    IR * imm1 = nullptr;
     if (type->is_int()) {
         imm1 = m_rg->buildImmInt(1, type);
     } else {
@@ -958,8 +958,8 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     ASSERT0(addsub->is_ptr() == inc_exp->is_ptr());
 
     //Generate inc_exp = inc_exp + 1
-    IR * xstpr = NULL;
-    IR * xincst = NULL;
+    IR * xstpr = nullptr;
+    IR * xincst = nullptr;
     if (inc_exp->is_ild()) {
         ASSERT0(ILD_base(inc_exp));
         //If inc_exp is ILD, generate IST(inc_exp's mem_loc) = ILD + 1.
@@ -1000,7 +1000,7 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         if (!inc_exp->is_ld()) {
             err(lineno, "'%s' needs l-value",
                 TREE_type(t) == TR_POST_INC ? "++" : "--");
-            return NULL;
+            return nullptr;
         }
 
         xstpr = m_rg->buildStorePR(inc_exp->getType(),
@@ -1024,7 +1024,7 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 
 IR * CTree2IR::convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx *)
 {
-    IR * vexp = convert(TREE_switch_det(t), NULL);
+    IR * vexp = convert(TREE_switch_det(t), nullptr);
     vexp = only_left_last(vexp);
     ASSERT0(vexp);
 
@@ -1033,17 +1033,17 @@ IR * CTree2IR::convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx *)
     List<CaseValue*> case_list;
     m_case_list = &case_list;
 
-    IR * body = convert(TREE_switch_body(t), NULL);
+    IR * body = convert(TREE_switch_body(t), nullptr);
 
     #ifdef _DEBUG_
     bool find_default_lab = false; //indicate if we find the default label.
     #endif
 
-    LabelInfo const* deflab = NULL;
-    IR * casev_list = NULL;
-    IR * last = NULL;
+    LabelInfo const* deflab = nullptr;
+    IR * casev_list = nullptr;
+    IR * last = nullptr;
     for (CaseValue * casev = case_list.get_head();
-         casev != NULL; casev = case_list.get_next()) {
+         casev != nullptr; casev = case_list.get_next()) {
         if (CASEV_is_def(casev)) {
             ASSERTN(!find_default_lab, ("redefined DEFAULT in SWITCH"));
             #ifdef _DEBUG_
@@ -1162,8 +1162,8 @@ IR * CTree2IR::convertIndirectMemAccess(Tree * t,
     UINT sz;
     Decl * field_decl = TREE_result_type(TREE_field(t));
     DATA_TYPE dt = D_UNDEF;
-    IR * ir = NULL;
-    IR * base = convert(TREE_base_region(t), NULL);
+    IR * ir = nullptr;
+    IR * base = convert(TREE_base_region(t), nullptr);
     ASSERTN(base->is_ptr(),
             ("base of indirect memory access must be pointer."));
     if (is_pointer(field_decl)) {
@@ -1179,7 +1179,7 @@ IR * CTree2IR::convertIndirectMemAccess(Tree * t,
             ir->setOffset(field_ofst);
         }
     } else if ((dt = ::get_decl_dtype(field_decl, &sz, m_tm)) == D_MC) {
-        if ((cont != NULL && CONT_is_compute_addr(cont)) ||
+        if ((cont != nullptr && CONT_is_compute_addr(cont)) ||
             is_array(field_decl)) {
             //CASE: generate ld to load the address of mc.
             //e.g: p->s.b, will generate,
@@ -1219,10 +1219,10 @@ IR * CTree2IR::convertIndirectMemAccess(Tree * t,
 
 IR * CTree2IR::convertDeref(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 {
-    if (TREE_parent(t) == NULL) { return NULL; }
+    if (TREE_parent(t) == nullptr) { return nullptr; }
     IR * addr = convert(TREE_lchild(t),cont);
     ASSERT0(addr && addr->is_ptr());
-    IR * ir = NULL;
+    IR * ir = nullptr;
     if (TREE_type(TREE_parent(t)) == TR_ARRAY &&
         t == TREE_array_base(TREE_parent(t))) {
         //In C, base of array only needs address, so the DEREF
@@ -1235,7 +1235,7 @@ IR * CTree2IR::convertDeref(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         //    e.g: a = (*p)[]: a=ARRAY(LD(p)).
         ir = addr;
     } else {
-        Type const* type = NULL;
+        Type const* type = nullptr;
         if (is_pointer(TREE_result_type(t))) {
             type = m_tm->getPointerType(
                 get_pointer_base_size(TREE_result_type(t)));
@@ -1258,7 +1258,7 @@ IR * CTree2IR::convertDeref(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 
 IR * CTree2IR::convertSelect(Tree * t, INT lineno, T2IRCtx * cont)
 {
-    //TREE_result_type(t) is NULL, may be it is necessary.
+    //TREE_result_type(t) is nullptr, may be it is necessary.
     IR * det = convert(TREE_det(t), cont);
     ASSERT0(det);
 
@@ -1267,18 +1267,18 @@ IR * CTree2IR::convertSelect(Tree * t, INT lineno, T2IRCtx * cont)
     IR * fexp = convert(TREE_false_part(t), cont);
     ASSERT0(texp && fexp);
 
-    while (IR_next(texp) != NULL) {
+    while (IR_next(texp) != nullptr) {
         m_rg->freeIRTree(xcom::removehead(&texp));
     }
 
-    while (IR_next(fexp) != NULL) {
+    while (IR_next(fexp) != nullptr) {
         m_rg->freeIRTree(xcom::removehead(&fexp));
     }
 
     Type const* d0 = texp->getType();
     Type const* d1 = fexp->getType();
     ASSERT0(d0 && d1);
-    Type const* type = NULL;
+    Type const* type = nullptr;
     if (d0->is_pointer() || d1->is_pointer()) {
         //Pointer should have same ptr-base-size.
         if (texp->is_const() && CONST_int_val(texp) == 0) {
@@ -1326,7 +1326,7 @@ IR * CTree2IR::genReturnValBuf(IR * ir)
 {
     ASSERT0(ir->is_return());
     IR * retval = RET_exp(ir);
-    if (retval == NULL) { return ir; }
+    if (retval == nullptr) { return ir; }
 
     //If memory size of return-value is too big to store in
     //return registers, generate a return-value-buffer and
@@ -1337,7 +1337,7 @@ IR * CTree2IR::genReturnValBuf(IR * ir)
                                GENERAL_REGISTER_SIZE) {
         return ir;
     }
-    if (m_retval_buf == NULL) {
+    if (m_retval_buf == nullptr) {
         CHAR const* rname = m_rg->getRegionName();
         ASSERT0(rname);
         xcom::StrBuf tmp((UINT)(::strlen(rname) + 32));
@@ -1355,7 +1355,7 @@ IR * CTree2IR::genReturnValBuf(IR * ir)
 
     IR * ist = m_rg->buildIStore(
         m_rg->buildLoad(m_retval_buf), retval, retval->getType());
-    RET_exp(ir) = NULL;
+    RET_exp(ir) = nullptr;
 
     xcom::add_next(&ist, ir);
     return ist;
@@ -1392,9 +1392,9 @@ xoc::Type const* CTree2IR::checkAndGenCVTType(Decl const* tgt, Decl const* src)
         }
     }
 
-    if (!need_cvt) { return NULL; }
+    if (!need_cvt) { return nullptr; }
 
-    Type const* type = NULL;
+    Type const* type = nullptr;
     if (IS_SIMPLEX(tgt_dt)) {
         type = m_tm->getSimplexTypeEx(tgt_dt);
     } else if (IS_PTR(tgt_dt)) {
@@ -1410,12 +1410,12 @@ xoc::Type const* CTree2IR::checkAndGenCVTType(Decl const* tgt, Decl const* src)
 IR * CTree2IR::convertReturn(Tree * t, INT lineno, T2IRCtx * cont)
 {
     IR * ir = m_rg->buildReturn(convert(TREE_ret_exp(t), cont));
-    if (RET_exp(ir) != NULL) {
-        ASSERTN(IR_next(RET_exp(ir)) == NULL, ("unsupport"));
+    if (RET_exp(ir) != nullptr) {
+        ASSERTN(IR_next(RET_exp(ir)) == nullptr, ("unsupport"));
         ir->setParentPointer(false);
         xoc::Type const* cvttype = checkAndGenCVTType(
             m_return_type, TREE_result_type(TREE_ret_exp(t)));
-        if (cvttype != NULL) {
+        if (cvttype != nullptr) {
             IR * cvt = m_rg->buildCvt(RET_exp(ir), cvttype);
             RET_exp(ir) = cvt;
             ir->setParent(cvt);
@@ -1429,7 +1429,7 @@ IR * CTree2IR::convertReturn(Tree * t, INT lineno, T2IRCtx * cont)
 
 IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
 {
-    IR * ir = NULL;
+    IR * ir = nullptr;
     IR * base = convert(TREE_lchild(t), cont);
     if (base->is_ld()) {
         //Need to revise the exp.
@@ -1460,7 +1460,7 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
         SimpCtx tc;
         SIMP_array(&tc) = true;
         ir = m_rg->simplifyArrayAddrExp(base, &tc);
-        if (SIMP_stmtlist(&tc) != NULL) {
+        if (SIMP_stmtlist(&tc) != nullptr) {
             xcom::add_next(CONT_toplirlist(cont), SIMP_stmtlist(&tc));
         }
     } else if (base->is_id()) {
@@ -1498,7 +1498,7 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
         } else {
             ir = ILD_base(base);
         }
-        ILD_base(base) = NULL;
+        ILD_base(base) = nullptr;
         m_rg->freeIRTree(base);
     } else {
         UNREACHABLE();
@@ -1510,7 +1510,7 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
 
 IR * CTree2IR::convertCVT(Tree * t, INT lineno, T2IRCtx * cont)
 {
-    IR * ir = NULL;
+    IR * ir = nullptr;
     Decl * cvtype = TREE_type_name(TREE_cvt_type(t));
     if (is_pointer(cvtype)) {
         //decl is pointer variable
@@ -1519,7 +1519,7 @@ IR * CTree2IR::convertCVT(Tree * t, INT lineno, T2IRCtx * cont)
     } else {
         UINT size = 0;
         DATA_TYPE dt = get_decl_dtype(cvtype, &size, m_tm);
-        Type const* type = NULL;
+        Type const* type = nullptr;
         if (IS_SIMPLEX(dt)) {
             type = m_tm->getSimplexTypeEx(dt);
         } else if (IS_PTR(dt)) {
@@ -1538,7 +1538,7 @@ IR * CTree2IR::convertCVT(Tree * t, INT lineno, T2IRCtx * cont)
 
 IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
 {
-    IR * ir = NULL;
+    IR * ir = nullptr;
     Decl * res_ty = TREE_result_type(t);
     if (is_array(res_ty)) {
         //In C, identifier of array can be represent as LDA.
@@ -1566,7 +1566,7 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
     } else if (is_fun_decl(res_ty)) {
         //If current Tree is fun-decl, there will be two case:
         //tree is the callee or parameter of call.
-        if (cont != NULL && CONT_is_parse_callee(cont)) {
+        if (cont != nullptr && CONT_is_parse_callee(cont)) {
             //tree is the callee.
             ir = buildId(t);
         } else {
@@ -1582,7 +1582,7 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
             ASSERT0(var && VAR_is_func_decl(var));
             ir = m_rg->buildLda(var);
         }
-    } else if (TREE_parent(t) != NULL && TREE_type(TREE_parent(t)) == TR_LDA) {
+    } else if (TREE_parent(t) != nullptr && TREE_type(TREE_parent(t)) == TR_LDA) {
         ir = buildId(t);
     } else if (is_bitfield(res_ty)) {
         //e.g: int a:3;
@@ -1606,7 +1606,7 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
 IR * CTree2IR::only_left_last(IR * head)
 {
     IR * last = removetail(&head);
-    while (head != NULL) {
+    while (head != nullptr) {
         IR * t = xcom::removehead(&head);
         m_rg->freeIRTree(t);
     }
@@ -1635,16 +1635,16 @@ BYTE CTree2IR::getMantissaNum(CHAR const* fpval)
 //Convert TREE AST to IR.
 IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
 {
-    IR * ir = NULL;
-    IR * ir_list = NULL; //record ir list generated.
-    IR * l = NULL, * r = NULL;
+    IR * ir = nullptr;
+    IR * ir_list = nullptr; //record ir list generated.
+    IR * l = nullptr, * r = nullptr;
     T2IRCtx ct;
-    if (cont == NULL) {
+    if (cont == nullptr) {
         cont = &ct;
         CONT_toplirlist(cont) = &ir_list;
     }
 
-    while (t != NULL) {
+    while (t != nullptr) {
         INT lineno = TREE_lineno(t);
         switch (TREE_type(t)) {
         case TR_ASSIGN:
@@ -1706,10 +1706,10 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             break;
         }
         case TR_STRING:
-            ir = m_rg->buildLdaString(NULL, TREE_string_val(t));
+            ir = m_rg->buildLdaString(nullptr, TREE_string_val(t));
             ASSERT0(ir->is_lda() &&
                     LDA_idinfo(ir)->is_global() &&
-                    m_rg->getTopRegion() != NULL &&
+                    m_rg->getTopRegion() != nullptr &&
                     m_rg->getTopRegion()->is_program());
             m_rg->getTopRegion()->addToVarTab(LDA_idinfo(ir));
             setLineNum(ir, lineno, m_rg);
@@ -1729,7 +1729,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         case TR_INCLUSIVE_OR: { //inclusive or  |
             l = convert(TREE_lchild(t), cont);
             r = convert(TREE_rchild(t), cont);
-            Type const* type = NULL;
+            Type const* type = nullptr;
             if (is_pointer(TREE_result_type(t))) {
                 type = m_tm->getPointerType(
                     get_pointer_base_size(TREE_result_type(t)));
@@ -1750,7 +1750,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         case TR_INCLUSIVE_AND: { //inclusive and &
             l = convert(TREE_lchild(t), cont);
             r = convert(TREE_rchild(t), cont);
-            Type const* type = NULL;
+            Type const* type = nullptr;
             if (is_pointer(TREE_result_type(t))) {
                 type = m_tm->getPointerType(
                     get_pointer_base_size(TREE_result_type(t)));
@@ -1771,7 +1771,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         case TR_XOR: { //exclusive or
             l = convert(TREE_lchild(t), cont);
             r = convert(TREE_rchild(t), cont);
-            Type const* type = NULL;
+            Type const* type = nullptr;
             if (is_pointer(TREE_result_type(t))) {
                 type = m_tm->getPointerType(
                     get_pointer_base_size(TREE_result_type(t)));
@@ -1821,7 +1821,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         case TR_SHIFT: {  // >> <<
             l = convert(TREE_lchild(t), cont);
             r = convert(TREE_rchild(t), cont);
-            Type const* type = NULL;
+            Type const* type = nullptr;
             if (is_pointer(TREE_result_type(t))) {
                 type = m_tm->getPointerType(
                     get_pointer_base_size(TREE_result_type(t)));
@@ -1847,7 +1847,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         case TR_ADDITIVE: { // '+' '-'
             l = convert(TREE_lchild(t), cont);
             r = convert(TREE_rchild(t), cont);
-            Type const* type = NULL;
+            Type const* type = nullptr;
             if (is_pointer(TREE_result_type(t))) {
                 type = m_tm->getPointerType(
                     get_pointer_base_size(TREE_result_type(t)));
@@ -1873,7 +1873,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         case TR_MULTI: {   // '*' '/' '%'
             l = convert(TREE_lchild(t), cont);
             r = convert(TREE_rchild(t), cont);
-            Type const* type = NULL;
+            Type const* type = nullptr;
             if (is_pointer(TREE_result_type(t))) {
                 type = m_tm->getPointerType(
                     get_pointer_base_size(TREE_result_type(t)));
@@ -1899,17 +1899,17 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         }
         case TR_SCOPE:
             ASSERT0(TREE_scope(t));
-            ir = convert(SCOPE_stmt_list(TREE_scope(t)), NULL);
+            ir = convert(SCOPE_stmt_list(TREE_scope(t)), nullptr);
             break;
         case TR_IF: {
             IR * det = convert(TREE_if_det(t), cont);
             det = only_left_last(det);
-            if (det == NULL) {
+            if (det == nullptr) {
                 det = m_rg->buildJudge(m_rg->buildImmInt(1, m_tm->getI32()));
             }
 
-            IR * truebody = convert(TREE_if_true_stmt(t), NULL);
-            IR * falsebody = convert(TREE_if_false_stmt(t), NULL);
+            IR * truebody = convert(TREE_if_true_stmt(t), nullptr);
+            IR * falsebody = convert(TREE_if_false_stmt(t), nullptr);
             if (!det->is_judge()) {
                 IR * old = det;
                 det = m_rg->buildJudge(det);
@@ -1920,8 +1920,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             break;
         }
         case TR_DO: {
-            IR * prolog = NULL;
-            IR * epilog = NULL;
+            IR * prolog = nullptr;
+            IR * epilog = nullptr;
             T2IRCtx ct2;
             CONT_toplirlist(&ct2) = &prolog;
             CONT_epilogirlist(&ct2) = &epilog;
@@ -1929,23 +1929,23 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
 
             IR * det = convert(TREE_dowhile_det(t), &ct2);
             det = only_left_last(det);
-            if (det == NULL) {
+            if (det == nullptr) {
                 det = m_rg->buildJudge(m_rg->buildImmInt(1,
                     m_tm->getI32()));
             }
 
-            if (prolog != NULL) {
+            if (prolog != nullptr) {
                 //Do NOT add prolog before DO_WHILE stmt.
                 //dup_prolog = m_rg->dupIRTreeList(prolog);
                 //xcom::add_next(&ir_list, prolog);
             }
 
-            IR * body = convert(TREE_dowhile_body(t), NULL);
-            if (prolog != NULL) {
+            IR * body = convert(TREE_dowhile_body(t), nullptr);
+            if (prolog != nullptr) {
                 //Put prolog at end of body.
                 xcom::add_next(&body, prolog);
             }
-            if (epilog != NULL) {
+            if (epilog != nullptr) {
                 xcom::add_next(&body, epilog);
             }
 
@@ -1959,8 +1959,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             break;
         }
         case TR_WHILE: {
-            IR * prolog = NULL;
-            IR * epilog = NULL;
+            IR * prolog = nullptr;
+            IR * epilog = nullptr;
             T2IRCtx ct2;
             CONT_toplirlist(&ct2) = &prolog;
             CONT_epilogirlist(&ct2) = &epilog;
@@ -1968,20 +1968,20 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
 
             IR * det = convert(TREE_whiledo_det(t), &ct2);
             det = only_left_last(det);
-            if (det == NULL) {
+            if (det == nullptr) {
                 det = m_rg->buildJudge(m_rg->buildImmInt(1,
                     m_tm->getI32()));
             }
 
-            IR * dup_prolog = NULL;
-            if (prolog != NULL) {
+            IR * dup_prolog = nullptr;
+            if (prolog != nullptr) {
                 dup_prolog = m_rg->dupIRTreeList(prolog);
                 xcom::add_next(&ir_list, prolog);
             }
-            ASSERT0(epilog == NULL);
+            ASSERT0(epilog == nullptr);
 
-            IR * body = convert(TREE_whiledo_body(t), NULL);
-            if (dup_prolog != NULL) {
+            IR * body = convert(TREE_whiledo_body(t), nullptr);
+            if (dup_prolog != nullptr) {
                 xcom::add_next(&body, dup_prolog);
             }
 
@@ -1996,27 +1996,27 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             break;
         }
         case TR_FOR: {
-            IR * init = convert(TREE_for_init(t), NULL);
+            IR * init = convert(TREE_for_init(t), nullptr);
 
             T2IRCtx ct2;
             ASSERT0(cont);
-            IR * stmt_in_det = NULL;
+            IR * stmt_in_det = nullptr;
             CONT_toplirlist(&ct2) = &stmt_in_det;
             IR * det = convert(TREE_for_det(t), &ct2);
-            if (stmt_in_det != NULL) {
+            if (stmt_in_det != nullptr) {
                 xcom::add_next(&init, stmt_in_det);
             }
 
             det = only_left_last(det);
-            if (det == NULL) {
+            if (det == nullptr) {
                 det = m_rg->buildJudge(m_rg->buildImmInt(1,
                     m_tm->getI32()));
             }
 
-            IR * body = convert(TREE_for_body(t), NULL);
-            IR * step = convert(TREE_for_step(t), NULL);
+            IR * body = convert(TREE_for_body(t), nullptr);
+            IR * step = convert(TREE_for_step(t), nullptr);
             xcom::add_next(&body, step);
-            if (stmt_in_det != NULL) {
+            if (stmt_in_det != nullptr) {
                 xcom::add_next(&body, m_rg->dupIRTreeList(stmt_in_det));
             }
 
@@ -2135,14 +2135,14 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         } //end switch
 
         t = TREE_nsib(t);
-        if (ir != NULL) {
+        if (ir != nullptr) {
             if (getLineNum(ir) == 0) {
                 setLineNum(ir, lineno, m_rg);
             }
             xcom::add_next(&ir_list, ir);
         }
 
-        ir = NULL;
+        ir = nullptr;
     }
     return ir_list;
 }
@@ -2151,16 +2151,16 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
 //Count up the number of local-variables.
 static void scanScopeDeclList(SCOPE * s, OUT xoc::Region * rg, bool scan_sib)
 {
-    if (s == NULL) return;
+    if (s == nullptr) return;
     Decl * decl = SCOPE_decl_list(s);
-    while (decl != NULL) {
-        if (DECL_is_formal_para(decl) && get_decl_sym(decl) == NULL) {
+    while (decl != nullptr) {
+        if (DECL_is_formal_para(decl) && get_decl_sym(decl) == nullptr) {
             //void function(void*), parameter does not have name.
             decl = DECL_next(decl);
             continue;
         }
         xoc::Var * v = mapDecl2VAR(decl);
-        ASSERTN(v, ("NULL variable correspond to"));
+        ASSERTN(v, ("nullptr variable correspond to"));
         if (VAR_is_global(v)) {
             xoc::Region * topru = rg->getTopRegion();
             ASSERT0(topru);
@@ -2183,13 +2183,13 @@ static void scanScopeDeclList(SCOPE * s, OUT xoc::Region * rg, bool scan_sib)
 static IR * addReturn(IR * irs, Region * rg)
 {
     IR * last = get_last(irs);
-    if (last == NULL) {
-        return rg->buildReturn(NULL);
+    if (last == nullptr) {
+        return rg->buildReturn(nullptr);
     }
 
     if (!last->is_return()) {
-        IR * ret = rg->buildReturn(NULL);
-        if (irs == NULL) {
+        IR * ret = rg->buildReturn(nullptr);
+        if (irs == nullptr) {
             irs = ret;
         } else {
             xcom::insertafter_one(&last, ret);
@@ -2232,7 +2232,7 @@ xoc::DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, xoc::TypeMgr * tm)
         is_signed = true;
     }
 
-    ASSERTN(ty, ("Type-SPEC in DCRLARATION cannot be NULL"));
+    ASSERTN(ty, ("Type-SPEC in DCRLARATION cannot be nullptr"));
     *size = getSimplyTypeSize(ty);
     if (IS_TYPE(ty, T_SPEC_VOID) ||
         IS_TYPE(ty, T_SPEC_CHAR) ||
@@ -2305,7 +2305,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
 
     //Generate IRs.
     CTree2IR ct2ir(r, dcl);
-    xoc::IR * irs = ct2ir.convert(SCOPE_stmt_list(DECL_fun_body(dcl)), NULL);
+    xoc::IR * irs = ct2ir.convert(SCOPE_stmt_list(DECL_fun_body(dcl)), nullptr);
     if (g_err_msg_list.get_elem_count() > 0) {
         return ST_ERR;
     }
@@ -2336,7 +2336,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
     r->initPassMgr();
     Refine * rf = (Refine*)r->getPassMgr()->registerPass(PASS_REFINE);
     irs = rf->refineIRlist(irs, change, rc);
-    ASSERT0(xoc::verifyIRList(irs, NULL, r));
+    ASSERT0(xoc::verifyIRList(irs, nullptr, r));
     r->setIRList(irs);
 
     END_TIMER_FMT(t, ("GenerateFuncRegion '%s'",
@@ -2373,7 +2373,7 @@ bool generateRegion(RegionMgr * rm)
     }
 
     //Iterate each declaration in scope.
-    for (Decl * dcl = SCOPE_decl_list(s); dcl != NULL; dcl = DECL_next(dcl)) {
+    for (Decl * dcl = SCOPE_decl_list(s); dcl != nullptr; dcl = DECL_next(dcl)) {
         if (is_fun_decl(dcl)) {
             if (DECL_is_fun_def(dcl)) {
                 //It is function definition.

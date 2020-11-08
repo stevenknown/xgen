@@ -44,10 +44,10 @@ OR * ARMORMgr::allocOR()
     return new ARMOR();
 }
 
-void ARMOR::set_pred(SR * v)
+void ARMOR::set_pred(SR * v, CG * cg)
 {
     ASSERTN_DUMMYUSE(HAS_PREDICATE_REGISTER, ("target not support"));
-    set_opnd(0, v);
+    set_opnd(0, v, cg);
 }
 //END ARMORMgr
 
@@ -57,9 +57,7 @@ void ARMOR::set_pred(SR * v)
 //
 LabelInfo const* ARMOR::getLabel() const
 {
-    ASSERT0(OR_is_uncond_br(this) ||
-            OR_is_cond_br(this) ||
-            OR_is_call(this) ||
+    ASSERT0(is_uncond_br() || is_cond_br() || is_call() ||
             OR_code(this) == OR_label);
     return OR::getLabel();
 }

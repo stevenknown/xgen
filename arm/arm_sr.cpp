@@ -64,7 +64,7 @@ CHAR const* ARMSR::getAsmName(StrBuf & buf, CG * cg)
     default:
         return SR::getAsmName(buf, cg);
     }
-    return NULL;
+    return nullptr;
 }
 
 

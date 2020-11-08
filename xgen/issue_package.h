@@ -33,36 +33,45 @@ author: Su Zhenyu
 
 namespace xgen {
 
-class IssuePackage : public Vector<OR*, 2> {
+class IssuePackageList;
+class IssuePackageMgr;
+
+typedef Vector<IssuePackageList*> IssuePackageListVector;
+
+class IssuePackage : public
+    xcom::SimpleVector<OR*, 1, MAX_OR_NUM_IN_ISSUE_PACKAGE> {
 public:
+    void set(UINT i, OR * elem, CG * cg);
+};
+
+typedef SC<IssuePackage*> IssuePackageListCt; //container
+typedef SC<IssuePackage*> * IssuePackageListIter; //iterator
+
+class IssuePackageList : public SListCoreEx<IssuePackage*> {
+public:
+    IssuePackageListCt * append_tail(IssuePackage * ip, IssuePackageMgr * mgr);
 };
 
 
-class IssuePackageList : public List<IssuePackage*> {
+//This class defined IssuePackage Manager to manage the allocation and
+//destroy of IssuePackage.
+class IssuePackageMgr {
+    COPY_CONSTRUCTOR(IssuePackageMgr);
+    SMemPool * m_pool;
+    CG * m_cg;
 public:
-    virtual ~IssuePackageList() {}
-    virtual void append_tail(IssuePackage * i)
-    {
-        #ifdef _DEBUG_
-        for (IssuePackage * ip = get_head(); ip != NULL; ip = get_next()) {
-            ASSERTN(ip != i, ("already in list."));
-        }
-        #endif
-        List<IssuePackage*>::append_tail(i);
-    }
+    IssuePackageMgr(CG * cg);
+    ~IssuePackageMgr();
 
-    virtual void append_tail(IssuePackageList & ipl)
-    {
-        #ifdef _DEBUG_
-        for (IssuePackage * ip = get_head(); ip != NULL; ip = get_next()) {
-            for (IssuePackage * ipp = ipl.get_head();
-                 ipp != NULL; ipp = ipl.get_next()) {
-                ASSERTN(ip != ipp, ("already in list."));
-            }
-        }
-        #endif
-        List<IssuePackage*>::append_tail(ipl);
-    }
+    IssuePackage * allocIssuePackage();
+    //num: the number of object expected to be allocated.
+    //The returned objects arranged as an array.
+    IssuePackageList * allocIssuePackageList(UINT num = 1);
+    IssuePackageListCt * allocIssuePackageListCt();
+
+    void destroy();
+
+    SMemPool * get_pool() const { return m_pool; }
 };
 
 } //namespace xgen

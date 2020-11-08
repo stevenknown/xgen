@@ -34,25 +34,25 @@ namespace xgen {
 
 RaMgr::RaMgr(List<ORBB*> * bbs, bool is_func, CG * cg)
 {
-    m_cg = NULL;
+    m_cg = nullptr;
     init(bbs, is_func, cg);
 }
 
 
 void RaMgr::init(List<ORBB*> * bbs, bool is_func, CG * cg)
 {
-    if (bbs == NULL) { return; }
+    if (bbs == nullptr) { return; }
 
     m_bb_list = bbs;
-    ASSERT0(m_cg == NULL);
+    ASSERT0(m_cg == nullptr);
     m_cg = cg;
     m_rg = cg->getRegion();
     ASSERT0(m_cg && m_rg);
     m_need_save_asm_effect = false;
     RAMGR_can_alloc_callee(this) = true;
     m_is_func = is_func;
-    m_ppm_vec = NULL;
-    m_gra = NULL;
+    m_ppm_vec = nullptr;
+    m_gra = nullptr;
     m_pool = smpoolCreate(256, MEM_COMM);
 }
 
@@ -60,24 +60,24 @@ void RaMgr::init(List<ORBB*> * bbs, bool is_func, CG * cg)
 void RaMgr::destroy()
 {
     m_var2or_map.destroy();
-    m_bb_list = NULL;
-    m_rg = NULL;
+    m_bb_list = nullptr;
+    m_rg = nullptr;
     m_is_func = false;
-    if (m_gra != NULL) {
+    if (m_gra != nullptr) {
         delete m_gra;
-        m_gra = NULL;
+        m_gra = nullptr;
     }
     smpoolDelete(m_pool);
-    m_pool = NULL;
+    m_pool = nullptr;
 }
 
 
 void * RaMgr::xmalloc(INT size)
 {
     ASSERTN(size > 0, ("xmalloc: size less zero!"));
-    ASSERTN(m_pool != NULL, ("need graph pool!!"));
+    ASSERTN(m_pool != nullptr, ("need graph pool!!"));
     void * p = smpoolMalloc(size, m_pool);
-    if (p == NULL) return NULL;
+    if (p == nullptr) return nullptr;
     ::memset(p, 0, size);
     return p;
 }
@@ -98,10 +98,10 @@ void RaMgr::preBuild()
 
     //Initializing SYMBOL referencing list.
     for (ORBB * bb = m_bb_list->get_head();
-         bb != NULL; bb = m_bb_list->get_next()) {
-        for (OR * o = ORBB_first_or(bb); o != NULL; o = ORBB_next_or(bb)) {
+         bb != nullptr; bb = m_bb_list->get_next()) {
+        for (OR * o = ORBB_first_or(bb); o != nullptr; o = ORBB_next_or(bb)) {
             xoc::Var const* spill_var = m_cg->computeSpillVar(o);
-            if (spill_var != NULL) { //o is a spilling-o.
+            if (spill_var != nullptr) { //o is a spilling-o.
                 addVARRefList(bb, o, spill_var);
             }
         }
@@ -119,7 +119,7 @@ void RaMgr::postBuild()
             //same register at twice.
             //
             //BUG: GRA saved callee registers, but the result does not
-            //be recorded in 'm_lra_used_callee_saved_reg', so it always be NULL.
+            //be recorded in 'm_lra_used_callee_saved_reg', so it always be nullptr.
             //And phy-registers assigned just during Lra.
             //
             //RegSet * gra_used_callee_save_regs =
@@ -141,9 +141,9 @@ void RaMgr::postBuild()
 
     //Finializing the SYMBOL list.
     VAR2ORIter iter;
-    RefORBBList * ref_bb_list = NULL;
+    RefORBBList * ref_bb_list = nullptr;
     for (xoc::Var const* sym = m_var2or_map.get_first(iter, &ref_bb_list);
-         sym != NULL; sym = m_var2or_map.get_next(iter)) {
+         sym != nullptr; sym = m_var2or_map.get_next(iter)) {
         ASSERT0(ref_bb_list);
         ref_bb_list->destroy();
     }
@@ -182,9 +182,9 @@ void RaMgr::dumpGlobalVAR2OR()
     INT i = 0;
     xcom::StrBuf buf(64);
     VAR2ORIter iter;
-    RefORBBList * ref_bb_list = NULL;
+    RefORBBList * ref_bb_list = nullptr;
     for (xoc::Var const* var = m_var2or_map.get_first(iter, &ref_bb_list);
-         var != NULL; var = m_var2or_map.get_next(iter, &ref_bb_list)) {
+         var != nullptr; var = m_var2or_map.get_next(iter, &ref_bb_list)) {
         fprintf(h, "\n\tVAR%d", i++);
         fprintf(h, "\n\t\t%s", var->dump(buf, m_rg->getTypeMgr()));
 
@@ -193,7 +193,7 @@ void RaMgr::dumpGlobalVAR2OR()
              bu = ref_bb_list->get_next()) {
             ORBB * bb = OR_BBUNIT_bb(bu);
             fprintf(h, "\n\t\tBB%d:", bb->id());
-            for (OR * o = OR_BBUNIT_or_list(bu)->get_head(); o != NULL;
+            for (OR * o = OR_BBUNIT_or_list(bu)->get_head(); o != nullptr;
                  o = OR_BBUNIT_or_list(bu)->get_next()) {
                 ASSERTN(o, ("Miss info"));
                 fprintf(h, "\n\t\t\t");
@@ -217,11 +217,11 @@ void RaMgr::dumpBBList()
 void RaMgr::dumpCalleeRegUsedByGra()
 {
     FILE * h = m_rg->getLogMgr()->getFileHandler();
-    if (h == NULL) { return; }
+    if (h == nullptr) { return; }
 
     fprintf(h, "\n==---- DUMP GRA Used Callee Regs, Region:%s: ",
             m_rg->getRegionName());
-    if (RAMGR_gra(this) == NULL) {
+    if (RAMGR_gra(this) == nullptr) {
         fprintf(h, "No GRA\n");
         return;
     }
@@ -246,7 +246,7 @@ static bool verifyORS(ORList const& ors, ORBB * bb)
 {
     ORCt * ct;
     for (ors.get_head(&ct); ct != ors.end(); ct = ors.get_next(ct)) {
-        CHECK_DUMMYUSE(OR_bb(ct->val()) == bb);
+        CHECK_DUMMYUSE(ct->val()->getBB() == bb);
     }
     return true;
 }
@@ -269,11 +269,11 @@ void RaMgr::saveCalleePredicateAtEntry(REGFILE regfile,
         ASSERTN(0, ("Target Dependent Code"));
     }
     OR * sp_adj = ORBB_entry_spadjust(entry);
-    ASSERT0(sp_adj == NULL || OR_code(sp_adj) == OR_spadjust);
+    ASSERT0(sp_adj == nullptr || OR_code(sp_adj) == OR_spadjust);
     if (m_rg->is_function()) { ASSERT0(sp_adj); }
 
     ORList ors;
-    if (sp_adj != NULL) {
+    if (sp_adj != nullptr) {
         ORBB_orlist(entry)->insert_after(ors, sp_adj);
     } else {
         ORBB_orlist(entry)->append_head(ors);
@@ -294,9 +294,9 @@ void RaMgr::saveCalleeFPRegisterAtEntry(REGFILE regfile,
     RegSet * used_regs = &used_callee_regs[regfile];
 
     OR * sp_adj = ORBB_entry_spadjust(entry);
-    ASSERT0(sp_adj == NULL || OR_code(sp_adj) == OR_spadjust);
+    ASSERT0(sp_adj == nullptr || OR_code(sp_adj) == OR_spadjust);
 
-    if (m_rg->is_function()) { ASSERT0(sp_adj != NULL); }
+    if (m_rg->is_function()) { ASSERT0(sp_adj != nullptr); }
 
     ORList ors;
     bool modified = false;
@@ -305,7 +305,7 @@ void RaMgr::saveCalleeFPRegisterAtEntry(REGFILE regfile,
         ors.clean();
 
         SR * sr = m_cg->getDedicatedSRForPhyReg(reg);
-        if (sr == NULL) {
+        if (sr == nullptr) {
             //Dedicated SR has assigned reg already.
             sr = m_cg->genReg((UINT)GENERAL_REGISTER_SIZE);
             SR_regfile(sr) = tmMapReg2RegFile(reg);
@@ -328,8 +328,8 @@ void RaMgr::saveCalleeFPRegisterAtEntry(REGFILE regfile,
                 ors.get_elem_count() == 2, //t2=sp+literal(>24bits),[t2]=t1
                 ("Too many spill code"));
 
-        ORCt * orct = NULL;
-        ORCt * next = NULL;
+        ORCt * orct = nullptr;
+        ORCt * next = nullptr;
         for (ors.get_head(&orct); orct != ors.end(); orct = next) {
             next = ors.get_next(orct);
             OR * tmp = orct->val();
@@ -339,7 +339,7 @@ void RaMgr::saveCalleeFPRegisterAtEntry(REGFILE regfile,
         }
 
         //Assign_Spill_Ops_Regfiles(pacdsp_regfile_cluster(f), &ors);
-        if (sp_adj != NULL) {
+        if (sp_adj != nullptr) {
             ORBB_orlist(entry)->insert_after(ors, sp_adj);
         } else {
             ORBB_orlist(entry)->append_head(ors);
@@ -366,7 +366,7 @@ void RaMgr::saveCalleeFPRegisterAtExit(REGFILE regfile,
     RegSet * used_regs = &used_callee_regs[regfile];
 
     OR * sp_adj = ORBB_exit_spadjust(exit);
-    ASSERT0(sp_adj == NULL || OR_code(sp_adj) == OR_spadjust);
+    ASSERT0(sp_adj == nullptr || OR_code(sp_adj) == OR_spadjust);
     if (m_rg->is_function()) { ASSERT0(sp_adj); }
 
     ORList ors;
@@ -376,7 +376,7 @@ void RaMgr::saveCalleeFPRegisterAtExit(REGFILE regfile,
         ors.clean();
 
         SR * sr = m_cg->getDedicatedSRForPhyReg(reg);
-        if (sr == NULL) {
+        if (sr == nullptr) {
             //Dedicated SR has assigned reg already.
             sr = m_cg->genReg((UINT)GENERAL_REGISTER_SIZE);
             SR_regfile(sr) = tmMapReg2RegFile(reg);
@@ -406,8 +406,8 @@ void RaMgr::saveCalleeFPRegisterAtExit(REGFILE regfile,
                 ors.get_elem_count() == 2,
                 ("Too many spilling code"));
 
-        ORCt * orct = NULL;
-        ORCt * next = NULL;
+        ORCt * orct = nullptr;
+        ORCt * next = nullptr;
         for (ors.get_head(&orct); orct != ors.end(); orct = next) {
             next = ors.get_next(orct);
             OR * tmp = orct->val();
@@ -416,7 +416,7 @@ void RaMgr::saveCalleeFPRegisterAtExit(REGFILE regfile,
             }
         }
 
-        if (sp_adj != NULL) {
+        if (sp_adj != nullptr) {
             ORBB_orlist(exit)->insert_before(ors, sp_adj);
         } else {
             ORBB_orlist(exit)->append_tail(ors);
@@ -442,8 +442,8 @@ void RaMgr::saveCalleeIntRegisterAtEntry(REGFILE regfile,
     ASSERT0(tmIsIntRegFile(regfile));
     RegSet * used_regs = &used_callee_regs[regfile];
     OR * sp_adj = ORBB_entry_spadjust(entry);
-    ASSERT0(sp_adj == NULL || OR_code(sp_adj) == OR_spadjust);
-    if (m_rg->is_function()) { ASSERT0(sp_adj != NULL); }
+    ASSERT0(sp_adj == nullptr || OR_code(sp_adj) == OR_spadjust);
+    if (m_rg->is_function()) { ASSERT0(sp_adj != nullptr); }
 
     ORList ors;
     bool modified = false;
@@ -452,7 +452,7 @@ void RaMgr::saveCalleeIntRegisterAtEntry(REGFILE regfile,
         ors.clean();
 
         SR * sr = m_cg->getDedicatedSRForPhyReg(reg);
-        if (sr == NULL) {
+        if (sr == nullptr) {
             //Dedicated SR has assigned reg already.
             sr = m_cg->genReg((UINT)GENERAL_REGISTER_SIZE);
             SR_regfile(sr) = tmMapReg2RegFile(reg);
@@ -474,8 +474,8 @@ void RaMgr::saveCalleeIntRegisterAtEntry(REGFILE regfile,
         ASSERTN(ors.get_elem_count() == 1 || //[sp + literal(<=24bits)] = t1
                 ors.get_elem_count() == 2, //t2=sp+literal(>24bits),[t2]=t1
                 ("Too many spill code"));
-        ORCt * orct = NULL;
-        ORCt * next = NULL;
+        ORCt * orct = nullptr;
+        ORCt * next = nullptr;
         for (ors.get_head(&orct); orct != ors.end(); orct = next) {
             next = ors.get_next(orct);
             OR * tmp = orct->val();
@@ -485,7 +485,7 @@ void RaMgr::saveCalleeIntRegisterAtEntry(REGFILE regfile,
         }
 
         //Assign_Spill_Ops_Regfiles(pacdsp_regfile_cluster(f), &ors);
-        if (sp_adj != NULL) {
+        if (sp_adj != nullptr) {
             ORBB_orlist(entry)->insert_after(ors, sp_adj);
         } else {
             ORBB_orlist(entry)->append_head(ors);
@@ -554,8 +554,8 @@ void RaMgr::saveCalleeIntRegisterAtExit(REGFILE regfile,
 {
     RegSet * used_regs = &used_callee_regs[regfile];
     OR * sp_adj = ORBB_exit_spadjust(exit);
-    ASSERT0(sp_adj == NULL || OR_code(sp_adj) == OR_spadjust);
-    if (m_rg->is_function()) { ASSERT0(sp_adj != NULL); }
+    ASSERT0(sp_adj == nullptr || OR_code(sp_adj) == OR_spadjust);
+    if (m_rg->is_function()) { ASSERT0(sp_adj != nullptr); }
 
     ORList ors;
     bool modified = false;
@@ -564,7 +564,7 @@ void RaMgr::saveCalleeIntRegisterAtExit(REGFILE regfile,
         ors.clean();
 
         SR * sr = m_cg->getDedicatedSRForPhyReg(reg);
-        if (sr == NULL) {
+        if (sr == nullptr) {
             //Dedicated SR has assigned reg already.
             sr = m_cg->genReg((UINT)GENERAL_REGISTER_SIZE);
             SR_regfile(sr) = tmMapReg2RegFile(reg);
@@ -592,8 +592,8 @@ void RaMgr::saveCalleeIntRegisterAtExit(REGFILE regfile,
                 ors.get_elem_count() == 2, // t2=sp + literal(>24bits), t1=[t2]
                 ("Too many spilling code"));
 
-        ORCt * orct = NULL;
-        ORCt * next = NULL;
+        ORCt * orct = nullptr;
+        ORCt * next = nullptr;
         for (ors.get_head(&orct); orct != ors.end(); orct = next) {
             next = ors.get_next(orct);
             OR * tmp = orct->val();
@@ -602,7 +602,7 @@ void RaMgr::saveCalleeIntRegisterAtExit(REGFILE regfile,
             }
         }
 
-        if (sp_adj != NULL) {
+        if (sp_adj != nullptr) {
             ORBB_orlist(exit)->insert_before(ors, sp_adj);
         } else {
             ORBB_orlist(exit)->append_tail(ors);
@@ -634,11 +634,11 @@ void RaMgr::saveCalleePredicateAtExit(REGFILE regfile,
     ASSERTN(0, ("Target Dependent Code"));
 
     OR * sp_adj = ORBB_exit_spadjust(exit);
-    ASSERT0(sp_adj == NULL || OR_code(sp_adj) == OR_spadjust);
+    ASSERT0(sp_adj == nullptr || OR_code(sp_adj) == OR_spadjust);
     if (m_rg->is_function()) { ASSERT0(sp_adj); }
 
     ORList ors;
-    if (sp_adj != NULL) {
+    if (sp_adj != nullptr) {
         ORBB_orlist(exit)->insert_after(ors, sp_adj);
     } else {
         ORBB_orlist(exit)->append_tail(ors);
@@ -659,7 +659,7 @@ void RaMgr::saveCallee(RegSet used_callee_regs[])
 
     xcom::TMap<REG, xoc::Var*> reg2var;
     for (ORBB * bb = entry_bbs.get_head();
-         bb != NULL; bb = entry_bbs.get_next()) {
+         bb != nullptr; bb = entry_bbs.get_next()) {
         ASSERTN(ORBB_is_entry(bb) , ("not an entry BB"));
         for(INT regfile = RF_UNDEF + 1; regfile < RF_NUM; regfile++) {
             saveCalleeRegFileAtEntry((REGFILE)regfile,
@@ -668,7 +668,7 @@ void RaMgr::saveCallee(RegSet used_callee_regs[])
     }
 
     for (ORBB * bb = exit_bbs.get_head();
-         bb != NULL; bb = exit_bbs.get_next()) {
+         bb != nullptr; bb = exit_bbs.get_next()) {
         ASSERTN(ORBB_is_exit(bb), ("not an exit BB"));
         for(INT regfile = RF_UNDEF + 1; regfile < RF_NUM; regfile++) {
             saveCalleeRegFileAtExit((REGFILE)regfile,
@@ -677,9 +677,9 @@ void RaMgr::saveCallee(RegSet used_callee_regs[])
     }
 
     //Do LRA for BB if new memory operations generated.
-    for (ORBB * bb = bblist.get_head(); bb != NULL; bb = bblist.get_next()) {
-        ParallelPartMgr * ppm = NULL;
-        if (m_ppm_vec != NULL) {
+    for (ORBB * bb = bblist.get_head(); bb != nullptr; bb = bblist.get_next()) {
+        ParallelPartMgr * ppm = nullptr;
+        if (m_ppm_vec != nullptr) {
             ppm = m_ppm_vec->get(bb->id());
         }
         LRA * lra = allocLRA(bb, ppm, this);
@@ -695,12 +695,12 @@ void RaMgr::saveCallee(RegSet used_callee_regs[])
 void RaMgr::addVARRefList(ORBB * bb, OR * o, xoc::Var const* loc)
 {
     RefORBBList * ref_bb_list = m_var2or_map.get(loc);
-    if (ref_bb_list == NULL) {
+    if (ref_bb_list == nullptr) {
         ref_bb_list = (RefORBBList*)xmalloc(sizeof(RefORBBList));
         ref_bb_list->init();
         m_var2or_map.set(loc, ref_bb_list);
     }
-    ref_bb_list->add_or(bb, o);
+    ref_bb_list->addOR(bb, o);
 }
 
 
@@ -710,12 +710,12 @@ void RaMgr::performLRA()
 {
     START_TIMER(t, "Perform Local Register Allocation");
     preBuild();
-    xcom::C<ORBB*> * ct = NULL;
+    xcom::C<ORBB*> * ct = nullptr;
     for (m_bb_list->get_head(&ct);
          ct != m_bb_list->end(); ct = m_bb_list->get_next(ct)) {
         ORBB * bb = ct->val();
-        ParallelPartMgr * ppm = NULL;
-        if (m_ppm_vec != NULL) {
+        ParallelPartMgr * ppm = nullptr;
+        if (m_ppm_vec != nullptr) {
             ppm = m_ppm_vec->get(bb->id());
         }
         LRA * lra = allocLRA(bb, ppm, this);
@@ -731,7 +731,7 @@ void RaMgr::performLRA()
 
 void RaMgr::performGRA()
 {
-    if (m_gra == NULL) {
+    if (m_gra == nullptr) {
         m_gra = allocGRA();
     }
     m_gra->perform();

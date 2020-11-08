@@ -41,7 +41,7 @@ bool CLRegionMgr::compileFuncRegion(xoc::Region * func,
 {
     ASSERT0(func && cgmgr && asmh && oc);
     ASSERT0(func->is_function() || func->is_program() || func->is_inner());
-
+    START_TIMER_FMT(t, ("compileFuncRegion '%s'", func->getRegionName()));
     //Note we regard INNER region as FUNCTION region.
     if (!xoc::RegionMgr::processFuncRegion(func, oc)) {
         return false;
@@ -53,6 +53,7 @@ bool CLRegionMgr::compileFuncRegion(xoc::Region * func,
         }
     }
     xoc::tfree();
+    END_TIMER_FMT(t, ("compileFuncRegion '%s'", func->getRegionName()));
     return true;
 }
 

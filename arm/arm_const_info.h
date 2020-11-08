@@ -152,6 +152,14 @@ typedef unsigned long long UINT128;
 #define TO_BE_COMPATIBLE_WITH_ARM_LINUX_GNUEABI
 #define CONTINUOUS_REG_NUM 2
 
+//Defined the maximum number of operand of OR.
+#define MAX_OR_OPERAND_NUM 8
+//Defined the maximum number of result of OR.
+#define MAX_OR_RESULT_NUM 4
+
+//Defined the maximum number of OR in Issue-Package.
+#define MAX_OR_NUM_IN_ISSUE_PACKAGE 2
+
 //Issue slot for multi-issue architecture.
 //FIRST_SLOT must be equal to 0.
 typedef enum _SLOT {

@@ -40,14 +40,14 @@ void Section::dump(CG const* cg)
     note(cg->getRegion(), "\n  VarLayOut:");
     List<xoc::Var const*> layout;
     for (xoc::Var const* v = var_list.get_head();
-         v != NULL; v = var_list.get_next()) {
+         v != nullptr; v = var_list.get_next()) {
         VarDesc * vd = var2vdesc_map.get(v);
         ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
 
         xcom::C<xoc::Var const*> * ct;
         bool find = false;
         for (xoc::Var const* v2 = layout.get_head(&ct);
-             v2 != NULL; v2 = layout.get_next(&ct)) {
+             v2 != nullptr; v2 = layout.get_next(&ct)) {
             VarDesc * vd2 = var2vdesc_map.get(v2);
             ASSERTN(vd2, ("No VarDesc correspond to xoc::Var"));
 
@@ -62,7 +62,7 @@ void Section::dump(CG const* cg)
     }
 
     for (xoc::Var const* v = layout.get_tail();
-         v != NULL; v = layout.get_prev()) {
+         v != nullptr; v = layout.get_prev()) {
         VarDesc * vd = var2vdesc_map.get(v);
         buf.clean();
         ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
@@ -88,14 +88,14 @@ void StackSection::dump(CG const* cg)
     fprintf(h, "\n  VarLayOut:");
     List<xoc::Var const*> layout;
     for (xoc::Var const* v = var_list.get_head();
-         v != NULL; v = var_list.get_next()) {
+         v != nullptr; v = var_list.get_next()) {
         VarDesc * vd = var2vdesc_map.get(v);
         ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
 
         xcom::C<xoc::Var const*> * ct;
         bool find = false;
         for (xoc::Var const* v2 = layout.get_head(&ct);
-             v2 != NULL; v2 = layout.get_next(&ct)) {
+             v2 != nullptr; v2 = layout.get_next(&ct)) {
             VarDesc * vd2 = var2vdesc_map.get(v2);
             ASSERTN(vd2, ("No VarDesc correspond to xoc::Var"));
 
@@ -110,7 +110,7 @@ void StackSection::dump(CG const* cg)
     }
 
     for (xoc::Var const* v = layout.get_tail();
-         v != NULL; v = layout.get_prev()) {
+         v != nullptr; v = layout.get_prev()) {
         VarDesc * vd = var2vdesc_map.get(v);
         ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
         buf.clean();

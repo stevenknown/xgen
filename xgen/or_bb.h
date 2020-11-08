@@ -33,6 +33,9 @@ author: Su Zhenyu
 
 namespace xgen {
 
+typedef xcom::List<ORBB*> ORBBList;
+typedef xcom::C<ORBB*> * ORBBListIter;
+
 //Mapping from OR to HOLDER
 class OR2Holder {
 public:
@@ -49,6 +52,8 @@ public:
 //
 //START BBORList
 //
+typedef xcom::C<OR*> * BBORListIter;
+
 #define OR_ORDER_INTERVAL 5
 class BBORList : public EList<OR*, OR2Holder> {
     ORBB * m_bb;
@@ -150,7 +155,7 @@ public:
 
     inline void addLabel(LabelInfo const* li)
     {
-        ASSERT0(li != NULL);
+        ASSERT0(li != nullptr);
         if (!m_lab_list.find(li)) {
             m_lab_list.append_tail(li);
         }
@@ -187,7 +192,7 @@ public:
     {
         ORBB * pthis = const_cast<ORBB*>(this);
         for (LabelInfo const* li = pthis->getLabelList().get_head();
-             li != NULL; li = pthis->getLabelList().get_next()) {
+             li != nullptr; li = pthis->getLabelList().get_next()) {
             if (LABELINFO_is_catch_start(li)) {
                 return true;
             }
@@ -198,7 +203,7 @@ public:
     {
         ORBB * pthis = const_cast<ORBB*>(this);
         for (LabelInfo const* li = pthis->getLabelList().get_head();
-             li != NULL; li = pthis->getLabelList().get_next()) {
+             li != nullptr; li = pthis->getLabelList().get_next()) {
             if (LABELINFO_is_terminate(li)) {
                 return true;
             }
@@ -228,7 +233,7 @@ public:
     ~ORBBMgr()
     {
         for (ORBB * bb = m_bbs_list.get_head();
-             bb != NULL; bb = m_bbs_list.get_next()) {
+             bb != nullptr; bb = m_bbs_list.get_next()) {
             delete bb;
         }
     }

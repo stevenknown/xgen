@@ -34,7 +34,7 @@ class CanonCtx {
 public:
     IR * new_stmts;
 
-    CanonCtx() { new_stmts = NULL; }
+    CanonCtx() { new_stmts = nullptr; }
 };
 
 

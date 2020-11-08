@@ -80,7 +80,7 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     do {
         change = false;
         for (Pass * pass = passlist.get_head();
-             pass != NULL; pass = passlist.get_next()) {
+             pass != nullptr; pass = passlist.get_next()) {
             ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
             CHAR const* passname = pass->getPassName();
             DUMMYUSE(passname);

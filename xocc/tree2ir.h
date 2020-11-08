@@ -118,7 +118,7 @@ protected:
     void * xmalloc(INT size)
     {
         ASSERTN(size > 0, ("xmalloc: size less zero!"));
-        ASSERTN(m_pool != NULL, ("need pool!!"));
+        ASSERTN(m_pool != nullptr, ("need pool!!"));
         void * p = smpoolMalloc(size, m_pool);
         ASSERT0(p);
         ::memset(p, 0, size);
@@ -134,8 +134,8 @@ public:
         m_return_type = get_return_type(dcl);
         m_rg = rg;
         m_tm = rg->getTypeMgr();
-        m_case_list = NULL;
-        m_retval_buf = NULL;
+        m_case_list = nullptr;
+        m_retval_buf = nullptr;
         m_pool = smpoolCreate(16, MEM_COMM);
     }
     COPY_CONSTRUCTOR(CTree2IR);

@@ -36,6 +36,7 @@ CFLAGS +=\
    -Wno-multichar \
    -Winit-self \
    -Wswitch \
+   -D_SUPPORT_C11_ \
    -Wall #-DDEBUG_XOC -fprofile-arcs -ftest-coverage # # 
 
 #CFLAGS+=\

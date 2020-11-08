@@ -35,21 +35,24 @@ namespace xgen {
 
 #define MAX_ST 5
 #define MAX_INPUT 10
-#define MIN_IOR_NUM 0.85  //minimal factor of percent to assign regfile.
-//base factor that must be added to estimation in cyc-estimate
-#define SL_BASE_FACTOR 0.5
-#define INFINITE 0x7FFFFFFF //Pseudo finitesimal I supposed
-#define EPSILON 0.000001 //Pseudo infinitesimal I supposed
-#define UNBALANCE_RATE 9999999.5  //Used in register bank partitioning
+#define MIN_IOR_NUM 0.85 //Defined minimal factor of percent to assign regfile
 
+//Defined base factor that must be added to estimation in cyc-estimate
+#define SL_BASE_FACTOR 0.5
+#define INFINITE 0x7FFFFFFF //Defined Pseudo finitesimal I supposed
+#define EPSILON 0.000001 //Defined Pseudo infinitesimal I supposed
+#define UNBALANCE_RATE 9999999.5 //Used in register bank partitioning
+
+typedef List<OR const*> ConstORList;
 typedef xcom::TMap<SR*, SR*> SR2SR;
 typedef xcom::DMap<SR*, SR*, SR2SR, SR2SR> SR2SR_DMAP;
 
 //EList of Var
 typedef xcom::EList<xoc::Var const*,
-    xcom::TMap<xoc::Var const*, xcom::C<xoc::Var const*>*> > VarElist;
+                    xcom::TMap<xoc::Var const*,
+                               xcom::C<xoc::Var const*>*> > VarElist;
 
-#define VD_ofst(m) (m)->m_ofst
+#define VD_ofst(m) ((m)->m_ofst)
 class VarDesc {
 public:
     size_t m_ofst;
@@ -60,26 +63,26 @@ public:
 
 //Mapping from SR to OR list.
 //Managing program memory automatically.
-class SR2ORList : public xcom::TMap<SR*, List<OR*>*> {
-    List<List<OR*>*> m_orlst_lst;
+class SR2ORList : public xcom::TMap<SR*, ConstORList*> {
+    List<ConstORList*> m_orlst_lst;
 public:
     virtual ~SR2ORList()
     {
-        for (List<OR*> * ol = m_orlst_lst.get_head();
-             ol != NULL; ol = m_orlst_lst.get_next()) {
+        for (ConstORList * ol = m_orlst_lst.get_head();
+             ol != nullptr; ol = m_orlst_lst.get_next()) {
             delete ol;
         }
     }
 
     //'sr' corresponds to single 'or'.
-    virtual void set(SR * sr, OR * o)
+    virtual void set(SR * sr, OR const* o)
     {
         ASSERT0(sr && o);
-        List<OR*> * orlst = xcom::TMap<SR*, List<OR*>*>::get(sr);
-        if (orlst == NULL) {
-            orlst = new List<OR*>();
+        ConstORList * orlst = xcom::TMap<SR*, ConstORList*>::get(sr);
+        if (orlst == nullptr) {
+            orlst = new ConstORList();
             m_orlst_lst.append_tail(orlst);
-            xcom::TMap<SR*, List<OR*>*>::set(sr, orlst);
+            xcom::TMap<SR*, ConstORList*>::set(sr, orlst);
         } else {
             //In single ORBB, only record the immediate-dominate DEF or.
             ASSERT0(orlst->get_elem_count() <= 1);
@@ -92,8 +95,8 @@ public:
     void append(SR * sr, OR * o)
     {
         ASSERT0(sr && o);
-        List<OR*> * orlst = xcom::TMap<SR*, List<OR*>*>::get(sr);
-        if (orlst == NULL) {
+        ConstORList * orlst = xcom::TMap<SR*, ConstORList*>::get(sr);
+        if (orlst == nullptr) {
             set(sr, o);
         } else {
             orlst->append_tail(o);
@@ -103,8 +106,8 @@ public:
     void clean(SR * sr)
     {
         ASSERT0(sr);
-        List<OR*> * orlst = xcom::TMap<SR*, List<OR*>*>::get(sr);
-        if (orlst != NULL) {
+        ConstORList * orlst = xcom::TMap<SR*, ConstORList*>::get(sr);
+        if (orlst != nullptr) {
             orlst->clean();
         }
     }
@@ -113,34 +116,34 @@ public:
 
 //Mapping between an unsigned long integer and a list of OR.
 //Manage object memory automatically.
-class UINT2ORList : public xcom::TMap<UINT, List<OR*>*> {
-    List<List<OR*>*> m_orlst_lst; //Collect all allocated objects.
+class UINT2ConstORList : public xcom::TMap<UINT, ConstORList*> {
+    List<ConstORList*> m_orlst_lst; //Collect all allocated objects.
 public:
-    virtual ~UINT2ORList()
+    virtual ~UINT2ConstORList()
     {
-        for (List<OR*> * ol = m_orlst_lst.get_head();
-             ol != NULL; ol = m_orlst_lst.get_next()) {
+        for (ConstORList * ol = m_orlst_lst.get_head();
+             ol != nullptr; ol = m_orlst_lst.get_next()) {
             delete ol;
         }
     }
 
-    virtual void set(UINT u, OR * o)
+    virtual void set(UINT u, OR const* o)
     {
-        ASSERT0(u != 0 && o); //'0' is set as default NULL
-        List<OR*> * orlst = xcom::TMap<UINT, List<OR*>*>::get(u);
-        if (orlst == NULL) {
-            orlst = new List<OR*>();
+        ASSERT0(u != 0 && o); //'0' is set as default nullptr
+        ConstORList * orlst = xcom::TMap<UINT, ConstORList*>::get(u);
+        if (orlst == nullptr) {
+            orlst = new ConstORList();
             m_orlst_lst.append_tail(orlst);
-            xcom::TMap<UINT, List<OR*>*>::set(u, orlst);
+            xcom::TMap<UINT, ConstORList*>::set(u, orlst);
         }
         orlst->append_tail(o);
     }
 
     virtual void clean(UINT u)
     {
-        ASSERT0(u != 0); //'0' is set as default NULL
-        List<OR*> * orlst = xcom::TMap<UINT, List<OR*>*>::get(u);
-        if (orlst != NULL) {
+        ASSERT0(u != 0); //'0' is set as default nullptr
+        ConstORList * orlst = xcom::TMap<UINT, ConstORList*>::get(u);
+        if (orlst != nullptr) {
             orlst->clean();
         }
     }
@@ -148,17 +151,17 @@ public:
 
 
 //Mapping between register number and a list of OR.
-class Reg2ORList : public UINT2ORList {
+class Reg2ORList : public UINT2ConstORList {
 public:
     virtual ~Reg2ORList() {}
 
     //'u' corresponds to single 'or'.
-    virtual void set(UINT u, OR * o)
+    virtual void set(UINT u, OR const* o)
     {
-        ASSERT0(u != 0 && o); //'0' is set as default NULL
-        List<OR*> * orlst = get(u);
-        if (orlst == NULL) {
-            UINT2ORList::set(u, o);
+        ASSERT0(u != 0 && o); //'0' is set as default nullptr
+        ConstORList * orlst = get(u);
+        if (orlst == nullptr) {
+            UINT2ConstORList::set(u, o);
         } else {
             //In single ORBB, only record the immediate-dominate DEF or.
             ASSERT0(orlst->get_elem_count() <= 1);
@@ -168,12 +171,12 @@ public:
     }
 
     //'u' corresponds to multiple 'or'.
-    void append(UINT u, OR * o)
+    void append(UINT u, OR const* o)
     {
-        ASSERT0(u != 0 && o); //'0' is set as default NULL
-        List<OR*> * orlst = get(u);
-        if (orlst == NULL) {
-            UINT2ORList::set(u, o);
+        ASSERT0(u != 0 && o); //'0' is set as default nullptr
+        ConstORList * orlst = get(u);
+        if (orlst == nullptr) {
+            UINT2ConstORList::set(u, o);
         } else {
             orlst->append_tail(o);
         }

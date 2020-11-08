@@ -33,22 +33,14 @@ author: Su Zhenyu
 
 class ARMLIS : public LIS {
 public:
-    ARMLIS(ORBB * bb,
-           DataDepGraph & ddg,
-           BBSimulator * sim,
-           UINT sch_mode,
-           bool change_slot,
-           bool change_cluster) :
-        LIS(bb, ddg, (BBSimulator*)sim, sch_mode, change_slot, change_cluster)
-    {}
+    ARMLIS(ORBB * bb, DataDepGraph & ddg, BBSimulator * sim, UINT sch_mode) :
+        LIS(bb, ddg, (BBSimulator*)sim, sch_mode) {}
     virtual ~ARMLIS() {}
-
     //Interface
-    virtual bool isValidResourceUsage(
-            IN OR * o,
-            SLOT slot,
-            OR * issue_ors[SLOT_NUM],
-            OR * conflict_ors[SLOT_NUM]);
+    virtual bool isValidResourceUsage(OR const* o,
+                                      SLOT slot,
+                                      OR * issue_ors[SLOT_NUM],
+                                      OR * conflict_ors[SLOT_NUM]) const;
 
     //Interface
     virtual bool changeSlot(OR * o, SLOT to_slot);

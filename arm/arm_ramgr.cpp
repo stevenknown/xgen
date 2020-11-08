@@ -110,12 +110,12 @@ void ARMRaMgr::postBuild()
     //List<ORBB*> * bblst = m_cg->getORBBList();
     //bool has_call = false;
     //for (ORBB * bb = bblst->get_head();
-    //     bblst != NULL; bb = bblst->get_next()) {
+    //     bblst != nullptr; bb = bblst->get_next()) {
     //    if (has_call) {
     //        break;
     //    }
     //    for (OR * o = ORBB_orlist(bb)->get_head();
-    //         o != NULL; o = ORBB_orlist(bb)->get_next()) {
+    //         o != nullptr; o = ORBB_orlist(bb)->get_next()) {
     //        if (OR_is_call(o)) {
     //            has_call = true;
     //            break;

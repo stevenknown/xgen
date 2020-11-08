@@ -49,8 +49,8 @@ public:
 
     void init()
     {
-        reg_result_cyc_buf = NULL;
-        mem_result_cyc_buf = NULL;
+        reg_result_cyc_buf = nullptr;
+        mem_result_cyc_buf = nullptr;
         last_result_avail_cyc = 0;
         first_result_avail_cyc = 0;
     }

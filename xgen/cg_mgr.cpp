@@ -41,21 +41,21 @@ AsmPrinter * CGMgr::allocAsmPrinter(CG * cg, AsmPrinterMgr * asmprtmgr)
 
 bool CGMgr::GenAndPrtGlobalVariable(Region * rg, FILE * asmh)
 {
-    if (asmh == NULL) { return false; }
+    if (asmh == nullptr) { return false; }
     START_TIMER(t, "Generate and Print Global Variable");
     ASSERT0(rg->is_program());
     CG * cg = allocCG(rg);
     VarVec * varvec = rg->getVarMgr()->get_var_vec();
     for (INT i = 0; i <= varvec->get_last_idx(); i++) {
         Var * v = varvec->get(i);
-        if (v == NULL ||
+        if (v == nullptr ||
             !v->is_global() ||
             v->is_fake() ||
             v->is_unallocable() ||
             v->is_func_decl()) {
             continue;
         }
-        cg->computeAndUpdateGlobalVarLayout(v, NULL, NULL);
+        cg->computeAndUpdateGlobalVarLayout(v, nullptr, nullptr);
     }
 
     AsmPrinter * ap = allocAsmPrinter(cg, &m_asmprtmgr);
@@ -102,6 +102,7 @@ bool CGMgr::CodeGen(Region * region, FILE * asmh)
         delete ap;
     }
     delete cg;
+    clean();
     END_TIMER(t, "Code Generation");
     return true;
 }

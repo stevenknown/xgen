@@ -32,7 +32,7 @@ author: Su Zhenyu
 #include "../../com/xcominc.h"
 #include "../../xgen/xgeninc.h"
 
-static FILE * g_output = NULL;
+static FILE * g_output = nullptr;
 static List<EquORTypes*> g_or_types_list;
 static List<RegFileSet*> g_regfile_set_list;
 static List<RegSet*> g_reg_set_list;
@@ -43,9 +43,11 @@ static CHAR const* g_reg_result_cyc_buf_name = "reg_result_cyc_buf";
 static CHAR const* g_mem_result_cyc_buf_name = "mem_result_cyc_buf";
 static CHAR const* g_robs_empty_name = "robs_empty";
 
-static CHAR const* g_cluster2regset_allocable_name = "g_cluster2regset_allocable";
+static CHAR const* g_cluster2regset_allocable_name =
+    "g_cluster2regset_allocable";
 static CHAR const* g_reg2regfile_name = "g_reg2regfile";
-static CHAR const* g_regfile2regset_allocable_name = "g_regfile2regset_allocable";
+static CHAR const* g_regfile2regset_allocable_name =
+    "g_regfile2regset_allocable";
 static CHAR const* g_regfile2regset_name = "g_regfile2regset";
 static CHAR const* g_or_type_desc_name = "g_or_type_desc";
 static CHAR const* g_cluster2regset_name = "g_cluster2regset";
@@ -280,7 +282,7 @@ static SRDesc * newSRDesc()
 
 inline static void setSRDescGroup(OR_TYPE ort, SRDescGroup<> * srdg)
 {
-    ASSERTN(OTD_srd_group(&g_or_type_desc[ort]) == NULL, ("has been set"));
+    ASSERTN(OTD_srd_group(&g_or_type_desc[ort]) == nullptr, ("has been set"));
     OTD_srd_group(&g_or_type_desc[ort]) = srdg;
 }
 
@@ -296,10 +298,9 @@ static void prtROBitSet(CHAR const* byte_buffer_name)
 }
 
 
-static void prtBitSet(
-        xcom::BitSet const& bs,
-        CHAR const* var_name,
-        bool is_static)
+static void prtBitSet(xcom::BitSet const& bs,
+                      CHAR const* var_name,
+                      bool is_static)
 {
     ASSERT0(g_output && var_name);
 
@@ -309,7 +310,7 @@ static void prtBitSet(
 
     fprintf(g_output, "BYTE %s [] = {", var_name);
     BYTE const* bytevec = bs.get_byte_vec();
-    if (bytevec == NULL) { goto FIN; }
+    if (bytevec == nullptr) { goto FIN; }
 
     for (UINT i = 0; i < bs.get_byte_size(); i++) {
         fprintf(g_output, "0x%.2x,", bytevec[i]);
@@ -323,7 +324,6 @@ FIN:
 static void initAndPrtRegister(OUT xcom::BitSet & allocable)
 {
     fprintf(g_output, "\n//Map regfile to allocable register set.\n");
-
     xcom::BitSet argument;
     xcom::BitSet return_value;
     xcom::BitSet caller_saved;
@@ -425,11 +425,10 @@ static void prtEmptyROBitSet()
 }
 
 
-static void prtRegSetArrayDeclaration(
-        CHAR const* array_var_name,
-        CHAR const* byte_vec_name,
-        UINT bound_start,
-        UINT bound_end)
+static void prtRegSetArrayDeclaration(CHAR const* array_var_name,
+                                      CHAR const* byte_vec_name,
+                                      UINT bound_start,
+                                      UINT bound_end)
 {
     //Print the export variable.
     fprintf(g_output, "static RegSet const* %s [] = {",
@@ -448,9 +447,8 @@ static void prtRegSetArrayDeclaration(
 }
 
 
-static void initAndPrtRegFile2Allocable(
-        xcom::BitSet const& allocable,
-        xcom::BitSet const regfile2regset[])
+static void initAndPrtRegFile2Allocable(xcom::BitSet const& allocable,
+                                        xcom::BitSet const regfile2regset[])
 {
     xcom::BitSet s;
     CHAR const* byte_vec_name = "regfile2regset_allocable";
@@ -462,13 +460,13 @@ static void initAndPrtRegFile2Allocable(
         buf.sprint("%s_%d", byte_vec_name, i);
         prtBitSet(s, buf.buf, true);
         fprintf(g_output,
-            "static ROBitSet robs_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
-            buf.buf, buf.buf, buf.buf, buf.buf);
+                "static ROBitSet robs_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
+                buf.buf, buf.buf, buf.buf, buf.buf);
     }
 
     //Print the export variable.
     prtRegSetArrayDeclaration(g_regfile2regset_allocable_name,
-        byte_vec_name, RF_UNDEF + 1, RF_NUM);
+                              byte_vec_name, RF_UNDEF + 1, RF_NUM);
 }
 
 
@@ -497,25 +495,25 @@ static void initAndPrtRegFile2RegSet(OUT xcom::BitSet regfile2regset[])
     //CPSR(rflag)
     regfile2regset[RF_CPSR].bunion(97); //
 
-    regfile2regset[RF_P].bunion(98);  //EQ  Equal
-   	regfile2regset[RF_P].bunion(99);  //NE  Not equal
-   	regfile2regset[RF_P].bunion(100); //CS  Carry set (identical to HS)
-   	regfile2regset[RF_P].bunion(101); //HS  Unsigned higher or same (identical to CS)
-   	regfile2regset[RF_P].bunion(102); //CC  Carry clear (identical to LO)
-   	regfile2regset[RF_P].bunion(103); //LO  Unsigned lower (identical to CC)
-   	regfile2regset[RF_P].bunion(104); //MI  Minus or negative result
-   	regfile2regset[RF_P].bunion(105); //PL  Positive or zero result
-   	regfile2regset[RF_P].bunion(106); //VS  Overflow
-   	regfile2regset[RF_P].bunion(107); //VC  No overflow
-   	regfile2regset[RF_P].bunion(108); //HI  Unsigned higher
-   	regfile2regset[RF_P].bunion(109); //LS  Unsigned lower or same
-   	regfile2regset[RF_P].bunion(110); //GE  Signed greater than or equal
-   	regfile2regset[RF_P].bunion(111); //LT  Signed less than
-   	regfile2regset[RF_P].bunion(112); //GT  Signed greater than
-   	regfile2regset[RF_P].bunion(113); //LE  Signed less than or equal
-   	regfile2regset[RF_P].bunion(114); //AL  Always (this is the default)
-   	ASSERT0(REG_RFLAG_REGISTER == 97);
-   	ASSERT0(REG_TRUE_PRED == 114);
+    regfile2regset[RF_P].bunion(98);  //EQ Equal
+    regfile2regset[RF_P].bunion(99);  //NE Not equal
+    regfile2regset[RF_P].bunion(100); //CS Carry set (identical to HS)
+    regfile2regset[RF_P].bunion(101); //HS Unsigned higher or same (identical to CS)
+    regfile2regset[RF_P].bunion(102); //CC Carry clear (identical to LO)
+    regfile2regset[RF_P].bunion(103); //LO Unsigned lower (identical to CC)
+    regfile2regset[RF_P].bunion(104); //MI Minus or negative result
+    regfile2regset[RF_P].bunion(105); //PL Positive or zero result
+    regfile2regset[RF_P].bunion(106); //VS Overflow
+    regfile2regset[RF_P].bunion(107); //VC No overflow
+    regfile2regset[RF_P].bunion(108); //HI Unsigned higher
+    regfile2regset[RF_P].bunion(109); //LS Unsigned lower or same
+    regfile2regset[RF_P].bunion(110); //GE Signed greater than or equal
+    regfile2regset[RF_P].bunion(111); //LT Signed less than
+    regfile2regset[RF_P].bunion(112); //GT Signed greater than
+    regfile2regset[RF_P].bunion(113); //LE Signed less than or equal
+    regfile2regset[RF_P].bunion(114); //AL Always (this is the default)
+    ASSERT0(REG_RFLAG_REGISTER == 97);
+    ASSERT0(REG_TRUE_PRED == 114);
     ASSERT0(REG_RETURN_ADDRESS_REGISTER == 15);
     ASSERT0(REG_R0 == 1);
     ASSERT0(REG_R1 == 2);
@@ -523,21 +521,21 @@ static void initAndPrtRegFile2RegSet(OUT xcom::BitSet regfile2regset[])
     ASSERT0(REG_R3 == 4);
     ASSERT0(REG_SP == 14);
     ASSERT0(REG_EQ_PRED == 98 &&
-        REG_NE_PRED == 99 &&
-        REG_CS_PRED == 100 &&
-        REG_HS_PRED == 101 &&
-        REG_CC_PRED == 102 &&
-        REG_LO_PRED == 103 &&
-        REG_MI_PRED == 104 &&
-        REG_PL_PRED == 105 &&
-        REG_VS_PRED == 106 &&
-        REG_VC_PRED == 107 &&
-        REG_HI_PRED == 108 &&
-        REG_LS_PRED == 109 &&
-        REG_GE_PRED == 110 &&
-        REG_LT_PRED == 111 &&
-        REG_GT_PRED == 112 &&
-        REG_LE_PRED == 113);
+            REG_NE_PRED == 99 &&
+            REG_CS_PRED == 100 &&
+            REG_HS_PRED == 101 &&
+            REG_CC_PRED == 102 &&
+            REG_LO_PRED == 103 &&
+            REG_MI_PRED == 104 &&
+            REG_PL_PRED == 105 &&
+            REG_VS_PRED == 106 &&
+            REG_VC_PRED == 107 &&
+            REG_HI_PRED == 108 &&
+            REG_LS_PRED == 109 &&
+            REG_GE_PRED == 110 &&
+            REG_LT_PRED == 111 &&
+            REG_GT_PRED == 112 &&
+            REG_LE_PRED == 113);
     ASSERT0(REG_LAST == 114);
 
     fprintf(g_output, "\n//RegFile to RegisterSet.\n");
@@ -548,19 +546,18 @@ static void initAndPrtRegFile2RegSet(OUT xcom::BitSet regfile2regset[])
         buf.sprint("%s_%d", byte_vec_name, i);
         prtBitSet(regfile2regset[i], buf.buf, true);
         fprintf(g_output,
-            "static ROBitSet robs_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
-            buf.buf, buf.buf, buf.buf, buf.buf);
+                "static ROBitSet robs_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
+                buf.buf, buf.buf, buf.buf, buf.buf);
     }
 
     //Print the export variable.
-    prtRegSetArrayDeclaration(g_regfile2regset_name,
-        byte_vec_name, RF_UNDEF + 1, RF_NUM);
+    prtRegSetArrayDeclaration(g_regfile2regset_name, byte_vec_name,
+                              RF_UNDEF + 1, RF_NUM);
 }
 
 
-static void initCluster2RegSet(
-        xcom::BitSet const regfile2regset[],
-        OUT xcom::BitSet cluster2regset[CLUST_NUM])
+static void initCluster2RegSet(xcom::BitSet const regfile2regset[],
+                               OUT xcom::BitSet cluster2regset[CLUST_NUM])
 {
     cluster2regset[CLUST_SCALAR].bunion(regfile2regset[RF_P]);
     cluster2regset[CLUST_SCALAR].bunion(regfile2regset[RF_R]);
@@ -581,13 +578,13 @@ static void initCluster2RegSet(
         buf.sprint("%s_%d", byte_vec_name, i);
         prtBitSet(cluster2regset[i], buf.buf, true);
         fprintf(g_output,
-            "static ROBitSet robs_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
-            buf.buf, buf.buf, buf.buf, buf.buf);
+                "static ROBitSet robs_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
+                buf.buf, buf.buf, buf.buf, buf.buf);
     }
 
     //Print the export variable.
-    prtRegSetArrayDeclaration(g_cluster2regset_name,
-        byte_vec_name, CLUST_UNDEF + 1, CLUST_NUM);
+    prtRegSetArrayDeclaration(g_cluster2regset_name, byte_vec_name,
+                              CLUST_UNDEF + 1, CLUST_NUM);
 }
 
 
@@ -739,7 +736,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
 
     /////////////////////////////////////////////////////
     //Create SR Descriptor of related RegFileSet, RegSet.
-    RegSet * t = NULL;
+    RegSet * t = nullptr;
 
     //init regfile-sets for r
     SRDesc * sr_r = newSRDesc();
@@ -772,21 +769,14 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     //Init the recording placeholder for each operand/result
     //of each instructions.
     //The first operand always be predicate register.
-    SRDescGroup<> * sda = NULL;
+    SRDescGroup<> * sda = nullptr;
 
     //0 res, 2 opnd:-- <- p, 32b_unsig_imm
     sda = newSRDescGroup(0, 2);
     //opnd
     sda->set_opnd(0, sr_r);
-    sda->set_opnd(1, sr_32b_unsig_imm);
+    sda->set_opnd(1, sr_32b_unsig_imm); //label
     setSRDescGroup(OR_label, sda);
-
-    //0 res, 2 opnd:-- <- p, +/-32MB
-    sda = newSRDescGroup(0, 2);
-    //opnd
-    sda->set_opnd(0, sr_p);
-    sda->set_opnd(1, sr_25b_unsig_imm);
-    setSRDescGroup(OR_b, sda);
 
     //0 res, 2 opnd:-- <- p, r
     sda = newSRDescGroup(0, 2);
@@ -795,6 +785,14 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     sda->set_opnd(1, sr_r); //LR
     setSRDescGroup(OR_bx, sda);
     setSRDescGroup(OR_ret, sda);
+
+    //0 res, 3 opnd:-- <- p, +/-32MB
+    sda = newSRDescGroup(0, 3);
+    //opnd
+    sda->set_opnd(0, sr_p);
+    sda->set_opnd(1, sr_25b_unsig_imm); //label
+    sda->set_opnd(2, sr_cpsr); //Rflag
+    setSRDescGroup(OR_b, sda);
 
     //0 res, 3 opnd:-- <- p, r, r
     sda = newSRDescGroup(0, 3);
@@ -1429,32 +1427,32 @@ static void initORProperty()
 static void fini()
 {
     for (EquORTypes * ot = g_or_types_list.get_head();
-         ot != NULL; ot = g_or_types_list.get_next()) {
+         ot != nullptr; ot = g_or_types_list.get_next()) {
         delete ot;
     }
 
     for (RegFileSet * rfs = g_regfile_set_list.get_head();
-         rfs != NULL; rfs = g_regfile_set_list.get_next()) {
+         rfs != nullptr; rfs = g_regfile_set_list.get_next()) {
         delete rfs;
     }
 
     for (RegSet * rs = g_reg_set_list.get_head();
-         rs != NULL; rs = g_reg_set_list.get_next()) {
+         rs != nullptr; rs = g_reg_set_list.get_next()) {
         delete rs;
     }
 
     for (SRDescGroup<> * sda = g_sr_resc_group_list.get_head();
-         sda != NULL; sda = g_sr_resc_group_list.get_next()) {
+         sda != nullptr; sda = g_sr_resc_group_list.get_next()) {
         free(sda);
     }
 
     for (SRDesc * sd = g_sr_resc_list.get_head();
-         sd != NULL; sd = g_sr_resc_list.get_next()) {
+         sd != nullptr; sd = g_sr_resc_list.get_next()) {
         delete sd;
     }
 
     for (UINT * buf = g_uint_buffer_list.get_head();
-         buf != NULL; buf = g_uint_buffer_list.get_next()) {
+         buf != nullptr; buf = g_uint_buffer_list.get_next()) {
         free(buf);
     }
 }
@@ -1468,8 +1466,8 @@ inline static void prtUnit(UINT u)
 
 inline static void prtEquORTypeAddress(EquORTypes * equort)
 {
-    if (equort == NULL) {
-        fprintf(g_output, "NULL,");
+    if (equort == nullptr) {
+        fprintf(g_output, "nullptr,");
         return;
     }
 
@@ -1479,8 +1477,8 @@ inline static void prtEquORTypeAddress(EquORTypes * equort)
 
 inline static void prtSRDescGroupAddress(SRDescGroup<> * srdgroup)
 {
-    if (srdgroup == NULL) {
-        fprintf(g_output, "NULL,");
+    if (srdgroup == nullptr) {
+        fprintf(g_output, "nullptr,");
         return;
     }
 
@@ -1507,7 +1505,7 @@ static void prtContentOfEquORTypes(xcom::StrBuf & buf)
     //Print a list of EquORTypes.
     fprintf(g_output, "\n//Initialize EquORTypes.\n");
     for (EquORTypes * e = g_or_types_list.get_head();
-         e != NULL; e = g_or_types_list.get_next()) {
+         e != nullptr; e = g_or_types_list.get_next()) {
 
         fprintf(g_output, "static EquORTypes g_equort_%p = {", e);
 
@@ -1545,8 +1543,8 @@ static void prtContentOfSRDescs()
     CHAR const* byte_buffer_name2 = "byte_valid_regset";
 
     for (SRDesc * srd = g_sr_resc_list.get_head();
-         srd != NULL; srd = g_sr_resc_list.get_next()) {
-        if (SRD_valid_regfile_set(srd) != NULL) {
+         srd != nullptr; srd = g_sr_resc_list.get_next()) {
+        if (SRD_valid_regfile_set(srd) != nullptr) {
             //Print ROBitSet of valid register file set to current SRDesc.
             buf.sprint("%s_%p", byte_buffer_name, srd);
             prtBitSet(*SRD_valid_regfile_set(srd), buf.buf, true);
@@ -1556,7 +1554,7 @@ static void prtContentOfSRDescs()
             buf.buf, buf.buf, buf.buf, buf.buf);
         }
 
-        if (SRD_valid_reg_set(srd) != NULL) {
+        if (SRD_valid_reg_set(srd) != nullptr) {
             //Print ROBitSet of valid register set to current SRDesc.
             buf.sprint("%s_%p", byte_buffer_name2, srd);
             prtBitSet(*SRD_valid_reg_set(srd), buf.buf, true);
@@ -1569,18 +1567,18 @@ static void prtContentOfSRDescs()
         //Print the initialization of SRDesc to current SRDesc.
         fprintf(g_output, "static SRDesc g_sr_resc_%p = {", srd);
 
-        if (SRD_valid_regfile_set(srd) != NULL) {
+        if (SRD_valid_regfile_set(srd) != nullptr) {
             buf.sprint("robs_%s_%p", byte_buffer_name, srd);
             fprintf(g_output, "(RegFileSet*)&%s,", buf.buf);
         } else {
-            fprintf(g_output, "NULL,");
+            fprintf(g_output, "nullptr,");
         }
 
-        if (SRD_valid_reg_set(srd) != NULL) {
+        if (SRD_valid_reg_set(srd) != nullptr) {
             buf.sprint("robs_%s_%p", byte_buffer_name2, srd);
             fprintf(g_output, "(RegSet*)&%s,", buf.buf);
         } else {
-            fprintf(g_output, "NULL,");
+            fprintf(g_output, "nullptr,");
         }
 
         fprintf(g_output, "%d,", SRD_bitsize(srd));
@@ -1597,7 +1595,7 @@ static void prtContentOfSRDescGroups()
     //Print a list of SRDescGroup.
     fprintf(g_output, "\n//List of SRDescGroup.\n");
     for (SRDescGroup<> * sdg = g_sr_resc_group_list.get_head();
-         sdg != NULL; sdg = g_sr_resc_group_list.get_next()) {
+         sdg != nullptr; sdg = g_sr_resc_group_list.get_next()) {
         fprintf(g_output, "static SRDescGroup<%d> g_sr_resc_group_%p(%d, %d",
                 sdg->get_opnd_num() + sdg->get_res_num(),
                 sdg,
@@ -1629,20 +1627,20 @@ static void prtContentOfSRDescGroups()
 static void prtORScheInfoContent(ORScheInfo & si)
 {
     fprintf(g_output, "{");
-    if (ORSI_reg_result_cyc_buf(&si) != NULL) {
+    if (ORSI_reg_result_cyc_buf(&si) != nullptr) {
         fprintf(g_output, "%s_%p,",
                 g_reg_result_cyc_buf_name,
                 ORSI_reg_result_cyc_buf(&si));
     } else {
-        fprintf(g_output, "NULL,");
+        fprintf(g_output, "nullptr,");
     }
 
-    if (ORSI_mem_result_cyc_buf(&si) != NULL) {
+    if (ORSI_mem_result_cyc_buf(&si) != nullptr) {
         fprintf(g_output, "%s_%p,",
                 g_mem_result_cyc_buf_name,
                 ORSI_mem_result_cyc_buf(&si));
     } else {
-        fprintf(g_output, "NULL,");
+        fprintf(g_output, "nullptr,");
     }
 
     fprintf(g_output, "%d,", ORSI_last_result_avail_cyc(&si));
@@ -1816,7 +1814,7 @@ static void initAndPrtScheInfoImpl(OR_TYPE ot)
     ORScheInfo * si = &OTD_sche_info(otd);
     si->init();
     SRDescGroup<> const* sdg = OTD_srd_group(otd);
-    if (sdg == NULL) {
+    if (sdg == nullptr) {
         //This OR does NOT need schedul info.
         return;
     }

@@ -63,7 +63,7 @@ void IR2OR::convertStoreViaAddress(IN SR * src_addr,
 
     //Generate ::memcpy.
     cont->clean_bottomup(); //clean outdated info included addr.
-    m_cg->buildLda(SR_var(tgtvar), SR_var_ofst(tgtvar) + ofst, NULL, ors, cont);
+    m_cg->buildLda(SR_var(tgtvar), SR_var_ofst(tgtvar) + ofst, nullptr, ors, cont);
     SR * tgt_addr = cont->get_reg(0); //get target memory address.
     ASSERT0(tgt_addr);
     cont->clean_bottomup(); //clean outdated info included addr.
@@ -101,8 +101,8 @@ void IR2OR::convertLoadConst(IR const* ir, OUT ORList & ors, IN IOC * cont)
     ASSERTN(ir->getTypeSize(m_tm) <= 2 * GENERAL_REGISTER_SIZE,
             ("Target Dependent Code"));
     ORList tors;
-    SR * load_val = NULL;
-    SR * load_val2 = NULL;
+    SR * load_val = nullptr;
+    SR * load_val2 = nullptr;
     if (ir->is_int()) {
         load_val = m_cg->genReg();
 
@@ -175,7 +175,19 @@ void IR2OR::convertLoadConst(IR const* ir, OUT ORList & ors, IN IOC * cont)
         m_cg->buildMove(load_val, m_cg->genIntImm(CONST_int_val(ir), false),
                         tors, cont);
     } else if (ir->is_str()) {
-        UNREACHABLE();
+        //Support loading const to lda(string-variable)
+        Region * rg = m_cg->getRegion();
+        IR * lda = rg->buildLdaString(nullptr, CONST_str_val(ir));
+        //Record string-variable into program-region to facilitate asm-print.
+        //This will storage string content at .data section.
+        ASSERT0(lda->is_lda() && LDA_idinfo(lda)->is_global() &&
+                rg->getTopRegion() != nullptr &&
+                rg->getTopRegion()->is_program());
+        rg->getTopRegion()->addToVarTab(LDA_idinfo(lda));
+        convertLda(lda, tors, cont);
+        load_val = cont->get_reg(0);
+        ASSERT0(load_val && load_val->is_reg());
+        cont->clean_bottomup();
     } else {
         ASSERTN(0, ("unsupport immediate value DATA_TYPE:%d", ir->getDType()));
     }
@@ -183,7 +195,7 @@ void IR2OR::convertLoadConst(IR const* ir, OUT ORList & ors, IN IOC * cont)
     tors.copyDbx(ir);
     ors.append_tail(tors);
     cont->set_reg(0, load_val);
-    //if (load_val2 != NULL) {
+    //if (load_val2 != nullptr) {
     //    cont->set_reg(1, load_val2);
     //}
 }
@@ -192,7 +204,7 @@ void IR2OR::convertLoadConst(IR const* ir, OUT ORList & ors, IN IOC * cont)
 //Generate ORs to load value into a symbol register.
 void IR2OR::convertGeneralLoad(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
-    ASSERT0(cont != NULL);
+    ASSERT0(cont != nullptr);
     switch (ir->getCode()) {
     SR * res;
     case IR_CONST:
@@ -207,7 +219,7 @@ void IR2OR::convertGeneralLoad(IR const* ir, OUT ORList & ors, IN IOC * cont)
     default:
         cont->clean_bottomup();
         convert(ir, ors, cont);
-        if (cont->get_reg(0) == NULL) {
+        if (cont->get_reg(0) == nullptr) {
             ASSERT0(cont->get_addr());
             break;
         }
@@ -217,7 +229,7 @@ void IR2OR::convertGeneralLoad(IR const* ir, OUT ORList & ors, IN IOC * cont)
         if (!res->is_reg()) {
             SRVec * srvec = SR_vec(res);
             ORList tors;
-            if (srvec == NULL) {
+            if (srvec == nullptr) {
                 SR * r = m_cg->genReg();
                 m_cg->buildMove(r, res, tors, cont);
                 cont->set_reg(0, r);
@@ -265,12 +277,12 @@ void IR2OR::convertIStore(IR const* ir, OUT ORList & ors, IN IOC * cont)
     ors.append_tail(tors);
 
     tors.clean();
-    if (cont->get_reg(0) != NULL) {
+    if (cont->get_reg(0) != nullptr) {
         //Generate store.
         //Note that one should use builtStore to generate STORE with offset
         //instead of generating code that adding offset to base if
-        //cont->get_reg(0) is not NULL.
-        ASSERT0(cont->get_addr() == NULL);
+        //cont->get_reg(0) is not nullptr.
+        ASSERT0(cont->get_addr() == nullptr);
         ASSERT0(ir->getTypeSize(m_tm) > 0);
 
         IOC tmp_cont;
@@ -306,7 +318,7 @@ void IR2OR::convertIStore(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
 void IR2OR::convertILoad(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
-    ASSERT0(ir != NULL && ir->is_ild());
+    ASSERT0(ir != nullptr && ir->is_ild());
     IOC tmp_cont;
 
     //Load mem_address into a register
@@ -331,7 +343,7 @@ void IR2OR::convertILoad(IR const* ir, OUT ORList & ors, IN IOC * cont)
     ASSERT0(cont);
     cont->clean_regvec();
     SR * load_val = tmp_cont.get_reg(0);
-    if (load_val != NULL) {
+    if (load_val != nullptr) {
         //Set result reg.
         cont->set_reg(0, load_val);
         return;
@@ -381,8 +393,8 @@ void IR2OR::convertGeneralLoadPR(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
     ASSERT0(ir->is_pr());
     SR * mm = m_cg->mapPR2SR(PR_no(ir));
-    if (mm != NULL) {
-        ASSERT0(cont != NULL);
+    if (mm != nullptr) {
+        ASSERT0(cont != nullptr);
         if (mm->is_reg()) {
             cont->set_reg(0, mm);
             return;
@@ -408,7 +420,7 @@ void IR2OR::convertGeneralLoadPR(IR const* ir, OUT ORList & ors, IN IOC * cont)
         m_cg->setMapPR2SR(PR_no(ir), m_cg->genReg());
     } else {
         Var * v = m_rg->mapPR2Var(PR_no(ir));
-        ASSERT0(v != NULL);
+        ASSERT0(v != nullptr);
         //TO BE DETERMINED: Does ir size have to equal to variable's size?
         //ASSERT0(ir->getTypeSize(m_tm) == v->getByteSize(m_tm));
         m_cg->setMapPR2SR(PR_no(ir), m_cg->genVAR(v));
@@ -430,8 +442,8 @@ void IR2OR::convertCopyPR(IR const* tgt,
     UINT tgtprno = tgt->getPrno();
     ASSERT0(tgtprno != PRNO_UNDEF);
     SR * tgtx = m_cg->mapPR2SR(tgtprno);
-    if (tgtx != NULL) {
-        ASSERT0(src != NULL);
+    if (tgtx != nullptr) {
+        ASSERT0(src != nullptr);
         ORList tors;
         IOC tc;
         if (tgtx->is_reg()) {
@@ -459,14 +471,14 @@ void IR2OR::convertCopyPR(IR const* tgt,
 
         //Store to local-variable(memory) instead of register.
         Var * loc = m_rg->mapPR2Var(tgtprno);
-        if (loc == NULL) {
+        if (loc == nullptr) {
             loc = registerLocalVar(tgt);
         } else {
             m_rg->addToVarTab(loc);
         }
 
         ASSERT0(loc);
-        ASSERT0(tgt->getTypeSize(m_tm) == loc->getByteSize(m_tm));
+        ASSERT0(tgt->getTypeSize(m_tm) <= loc->getByteSize(m_tm));
         m_cg->setMapPR2SR(tgtprno, m_cg->genVAR(loc));
     }
 
@@ -479,12 +491,12 @@ void IR2OR::convertStorePR(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
     ASSERT0(ir->is_stpr());
     SR * mm = m_cg->mapPR2SR(STPR_no(ir));
-    if (mm != NULL) {
+    if (mm != nullptr) {
         IOC tc;
         convertGeneralLoad(STPR_rhs(ir), ors, cont);
         SR * store_val = cont->get_reg(0);
         ORList tors;
-        if (store_val == NULL) {
+        if (store_val == nullptr) {
             ASSERTN(cont->get_addr(), ("miss RHS value"));
             //ASSERTN(0, ("can not convert IR_STPR by loading from an address"));
             store_val = cont->get_addr();
@@ -511,12 +523,12 @@ void IR2OR::convertStorePR(IR const* ir, OUT ORList & ors, IN IOC * cont)
         } else {
             //Store to local-variable(memory) instead of register.
             Var * v = m_rg->mapPR2Var(STPR_no(ir));
-            if (v == NULL) {
+            if (v == nullptr) {
                 v = registerLocalVar(ir);
             } else {
                 ASSERT0(m_rg->getVarTab()->find(v));
             }
-            ASSERT0(v != NULL);
+            ASSERT0(v != nullptr);
             ASSERT0(ir->getTypeSize(m_tm) == v->getByteSize(m_tm));
             m_cg->setMapPR2SR(STPR_no(ir), m_cg->genVAR(v));
         }
@@ -549,12 +561,12 @@ Var * IR2OR::registerLocalVar(IR const* pr)
 
 void IR2OR::convertStoreVar(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
-    ASSERT0(ir != NULL && ir->is_st());
+    ASSERT0(ir != nullptr && ir->is_st());
     ORList tors;
     //Analyize memory-address expression.
     convertGeneralLoad(ST_rhs(ir), ors, cont);
     SR * store_val = cont->get_reg(0);
-    ASSERT0(store_val != NULL);
+    ASSERT0(store_val != nullptr);
     IOC tc;
     IOC_mem_byte_size(&tc) = ir->getTypeSize(m_tm);
     ASSERT0(IOC_mem_byte_size(&tc) > 0);
@@ -585,7 +597,7 @@ void IR2OR::convertUnaryOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     //result type is BOOL, opnd type is INT.
     OR_TYPE orty = m_cg->mapIRType2ORType(ir->getCode(),
                                           UNA_opnd(ir)->getTypeSize(m_tm),
-                                          opnd, NULL, ir->is_signed());
+                                          opnd, nullptr, ir->is_signed());
     ASSERTN(orty != OR_UNDEF, ("mapIRType2ORType() should be overloaded"));
 
     OR * o;
@@ -601,7 +613,7 @@ void IR2OR::convertUnaryOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     copyDbx(o, ir);
 
     //Set result SR.
-    ASSERT0(cont != NULL);
+    ASSERT0(cont != nullptr);
     cont->set_reg(0, res);
     ors.append_tail(o);
 }
@@ -616,13 +628,13 @@ void IR2OR::convertBinaryOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     IOC tmp;
     convert(BIN_opnd0(ir), ors, &tmp);
     SR * opnd0 = tmp.get_reg(0);
-    ASSERT0(opnd0 != NULL && opnd0->is_reg());
+    ASSERT0(opnd0 != nullptr && opnd0->is_reg());
 
     //Operand1
     tmp.clean();
     convert(BIN_opnd1(ir), ors, &tmp);
     SR * opnd1 = tmp.get_reg(0);
-    ASSERT0(opnd1 != NULL && opnd1->is_reg());
+    ASSERT0(opnd1 != nullptr && opnd1->is_reg());
 
     //Result
     SR * res = m_cg->genReg((UINT)ir->getTypeSize(m_tm));
@@ -651,7 +663,7 @@ void IR2OR::convertBinaryOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     copyDbx(o, ir);
 
     //Set result SR.
-    ASSERT0(cont != NULL);
+    ASSERT0(cont != nullptr);
     cont->set_reg(0, res);
     ors.append_tail(o);
 }
@@ -663,10 +675,10 @@ void IR2OR::flattenSRVec(IOC const* cont, Vector<SR*> * vec)
     UINT vec_count = 0;
     for (UINT i = 0;; i++) {
         SR * sr = cont->get_reg(i);
-        if (sr == NULL) { return; }
+        if (sr == nullptr) { return; }
         if (sr->is_vec()) {
             ASSERTN(SR_vec_idx(sr) == 0, ("expect first element"));
-            for (INT j = 0; j <= SR_vec(sr)->get_last_idx(); j++) {
+            for (UINT j = 0; j <= SR_vec(sr)->get_elem_count(); j++) {
                 vec->set(vec_count, SR_vec(sr)->get(j));
                 vec_count++;
             }
@@ -689,15 +701,15 @@ void IR2OR::processRealParamsThroughRegister(IR const* ir,
     ORList tors;
     //ASSERT0(tmGetRegSetOfArgument() &&
     //        tmGetRegSetOfArgument()->get_elem_count() != 0);
-    for (; ir != NULL; ir = ir->get_next()) {
+    for (; ir != nullptr; ir = ir->get_next()) {
         UINT irsize = ir->getTypeSize(m_tm);
         //Generate load operations.
         IOC tcont;
         convertGeneralLoad(ir, ors, &tcont);
 
-        SR * argval = NULL;
-        SR * argaddr = NULL;
-        if (tcont.get_addr() != NULL) {
+        SR * argval = nullptr;
+        SR * argaddr = nullptr;
+        if (tcont.get_addr() != nullptr) {
             argaddr = tcont.get_addr();
             ASSERT0(IOC_mem_byte_size(&tcont) == irsize);
         } else {
@@ -717,7 +729,7 @@ void IR2OR::processRealParamsThroughRegister(IR const* ir,
 //'ir': the first parameter of CALL.
 void IR2OR::processRealParams(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
-    if (ir == NULL) {
+    if (ir == nullptr) {
         ASSERT0(cont);
         IOC_param_size(cont) = 0;
         return;
@@ -908,7 +920,7 @@ void IR2OR::convertGoto(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
 void IR2OR::convertTruebr(IR const* ir, OUT ORList & ors, IN IOC * cont)
 {
-    ASSERT0(ir != NULL && ir->is_truebr());
+    ASSERT0(ir != nullptr && ir->is_truebr());
     IR * br_det = BR_det(ir);
     ASSERT0(br_det->is_lt() || br_det->is_le() || br_det->is_gt() ||
             br_det->is_ge() || br_det->is_eq() || br_det->is_ne());
@@ -1041,7 +1053,7 @@ void IR2OR::convert(IR const* ir, OUT ORList & ors, IN IOC * cont)
         break;
     case IR_LDA:   // &a get address of 'a'
         convertLda(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_CALL:
         convertCall(ir, tors, cont);
@@ -1051,46 +1063,46 @@ void IR2OR::convert(IR const* ir, OUT ORList & ors, IN IOC * cont)
         break;
     case IR_ASR:
         convertASR(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_LSR:
         convertLSR(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_LSL:
         convertLSL(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_CVT: //type convertion
         convertCvt(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_PR:
         convertGeneralLoad(ir, tors, cont);
         break;
     case IR_ADD:
         convertAdd(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_SUB:
         convertSub(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_DIV:
         convertDiv(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_MUL:
         convertMul(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_REM:
         convertRem(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_MOD:
         convertMod(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_LAND: //logical and      &&
         convertLogicalAnd(ir, tors, cont);
@@ -1100,27 +1112,27 @@ void IR2OR::convert(IR const* ir, OUT ORList & ors, IN IOC * cont)
         break;
     case IR_BAND: //inclusive and &
         convertBitAnd(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_BOR: //inclusive or  |
         convertBitOr(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_XOR: //exclusive or
         convertXOR(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_BNOT:  //bitwise not
         convertBitNot(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_LNOT:  //logical not
         convertLogicalNot(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_NEG:  // -123
         convertNeg(ir, tors, cont);
-        ASSERT0(cont->get_reg(0) != NULL);
+        ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_LT:
         convertLT(ir, tors, cont);
@@ -1175,7 +1187,7 @@ void IR2OR::convertIRBBListToORList(OUT ORList & or_list)
     ASSERT0(ir_bb_list);
     IOC cont;
     for (IRBB const* bb = ir_bb_list->get_head();
-         bb != NULL; bb = ir_bb_list->get_next()) {
+         bb != nullptr; bb = ir_bb_list->get_next()) {
         convertLabel(bb, or_list, &cont);
         IRListIter ct;
         for (BB_irlist(bb).get_head(&ct);

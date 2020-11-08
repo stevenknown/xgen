@@ -58,7 +58,7 @@ public:
     ~RegSetMgr()
     {
         for (RegSet * rs = m_regset_list.get_head();
-             rs != NULL; rs = m_regset_list.get_next()) {
+             rs != nullptr; rs = m_regset_list.get_next()) {
             delete rs;
         }
     }

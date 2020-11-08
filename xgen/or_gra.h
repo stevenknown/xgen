@@ -88,9 +88,9 @@ protected:
 protected:
     void * xmalloc(UINT size)
     {
-        ASSERTN(m_pool != NULL,("need graph pool!!"));
+        ASSERTN(m_pool != nullptr,("need graph pool!!"));
         void * p = smpoolMalloc(size, m_pool);
-        ASSERT0(p != NULL);
+        ASSERT0(p != nullptr);
         ::memset(p, 0, size);
         return p;
     }
@@ -130,7 +130,7 @@ public:
 public:
     G_INTERF_GRAPH(RaMgr * ra_mgr, GLT_MGR * glt_mgr, CG * cg);
 
-    void dump(IN CHAR * name = NULL);
+    void dump(IN CHAR * name = nullptr);
     bool isInterferred(IN G_LIFE_TIME * glt1, IN G_LIFE_TIME * glt2);
     void rebuild();
     void build();
@@ -166,7 +166,7 @@ protected:
 public:
     GRA(RaMgr * ra_mgr, CG * cg)
     {
-        ASSERT0(ra_mgr != NULL);
+        ASSERT0(ra_mgr != nullptr);
         m_ramgr = ra_mgr;
         m_cg = cg;
     }

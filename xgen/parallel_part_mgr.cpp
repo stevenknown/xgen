@@ -58,7 +58,7 @@ bool ParallelPartMgr::findMainIV(
 //
 ParallelPartMgr::ParallelPartMgr(ORBB * bb)
 {
-    m_pool = NULL;
+    m_pool = nullptr;
     init(bb);
 }
 
@@ -71,13 +71,13 @@ ParallelPartMgr::~ParallelPartMgr()
 
 void ParallelPartMgr::init(ORBB * bb)
 {
-    if (m_pool != NULL) { return; }
+    if (m_pool != nullptr) { return; }
     ASSERT0(bb);
     m_bb = bb;
     m_cg = ORBB_cg(bb);
     ASSERT0(m_cg);
-    m_prolog = NULL;
-    m_epilog = NULL;
+    m_prolog = nullptr;
+    m_epilog = nullptr;
     m_pool = smpoolCreate(256, MEM_COMM);
     m_para_part_orlst.init();
     m_para_part_oridx_lst.init();
@@ -86,34 +86,34 @@ void ParallelPartMgr::init(ORBB * bb)
     m_sr2sr_dmap_lst.init();
     m_gsr.init();
     m_num_cluster = 0;
-    m_main_red_or = NULL;
-    m_cmp_or = NULL;
-    m_iv = NULL;
+    m_main_red_or = nullptr;
+    m_cmp_or = nullptr;
+    m_iv = nullptr;
 }
 
 
 void ParallelPartMgr::destroy()
 {
-    if (m_pool == NULL) return;
+    if (m_pool == nullptr) return;
 
     ///
     if (m_para_part_orlst.get_elem_count() != 0) {
         ASSERTN(m_sr2sr_dmap_lst.get_elem_count() ==
                 m_para_part_orlst.get_elem_count(), ("unmatch info"));
         List<OR*> * or_lst;
-        for (or_lst = m_para_part_orlst.get_head(); or_lst != NULL;
+        for (or_lst = m_para_part_orlst.get_head(); or_lst != nullptr;
              or_lst = m_para_part_orlst.get_next()) {
             or_lst->destroy();
         }
-        for (or_lst = m_para_part_redor_lst.get_head(); or_lst != NULL;
+        for (or_lst = m_para_part_redor_lst.get_head(); or_lst != nullptr;
              or_lst = m_para_part_redor_lst.get_next()) {
             or_lst->destroy();
         }
         for (xcom::BitSet * oridx_lst = m_para_part_oridx_lst.get_head();
-             oridx_lst != NULL; oridx_lst = m_para_part_oridx_lst.get_next()) {
+             oridx_lst != nullptr; oridx_lst = m_para_part_oridx_lst.get_next()) {
             oridx_lst->destroy();
         }
-        for (SR2SR_DMAP * map = m_sr2sr_dmap_lst.get_head(); map != NULL;
+        for (SR2SR_DMAP * map = m_sr2sr_dmap_lst.get_head(); map != nullptr;
              map = m_sr2sr_dmap_lst.get_next()) {
             delete(map);
         }
@@ -127,7 +127,7 @@ void ParallelPartMgr::destroy()
     ///
 
     smpoolDelete(m_pool);
-    m_pool = NULL;
+    m_pool = nullptr;
 }
 
 
@@ -144,7 +144,7 @@ void ParallelPartMgr::renameSR(IN OUT OR * o, IN SR2SR_DMAP & dmap)
                 //CASE: Same sr appeared in twice or more times.
                 //    sr2, sr2, or, sr9(p0), sr1, 1
                 SR * newtn = dmap.get(res);
-                if (newtn == NULL) {
+                if (newtn == nullptr) {
                     newtn = m_cg->dupSR(res);
                     dmap.setAlways(res, newtn);
                 }
@@ -153,7 +153,7 @@ void ParallelPartMgr::renameSR(IN OUT OR * o, IN SR2SR_DMAP & dmap)
                 }
 
                 //Rename result sr of o for parallel part.
-                o->set_result(i, newtn);
+                o->set_result(i, newtn, m_cg);
             }
         }
     } //end for
@@ -163,7 +163,7 @@ void ParallelPartMgr::renameSR(IN OUT OR * o, IN SR2SR_DMAP & dmap)
         if (m_cg->isIntRegSR(o, opnd, i, false)) {
             if (!SR_is_dedicated(opnd)) {
                 SR * newtn = dmap.get(opnd);
-                if (newtn == NULL) {
+                if (newtn == nullptr) {
                     ASSERTN(opnd->is_global(),    ("local sr must have DEF"));
                     newtn = m_cg->dupSR(opnd);
                     m_gsr.append(opnd);
@@ -171,7 +171,7 @@ void ParallelPartMgr::renameSR(IN OUT OR * o, IN SR2SR_DMAP & dmap)
                 }
 
                 //Rename operand sr of o for parallel part.
-                o->set_opnd(i, newtn);
+                o->set_opnd(i, newtn, m_cg);
             }
         }
     } //end for
@@ -181,47 +181,49 @@ void ParallelPartMgr::renameSR(IN OUT OR * o, IN SR2SR_DMAP & dmap)
 List<OR*> * ParallelPartMgr::getClusterReductionOR(UINT n)
 {
     if (n >= m_para_part_redor_lst.get_elem_count()) {
-        return NULL;
+        return nullptr;
     }
     return m_para_part_redor_lst.get_head_nth(n);
 }
 
 
-List<OR*> * ParallelPartMgr::getClusterParallelPart(
-        UINT n,
-        OUT xcom::BitSet ** oridx_lst)
+//Note n should be a small number.
+List<OR*> * ParallelPartMgr::getClusterParallelPart(UINT n,
+                                                    OUT BitSet ** oridx_lst)
 {
     ASSERTN(m_pool, ("not yet initialize."));
     if (n >= m_para_part_oridx_lst.get_elem_count()) {
         if (oridx_lst) {
-            *oridx_lst = NULL;
+            *oridx_lst = nullptr;
         }
-        return NULL;
+        return nullptr;
     }
     if (oridx_lst) {
+        //Note if n is a big number, this list accessing will be slowly.
         *oridx_lst = m_para_part_oridx_lst.get_head_nth(n);
     }
     return m_para_part_orlst.get_head_nth(n);
 }
 
 
+//Note n should be a small number.
 SR2SR_DMAP * ParallelPartMgr::getClusterDMap(UINT n)
 {
     ASSERTN(m_pool, ("not yet initialize."));
     if (n >= m_sr2sr_dmap_lst.get_elem_count()) {
-        return NULL;
+        return nullptr;
     }
+    //Note if n is a big number, this list accessing will be slowly.    
     return m_sr2sr_dmap_lst.get_head_nth(n);
 }
 
 
 //Generate bus-operation to broadcast
-void ParallelPartMgr::genBusCopy(
-        IN OUT ORBB * bb,
-        CLUST from_clust,
-        IN List<CLUST> & to_clust_lst,
-        IN SR * from_sr,
-        IN List<SR*> & to_sr_lst)
+void ParallelPartMgr::genBusCopy(IN ORBB * bb,
+                                 CLUST from_clust,
+                                 IN List<CLUST> & to_clust_lst,
+                                 IN SR * from_sr,
+                                 IN List<SR*> & to_sr_lst)
 {
     DUMMYUSE(bb);
     ASSERTN(m_pool, ("not yet initialize."));
@@ -230,8 +232,8 @@ void ParallelPartMgr::genBusCopy(
     //copy to scalar o cluster-2 unit
     CLUST to_clust = to_clust_lst.get_head();
     SR * to_tn = to_sr_lst.get_head();
-    OR * cp = m_cg->buildBusCopy(from_sr, to_tn,
-        m_cg->getTruePred(), from_clust, to_clust);
+    OR * cp = m_cg->buildBusCopy(from_sr, to_tn, m_cg->getTruePred(),
+                                 from_clust, to_clust);
     ORBB_orlist(m_bb)->append_tail(cp);
 }
 
@@ -260,7 +262,7 @@ bool ParallelPartMgr::hasPDomOcc(ORBB * bb, SR * gsr)
     ASSERT0(occ);
     if (occ->get_elem_count() > 1) {
         xcom::BitSet * pdom = ORBB_cg(bb)->getORCfg()->get_pdom_set(bb->id());
-        ASSERT0((pdom != NULL && !pdom->is_empty()) || !bb->isLiveOut(gsr));
+        ASSERT0((pdom != nullptr && !pdom->is_empty()) || !bb->isLiveOut(gsr));
         for (UINT bbid = occ->get_first();
              bbid != 0; bbid = occ->get_next(bbid)) {
             if (bbid == bb->id()) {
@@ -361,15 +363,8 @@ bool ParallelPartMgr::prepare_distribute(OR * red_or, OR * cmp_or, SR * iv)
     if (!red_or || !cmp_or || !iv) {
         //ORBB's dependence graph.
         DataDepGraph ddg;
-        ddg.setParam(NO_PHY_REG,
-                      NO_MEM_READ,
-                      INC_MEM_FLOW,
-                      INC_MEM_OUT,
-                      INC_CONTROL,
-                      NO_REG_READ,
-                      INC_REG_ANTI,
-                      INC_MEM_ANTI,
-                      INC_SYM_REG);
+        ddg.setParam(DEP_MEM_FLOW|DEP_MEM_OUT|DEP_CONTROL|DEP_REG_ANTI|
+                     DEP_MEM_ANTI|DEP_SYM_REG);
         ddg.init(m_bb);
         ddg.build();
         findMainIV(m_bb, ddg, &red_or, &cmp_or, &iv);
@@ -391,8 +386,7 @@ void ParallelPartMgr::dupORForParallelPart()
 {
     ASSERTN(m_pool, ("not yet initialize."));
     ASSERT0(m_main_red_or && m_cmp_or);
-    UINT i;
-    for (i = 0; i < numOfParallelPart(); i++) {
+    for (UINT i = 0; i < numOfParallelPart(); i++) {
         List<OR*> * dist_or_list =
             (List<OR*>*)xmalloc(sizeof(ORList));
         dist_or_list->init();
@@ -430,7 +424,7 @@ void ParallelPartMgr::dupORForParallelPart()
     }
 
     //Duplicate ors for other parallel part.
-    for (i = 0; i < numOfParallelPart(); i++) {
+    for (UINT i = 0; i < numOfParallelPart(); i++) {
         if (i == first_cluster_idx) {
             continue;
         }
@@ -457,7 +451,7 @@ bool ParallelPartMgr::distributeToCluster(UINT n)
 {
     ASSERTN(m_pool, ("not yet initialize."));
     ASSERT0(n < m_num_cluster);
-    xcom::BitSet * oridx_lst = NULL;
+    xcom::BitSet * oridx_lst = nullptr;
     List<OR*> * or_lst = getClusterParallelPart(n, &oridx_lst);
     ASSERT0(or_lst && oridx_lst);
     //SR2SR_DMAP * dmap = getClusterDMap(n);
@@ -466,7 +460,7 @@ bool ParallelPartMgr::distributeToCluster(UINT n)
     CLUST to_clust = getCluster(n);
     OR * o;
     for (o = or_lst->get_head(); o; o = or_lst->get_next()) {
-        if (!m_cg->changeORCluster(o, to_clust, m_regfile_unique, false)) {
+        if (!m_cg->changeORCluster(o, to_clust, &m_regfile_unique, false)) {
             UNREACHABLE();
         }
     }
@@ -476,7 +470,7 @@ bool ParallelPartMgr::distributeToCluster(UINT n)
     }
     //OR map idx allocate after append into ORBB.
     for (o = or_lst->get_head(); o; o = or_lst->get_next()) {
-        oridx_lst->bunion(OR_id(o));
+        oridx_lst->bunion(o->id());
     }
     return true;
 }
@@ -523,90 +517,88 @@ bool ParallelPartMgr::distribute()
 }
 
 
-void ParallelPartMgr::computeUniqueRegFile(
-        OR * o,
-        Vector<bool> & is_regfile_unique)
+void ParallelPartMgr::computeUniqueRegFile(OR * o,
+                                           RegFileSet & is_regfile_unique)
 {
     ASSERTN(m_pool, ("not yet initialize."));
-    UINT i;
-    for (i = 0; i < o->result_num(); i++) {
+    for (UINT i = 0; i < o->result_num(); i++) {
         SR * sr = o->get_result(i);
         if (!m_cg->isIntRegSR(o, sr, i, true)) {
             continue;
         }
-        if (is_regfile_unique.get(SR_sregid(sr))) {
+        if (is_regfile_unique.is_contain(SR_sregid(sr))) {
             continue;
         }
         if (sr->getPhyReg() != REG_UNDEF) {
             SR_regfile(sr) = tmMapReg2RegFile(sr->getPhyReg());
             ASSERTN(sr->getRegFile() != RF_UNDEF, ("Unknown regfile"));
-            is_regfile_unique.set(SR_sregid(sr), true);
+            is_regfile_unique.bunion(SR_sregid(sr));
             continue;
         }
 
         //Can allocate global register over again.
         //if (sr->is_global()) {
-        //    is_regfile_unique.set(SR_sregid(sr), true);
+        //    is_regfile_unique.bunion(SR_sregid(sr));
         //    continue;
         //}
 
         if (SR_is_dedicated(sr)) {
-            is_regfile_unique.set(SR_sregid(sr), true);
+            is_regfile_unique.bunion(SR_sregid(sr));
             continue;
         }
         if (sr->is_pred()) {
             SR_regfile(sr) = m_cg->getPredicateRegfile();
-            is_regfile_unique.set(SR_sregid(sr), true);
+            is_regfile_unique.bunion(SR_sregid(sr));
             continue;
         }
         if (sr->is_rflag()) {
             SR_regfile(sr) = m_cg->getRflagRegfile();
-            is_regfile_unique.set(SR_sregid(sr), true);
+            is_regfile_unique.bunion(SR_sregid(sr));
             continue;
         }
         if (o->is_asm()) {
             if (sr->getPhyReg() != REG_UNDEF ||
                 sr->getRegFile() != RF_UNDEF) {
-                is_regfile_unique.set(SR_sregid(sr), true);
+                is_regfile_unique.bunion(SR_sregid(sr));
                 continue;
             }
         }
     }
 
-    for (i = 0; i < o->opnd_num(); i++) {
+    for (UINT i = 0; i < o->opnd_num(); i++) {
         SR * sr = o->get_opnd( i);
         if (!m_cg->isIntRegSR(o, sr, i, false)) {
             continue;
         }
-        if (is_regfile_unique.get(SR_sregid(sr))) {
+        if (is_regfile_unique.is_contain(SR_sregid(sr))) {
             continue;
         }
         if (sr->getPhyReg() != REG_UNDEF) {
             SR_regfile(sr) = tmMapReg2RegFile(sr->getPhyReg());
             ASSERTN(sr->getRegFile() != RF_UNDEF,
                     ("Unknown regfile"));
-            is_regfile_unique.set(SR_sregid(sr), true);
+            is_regfile_unique.bunion(SR_sregid(sr));
             continue;
         }
 
         //Can allocate global register over again.
         //if (sr->is_global()) {
-        //    is_regfile_unique.set(SR_sregid(sr), true);
+        //    is_regfile_unique.bunion(SR_sregid(sr));
         //    continue;
         //}
 
         if (SR_is_dedicated(sr)) {
-            is_regfile_unique.set(SR_sregid(sr), true);
+            is_regfile_unique.bunion(SR_sregid(sr));
             continue;
         }
         if (o->is_asm()) {
             if (sr->getPhyReg() != REG_UNDEF ||
                 sr->getRegFile() != RF_UNDEF) {
-                is_regfile_unique.set(SR_sregid(sr), true);
+                is_regfile_unique.bunion(SR_sregid(sr));
                 continue;
             }
-        }//end if
-    }//end for
+        }
+    }
 }
 
 
@@ -633,7 +625,7 @@ bool ParallelPartMgr::modifyReductionOR(OR * o, INT mul)
     //TODO: Support multiply when step is variant.
     ASSERT0(step->is_constant());
     SR * new_step = m_cg->genIntImm((HOST_INT)step->getInt() * mul, true);
-    o->set_opnd(2, new_step);
+    o->set_opnd(2, new_step, m_cg);
     return true;
 }
 
@@ -652,7 +644,7 @@ SR * ParallelPartMgr::findIV(OR * o)
             return res;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 

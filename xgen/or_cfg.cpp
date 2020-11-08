@@ -46,7 +46,7 @@ OR_CFG::OR_CFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
     //Append bb list to vector and base graph
     ASSERT0(m_bb_vec.get_last_idx() == -1);
     for (ORBB * bb = m_bb_list->get_head();
-         bb != NULL; bb = m_bb_list->get_next()) {
+         bb != nullptr; bb = m_bb_list->get_next()) {
         m_bb_vec.set(bb->id(), bb);
         addVertex(bb->id());
         C<xoc::LabelInfo const*> * ct;
@@ -82,7 +82,7 @@ OR_CFG::OR_CFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
 
         //Collect exit BB.
         for (ORBB * bb = m_bb_list->get_head();
-             bb != NULL; bb = m_bb_list->get_next()) {
+             bb != nullptr; bb = m_bb_list->get_next()) {
             if (ORBB_is_exit(bb)) {
                 m_exit_list.append_tail(bb);
             }
@@ -110,7 +110,7 @@ List<ORBB*> * OR_CFG::getBBList()
 //the BB list should be modified out of this function.
 void OR_CFG::addBB(ORBB * bb)
 {
-    ASSERT0(bb && m_bb_vec.get(bb->id()) == NULL);
+    ASSERT0(bb && m_bb_vec.get(bb->id()) == nullptr);
     m_bb_vec.set(bb->id(), bb);
     addVertex(bb->id());
 }
@@ -123,7 +123,7 @@ void OR_CFG::moveLabels(ORBB * src, ORBB * tgt)
 
     //Set label2bb map.
     for (xoc::LabelInfo const* li = tgt->getLabelList().get_head();
-         li != NULL; li = tgt->getLabelList().get_next()) {
+         li != nullptr; li = tgt->getLabelList().get_next()) {
         m_lab2bb.setAlways(li, tgt);
     }
 
@@ -135,8 +135,8 @@ void OR_CFG::moveLabels(ORBB * src, ORBB * tgt)
 void OR_CFG::resetMapBetweenLabelAndBB(ORBB * bb)
 {
     for (xoc::LabelInfo const* li = bb->getLabelList().get_head();
-         li != NULL; li = bb->getLabelList().get_next()) {
-        m_lab2bb.setAlways(li, NULL);
+         li != nullptr; li = bb->getLabelList().get_next()) {
+        m_lab2bb.setAlways(li, nullptr);
     }
     bb->cleanLabelInfoList();
 }
@@ -160,7 +160,7 @@ void OR_CFG::get_succs(IN OUT List<ORBB*> & succs, ORBB const* bb)
     xcom::Vertex * v = getVertex(bb->id());
     xcom::EdgeC * el = v->getOutList();
     succs.clean();
-    while (el != NULL) {
+    while (el != nullptr) {
         ORBB * succ = getBB(el->getToId());
         ASSERTN(succ, ("without bb corresponded"));
         succs.append_tail(succ);
@@ -175,7 +175,7 @@ void OR_CFG::get_preds(IN OUT List<ORBB*> & preds, ORBB const* bb)
     xcom::Vertex * v = getVertex(bb->id());
     xcom::EdgeC * el = v->getInList();
     preds.clean();    
-    while (el != NULL) {
+    while (el != nullptr) {
         ORBB * pred = getBB(el->getFromId());
         ASSERTN(pred, ("without bb corresponded"));
         preds.append_tail(pred);
@@ -228,7 +228,7 @@ void OR_CFG::dump_node(FILE * h, bool detail)
     xcom::StrBuf buf(64);
     UINT vertical_order = 1;
     for (ORBB * bb = m_bb_list->get_head();
-         bb != NULL; bb = m_bb_list->get_next()) {
+         bb != nullptr; bb = m_bb_list->get_next()) {
         xcom::Vertex * v = getVertex(bb->id());
         ASSERTN(v, ("bb is not in cfg"));
 
@@ -251,7 +251,7 @@ void OR_CFG::dump_node(FILE * h, bool detail)
         fprintf(h, "\n");
 
         if (detail) {
-            for (OR * o = ORBB_first_or(bb); o != NULL; o = ORBB_next_or(bb)) {
+            for (OR * o = ORBB_first_or(bb); o != nullptr; o = ORBB_next_or(bb)) {
                 buf.clean();
                 fprintf(h, "%s\n", o->dump(buf, m_cg));
             }
@@ -264,9 +264,9 @@ void OR_CFG::dump_node(FILE * h, bool detail)
 
 void OR_CFG::dump_edge(FILE * h)
 {
-    INT c;
-    for (xcom::Edge * e = m_edges.get_first(c);
-         e != NULL; e = m_edges.get_next(c)) {
+    EdgeIter c;
+    for (xcom::Edge * e = get_first_edge(c);
+         e != nullptr; e = get_next_edge(c)) {
         fprintf(h,
                 "\nedge: { sourcename:\"%d\" targetname:\"%d\" "
                 " thickness:4 color:darkred }",
@@ -317,12 +317,12 @@ void OR_CFG::dump_head(FILE * h)
 
 void OR_CFG::dumpVCG(CHAR const* name, bool detail)
 {
-    if (name == NULL) {
+    if (name == nullptr) {
         name = "graph_cfg.vcg";
     }
     UNLINK(name);
     FILE * h = fopen(name, "a+");
-    ASSERTN(h != NULL, ("%s create failed!!!",name));
+    ASSERTN(h != nullptr, ("%s create failed!!!",name));
 
     //Print comment
     fprintf(h, "\n/*");

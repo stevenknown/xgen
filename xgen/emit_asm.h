@@ -55,7 +55,7 @@ public:
         ASSERTN(0, ("Target Dependent Code"));
         DUMMYUSE(o);
         DUMMYUSE(buf);
-        return NULL;
+        return nullptr;
     }
 
     virtual void printData(FILE * h)

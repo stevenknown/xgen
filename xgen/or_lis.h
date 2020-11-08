@@ -33,28 +33,44 @@ author: Su Zhenyu
 
 namespace xgen {
 
-//Local Instruction Schedulor
-#define SCH_UNDEF 0
-#define SCH_TOP_DOWN 1 //Scheducling Top-down
-#define SCH_BOTTOM_UP 2 //Scheducling bottom up
-#define SCH_BRANCH_DELAY_SLOT 3 //Scheducling branch delay
+//Cycle-Accurate Local Instruction Schedulor
 class LIS {
+    COPY_CONSTRUCTOR(LIS);
+public:
+    //Defined the direction of scheduling and some target dependent behaviors.
+    enum SchedMode {
+        SCH_UNDEF = 0x0, //Undefined scheduling behavior
+        SCH_TOP_DOWN = 0x1, //Scheducling Top-down
+        SCH_BOTTOM_UP = 0x2, //Scheducling bottom up
+        SCH_BRANCH_DELAY_SLOT = 0x4, //Scheducling branch delay
+        SCH_CHANGE_SLOT = 0x8, //Allow schedulor changes Issue Slot/FunctionUnit
+                               //of OR if needed during scheduling
+        SCH_CHANGE_CLUSTER = 0x10, //Allow schedulor changes cluster if needed
+                                   //during scheduling
+        SCH_ALLOW_RESCHED = 0x20, //allow rescheduling if needed
+    };
+
 protected:
+    UINT m_sch_mode:31;
+    UINT m_or_changed:1;
     SMemPool * m_pool;
-    UINT m_sch_mode;
     DataDepGraph * m_ddg;
     ORBB * m_bb;
     BBSimulator * m_sim;
     CG * m_cg;
-    OR_HASH m_ready_list;
-    bool m_is_change_slot; //permit func unit be changed.
-    bool m_is_change_cluster; //permit cluster be changed.
-    bool m_or_changed; //record if resource of or changed.
+    RegFileSet const* m_is_regfile_unique;
     ORDesc * m_br_ord; //description of branch operation.
-    OR_HASH m_br_all_preds; //all of ors which are predecessors of branch-or.
-    Vector<bool> const* m_is_regfile_unique;
+    ORTab m_ready_list;
+    ORTab m_br_all_preds; //all of ors which are predecessors of branch-or.
 
 protected:
+    bool isScheduleDelaySlot() const { return m_br_ord != nullptr; }
+    bool isBranch(OR const* o) const
+    {
+        ASSERT0(isScheduleDelaySlot());
+        return o == ORDESC_or(m_br_ord);
+    }
+
     inline void * xmalloc(INT size)
     {
         ASSERTN(size > 0, ("xmalloc: size less zero!"));
@@ -64,27 +80,40 @@ protected:
         ::memset(p,0,size);
         return p;
     }
-    virtual OR * selectBestOR(OR_HASH & cand_hash, SLOT slot);
+    virtual OR * selectBestOR(ORTab & cand_tab, SLOT slot);
     virtual void updateIssueORs(IN OUT ORList & cand_list,
                                 SLOT slot,
                                 IN OR * issue_or,
                                 IN OUT OR * issue_ors[SLOT_NUM]);
+
+    //Add more ready-OR into ready-list when removing 'or'.
+    //or: OR will be removed.
+    //ddg: dependent graph, it will be updated before function return.
+    //visited: bitset that used to update ready-or-list. It can be
+    //nullptr if you are not going to update ready-list.
+    void updateReadyList(OR const* o, DataDepGraph const& ddg,
+                         DefSBitSet * visited);
 public:
-    LIS(ORBB * bb,
-        DataDepGraph & ddg,
-        BBSimulator * sim,
-        UINT sch_mode = SCH_TOP_DOWN,
-        bool change_slot = true,
-        bool change_cluster = false)
+    LIS(ORBB * bb, DataDepGraph & ddg, BBSimulator * sim,
+        UINT sch_mode = SCH_TOP_DOWN | SCH_CHANGE_SLOT)
     {
-        m_pool = NULL;
-        init(bb, ddg, sim, sch_mode, change_slot, change_cluster);
+        m_pool = nullptr;
+        init(bb, ddg, sim, sch_mode);
     }
     virtual ~LIS() { destroy(); }
 
+    //Return true if allowing rescheduling ORs when sch-mode is SCH_DEALY_SLOT.
+    //Note this will increase compilation time obviously.
+    virtual bool allowReschedule() const
+    { return HAVE_FLAG(m_sch_mode, SCH_ALLOW_RESCHED); }
+    bool allowChangeSlot() const
+    { return HAVE_FLAG(m_sch_mode, SCH_CHANGE_SLOT); }
+    bool allowChangeCluster() const
+    { return HAVE_FLAG(m_sch_mode, SCH_CHANGE_CLUSTER); }
+
     //Scheduling method
     void computeReadyList(IN OUT DataDepGraph & ddg,
-                          IN OUT Vector<bool> & visited,
+                          IN OUT DefSBitSet & visited,
                           bool topdown);
 
     //Change OR to given issue slot.
@@ -100,37 +129,48 @@ public:
     //Return true if 'o' can be issued at 'to_slot'.
     //The verification includes hardware resource, instrcution hazard, etc.
     bool makeIssued(OR * o,
-                     OR * issue_ors[SLOT_NUM],
-                     SLOT to_slot,
-                     bool is_change_slot,
-                     OR * conflict_ors[SLOT_NUM]);
+                    OR * issue_ors[SLOT_NUM],
+                    SLOT to_slot,
+                    bool is_change_slot,
+                    OR * conflict_ors[SLOT_NUM]);
 
     void destroy();
-    virtual INT dcache_miss_rate(OR * o);
-    virtual INT dcache_miss_penalty(OR * o);
-    virtual void dump(CHAR * name,
-                      bool is_del = true,
-                      bool need_exec_detail = true);
+    virtual INT dcache_miss_rate(OR const* o) const;
+    virtual INT dcache_miss_penalty(OR const* o) const;
+    virtual void dump(bool need_exec_detail = true) const;
 
-    virtual bool fillIssueSlot(DataDepGraph & stepddg);
+    //Choose candidate OR from ready-list, and fill available issue slot.
+    //Return true if there are ORs issued, and ready-list should
+    //be recomputed.
+    //stepddg: computing ready instructions step by step during scheduling.
+    //visited: bitset that used to update ready-or-list. It can be nullptr if you
+    //         are not going to update ready-list.
+    //
+    //About fill branch shadow:
+    //    When GIS is calling it, don't try to schedule the operation
+    //    that has moved from a different block that do not
+    //    dominate/post-dominate current BB in the delay slot.
+    //    Frequent observance is that this will unneccessarily
+    //    restrict further code motion.
+    virtual bool fillIssueSlot(DataDepGraph * stepddg, DefSBitSet * visited);
 
     //Return the Branch Operation.
     OR * get_br() const { return m_bb->getBranchOR(); }
+    ORBB * getBB() const { return m_bb; }
     //Get simulated machine
     BBSimulator const* get_simm() const { return m_sim; }
 
-    void init(ORBB * bb,
-              DataDepGraph & ddg,
-              BBSimulator * sim,
-              UINT sch_mode,
-              bool change_slot,
-              bool change_cluster);
+    //Return an experimental integer that describe the maximum times to
+    //rescheduling ORs by adjusting issue time of branch operation. 
+    //Note this is sometime a tricky value, range between [0~N].
+    virtual UINT getAddendOfMaxTryTime() const { return 0; }
 
+    void init(ORBB * bb, DataDepGraph & ddg, BBSimulator * sim, UINT sch_mode);
     //Return true if OR can be issued at given slot.
-    virtual bool isValidResourceUsage(IN OR *,
+    virtual bool isValidResourceUsage(OR const*,
                                       SLOT slot,
                                       OR * issue_ors[SLOT_NUM],
-                                      OR * conflict_ors[SLOT_NUM])
+                                      OR * conflict_ors[SLOT_NUM]) const
     {
         ASSERTN(0, ("Target Dependent Code"));
         DUMMYUSE(slot);
@@ -139,7 +179,7 @@ public:
         return true;
     }
 
-    virtual bool isIssueCand(OR * o);
+    bool isIssueCand(OR const* o) const;
     bool isFuncUnitOccupied(UnitSet const& us,
                             CLUST clst,
                             OR const* const issue_ors [SLOT_NUM]) const;
@@ -149,23 +189,29 @@ public:
                              SLOT to_slot);
     virtual bool selectIssueORs(IN ORList & cand_list,
                                 OUT OR * issue_ors[SLOT_NUM]);
-    virtual OR * selectBestORByPriority(OR_HASH & cand_hash);
-    virtual bool selectIssueOR(IN ORList & cand_list,
+    virtual OR * selectBestORByPriority(ORTab const& cand_hash) const;
+
+    //Find valid OR that can be issued at slot.
+    //Return true if avaiable issue ors found.
+    //'cand_list': list of candidate operations which
+    //             can be issue at this cycle.
+    //'slot': slot need to fill
+    //'issue_or': record issued ors selected.
+    //'change_slot': set to true indicate the routine allows modification
+    //  of operations in other slot. Note that the modification may
+    //  change the function unit of operation.
+    //Note this functio will attempt to change OR's slot if possible.
+    virtual bool selectIssueOR(IN ORList & cand_list, //OR may be changed.
                                SLOT slot,
                                OUT OR * issue_ors[SLOT_NUM],
                                bool change_slot);
+    //Set simulator.
     void set_simm(BBSimulator * sim) { m_sim = sim; }
+    //Set scheduling mode.
     void set_sch_mode(UINT sch_mode) { m_sch_mode = sch_mode; }
-
-    void set_unique_regfile(Vector<bool> const& is_regfile_unique)
-    { m_is_regfile_unique = &is_regfile_unique; }
-
-    void set_change_slot(bool is_change_slot)
-    { m_is_change_slot = is_change_slot; }
-
-    void set_change_cluster(bool is_change_cluster)
-    { m_is_change_cluster = is_change_cluster; }
-
+    //Set unique register file information.
+    void set_unique_regfile(RegFileSet const* is_regfile_unique)
+    { m_is_regfile_unique = is_regfile_unique; }
     virtual bool schedule();
     void serialize();
 };

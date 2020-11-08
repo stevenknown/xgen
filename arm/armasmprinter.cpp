@@ -70,7 +70,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
         buf.strcat("bx");
         break;
     default:
-        buf.strcat("%s", OR_code_name(o));
+        buf.strcat("%s", o->getCodeName());
         break;
     }
 
@@ -144,7 +144,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     case OR_strh_i8:
     case OR_str:
     case OR_str_i12:
-        buf.strcat("%s, ", o->get_store_val()->getAsmName(tbuf, m_cg));
+        buf.strcat("%s, ", o->get_first_store_val()->getAsmName(tbuf, m_cg));
         tbuf.clean();
         buf.strcat("[%s, ", o->get_store_base()->getAsmName(tbuf, m_cg));
         tbuf.clean();
@@ -273,7 +273,7 @@ void ARMAsmPrinter::printBss(FILE * asmh, Section & sect)
     StrBuf buf(64);
     ASSERT0(SECT_var(&sect));
     for (Var const* v = SECT_var_list(&sect).get_head();
-         v != NULL; v = SECT_var_list(&sect).get_next()) {
+         v != nullptr; v = SECT_var_list(&sect).get_next()) {
         if (m_asmprtmgr->getPrintedVARTab().find(v) || VAR_is_func_decl(v)) {
             continue;
         }
@@ -300,7 +300,7 @@ void ARMAsmPrinter::printData(FILE * asmh, Section & sect)
     StrBuf buf(128);
     bool first = true;
     for (Var const* v = SECT_var_list(&sect).get_head();
-         v != NULL; v = SECT_var_list(&sect).get_next()) {
+         v != nullptr; v = SECT_var_list(&sect).get_next()) {
         if (m_asmprtmgr->getPrintedVARTab().find(v)) {
             continue;
         }
@@ -313,8 +313,8 @@ void ARMAsmPrinter::printData(FILE * asmh, Section & sect)
 
         CHAR const* name = SYM_name(v->get_name());
         if (v->is_string()) {
-            CHAR const* p = NULL;
-            if (VAR_string(v) != NULL) {
+            CHAR const* p = nullptr;
+            if (VAR_string(v) != nullptr) {
                 p = SYM_name(VAR_string(v));
             } else {
                 p = "";
@@ -386,14 +386,15 @@ void ARMAsmPrinter::printCodeSequentially(IssuePackageList * ipl,
     asm_lm.push(asmh, "");
     prtctx.prefix = "#";
     prtctx.logmgr = &asm_lm;
-    for (IssuePackage const* ip = ipl->get_head();
-         ip != NULL; ip = ipl->get_next()) {
+    for (IssuePackageListIter it = ipl->get_head();
+         it != ipl->end(); it = ipl->get_next(it)) {
+        IssuePackage const* ip = it->val();
         fprintf(asmh, "\n");
         OR * o = ip->get(SLOT_G);
-        if (xoc::g_dbx_mgr != NULL && g_cg_dump_src_line) {
+        if (xoc::g_dbx_mgr != nullptr && g_cg_dump_src_line) {
             xoc::g_dbx_mgr->printSrcLine(&OR_dbx(o), &prtctx);
         }
-        if (o != NULL) {
+        if (o != nullptr) {
             buf.clean();
             fprintf(asmh, format, code_indent, printOR(o, buf));
         } else {
@@ -411,8 +412,8 @@ void ARMAsmPrinter::printCode(FILE * asmh)
 {
     StrBuf buf(128);
     //Print function name, type, global property.
-    CHAR const* func_name = SYM_name(
-        m_cg->getRegion()->getRegionVar()->get_name());
+    CHAR const* func_name = m_cg->getRegion()->getRegionVar()->
+                                get_name()->getStr();
     ASSERT0(func_name);
     fprintf(asmh, "\n.align 2");
     fprintf(asmh, "\n\n\n\n.section .text, \"ax\", \"progbits\"");
@@ -425,7 +426,7 @@ void ARMAsmPrinter::printCode(FILE * asmh)
     Vector<IssuePackageList*> const* iplvec = m_cg->getIssuePackageListVec();
     List<ORBB*> * bblst = m_cg->getORBBList();
     ASSERT0(bblst);
-    for (ORBB * bb = bblst->get_head(); bb != NULL; bb = bblst->get_next()) {
+    for (ORBB * bb = bblst->get_head(); bb != nullptr; bb = bblst->get_next()) {
         //Print BB info
         fprintf(asmh, "\n#START BB%d", bb->id());
         if (ORBB_is_entry(bb)) {
@@ -439,7 +440,7 @@ void ARMAsmPrinter::printCode(FILE * asmh)
 
         //Print label
         for (LabelInfo const* li = bb->getLabelList().get_head();
-             li != NULL; li = bb->getLabelList().get_next()) {
+             li != nullptr; li = bb->getLabelList().get_next()) {
             if (li->is_pragma()) { continue; }
             buf.clean();
             fprintf(asmh, "%s:\n", m_cg->formatLabelName(li, buf));

@@ -35,6 +35,7 @@ namespace xgen {
 
 //This class apply objects to allocate OR and SR.
 class CGMgr {
+    COPY_CONSTRUCTOR(CGMgr);
 protected:
     ORMgr * m_or_mgr;
     SRMgr * m_sr_mgr;
@@ -47,19 +48,25 @@ protected:
 
     void initSRAndORMgr()
     {
+        if (m_sr_mgr != nullptr) { return; }
         m_sr_mgr = allocSRMgr();
-        m_or_mgr = allocORMgr(getSRMgr());
+        m_or_mgr = allocORMgr(getSRMgr());    
+        m_sr_vec_mgr.init();
     }
 
     void finiSRAndORMgr()
     {
+        if (m_sr_mgr == nullptr) { return; }
         ASSERT0(getSRMgr() && m_or_mgr);
         delete m_sr_mgr;
         delete m_or_mgr;
+        m_sr_mgr = nullptr;
+        m_or_mgr = nullptr;
+        m_sr_vec_mgr.destroy();
     }
 public:
-    CGMgr() {} //You need invoke init() after CGMgr constructed.
-    COPY_CONSTRUCTOR(CGMgr);
+    //You need invoke init() after CGMgr constructed.
+    CGMgr() { m_sr_mgr = nullptr; m_or_mgr = nullptr; }
     virtual ~CGMgr() { finiSRAndORMgr(); }
 
     //Allocate CG.
@@ -83,6 +90,11 @@ public:
     //    6. LRA.
     //    7. Peephole.
     virtual bool CodeGen(Region * region, FILE * asmh);
+    void clean()
+    {
+        finiSRAndORMgr();
+        initSRAndORMgr();        
+    }
 
     //Print global variable to asmfile.
     virtual bool GenAndPrtGlobalVariable(Region * rg, FILE * asmh);

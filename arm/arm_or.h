@@ -37,7 +37,7 @@ author: Su Zhenyu
 class ARMOR : public OR {
 public:
     virtual LabelInfo const* getLabel() const;
-    virtual void set_pred(SR * v);
+    virtual void set_pred(SR * v, CG * cg);
 };
 //END ARMOR
 
@@ -46,11 +46,11 @@ public:
 //START ARMORMgr
 //
 class ARMORMgr : public ORMgr {
+    COPY_CONSTRUCTOR(ARMORMgr);
+protected:
+    virtual OR * allocOR();
 public:
     ARMORMgr(SRMgr * srmgr) : ORMgr(srmgr) {}
-    COPY_CONSTRUCTOR(ARMORMgr);
-
-    virtual OR * allocOR();
 };
 //END ARMORMgr
 

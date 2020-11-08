@@ -54,7 +54,7 @@ protected:
     void remove_bb_impl(ORBB * bb)
     {
         ASSERT0(bb);
-        m_bb_vec.set(bb->id(), NULL);
+        m_bb_vec.set(bb->id(), nullptr);
 
         //C<LabelInfo const*> * ct;
         //for (lablst.get_head(&ct);
@@ -72,7 +72,7 @@ public:
 
     virtual void cf_opt();
 
-    void dumpVCG(CHAR const* name = NULL, bool detail = true);
+    void dumpVCG(CHAR const* name = nullptr, bool detail = true);
 
     virtual ORBB * findBBbyLabel(LabelInfo const* lab) const;
     virtual void findTargetBBOfMulticondBranch(OR const*,
@@ -94,7 +94,7 @@ public:
     virtual bool isRegionExit(ORBB * bb) { return ORBB_is_exit(bb); }
 
     //Remove 'bb' from CFG, vector and bb-list.
-    virtual void remove_bb(C<ORBB*> * bbct)
+    virtual void removeBB(C<ORBB*> * bbct)
     {
         ASSERT0(bbct);
         ASSERT0(m_bb_list->in_list(bbct));
@@ -103,7 +103,7 @@ public:
     }
 
     //Remove 'bb' from CFG, vector and bb-list.
-    virtual void remove_bb(ORBB * bb)
+    virtual void removeBB(ORBB * bb)
     {
         ASSERT0(bb);
         remove_bb_impl(bb);

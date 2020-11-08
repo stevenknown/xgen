@@ -36,6 +36,13 @@ namespace xgen {
 class CG;
 class SR;
 class SRVec;
+class SRVecMgr;
+
+//This macro defined the maximum number of element that SRVec can recorded.
+//User can extend this value if it is not big enough.
+#define MAX_SRVEC_NUM 64
+#define SYMREG_UNDEF 0
+#define SRVEC_IDX_UNDEF -1
 
 typedef enum _SR_TYPE {
     SR_UNDEF = 0,
@@ -97,17 +104,18 @@ SR const* checkSRIMM(SR const* ir);
 //Record the sr's position in the vector, start at 0.
 //sr is either register or immeidate.
 #define SR_vec_idx(sr) ((sr)->m_sr_vec_idx)
-#define SR_is_vec(sr) (SR_vec(sr) != NULL)
+#define SR_is_vec(sr) (SR_vec(sr) != nullptr)
 #define SR_is_str(sr) (SR_type(sr) == SR_STR)
 #define SR_is_label(sr) (SR_type(sr) == SR_LAB)
 #define SR_is_var(sr) (SR_type(sr) == SR_VAR)
-#define SR_is_sp(sr) ((sr)->u2.s2.isSP)
+#define SR_is_sp(sr) ((sr)->u2.s2.is_sp)
 #define SR_is_fp(sr) ((sr)->u2.s2.is_fp)
 #define SR_is_gp(sr) ((sr)->u2.s2.is_gp)
 #define SR_is_param_pointer(sr) ((sr)->u2.s2.is_param_pointer)
 #define SR_is_rflag(sr) ((sr)->u2.s2.is_rflag)
 #define SR_is_dedicated(sr) ((sr)->u2.s2.is_dedicated)
 #define SR_is_ra(sr) ((sr)->u2.s2.is_return_address)
+#define SR_is_free(sr) ((sr)->u2.s2.is_free)
 #define SR_is_global(sr) ((sr)->u2.s2.is_global)
 #define SR_is_pred(sr) ((sr)->u2.s2.is_predicated)
 #define SR_is_int_imm(sr) ((sr)->type == SR_INT_IMM)
@@ -123,7 +131,7 @@ public:
     union {
         UINT bitflags;
         struct {
-            UINT isSP:1; //stack pointer
+            UINT is_sp:1; //stack pointer
             UINT is_fp:1; //frame pointer
             UINT is_gp:1; //global register
             UINT is_param_pointer:1; //param poniter register
@@ -132,6 +140,7 @@ public:
             UINT is_global:1; //global symbol register
             UINT is_predicated:1; //predicated register
             UINT is_return_address:1; //function return-address register.
+            UINT is_free:1; //set to true if current SR has been freed.
         } s2;
     } u2;
 
@@ -178,7 +187,8 @@ public:
     SR() { clean(); }
     virtual ~SR() {}
 
-    virtual void copy(SR const* sr, bool is_clone_vec = false, CG * cg = NULL);
+    virtual void copy(SR const* sr, bool is_clone_vec = false,
+                      CG * cg = nullptr);
     virtual void clean();
 
     virtual void dump(CG * cg) const;
@@ -232,7 +242,8 @@ public:
     bool is_imm() const { return SR_is_imm(this); }
     bool is_reg() const { return SR_is_reg(this); }
     bool is_constant() const { return SR_is_constant(this); }
-    bool is_group() const { return SR_vec(this) != NULL; }
+    bool is_group() const { return SR_vec(this) != nullptr; }
+    bool is_free() const { return SR_is_free(this); }
 };
 
 typedef List<SR*> SRList;
@@ -243,7 +254,6 @@ typedef xcom::Hash<SR*> SRHash; //SR hash table
 class SRMgr : public List<SR*> {
 protected:
     List<SR*> m_freesr_list;
-    xcom::BitSet m_freesr_mark;
     Vector<SR*> m_sridx2sr_map;
 
     virtual SR * allocSR();
@@ -251,33 +261,44 @@ public:
     SRMgr() {}
     virtual ~SRMgr() { clean(); }
     virtual void clean();
-    virtual void freeSR(SR * sr);
+    void freeSR(SR * sr);
     virtual SR * get(UINT unique_id);
     virtual SR * genSR();
+};
+
+
+//This class is used to manage the allocation and recycling of SRVec.
+class SRVecMgr {
+    SMemPool * m_pool;
+protected:
+    SRVec * newSRVec();
+public:
+    SRVecMgr() { m_pool = nullptr; init(); }
+    ~SRVecMgr() { destroy(); }
+
+    void init();
+    void destroy()
+    {
+        if (m_pool == nullptr) { return; }
+        smpoolDelete(m_pool);
+        m_pool = nullptr;
+    } 
+
+    SMemPool * get_pool() const { return m_pool; }
+    SR * genSRVec(UINT num, ...);
+    SR * genSRVec(List<SR*> & lst);
 };
 
 
 //This class defined the vector of SR.
 //A SRVec binds several SR into one group, and each element SR in the group
 //has a pointer which points to the group that the SR is belonged to.
-class SRVec : public Vector<SR*, 1> {
+class SRVec : public SimpleVector<SR*, 1, MAX_SRVEC_NUM> {
 public:
-    SRVec() : Vector<SR*, 1>(2) {}
-    UINT get_elem_count() {    return get_last_idx() + 1; }
-};
+    UINT get_elem_count() { return getElemNum(); }
 
-
-//This class is used to manage the allocation and recycling of SRVec.
-class SRVecMgr {
-protected:
-    List<SRVec*> m_sr_vec_list;
-    SRVec * newSRVec();
-public:
-    SRVecMgr() {}
-    virtual ~SRVecMgr() { clean(); }
-    virtual void clean();
-    virtual SR * genSRVec(UINT num, ...);
-    virtual SR * genSRVec(List<SR*> & lst);
+    void set(UINT i, SR * elem, SRVecMgr * mgr) 
+    { SimpleVector<SR*, 1, MAX_SRVEC_NUM>::set(i, elem, mgr->get_pool()); }
 };
 
 } //namespace xgen

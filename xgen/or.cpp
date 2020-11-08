@@ -38,7 +38,7 @@ namespace xgen {
 void ORList::append_tail(OR * o)
 {
     #ifdef _DEBUG_
-    for (OR * t = get_head(); t != NULL; t = get_next()) {
+    for (OR * t = get_head(); t != nullptr; t = get_next()) {
         ASSERTN(t != o, ("already in list."));
     }
     #endif
@@ -49,8 +49,8 @@ void ORList::append_tail(OR * o)
 void ORList::append_tail(ORList & ors)
 {
     #ifdef _DEBUG_
-    for (OR * o = get_head(); o != NULL; o = get_next()) {
-        for (OR * oo = ors.get_head(); oo != NULL; oo = ors.get_next()) {
+    for (OR * o = get_head(); o != nullptr; o = get_next()) {
+        for (OR * oo = ors.get_head(); oo != nullptr; oo = ors.get_next()) {
             ASSERTN(o != oo, ("already in list."));
         }
     }
@@ -62,7 +62,7 @@ void ORList::append_tail(ORList & ors)
 void ORList::dump(CG * cg)
 {
     xcom::StrBuf buf(128);
-    for (OR * o = get_head(); o != NULL; o = get_next()) {
+    for (OR * o = get_head(); o != nullptr; o = get_next()) {
         buf.clean();
         o->dump(buf, cg);
         note(cg->getRegion(), "\n%s", buf.buf);
@@ -80,9 +80,9 @@ void OR::clean()
     //DO NOT MODIFY 'id'. It is the marker in or_vector.
     code = OR_UNDEF;
     clust = CLUST_UNDEF; //cluster
-    container = NULL;
+    container = nullptr;
     order = -1;
-    bb = NULL;
+    ubb = nullptr;
     OR_flag(this) = 0;
     dbx.clean();
     m_opnd.clean();
@@ -94,21 +94,21 @@ void OR::copyDbx(IR const* ir)
 {
     ASSERT0(ir);
     Dbx * t = ::getDbx(ir);
-    if (t != NULL) {
+    if (t != nullptr) {
         OR_dbx(this).copy(*t);
     }
 }
 
 
-void OR::clone(OR const* o)
+void OR::clone(OR const* o, CG * cg)
 {
     //DO NOT MODIFY 'id'.
-    m_opnd.copy(o->m_opnd);
-    m_result.copy(o->m_result);
+    m_opnd.copy(o->m_opnd, cg->getORMgr()->get_pool());
+    m_result.copy(o->m_result, cg->getORMgr()->get_pool());
     dbx.copy(o->dbx);
     code = o->code;
     order = -1; //order in BB need to recompute.
-    bb = o->bb;
+    ubb = o->ubb;
     OR_flag(this) = OR_flag(o);
 }
 
@@ -126,7 +126,7 @@ SR * OR::get_imm_sr()
 bool OR::is_equal(OR const* o) const
 {
     if (OR_code(this) == o->getCode() &&
-        OR_bb(this) == OR_bb(o) &&
+        OR_bb(this) == o->getBB() &&
         OR_is_call(this) == OR_is_call(o) &&
         OR_is_cond_br(this) == OR_is_call(o) &&
         OR_is_predicated(this) == OR_is_predicated(o) &&
@@ -149,14 +149,14 @@ void OR::dump(CG * cg) const
 
 CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
 {
-    if (xoc::g_dbx_mgr != NULL && g_cg_dump_src_line) {
+    if (xoc::g_dbx_mgr != nullptr && g_cg_dump_src_line) {
         DbxMgr::PrtCtx prtctx;
         xoc::g_dbx_mgr->printSrcLine(buf, &OR_dbx(this), &prtctx);
     }
 
     OR * pthis = const_cast<OR*>(this);
     //Order in BB.
-    if (OR_bb(this) == NULL) {
+    if (OR_bb(this) == nullptr) {
         buf.strcat("[????]");
     } else {
         buf.strcat("[O:%d]", OR_order(this));
@@ -216,7 +216,7 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
         //reg <- predicate_register, [base + ofst]
         //load value
         for (UINT i = 0; i < get_num_load_val(); i++) {
-            ASSERTN(pthis->get_load_val(i) != NULL, ("miss result"));
+            ASSERTN(pthis->get_load_val(i) != nullptr, ("miss result"));
             pthis->get_load_val(i)->get_name(buf, cg);
             if (i < get_num_load_val() - 1) {
                 buf.strcat(", ");
@@ -288,14 +288,14 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
     //assistant info
     if (OR_is_store(this)) {
         xoc::Var const* var = cg->mapOR2Var(pthis);
-        if (var != NULL) {
+        if (var != nullptr) {
             buf.strcat("  //store to '");
             var->dump(buf, cg->getRegion()->getTypeMgr());
             buf.strcat("'");
         }
     } else if (OR_is_load(this)) {
         xoc::Var const* var = cg->mapOR2Var(pthis);
-        if (var != NULL) {
+        if (var != nullptr) {
             buf.strcat("  //load from '");
             var->dump(buf, cg->getRegion()->getTypeMgr());
             buf.strcat("'");
@@ -309,7 +309,7 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
 //Return the idx of opnd 'sr'.
 INT OR::get_opnd_idx(SR * sr) const
 {
-    for (INT i = 0; i <= m_opnd.get_last_idx(); i++) {
+    for (UINT i = 0; i <= m_opnd.getElemNum(); i++) {
         if (m_opnd.get(i) == sr) {
             return i;
         }
@@ -321,12 +321,26 @@ INT OR::get_opnd_idx(SR * sr) const
 //Return the idx of opnd 'sr'.
 INT OR::get_result_idx(SR * sr) const
 {
-    for (INT i = 0; i <= m_result.get_last_idx(); i++) {
+    for (UINT i = 0; i <= m_result.getElemNum(); i++) {
         if (m_result.get(i) == sr) {
             return i;
         }
     }
     return -1;
+}
+
+
+void OR::set_opnd(INT i, SR * sr, CG * cg)
+{
+    ASSERT0(sr && (UINT)i < opnd_num());
+    m_opnd.set(i, sr, cg->getORMgr()->get_pool());
+}
+
+
+void OR::set_result(INT i, SR * sr, CG * cg)
+{
+    ASSERT0(sr && (UINT)i < result_num());
+    m_result.set(i, sr, cg->getORMgr()->get_pool());
 }
 //END OR
 
@@ -338,6 +352,7 @@ ORMgr::ORMgr(SRMgr * srmgr)
 {
     ASSERT0(srmgr);
     m_sr_mgr = srmgr;
+    m_pool = smpoolCreate(64, MEM_COMM);
 }
 
 
@@ -345,14 +360,16 @@ void ORMgr::clean()
 {
     for (INT i = 0; i <= get_last_idx(); i++) {
         OR * o = get(i);
-        if (o != NULL) {
-            //o may be NULL.
+        if (o != nullptr) {
+            //o may be nullptr.
             delete o;
         }
     }
 
     Vector<OR*>::clean();
     m_free_or_list.clean();
+    smpoolDelete(m_pool);
+    m_pool = nullptr;
 }
 
 
@@ -371,55 +388,56 @@ OR * ORMgr::getOR(UINT id)
 OR * ORMgr::genOR(OR_TYPE ort, CG * cg)
 {
     OR * o = m_free_or_list.remove_head();
-    if (o == NULL) {
+    if (o == nullptr) {
         o = allocOR();
         INT idx = get_last_idx();
         if (idx < 0) {
-            OR_id(o) = 1; //Do not use 0 as index. 0 is reserved.
+            OR_id(o) = ORID_UNDEF + 1; //Do not use ORID_UNDEF as index.
         } else {
             OR_id(o) = idx + 1;
         }
-        set(OR_id(o), o);
+        set(o->id(), o);
     }
     OR_code(o) = ort;
+    o->get_opnd_vec()->grow(o->opnd_num(), get_pool());
+    o->get_result_vec()->grow(o->result_num(), get_pool());
     if (HAS_PREDICATE_REGISTER) {
         ASSERT0(cg);
-        o->set_pred(cg->getTruePred());
+        o->set_pred(cg->getTruePred(), cg);
     }
     return o;
 }
 
 
-void ORMgr::freeOR(OR * o)
+//Free SR to reuse it at next allocSR().
+void ORMgr::freeSR(OR * o)
 {
-    UINT i;
     ASSERT0(m_sr_mgr);
-    for (i = 0; i < o->result_num(); i++) {
+    for (UINT i = 0; i < o->result_num(); i++) {
         SR * sr = o->get_result(i);
-        ASSERT0(sr != NULL);
+        ASSERT0(sr != nullptr);
         if (!SR_is_dedicated(sr)) {
             m_sr_mgr->freeSR(sr);
         }
     }
 
-    for (i = 0; i < o->opnd_num(); i++) {
+    for (UINT i = 0; i < o->opnd_num(); i++) {
         SR * sr = o->get_opnd(i);
-        ASSERT0(sr != NULL);
+        ASSERT0(sr != nullptr);
         if (!SR_is_dedicated(sr)) {
             m_sr_mgr->freeSR(sr);
         }
     }
-
-    o->clean();
-    m_free_or_list.append_head(o);
 }
 
 
-void ORMgr::freeORList(IN ORList & ors)
+//Free OR to reuse it at next allocOR().
+void ORMgr::freeOR(OR * o)
 {
-    for (OR * o = ors.get_head(); o != NULL; o = ors.get_next()) {
-        freeOR(o);
-    }
+    ASSERT0(m_sr_mgr);
+    freeSR(o);
+    o->clean();
+    m_free_or_list.append_head(o);
 }
 //END ORMgr
 

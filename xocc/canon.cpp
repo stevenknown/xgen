@@ -39,7 +39,7 @@ IR * Canon::handle_det_list(IN IR * ir_list, OUT bool & change, CanonCtx * cc)
 IR * Canon::only_left_last(IR * head)
 {
     IR * last = removetail(&head);
-    while (head != NULL) {
+    while (head != nullptr) {
         IR * t = xcom::removehead(&head);
         m_rg->freeIRTree(t);
     }
@@ -56,17 +56,17 @@ IR * Canon::handle_select(IN IR * ir, OUT bool & change, CanonCtx *)
     //     a>0,x<0 ? b/3,c*2,d:0,1,2
     // normalize to:
     //     x>0 ? d:2
-    if (SELECT_pred(ir)->get_next() != NULL) {
+    if (SELECT_pred(ir)->get_next() != nullptr) {
         SELECT_pred(ir) = only_left_last(SELECT_pred(ir));
         if (!SELECT_pred(ir)->is_judge()) {
             SELECT_pred(ir) = m_rg->buildJudge(SELECT_pred(ir));
             ir->setParent(SELECT_pred(ir));
         }
     }
-    if (IR_next(SELECT_trueexp(ir)) != NULL) {
+    if (IR_next(SELECT_trueexp(ir)) != nullptr) {
         SELECT_trueexp(ir) = only_left_last(SELECT_trueexp(ir));
     }
-    if (IR_next(SELECT_falseexp(ir)) != NULL) {
+    if (IR_next(SELECT_falseexp(ir)) != nullptr) {
         SELECT_falseexp(ir) = only_left_last(SELECT_falseexp(ir));
     }
     ir->setParentPointer(false);
@@ -85,8 +85,8 @@ IR * Canon::handle_lda(IR * ir, bool & change, CanonCtx * cc)
     //    SimpCtx tc;
     //    SIMP_array(&tc) = true;
     //    ir = m_rg->simplifyArrayAddrExp(LDA_base(ir), &tc);
-    //    ASSERTN(SIMP_stmtlist(&tc) == NULL, ("TODO: handle this case"));
-    //    if (cc != NULL) {
+    //    ASSERTN(SIMP_stmtlist(&tc) == nullptr, ("TODO: handle this case"));
+    //    if (cc != nullptr) {
     //        xcom::add_next(&cc->new_stmts, SIMP_stmtlist(&tc));
     //    }
     //    change = true;
@@ -110,7 +110,7 @@ IR * Canon::handle_lda(IR * ir, bool & change, CanonCtx * cc)
     //    //    ADD((LD,ofst1), ofst2)
     //    //e.g2:&(s.a->b) => LD(s.a) + ofst(b)
     //    IR * newir = ILD_base(LDA_base(ir));
-    //    ILD_base(LDA_base(ir)) = NULL;
+    //    ILD_base(LDA_base(ir)) = nullptr;
     //    if (ILD_ofst(LDA_base(ir)) != 0) {
     //        Type const* t = getTypeMgr()->getSimplexTypeEx(D_U32);
     //        newir = buildBinaryOpSimp(IR_ADD, ir->getType(), newir,
@@ -126,7 +126,7 @@ IR * Canon::handle_lda(IR * ir, bool & change, CanonCtx * cc)
     //Convert LDA(ILD(x)) => x
     //if (LDA_base(ir)->is_ild()) {
     //    IR * newir = ILD_base(LDA_base(rhs));
-    //    ILD_base(LDA_base(rhs)) = NULL;
+    //    ILD_base(LDA_base(rhs)) = nullptr;
     //    freeIRTree(ir);
     //    change = true;
     //    ir = newir;
@@ -170,11 +170,11 @@ void Canon::handle_call(IN IR * ir, OUT bool & change, CanonCtx * cc)
 {
     ASSERT0(ir->isCallStmt());
 
-    if (CALL_param_list(ir) != NULL) {
+    if (CALL_param_list(ir) != nullptr) {
         IR * param = xcom::removehead(&CALL_param_list(ir));
-        IR * newparamlst = NULL;
-        IR * last = NULL;
-        while (param != NULL) {
+        IR * newparamlst = nullptr;
+        IR * last = nullptr;
+        while (param != nullptr) {
             IR * newp = handle_exp(param, change, cc);
             xcom::add_next(&newparamlst, &last, newp);
             last = newp;
@@ -250,9 +250,9 @@ IR * Canon::handle_stmt_list(IR * ir_list, bool & change)
     bool lchange = true; //local flag
     while (lchange) {
         lchange = false;
-        IR * new_list = NULL;
-        IR * last = NULL;
-        while (ir_list != NULL) {
+        IR * new_list = nullptr;
+        IR * last = nullptr;
+        while (ir_list != nullptr) {
             IR * ir = xcom::removehead(&ir_list);
             if (!ir->is_stmt()) {
                 //Delete exp node from statement list.

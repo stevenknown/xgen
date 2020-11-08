@@ -65,6 +65,7 @@ author: Su Zhenyu
 #include "ir2or.h"
 #include "cg.h"
 #include "parallel_part_mgr.h"
+#include "instruction_partition.h"
 #include "cl_region_mgr.h"
 #include "cl_dbg.h"
 

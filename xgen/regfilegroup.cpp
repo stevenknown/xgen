@@ -47,7 +47,7 @@ void * RegFileGroup::xmalloc(INT size)
 void RegFileGroup::init()
 {
     if (m_is_init) return;
-    m_bb = NULL;
+    m_bb = nullptr;
     m_group2orlist_map.init();
     m_oridx2group_map.init();
     m_pool = smpoolCreate(64, MEM_COMM);
@@ -61,7 +61,7 @@ void RegFileGroup::destroy()
     if (!m_is_init) { return; }
     for (INT i = 0; i <= m_group2orlist_map.get_last_idx(); i++) {
         List<OR*> * orlist = m_group2orlist_map.get(i);
-        if (orlist == NULL) {
+        if (orlist == nullptr) {
             continue;
         }
         orlist->destroy();
@@ -82,9 +82,9 @@ INT RegFileGroup::getNumOfGroup() const
 
 INT RegFileGroup::getORGroup(OR const* o) const
 {
-    ASSERTN(o, ("o is NULL."));
+    ASSERTN(o, ("o is nullptr."));
     ASSERTN(m_is_init, ("List not yet initialized."));
-    return m_oridx2group_map.get(OR_id(o));
+    return m_oridx2group_map.get(o->id());
 }
 
 
@@ -104,8 +104,8 @@ void RegFileGroup::clone(RegFileGroup & group)
     //clone group info
     for (INT i = 0; i < group.getNumOfGroup(); i++) {
         List<OR*> * orlist = group.getORListInGroup(i);
-        if (orlist == NULL) {
-            m_group2orlist_map.set(i, (ORList*)NULL);
+        if (orlist == nullptr) {
+            m_group2orlist_map.set(i, (ORList*)nullptr);
             continue;
         }
         List<OR*> * neworlist = (List<OR*>*)
@@ -127,7 +127,7 @@ void RegFileGroup::addOR(OR * o, INT layer)
     ASSERTN(m_is_init, ("List not yet initialized."));
     ASSERTN(o && layer >= 0 && layer < MAX_LAYER, ("Illegal info"));
     List<OR*> * orlist = m_group2orlist_map.get(layer);
-    if (orlist == NULL) {
+    if (orlist == nullptr) {
         orlist = (List<OR*>*)xmalloc(sizeof(List<OR*>));
         orlist->init();
         m_group2orlist_map.set(layer, orlist);
@@ -137,7 +137,7 @@ void RegFileGroup::addOR(OR * o, INT layer)
         return;
     }
     orlist->append_tail(o);
-    m_oridx2group_map.set(OR_id(o), layer);
+    m_oridx2group_map.set(o->id(), layer);
 }
 
 
@@ -151,7 +151,7 @@ void RegFileGroup::dump()
     for (INT i = 0; i <= m_group2orlist_map.get_last_idx(); i++) {
         fprintf(h, "\n\tGroup(%d):\n", i);
         List<OR*> * orlist = m_group2orlist_map.get(i);
-        if (orlist != NULL) {
+        if (orlist != nullptr) {
             for (OR * o = orlist->get_head(); o; o = orlist->get_next()) {
                 fprintf(h, "\t\t");
                 ASSERT0(m_cg);
@@ -172,11 +172,11 @@ void RegFileGroup::computeGroup()
     if (ORBB_ornum(m_bb) == 0) { return; }
 
     //Partitioning OR into different layers accroding to REGFILE they belong.
-    //e.g:1. t1[A1] =
+    //e.g:1. t1[A] =
     //       ...
-    //    2.        = t1[A1]
+    //    2.        = t1[A]
     //       ...
-    //    3. t2[A1] =
+    //    3. t2[A] =
     //  Now t1,t2 assiged same regfile, if we assigned same
     //  register for them, that will be incur
     //  anti-dep between 2. and 3, and out-dep between 1. and 3.
@@ -188,7 +188,7 @@ void RegFileGroup::computeGroup()
     //  Partitioning different results to different layer.
     ORCt * ct;
     for (OR * o = ORBB_orlist(m_bb)->get_head(&ct);
-         o != NULL; o = ORBB_orlist(m_bb)->get_next(&ct)) {
+         o != nullptr; o = ORBB_orlist(m_bb)->get_next(&ct)) {
         //Determine layer by the last allocable regfile.
         //'o' has not layer if there are not any results.
         for (UINT i = 0; i < o->result_num(); i++) {
@@ -216,7 +216,7 @@ void RegFileGroup::recomputeGroup(ORBB * bb)
 
 void RegFileGroup::setBB(ORBB * bb)
 {
-    if (bb != NULL) {
+    if (bb != nullptr) {
         m_cg = ORBB_cg(bb);
     }
     m_bb = bb;

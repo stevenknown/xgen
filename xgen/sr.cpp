@@ -95,12 +95,12 @@ void SR::clean()
     //There is virtual table.
     type = SR_UNDEF;
     u2.bitflags = 0;
-    u1.u2.symbol_regid = 0;
+    u1.u2.symbol_regid = SYMREG_UNDEF;
     u1.u2.regfile = RF_UNDEF;
-    u1.u2.phy_regid = 0;
-    u1.u2.spill_var = NULL;
-    m_sr_vec = NULL; //vec will be dropped to pool. TODO: recycle it.
-    m_sr_vec_idx = -1;
+    u1.u2.phy_regid = REG_UNDEF;
+    u1.u2.spill_var = nullptr;
+    m_sr_vec = nullptr; //vec will be dropped to pool. TODO: recycle it.
+    m_sr_vec_idx = SRVEC_IDX_UNDEF;
 }
 
 
@@ -167,10 +167,10 @@ CHAR const* SR::get_name(StrBuf & buf, CG * cg) const
         ASSERT0(SR_var(this));
         ASSERT0(SR_var(this)->get_name());
         CHAR * name = SYM_name(SR_var(this)->get_name());
-        ASSERT0(SR_var_ir(this) == NULL || SR_var_ir(this)->is_id());
+        ASSERT0(SR_var_ir(this) == nullptr || SR_var_ir(this)->is_id());
         buf.strcat("'%s'", name);
 
-        if (SR_var_ir(this) != NULL) {
+        if (SR_var_ir(this) != nullptr) {
             UINT ofst = SR_var_ir(this)->getOffset();
             if (ofst != 0) {
                 buf.strcat("+%u", ofst);
@@ -267,12 +267,11 @@ bool SR::is_equal(SR const* sr)
 //
 void SRMgr::clean()
 {
-    for (SR * sr = get_head(); sr != NULL; sr = get_next()) {
+    for (SR * sr = get_head(); sr != nullptr; sr = get_next()) {
         delete sr;
     }
     m_sridx2sr_map.clean();
     m_freesr_list.clean();
-    m_freesr_mark.clean();
     List<SR*>::clean();
 }
 
@@ -286,8 +285,9 @@ SR * SRMgr::allocSR()
 SR * SRMgr::genSR()
 {
     SR * sr = m_freesr_list.remove_head();
-    if (sr != NULL) {
-        m_freesr_mark.diff(SR_id(sr));
+    if (sr != nullptr) {
+        ASSERT0(sr->is_free());
+        SR_is_free(sr) = false;
         return sr;
     }
     sr = allocSR();
@@ -306,13 +306,11 @@ SR * SRMgr::get(UINT unique_id)
 
 void SRMgr::freeSR(SR * sr)
 {
-    if (m_freesr_mark.is_contain(SR_id(sr))) {
-        return;
-    }
+    if (sr->is_free()) { return; }
     ASSERT0(!SR_is_dedicated(sr));
     sr->clean();
+    SR_is_free(sr) = true;
     m_freesr_list.append_head(sr);
-    m_freesr_mark.bunion(SR_id(sr));
 }
 //END SRMgr
 
@@ -320,22 +318,19 @@ void SRMgr::freeSR(SR * sr)
 //
 //START SRVecMgr
 //
-void SRVecMgr::clean()
+void SRVecMgr::init()
 {
-    xcom::C<SRVec*> * ct = NULL;
-    for (m_sr_vec_list.get_head(&ct);
-         ct != NULL; ct = m_sr_vec_list.get_next(ct)) {
-        SRVec * sv = ct->val();
-        ASSERT0(sv);
-        delete sv;
-    }
-    m_sr_vec_list.clean();
+    if (m_pool != nullptr) { return; }
+    m_pool = smpoolCreate(sizeof(SRVec), MEM_COMM);
 }
 
 
 SRVec * SRVecMgr::newSRVec()
 {
-    return new SRVec();
+    SRVec * vec = (SRVec*)smpoolMalloc(sizeof(SRVec), m_pool);
+    ::memset(vec, 0, sizeof(SRVec));
+    vec->init();
+    return vec;
 }
 
 
@@ -343,13 +338,13 @@ SRVec * SRVecMgr::newSRVec()
 SR * SRVecMgr::genSRVec(UINT num, ...)
 {
     SRVec * sv = newSRVec();
-    m_sr_vec_list.append_tail(sv);
 
     //This manner worked well on ia32, but is not on x8664.
     //SR ** p = (SR**)(((CHAR*)&num) + sizeof(UINT));
 
+    sv->grow(num, m_pool);
     UINT i = 0;
-    SR * first = NULL;
+    SR * first = nullptr;
     va_list ptr;
     va_start(ptr, num);
     while (i < num) {
@@ -359,7 +354,7 @@ SR * SRVecMgr::genSRVec(UINT num, ...)
         }
         SR_vec(sr) = sv;
         SR_vec_idx(sr) = i;
-        sv->set(i, sr);
+        sv->set(i, sr, this);
         i++;
     }
     va_end(ptr);
@@ -371,15 +366,14 @@ SR * SRVecMgr::genSRVec(UINT num, ...)
 SR * SRVecMgr::genSRVec(List<SR*> & lst)
 {
     SRVec * sv = newSRVec();
-    m_sr_vec_list.append_tail(sv);
-
     UINT i = 0;
-    SR * first = NULL;
-    for (SR * sr = lst.get_head(); sr != NULL; sr = lst.get_next()) {
-        if (first == NULL) { first = sr; }
+    SR * first = nullptr;
+    sv->grow(lst.get_elem_count(), m_pool);
+    for (SR * sr = lst.get_head(); sr != nullptr; sr = lst.get_next()) {
+        if (first == nullptr) { first = sr; }
         SR_vec(sr) = sv;
         SR_vec_idx(sr) = i;
-        sv->set(i, sr);
+        sv->set(i, sr, this);
         i++;
     }
     return first;
@@ -391,7 +385,7 @@ SR * SRVecMgr::genSRVec(List<SR*> & lst)
 UINT SR::getByteSize() const
 {
     if (is_vec()) {
-        return (SR_vec(this)->get_last_idx() + 1) * GENERAL_REGISTER_SIZE;
+        return SR_vec(this)->get_elem_count() * GENERAL_REGISTER_SIZE;
     }
     return GENERAL_REGISTER_SIZE;
 }

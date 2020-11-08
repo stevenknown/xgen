@@ -61,7 +61,7 @@ public:
 
     SR * pred; //used as input parameter, record predicate register if need.
     SR * addr; //used as input parameter, record memory address pseduo register.
-    Vector<SR*, 2> reg_vec;
+    Vector<SR*> reg_vec;
     OR_TYPE ortype; //used as output, record OR_TYPE of result if exist.
 
     union {
@@ -80,12 +80,12 @@ public:
     IOC()
     {
         u2.u2val = 0;
-        pred = NULL;
+        pred = nullptr;
         ortype = OR_UNDEF;
         u1.param_size = 0;
         u1.mem_byte_size = 0;
         reg_vec.init();
-        addr = NULL;
+        addr = nullptr;
     }
     COPY_CONSTRUCTOR(IOC);
     virtual ~IOC() {}
@@ -93,12 +93,12 @@ public:
     virtual void clean()
     {
         u2.u2val = 0;
-        pred = NULL;
+        pred = nullptr;
         ortype = OR_UNDEF;
         u1.param_size = 0;
         u1.mem_byte_size = 0;
         reg_vec.clean();
-        addr = NULL;
+        addr = nullptr;
     }
 
     virtual void set_pred(SR * p) { pred = p; }
@@ -128,7 +128,7 @@ public:
     SR * getResult() const
     {
         SR * val = get_reg(0);
-        if (val != NULL) { return val; }
+        if (val != nullptr) { return val; }
         return get_addr();        
     }
     OR_TYPE get_ortype() const { return ortype; }
@@ -137,7 +137,7 @@ public:
     void clean_bottomup()
     {
         clean_regvec();
-        set_addr(NULL);
+        set_addr(nullptr);
         set_ortype(OR_UNDEF);
     }
 };
@@ -361,7 +361,7 @@ public:
     void copyDbx(OR * o, IR const* ir)
     {
         Dbx * d = ::getDbx(ir);
-        if (d != NULL) { OR_dbx(o).copy(*d); }
+        if (d != nullptr) { OR_dbx(o).copy(*d); }
     }
 
     void convertIRBBListToORList(OUT ORList & or_list);

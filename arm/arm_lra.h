@@ -41,10 +41,8 @@ public:
 
     virtual void handlePreferredReg(OR const*);
 
-    virtual void considerSpecialConstraints(
-            IN OR *,
-            SR const*,
-            OUT RegSet & usable_regs);
+    virtual void considerSpecialConstraints(IN OR *, SR const*,
+                                            OUT RegSet & usable_regs);
 
 };
 //END ARMLifeTimeMgr

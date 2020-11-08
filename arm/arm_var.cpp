@@ -45,12 +45,12 @@ author: Su Zhenyu
 CHAR const* ARMVar::dumpVARDecl(StrBuf & buf) const
 {
     Decl * decl = mapVAR2Decl(const_cast<ARMVar*>(this));
-    if (decl != NULL) {
+    if (decl != nullptr) {
         ASSERT0(DECL_dt(decl) == DCL_DECLARATION);
         format_declaration(buf, decl);
         return buf.buf;
     }
-    return NULL;
+    return nullptr;
 }
 //END ARMVar
 

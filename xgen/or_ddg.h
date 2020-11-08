@@ -37,25 +37,27 @@ class ParallelPartMgr;
 class BBSimulator;
 
 typedef enum {
-    DEP_UNDEF    = 0x0,
-    DEP_REG_FLOW = 0x1,   //register flow dependence
-    DEP_REG_ANTI = 0x2,   //register anti dependence
-    DEP_REG_OUT  = 0x4,   //register out dependence
-    DEP_REG_READ = 0x8,   //register read dependence
-    DEP_MEM_FLOW = 0x10,  //memory flow dependence
-    DEP_MEM_ANTI = 0x20,  //memory anti dependence
-    DEP_MEM_OUT  = 0x40,  //memory out dependence
-    DEP_MEM_VOL  = 0x80,  //memory volatile dependence
+    DEP_UNDEF = 0x0,
+    DEP_REG_FLOW = 0x1, //register flow dependence
+    DEP_REG_ANTI = 0x2, //register anti dependence
+    DEP_REG_OUT  = 0x4, //register out dependence
+    DEP_REG_READ = 0x8, //register read dependence
+    DEP_MEM_FLOW = 0x10, //memory flow dependence
+    DEP_MEM_ANTI = 0x20, //memory anti dependence
+    DEP_MEM_OUT = 0x40, //memory out dependence
+    DEP_MEM_VOL = 0x80, //memory volatile dependence
     DEP_MEM_READ = 0x100, //memory read dependence
-    DEP_CONTROL  = 0x200, //control dependence
-    DEP_HYB      = 0x400, //hybrid dependence
+    DEP_CONTROL = 0x200, //control dependence
+    DEP_PHY_REG = 0x400, //physic-register dependence.
+    DEP_SYM_REG = 0x800, //symbol register dependence.
+    DEP_HYB = 0x1000, //hybrid dependence
 } DEP_TYPE;
 
 
-#define DDGEI_deptype(c)    ((DDGEdgeInfo*)(c))->deptype
+#define DDGEI_deptype(c) (((DDGEdgeInfo*)(c))->deptype)
 class DDGEdgeInfo {
 public:
-    ULONG deptype;  //Dependence type
+    ULONG deptype; //Dependence type
 };
 
 
@@ -73,103 +75,63 @@ public:
 };
 
 
-//DataDepGraph Parameters
-#define NO_MEM_OUT          false
-#define INC_MEM_OUT         true
-#define NO_MEM_FLOW         false
-#define INC_MEM_FLOW        true
-#define NO_MEM_READ         false
-#define INC_MEM_READ        true
-#define NO_MEM_ANTI         false
-#define INC_MEM_ANTI        true
-#define NO_REG_FLOW         false
-#define INC_REG_FLOW        true
-#define NO_REG_READ         false
-#define INC_REG_READ        true
-#define NO_REG_OUT          false
-#define INC_REG_OUT         true
-#define NO_REG_ANTI         false
-#define INC_REG_ANTI        true
-#define NO_CONTROL          false
-#define INC_CONTROL         true
-#define NO_PHY_REG          false
-#define INC_PHY_REG         true
-#define NO_SYM_REG          false
-#define INC_SYM_REG         true
+#define DDG_DUMP_CLUSTER_INFO 0x1
+#define DDG_DUMP_EDGE_INFO 0x2
+#define DDG_DUMP_OP_INFO 0x4
+#define DDG_DELETE 0x8
 
+typedef UINT DDGParam;
 
-class DDGParam {
-public:
-    bool phy_reg_dep; //Build dep caused by physic-register.
-    bool mem_read_read_dep; //Build dep caused by memory RAR(read-after-read).
-    bool mem_flow_dep; //Build dep caused by memory flow-dep.
-    bool mem_out_dep; //Build dep caused by memory out-dep.
-    bool control_dep; //Build dep caused by control.
-
-    //Build dep caused by register RAR(read-after-read).
-    //NOTE: Build read-read dependence might
-    //lead to larger DataDepGraph because there
-    //may be a lot of ORs read same SR.
-    bool reg_read_read_dep;
-
-    bool reg_anti_dep; //Build dep caused by register anti-ors.
-    bool mem_anti_dep; //Build dep caused by memory anti-ors.
-    bool sym_reg_dep; //Build dep caused by symbol register.
-};
-
-
-#define DDG_DUMP_CLUSTER_INFO    0x1
-#define DDG_DUMP_EDGE_INFO       0x2
-#define DDG_DUMP_OP_INFO         0x4
-#define DDG_DELETE               0x8
 class DataDepGraph : public xcom::Graph {
 protected:
     ORBB * m_bb;
     CG * m_cg;
-    Vector<OR*> m_mapidx2or_map;
-    Stack<DDGParam*> m_params_stack;
+    ORMgr * m_ormgr;
     ParallelPartMgr * m_ppm; //Parallel part manager
+    SMemPool * m_pool;    
+    Stack<DDGParam> m_params_stack;
     DDGParam m_ddg_param;
+
+    typedef TMap<UINT, UINT> ID2Cyc;
+    ID2Cyc m_estart;
+    ID2Cyc m_lstart;
     bool m_is_init;
     bool m_is_clonal;
     bool m_unique_mem_loc;
-    Vector<UINT> m_estart_vec;
-    Vector<UINT> m_lstart_vec;
-    SMemPool * m_pool;
-
 protected:
-    virtual void * xmalloc(UINT size); //Given size of byte
-    virtual DDGParam * dup_param()
-    {
-        DDGParam * ps = (DDGParam*)xmalloc(sizeof(DDGParam));
-        *ps = m_ddg_param;
-        return ps;
-    }
+    //This function will establish dependency for memory operation one by one
+    //rather than doing any analysis which is in order to speedup compilation.
+    void buildMemDepWithOutAnalysis();
+    void buildRegDep();
+    void buildMemFlowDep(OR const* from, OR const* to);
+    void buildMemOutDep(OR const* from, OR const* to, Var const* from_loc);
+    void buildMemInDep(OR const* from, OR const* to, Var const* from_loc);
+    void buildMemVolatileDep(OR const* from, OR const* to);
+    void buildMemDep();
 
     void * cloneEdgeInfo(xcom::Edge * e);
     void * cloneVertexInfo(xcom::Vertex * v);
-    void handle_results(
-            OR const* o,
-            OUT Reg2ORList & map_reg2defors,
-            OUT Reg2ORList & map_reg2useors,
-            OUT SR2ORList & map_sr2defors,
-            OUT SR2ORList & map_sr2useors);
-    void handle_opnds(
-            OR const* o,
-            OUT Reg2ORList & map_reg2defors,
-            OUT Reg2ORList & map_reg2useors,
-            OUT SR2ORList & map_sr2defors,
-            OUT SR2ORList & map_sr2useors);
-    void handle_store(
-            IN OR * o,
-            ULONG mem_loc_idx,
-            OUT UINT2ORList & map_memloc2defors,
-            OUT UINT2ORList & map_memloc2useors);
-    void handle_load(
-            IN OR * o,
-            ULONG mem_loc_idx,
-            OUT UINT2ORList & map_memloc2defors,
-            OUT UINT2ORList & map_memloc2useors);
+
+    void handle_results(OR const* o,
+                        OUT Reg2ORList & map_reg2defors,
+                        OUT Reg2ORList & map_reg2useors,
+                        OUT SR2ORList & map_sr2defors,
+                        OUT SR2ORList & map_sr2useors);
+    void handle_opnds(OR const* o,
+                      OUT Reg2ORList & map_reg2defors,
+                      OUT Reg2ORList & map_reg2useors,
+                      OUT SR2ORList & map_sr2defors,
+                      OUT SR2ORList & map_sr2useors);
+    void handle_store(OR const* o,
+                      ULONG mem_loc_idx,
+                      OUT UINT2ConstORList & map_memloc2defors,
+                      OUT UINT2ConstORList & map_memloc2useors);
+    void handle_load(OR const* o,
+                     ULONG mem_loc_idx,
+                     OUT UINT2ConstORList & map_memloc2defors,
+                     OUT UINT2ConstORList & map_memloc2useors);
+
+    virtual void * xmalloc(UINT size); //Given size of byte
 public:
     DataDepGraph();
     ~DataDepGraph();
@@ -177,68 +139,97 @@ public:
     virtual bool appendEdge(ULONG deptype, OR const* from, OR const* to);
     virtual void appendOR(OR * o);
 
-    ORBB * bb() const;
     virtual void build();
-    void buildRegDep();
-    void buildMemFlowDep(OR * from, OR * to);
-    void buildMemOutDep(OR * from, OR * to, Var const* from_loc);
-    void buildMemInDep(OR * from, OR * to, Var const* from_loc);
-    void buildMemVolatileDep(OR * from, OR * to);
-    void buildMemDep();
+    void buildSerialDependence();
 
-    UINT computeEstartAndLstart(IN BBSimulator & sim, OUT OR ** fin_or);
-    UINT computeCriticalPathLen(BBSimulator & sim);
+    //Return memory operations which may access same memory location.
+    //Calculate the length of critical path.
+    //fin_or: record the OR which at the maximum path length.
+    //Record the result at Estart and Lstart table.
+    UINT computeEstartAndLstart(BBSimulator const& sim, OUT OR ** fin_or);
+    UINT computeCriticalPathLen(BBSimulator const& sim) const;
     virtual void clone(DataDepGraph & ddg);
     void chainPredAndSucc(OR * o);
+    //Count memory usage for current object.
+    size_t count_mem() const
+    {
+        return sizeof(DataDepGraph) + smpoolGetPoolSize(m_pool) +
+               m_params_stack.count_mem() +
+               m_estart.count_mem() + m_lstart.count_mem();
+    }
 
     virtual void destroy();
-    void dump(INT flag = 0xF, INT rootoridx = -1, CHAR * name = NULL);
+    void dump(INT flag = 0xF, INT rootoridx = -1, CHAR * name = nullptr);
 
-    virtual void init(ORBB * bb);
-    bool isGraphNode(OR * o);
-    bool is_param_equal(bool phy_reg_dep,
-                        bool memread_dep,
-                        bool memflow_dep,
-                        bool memout_dep,
-                        bool control_dep,
-                        bool regread_dep,
-                        bool reganti_dep,
-                        bool memanti_dep,
-                        bool symreg_dep) const;
-
-    OR * getOR(UINT mapidx) const { return m_mapidx2or_map.get(mapidx); }
+    ORBB * getBB() const
+    {
+        ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
+        return m_bb;
+    }
+    //The returned OR may be changed.
+    OR * getOR(UINT orid) const { return m_ormgr->getOR(orid); }
     OR * getFirstOR(INT & cur);
     OR * getNextOR(INT & cur);
-
     void get_neighbors(IN OUT ORList & nis, OR const* o);
     void getSuccsByOrder(IN OUT ORList & succs, IN OR * o);
     void getSuccsByOrderTraverseNode(IN OUT ORList & succs, OR const* o);
+
+    //Return all dependent predecessors in lexicographicly order.
+    //e.g:a->b->c->d, a->d
+    //  c and a are immediate predecessors of d, whereas a,b,c are
+    //  dependent predecessors of d.
     void getPredsByOrderTraverseNode(IN OUT ORList & succs, OR const* o);
+
+    //Return all dependent predecessors of OR.
+    //e.g:a->b->c->d, a->d
+    //  c and a are immediate predecessors of d, whereas a,b,c are
+    //  dependent predecessors of d.
+    void getDependentPreds(OUT ORTab & preds, OR const* o);
     void get_succs(IN OUT ORList & succs, OR const* o);
     void getPredsByOrder(IN OUT ORList & preds, IN OR * o);
     void get_preds(IN OUT List<xcom::Vertex*> & preds, IN xcom::Vertex * v);
     void get_preds(IN OUT ORList & preds, OR const* o);
     void getORListWhichAccessSameMem(OUT ORList & mem_ors, OR const* o);
-    void getEstartAndLstart(
-            OUT UINT & estart,
-            OUT UINT & lstart,
-            OR const* o) const;
-    DDGParam * get_param() { return &m_ddg_param; }
-    virtual INT get_slack(OR * o);
+    void getEstartAndLstart(OUT UINT & estart, OUT UINT & lstart,
+                            OR const* o) const;
+    DDGParam get_param() { return m_ddg_param; }
+    virtual INT get_slack(OR const* o) const;
 
+    virtual bool handleDedicatedSR(SR const* sr, OR const* o,
+                                   bool is_result) const;
+    bool has_mem_out_dep() const { return HAVE_FLAG(m_ddg_param, DEP_MEM_OUT); }
+    bool has_mem_flow_dep() const
+    { return HAVE_FLAG(m_ddg_param, DEP_MEM_FLOW); }
+    bool has_mem_read_dep() const
+    { return HAVE_FLAG(m_ddg_param, DEP_MEM_READ); }
+    bool has_mem_anti_dep() const
+    { return HAVE_FLAG(m_ddg_param, DEP_MEM_ANTI); }
+    bool has_reg_flow_dep() const
+    { return HAVE_FLAG(m_ddg_param, DEP_REG_FLOW); }
+    bool has_reg_read_dep() const
+    { return HAVE_FLAG(m_ddg_param, DEP_REG_READ); }
+    bool has_reg_out_dep() const { return HAVE_FLAG(m_ddg_param, DEP_REG_OUT); }
+    bool has_reg_anti_dep() const
+    { return HAVE_FLAG(m_ddg_param, DEP_REG_ANTI); }
+    bool has_control_dep() const { return HAVE_FLAG(m_ddg_param, DEP_CONTROL); }
+    bool has_phy_reg_dep() const { return HAVE_FLAG(m_ddg_param, DEP_PHY_REG); }
+    bool has_sym_reg_dep() const { return HAVE_FLAG(m_ddg_param, DEP_SYM_REG); }
+    bool has_hyb() const { return HAVE_FLAG(m_ddg_param, DEP_HYB); }
 
-    virtual bool handleDedicatedSR(SR const* sr, OR const* o, bool is_result);
-
+    virtual void init(ORBB * bb);
+    bool isGraphNode(OR const* o) const;
+    //Return true if current dep graph parameters identical with inputs.
+    bool is_param_equal(DDGParam param) const { return m_ddg_param == param; }
     //Return true if OR is on the critical path.
-    bool isOnCriticalPath(OR * o);
+    bool isOnCriticalPath(OR const* o) const;
+
+    //Return true if or1 is dependent with or2.
+    bool is_dependent(OR const* or1, OR const* or2) const;
 
     //Return true if or1 is independent with or2.
-    bool is_dependent(OR const* or1, OR const* or2);
+    bool is_independent(OR const* or1, OR const* or2) const;
 
-    //Return true if or1 is independent with or2.
-    bool is_independent(OR * or1, OR * or2);
-
-    virtual bool must_def_sp_reg(OR * o);
+    virtual bool mustDefSP(OR const* o) const;
 
     virtual void removeOR(OR * o);
     virtual void removeORIdx(UINT oridx);
@@ -248,31 +239,19 @@ public:
     virtual void reschedul();
     virtual void rebuild();
 
-    void sortInTopological(OUT Vector<UINT> & vex_vec);
     void setParallelPartMgr(ParallelPartMgr * ppm);
     void simplifyGraph();
-    void setParam(bool phy_reg_dep,
-                   bool memread_dep,
-                   bool memflow_dep,
-                   bool memout_dep,
-                   bool control_dep,
-                   bool regread_dep,
-                   bool reganti_dep,
-                   bool memanti_dep,
-                   bool symreg_dep);
-
+    void setParam(DDGParam param) { m_ddg_param = param; }
     virtual void traverse();
 
-    //Preparation for building graph.
-    virtual void preBuild(){}
-    virtual void pushParam();
-    virtual void popParam();
-
-    virtual void union_edge(List<OR*> & orlist, OR * tgt);
+    virtual void pushParam() { m_params_stack.push(m_ddg_param); }
+    virtual void popParam() { m_ddg_param = m_params_stack.pop(); }
+    
+    //Add edge between OR in 'orlist' and 'tgt'.
+    virtual void unifyEdge(List<OR*> & orlist, OR * tgt);
 
     //Should be removed from the basic class.
-    virtual void predigest()
-    { ASSERTN(0, ("Target Dependent Code")); }
+    virtual void predigest() { ASSERTN(0, ("Target Dependent Code")); }
 };
 
 } //namespace xgen

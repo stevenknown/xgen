@@ -32,61 +32,56 @@ author: Su Zhenyu
 
 namespace xgen {
 
-void LIS::init(ORBB * bb,
-               DataDepGraph & ddg,
-               BBSimulator * sim,
-               UINT sch_mode,
-               bool change_slot,
-               bool change_cluster)
+void LIS::init(ORBB * bb, DataDepGraph & ddg, BBSimulator * sim, UINT sch_mode)
 {
-    if (m_pool != NULL) return;
+    if (m_pool != nullptr) { return; }
     ASSERTN(bb && sim, ("invalid parameter"));
     m_pool = smpoolCreate(256, MEM_COMM);
-    m_is_regfile_unique = NULL;
+    m_is_regfile_unique = nullptr;
     m_ddg = &ddg;
     m_bb = bb;
     m_sim = sim;
     m_cg = ORBB_cg(bb);
     m_ready_list.init();
     m_br_all_preds.init();
-    m_is_change_slot = change_slot;
     m_or_changed = false;
-    m_is_change_cluster = change_cluster;
     m_sch_mode = sch_mode;
-    OR * br = NULL;
-    if (m_sch_mode == SCH_BRANCH_DELAY_SLOT &&
-        (br = get_br()) != NULL) {
+    
+    OR * br = nullptr;
+    if (HAVE_FLAG(m_sch_mode, SCH_BRANCH_DELAY_SLOT) &&
+        (br = get_br()) != nullptr) {
         m_br_ord = (ORDesc*)xmalloc(sizeof(ORDesc));
         ORDESC_or(m_br_ord) = br;
         ORDESC_start_cyc(m_br_ord) = -1;
-        //Note that 'sim' can NOT be destructed by caller of schedulor,
-        //o else the memory in used is unavailable.
-        ORDESC_or_sche_info(m_br_ord) = tmGetORScheInfo(OR_code(br));
-        ASSERT0(ORDESC_or_sche_info(m_br_ord));
+        //Note 'sim' can NOT be destructed by caller of schedulor until
+        //packaging finished because sim preserved the cycle-accurated
+        //scheduling information.
+        ORDESC_sche_info(m_br_ord) = tmGetORScheInfo(OR_code(br));
+        ASSERT0(ORDESC_sche_info(m_br_ord));
     } else {
-        m_br_ord = NULL;
+        m_br_ord = nullptr;
     }
 }
 
 
 void LIS::destroy()
 {
-    if (m_pool == NULL) return;
+    if (m_pool == nullptr) { return; }
     smpoolDelete(m_pool);
-    m_pool = NULL;
+    m_pool = nullptr;
     m_sch_mode = SCH_UNDEF;
-    m_ddg = NULL;
-    m_sim = NULL;
-    m_bb = NULL;
-    m_cg = NULL;
+    m_ddg = nullptr;
+    m_sim = nullptr;
+    m_bb = nullptr;
+    m_cg = nullptr;
     m_ready_list.destroy();
     m_br_all_preds.destroy();
-    m_br_ord = NULL;
+    m_br_ord = nullptr;
 }
 
 
 void LIS::computeReadyList(IN OUT DataDepGraph & ddg,
-                           IN OUT Vector<bool> & visited,
+                           OUT DefSBitSet & visited,
                            bool topdown)
 {
     ASSERTN(m_pool, ("uninitialized"));
@@ -95,29 +90,29 @@ void LIS::computeReadyList(IN OUT DataDepGraph & ddg,
 COMP_REDO:
     INT c;
     for (xcom::Vertex * v = ddg.get_first_vertex(c);
-         v != NULL; v = ddg.get_next_vertex(c)) {
+         v != nullptr; v = ddg.get_next_vertex(c)) {
         xcom::EdgeC * ck_lst;
         if (topdown)  {
             ck_lst = v->getInList();
         } else {
             ck_lst = v->getOutList();
         }
-        if (ck_lst == NULL && !visited.get(VERTEX_id(v))) {
+        if (ck_lst == nullptr && !visited.is_contain(v->id())) {
             OR * o = ddg.getOR(VERTEX_id(v));
             if (OR_is_nop(o)) { //Do not schedul NOP.
                 nop_list.append_tail(o);
                 continue;
             }
             m_ready_list.append(o);
-            visited.set(VERTEX_id(v), true);
+            visited.bunion(v->id());
             continue;
         }
     }
 
     if (nop_list.get_elem_count() > 0) {
         for (OR * o = nop_list.get_head();
-             o != NULL; o = nop_list.get_next()) {
-            xcom::Vertex * v = ddg.getVertex(OR_id(o));
+             o != nullptr; o = nop_list.get_next()) {
+            xcom::Vertex * v = ddg.getVertex(o->id());
             if (ddg.getDegree(v) > 0) {
                 redo = true;
             }
@@ -133,15 +128,15 @@ COMP_REDO:
 }
 
 
-bool LIS::isIssueCand(OR * o)
+bool LIS::isIssueCand(OR const* o) const
 {
     ASSERTN(m_pool, ("uninitialized"));
     SLOT or_slot = m_cg->computeORSlot(o);
 
     //Schedule the branch delay slot at first.
-    if (m_br_ord != NULL && o == ORDESC_or(m_br_ord)) {
-        if (ORDESC_start_cyc(m_br_ord) != -1 &&
-            ORDESC_start_cyc(m_br_ord) > (INT)m_sim->getCurCycle()) {
+    if (isScheduleDelaySlot() && isBranch(o)) {
+        if (m_br_ord->getStartCycle() != -1 &&
+            m_br_ord->getStartCycle() > (INT)m_sim->getCurCycle()) {
             //It is not the issue time of branch yet.
             return false;
         }
@@ -154,13 +149,12 @@ bool LIS::isIssueCand(OR * o)
 
 
 //Check the usage of function unit.
-bool LIS::isFuncUnitOccupied(UnitSet const& us,
-                             CLUST clst,
+bool LIS::isFuncUnitOccupied(UnitSet const& us, CLUST clst,
                              OR const* const issue_ors [SLOT_NUM]) const
 {
     for (INT i = us.get_first(); i != -1; i = us.get_next(i)) {
         SLOT s = m_cg->mapUnit2Slot((UNIT)i, clst);
-        if (issue_ors[s] != NULL) {
+        if (issue_ors[s] != nullptr) {
             //This slot has issued other operation.
             return true;
         }
@@ -199,34 +193,31 @@ bool LIS::makeIssued(OR * o,
         }
     }
 
-    if (!isValidResourceUsage(o, to_slot, issue_ors, conflict_ors)) {
-        return false;
-    }
-    return true;
+    return isValidResourceUsage(o, to_slot, issue_ors, conflict_ors);
 }
 
 
 //Select an operation with highest priority.
 //Change the function unit of best o if necessary.
-OR * LIS::selectBestOR(OR_HASH & cand_hash, SLOT slot)
+OR * LIS::selectBestOR(ORTab & cand_tab, SLOT slot)
 {
     DUMMYUSE(slot);
 
-    ASSERT0(cand_hash.get_elem_count() > 0);
-    OR_HASH br_preds_cand_hash;
-    OR_HASH * cand_hash_ptr = &cand_hash;
-    if (m_br_ord != NULL) {
-        //Find ors which are predecessors of branch-o in order to
-        //schedule branch-o as earlier as possible.
-        INT c;
-        for (OR * o = cand_hash.get_first(c);
-             o != NULL; o = cand_hash.get_next(c)) {
+    ASSERT0(cand_tab.get_elem_count() > 0);
+    ORTab br_preds_cand;
+    ORTab * cand_hash_ptr = &cand_tab;
+    if (isScheduleDelaySlot()) {
+        //Find ORs which are predecessors of branch-OR in order to
+        //schedule branch-OR as earlier as possible.
+        ORTabIter c;
+        for (OR * o = cand_tab.get_first(c);
+             o != nullptr; o = cand_tab.get_next(c)) {
             if (m_br_all_preds.find(o)) {
-                br_preds_cand_hash.append(o);
+                br_preds_cand.append(o);
             }
         }
-        if (br_preds_cand_hash.get_elem_count() > 0) {
-            cand_hash_ptr = &br_preds_cand_hash;
+        if (br_preds_cand.get_elem_count() > 0) {
+            cand_hash_ptr = &br_preds_cand;
         }
     }
 
@@ -243,16 +234,17 @@ OR * LIS::selectBestOR(OR_HASH & cand_hash, SLOT slot)
 //'change_slot': set to true indicate the routine allows modification
 //  of operations in other slot. Note that the modification may
 //  change the function unit of operation.
-bool LIS::selectIssueOR(IN ORList & cand_list,
+//Note this functio will attempt to change OR's slot if possible.
+bool LIS::selectIssueOR(IN ORList & cand_list, //OR may be changed.
                         SLOT slot,
                         OUT OR * issue_ors[SLOT_NUM],
                         bool change_slot)
 {
     ASSERTN(m_pool, ("uninitialized"));
-    OR_HASH valid_cands;
+    ORTab valid_cands;
     OR * cflct_ors[SLOT_NUM] = {0}; //record conflict ors.
     for (OR * o = cand_list.get_head();
-         o != NULL; o = cand_list.get_next()) {
+         o != nullptr; o = cand_list.get_next()) {
         if (makeIssued(o, issue_ors, slot, change_slot, cflct_ors)) {
             valid_cands.append(o);
         }
@@ -301,16 +293,16 @@ SLOT LIS::rollBackORs(bool be_changed[SLOT_NUM],
                       OR * issue_ors[SLOT_NUM],
                       SLOT to_slot)
 {
-    ASSERT0(issue_ors[to_slot] == NULL);
+    ASSERT0(issue_ors[to_slot] == nullptr);
     for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {
-        if (!be_changed[i] && issue_ors[i] != NULL) {
+        if (!be_changed[i] && issue_ors[i] != nullptr) {
             if (!changeSlot(issue_ors[i], to_slot)) {
                 continue;
             }
             ASSERTN(i != (UINT)to_slot, ("illegal!"));
             m_or_changed = true;
             issue_ors[to_slot] = issue_ors[i];
-            issue_ors[i] = NULL;
+            issue_ors[i] = nullptr;
             be_changed[to_slot] = true;
             return (SLOT)i;
         }
@@ -334,9 +326,9 @@ bool LIS::selectIssueORs(IN ORList & cand_list, OUT OR * issue_ors[SLOT_NUM])
         }
 
         SLOT slot = (SLOT)(((INT)FIRST_SLOT) + i);
-        if (selectIssueOR(cand_list, slot, issue_ors, m_is_change_slot)) {
+        if (selectIssueOR(cand_list, slot, issue_ors, allowChangeSlot())) {
             find = true;
-        } else if (m_is_change_slot) {
+        } else if (allowChangeSlot()) {
             next_slot = rollBackORs(be_changed, issue_ors, slot);
         }
     }
@@ -344,11 +336,43 @@ bool LIS::selectIssueORs(IN ORList & cand_list, OUT OR * issue_ors[SLOT_NUM])
 }
 
 
+//Add more ready-OR into ready-list when removing 'or'.
+//o: OR will be removed.
+//ddg: dependent graph, vertex of 'o' should be removed after function return.
+//visited: bitset that used to update ready-or-list. It can be nullptr if you
+//         are not going to update ready-list.
+void LIS::updateReadyList(OR const* o, DataDepGraph const& ddg,
+                          DefSBitSet * visited)
+{
+    if (visited == nullptr) { return; }
+
+    Vertex const* or_vex = ddg.getVertex(o->id());
+    for (xcom::EdgeC const* el = or_vex->getOutList();
+         el != nullptr; el = el->get_next()) {
+        Vertex * vex_succ = el->getTo();
+
+        //Determine if in-degree is bigger than 1.
+        UINT in_degrees = 0;
+        for (xcom::EdgeC const* el2 = vex_succ->getInList();
+             el2 != nullptr && in_degrees <= 1;
+             el2 = el2->get_next(), in_degrees++) {;}
+
+        ASSERT0(in_degrees >= 1);
+        if (in_degrees == 1) {
+            m_ready_list.append(m_cg->getOR(vex_succ->id()));
+            ASSERT0(!visited->is_contain(vex_succ->id()));
+            visited->bunion(vex_succ->id());
+        }
+    }
+}
+
+
 //Choose candidate OR from ready-list, and fill available issue slot.
-//Return true if DDG node has been removed, and ready-list should
+//Return true if there are ORs issued, and ready-list should
 //be recomputed.
-//
-//'stepddg': computing ready instructions step by step during scheduling.
+//stepddg: computing ready instructions step by step during scheduling.
+//visited: bitset that used to update ready-or-list. It can be nullptr if you
+//         are not going to update ready-list.
 //
 //About fill branch shadow:
 //    When GIS is calling it, don't try to schedule the operation
@@ -356,69 +380,73 @@ bool LIS::selectIssueORs(IN ORList & cand_list, OUT OR * issue_ors[SLOT_NUM])
 //    dominate/post-dominate current BB in the delay slot.
 //    Frequent observance is that this will unneccessarily
 //    restrict further code motion.
-bool LIS::fillIssueSlot(DataDepGraph & stepddg)
+bool LIS::fillIssueSlot(DataDepGraph * stepddg, DefSBitSet * visited)
 {
     ASSERTN(m_pool, ("uninitialized"));
-    ORList cand_list;
+    ORList cand_list; //OR may be changed.
 
-    //Find ors can be issued at current cycle.
-    INT c;
+    //Find ors that can be issued at current cycle.
+    ORTabIter c;
     for (OR * o = m_ready_list.get_first(c);
-         o != NULL; o = m_ready_list.get_next(c)) {
+         o != nullptr; o = m_ready_list.get_next(c)) {
         if (isIssueCand(o)) {
             cand_list.append_tail(o);
         }
     }
 
-    //Select appropriate issue OR for each slot.
-    bool ddg_node_removed = false;
+    //Appropriate OR has been selected and issued.
+    bool issued = false;
 
     //Record selected OR that is ready to issue, and these ORs
     //will not has conflict with ones already issued both in
     //hardware resources and data dependences.
     OR * issue_ors[SLOT_NUM] = {0};
     if (cand_list.get_elem_count() > 0) {
+        //Note OR in cand_list may be changed.
         if (selectIssueORs(cand_list, issue_ors)) {
             for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {
-                if (issue_ors[i] == NULL) { continue; }
-                if (m_br_ord != NULL &&
-                    issue_ors[i] == ORDESC_or(m_br_ord)) {
+                if (issue_ors[i] == nullptr) { continue; }
+                if (isScheduleDelaySlot() &&
+                    issue_ors[i] == m_br_ord->getOR()) {
                     //Branch-OR is ready to schedule!
                     ORDESC_start_cyc(m_br_ord) = m_sim->getCurCycle();
                 }
                 if (m_sim->issue(issue_ors[i], (SLOT)(FIRST_SLOT + i))) {
-                    m_ready_list.removed(issue_ors[i]);
+                    m_ready_list.remove(issue_ors[i]);
                 }
-                stepddg.removeOR(issue_ors[i]);
-                ddg_node_removed = true;
+                if (stepddg != nullptr) {
+                    updateReadyList(issue_ors[i], *stepddg, visited);
+                    stepddg->removeOR(issue_ors[i]);
+                }
+                issued = true;
             }
         }
     }
-    m_sim->runOneCycle(NULL);
-    return ddg_node_removed;
+    m_sim->runOneCycle(nullptr);
+    return issued;
 }
 
 
-INT LIS::dcache_miss_rate(OR *)
+INT LIS::dcache_miss_rate(OR const*) const
 {
     return 0;
 }
 
 
-INT LIS::dcache_miss_penalty(OR *)
+INT LIS::dcache_miss_penalty(OR const*) const
 {
     return 0;
 }
 
 
 //Select an operation with highest priority.
-OR * LIS::selectBestORByPriority(OR_HASH & cand_hash)
+OR * LIS::selectBestORByPriority(ORTab const& cand_tab) const
 {
-    OR * best_cand = NULL;
+    OR * best_cand = nullptr;
     float best_prio = 0.0;
-    INT c;
-    for (OR * o = cand_hash.get_first(c);
-         o != NULL; o = cand_hash.get_next(c)) {
+    ORTabIter c;
+    for (OR * o = cand_tab.get_first(c);
+         o != nullptr; o = cand_tab.get_next(c)) {
         float prio = 1.0;
 
         //Consider execute shadow.
@@ -436,48 +464,51 @@ OR * LIS::selectBestORByPriority(OR_HASH & cand_hash)
 }
 
 
-void LIS::dump(CHAR * name, bool is_del, bool need_exec_detail)
+void LIS::dump(bool need_exec_detail) const
 {
-    m_sim->dump(name, is_del, need_exec_detail);
+    if (!m_cg->getRegion()->isLogMgrInit()) { return; }
+    m_sim->dump(m_cg->getRegion()->getLogMgr()->getFileHandler(),
+                need_exec_detail);
 }
 
 
-//Compute the execution time for instructions in order.
+//Compute the execution time for instructions in serialization order.
 //This function does not change any function unit.
 void LIS::serialize()
 {
+    //START_TIMER_FMT(t, ("LIS: Serialize: BB%d", getBB()->id()));
     ASSERT0(m_bb && m_ddg);
-    DataDepGraph * stepddg = m_cg->allocDDG(false); //Local used.
-    stepddg->init(m_bb);
-    stepddg->clone(*m_ddg);
-    stepddg->computeEstartAndLstart(*m_sim, NULL);
-
     INT last_res_cyc = 0;
-    if (m_br_ord != NULL) {
+    if (isScheduleDelaySlot()) {
         last_res_cyc = ORSI_last_result_avail_cyc(
-            ORDESC_or_sche_info(m_br_ord));
+            m_br_ord->getScheInfo());
     }
 
-    xcom::C<OR*> * container = NULL;
-    for (ORBB_orlist(m_bb)->get_head(&container);
-         container != ORBB_orlist(m_bb)->end();
-         ORBB_orlist(m_bb)->get_next(&container)) {
-        m_ready_list.append(container->val());
-        while (!fillIssueSlot(*stepddg)) {;}
+    BBORListIter ct = nullptr;
+    for (m_bb->getORList()->get_head(&ct);
+         ct != m_bb->getORList()->end();
+         m_bb->getORList()->get_next(&ct)) {
+        m_ready_list.append(ct->val());
+        while (!fillIssueSlot(nullptr, nullptr)) {;}
     }
 
-    if (m_br_ord != NULL) {
+    if (isScheduleDelaySlot()) {
         UINT end_cyc = m_sim->getCurCycle() - 1;
-        INT br_start_cyc = ORDESC_start_cyc(m_br_ord);
+        INT br_start_cyc = m_br_ord->getStartCycle();
         ASSERT0(br_start_cyc >= 0);
         INT pad = br_start_cyc + (last_res_cyc - 1) - end_cyc;
         ASSERT0(pad >= 0);
         for (INT i = 0; i < pad; i++) {
-            m_sim->runOneCycle(NULL);
+            m_sim->runOneCycle(nullptr);
         }
     }
 
-    delete stepddg;
+    //END_TIMER_FMT(t, ("LIS: Serialize: BB%d", getBB()->id()));
+    if (g_is_dump_after_pass && g_dump_opt.isDumpLIS()) {
+        START_TIMER(t3, "LIS:dump");
+        dump(true);
+        END_TIMER(t3, "LIS:dump");
+    }
 }
 
 
@@ -485,42 +516,43 @@ void LIS::serialize()
 //Return true if some instructions changed their register file.
 bool LIS::schedule()
 {
+    //START_TIMER_FMT(t, ("LIS: Schedule: BB%d", getBB()->id()));
     ASSERTN(m_pool, ("uninitialized"));
-    DataDepGraph * stepddg = m_cg->allocDDG(false);
+
+    //Stepddg is local used, and should be deleted
+    //before leaving this function.
+    DataDepGraph * stepddg = m_cg->allocDDG();
     stepddg->init(m_bb);
     stepddg->clone(*m_ddg);
-    stepddg->computeEstartAndLstart(*m_sim, NULL);
-    Vector<bool> visited;
+    stepddg->computeEstartAndLstart(*m_sim, nullptr);
+    DefMiscBitSetMgr sm;
+    DefSBitSet visited(sm.getSegMgr());
     m_or_changed = false;
 
     INT last_res_cyc = 0;
-    if (m_br_ord != NULL) {
+    if (isScheduleDelaySlot()) {
         ORDESC_start_cyc(m_br_ord) = -1;
-        ORList tmp;
-        stepddg->getPredsByOrderTraverseNode(tmp, ORDESC_or(m_br_ord));
-        for (OR * o = tmp.get_head(); o != NULL; o = tmp.get_next()) {
-            m_br_all_preds.append(o);
-        }
-        m_br_all_preds.append(ORDESC_or(m_br_ord));
-
-        last_res_cyc = ORSI_last_result_avail_cyc(ORDESC_or_sche_info(m_br_ord));
+        stepddg->getDependentPreds(m_br_all_preds, m_br_ord->getOR());
+        m_br_all_preds.append(m_br_ord->getOR());
+        last_res_cyc = ORSI_last_result_avail_cyc(
+            m_br_ord->getScheInfo());
     }
 
 RESCH:
     computeReadyList(*stepddg, visited, true);
     while (stepddg->getVertexNum() > 0 || !m_sim->done()) {
-        fillIssueSlot(*stepddg);
-        computeReadyList(*stepddg, visited, true);
+        fillIssueSlot(stepddg, &visited);
     }
 
-    if (m_br_ord != NULL) {
+    if (isScheduleDelaySlot() && allowReschedule()) {
+        //Select an issue cycle for branch operation according last scheduling
+        //result.
         UINT end_cyc = m_sim->getCurCycle() - 1;
-        INT br_start_cyc = ORDESC_start_cyc(m_br_ord);
+        INT br_start_cyc = m_br_ord->getStartCycle();
         ASSERT0(br_start_cyc >= 0);
         if (br_start_cyc <= (INT)(end_cyc - last_res_cyc)) {
             //Once again, 'max_try' can not less than 'last_res_cyc'.
-            INT max_try = last_res_cyc +
-                          2; //tricky value, range between [0~N]
+            INT max_try = last_res_cyc + getAddendOfMaxTryTime();
             if (((INT)(end_cyc - br_start_cyc)) > max_try) {
                 ORDESC_start_cyc(m_br_ord) = end_cyc - max_try;
             } else {
@@ -536,6 +568,14 @@ RESCH:
     }
 
     delete stepddg;
+    //END_TIMER_FMT(t, ("LIS: Schedule: BB%d", getBB()->id()));
+
+    if (g_is_dump_after_pass && g_dump_opt.isDumpLIS()) {
+        START_TIMER(t3, "LIS:dump");
+        dump(true);
+        END_TIMER(t3, "LIS:dump");
+    }
+
     return m_or_changed;
 }
 

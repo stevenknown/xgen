@@ -34,6 +34,7 @@ author: Su Zhenyu
 namespace xgen {
 
 class OR;
+class ORMgr;
 class ORBB;
 
 typedef xcom::C<OR*> ORCt; //OR container
@@ -44,6 +45,7 @@ typedef Vector<OR*> ORVec; //OR vector
 #define OFST_STORE_VAL 2
 #define OFST_LOAD_BASE 0
 #define OFST_LOAD_OFST 1
+#define ORID_UNDEF 0
 
 //OR Descriptor
 #define OTD_code(o) ((o)->code)
@@ -118,9 +120,9 @@ public:
 #define OR_code(o) ((o)->code)
 #define OR_ct(o) ((o)->container)
 #define OR_clust(o) ((o)->clust)
-#define OR_id(o) ((o)->id)
+#define OR_id(o) ((o)->uid)
 #define OR_order(o) ((o)->order)
-#define OR_bb(o) ((o)->bb)
+#define OR_bb(o) ((o)->ubb)
 #define OR_unit(o) OTD_unit(tmGetORTypeDesc(o->getCode()))
 #define OR_code_name(o) OTD_name(tmGetORTypeDesc(o->getCode()))
 #define OR_dbx(o) ((o)->dbx)
@@ -139,7 +141,7 @@ public:
 #define OR_is_reload(o) ((o)->u1.s1.is_reload)
 #define OR_is_terminate(o) ((o)->u1.s1.is_terminate_control_flow)
 #define OR_is_need_compute_var_ofst(o)  ((o)->u1.s1.need_to_compute_var_ofst)
-#define OR_is_mem(o) (OR_is_store(o) || OR_is_load(o))
+#define OR_is_mem(o) (o->is_store() || o->is_load())
 #define OR_is_fake(o) OTD_is_fake(tmGetORTypeDesc(o->getCode()))
 #define OR_is_bus(o) OTD_is_bus(tmGetORTypeDesc(o->getCode()))
 #define OR_is_nop(o) OTD_is_nop(tmGetORTypeDesc(o->getCode()))
@@ -155,13 +157,21 @@ public:
 #define OR_is_subi(o) OTD_is_subi(tmGetORTypeDesc(o->getCode()))
 #define OR_flag(o) ((o)->u1.s1byte)
 class OR {
+    friend class ORMgr;
 protected:
-    Vector<SR*, 2> m_opnd; //operand of micro operation
-    Vector<SR*, 2> m_result; //result of micro operation
+    typedef SimpleVector<SR*, 2, MAX_OR_OPERAND_NUM> OpndVec;
+    typedef SimpleVector<SR*, 2, MAX_OR_RESULT_NUM> ResultVec;
+    OpndVec m_opnd; //Operand of micro operation
+    ResultVec m_result; //Result of micro operation
+
+protected:
+    OpndVec * get_opnd_vec() { return &m_opnd; }
+    ResultVec * get_result_vec() { return &m_result; }
+
 public:
     //each op has its own unique id.
     //DO NOT MODIFY 'id' DURING cleaning, cloning or copying of OR.
-    UINT id;
+    UINT uid;
 
     OR_TYPE code; //operation type, various to different target machine.
 
@@ -171,7 +181,7 @@ public:
 
     CLUST clust; //cluster, various to different target machine.
     INT order; //identify the ordinal of OR in BB.
-    ORBB * bb;
+    ORBB * ubb;
     union {
         struct {
             BYTE is_signed:1; //Is OR signed?
@@ -193,7 +203,7 @@ public:
     virtual ~OR() { destroy(); }
 
     void clean();
-    virtual void clone(OR const* o);
+    virtual void clone(OR const* o, CG * cg);
     void copyDbx(IR const* ir);
 
     void destroy()
@@ -205,15 +215,17 @@ public:
     virtual void dump(CG * cg) const;
 
     OR_TYPE getCode() const { return code; }
-    SR * get_opnd(INT i) const
+    CHAR const* getCodeName() const { return OR_code_name(this); }
+    ORBB * getBB() const { return OR_bb(this); }
+    SR * get_opnd(UINT i) const
     {
-        ASSERT0(i <= m_opnd.get_last_idx() && i >= 0);
+        ASSERT0(i <= m_opnd.getElemNum());
         return m_opnd.get(i);
     }
 
-    SR * get_result(INT i) const
+    SR * get_result(UINT i) const
     {
-        ASSERT0(i <= m_result.get_last_idx() && i >= 0);
+        ASSERT0(i <= m_result.getElemNum());
         return m_result.get(i);
     }
 
@@ -237,6 +249,14 @@ public:
     virtual SR * get_lda_base()
     { return get_opnd(HAS_PREDICATE_REGISTER + 0); }
 
+    //Get Label operand, it should be a label SR, the default operand index
+    //is HAS_PREDICATE_REGISTER + 0.
+    //Layout of opnds:
+    //-----------------------------------------------------------
+    // 0         | 1     | 2   |
+    // predicate | label | ... |
+    // register  |       |     |
+    //-----------------------------------------------------------
     virtual LabelInfo const* getLabel() const
     {
         SR * sr = get_opnd(HAS_PREDICATE_REGISTER + 0);
@@ -296,11 +316,12 @@ public:
     //Get opnd SR, the default STORE has at least one store-value.
     //OR format is : <- base, ofst, store_value0, store_value1, ...
     //'idx': index of store-value.
-    SR * get_store_val(UINT idx = 0)
+    SR * get_store_val(UINT idx)
     {
         ASSERT0(OR_is_store(this));
         return get_opnd(HAS_PREDICATE_REGISTER + OFST_STORE_VAL + idx);
     }
+    SR * get_first_store_val() { return get_store_val(0); }
 
     UINT get_num_store_val() const
     { return opnd_num() - OFST_STORE_VAL - HAS_PREDICATE_REGISTER; }
@@ -320,14 +341,15 @@ public:
 
     bool hasSideEffect() const { return OR_is_side_effect(this); }
 
+    UINT id() const { return OR_id(this); }
     void init()
     {
         code = OR_UNDEF;
-        container = NULL;
+        container = nullptr;
         clust = CLUST_UNDEF;
-        id = 0;
+        uid = ORID_UNDEF;
         order = -1;
-        bb = NULL;
+        ubb = nullptr;
         OR_flag(this) = 0;
         m_opnd.init();
         m_result.init();
@@ -335,7 +357,7 @@ public:
     }
     virtual bool is_equal(OR const* o) const;
     //Return true if 'o' depicted a label.
-    bool is_label_or()
+    bool is_label_or() const
     {
         #ifdef _DEBUG_
         if (OR_code(this) == OR_label) {
@@ -344,7 +366,7 @@ public:
         #endif
         return OR_code(this) == OR_label;
     }
-    bool isConditionalBr() { return OR_is_cond_br(this); }
+    bool isConditionalBr() const { return OR_is_cond_br(this); }
     bool isUnconditionalBr() const { return OR_is_uncond_br(this); }
     bool isIndirectBr() const { return OR_is_indirect_br(this); }
     bool is_return() const { return OR_is_return(this); }
@@ -391,82 +413,86 @@ public:
     // register  |      |        |            |            |     |
     //-----------------------------------------------------------
     //'idx': index of store-values.
-    void set_store_val(SR * val, UINT idx = 0)
+    void set_store_val(SR * val, CG * cg, UINT idx)
     {
         ASSERT0(OR_is_store(this));
-        set_opnd(HAS_PREDICATE_REGISTER + OFST_STORE_VAL + idx, val);
+        set_opnd(HAS_PREDICATE_REGISTER + OFST_STORE_VAL + idx, val, cg);
     }
+    void set_first_store_val(SR * val, CG * cg) { set_store_val(val, cg, 0); }
 
     //Set BASE of STORE MEMORY ADDRESS.
-    void set_store_base(SR * base)
+    void set_store_base(SR * base, CG * cg)
     {
         ASSERT0(OR_is_store(this));
-        set_opnd(HAS_PREDICATE_REGISTER + OFST_STORE_BASE, base);
+        set_opnd(HAS_PREDICATE_REGISTER + OFST_STORE_BASE, base, cg);
     }
 
     //Set OFFSET of BASE of STORE MEMORY ADDRESS.
-    void set_store_ofst(SR * ofst)
+    void set_store_ofst(SR * ofst, CG * cg)
     {
         ASSERT0(OR_is_store(this));
-        set_opnd(HAS_PREDICATE_REGISTER + OFST_STORE_OFST, ofst);
+        set_opnd(HAS_PREDICATE_REGISTER + OFST_STORE_OFST, ofst, cg);
     }
 
     //Set result register, default load-operation has one result.
-    void set_load_val(SR * val, UINT idx = 0)
+    void set_load_val(SR * val, CG * cg, UINT idx)
     {
         ASSERT0(OR_is_load(this));
-        set_result(idx, val);
+        set_result(idx, val, cg);
+    }
+    void set_first_load_val(SR * val, CG * cg) { set_load_val(val, cg, 0); }
+
+    //OR format is : result <- base, ofst
+    void set_load_base(SR * base, CG * cg)
+    {
+        ASSERT0(OR_is_load(this));
+        set_opnd(HAS_PREDICATE_REGISTER + OFST_LOAD_BASE, base, cg);
     }
 
     //OR format is : result <- base, ofst
-    void set_load_base(SR * base)
+    void set_load_ofst(SR * ofst, CG * cg)
     {
         ASSERT0(OR_is_load(this));
-        set_opnd(HAS_PREDICATE_REGISTER + OFST_LOAD_BASE, base);
+        set_opnd(HAS_PREDICATE_REGISTER + OFST_LOAD_OFST, ofst, cg);
     }
 
-    //OR format is : result <- base, ofst
-    void set_load_ofst(SR * ofst)
-    {
-        ASSERT0(OR_is_load(this));
-        set_opnd(HAS_PREDICATE_REGISTER + OFST_LOAD_OFST, ofst);
-    }
-
-    void set_opnd(INT i, SR * sr)
-    {
-        ASSERT0(sr && (UINT)i < opnd_num());
-        m_opnd.set(i, sr);
-    }
-
-    void set_result(INT i, SR * sr)
-    {
-        ASSERT0(sr && (UINT)i < result_num());
-        m_result.set(i, sr);
-    }
-
-    virtual void set_pred(SR * v) //set predicate register
+    void set_opnd(INT i, SR * sr, CG * cg);
+    void set_result(INT i, SR * sr, CG * cg);
+    virtual void set_pred(SR * v, CG * cg) //set predicate register
     {
         ASSERTN_DUMMYUSE(HAS_PREDICATE_REGISTER, ("target not support"));
-        set_opnd(0, v);
+        set_opnd(0, v, cg);
     }
 
-    virtual void set_mov_from(SR * v)
-    { set_opnd(HAS_PREDICATE_REGISTER + 0, v); }
+    virtual void set_mov_from(SR * v, CG * cg)
+    { set_opnd(HAS_PREDICATE_REGISTER + 0, v, cg); }
 
-    virtual void set_copy_from(SR * v)
-    { set_opnd(HAS_PREDICATE_REGISTER + 0, v); }
+    virtual void set_copy_from(SR * v, CG * cg)
+    { set_opnd(HAS_PREDICATE_REGISTER + 0, v, cg); }
 
-    virtual void set_lda_base(SR * v)
-    { set_opnd(HAS_PREDICATE_REGISTER + 0, v); }
+    virtual void set_lda_base(SR * v, CG * cg)
+    { set_opnd(HAS_PREDICATE_REGISTER + 0, v, cg); }
 
-    virtual void setLabel(SR * v)
-    { set_opnd(HAS_PREDICATE_REGISTER + 0, v);}
+    //Set Label operand, it should be a label SR, the default operand index
+    //is HAS_PREDICATE_REGISTER + 0.
+    //Layout of opnds:
+    //-----------------------------------------------------------
+    // 0         | 1     | 2   |
+    // predicate | label | ... |
+    // register  |       |     |
+    //-----------------------------------------------------------
+    virtual void setLabel(SR * v, CG * cg)
+    {
+        ASSERT0(v && v->is_label());
+        set_opnd(HAS_PREDICATE_REGISTER + 0, v, cg);
+    }
 
-    virtual void set_lda_result(SR * v) { set_result(0, v); }
-    virtual void set_mov_to(SR * v) { set_result(0, v); }
-    virtual void set_copy_to(SR * v) { set_result(0, v); }
+    virtual void set_lda_result(SR * v, CG * cg) { set_result(0, v, cg); }
+    virtual void set_mov_to(SR * v, CG * cg) { set_result(0, v, cg); }
+    virtual void set_copy_to(SR * v, CG * cg) { set_result(0, v, cg); }
 };
 
+typedef List<OR const*> ConstORList;
 
 class ORList : public List<OR*> {
 public:
@@ -475,10 +501,10 @@ public:
     void copyDbx(IR const* ir)
     {
         ASSERT0(ir);
-        if (IR_ai(ir) == NULL) { return; }
+        if (IR_ai(ir) == nullptr) { return; }
         DbxAttachInfo * da = (DbxAttachInfo*)IR_ai(ir)->get(AI_DBX);
-        if (da == NULL) { return; }
-        for (OR * o = get_head(); o != NULL; o = get_next()) {
+        if (da == nullptr) { return; }
+        for (OR * o = get_head(); o != nullptr; o = get_next()) {
             OR_dbx(o).copy(da->dbx);
         }
     }
@@ -486,16 +512,16 @@ public:
     void copyDbx(Dbx const* dbx)
     {
         ASSERT0(dbx);
-        for (OR * o = get_head(); o != NULL; o = get_next()) {
+        for (OR * o = get_head(); o != nullptr; o = get_next()) {
             OR_dbx(o).copy(*dbx);
         }
     }
 
-    void set_pred(IN SR * pred)
+    void set_pred(IN SR * pred, CG * cg)
     {
         ASSERT0(pred);
-        for (OR * o = get_head(); o != NULL; o = get_next()) {
-            o->set_pred(pred);
+        for (OR * o = get_head(); o != nullptr; o = get_next()) {
+            o->set_pred(pred, cg);
         }
     }
     virtual void append_tail(OR * o);
@@ -504,27 +530,36 @@ public:
 };
 
 
-typedef xcom::Hash<OR*> OR_HASH; //OR hash table
-
+typedef xcom::Hash<OR*> OR_HASH;
+typedef xcom::TTab<OR*> ORTab;
+typedef xcom::TTab<UINT> ORIdTab;
+typedef xcom::TTabIter<OR*> ORTabIter;
 
 //
 //START ORMgr
 //
 class ORMgr : public Vector<OR*> {
+    friend class OR;
 protected:
     List<OR*> m_free_or_list;
     CG * m_cg;
     SRMgr * m_sr_mgr;
+    SMemPool * m_pool;
+
+protected:
+    virtual OR * allocOR();
+
 public:
     ORMgr(SRMgr * srmgr);
     virtual ~ORMgr() { clean(); }
-    void clean();
-    virtual OR * allocOR();
 
+    void clean();
+
+    SMemPool * get_pool() const { return m_pool; }
     OR * getOR(UINT id);
     virtual OR * genOR(OR_TYPE ort, CG * cg);
     virtual void freeOR(IN OR * o);
-    virtual void freeORList(IN ORList & o);
+    void freeSR(OR * o);
 };
 //END ORMgr
 

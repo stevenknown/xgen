@@ -38,7 +38,7 @@ protected:
     FILE * m_asmfile; //assembly file handler.
 
 public:
-    ARMRegionMgr() { m_asmfile = NULL; }
+    ARMRegionMgr() { m_asmfile = nullptr; }
     virtual ~ARMRegionMgr() {}
 
     virtual Region * allocRegion(REGION_TYPE rt);

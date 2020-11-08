@@ -58,14 +58,15 @@ void AsmPrinter::printCode(FILE * asmfile)
 
     StrBuf buf(128);
     for (ORBB * bb = bblst->get_head();
-        bb != NULL; bb = bblst->get_next()) {
+        bb != nullptr; bb = bblst->get_next()) {
         IssuePackageList * ipl = ipcvec->get(bb->id());
-        ASSERT0(ipl != NULL);
-        for (IssuePackage * ip = ipl->get_head();
-            ip != NULL; ip = ipl->get_next()) {
+        ASSERT0(ipl != nullptr);
+        for (IssuePackageListIter it = ipl->get_head();
+             it != ipl->end(); it = ipl->get_next(it)) {
+            IssuePackage * ip = it->val();
             fprintf(asmfile, "\n { ");
             OR * o = ip->get(FIRST_SLOT);
-            if (o != NULL) {
+            if (o != nullptr) {
                 buf.clean();
                 fprintf(asmfile, "%s%s\n", code_indent, printOR(o, buf));
             }

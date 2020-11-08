@@ -35,10 +35,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../reader/grreader.h"
 #include "../opt/comopt.h"
 
-CHAR * g_c_file_name = NULL;
-CHAR * g_gr_file_name = NULL;
-CHAR * g_dump_file_name = NULL;
-static CHAR * g_output_file_name = NULL;
+CHAR * g_c_file_name = nullptr;
+CHAR * g_gr_file_name = nullptr;
+CHAR * g_dump_file_name = nullptr;
+static CHAR * g_output_file_name = nullptr;
 bool g_is_dumpgr = false;
 static CHAR const* g_xocc_version = "1.0.0";
 
@@ -57,10 +57,10 @@ static TMap<Var*, Decl*> g_var2decl_map;
 void resetMapBetweenVARandDecl(Var * v)
 {
     Decl * decl = g_var2decl_map.get(v);
-    if (decl != NULL) {
-        g_decl2var_map.setAlways(decl, NULL);
+    if (decl != nullptr) {
+        g_decl2var_map.setAlways(decl, nullptr);
     }
-    g_var2decl_map.setAlways(v, NULL);
+    g_var2decl_map.setAlways(v, nullptr);
 }
 #endif
 
@@ -84,7 +84,7 @@ INT report_location(CHAR const* file, INT line)
 void CLDbxMgr::printSrcLine(Dbx const* dbx, PrtCtx * ctx)
 {
     ASSERT0(ctx && dbx);
-    if (ctx->logmgr == NULL) { return; }
+    if (ctx->logmgr == nullptr) { return; }
 
     UINT lineno = getLineNum(dbx);
     if (lineno == m_cur_lineno) {
@@ -95,7 +95,7 @@ void CLDbxMgr::printSrcLine(Dbx const* dbx, PrtCtx * ctx)
     m_cur_lineno = lineno;
     if (lineno == 0) {
         //No line number info recorded.
-        if (ctx != NULL && ctx->prefix != NULL) {
+        if (ctx != nullptr && ctx->prefix != nullptr) {
             note(ctx->logmgr, "\n%s[0]\n", ctx->prefix);
         } else {
             note(ctx->logmgr, "\n[0]\n");
@@ -103,15 +103,15 @@ void CLDbxMgr::printSrcLine(Dbx const* dbx, PrtCtx * ctx)
         return;
     }
 
-    if (g_hsrc != NULL) {
+    if (g_hsrc != nullptr) {
         UINT srcline = mapRealLineToSrcLine(m_cur_lineno);
         if (srcline == 0) {
             srcline = m_cur_lineno;
         }
         ASSERTN(srcline < OFST_TAB_LINE_SIZE, ("unexpected src line"));
         fseek(g_hsrc, g_ofst_tab[srcline], SEEK_SET);
-        if (fgets(g_cur_line, g_cur_line_len, g_hsrc) != NULL) {
-            if (ctx != NULL && ctx->prefix != NULL) {
+        if (fgets(g_cur_line, g_cur_line_len, g_hsrc) != nullptr) {
+            if (ctx != nullptr && ctx->prefix != nullptr) {
                 note(ctx->logmgr, "\n\n%s[%u]%s",
                      ctx->prefix, m_cur_lineno, g_cur_line);
             } else {
@@ -133,7 +133,7 @@ void CLDbxMgr::printSrcLine(xcom::StrBuf & output, Dbx const* dbx, PrtCtx * ctx)
     m_cur_lineno = lineno;
     if (lineno == 0) {
         //No line number info recorded.
-        if (ctx != NULL && ctx->prefix != NULL) {
+        if (ctx != nullptr && ctx->prefix != nullptr) {
             output.strcat("\n%s[0]\n", ctx->prefix);
         } else {
             output.strcat("\n[0]\n");
@@ -141,15 +141,15 @@ void CLDbxMgr::printSrcLine(xcom::StrBuf & output, Dbx const* dbx, PrtCtx * ctx)
         return;
     }
 
-    if (g_hsrc != NULL) {
+    if (g_hsrc != nullptr) {
         UINT srcline = mapRealLineToSrcLine(m_cur_lineno);
         if (srcline == 0) {
             srcline = m_cur_lineno;
         }
         ASSERTN(srcline < OFST_TAB_LINE_SIZE, ("unexpected src line"));
         fseek(g_hsrc, g_ofst_tab[srcline], SEEK_SET);
-        if (fgets(g_cur_line, g_cur_line_len, g_hsrc) != NULL) {
-            if (ctx != NULL && ctx->prefix != NULL) {
+        if (fgets(g_cur_line, g_cur_line_len, g_hsrc) != nullptr) {
+            if (ctx != nullptr && ctx->prefix != nullptr) {
                 output.strcat("\n\n%s[%u]%s", ctx->prefix,
                               m_cur_lineno, g_cur_line);
             } else {
@@ -263,7 +263,7 @@ static bool process_O(INT argc, CHAR * argv[], INT & i)
 
 static bool process_o(INT argc, CHAR * argv[], INT & i)
 {
-    if (i + 1 < argc && argv[i + 1] != NULL) {
+    if (i + 1 < argc && argv[i + 1] != nullptr) {
         g_output_file_name = argv[i + 1];
     }
     i += 2;
@@ -274,8 +274,8 @@ static bool process_o(INT argc, CHAR * argv[], INT & i)
 
 static CHAR * process_d(INT argc, CHAR * argv[], INT & i)
 {
-    CHAR * n = NULL;
-    if (i + 1 < argc && argv[i + 1] != NULL) {
+    CHAR * n = nullptr;
+    if (i + 1 < argc && argv[i + 1] != nullptr) {
         n = argv[i + 1];
     }
     i += 2;
@@ -285,11 +285,11 @@ static CHAR * process_d(INT argc, CHAR * argv[], INT & i)
 
 static bool process_thres_opt_bb_num(INT argc, CHAR * argv[], INT & i)
 {
-    CHAR * n = NULL;
-    if (i + 1 < argc && argv[i + 1] != NULL) {
+    CHAR * n = nullptr;
+    if (i + 1 < argc && argv[i + 1] != nullptr) {
         n = argv[i + 1];
     }
-    if (n == NULL) { return false; } 
+    if (n == nullptr) { return false; } 
     xoc::g_thres_opt_bb_num = (UINT)xcom::xatoll(n, false);
     i += 2;
     return true;
@@ -298,11 +298,11 @@ static bool process_thres_opt_bb_num(INT argc, CHAR * argv[], INT & i)
 
 static bool process_thres_opt_ir_num(INT argc, CHAR * argv[], INT & i)
 {
-    CHAR * n = NULL;
-    if (i + 1 < argc && argv[i + 1] != NULL) {
+    CHAR * n = nullptr;
+    if (i + 1 < argc && argv[i + 1] != nullptr) {
         n = argv[i + 1];
     }
-    if (n == NULL) { return false; } 
+    if (n == nullptr) { return false; } 
     xoc::g_thres_opt_ir_num = (UINT)xcom::xatoll(n, false);
     i += 2;
     return true;
@@ -367,7 +367,7 @@ static bool processOneLevelCmdLine(INT argc, CHAR * argv[], INT & i)
         i++;
     } else if (!strcmp(cmdstr, "dump")) {
         CHAR * n = process_d(argc, argv, i);
-        if (n == NULL) {
+        if (n == nullptr) {
             return false;
         }
         g_dump_file_name = n;
@@ -415,6 +415,9 @@ static bool processOneLevelCmdLine(INT argc, CHAR * argv[], INT & i)
         i++;
     } else if (!strcmp(cmdstr, "dump-cfg")) {
         g_dump_opt.is_dump_cfg = true;
+        i++;
+    } else if (!strcmp(cmdstr, "dump-lis")) {
+        g_dump_opt.is_dump_lis = true;
         i++;
     } else if (!strcmp(cmdstr, "dump-aa")) {
         g_dump_opt.is_dump_aa = true;
@@ -513,15 +516,15 @@ bool processCmdLine(INT argc, CHAR * argv[])
         return false;
     }
 
-    if (g_c_file_name != NULL) {
+    if (g_c_file_name != nullptr) {
         g_hsrc = fopen(g_c_file_name, "rb");
-        if (g_hsrc == NULL) {
+        if (g_hsrc == nullptr) {
             fprintf(stdout, "xoc: cannot open %s, error information is %s\n",
                             g_c_file_name, strerror(errno));
             return false;
         }
     }
-    if (g_output_file_name != NULL) {
+    if (g_output_file_name != nullptr) {
         UNLINK(g_output_file_name);
     }
     if (g_opt_level == OPT_LEVEL0) {
@@ -544,7 +547,7 @@ bool processCmdLine(INT argc, CHAR * argv[])
         g_compute_pr_du_chain = false;
         g_compute_nonpr_du_chain = false;        
         g_do_refine = false;
-        g_do_refine_auto_insert_cvt = false;
+        g_do_refine_auto_insert_cvt = true;
         g_do_call_graph = false;
         g_do_ipa = false;
     }
@@ -605,7 +608,7 @@ static Var * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
     ASSERT0(dm);
 
     DATA_TYPE data_type = get_decl_dtype(decl, &data_size, dm);
-    Type const* type = NULL;
+    Type const* type = nullptr;
     if (IS_PTR(data_type)) {
         ASSERT0(is_pointer(decl));
         UINT basesize = get_pointer_base_size(decl);
@@ -666,10 +669,10 @@ static Var * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
 //      --SCOPE4
 static void scanAndInitVar(SCOPE * s, VarMgr * vm, TypeMgr * tm)
 {
-    if (s == NULL) { return; }
+    if (s == nullptr) { return; }
     do {
         for (Decl * decl = SCOPE_decl_list(s);
-             decl != NULL; decl = DECL_next(decl)) {
+             decl != nullptr; decl = DECL_next(decl)) {
             ASSERT0(DECL_decl_scope(decl) == s);
             if (is_fun_decl(decl)) {
                 //Function declaration decl.
@@ -680,7 +683,7 @@ static void scanAndInitVar(SCOPE * s, VarMgr * vm, TypeMgr * tm)
                     VAR_is_func_decl(v) = true;
                 } else {
                     //Function declaration
-                    if (mapDecl2VAR(decl) == NULL) {
+                    if (mapDecl2VAR(decl) == nullptr) {
                         Var * v = addDecl(decl, vm, tm);
 
                         //Function declaration should not be fake, since
@@ -700,8 +703,8 @@ static void scanAndInitVar(SCOPE * s, VarMgr * vm, TypeMgr * tm)
             }
 
             //General variable declaration decl.
-            if (mapDecl2VAR(decl) == NULL &&
-                !(DECL_is_formal_para(decl) && get_decl_sym(decl) == NULL)) {
+            if (mapDecl2VAR(decl) == nullptr &&
+                !(DECL_is_formal_para(decl) && get_decl_sym(decl) == nullptr)) {
                 //No need to generate Var for parameter that does not
                 //have a name.
                 //e.g: parameter of foo(char*)
@@ -711,7 +714,7 @@ static void scanAndInitVar(SCOPE * s, VarMgr * vm, TypeMgr * tm)
 
         scanAndInitVar(SCOPE_sub(s), vm, tm);
         s = SCOPE_nsibling(s);
-    } while (s != NULL);
+    } while (s != nullptr);
 }
 
 
@@ -749,10 +752,10 @@ FIN:
 
 static FILE * createAsmFileHandler()
 {
-    FILE * asmh = NULL;
-    if (g_output_file_name != NULL) {
+    FILE * asmh = nullptr;
+    if (g_output_file_name != nullptr) {
         asmh = fopen(g_output_file_name, "a+");
-        if (asmh == NULL) {
+        if (asmh == nullptr) {
             xoc::prt2C("Can not create assembly file %s", g_output_file_name);
         }
         return asmh;
@@ -760,10 +763,10 @@ static FILE * createAsmFileHandler()
 
     StrBuf buf(128);
     ASSERT0(g_c_file_name || g_gr_file_name);
-    buf.sprint("%s.asm", g_c_file_name != NULL ?
+    buf.sprint("%s.asm", g_c_file_name != nullptr ?
                          g_c_file_name : g_gr_file_name);
     asmh = fopen(buf.buf, "a+");
-    if (asmh == NULL) {
+    if (asmh == nullptr) {
         xoc::prt2C("Can not create assembly file %s", buf.buf);
     }
     return asmh;
@@ -792,13 +795,12 @@ static void dumpPoolUsage(RegionMgr * rm)
 
 //#define MEMLEAKTEST
 #ifdef MEMLEAKTEST
-static void test_ru(RegionMgr * rm)
+static void test_ru(RegionMgr * rm, CGMgr * cgmgr)
 {
-    Region * func = NULL;
+    Region * func = nullptr;
     for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
         Region * rg = rm->getRegion(i);
-        if (rg == NULL) { continue; }
-        if (rg->is_program()) {
+        if (rg == nullptr || rg->is_program()) {
             continue;
         }
         func = rg;
@@ -809,13 +811,16 @@ static void test_ru(RegionMgr * rm)
 
     INT i = 0;
     Var * v = func->getRegionVar();
-    Region * x = new Region(REGION_FUNC, rm);
+    Region * x = rm->newRegion(REGION_FUNC);
+    //Note Local Vars and MDs will be freed and collected by Mgr.
+    //The test region should not have global var.
     while (i < 10000) {
+        OptCtx oc;
         x->init(REGION_FUNC, rm);
         x->setRegionVar(v);
         IR * irs = func->getIRList();
         x->setIRList(x->dupIRTreeList(irs));
-        bool succ = x->process();
+        bool succ = x->process(&oc);
         ASSERT0(succ);
         //VarMgr * vm = x->getVarMgr();
         //vm->dump();
@@ -837,7 +842,7 @@ static void compileProgramRegion(Region * rg, CGMgr * cgmgr, FILE * asmh)
     
     ASSERT0(g_c_file_name || g_gr_file_name);
     xcom::StrBuf b(64);
-    b.strcat(g_c_file_name != NULL ? g_c_file_name : g_gr_file_name);
+    b.strcat(g_c_file_name != nullptr ? g_c_file_name : g_gr_file_name);
     b.strcat(".hir.gr");
     UNLINK(b.buf);
 
@@ -872,12 +877,12 @@ static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr, FILE * asmh)
 {
     ASSERT0(rm && cgmgr && asmh);
     //Test mem leak.
-    //test_ru(this);
+    //test_ru(rm, cgmgr);
     rm->registerGlobalMD();
-    Region * program = NULL; //There could be multiple program regions.
+    Region * program = nullptr; //There could be multiple program regions.
     for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
         Region * rg = rm->getRegion(i);
-        if (rg == NULL) { continue; }
+        if (rg == nullptr) { continue; }
         if (rg->is_program()) {
             program = rg;
             compileProgramRegion(rg, cgmgr, asmh);
@@ -916,7 +921,7 @@ static CLRegionMgr * initRegionMgr()
 
     //Retain CFG, DU info for IPA used.
     g_compute_region_imported_defuse_md = true;
-    g_retain_pass_mgr_for_region = true;
+    g_retain_pass_mgr_for_region = false;
     //g_compute_pr_du_chain = false;
     //g_compute_nonpr_du_chain = false;
     //g_do_call_graph = true;
@@ -924,7 +929,6 @@ static CLRegionMgr * initRegionMgr()
     g_is_support_dynamic_type = true;
     g_is_opt_float = true;
     g_prt_asm_horizontal = true;
-    g_do_refine_auto_insert_cvt = false;
     return rm;
 }
 
@@ -934,7 +938,7 @@ static void dumpRegionMgrGR(RegionMgr * rm, CHAR * srcname)
     ASSERT0(rm);
     for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
         Region * rg = rm->getRegion(i);
-        if (rg == NULL) { continue; }
+        if (rg == nullptr) { continue; }
         if (rg->is_program()) {
             //r->dump(true);
             ASSERT0(srcname);
@@ -971,16 +975,16 @@ static void finiCompile(CLRegionMgr * rm,
                         CGMgr * cgmgr,
                         TargInfo * ti)
 {
-    if (rm != NULL) {
+    if (rm != nullptr) {
         delete rm;
     }
-    if (cgmgr != NULL) {
+    if (cgmgr != nullptr) {
         delete cgmgr;
     }
-    if (ti != NULL) {
+    if (ti != nullptr) {
         delete ti;
     }
-    if (asmh != NULL) {
+    if (asmh != nullptr) {
         fclose(asmh);
     }
 }
@@ -990,17 +994,18 @@ bool compileGRFile(CHAR * gr_file_name)
 {
     bool res = true;
     ASSERT0(gr_file_name);
-    TargInfo * ti = NULL;
-    CLRegionMgr * rm = NULL;
-    CGMgr * cgmgr = NULL;
-    FILE * asmh = NULL;
+    TargInfo * ti = nullptr;
+    CLRegionMgr * rm = nullptr;
+    CGMgr * cgmgr = nullptr;
+    FILE * asmh = nullptr;
     START_TIMER_FMT(t, ("Compile GR File"));
     initCompile(&rm, &asmh, &cgmgr, &ti);
-    if (g_dump_file_name != NULL) {
+    if (g_dump_file_name != nullptr) {
         rm->getLogMgr()->init(g_dump_file_name, true);
     }
     bool succ = xoc::readGRAndConstructRegion(rm, gr_file_name);
     if (!succ) {
+        prt2C("\nFail read and parse '%s'", gr_file_name);
         res = false;
         goto FIN;
     }
@@ -1013,11 +1018,11 @@ bool compileGRFile(CHAR * gr_file_name)
     compileRegionSet(rm, cgmgr, asmh);
     for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
         Region * r = rm->getRegion(i);
-        if (r == NULL || r->is_blackbox()) { continue; }
-        if (r->getPassMgr() != NULL) {
+        if (r == nullptr || r->is_blackbox()) { continue; }
+        if (r->getPassMgr() != nullptr) {
             xoc::PRSSAMgr * ssamgr = (PRSSAMgr*)r->
                 getPassMgr()->queryPass(PASS_PR_SSA_MGR);
-            if (ssamgr != NULL && ssamgr->is_valid()) {
+            if (ssamgr != nullptr && ssamgr->is_valid()) {
                 OptCtx * oc = rm->getAndGenOptCtx(r->id());
                 ssamgr->destruction(oc);
             }
@@ -1033,16 +1038,16 @@ FIN:
 bool compileCFile()
 {
     bool res = true;
-    TargInfo * ti = NULL;
-    CLRegionMgr * rm = NULL;
-    CGMgr * cgmgr = NULL;
-    FILE * asmh = NULL;
+    TargInfo * ti = nullptr;
+    CLRegionMgr * rm = nullptr;
+    CGMgr * cgmgr = nullptr;
+    FILE * asmh = nullptr;
     START_TIMER(t, "Compile C File");
     initParser();
     initCompile(&rm, &asmh, &cgmgr, &ti);
     g_fe_sym_tab = rm->getSymTab();
     g_dbx_mgr = new CLDbxMgr();
-    if (g_dump_file_name != NULL) {
+    if (g_dump_file_name != nullptr) {
         rm->getLogMgr()->init(g_dump_file_name, true);
     }
     if (g_redirect_stdout_to_dump_file) {
@@ -1066,9 +1071,9 @@ bool compileCFile()
         dumpRegionMgrGR(rm, g_c_file_name);
     }
 FIN:
-    if (g_dbx_mgr != NULL) {
+    if (g_dbx_mgr != nullptr) {
         delete g_dbx_mgr;
-        g_dbx_mgr = NULL;
+        g_dbx_mgr = nullptr;
     }
     g_decl2var_map.clean();
     g_var2decl_map.clean();

@@ -36,15 +36,15 @@ INT main(INT argc, CHAR * argv[])
     }
 
     bool res = true;
-    if (g_gr_file_name != NULL) {
+    if (g_gr_file_name != nullptr) {
         res |= compileGRFile(g_gr_file_name);
     }
-    
-    if (g_c_file_name != NULL) {
+
+    if (g_c_file_name != nullptr) {
         res |= compileCFile();
     }
 
-    if (g_gr_file_name == NULL && g_c_file_name == NULL) {
+    if (g_gr_file_name == nullptr && g_c_file_name == nullptr) {
         fprintf(stdout, "xocc.exe: no input files\n");
         fflush(stdout);
         return 4;
