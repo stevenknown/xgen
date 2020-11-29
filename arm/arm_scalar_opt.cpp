@@ -28,20 +28,44 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-#include "../opt/cominc.h"
-#include "../opt/comopt.h"
-#include "../opt/cfs_opt.h"
-#include "../opt/liveness_mgr.h"
 #include "../xgen/xgeninc.h"
-#include "../cfe/cfexport.h"
-#include "../opt/util.h"
+
+static bool worthToDo(Pass const* pass, UINT & cp_count,
+                      UINT & licm_count) {
+    if (pass->getPassType() == PASS_LICM &&
+        licm_count > 1 && cp_count > 1) {
+        //LICM has performed at least once.
+        //Sometime, LICM doing the counter-effect to CP.
+        //We make the simplest choose that if both LICM and CP have performed
+        //more than once, says twice, it is not worthy to do any more.
+        return false;
+    }
+
+    if (pass->getPassType() == PASS_CP &&
+        licm_count > 1 && cp_count > 1) {
+        //CP has performed at least once.
+        //Sometime, LICM doing the counter-effect to CP.
+        //We make the simplest choose that if both LICM and CP have performed
+        //more than once, says twice, it is not worthy to do any more.
+        return false;
+    }
+
+    return true;
+}
+
+
+static void updateCounter(Pass const* pass, UINT & cp_count,
+                          UINT & licm_count) {
+    licm_count += pass->getPassType() == PASS_LICM ? 1 : 0;
+    cp_count += pass->getPassType() == PASS_CP ? 1 : 0;
+}
+
 
 bool ARMScalarOpt::perform(OptCtx & oc)
 {
     ASSERT0(oc.is_cfg_valid());
     ASSERT0(m_rg && m_rg->getCFG()->verify());
     List<Pass*> passlist; //A list of Optimization.
-
     if (g_do_ivr) { passlist.append_tail(m_pass_mgr->registerPass(PASS_IVR)); }
     if (g_do_licm) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_LICM));
@@ -77,6 +101,8 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     bool change;
     UINT count = 0;
     ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg));
+    UINT cp_count = 0;
+    UINT licm_count = 0;
     do {
         change = false;
         for (Pass * pass = passlist.get_head();
@@ -84,14 +110,16 @@ bool ARMScalarOpt::perform(OptCtx & oc)
             ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
             CHAR const* passname = pass->getPassName();
             DUMMYUSE(passname);
-            bool doit = pass->perform(oc);
+            bool doit = false;
+            if (worthToDo(pass, cp_count, licm_count)) {
+                doit = pass->perform(oc);
+            }
             if (doit) {
                 //RefineCtx rf;
                 //RC_insert_cvt(rf) = false;
                 //m_rg->getRefine()->refineBBlist(m_rg->getBBList(), rf);
                 change = true;
-                
-
+                updateCounter(pass, cp_count, licm_count);
             }
 
             res |= doit;

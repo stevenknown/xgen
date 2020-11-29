@@ -35,6 +35,7 @@ author: Su Zhenyu
 //START ARMCG
 //
 class ARMCG : public CG {
+    COPY_CONSTRUCTOR(ARMCG);
 private:
     void buildStoreCase1(IN SR * store_val,
                          IN SR * base,
@@ -86,11 +87,12 @@ private:
                                 IN OUT IOC * cont);
     //This is an util function.
     //Build several [tgt] <- [src] operations accroding unrolling factor.
-    //e.g: given unrolling factor is 2, two memory assignments will be generated:
-    //     [tgt] <- [src];
-    //     src <- src + GENERAL_REGISTER_SIZE;
-    //     tgt <- tgt + GENERAL_REGISTER_SIZE;
-    //     [tgt] <- [src];
+    //e.g: given unrolling factor is 2, two memory assignments will
+    //be generated:
+    //  [tgt] <- [src];
+    //  src <- src + GENERAL_REGISTER_SIZE;
+    //  tgt <- tgt + GENERAL_REGISTER_SIZE;
+    //  [tgt] <- [src];
     //tgt: target memory address register.
     //src: source memory address register.
     void buildMemAssignUnroll(SR * tgt,
@@ -152,68 +154,14 @@ private:
     void expandFakeMov32(IN OR * o, OUT IssuePackageList * ipl);
 
 protected:
-    void _output_bss(FILE * asmh, Section & sect);
-    void _output_data(FILE * asmh, Section & sect);
     SR const* m_sp;
     SR const* m_fp;
     SR const* m_gp;
     SR const* m_true_pred;
-    virtual void initBuiltin();
 
-public:
-    Var const* m_builtin_uimod;
-    Var const* m_builtin_imod;
-    Var const* m_builtin_uidiv;
-    Var const* m_builtin_ashldi3;
-    Var const* m_builtin_lshrdi3;
-    Var const* m_builtin_ashrdi3;
-    Var const* m_builtin_modsi3;
-    Var const* m_builtin_umodsi3;
-    Var const* m_builtin_moddi3;
-    Var const* m_builtin_umoddi3;
-    Var const* m_builtin_addsf3;
-    Var const* m_builtin_adddf3;
-    Var const* m_builtin_subsf3;
-    Var const* m_builtin_subdf3;
-    Var const* m_builtin_divsi3;
-    Var const* m_builtin_udivsi3;
-    Var const* m_builtin_divsf3;
-    Var const* m_builtin_divdi3;
-    Var const* m_builtin_udivdi3;
-    Var const* m_builtin_divdf3;
-    Var const* m_builtin_muldi3;
-    Var const* m_builtin_mulsf3;
-    Var const* m_builtin_muldf3;
-    Var const* m_builtin_ltsf2;
-    Var const* m_builtin_gtsf2;
-    Var const* m_builtin_gesf2;
-    Var const* m_builtin_eqsf2;
-    Var const* m_builtin_nesf2;
-    Var const* m_builtin_lesf2;
-    Var const* m_builtin_ltdf2;
-    Var const* m_builtin_gtdf2;
-    Var const* m_builtin_gedf2;
-    Var const* m_builtin_eqdf2;
-    Var const* m_builtin_nedf2;
-    Var const* m_builtin_ledf2;
-    Var const* m_builtin_fixsfsi;
-    Var const* m_builtin_fixdfsi;
-    Var const* m_builtin_fixunssfsi;
-    Var const* m_builtin_fixunsdfsi;
-    Var const* m_builtin_fixunssfdi;
-    Var const* m_builtin_fixunsdfdi;
-    Var const* m_builtin_truncdfsf2;
-    Var const* m_builtin_floatsisf;
-    Var const* m_builtin_floatdisf;
-    Var const* m_builtin_floatsidf;
-    Var const* m_builtin_floatdidf;
-    Var const* m_builtin_fixsfdi;
-    Var const* m_builtin_fixdfdi;
-    Var const* m_builtin_floatunsisf;
-    Var const* m_builtin_floatundisf;
-    Var const* m_builtin_floatunsidf;
-    Var const* m_builtin_floatundidf;
-    Var const* m_builtin_extendsfdf2;
+protected:
+    void _output_bss(FILE * asmh, Section & sect);
+    void _output_data(FILE * asmh, Section & sect);
 
 public:
     explicit ARMCG(Region * rg, CGMgr * cgmgr) : CG(rg, cgmgr)
@@ -231,7 +179,6 @@ public:
         //       ld:mc(16) 'retval_buf_of_foo'
         g_gen_code_for_big_return_value = false;
     }
-    COPY_CONSTRUCTOR(ARMCG);
     virtual ~ARMCG() {}
 
     virtual SR * getSP() const;

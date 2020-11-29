@@ -358,14 +358,11 @@ ORMgr::ORMgr(SRMgr * srmgr)
 
 void ORMgr::clean()
 {
-    for (INT i = 0; i <= get_last_idx(); i++) {
+    for (INT i = ORID_UNDEF + 1; i <= get_last_idx(); i++) {
         OR * o = get(i);
-        if (o != nullptr) {
-            //o may be nullptr.
-            delete o;
-        }
+        ASSERT0(o);
+        delete o; //invoke virtual destructor of OR.
     }
-
     Vector<OR*>::clean();
     m_free_or_list.clean();
     smpoolDelete(m_pool);
@@ -390,12 +387,10 @@ OR * ORMgr::genOR(OR_TYPE ort, CG * cg)
     OR * o = m_free_or_list.remove_head();
     if (o == nullptr) {
         o = allocOR();
+        ASSERT0(ORID_UNDEF == 0);
+        //Do not use ORID_UNDEF as index.
         INT idx = get_last_idx();
-        if (idx < 0) {
-            OR_id(o) = ORID_UNDEF + 1; //Do not use ORID_UNDEF as index.
-        } else {
-            OR_id(o) = idx + 1;
-        }
+        OR_id(o) = idx < 0 ? ORID_UNDEF + 1 : idx + 1; 
         set(o->id(), o);
     }
     OR_code(o) = ort;
@@ -440,5 +435,39 @@ void ORMgr::freeOR(OR * o)
     m_free_or_list.append_head(o);
 }
 //END ORMgr
+
+//
+//START RecycORList
+//
+RecycORList::RecycORList(RecycORListMgr * mgr)
+{
+    m_mgr = mgr;
+    m_entity = mgr->getFree();
+    if (m_entity == nullptr) {
+        m_entity = new ORList();
+    }
+}
+
+
+RecycORList::RecycORList(IR2OR * ir2or) :
+    RecycORList(ir2or->getRecycORListMgr())
+{
+}
+
+
+RecycORList::~RecycORList()
+{
+    m_mgr->addFree(m_entity);
+}
+//END RecycORList
+
+
+RecycORListMgr::~RecycORListMgr()
+{
+    C<ORList*> * it;
+    for (m_free_list.get_head(&it); it != nullptr; m_free_list.get_next(&it)) {
+        delete it->val();
+    }
+}
 
 } //namespace xgen

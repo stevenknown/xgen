@@ -33,10 +33,11 @@ author: Su Zhenyu
 
 namespace xgen {
 
-AsmPrinter::AsmPrinter(CG * cg, AsmPrinterMgr * apmgr)
+AsmPrinter::AsmPrinter(CG const* cg, AsmPrinterMgr * apmgr)
 {
     ASSERT0(cg && apmgr);
     m_cg = cg;
+    m_cgmgr = cg->getCGMgr();
     m_tm = m_cg->getTypeMgr();
     m_asmprtmgr = apmgr;
 }
@@ -53,8 +54,9 @@ void AsmPrinter::printCode(FILE * asmfile)
 {
     ASSERTN_DUMMYUSE(FIRST_SLOT == LAST_SLOT, ("Target Dependent Code"));
     CHAR const* code_indent = "      ";
-    Vector<IssuePackageList*> * ipcvec = m_cg->getIssuePackageListVec();
-    List<ORBB*> * bblst = m_cg->getORBBList();
+    Vector<IssuePackageList*> * ipcvec =
+        const_cast<CG*>(m_cg)->getIssuePackageListVec();
+    List<ORBB*> * bblst = const_cast<CG*>(m_cg)->getORBBList();
 
     StrBuf buf(128);
     for (ORBB * bb = bblst->get_head();

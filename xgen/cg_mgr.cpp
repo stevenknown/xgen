@@ -32,20 +32,113 @@ author: Su Zhenyu
 
 namespace xgen {
 
-//Allocate VarMgr.
-AsmPrinter * CGMgr::allocAsmPrinter(CG * cg, AsmPrinterMgr * asmprtmgr)
+CGMgr::CGMgr(RegionMgr * rm)
 {
-    return new AsmPrinter(cg, asmprtmgr);
+    m_sr_mgr = nullptr;
+    m_or_mgr = nullptr;
+    m_sect_mgr = nullptr;
+    m_code_sect = nullptr;
+    m_data_sect = nullptr;
+    m_rodata_sect = nullptr;
+    m_bss_sect = nullptr;
+    m_param_sect = nullptr;
+    m_stack_sect = nullptr;
+    m_rm = rm;
+    m_asm_file_handler = nullptr;
+    initBuiltin();
 }
 
 
-bool CGMgr::GenAndPrtGlobalVariable(Region * rg, FILE * asmh)
+size_t CGMgr::count_mem() const
 {
-    if (asmh == nullptr) { return false; }
+    size_t count = sizeof(*this);
+    count -= sizeof(m_sr_vec_mgr);
+    count -= sizeof(m_asmprtmgr);
+    count -= sizeof(m_builtin_var);
+    count += m_sr_vec_mgr.count_mem();
+    count += m_asmprtmgr.count_mem();
+    count += m_builtin_var.count_mem();
+    if (m_sr_mgr != nullptr) {
+        count += m_sr_mgr->count_mem();
+    }
+    if (m_or_mgr != nullptr) {
+        count += m_or_mgr->count_mem();
+    }
+    if (m_sect_mgr != nullptr) {
+        count += m_sect_mgr->count_mem();
+    }
+    return count;
+}
+
+
+void CGMgr::initBuiltin()
+{
+    m_builtin_var.set(BUILTIN_MEMCPY, addBuiltinVar("memcpy"));
+}
+
+
+//Initialize program-section information, which might include
+//but not limited CODE, DATA, RODATA, BSS.
+//Generate new symbol for each of sections in order to
+//assign concise name of them.
+void CGMgr::initSectionMgrAndSections()
+{
+    ASSERT0(m_sect_mgr == nullptr);
+    m_sect_mgr = allocSectionMgr();
+
+    m_code_sect = m_sect_mgr->genSection(".code", false, 0);
+    m_data_sect = m_sect_mgr->genSection(".data", false, 0);
+    m_rodata_sect = m_sect_mgr->genSection(".rodata", false, 0);
+    m_bss_sect = m_sect_mgr->genSection(".bss", false, 0);
+    m_param_sect = m_sect_mgr->genSection(".param", false, 0);
+    m_stack_sect = m_sect_mgr->genStackSection();
+}
+
+
+//Free md's id and var's id back to MDSystem and VarMgr.
+//The index of MD and Var is important resource if there
+//are a lot of CG.
+void CGMgr::destroyVAR()
+{
+    VarMgr * varmgr = m_rm->getVarMgr();
+    MDSystem * mdsys = m_rm->getMDSystem();
+    ConstMDIter mdit;
+    Bltin2VarIter it;
+    Var * v;
+    for (m_builtin_var.get_first(it, &v); v != nullptr;
+         m_builtin_var.get_next(it, &v)) {
+        mdsys->removeMDforVAR(v, mdit);
+        varmgr->destroyVar(v);
+    }
+    m_builtin_var.clean();
+}
+
+
+//Allocate VarMgr.
+AsmPrinter * CGMgr::allocAsmPrinter(CG const* cg)
+{
+    return new AsmPrinter(cg, getAsmPrtMgr());
+}
+
+
+//Print result of CG to asm file.
+void CGMgr::prtCGResult(CG const* cg)
+{
+    if (getAsmFileHandler() == nullptr) { return; }
+    AsmPrinter * ap = allocAsmPrinter(cg);
+    ap->printData(getAsmFileHandler());
+    ap->printCode(getAsmFileHandler());
+    delete ap;
+}
+
+
+bool CGMgr::genAndPrtGlobalVariable(Region * rg)
+{
+    if (getAsmFileHandler() == nullptr || !has_section()) { return false; }
     START_TIMER(t, "Generate and Print Global Variable");
     ASSERT0(rg->is_program());
     CG * cg = allocCG(rg);
-    VarVec * varvec = rg->getVarMgr()->get_var_vec();
+    VarVec * varvec = rg->getVarMgr()->getVarVec();
     for (INT i = 0; i <= varvec->get_last_idx(); i++) {
         Var * v = varvec->get(i);
         if (v == nullptr ||
@@ -57,52 +150,50 @@ bool CGMgr::GenAndPrtGlobalVariable(Region * rg, FILE * asmh)
         }
         cg->computeAndUpdateGlobalVarLayout(v, nullptr, nullptr);
     }
-
-    AsmPrinter * ap = allocAsmPrinter(cg, &m_asmprtmgr);
-    ap->printData(asmh);
-    ap->printCode(asmh);
-    fflush(asmh);
-
+    prtCGResult(cg);
     delete cg;
-    delete ap;
     END_TIMER(t, "Generate and Print Global Variable");
     return true;
 }
 
 
-//Generate code and perform target machine dependent operations.
-//Basis step to do:
-//    1. Generate target dependent micro operation representation(named as OR).
-//    2. Print micro operation into ASM file.
-//    3. Machine resource allocation.
-//
-//Optimizations to be performed:
-//    1. Instruction scheduling.
-//    2. Loop optimization.
-//    3. Software pipelining.
-//    4. Control flow optimization(predicational).
-//    5. GRA.
-//    6. LRA.
-//    7. Peephole.
-bool CGMgr::CodeGen(Region * region, FILE * asmh)
+static void generateORAndOutput(Region * rg, CGMgr * cgmgr)
 {
-    ASSERT0(region && asmh);
-    START_TIMER(t, "Code Generation");
-    CG * cg = allocCG(region);
+    CG * cg = cgmgr->allocCG(rg);
     cg->initFuncUnit();
-    cg->initBuiltin();
     cg->initDedicatedSR();
     //cg->initGlobalVar(m_rg->getVarMgr());
     cg->perform();
-    if (region->is_function()) {
-        AsmPrinter * ap = allocAsmPrinter(cg, &m_asmprtmgr);
-        ap->printData(asmh);
-        ap->printCode(asmh);
-        fflush(asmh);
-        delete ap;
+    if (rg->is_function()) {
+        cgmgr->prtCGResult(cg);
     }
     delete cg;
-    clean();
+}
+
+
+//Generate code and perform target machine dependent operations.
+//Basis step to do:
+//  1. Generate target dependent micro operation representation(named as OR).
+//  2. Print micro operation into ASM file.
+//  3. Machine resource allocation.
+//
+//Optimizations to be performed:
+//  1. Instruction scheduling.
+//  2. Loop optimization.
+//  3. Software pipelining.
+//  4. Control flow optimization(predicational).
+//  5. GRA.
+//  6. LRA.
+//  7. Peephole.
+bool CGMgr::generate(Region * rg)
+{
+    ASSERT0(rg);
+    START_TIMER(t, "Code Generation");
+    initSRAndORMgr();
+    initSectionMgrAndSections();
+    generateORAndOutput(rg, this);
+    destroySRAndORMgr();
+    destroySectionMgr();
     END_TIMER(t, "Code Generation");
     return true;
 }

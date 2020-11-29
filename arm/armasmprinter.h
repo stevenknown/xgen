@@ -36,13 +36,11 @@ class ARMAsmPrinter : public AsmPrinter {
 protected:
     void printBss(FILE * asmh, Section & sect);
     void printData(FILE * asmh, Section & sect);
-    void printCodeSequentially(
-            IssuePackageList * ipl,
-            StrBuf & buf,
-            FILE * asmh);
+    void printCodeSequentially(IssuePackageList * ipl, StrBuf & buf,
+                               FILE * asmh);
 
 public:
-    ARMAsmPrinter(CG * cg, AsmPrinterMgr * asmprtmgr) :
+    ARMAsmPrinter(CG const* cg, AsmPrinterMgr * asmprtmgr) :
         AsmPrinter(cg, asmprtmgr) {}
     virtual ~ARMAsmPrinter() {}
     virtual CHAR * printOR(OR * o, StrBuf & buf);

@@ -33,28 +33,58 @@ author: Su Zhenyu
 
 namespace xgen {
 
+typedef TMap<BUILTIN_TYPE, Var*> Bltin2Var;
+typedef TMapIter<BUILTIN_TYPE, Var*> Bltin2VarIter;
+
 //This class apply objects to allocate OR and SR.
 class CGMgr {
     COPY_CONSTRUCTOR(CGMgr);
 protected:
     ORMgr * m_or_mgr;
     SRMgr * m_sr_mgr;
+    SectionMgr * m_sect_mgr;
+    Section * m_code_sect;
+    Section * m_data_sect;
+    Section * m_rodata_sect;
+    Section * m_bss_sect;
+    Section * m_param_sect;
+    Section * m_stack_sect;
+    RegionMgr * m_rm;
+    FILE * m_asm_file_handler;
     SRVecMgr m_sr_vec_mgr;
     AsmPrinterMgr m_asmprtmgr;
+
+    //Builtin function should be initialized in initBuiltin().
+    Bltin2Var m_builtin_var;
 
 protected:
     virtual SRMgr * allocSRMgr() { return new SRMgr(); }
     virtual ORMgr * allocORMgr(SRMgr * srmgr) { return new ORMgr(srmgr); }
+    virtual SectionMgr * allocSectionMgr() { return new SectionMgr(this); }
+    inline xoc::Var * addBuiltinVar(CHAR const* buildin_name)
+    {
+        ASSERT0(m_rm);
+        xoc::Sym * s = m_rm->addToSymbolTab(buildin_name);
+        return m_rm->getVarMgr()->registerStringVar(buildin_name,
+                                                    s, MEMORY_ALIGNMENT);
+    }
 
+    AsmPrinterMgr * getAsmPrtMgr() { return &m_asmprtmgr; }
+
+    //Initialize the SRMgr and ORMgr.
+    //Note this is the necessary initialization function you have to call
+    //before generate OR and SR.
     void initSRAndORMgr()
     {
         if (m_sr_mgr != nullptr) { return; }
         m_sr_mgr = allocSRMgr();
-        m_or_mgr = allocORMgr(getSRMgr());    
+        m_or_mgr = allocORMgr(getSRMgr());
         m_sr_vec_mgr.init();
     }
+    void initSectionMgrAndSections();
+    void initBuiltin();
 
-    void finiSRAndORMgr()
+    void destroySRAndORMgr()
     {
         if (m_sr_mgr == nullptr) { return; }
         ASSERT0(getSRMgr() && m_or_mgr);
@@ -64,49 +94,86 @@ protected:
         m_or_mgr = nullptr;
         m_sr_vec_mgr.destroy();
     }
+    void destroySectionMgr()
+    {
+        if (m_sect_mgr == nullptr) { return; }
+        delete m_sect_mgr;
+        m_sect_mgr = nullptr;
+        m_code_sect = nullptr;
+        m_data_sect = nullptr;
+        m_rodata_sect = nullptr;
+        m_bss_sect = nullptr;
+        m_param_sect = nullptr;
+        m_stack_sect = nullptr;
+     }
+    //Free md's id and var's id back to MDSystem and VarMgr.
+    //The index of MD and Var is important resource if there
+    //are a lot of CG.
+    void destroyVAR();
+
 public:
-    //You need invoke init() after CGMgr constructed.
-    CGMgr() { m_sr_mgr = nullptr; m_or_mgr = nullptr; }
-    virtual ~CGMgr() { finiSRAndORMgr(); }
+    CGMgr(RegionMgr * rm);
+    virtual ~CGMgr()
+    {
+        destroySRAndORMgr();
+        destroySectionMgr();
+        destroyVAR();
+    }
 
     //Allocate CG.
     virtual CG * allocCG(Region * rg) = 0;
 
     //Allocate VarMgr.
-    virtual AsmPrinter * allocAsmPrinter(CG * cg, AsmPrinterMgr * asmprtmgr);
+    virtual AsmPrinter * allocAsmPrinter(CG const* cg);
+    size_t count_mem() const;
 
     //Generate code and perform target machine dependent operations.
+    //region: this function is the main entry to generate code for given
+    //        region.
+    //asmh: assembly file handler. It is the output of code generation.
+    //      If you expect generating code in a buffer, an embedded assembler
+    //      is needed(TODO).
     //Basis step to do:
-    //    1. Generate target dependent micro operation representation(named as OR).
-    //    2. Print micro operation into ASM file.
-    //    3. Machine resource allocation.
+    //  1. Generate target dependent micro operation
+    //     representation(named as OR).
+    //  2. Print micro operation into ASM file.
+    //  3. Machine resource allocation.
     //
     //Optimizations to be performed:
-    //    1. Instruction scheduling.
-    //    2. Loop optimization.
-    //    3. Software pipelining.
-    //    4. Control flow optimization(predicational).
-    //    5. GRA.
-    //    6. LRA.
-    //    7. Peephole.
-    virtual bool CodeGen(Region * region, FILE * asmh);
-    void clean()
-    {
-        finiSRAndORMgr();
-        initSRAndORMgr();        
-    }
-
+    //  1. Instruction scheduling.
+    //  2. Loop optimization.
+    //  3. Software pipelining.
+    //  4. Control flow optimization(predicational).
+    //  5. GRA.
+    //  6. LRA.
+    //  7. Peephole.
+    virtual bool generate(Region * rg);
     //Print global variable to asmfile.
-    virtual bool GenAndPrtGlobalVariable(Region * rg, FILE * asmh);
-
-    //Initialize the SRMgr and ORMgr.
-    //Note this is the first function you should invoked after
-    //CGMgr constructed.
-    void init() { initSRAndORMgr(); }
-
+    virtual bool genAndPrtGlobalVariable(Region * rg);
     SRMgr * getSRMgr() const { return m_sr_mgr; }
     ORMgr * getORMgr() const { return m_or_mgr; }
+    SectionMgr * getSectionMgr() const { return m_sect_mgr; }
     SRVecMgr * getSRVecMgr() { return &m_sr_vec_mgr; }
+    RegionMgr * getRegionMgr() const { return m_rm; }
+    Section * getRodataSection() { return m_rodata_sect; }
+    Section * getCodeSection() { return m_code_sect; }
+    Section * getDataSection() { return m_data_sect; }
+    Section * getBssSection() { return m_bss_sect; }
+    Section * getStackSection() { return m_stack_sect; }
+    Section * getParamSection() { return m_param_sect; }
+    Var * getBuiltinVar(BUILTIN_TYPE bt) const
+    { return m_builtin_var.get(bt); }
+    FILE * getAsmFileHandler() const { return m_asm_file_handler; }
+
+    //Return true if there are any section generated.
+    bool has_section() const
+    { return m_sect_mgr == nullptr ? false : m_sect_mgr->getSectNum() != 0; }
+
+    //Print result of CG to asm file.
+    void prtCGResult(CG const* cg);
+
+    //Set handler for printing assembly into file.
+    void setAsmFileHandler(FILE * asmh) { m_asm_file_handler = asmh; }
 };
 
 } //namespace xgen

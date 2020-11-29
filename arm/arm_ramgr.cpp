@@ -28,13 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-#include "../opt/cominc.h"
-#include "../opt/comopt.h"
-#include "../opt/cfs_opt.h"
-#include "../opt/liveness_mgr.h"
 #include "../xgen/xgeninc.h"
-#include "../cfe/cfexport.h"
-#include "../opt/util.h"
 
 //Save predicate register at entry BB
 //'bblist': records BBs need to reallocate register.
@@ -104,7 +98,7 @@ void ARMRaMgr::setUseLR()
 }
 
 
-void ARMRaMgr::postBuild()
+void ARMRaMgr::postProcess()
 {
     //The code saving-LR has been generated at generateFuncUnitDedicatedCode()
     //List<ORBB*> * bblst = m_cg->getORBBList();
@@ -125,5 +119,5 @@ void ARMRaMgr::postBuild()
     //if (has_call) {
     //    setUseLR();
     //}
-    RaMgr::postBuild();
+    RaMgr::postProcess();
 }

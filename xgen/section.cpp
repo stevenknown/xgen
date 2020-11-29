@@ -30,6 +30,11 @@ author: Su Zhenyu
 @*/
 #include "xgeninc.h"
 
+namespace xgen {
+
+//
+//START Section
+//
 void Section::dump(CG const* cg)
 {
     if (!cg->getRegion()->isLogMgrInit()) { return; }
@@ -41,14 +46,14 @@ void Section::dump(CG const* cg)
     List<xoc::Var const*> layout;
     for (xoc::Var const* v = var_list.get_head();
          v != nullptr; v = var_list.get_next()) {
-        VarDesc * vd = var2vdesc_map.get(v);
+        VarDesc * vd = getVar2Desc()->get(v);
         ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
 
         xcom::C<xoc::Var const*> * ct;
         bool find = false;
         for (xoc::Var const* v2 = layout.get_head(&ct);
              v2 != nullptr; v2 = layout.get_next(&ct)) {
-            VarDesc * vd2 = var2vdesc_map.get(v2);
+            VarDesc * vd2 = getVar2Desc()->get(v2);
             ASSERTN(vd2, ("No VarDesc correspond to xoc::Var"));
 
             if (vd->getOfst() < vd2->getOfst()) {
@@ -63,13 +68,14 @@ void Section::dump(CG const* cg)
 
     for (xoc::Var const* v = layout.get_tail();
          v != nullptr; v = layout.get_prev()) {
-        VarDesc * vd = var2vdesc_map.get(v);
+        VarDesc * vd = getVar2Desc()->get(v);
         buf.clean();
         ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
         note(cg->getRegion(), "\n  (%u)%s",
              (UINT)vd->getOfst(), v->dump(buf, tm));
     }
 }
+//END Section
 
 
 //
@@ -89,14 +95,14 @@ void StackSection::dump(CG const* cg)
     List<xoc::Var const*> layout;
     for (xoc::Var const* v = var_list.get_head();
          v != nullptr; v = var_list.get_next()) {
-        VarDesc * vd = var2vdesc_map.get(v);
+        VarDesc * vd = getVar2Desc()->get(v);
         ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
 
         xcom::C<xoc::Var const*> * ct;
         bool find = false;
         for (xoc::Var const* v2 = layout.get_head(&ct);
              v2 != nullptr; v2 = layout.get_next(&ct)) {
-            VarDesc * vd2 = var2vdesc_map.get(v2);
+            VarDesc * vd2 = getVar2Desc()->get(v2);
             ASSERTN(vd2, ("No VarDesc correspond to xoc::Var"));
 
             if (vd->getOfst() < vd2->getOfst()) {
@@ -111,7 +117,7 @@ void StackSection::dump(CG const* cg)
 
     for (xoc::Var const* v = layout.get_tail();
          v != nullptr; v = layout.get_prev()) {
-        VarDesc * vd = var2vdesc_map.get(v);
+        VarDesc * vd = getVar2Desc()->get(v);
         ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
         buf.clean();
         fprintf(h, "\n  (%u)%s",
@@ -126,3 +132,84 @@ void StackSection::dump(CG const* cg)
     fflush(h);
 }
 //END StackSection
+
+
+//
+//START SectionMgr
+//
+SectionMgr::SectionMgr(CGMgr * cgmgr)
+{
+    m_cgmgr = cgmgr;
+    m_tm = cgmgr->getRegionMgr()->getTypeMgr();
+    m_vm = cgmgr->getRegionMgr()->getVarMgr();
+    m_mdsys = cgmgr->getRegionMgr()->getMDSystem();
+}
+ 
+
+SectionMgr::~SectionMgr()
+{
+    ConstMDIter mdit;
+    for (INT i = 0; i <= m_sect_vec.get_last_idx(); i++) {
+        Section * sect = m_sect_vec[i]; 
+        ASSERT0(sect);
+
+        //Free md's id and var's id back to MDSystem and VarMgr.
+        //The index of MD and Var is important resource if there
+        //are a lot ones in CG.
+        Var * v = sect->getVar();
+        m_mdsys->removeMDforVAR(v, mdit);
+        m_vm->destroyVar(v);
+        
+        //NOTE: the variable in section's varlist do not need to be destoried.
+        //Because they are not registered in CG.
+        //FIXME: spill-var need to be destoried
+        delete sect;
+    }
+}
+
+
+Section * SectionMgr::allocSection()
+{
+    return new Section();
+}
+
+
+Section * SectionMgr::allocStackSection()
+{
+    return new StackSection();
+}
+
+
+//Assign variable to section.
+void SectionMgr::assignSectVar(Section * sect, CHAR const* sect_name,
+                               bool allocable, UINT size)
+{
+    UINT id = getSectNum();
+    xoc::Type const* type = m_tm->getMCType(4);
+    SECT_var(sect) = m_vm->registerVar(sect_name, type, 1,
+                                       VAR_GLOBAL|VAR_FAKE);
+    VAR_is_unallocable(SECT_var(sect)) = !allocable;
+    SECT_size(sect) = size;
+    SECT_id(sect) = id;
+    m_sect_vec.set(id, sect);
+}
+
+
+Section * SectionMgr::genStackSection()
+{
+    Section * sect = allocStackSection();
+    assignSectVar(sect, ".stack", false, 0);
+    return sect;
+}
+
+
+Section * SectionMgr::genSection(CHAR const* sect_name, bool allocable,
+                                 UINT size)
+{
+    Section * sect = allocSection();
+    assignSectVar(sect, sect_name, allocable, size);
+    return sect;
+}
+//END SectionMgr
+
+} //namespace xgen

@@ -49,9 +49,7 @@ public:
     xoc::Region * get_program() { return m_program; }
     void set_program(xoc::Region * r) { m_program = r; }
 
-    virtual bool compileFuncRegion(xoc::Region * func,
-                                   CGMgr * cgmgr,
-                                   FILE * asmh,
+    virtual bool compileFuncRegion(xoc::Region * func, CGMgr * cgmgr,
                                    xoc::OptCtx * oc);
 };
 

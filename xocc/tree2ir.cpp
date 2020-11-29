@@ -485,7 +485,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     //Record the post side effect operations.
     xcom::add_next(CONT_toplirlist(cont), epilog_ir_list);
 
-    ir = get_last(ir);
+    ir = xcom::get_last(ir);
 
     //return rhs as the result of STMT.
     IR * retv = ir->getRHS();
@@ -2182,7 +2182,7 @@ static void scanScopeDeclList(SCOPE * s, OUT xoc::Region * rg, bool scan_sib)
 //Ensure IR_RETURN at the end of function if its return-type is VOID.
 static IR * addReturn(IR * irs, Region * rg)
 {
-    IR * last = get_last(irs);
+    IR * last = xcom::get_last(irs);
     if (last == nullptr) {
         return rg->buildReturn(nullptr);
     }
@@ -2399,7 +2399,6 @@ bool generateRegion(RegionMgr * rm)
     }
 
     //Free the temprary memory pool.
-    tfree();
     END_TIMER(t, "CAst2IR");
     return true;
 }

@@ -41,32 +41,25 @@ public:
 
     virtual LifeTimeMgr * allocLifeTimeMgr();
 
-    virtual void postBuild();
+    virtual void postProcess();
 
     virtual void saveCalleePredicateAtEntry(
-                    REGFILE regfile,
-                    IN ORBB * entry,
-                    IN RegSet used_callee_regs[],
-                    OUT List<ORBB*> & bblist,
-                    OUT xcom::TMap<REG, Var*> & reg2var);
-    virtual void saveCalleePredicateAtExit(
-                    REGFILE regfile,
-                    IN ORBB * exit,
-                    IN RegSet used_callee_regs[],
-                    OUT List<ORBB*> & bblist,
-                    xcom::TMap<REG, Var*> const& reg2var);
-    virtual void saveCalleeRegFileAtEntry(
-                    REGFILE regfile,
-                    IN ORBB * entry,
-                    IN RegSet used_callee_regs[],
-                    OUT List<ORBB*> & bblist,
-                    OUT xcom::TMap<REG, Var*> & reg2var);
-    virtual void saveCalleeRegFileAtExit(
-                    REGFILE regfile,
-                    IN ORBB * exit,
-                    IN RegSet used_callee_regs[],
-                    OUT List<ORBB*> & bblist,
-                    xcom::TMap<REG, Var*> const& reg2var);
+        REGFILE regfile, IN ORBB * entry,
+        IN RegSet used_callee_regs[],
+        OUT List<ORBB*> & bblist,
+        OUT xcom::TMap<REG, Var*> & reg2var);
+    virtual void saveCalleePredicateAtExit(REGFILE regfile, IN ORBB * exit,
+                                           IN RegSet used_callee_regs[],
+                                           OUT List<ORBB*> & bblist,
+                                           TMap<REG, Var*> const& reg2var);
+    virtual void saveCalleeRegFileAtEntry(REGFILE regfile, IN ORBB * entry,
+                                          IN RegSet used_callee_regs[],
+                                          OUT List<ORBB*> & bblist,
+                                          OUT xcom::TMap<REG, Var*> & reg2var);
+    virtual void saveCalleeRegFileAtExit(REGFILE regfile, IN ORBB * exit,
+                                         IN RegSet used_callee_regs[],
+                                         OUT List<ORBB*> & bblist,
+                                         xcom::TMap<REG, Var*> const& reg2var);
 };
 
 #endif

@@ -105,7 +105,7 @@ void SR::clean()
 
 
 //Return SR name during print assembly file.
-CHAR const* SR::getAsmName(StrBuf & buf, CG * cg)
+CHAR const* SR::getAsmName(StrBuf & buf, CG const* cg)
 {
     CHAR const* strformatx = "0x%x";
     CHAR const* strformatd = "%d";
@@ -154,7 +154,7 @@ CHAR const* SR::getAsmName(StrBuf & buf, CG * cg)
 
 //Return symbol register name and info, used by tracing routines.
 //'buf': output string buffer.
-CHAR const* SR::get_name(StrBuf & buf, CG * cg) const
+CHAR const* SR::get_name(StrBuf & buf, CG const* cg) const
 {
     switch (SR_type(this)) {
     case SR_INT_IMM:
@@ -267,12 +267,13 @@ bool SR::is_equal(SR const* sr)
 //
 void SRMgr::clean()
 {
-    for (SR * sr = get_head(); sr != nullptr; sr = get_next()) {
-        delete sr;
+    for (INT i = SRID_UNDEF + 1; i <= m_sridx2sr.get_last_idx(); i++) {
+        SR * sr = m_sridx2sr.get(i);
+        ASSERT0(sr); 
+        delete sr; //invoke virtual destructor of SR.
     }
-    m_sridx2sr_map.clean();
+    m_sridx2sr.clean();
     m_freesr_list.clean();
-    List<SR*>::clean();
 }
 
 
@@ -291,16 +292,18 @@ SR * SRMgr::genSR()
         return sr;
     }
     sr = allocSR();
-    SR_id(sr) = get_elem_count();
-    m_sridx2sr_map.set(SR_id(sr), sr);
-    append_tail(sr);
+    ASSERT0(SRID_UNDEF == 0);
+    //Do not use SRID_UNDEF as index.
+    INT idx = m_sridx2sr.get_last_idx();
+    SR_id(sr) = idx < 0 ? SRID_UNDEF + 1 : idx + 1;
+    m_sridx2sr.set(SR_id(sr), sr);
     return sr;
 }
 
 
 SR * SRMgr::get(UINT unique_id)
 {
-    return m_sridx2sr_map.get(unique_id);
+    return m_sridx2sr.get(unique_id);
 }
 
 
@@ -325,7 +328,7 @@ void SRVecMgr::init()
 }
 
 
-SRVec * SRVecMgr::newSRVec()
+SRVec * SRVecMgr::allocSRVec()
 {
     SRVec * vec = (SRVec*)smpoolMalloc(sizeof(SRVec), m_pool);
     ::memset(vec, 0, sizeof(SRVec));
@@ -337,7 +340,7 @@ SRVec * SRVecMgr::newSRVec()
 //Return first SR in vector.
 SR * SRVecMgr::genSRVec(UINT num, ...)
 {
-    SRVec * sv = newSRVec();
+    SRVec * sv = allocSRVec();
 
     //This manner worked well on ia32, but is not on x8664.
     //SR ** p = (SR**)(((CHAR*)&num) + sizeof(UINT));
@@ -365,7 +368,7 @@ SR * SRVecMgr::genSRVec(UINT num, ...)
 //Return first SR in vector.
 SR * SRVecMgr::genSRVec(List<SR*> & lst)
 {
-    SRVec * sv = newSRVec();
+    SRVec * sv = allocSRVec();
     UINT i = 0;
     SR * first = nullptr;
     sv->grow(lst.get_elem_count(), m_pool);

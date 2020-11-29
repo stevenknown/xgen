@@ -28,13 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-#include "../opt/cominc.h"
-#include "../opt/comopt.h"
-#include "../opt/cfs_opt.h"
-#include "../opt/liveness_mgr.h"
 #include "../xgen/xgeninc.h"
-#include "../cfe/cfexport.h"
-#include "../opt/util.h"
 
 //Compute the alignment for specifical var, and return
 //the power of 2.
@@ -367,9 +361,15 @@ void ARMAsmPrinter::printData(FILE * asmh, Section & sect)
 
 void ARMAsmPrinter::printData(FILE * asmh)
 {
-    printBss(asmh, *m_cg->getBssSection());
-    printData(asmh, *m_cg->getDataSection());
-    printData(asmh, *m_cg->getRodataSection());
+    if (m_cgmgr->getBssSection() != nullptr) {
+        printBss(asmh, *m_cgmgr->getBssSection());
+    }
+    if (m_cgmgr->getDataSection() != nullptr) {
+        printData(asmh, *m_cgmgr->getDataSection());
+    }
+    if (m_cgmgr->getRodataSection()) {
+        printData(asmh, *m_cgmgr->getRodataSection());
+    }
 }
 
 
@@ -422,9 +422,10 @@ void ARMAsmPrinter::printCode(FILE * asmh)
     fprintf(asmh, "\n%s:", func_name);
     fprintf(asmh, "\n");
     fflush(asmh);
-
-    Vector<IssuePackageList*> const* iplvec = m_cg->getIssuePackageListVec();
-    List<ORBB*> * bblst = m_cg->getORBBList();
+    
+    Vector<IssuePackageList*> const* iplvec =
+        const_cast<CG*>(m_cg)->getIssuePackageListVec();
+    List<ORBB*> * bblst = const_cast<CG*>(m_cg)->getORBBList();
     ASSERT0(bblst);
     for (ORBB * bb = bblst->get_head(); bb != nullptr; bb = bblst->get_next()) {
         //Print BB info
@@ -453,4 +454,5 @@ void ARMAsmPrinter::printCode(FILE * asmh)
         printCodeSequentially(iplvec->get(bb->id()), buf, asmh);
     }
     fprintf(asmh, "\n.size %s, .-%s\n", func_name, func_name);
+    ::fflush(asmh);
 }

@@ -40,12 +40,13 @@ class CG;
 class AsmPrinter {
     COPY_CONSTRUCTOR(AsmPrinter);
 protected:
-    CG * m_cg;
-    xoc::TypeMgr * m_tm;
+    CG const* m_cg;
+    CGMgr * m_cgmgr;
+    xoc::TypeMgr const* m_tm;
     AsmPrinterMgr * m_asmprtmgr;
 
 public:
-    AsmPrinter(CG * cg, AsmPrinterMgr * apmgr);
+    AsmPrinter(CG const* cg, AsmPrinterMgr * apmgr);
     virtual ~AsmPrinter() {}
 
     Region * getRegion() const;
@@ -70,11 +71,12 @@ public:
 
 
 class AsmPrinterMgr {
+    COPY_CONSTRUCTOR(AsmPrinterMgr);
     //Record VARs which has been printed into ASM file.
     ConstVarTab m_prted_var_tab;
-
 public:
     AsmPrinterMgr() {}
+    size_t count_mem() const { return m_prted_var_tab.count_mem(); }
     ConstVarTab & getPrintedVARTab() { return m_prted_var_tab; }
 };
 

@@ -175,14 +175,14 @@ public:
     OR * getLastOR() const { return ORBB_last_or(this); }
 
     UINT id() const { return ORBB_id(this); }
-    bool isDownBoundary(OR * o);
+    bool isLowerBoundary(OR * o);
     bool is_bb_exit() const { return ORBB_is_exit(this); }
     bool is_entry() const { return ORBB_is_entry(this); }
     bool is_exit() const { return ORBB_is_exit(this); }
     bool is_target() const { return ORBB_is_target(this); }
     bool hasLabel(LabelInfo const* o);
     bool isBoundary(OR * o)
-    { return (isUpperBoundary(o) || isDownBoundary(o)); }
+    { return (isUpperBoundary(o) || isLowerBoundary(o)); }
     bool isUpperBoundary(OR * o) { return o->is_label_or(); }
     bool hasCall();
     bool isLiveIn(SR * sr);

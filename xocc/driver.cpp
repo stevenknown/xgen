@@ -784,8 +784,6 @@ static void dumpPoolUsage(RegionMgr * rm)
              (ULONG)smpoolGetPoolSize(g_pool_tree_used)/KB);
     note(rm, "\n ****** st pool %lu KB ********",
              (ULONG)smpoolGetPoolSize(g_pool_st_used)/KB);
-    note(rm, "\n ****** tmp pool %lu KB ********",
-             (ULONG)smpoolGetPoolSize(xoc::get_tmp_pool())/KB);
     note(rm, "\n ****** total mem query size : %lu KB\n",
              (ULONG)g_stat_mem_size/KB);
     note(rm, "\n===========================\n");
@@ -826,7 +824,6 @@ static void test_ru(RegionMgr * rm, CGMgr * cgmgr)
         //vm->dump();
         //MDSystem * ms = x->getMDSystem();
         //ms->dump();
-        tfree();
         x->destroy();
         i++;
     }
@@ -835,9 +832,9 @@ static void test_ru(RegionMgr * rm, CGMgr * cgmgr)
 #endif
 
 
-static void compileProgramRegion(Region * rg, CGMgr * cgmgr, FILE * asmh)
+static void compileProgramRegion(Region * rg, CGMgr * cgmgr)
 {
-    cgmgr->GenAndPrtGlobalVariable(rg, asmh);
+    cgmgr->genAndPrtGlobalVariable(rg);
     if (!g_is_dumpgr) { return; }
     
     ASSERT0(g_c_file_name || g_gr_file_name);
@@ -855,13 +852,10 @@ static void compileProgramRegion(Region * rg, CGMgr * cgmgr, FILE * asmh)
 }
 
 
-static void compileFuncRegion(Region * rg,
-                              CLRegionMgr * rm,
-                              CGMgr * cgmgr,
-                              FILE * asmh)
+static void compileFuncRegion(Region * rg, CLRegionMgr * rm, CGMgr * cgmgr)
 {
     OptCtx * oc = rm->getAndGenOptCtx(rg->id());
-    bool s = rm->compileFuncRegion(rg, cgmgr, asmh, oc);
+    bool s = rm->compileFuncRegion(rg, cgmgr, oc);
     ASSERT0(s);
     DUMMYUSE(s);
     //rm->deleteRegion(rg); //Local region can be deleted if processed.
@@ -873,9 +867,9 @@ static void compileFuncRegion(Region * rg,
 //2. Generate IR of Region.
 //3. Perform IR optimizaions
 //4. Generate assembly code.
-static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr, FILE * asmh)
+static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr)
 {
-    ASSERT0(rm && cgmgr && asmh);
+    ASSERT0(rm && cgmgr);
     //Test mem leak.
     //test_ru(rm, cgmgr);
     rm->registerGlobalMD();
@@ -885,7 +879,7 @@ static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr, FILE * asmh)
         if (rg == nullptr) { continue; }
         if (rg->is_program()) {
             program = rg;
-            compileProgramRegion(rg, cgmgr, asmh);
+            compileProgramRegion(rg, cgmgr);
             continue;
         }
         if (rg->is_blackbox()) {
@@ -895,7 +889,7 @@ static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr, FILE * asmh)
             xoc::prt2C("\n\n==== Start Process Region(id:%d)'%s' ====\n",
                        rg->id(), rg->getRegionName());
         }
-        compileFuncRegion(rg, rm, cgmgr, asmh);
+        compileFuncRegion(rg, rm, cgmgr);
     }
     ASSERT0(program);
 
@@ -963,9 +957,10 @@ static void initCompile(CLRegionMgr ** rm,
                         TargInfo ** ti)
 {
     *rm = initRegionMgr();
-    *cgmgr = xgen::allocCGMgr();
+    *cgmgr = xgen::allocCGMgr(*rm);    
     *asmh = createAsmFileHandler();
     *ti = (*rm)->getTargInfo();
+    (*cgmgr)->setAsmFileHandler(*asmh);
     ASSERT0(*asmh);
 }
 
@@ -975,17 +970,17 @@ static void finiCompile(CLRegionMgr * rm,
                         CGMgr * cgmgr,
                         TargInfo * ti)
 {
-    if (rm != nullptr) {
-        delete rm;
-    }
     if (cgmgr != nullptr) {
         delete cgmgr;
+    }
+    if (rm != nullptr) {
+        delete rm;
     }
     if (ti != nullptr) {
         delete ti;
     }
     if (asmh != nullptr) {
-        fclose(asmh);
+        ::fclose(asmh);
     }
 }
 
@@ -1015,7 +1010,7 @@ bool compileGRFile(CHAR * gr_file_name)
     }
 
     //Dump and clean
-    compileRegionSet(rm, cgmgr, asmh);
+    compileRegionSet(rm, cgmgr);
     for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
         Region * r = rm->getRegion(i);
         if (r == nullptr || r->is_blackbox()) { continue; }
@@ -1044,7 +1039,7 @@ bool compileCFile()
     FILE * asmh = nullptr;
     START_TIMER(t, "Compile C File");
     initParser();
-    initCompile(&rm, &asmh, &cgmgr, &ti);
+    initCompile(&rm, &asmh, &cgmgr, &ti);    
     g_fe_sym_tab = rm->getSymTab();
     g_dbx_mgr = new CLDbxMgr();
     if (g_dump_file_name != nullptr) {
@@ -1065,7 +1060,7 @@ bool compileCFile()
     }
     scanAndInitVar(get_global_scope(), rm->getVarMgr(), rm->getTypeMgr());
     if (generateRegion(rm)) {
-        compileRegionSet(rm, cgmgr, asmh);
+        compileRegionSet(rm, cgmgr);
     }
     if (g_is_dumpgr) {
         dumpRegionMgrGR(rm, g_c_file_name);

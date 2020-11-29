@@ -281,27 +281,26 @@ OR * RefORBBList::removeOR(ORBB * bb, OR * o)
 }
 
 
-//Also can be utilized to find designate bb.
-//Return nullptr when not found.
-ORBB * RefORBBList::removeBB(ORBB * bb)
+//This function remove 'bb' from current list.
+//It can be used to find designate bb.
+//Return false when not found.
+bool RefORBBList::removeBB(ORBB const* bb)
 {
     ASSERTN(m_pool, ("List not yet initialized."));
     ORBBUnit * bu;
 
     //Keep bu unique.
-    for (bu = get_head(); bu; bu = get_next()) {
+    for (bu = get_head(); bu != nullptr; bu = get_next()) {
         if (OR_BBUNIT_bb(bu) == bb) {
             break;
         }
     }
     if (bu == nullptr) {
-        return nullptr;
+        return false;
     }
-    bu = (ORBBUnit*)xmalloc(sizeof(ORBBUnit));
-    OR_BBUNIT_or_list(bu)->destroy();
     remove(bu);
     freeORBBUnit(bu);
-    return bb;
+    return true;
 }
 
 
@@ -315,9 +314,8 @@ void RefORBBList::init()
 
 void RefORBBList::destroy()
 {
-    if (m_pool == nullptr) return;
-    ORBBUnit *bu;
-    for (bu = get_head(); bu; bu = get_next()) {
+    if (m_pool == nullptr) { return; }
+    for (ORBBUnit * bu = get_head(); bu != nullptr; bu = get_next()) {
         freeORBBUnit(bu);
     }
     List<ORBBUnit*>::destroy();
@@ -1023,9 +1021,9 @@ void LifeTimeMgr::init(ORBB * bb, bool is_verify,
 
 void LifeTimeMgr::destroy()
 {
-    if(!m_is_init) { return; }
+    if (!m_is_init) { return; }
+    //Destroy and free allocated memory object.
     freeAllLifeTime();
-
     m_lt_tab.destroy();
     m_sr2lt_map.destroy();
     m_pos2or_map.destroy();
@@ -1035,7 +1033,6 @@ void LifeTimeMgr::destroy()
     m_oridx2sr_livein_gsr_spill_pos.destroy();
     m_oridx2sr_liveout_gsr_reload_pos.destroy();
     m_sibmgr.destroy();
-
     m_bb = nullptr;
     m_lt_count = LTID_UNDEF;
     m_max_lt_len = 0;
@@ -1133,7 +1130,7 @@ LifeTime * LifeTimeMgr::allocLifeTime(SR * sr, OR * o)
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
     ASSERTN(m_max_lt_len > 0, ("Life time length is overrange."));
     LifeTime * lt = (LifeTime*)xmalloc(sizeof(LifeTime));
-    LT_pos(lt) = m_rg->getBitSetMgr()->create();
+    LT_pos(lt) = getBitSetMgr()->create();
     LT_desc(lt).init();
     LT_id(lt) = ++m_lt_count;
     LT_sr(lt) = sr;
@@ -1174,16 +1171,19 @@ void LifeTimeMgr::freeLifeTime(LifeTime * lt)
 {
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
     LT_desc(lt).destroy(); //Destory vector
+    m_cg->getBitSetMgr()->free(lt->getPos());
     LT_pos(lt) = nullptr;
 }
 
 
+//Destroy and free allocated memory object.
 void LifeTimeMgr::freeAllLifeTime()
 {
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
-    for (INT i = 0; i <= m_lt_tab.get_last_idx(); i++) {
+    for (INT i = LTID_UNDEF + 1; i <= m_lt_tab.get_last_idx(); i++) {
         LifeTime * lt = m_lt_tab.get(i);
         if (lt != nullptr) {
+            //Some lifetime may be removed during LRA.
             freeLifeTime(lt);
         }
     }
@@ -1537,9 +1537,8 @@ void LifeTimeMgr::reviseLTCase1(LifeTime * lt)
 
     xcom::BitSet * tmp = LT_pos(lt);
     LT_pos(lt) = LT_pos(lt)->get_subset_in_range(first_occ,
-        LT_pos(lt)->get_last(), *m_rg->getBitSetMgr()->create());
-
-    m_rg->getBitSetMgr()->free(tmp);
+        LT_pos(lt)->get_last(), *getBitSetMgr()->create());
+    getBitSetMgr()->free(tmp);
 }
 
 
@@ -1743,7 +1742,6 @@ void LifeTimeMgr::recordPhysicalRegOcc(IN SR * sr,
 INT LifeTimeMgr::create()
 {
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
-    ASSERT0(m_rg);
     if (ORBB_ornum(m_bb) <= 0) {
         return 0;
     }
@@ -2458,6 +2456,12 @@ void LifeTimeMgr::considerSpecialConstraints(IN OR *, SR const*,
 {
     DUMMYUSE(usable_regs);
 }
+
+
+xcom::BitSetMgr * LifeTimeMgr::getBitSetMgr() const
+{
+    return m_cg->getBitSetMgr();
+}
 //END LifeTimeMgr
 
 
@@ -2751,7 +2755,7 @@ bool LRA::assignRegister(LifeTime * lt,
     //Shrink to register set 'regfile' allowed.
     RegSet const* regfile_usable_reg_set = tmMapRegFile2RegSet(regfile);
     usable->intersect(*regfile_usable_reg_set);
-    if (m_ramgr != nullptr && !RAMGR_can_alloc_callee(m_ramgr)) {
+    if (m_ramgr != nullptr && !m_ramgr->canAllocCallee()) {
         usable->diff(*tmGetRegSetOfCalleeSaved());
     }
     if (usable->get_elem_count() == 0) {
@@ -4264,7 +4268,7 @@ bool LRA::mergeRedundantStoreLoad(OR * o,
 
     //Checking for global xoc::Var referencing.
     if (m_ramgr != nullptr) {
-        RefORBBList * rbl = RAMGR_var2or_map(m_ramgr).get(spill_var);
+        RefORBBList * rbl = m_ramgr->getVar2OR()->get(spill_var);
         ASSERT0(m_ramgr->getBBList());
         if ((rbl && rbl->get_elem_count() > 1) ||
              //Only occurrence in one ORBB.
@@ -4495,7 +4499,7 @@ bool LRA::elimRedundantStoreLoad(DataDepGraph & ddg)
             //...
             //Check for both global and local memory load of 'xxx'.
             if (m_ramgr != nullptr) {
-                RefORBBList * rbl = RAMGR_var2or_map(m_ramgr).get(st_spill_loc);
+                RefORBBList * rbl = m_ramgr->getVar2OR()->get(st_spill_loc);
                 ASSERT0(m_ramgr->getBBList());
 
                 if (rbl == nullptr || //No any spill locations
@@ -4885,7 +4889,7 @@ void LRA::computeLTResideInHole(IN OUT List<LifeTime*> & reside_in_lts,
     INT hole_startpos, hole_endpos;
     getMaxHole(&hole_startpos, &hole_endpos, lt, ig, mgr, HOLE_LENGTH);
     xcom::BitSet * hole = LT_pos(lt)->get_subset_in_range(hole_startpos,
-        hole_endpos, *m_rg->getBitSetMgr()->create());
+        hole_endpos, *getBitSetMgr()->create());
     ASSERTN(hole, ("What's wrong with memory pool?"));
     List<LifeTime*> lt_group;
     ASSERTN(SR_regfile(LT_sr(lt)),("regfile undefined"));
@@ -7618,7 +7622,7 @@ bool LRA::checkSpillCanBeRemoved(xoc::Var const* spill_loc)
     bool spill_can_be_removed = true;
     if (m_ramgr != nullptr) {
         //Check out if the spill location is used in entire Region.
-        RefORBBList * rbl = RAMGR_var2or_map(m_ramgr).get(spill_loc);
+        RefORBBList * rbl = m_ramgr->getVar2OR()->get(spill_loc);
 
         //Take a look at the reference of spill-loc.
         if ((rbl != nullptr && rbl->get_elem_count() > 1) ||
@@ -8058,7 +8062,7 @@ void LRA::resetGSRSpillLocation()
         if (SR_spill_var(gsr) == nullptr) { continue; }
 
         xoc::Var * v = SR_spill_var(gsr);
-        if (CG_bb_level_internal_var_list(m_cg).find(v)) {
+        if (m_cg->getBBLevelVarList()->find(v)) {
             SR_spill_var(gsr) = nullptr;
         }
     }
@@ -8112,7 +8116,7 @@ void LRA::renameSR()
                 //    renameOpndInRange(sr, newsr, next_prev_def,
                 //                      prev_or, ORBB_orlist(bb));
                 //}
-                //m_rg->renameOpnd(o, sr, newsr, false);
+                //m_cg->renameOpnd(o, sr, newsr, false);
                 continue;
             }
 
@@ -8236,7 +8240,7 @@ void LRA::postLRA()
 
     //Unfreeze occupied temporary stack variable of
     //current BB for next processing of LRA.
-    CG_bb_level_internal_var_list(m_cg).free();
+    m_cg->getBBLevelVarList()->freeAll();
 }
 
 
@@ -8352,6 +8356,12 @@ void LRA::allocAndSolveConflict(List<LifeTime*> & prio_list,
                "after reallocate life time, do solve conflict");
     solveConflict(uncolored_list, prio_list, cri,
                   is_regfile_unique, *ig, *mgr, *ddg, rfg, action);
+}
+
+
+xcom::BitSetMgr * LRA::getBitSetMgr() const
+{
+    return m_cg->getBitSetMgr();
 }
 
 

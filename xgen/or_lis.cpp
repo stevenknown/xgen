@@ -85,8 +85,11 @@ void LIS::computeReadyList(IN OUT DataDepGraph & ddg,
                            bool topdown)
 {
     ASSERTN(m_pool, ("uninitialized"));
-    ORList nop_list;
+    PreemptiveORList * nop_list = &m_tmp_orlist; //Regard tmp as nop list.
+    ASSERT0(!nop_list->is_occupied());
+    nop_list->occupy();
     bool redo = false;
+
 COMP_REDO:
     INT c;
     for (xcom::Vertex * v = ddg.get_first_vertex(c);
@@ -100,7 +103,7 @@ COMP_REDO:
         if (ck_lst == nullptr && !visited.is_contain(v->id())) {
             OR * o = ddg.getOR(VERTEX_id(v));
             if (OR_is_nop(o)) { //Do not schedul NOP.
-                nop_list.append_tail(o);
+                nop_list->append_tail(o);
                 continue;
             }
             m_ready_list.append(o);
@@ -109,22 +112,23 @@ COMP_REDO:
         }
     }
 
-    if (nop_list.get_elem_count() > 0) {
-        for (OR * o = nop_list.get_head();
-             o != nullptr; o = nop_list.get_next()) {
+    if (nop_list->get_elem_count() > 0) {
+        for (OR * o = nop_list->get_head();
+             o != nullptr; o = nop_list->get_next()) {
             xcom::Vertex * v = ddg.getVertex(o->id());
             if (ddg.getDegree(v) > 0) {
                 redo = true;
             }
             ddg.removeOR(o);
         }
-        nop_list.clean();
+        nop_list->clean();
     }
 
     if (redo) {
         redo = false;
         goto COMP_REDO;
     }
+    nop_list->release();
 }
 
 
@@ -235,7 +239,7 @@ OR * LIS::selectBestOR(ORTab & cand_tab, SLOT slot)
 //  of operations in other slot. Note that the modification may
 //  change the function unit of operation.
 //Note this functio will attempt to change OR's slot if possible.
-bool LIS::selectIssueOR(IN ORList & cand_list, //OR may be changed.
+bool LIS::selectIssueOR(IN PreemptiveORList & cand_list, //OR may be changed
                         SLOT slot,
                         OUT OR * issue_ors[SLOT_NUM],
                         bool change_slot)
@@ -263,7 +267,7 @@ bool LIS::selectIssueOR(IN ORList & cand_list, //OR may be changed.
 
 //Mark and update candidate-list of OR to record which operation
 //has been selected to be issued subsequently.
-void LIS::updateIssueORs(IN OUT ORList & cand_list,
+void LIS::updateIssueORs(IN OUT PreemptiveORList & cand_list,
                          SLOT slot,
                          IN OR * issue_or,
                          IN OUT OR * issue_ors[SLOT_NUM])
@@ -313,7 +317,8 @@ SLOT LIS::rollBackORs(bool be_changed[SLOT_NUM],
 
 //Select instructions to fill issue slot as much as possible.
 //Return true if the candidate has been found.
-bool LIS::selectIssueORs(IN ORList & cand_list, OUT OR * issue_ors[SLOT_NUM])
+bool LIS::selectIssueORs(IN PreemptiveORList & cand_list,
+                         OUT OR * issue_ors[SLOT_NUM])
 {
     ASSERTN(m_pool, ("uninitialized"));
     bool find = true; //Find at least one slot can be issued.
@@ -383,14 +388,16 @@ void LIS::updateReadyList(OR const* o, DataDepGraph const& ddg,
 bool LIS::fillIssueSlot(DataDepGraph * stepddg, DefSBitSet * visited)
 {
     ASSERTN(m_pool, ("uninitialized"));
-    ORList cand_list; //OR may be changed.
+    PreemptiveORList * cand_list = &m_tmp_orlist; //OR may be changed.
+    ASSERT0(!cand_list->is_occupied());
+    cand_list->occupy();
 
     //Find ors that can be issued at current cycle.
     ORTabIter c;
     for (OR * o = m_ready_list.get_first(c);
          o != nullptr; o = m_ready_list.get_next(c)) {
         if (isIssueCand(o)) {
-            cand_list.append_tail(o);
+            cand_list->append_tail(o);
         }
     }
 
@@ -401,9 +408,9 @@ bool LIS::fillIssueSlot(DataDepGraph * stepddg, DefSBitSet * visited)
     //will not has conflict with ones already issued both in
     //hardware resources and data dependences.
     OR * issue_ors[SLOT_NUM] = {0};
-    if (cand_list.get_elem_count() > 0) {
+    if (cand_list->get_elem_count() > 0) {
         //Note OR in cand_list may be changed.
-        if (selectIssueORs(cand_list, issue_ors)) {
+        if (selectIssueORs(*cand_list, issue_ors)) {
             for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {
                 if (issue_ors[i] == nullptr) { continue; }
                 if (isScheduleDelaySlot() &&
@@ -423,6 +430,7 @@ bool LIS::fillIssueSlot(DataDepGraph * stepddg, DefSBitSet * visited)
         }
     }
     m_sim->runOneCycle(nullptr);
+    cand_list->release();
     return issued;
 }
 

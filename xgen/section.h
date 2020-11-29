@@ -33,24 +33,29 @@ author: Su Zhenyu
 
 namespace xgen {
 
+#define SECT_ID_UNDEF -1
+
 //Describing program section.e.g. code section, data section.
-#define SECT_id(s)              (s)->id
-#define SECT_var(s)             (s)->sect_var
-#define SECT_size(s)            (s)->size
-#define SECT_var_list(s)        (s)->var_list
-#define SECT_var2vdesc_map(s)   (s)->var2vdesc_map
+#define SECT_id(s) (s)->uid //unique section id
+#define SECT_var(s) (s)->sect_var //variable of section
+#define SECT_size(s) (s)->size //byte size of section
+#define SECT_var_list(s) (s)->var_list //list of variables in section
+#define SECT_var2vdesc_map(s) (s)->var2vdesc  //map between variable and
+                                              //VarDesc
+
+typedef TMap<xoc::Var const*, VarDesc*> Var2Desc;
 class Section {
 public:
-    INT id;
+    INT uid;
     xoc::Var * sect_var;
     ULONGLONG size;
     VarElist var_list;
-    TMap<xoc::Var const*, VarDesc*> var2vdesc_map;
+    Var2Desc var2vdesc;
 
 public:
     Section()
     {
-        id = -1;
+        uid = SECT_ID_UNDEF;
         sect_var = nullptr;
         size = 0;
     }
@@ -66,6 +71,13 @@ public:
     }
 
     virtual void dump(CG const* cg);
+    
+    ULONGLONG getSize() const { return SECT_size(this); }
+    VarElist * getVarList() { return &SECT_var_list(this); }
+    Var * getVar() const { return SECT_var(this); }
+    Var2Desc * getVar2Desc() { return &SECT_var2vdesc_map(this); }
+
+    INT id() const { return uid; }
 };
 
 
@@ -73,6 +85,33 @@ class StackSection : public Section {
 public:
     virtual ~StackSection() {}
     virtual void dump(CG const* cg);
+};
+
+class SectionMgr {
+    COPY_CONSTRUCTOR(SectionMgr);
+    xcom::Vector<Section*> m_sect_vec;
+    CGMgr * m_cgmgr;
+    TypeMgr * m_tm;
+    VarMgr * m_vm;
+    MDSystem * m_mdsys;
+
+    Section * allocStackSection();
+
+    //Assign variable to section.
+    void assignSectVar(Section * sect, CHAR const* sect_name,
+                       bool allocable, UINT size);
+public:
+    SectionMgr(CGMgr * cgmgr);
+    virtual ~SectionMgr();
+
+    virtual Section * allocSection();
+
+    size_t count_mem() const
+    { return sizeof(*this) + m_sect_vec.count_mem() - sizeof(m_sect_vec); }
+
+    Section * genSection(CHAR const* sect_name, bool allocable, UINT size);
+    Section * genStackSection();
+    UINT getSectNum() const { return m_sect_vec.get_last_idx() + 1; }
 };
 
 } //namespace xgen

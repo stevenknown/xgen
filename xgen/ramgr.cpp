@@ -49,7 +49,7 @@ void RaMgr::init(List<ORBB*> * bbs, bool is_func, CG * cg)
     m_rg = cg->getRegion();
     ASSERT0(m_cg && m_rg);
     m_need_save_asm_effect = false;
-    RAMGR_can_alloc_callee(this) = true;
+    m_can_alloc_callee = true;
     m_is_func = is_func;
     m_ppm_vec = nullptr;
     m_gra = nullptr;
@@ -59,6 +59,7 @@ void RaMgr::init(List<ORBB*> * bbs, bool is_func, CG * cg)
 
 void RaMgr::destroy()
 {
+    cleanVar2OR();
     m_var2or_map.destroy();
     m_bb_list = nullptr;
     m_rg = nullptr;
@@ -72,18 +73,32 @@ void RaMgr::destroy()
 }
 
 
+void RaMgr::cleanVar2OR()
+{
+    //Finializing the SYMBOL list.
+    VAR2ORIter iter;
+    RefORBBList * ref_bb_list = nullptr;
+    for (xoc::Var const* sym = m_var2or_map.get_first(iter, &ref_bb_list);
+         sym != nullptr; sym = m_var2or_map.get_next(iter, &ref_bb_list)) {
+        ASSERT0(ref_bb_list);
+        ref_bb_list->destroy();
+    }
+    m_var2or_map.clean();
+}
+
+
 void * RaMgr::xmalloc(INT size)
 {
     ASSERTN(size > 0, ("xmalloc: size less zero!"));
     ASSERTN(m_pool != nullptr, ("need graph pool!!"));
     void * p = smpoolMalloc(size, m_pool);
-    if (p == nullptr) return nullptr;
+    if (p == nullptr) { return nullptr; }
     ::memset(p, 0, size);
     return p;
 }
 
 
-void RaMgr::preBuild()
+void RaMgr::preProcess()
 {
     for (UINT i = RF_UNDEF; i < RF_NUM; i++) {
         m_lra_used_callee_saved_reg[i].clean();
@@ -91,9 +106,8 @@ void RaMgr::preBuild()
     }
 
     if (m_cg->isGRAEnable()) {
-        //Caculating live-in, live-out SR and registers,
+        //TODO:Caculating live-in, live-out SR and registers,
         //and rebuilding global data flow info of GSR.
-        //TODO
     }
 
     //Initializing SYMBOL referencing list.
@@ -101,7 +115,7 @@ void RaMgr::preBuild()
          bb != nullptr; bb = m_bb_list->get_next()) {
         for (OR * o = ORBB_first_or(bb); o != nullptr; o = ORBB_next_or(bb)) {
             xoc::Var const* spill_var = m_cg->computeSpillVar(o);
-            if (spill_var != nullptr) { //o is a spilling-o.
+            if (spill_var != nullptr) { //o is a spilling-or.
                 addVARRefList(bb, o, spill_var);
             }
         }
@@ -109,51 +123,49 @@ void RaMgr::preBuild()
 }
 
 
-void RaMgr::postBuild()
+void RaMgr::postProcessFunc()
+{
+    //Protect the registers to conform to calling convention.
+    if (!m_cg->isGRAEnable()) {
+        //Deduct callee-saved registers used by GRA
+        //from lra register set, in order to avoid saving
+        //same register at twice.
+        //
+        //BUG: GRA saved callee registers, but the result does not
+        //be recorded in 'm_lra_used_callee_saved_reg', so it always be nullptr.
+        //And phy-registers assigned just during Lra.
+        //
+        //RegSet * gra_used_callee_save_regs =
+        //    RAMGR_gra(m_ramgr)->get_used_callee_save_regs();
+        //for (REGFILE regfile = RF_UNDEF + 1; regfile < RF_NUM; regfile++) {
+        //    m_lra_used_callee_saved_reg[regfile].diff(
+        //                gra_used_callee_save_regs[regfile]);
+        //}
+    
+        //Generate spill and reload.
+        saveCallee(m_lra_used_callee_saved_reg);
+    }
+    
+    if (m_need_save_asm_effect) {
+        //Only process registers clobbed by asm.
+        saveCallee(m_lra_asmclobber_callee_saved_reg);
+    }
+}
+
+
+void RaMgr::postProcess()
 {
     if (m_is_func) {
-        //Protect the registers to conform to calling convention.
-        if (!m_cg->isGRAEnable()) {
-            //Deduct callee-saved registers used by GRA
-            //from lra register set, in order to avoid saving
-            //same register at twice.
-            //
-            //BUG: GRA saved callee registers, but the result does not
-            //be recorded in 'm_lra_used_callee_saved_reg', so it always be nullptr.
-            //And phy-registers assigned just during Lra.
-            //
-            //RegSet * gra_used_callee_save_regs =
-            //    RAMGR_gra(m_ramgr)->get_used_callee_save_regs();
-            //for (REGFILE regfile = RF_UNDEF + 1; regfile < RF_NUM; regfile++) {
-            //    m_lra_used_callee_saved_reg[regfile].diff(
-            //                gra_used_callee_save_regs[regfile]);
-            //}
-
-            //Generate spill and reload.
-            saveCallee(m_lra_used_callee_saved_reg);
-        }
-
-        if (m_need_save_asm_effect) {
-            //Only process registers clobbed by asm.
-            saveCallee(m_lra_asmclobber_callee_saved_reg);
-        }
+        postProcessFunc();
     }
-
-    //Finializing the SYMBOL list.
-    VAR2ORIter iter;
-    RefORBBList * ref_bb_list = nullptr;
-    for (xoc::Var const* sym = m_var2or_map.get_first(iter, &ref_bb_list);
-         sym != nullptr; sym = m_var2or_map.get_next(iter)) {
-        ASSERT0(ref_bb_list);
-        ref_bb_list->destroy();
-    }
+    cleanVar2OR();
 }
 
 
 void RaMgr::updateAsmClobberCallee(REGFILE regfile, REG reg)
 {
     ASSERTN(regfile != RF_UNDEF && reg != REG_UNDEF,
-           ("Illegal regfile and reg"));
+            ("Illegal regfile and reg"));
     if (tmGetRegSetOfCalleeSaved()->is_contain(reg)) {
         m_need_save_asm_effect = true;
         m_lra_asmclobber_callee_saved_reg[regfile].bunion(reg);
@@ -164,9 +176,9 @@ void RaMgr::updateAsmClobberCallee(REGFILE regfile, REG reg)
 void RaMgr::updateCallee(REGFILE regfile, REG reg)
 {
     ASSERTN(regfile != RF_UNDEF && reg != REG_UNDEF,
-           ("Illegal regfile and reg"));
+            ("Illegal regfile and reg"));
     if (tmGetRegSetOfCalleeSaved()->is_contain(reg)) {
-        ASSERTN(RAMGR_can_alloc_callee(this), ("Callee register is forbidden."));
+        ASSERTN(canAllocCallee(), ("Callee register is forbidden."));
         m_lra_used_callee_saved_reg[regfile].bunion(reg);
     }
 }
@@ -651,11 +663,11 @@ void RaMgr::saveCalleePredicateAtExit(REGFILE regfile,
 void RaMgr::saveCallee(RegSet used_callee_regs[])
 {
     List<ORBB*> bblist;
-    bool orig_val = RAMGR_can_alloc_callee(this);
-    RAMGR_can_alloc_callee(this) = false;
+    bool orig_val = canAllocCallee();
+    m_can_alloc_callee = false;
     List<ORBB*> entry_bbs;
     List<ORBB*> exit_bbs;
-    m_cg->computeEntryAndExit(*m_cg->getORCfg(), entry_bbs, exit_bbs);
+    m_cg->computeEntryAndExit(*m_cg->getORCFG(), entry_bbs, exit_bbs);
 
     xcom::TMap<REG, xoc::Var*> reg2var;
     for (ORBB * bb = entry_bbs.get_head();
@@ -687,11 +699,11 @@ void RaMgr::saveCallee(RegSet used_callee_regs[])
         delete lra;
     }
 
-    RAMGR_can_alloc_callee(this) = orig_val;
+    m_can_alloc_callee = orig_val;
 }
 
 
-//Record xoc::Var referred in bb.
+//Record that 'loc' is referred in 'bb'.
 void RaMgr::addVARRefList(ORBB * bb, OR * o, xoc::Var const* loc)
 {
     RefORBBList * ref_bb_list = m_var2or_map.get(loc);
@@ -709,7 +721,6 @@ void RaMgr::addVARRefList(ORBB * bb, OR * o, xoc::Var const* loc)
 void RaMgr::performLRA()
 {
     START_TIMER(t, "Perform Local Register Allocation");
-    preBuild();
     xcom::C<ORBB*> * ct = nullptr;
     for (m_bb_list->get_head(&ct);
          ct != m_bb_list->end(); ct = m_bb_list->get_next(ct)) {
@@ -721,10 +732,10 @@ void RaMgr::performLRA()
         LRA * lra = allocLRA(bb, ppm, this);
         lra->setOptPhase(LRA_VERIFY_REG);
         lra->perform();
-        CG_bb_level_internal_var_list(m_cg).free();
+        m_cg->getBBLevelVarList()->freeAll();
         delete lra;
     }
-    postBuild();
+    postProcess();
     END_TIMER(t, "Perform Local Register Allocation");
 }
 

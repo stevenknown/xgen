@@ -28,17 +28,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-#include "../opt/cominc.h"
-#include "../opt/comopt.h"
-#include "../opt/cfs_opt.h"
-#include "../opt/liveness_mgr.h"
 #include "../xgen/xgeninc.h"
-#include "../cfe/cfexport.h"
-#include "../opt/util.h"
 
 //Process binary operation, the function generate OR that consist of two
 //operands and one result.
-void ARMIR2OR::convertBinaryOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertBinaryOp(IR const* ir, OUT RecycORList & ors,
+                               IN IOC * cont)
 {
     ASSERTN(ir->isBinaryOp() && BIN_opnd0(ir) && BIN_opnd1(ir),
             ("missing operand"));
@@ -79,17 +74,17 @@ void ARMIR2OR::convertBinaryOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     ASSERT0(opnd1 != nullptr && opnd1->is_reg());
     ASSERT0(opnd0->getByteSize() == opnd1->getByteSize());
 
-    ORList tors;
+    RecycORList tors(this);
     switch (ir->getCode()) {
     case IR_ADD:
         getCG()->buildAdd(opnd0, opnd1, BIN_opnd0(ir)->getTypeSize(m_tm),
-                          ir->is_signed(), tors, cont);
+                          ir->is_signed(), tors.getList(), cont);
         tors.copyDbx(ir);
         ors.append_tail(tors);
         break;
     case IR_SUB:
         getCG()->buildSub(opnd0, opnd1, BIN_opnd0(ir)->getTypeSize(m_tm),
-                          ir->is_signed(), tors, cont);
+                          ir->is_signed(), tors.getList(), cont);
         tors.copyDbx(ir);
         ors.append_tail(tors);
         break;
@@ -99,17 +94,15 @@ void ARMIR2OR::convertBinaryOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
 
 //Generate operations: reg = &var
-void ARMIR2OR::convertLda(Var const* var,
-                          HOST_INT lda_ofst,
-                          Dbx const* dbx,
-                          OUT ORList & ors,
-                          IN IOC * cont)
+void ARMIR2OR::convertLda(Var const* var, HOST_INT lda_ofst, Dbx const* dbx,
+                          OUT RecycORList & ors, IN IOC * cont)
 {
-    getCG()->buildLda(var, lda_ofst, dbx, ors, cont);
+    getCG()->buildLda(var, lda_ofst, dbx, ors.getList(), cont);
 }
 
 
-void ARMIR2OR::convertStoreVar(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertStoreVar(IR const* ir, OUT RecycORList & ors,
+                               IN IOC * cont)
 {
     ASSERT0(ir != nullptr && ir->is_st());
     UINT resbytesize = ir->getTypeSize(m_tm);
@@ -135,16 +128,16 @@ void ARMIR2OR::convertStoreVar(IR const* ir, OUT ORList & ors, IN IOC * cont)
     ASSERT0(src && src->is_reg());
 
     //Generate ::memcpy.
-    ORList tors;
+    RecycORList tors(this);
     cont->clean_bottomup();
-    getCG()->buildMemcpy(tgt, src, resbytesize, tors, cont);
+    getCG()->buildMemcpy(tgt, src, resbytesize, tors.getList(), cont);
     tors.copyDbx(ir);
     ors.append_tail(tors);
 }
 
 
 //Generate operations: reg = &var
-void ARMIR2OR::convertLda(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertLda(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     ASSERT0(ir->is_lda());
     Var * v = LDA_idinfo(ir);
@@ -154,7 +147,8 @@ void ARMIR2OR::convertLda(IR const* ir, OUT ORList & ors, IN IOC * cont)
 }
 
 
-void ARMIR2OR::convertReturnValue(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertReturnValue(IR const* ir, OUT RecycORList & ors,
+                                  IN IOC * cont)
 {
     if (ir == nullptr) { return; }
     ASSERTN(ir->get_next() == nullptr, ("ARM only support C language."));
@@ -181,7 +175,7 @@ void ARMIR2OR::convertReturnValue(IR const* ir, OUT ORList & ors, IN IOC * cont)
 }
 
 
-void ARMIR2OR::convertCall(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertCall(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     ASSERTN(ir->isCallStmt(), ("illegal ir"));    
     processRealParams(CALL_param_list(ir), ors, cont);
@@ -197,7 +191,7 @@ void ARMIR2OR::convertCall(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     ASSERTN(!CALL_is_intrinsic(ir), ("TODO"));
 
-    ORList tors;
+    RecycORList tors(this);
     UINT retv_sz = GENERAL_REGISTER_SIZE;
 
     if (ir->hasReturnValue()) {
@@ -205,7 +199,7 @@ void ARMIR2OR::convertCall(IR const* ir, OUT ORList & ors, IN IOC * cont)
     }
 
     if (ir->is_call()) {
-        getCG()->buildCall(CALL_idinfo(ir), retv_sz, tors, cont);
+        getCG()->buildCall(CALL_idinfo(ir), retv_sz, tors.getList(), cont);
     } else {
         ASSERT0(ir->is_icall());
         //ICALL
@@ -219,7 +213,7 @@ void ARMIR2OR::convertCall(IR const* ir, OUT ORList & ors, IN IOC * cont)
             convertGeneralLoad(CVT_exp(callee), tors, &tc);
         }
         SR * tgtsr = tc.get_reg(0);
-        getCG()->buildICall(tgtsr, retv_sz, tors, cont);
+        getCG()->buildICall(tgtsr, retv_sz, tors.getList(), cont);
     }
     tors.copyDbx(ir);
     ors.append_tail(tors);
@@ -228,7 +222,7 @@ void ARMIR2OR::convertCall(IR const* ir, OUT ORList & ors, IN IOC * cont)
 }
 
 
-void ARMIR2OR::convertRem(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertRem(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     ASSERTN(ir->is_rem(), ("illegal ir"));
     ASSERTN(BIN_opnd0(ir) != nullptr && BIN_opnd1(ir) != nullptr,
@@ -253,7 +247,7 @@ void ARMIR2OR::convertRem(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    m_cg->passArgVariant(&argdescmgr, ors, 2,
+    m_cg->passArgVariant(&argdescmgr, ors.getList(), 2,
                          opnd0, nullptr, opnd0->getByteSize(), ::getDbx(op0),
                          opnd1, nullptr, opnd1->getByteSize(), ::getDbx(op1));
 
@@ -262,36 +256,37 @@ void ARMIR2OR::convertRem(IR const* ir, OUT ORList & ors, IN IOC * cont)
     m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
     //Intrinsic Call.
-    ORList tors;
+    RecycORList tors(this);
     UINT retv_sz = ir->getTypeSize(m_tm);
     Var const* builtin = nullptr;
     if (retv_sz <= BYTESIZE_OF_WORD) {
         if (ir->is_uint()) {
-            //builtin = getCG()->m_builtin_uimod;
-            builtin = getCG()->m_builtin_umodsi3;
+            //builtin = getBuiltinVar(BUILTIN_UIMOD);
+            builtin = getBuiltinVar(BUILTIN_UMODSI3);
         } else if (ir->is_sint()) {
-            builtin = getCG()->m_builtin_modsi3;
+            builtin = getBuiltinVar(BUILTIN_MODSI3);
         } else {
             UNREACHABLE();
         }
     } else if (retv_sz <= BYTESIZE_OF_DWORD) {
         if (ir->is_uint()) {
-            builtin = getCG()->m_builtin_umoddi3;
+            builtin = getBuiltinVar(BUILTIN_UMODDI3);
         } else if (ir->is_sint()) {
-            builtin = getCG()->m_builtin_moddi3;
+            builtin = getBuiltinVar(BUILTIN_MODDI3);
         } else {
             UNREACHABLE();
         }
     } else {
         UNREACHABLE();
     }
-    getCG()->buildCall(builtin, retv_sz, tors, cont);
+    getCG()->buildCall(builtin, retv_sz, tors.getList(), cont);
     tors.copyDbx(ir);
     ors.append_tail(tors);
 }
 
 
-void ARMIR2OR::convertAddSubFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertAddSubFp(IR const* ir, OUT RecycORList & ors,
+                               IN IOC * cont)
 {
     ASSERTN((ir->is_add() || ir->is_sub()) && ir->is_fp(), ("illegal ir"));
     IR * op0 = BIN_opnd0(ir);
@@ -317,7 +312,7 @@ void ARMIR2OR::convertAddSubFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    m_cg->passArgVariant(&argdescmgr, ors, 2,
+    m_cg->passArgVariant(&argdescmgr, ors.getList(), 2,
                          opnd0, nullptr, opnd0->getByteSize(), ::getDbx(op0),
                          opnd1, nullptr, opnd1->getByteSize(), ::getDbx(op1));
 
@@ -330,26 +325,26 @@ void ARMIR2OR::convertAddSubFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     Var const* builtin = nullptr;
     if (retv_sz <= BYTESIZE_OF_WORD) {
         if (ir->is_add()) {
-            builtin = getCG()->m_builtin_addsf3;
+            builtin = getBuiltinVar(BUILTIN_ADDSF3);
         } else {
-            builtin = getCG()->m_builtin_subsf3;
+            builtin = getBuiltinVar(BUILTIN_SUBSF3);
         }
     } else if (retv_sz <= BYTESIZE_OF_DWORD) {
         if (ir->is_add()) {
-            builtin = getCG()->m_builtin_adddf3;
+            builtin = getBuiltinVar(BUILTIN_ADDDF3);
         } else {
-            builtin = getCG()->m_builtin_subdf3;
+            builtin = getBuiltinVar(BUILTIN_SUBDF3);
         }
     } else { UNREACHABLE(); }
 
-    ORList tors;
-    getCG()->buildCall(builtin, retv_sz, tors, cont);
+    RecycORList tors(this);
+    getCG()->buildCall(builtin, retv_sz, tors.getList(), cont);
     tors.copyDbx(ir);
     ors.append_tail(tors);
 }
 
 
-void ARMIR2OR::convertDiv(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertDiv(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     ASSERTN(ir->is_div(), ("illegal ir"));
     IR * op0 = BIN_opnd0(ir);
@@ -373,7 +368,7 @@ void ARMIR2OR::convertDiv(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    m_cg->passArgVariant(&argdescmgr, ors, 2,
+    m_cg->passArgVariant(&argdescmgr, ors.getList(), 2,
                          opnd0, nullptr, opnd0->getByteSize(), ::getDbx(op0),
                          opnd1, nullptr, opnd1->getByteSize(), ::getDbx(op1));
 
@@ -386,30 +381,31 @@ void ARMIR2OR::convertDiv(IR const* ir, OUT ORList & ors, IN IOC * cont)
     Var const* builtin = nullptr;
     if (retv_sz <= BYTESIZE_OF_WORD) {
         if (op0->is_uint()) {
-            builtin = getCG()->m_builtin_udivsi3;
+            builtin = getBuiltinVar(BUILTIN_UDIVSI3);
         } else if (op0->is_sint()) {
-            builtin = getCG()->m_builtin_divsi3;
+            builtin = getBuiltinVar(BUILTIN_DIVSI3);
         } else if (op0->is_fp()) {
-            builtin = getCG()->m_builtin_divsf3;
+            builtin = getBuiltinVar(BUILTIN_DIVSF3);
         } else { UNREACHABLE(); }
     } else if (retv_sz <= BYTESIZE_OF_DWORD) {
         if (op0->is_uint()) {
-            builtin = getCG()->m_builtin_udivdi3;
+            builtin = getBuiltinVar(BUILTIN_UDIVDI3);
         } else if (op0->is_sint()) {
-            builtin = getCG()->m_builtin_divdi3;
+            builtin = getBuiltinVar(BUILTIN_DIVDI3);
         } else if (op0->is_fp()) {
-            builtin = getCG()->m_builtin_divdf3;
+            builtin = getBuiltinVar(BUILTIN_DIVDF3);
         } else { UNREACHABLE(); }
     } else { UNREACHABLE(); }
 
-    ORList tors;
-    getCG()->buildCall(builtin, retv_sz, tors, cont);
+    RecycORList tors(this);
+    getCG()->buildCall(builtin, retv_sz, tors.getList(), cont);
     tors.copyDbx(ir);
     ors.append_tail(tors);
 }
 
 
-void ARMIR2OR::convertMulofInt(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertMulofInt(IR const* ir, OUT RecycORList & ors,
+                               IN IOC * cont)
 {
     //CASE:
     // int b,c;
@@ -424,8 +420,9 @@ void ARMIR2OR::convertMulofInt(IR const* ir, OUT ORList & ors, IN IOC * cont)
     Dbx * dbx = ::getDbx(ir);
     ASSERT0(sr1->getByteSize() == GENERAL_REGISTER_SIZE);
     ASSERT0(sr2->getByteSize() == GENERAL_REGISTER_SIZE);
-    ORList tors;
-    getCG()->buildMul(sr1, sr2, GENERAL_REGISTER_SIZE, true, tors, cont);
+    RecycORList tors(this);
+    getCG()->buildMul(sr1, sr2, GENERAL_REGISTER_SIZE, true,
+                      tors.getList(), cont);
     if (dbx != nullptr) {
         tors.copyDbx(dbx);
     }
@@ -434,8 +431,7 @@ void ARMIR2OR::convertMulofInt(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
 
 //CALL __muldi3
-void ARMIR2OR::convertMulofLongLong(IR const* ir,
-                                    OUT ORList & ors,
+void ARMIR2OR::convertMulofLongLong(IR const* ir, OUT RecycORList & ors,
                                     IN IOC * cont)
 {
     ASSERT0(ir->is_mul());
@@ -465,7 +461,7 @@ void ARMIR2OR::convertMulofLongLong(IR const* ir,
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    m_cg->passArgVariant(&argdescmgr, ors, 2,
+    m_cg->passArgVariant(&argdescmgr, ors.getList(), 2,
                          opnd0, nullptr, opnd0->getByteSize(), ::getDbx(op0),
                          opnd1, nullptr, opnd1->getByteSize(), ::getDbx(op1));
 
@@ -474,15 +470,16 @@ void ARMIR2OR::convertMulofLongLong(IR const* ir,
     m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
     //Intrinsic Call.
-    ORList tors;
-    getCG()->buildCall(getCG()->m_builtin_muldi3, ir->getTypeSize(m_tm),
-                       tors, cont);
+    RecycORList tors(this);
+    getCG()->buildCall(getBuiltinVar(BUILTIN_MULDI3), ir->getTypeSize(m_tm),
+                       tors.getList(), cont);
     tors.copyDbx(ir);
     ors.append_tail(tors);
 }
 
 
-void ARMIR2OR::convertMulofFloat(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertMulofFloat(IR const* ir, OUT RecycORList & ors,
+                                 IN IOC * cont)
 {
     ASSERT0(ir->is_mul());
 
@@ -521,7 +518,7 @@ void ARMIR2OR::convertMulofFloat(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    m_cg->passArgVariant(&argdescmgr, ors, 2,
+    m_cg->passArgVariant(&argdescmgr, ors.getList(), 2,
                          opnd0, nullptr, opnd0->getByteSize(), ::getDbx(op0),
                          opnd1, nullptr, opnd1->getByteSize(), ::getDbx(op1));
 
@@ -532,19 +529,19 @@ void ARMIR2OR::convertMulofFloat(IR const* ir, OUT ORList & ors, IN IOC * cont)
     //Intrinsic Call.
     Var const* builtin;
     if (op0->getTypeSize(m_tm) <= BYTESIZE_OF_WORD) {
-        builtin = getCG()->m_builtin_mulsf3;
+        builtin = getBuiltinVar(BUILTIN_MULSF3);
     } else {
-        builtin = getCG()->m_builtin_muldf3;
+        builtin = getBuiltinVar(BUILTIN_MULDF3);
     }
 
-    ORList tors;
-    getCG()->buildCall(builtin, ir->getTypeSize(m_tm), tors, cont);
+    RecycORList tors(this);
+    getCG()->buildCall(builtin, ir->getTypeSize(m_tm), tors.getList(), cont);
     tors.copyDbx(ir);
     ors.append_tail(tors);
 }
 
 
-void ARMIR2OR::convertMul(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertMul(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     ASSERTN(ir->is_mul(), ("illegal ir"));
     IR * op0 = BIN_opnd0(ir);
@@ -570,7 +567,7 @@ void ARMIR2OR::convertMul(IR const* ir, OUT ORList & ors, IN IOC * cont)
 }
 
 
-void ARMIR2OR::convertNeg(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     ASSERTN(ir->is_neg(), ("illegal ir"));
     IR * opnd = UNA_opnd(ir);
@@ -613,9 +610,10 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT ORList & ors, IN IOC * cont)
         ASSERT0(res && res2);
         SR * src = getCG()->genZero();
         SR * src2 = getCG()->genZero();
-        ORList tors;
+        RecycORList tors(this);
         getCG()->getSRVecMgr()->genSRVec(2, src, src2);
-        getCG()->buildSub(src, res, BYTESIZE_OF_DWORD, true, tors, &tc);
+        getCG()->buildSub(src, res, BYTESIZE_OF_DWORD, true,
+                          tors.getList(), &tc);
         tors.copyDbx(ir);
         ors.append_tail(tors);
         ASSERT0(cont && tc.get_reg(0)->getByteSize() == BYTESIZE_OF_DWORD);
@@ -630,7 +628,7 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
 
 //Inverted the result value, e.g: 1->0 or 0->1.
-void ARMIR2OR::invertBoolValue(Dbx * dbx, SR * val, OUT ORList & ors)
+void ARMIR2OR::invertBoolValue(Dbx * dbx, SR * val, OUT RecycORList & ors)
 {
     ASSERT0(val);
     SR * one = getCG()->genIntImm(1, false);
@@ -642,7 +640,8 @@ void ARMIR2OR::invertBoolValue(Dbx * dbx, SR * val, OUT ORList & ors)
     OR * o;
     if (HAS_PREDICATE_REGISTER) {
         ASSERT0(tmGetResultNum(orty) == 1 && tmGetOpndNum(orty) == 3);
-        o = getCG()->buildOR(orty, 1, 3, val, getCG()->getTruePred(), val, one);
+        o = getCG()->buildOR(orty, 1, 3, val,
+                             getCG()->getTruePred(), val, one);
     } else {
         ASSERT0(tmGetResultNum(orty) == 1 && tmGetOpndNum(orty) == 2);
         o = getCG()->buildOR(orty, 1, 3, val, val, one);
@@ -654,10 +653,8 @@ void ARMIR2OR::invertBoolValue(Dbx * dbx, SR * val, OUT ORList & ors)
 }
 
 
-void ARMIR2OR::getResultPredByIRTYPE(IR_TYPE code,
-                                     SR ** truepd,
-                                     SR ** falsepd,
-                                     bool is_signed)
+void ARMIR2OR::getResultPredByIRTYPE(IR_TYPE code, SR ** truepd,
+                                     SR ** falsepd, bool is_signed)
 {
     ASSERT0(truepd && falsepd);
     switch (code) {
@@ -721,7 +718,7 @@ void ARMIR2OR::getResultPredByIRTYPE(IR_TYPE code,
 //     sr3, p1, p2 <- cmp sr0, sr1
 //     return sr3, p1, p2
 void ARMIR2OR::convertRelationOpDWORD(IR const* ir,
-                                      OUT ORList & ors,
+                                      OUT RecycORList & ors,
                                       IN IOC * cont)
 {
     ASSERT0(ir && ir->is_relation());
@@ -734,7 +731,7 @@ void ARMIR2OR::convertRelationOpDWORD(IR const* ir,
     //Integer, dould size of GENERAL_REGISTER_SIZE.
     ASSERT0(opnd0->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
 
-    ORList tors;
+    RecycORList tors(this);
     IOC tmp;
     //Operands 0
     convertGeneralLoad(opnd0, tors, &tmp);
@@ -752,7 +749,8 @@ void ARMIR2OR::convertRelationOpDWORD(IR const* ir,
 
     SR * truepd = nullptr;
     SR * falsepd = nullptr;
-    getResultPredByIRTYPE(ir->getCode(), &truepd, &falsepd, opnd0->is_signed());
+    getResultPredByIRTYPE(ir->getCode(), &truepd, &falsepd,
+                          opnd0->is_signed());
 
     //Comparison algo:
     //  compare is <sr1,sr2>, <sr3,sr4> equal:
@@ -763,15 +761,17 @@ void ARMIR2OR::convertRelationOpDWORD(IR const* ir,
     //Compare high part equality.
     //truepd, falsepd = cmp sr0, sr1
     getCG()->buildARMCmp(OR_cmp, getCG()->getTruePred(),
-                         SR_vec(sr0)->get(1), SR_vec(sr1)->get(1), tors, cont);
+                         SR_vec(sr0)->get(1), SR_vec(sr1)->get(1),
+                         tors.getList(), cont);
 
     //Compare low part if high part is equal.
     getCG()->buildARMCmp(OR_cmp, getCG()->genEQPred(),
-                         SR_vec(sr0)->get(0), SR_vec(sr1)->get(0), tors, cont);
+                         SR_vec(sr0)->get(0), SR_vec(sr1)->get(0),
+                         tors.getList(), cont);
 
     //Recompare high part if falsepd is true.
     getCG()->buildARMCmp(OR_cmp, falsepd, SR_vec(sr0)->get(1),
-                         SR_vec(sr1)->get(1), tors, cont);
+                         SR_vec(sr1)->get(1), tors.getList(), cont);
 
     tors.copyDbx(ir);
     ors.append_tail(tors);
@@ -790,7 +790,8 @@ void ARMIR2OR::convertRelationOpDWORD(IR const* ir,
 //     sr1 = b + 2
 //     sr3, p1, p2 <- cmp sr0, sr1
 //     return sr3, p1, p2
-void ARMIR2OR::convertRelationOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
+                                 IN IOC * cont)
 {
     ASSERT0(ir->is_relation());
     IR * opnd0 = BIN_opnd0(ir);
@@ -822,7 +823,8 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Generate compare operations.
     tmp.clean();
-    getCG()->buildARMCmp(OR_cmp, getCG()->getTruePred(), sr0, sr1, ors, cont);
+    getCG()->buildARMCmp(OR_cmp, getCG()->getTruePred(), sr0, sr1,
+                         ors.getList(), cont);
     cont->set_reg(RESULT_REGISTER_INDEX, nullptr);
     SR * truepd = nullptr;
     SR * falsepd = nullptr;
@@ -833,14 +835,14 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //if (!ir->getParent()->isConditionalBr()) {
     //    SR * res = getCG()->genReg();
-    //    ORList tors;
-    //    getCG()->buildMove(res, getCG()->gen_one(), tors, cont);
+    //    RecycORList tors(this);
+    //    getCG()->buildMove(res, getCG()->gen_one(), tors.getList(), cont);
     //    tors.set_pred(truepd, m_cg));
     //    tors.copyDbx(ir);
     //    ors.append_tail(tors);
 
     //    tors.clean();
-    //    getCG()->buildMove(res, getCG()->genZero(), tors, cont);
+    //    getCG()->buildMove(res, getCG()->genZero(), tors.getList(), cont);
     //    tors.set_pred(falsepd, m_cg);
     //    tors.copyDbx(ir);
     //    ors.append_tail(tors);
@@ -875,7 +877,7 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT ORList & ors, IN IOC * cont)
 //This implementation is just used to verify the function of BNOT,
 //in the sake of excessive redundant operations has been generated.
 void ARMIR2OR::convertBitNotLowPerformance(IR const* ir,
-                                           OUT ORList & ors,
+                                           OUT RecycORList & ors,
                                            IN IOC * cont)
 {
     ASSERTN(ir->is_bnot(), ("illegal ir"));
@@ -884,7 +886,7 @@ void ARMIR2OR::convertBitNotLowPerformance(IR const* ir,
     // =>
     //  res = movi res, -1
     //  res = xor src, res
-    ORList tors;
+    RecycORList tors(this);
     IR * movi_ir = m_rg->buildStorePR(ir->getType(),
                                       m_rg->buildImmInt(-1, ir->getType()));
     convert(movi_ir, tors, cont);
@@ -903,13 +905,15 @@ void ARMIR2OR::convertBitNotLowPerformance(IR const* ir,
 
     tors.copyDbx(ir);
     ors.append_tail(tors);
+    m_rg->freeIRTree(mov_ir);
 }
 
 
 //Convert Bitwise NOT into OR list. bnot is unary operation.
 //e.g BNOT(0x0001) = 0xFFFE
 //Note ONLY thumb supports ORN logical OR NOT operation.
-void ARMIR2OR::convertBitNot(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertBitNot(IR const* ir, OUT RecycORList & ors,
+                             IN IOC * cont)
 {
     ASSERTN(ir->is_bnot(), ("illegal ir"));
     //Algo:
@@ -917,7 +921,7 @@ void ARMIR2OR::convertBitNot(IR const* ir, OUT ORList & ors, IN IOC * cont)
     // =>
     // 1. res = movi res, -1
     // 2. res = xor opnd, res
-    ORList tors;
+    RecycORList tors(this);
 
     // 1. res = movi res, -1
     // 1.1 Generate result SR group.
@@ -930,7 +934,7 @@ void ARMIR2OR::convertBitNot(IR const* ir, OUT ORList & ors, IN IOC * cont)
         // 1.2 Generate move operation.
         IOC tmp;
         m_cg->buildMove(res_sr0, getCG()->genIntImm((HOST_INT)-1, false),
-                        tors, &tmp);
+                        tors.getList(), &tmp);
     } else if (res_size <= BYTESIZE_OF_DWORD) {
         res_sr0 = m_cg->genReg();
         res_sr1 = m_cg->genReg();
@@ -938,11 +942,11 @@ void ARMIR2OR::convertBitNot(IR const* ir, OUT ORList & ors, IN IOC * cont)
         // 1.2 Generate move operation.
         IOC tmp;
         m_cg->buildMove(res_sr0, getCG()->genIntImm((HOST_INT)-1, false),
-                        tors, &tmp);
+                        tors.getList(), &tmp);
 
         //The second mov-imm seems redundant. It is not necessary.
         //m_cg->buildMove(res_sr1, getCG()->genIntImm((HOST_INT)-1, false),
-        //                tors, &tmp);
+        //                tors.getList(), &tmp);
     } else {
         UNREACHABLE();
     }
@@ -1000,22 +1004,20 @@ void ARMIR2OR::convertBitNot(IR const* ir, OUT ORList & ors, IN IOC * cont)
 }
 
 
-void ARMIR2OR::recordRelationOpResult(IR const* ir,
-                                      SR * truepd,
-                                      SR * falsepd,
-                                      SR * result_pred,
-                                      OUT ORList & ors,
+void ARMIR2OR::recordRelationOpResult(IR const* ir, SR * truepd,
+                                      SR * falsepd, SR * result_pred,
+                                      OUT RecycORList & ors,
                                       IN OUT IOC * cont)
 {
     if (!ir->getParent()->isConditionalBr()) {
         SR * res = getCG()->genReg();
-        ORList tors;
-        getCG()->buildMove(res, getCG()->genOne(), tors, cont);
+        RecycORList tors(this);
+        getCG()->buildMove(res, getCG()->genOne(), tors.getList(), cont);
         tors.set_pred(truepd, m_cg);
         ors.append_tail(tors);
 
         tors.clean();
-        getCG()->buildMove(res, getCG()->genZero(), tors, cont);
+        getCG()->buildMove(res, getCG()->genZero(), tors.getList(), cont);
         tors.set_pred(falsepd, m_cg);
         ors.append_tail(tors);
 
@@ -1042,7 +1044,7 @@ void ARMIR2OR::recordRelationOpResult(IR const* ir,
 }
 
 
-void ARMIR2OR::convertIgoto(IR const* ir, OUT ORList & ors, IN IOC *)
+void ARMIR2OR::convertIgoto(IR const* ir, OUT RecycORList & ors, IN IOC *)
 {
     ASSERT0(ir->is_igoto());
     IOC tmp;
@@ -1056,11 +1058,12 @@ void ARMIR2OR::convertIgoto(IR const* ir, OUT ORList & ors, IN IOC *)
 }
 
 
-void ARMIR2OR::convertSelect(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors,
+                             IN IOC * cont)
 {
     ASSERT0(ir->is_select());
     IOC tmp;
-    ORList tors;
+    RecycORList tors(this);
 
     //Generate Compare operation
     convertRelationOp(SELECT_pred(ir), tors, &tmp);
@@ -1085,7 +1088,7 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT ORList & ors, IN IOC * cont)
         convertGeneralLoad(SELECT_trueexp(ir), tors, &tmp);
         if (res_size <= BYTESIZE_OF_WORD) {
             SR * sr0 = tmp.get_reg(0);
-            getCG()->buildMove(res, sr0, tors, &tmp);
+            getCG()->buildMove(res, sr0, tors.getList(), &tmp);
         } else if (res_size <= BYTESIZE_OF_DWORD) {
             SR * sr0 = tmp.get_reg(0);
             SR * sr1 = nullptr;
@@ -1093,12 +1096,13 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT ORList & ors, IN IOC * cont)
                 sr1 = SR_vec(sr0)->get(1);
             } else {
                 sr1 = getCG()->genReg();
-                getCG()->buildMove(sr1, getCG()->genZero(), tors, &tmp);
+                getCG()->buildMove(sr1, getCG()->genZero(),
+                                   tors.getList(), &tmp);
             }
             SR * res2 = getCG()->genReg();
             getCG()->getSRVecMgr()->genSRVec(2, res, res2);
-            getCG()->buildMove(res, sr0, tors, &tmp);
-            getCG()->buildMove(res2, sr1, tors, &tmp);
+            getCG()->buildMove(res, sr0, tors.getList(), &tmp);
+            getCG()->buildMove(res2, sr1, tors.getList(), &tmp);
         } else {
             UNREACHABLE();
         }
@@ -1115,7 +1119,7 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
         if (res_size <= BYTESIZE_OF_WORD) {
             SR * sr0 = tmp.get_reg(0);
-            getCG()->buildMove(res, sr0, tors, &tmp);
+            getCG()->buildMove(res, sr0, tors.getList(), &tmp);
         } else if (res_size <= BYTESIZE_OF_DWORD) {
             SR * sr0 = tmp.get_reg(0);
             SR * sr1 = nullptr;
@@ -1123,13 +1127,14 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT ORList & ors, IN IOC * cont)
                 sr1 = SR_vec(sr0)->get(1);
             } else {
                 sr1 = getCG()->genReg();
-                getCG()->buildMove(sr1, getCG()->genZero(), tors, &tmp);
+                getCG()->buildMove(sr1, getCG()->genZero(),
+                                   tors.getList(), &tmp);
             }
 
             SR * res2 = getCG()->genReg();
             getCG()->getSRVecMgr()->genSRVec(2, res, res2);
-            getCG()->buildMove(res, sr0, tors, &tmp);
-            getCG()->buildMove(res2, sr1, tors, &tmp);
+            getCG()->buildMove(res, sr0, tors.getList(), &tmp);
+            getCG()->buildMove(res2, sr1, tors.getList(), &tmp);
         } else {
             UNREACHABLE();
         }
@@ -1146,7 +1151,7 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT ORList & ors, IN IOC * cont)
 //The output registers in IOC are ResultSR,
 //TruePredicatedSR, FalsePredicatedSR.
 //The ResultSR record the boolean value of comparison of relation operation.
-void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
+void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
                                    IN IOC * cont)
 {
     ASSERT0(ir && ir->is_relation());
@@ -1155,7 +1160,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
 
     ASSERT0(op0->getTypeSize(m_tm) == op1->getTypeSize(m_tm));
 
-    ORList tors;
+    RecycORList tors(this);
 
     //Convert Operand0.
     IOC tmp;
@@ -1173,7 +1178,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    m_cg->passArgVariant(&argdescmgr, tors, 2,
+    m_cg->passArgVariant(&argdescmgr, tors.getList(), 2,
                          opnd0, nullptr, opnd0->getByteSize(), ::getDbx(op0),
                          opnd1, nullptr, opnd1->getByteSize(), ::getDbx(op1));
 
@@ -1184,32 +1189,32 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
     Var const* builtin = nullptr;
     if (opnd0->getByteSize() == GENERAL_REGISTER_SIZE) {
         switch (ir->getCode()) {
-        case IR_LT: builtin = getCG()->m_builtin_ltsf2; break;
-        case IR_GT: builtin = getCG()->m_builtin_gtsf2; break;
-        case IR_GE: builtin = getCG()->m_builtin_gesf2; break;
-        case IR_EQ: builtin = getCG()->m_builtin_eqsf2; break;
-        case IR_NE: builtin = getCG()->m_builtin_nesf2; break;
-        case IR_LE: builtin = getCG()->m_builtin_lesf2; break;
+        case IR_LT: builtin = getBuiltinVar(BUILTIN_LTSF2); break;
+        case IR_GT: builtin = getBuiltinVar(BUILTIN_GTSF2); break;
+        case IR_GE: builtin = getBuiltinVar(BUILTIN_GESF2); break;
+        case IR_EQ: builtin = getBuiltinVar(BUILTIN_EQSF2); break;
+        case IR_NE: builtin = getBuiltinVar(BUILTIN_NESF2); break;
+        case IR_LE: builtin = getBuiltinVar(BUILTIN_LESF2); break;
         default: UNREACHABLE();
         }
     } else {
         ASSERT0(opnd0->getByteSize() == GENERAL_REGISTER_SIZE * 2);
         switch (ir->getCode()) {
-        case IR_LT: builtin = getCG()->m_builtin_ltdf2; break;
-        case IR_GT: builtin = getCG()->m_builtin_gtdf2; break;
-        case IR_GE: builtin = getCG()->m_builtin_gedf2; break;
-        case IR_EQ: builtin = getCG()->m_builtin_eqdf2; break;
-        case IR_NE: builtin = getCG()->m_builtin_nedf2; break;
-        case IR_LE: builtin = getCG()->m_builtin_ledf2; break;
+        case IR_LT: builtin = getBuiltinVar(BUILTIN_LTDF2); break;
+        case IR_GT: builtin = getBuiltinVar(BUILTIN_GTDF2); break;
+        case IR_GE: builtin = getBuiltinVar(BUILTIN_GEDF2); break;
+        case IR_EQ: builtin = getBuiltinVar(BUILTIN_EQDF2); break;
+        case IR_NE: builtin = getBuiltinVar(BUILTIN_NEDF2); break;
+        case IR_LE: builtin = getBuiltinVar(BUILTIN_LEDF2); break;
         default: UNREACHABLE();
         }
     }
 
-    getCG()->buildCall(builtin, ir->getTypeSize(m_tm), tors, cont);
+    getCG()->buildCall(builtin, ir->getTypeSize(m_tm), tors.getList(), cont);
 
     //Get return value of call.
     //SR * retv = getCG()->genReg();
-    //getCG()->buildMove(retv, getCG()->gen_r0(), tors, cont);
+    //getCG()->buildMove(retv, getCG()->gen_r0(), tors.getList(), cont);
 
     tors.copyDbx(ir);
     ors.append_tail(tors);
@@ -1223,7 +1228,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
     bool needresval = !ir->getStmt()->isConditionalBr();
     if (needresval) {
         getCG()->buildCompare(OR_cmp_i, true, getCG()->gen_r0(),
-                              getCG()->genZero(), tors, cont);
+                              getCG()->genZero(), tors.getList(), cont);
         tors.copyDbx(ir);
         ors.append_tail(tors);
         tors.clean();
@@ -1236,7 +1241,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
         truepd = getCG()->genLTPred();
         if (needresval) {
             //(ge)r0 = 0;
-            getCG()->buildMove(r0, zero, tors, cont);
+            getCG()->buildMove(r0, zero, tors.getList(), cont);
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(falsepd, m_cg);
             tors.copyDbx(ir);
@@ -1244,7 +1249,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
             tors.clean();
 
             //(lt)r0 = 1;
-            getCG()->buildMove(r0, one, tors, cont);
+            getCG()->buildMove(r0, one, tors.getList(), cont);
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(truepd, m_cg);
             tors.copyDbx(ir);
@@ -1259,7 +1264,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
         truepd = getCG()->genLEPred();
         if (needresval) {
             //(gt)r0 = 0;
-            getCG()->buildMove(r0, zero, tors, cont);
+            getCG()->buildMove(r0, zero, tors.getList(), cont);
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(falsepd, m_cg);
             tors.copyDbx(ir);
@@ -1267,7 +1272,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
             tors.clean();
 
             //(le)r0 = 1;
-            getCG()->buildMove(r0, one, tors, cont);
+            getCG()->buildMove(r0, one, tors.getList(), cont);
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(truepd, m_cg);
             tors.copyDbx(ir);
@@ -1282,7 +1287,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
         truepd = getCG()->genGTPred();
         if (needresval) {
             //(le)r0 = 0;
-            getCG()->buildMove(r0, zero, tors, cont);
+            getCG()->buildMove(r0, zero, tors.getList(), cont);
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(falsepd, m_cg);
             tors.copyDbx(ir);
@@ -1290,7 +1295,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
             tors.clean();
 
             //(gt)r0 = 1;
-            getCG()->buildMove(r0, one, tors, cont);
+            getCG()->buildMove(r0, one, tors.getList(), cont);
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(truepd, m_cg);
             tors.copyDbx(ir);
@@ -1305,7 +1310,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
         truepd = getCG()->genGEPred();
         if (needresval) {
             //(lt)r0 = 0;
-            getCG()->buildMove(r0, zero, tors, cont);
+            getCG()->buildMove(r0, zero, tors.getList(), cont);
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(falsepd, m_cg);
             tors.copyDbx(ir);
@@ -1313,7 +1318,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
             tors.clean();
 
             //(ge)r0 = 1;
-            getCG()->buildMove(r0, one, tors, cont);
+            getCG()->buildMove(r0, one, tors.getList(), cont);
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(truepd, m_cg);
             tors.copyDbx(ir);
@@ -1328,7 +1333,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
         truepd = getCG()->genEQPred();
         if (needresval) {
             //(ne)r0 = 0;
-            getCG()->buildMove(r0, zero, tors, cont);
+            getCG()->buildMove(r0, zero, tors.getList(), cont);
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(falsepd, m_cg);
             tors.copyDbx(ir);
@@ -1336,7 +1341,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
             tors.clean();
 
             //(eq)r0 = 1;
-            getCG()->buildMove(r0, one, tors, cont);
+            getCG()->buildMove(r0, one, tors.getList(), cont);
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(truepd, m_cg);
             tors.copyDbx(ir);
@@ -1351,7 +1356,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
         truepd = getCG()->genNEPred();
         if (needresval) {
             //(eq)r0 = 0;
-            getCG()->buildMove(r0, zero, tors, cont);
+            getCG()->buildMove(r0, zero, tors.getList(), cont);
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(falsepd, m_cg);
             tors.copyDbx(ir);
@@ -1359,7 +1364,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
             tors.clean();
 
             //(ne)r0 = 1;
-            getCG()->buildMove(r0, one, tors, cont);
+            getCG()->buildMove(r0, one, tors.getList(), cont);
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(truepd, m_cg);
             tors.copyDbx(ir);
@@ -1385,7 +1390,8 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT ORList & ors,
 }
 
 
-void ARMIR2OR::convertTruebrFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertTruebrFp(IR const* ir, OUT RecycORList & ors,
+                               IN IOC * cont)
 {
     ASSERT0(cont->get_pred() == nullptr);
     convertRelationOpFp(BR_det(ir), ors, cont);
@@ -1395,20 +1401,21 @@ void ARMIR2OR::convertTruebrFp(IR const* ir, OUT ORList & ors, IN IOC * cont)
     ASSERT0(retv && retv->is_reg());
 
     //Build truebr.
-    ORList tors;
+    RecycORList tors(this);
     SR * tgt_lab = getCG()->genLabel(BR_lab(ir));
     getCG()->buildCompare(OR_cmp_i, true, retv,
-                          getCG()->genZero(), tors, cont);
+                          getCG()->genZero(), tors.getList(), cont);
     //cmp does not produce result in register.
     ASSERT0(cont->get_reg(0) == nullptr);
-    getCG()->buildCondBr(tgt_lab, tors, cont);
+    getCG()->buildCondBr(tgt_lab, tors.getList(), cont);
     tors.copyDbx(ir);
     cont->set_pred(nullptr); //clean status
     ors.append_tail(tors);
 }
 
 
-void ARMIR2OR::convertTruebr(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertTruebr(IR const* ir, OUT RecycORList & ors,
+                             IN IOC * cont)
 {
     ASSERT0(ir && ir->is_truebr());
     IR * opnd0 = BIN_opnd0(BR_det(ir));
@@ -1426,8 +1433,8 @@ void ARMIR2OR::convertTruebr(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     convertRelationOpDWORD(BR_det(ir), ors, cont);
 
-    ORList tors;
-    getCG()->buildCondBr(getCG()->genLabel(BR_lab(ir)), tors, cont);
+    RecycORList tors(this);
+    getCG()->buildCondBr(getCG()->genLabel(BR_lab(ir)), tors.getList(), cont);
     tors.copyDbx(ir);
     ors.append_tail(tors);
     return;
@@ -1441,47 +1448,47 @@ Var const* ARMIR2OR::fp2int(IR const* tgt, IR const* src)
         if (tgt->is_sint()) {
             if (src->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE) {
                 //float -> sign int.
-                return getCG()->m_builtin_fixsfsi;
+                return getBuiltinVar(BUILTIN_FIXSFSI);
             }
 
             ASSERT0(src->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
             //double -> sign int.
-            return getCG()->m_builtin_fixdfsi;
+            return getBuiltinVar(BUILTIN_FIXDFSI);
         }
 
         ASSERT0(tgt->is_uint() || tgt->is_bool());
         if (src->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE) {
             //float -> unsign int.
             //float -> bool.
-            return getCG()->m_builtin_fixunssfsi;
+            return getBuiltinVar(BUILTIN_FIXUNSSFSI);
         }
 
         ASSERT0(src->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
         //double -> unsign int.
-        return getCG()->m_builtin_fixunsdfsi;
+        return getBuiltinVar(BUILTIN_FIXUNSDFSI);
     }
 
     ASSERT0(tgt->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
     if (tgt->is_sint()) {
         if (src->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE) {
             //float -> sign long long.
-            return getCG()->m_builtin_fixsfdi;
+            return getBuiltinVar(BUILTIN_FIXSFDI);
         }
 
         ASSERT0(src->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
         //double -> sign long long.
-        return getCG()->m_builtin_fixdfdi;
+        return getBuiltinVar(BUILTIN_FIXDFDI);
     }
 
     ASSERT0(tgt->is_uint());
     if (src->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE) {
          //float -> unsign long long.
-         return getCG()->m_builtin_fixunssfdi;
+         return getBuiltinVar(BUILTIN_FIXUNSSFDI);
     }
 
     ASSERT0(src->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
     //double -> unsign long long.
-    return getCG()->m_builtin_fixunsdfdi;
+    return getBuiltinVar(BUILTIN_FIXUNSDFDI);
 }
 
 
@@ -1493,12 +1500,12 @@ Var const* ARMIR2OR::int2fp(IR const* tgt, IR const* src)
         if (src->is_sint()) {
             if (src->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE) {
                 //sign int -> float.
-                return getCG()->m_builtin_floatsisf;
+                return getBuiltinVar(BUILTIN_FLOATSISF);
             }
 
             ASSERT0(src->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
             //sign long long -> float.
-            return getCG()->m_builtin_floatdisf;
+            return getBuiltinVar(BUILTIN_FLOATDISF);
         }
 
         ASSERT0(src->is_uint() || src->is_bool() ||
@@ -1506,37 +1513,37 @@ Var const* ARMIR2OR::int2fp(IR const* tgt, IR const* src)
         if (src->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE) {
             //unsign int -> float.
             //bool -> float.
-            return getCG()->m_builtin_floatunsisf;
+            return getBuiltinVar(BUILTIN_FLOATUNSISF);
         }
 
         ASSERT0(src->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
 
         //unsign long long -> float.
-        return getCG()->m_builtin_floatundisf;
+        return getBuiltinVar(BUILTIN_FLOATUNDISF);
     }
 
     ASSERT0(tgt->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
     if (src->is_sint()) {
         if (src->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE) {
             //sign int -> double.
-            return getCG()->m_builtin_floatsidf;
+            return getBuiltinVar(BUILTIN_FLOATSIDF);
         }
 
         ASSERT0(src->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
         //sign long long -> double.
-        return getCG()->m_builtin_floatdidf;
+        return getBuiltinVar(BUILTIN_FLOATDIDF);
     }
 
     ASSERT0(src->is_uint() || src->is_bool() || src->is_ptr() || src->is_mc());
     if (src->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE) {
         //unsign int -> double.
         //bool -> double.
-        return getCG()->m_builtin_floatunsidf;
+        return getBuiltinVar(BUILTIN_FLOATUNSIDF);
     }
 
     ASSERT0(src->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
     //unsign long long -> double.
-    return getCG()->m_builtin_floatundidf;
+    return getBuiltinVar(BUILTIN_FLOATUNDIDF);
 }
 
 
@@ -1549,15 +1556,15 @@ Var const* ARMIR2OR::fp2fp(IR const* tgt, IR const* src)
     ASSERTN(tgtsz != srcsz, ("CVT is redundant"));
     if (tgtsz == GENERAL_REGISTER_SIZE) {
         ASSERT0(srcsz == GENERAL_REGISTER_SIZE * 2);
-        return getCG()->m_builtin_truncdfsf2;
+        return getBuiltinVar(BUILTIN_TRUNCDFSF2);
     }
 
     ASSERT0(tgtsz == srcsz * 2);
-    return getCG()->m_builtin_extendsfdf2;
+    return getBuiltinVar(BUILTIN_EXTENDSFDF2);
 }
 
 
-void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertCvt(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     ASSERT0(ir->is_cvt() && CVT_exp(ir));
 
@@ -1572,11 +1579,14 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
     if ((newir->is_int() || newir->is_ptr()) &&
         (CVT_exp(newir)->is_int() || CVT_exp(newir)->is_ptr())) {
         IR2OR::convertCvt(newir, ors, cont);
+        if (newir != ir) {
+            m_rg->freeIRTree(newir);
+        }
         return;
     }
     ASSERTN(!newir->is_any(), ("Unsupported CVT to ANY"));
 
-    ORList tors;
+    RecycORList tors(this);
     IOC tmp;
     convertGeneralLoad(CVT_exp(newir), tors, &tmp);
     SR * opnd = tmp.get_reg(0);
@@ -1584,7 +1594,7 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
-    m_cg->passArgVariant(&argdescmgr, tors, 1,
+    m_cg->passArgVariant(&argdescmgr, tors.getList(), 1,
                          opnd, nullptr, opnd->getByteSize(),
                          ::getDbx(CVT_exp(newir)));
 
@@ -1605,7 +1615,8 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
     } else { UNREACHABLE(); }
 
     ASSERT0(builtin);
-    getCG()->buildCall(builtin, newir->getTypeSize(m_tm), tors, cont);
+    getCG()->buildCall(builtin, newir->getTypeSize(m_tm),
+                       tors.getList(), cont);
 
     //Result register.
     ASSERT0(cont);
@@ -1615,8 +1626,8 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
         ASSERT0(newir->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
         //SR * res0 = getCG()->genReg();
         //SR * res1 = getCG()->genReg();
-        //getCG()->buildMove(res0, getCG()->gen_r0(), tors, nullptr);
-        //getCG()->buildMove(res1, getCG()->gen_r1(), tors, nullptr);
+        //getCG()->buildMove(res0, getCG()->gen_r0(), tors.getList(), nullptr);
+        //getCG()->buildMove(res1, getCG()->gen_r1(), tors.getList(), nullptr);
 
         SR * res0 = getCG()->gen_r0();
         SR * res1 = getCG()->gen_r1();
@@ -1628,10 +1639,14 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont)
 
     tors.copyDbx(ir); //copy dbx from origin ir.
     ors.append_tail(tors);
+    if (newir != ir) {
+        m_rg->freeIRTree(newir);
+    }
 }
 
 
-void ARMIR2OR::convertReturn(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convertReturn(IR const* ir, OUT RecycORList & ors,
+                             IN IOC * cont)
 {
     ASSERT0(ir->is_return());
     IR * exp = RET_exp(ir);
@@ -1643,7 +1658,7 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT ORList & ors, IN IOC * cont)
         return;
     }
 
-    ORList tors;
+    RecycORList tors(this);
     ASSERT0(IR_next(exp) == nullptr);
     IOC tmp;
     convert(exp, tors, &tmp);
@@ -1659,11 +1674,12 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT ORList & ors, IN IOC * cont)
         ASSERT0(retbuf &&
             retbuf->getByteSize(m_tm) == exp->getTypeSize(m_tm));
         tmp.clean_bottomup();
-        getCG()->buildLda(retbuf, 0, nullptr, tors, &tmp);
+        getCG()->buildLda(retbuf, 0, nullptr, tors.getList(), &tmp);
         SR * retbufaddr = tmp.get_reg(0);
         ASSERT0(retbufaddr && retbufaddr->is_reg());
         getCG()->buildMemcpyInternal(retbufaddr, srcaddr,
-                                     exp->getTypeSize(m_tm), tors, &tmp);
+                                     exp->getTypeSize(m_tm),
+                                     tors.getList(), &tmp);
         OR * o = getCG()->buildOR(OR_ret, 0, 2,
                                   getCG()->getTruePred(),
                                   getCG()->genReturnAddr());
@@ -1671,7 +1687,7 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT ORList & ors, IN IOC * cont)
     } else {
         SR * retv = tmp.get_reg(0);
         ASSERT0(retv && retv->is_reg());
-        getCG()->buildMove(r0, retv, tors, nullptr);
+        getCG()->buildMove(r0, retv, tors.getList(), nullptr);
         ASSERT0(cont);
         cont->set_reg(RESULT_REGISTER_INDEX, r0);
         OR * o;
@@ -1684,7 +1700,7 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT ORList & ors, IN IOC * cont)
                     ("it should be the first SR in vector"));
             SR * retv_2 = SR_vec(retv)->get(1);
             SR * r1 = getCG()->gen_r1();
-            getCG()->buildMove(r1, retv_2, tors, nullptr);
+            getCG()->buildMove(r1, retv_2, tors.getList(), nullptr);
             o = getCG()->buildOR(OR_ret2, 0, 4,
                                  getCG()->getTruePred(),
                                  getCG()->genReturnAddr(), r0, r1);
@@ -1729,8 +1745,11 @@ IR * ARMIR2OR::insertCvt(IR const* ir)
 }
 
 
-void ARMIR2OR::convert(IR const* ir, OUT ORList & ors, IN IOC * cont)
+void ARMIR2OR::convert(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     IR * newir = insertCvt(ir);
     IR2OR::convert(newir, ors, cont);
+    if (newir != ir) {
+        m_rg->freeIRTree(newir);
+    }
 }

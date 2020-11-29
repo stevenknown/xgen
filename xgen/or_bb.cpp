@@ -587,7 +587,7 @@ void ORBB::dump()
 }
 
 
-bool ORBB::isDownBoundary(OR * o)
+bool ORBB::isLowerBoundary(OR * o)
 {
     return (OR_is_call(o) ||
             OR_is_cond_br(o) ||

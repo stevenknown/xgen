@@ -47,7 +47,6 @@ public:
 
     void initAsmFileHandler(FILE * asmh) { m_asmfile = asmh; }
 
-    bool GenAndPrtGlobalVariable(Region * rg);
     FILE * getAsmFileHandler() const { return m_asmfile; }
 
     bool CodeGen(Region * rg);

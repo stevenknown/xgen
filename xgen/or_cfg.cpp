@@ -32,12 +32,12 @@ author: Su Zhenyu
 
 namespace xgen {
 
-//OR_CFG
-OR_CFG::OR_CFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
-    :xoc::CFG<ORBB, OR>(bbl)
+//ORCFG
+ORCFG::ORCFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
+    : xoc::CFG<ORBB, OR>(bbl)
 {
     m_cg = cg;
-    setBitSetMgr(cg->getRegion()->getBitSetMgr());
+    setBitSetMgr(cg->getBitSetMgr());
 
     if (m_bb_list->get_elem_count() == 0) {
         return;
@@ -94,13 +94,13 @@ OR_CFG::OR_CFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
 }
 
 
-INT OR_CFG::getNumOfBB()
+INT ORCFG::getNumOfBB()
 {
     return getVertexNum();
 }
 
 
-List<ORBB*> * OR_CFG::getBBList()
+List<ORBB*> * ORCFG::getBBList()
 {
     return m_bb_list;
 }
@@ -108,7 +108,7 @@ List<ORBB*> * OR_CFG::getBBList()
 
 //Add a new vertex into Graph to describe BB, but
 //the BB list should be modified out of this function.
-void OR_CFG::addBB(ORBB * bb)
+void ORCFG::addBB(ORBB * bb)
 {
     ASSERT0(bb && m_bb_vec.get(bb->id()) == nullptr);
     m_bb_vec.set(bb->id(), bb);
@@ -117,7 +117,7 @@ void OR_CFG::addBB(ORBB * bb)
 
 
 //Move Labels from 'src' to 'tgt'.
-void OR_CFG::moveLabels(ORBB * src, ORBB * tgt)
+void ORCFG::moveLabels(ORBB * src, ORBB * tgt)
 {
     tgt->mergeLabeInfoList(src);
 
@@ -132,7 +132,7 @@ void OR_CFG::moveLabels(ORBB * src, ORBB * tgt)
 
 
 //Cut off the mapping relation bwteen Labels and BB.
-void OR_CFG::resetMapBetweenLabelAndBB(ORBB * bb)
+void ORCFG::resetMapBetweenLabelAndBB(ORBB * bb)
 {
     for (xoc::LabelInfo const* li = bb->getLabelList().get_head();
          li != nullptr; li = bb->getLabelList().get_next()) {
@@ -142,20 +142,20 @@ void OR_CFG::resetMapBetweenLabelAndBB(ORBB * bb)
 }
 
 
-void OR_CFG::remove_xr(ORBB * bb, OR * o)
+void ORCFG::remove_xr(ORBB * bb, OR * o)
 {
     ORBB_orlist(bb)->remove(o);
 }
 
 
-ORBB * OR_CFG::getBB(UINT id) const
+ORBB * ORCFG::getBB(UINT id) const
 {
     return m_bb_vec.get(id);
 }
 
 
 //Return all successors.
-void OR_CFG::get_succs(IN OUT List<ORBB*> & succs, ORBB const* bb)
+void ORCFG::get_succs(IN OUT List<ORBB*> & succs, ORBB const* bb)
 {
     xcom::Vertex * v = getVertex(bb->id());
     xcom::EdgeC * el = v->getOutList();
@@ -170,7 +170,7 @@ void OR_CFG::get_succs(IN OUT List<ORBB*> & succs, ORBB const* bb)
 
 
 //Return all predecessors.
-void OR_CFG::get_preds(IN OUT List<ORBB*> & preds, ORBB const* bb)
+void ORCFG::get_preds(IN OUT List<ORBB*> & preds, ORBB const* bb)
 {
     xcom::Vertex * v = getVertex(bb->id());
     xcom::EdgeC * el = v->getInList();
@@ -185,7 +185,7 @@ void OR_CFG::get_preds(IN OUT List<ORBB*> & preds, ORBB const* bb)
 
 
 //Control flow optimization
-void OR_CFG::cf_opt()
+void ORCFG::cf_opt()
 {
     ASSERTN(0, ("TODO"));
     bool change = true;
@@ -200,7 +200,7 @@ void OR_CFG::cf_opt()
 
 
 //Return the last operation of 'bb'.
-OR * OR_CFG::get_last_xr(ORBB * bb)
+OR * ORCFG::get_last_xr(ORBB * bb)
 {
     ASSERT0(bb && m_bb_vec.get(bb->id()));
     return ORBB_last_or(bb);
@@ -208,14 +208,14 @@ OR * OR_CFG::get_last_xr(ORBB * bb)
 
 
 //Return the first operation of 'bb'.
-OR * OR_CFG::get_first_xr(ORBB * bb)
+OR * ORCFG::get_first_xr(ORBB * bb)
 {
     ASSERT0(bb && m_bb_vec.get(bb->id()));
     return ORBB_first_or(bb);
 }
 
 
-ORBB * OR_CFG::findBBbyLabel(xoc::LabelInfo const* lab) const
+ORBB * ORCFG::findBBbyLabel(xoc::LabelInfo const* lab) const
 {
     ORBB * bb = m_lab2bb.get(lab);
     ASSERT0(bb);
@@ -223,7 +223,7 @@ ORBB * OR_CFG::findBBbyLabel(xoc::LabelInfo const* lab) const
 }
 
 
-void OR_CFG::dump_node(FILE * h, bool detail)
+void ORCFG::dump_node(FILE * h, bool detail)
 {
     xcom::StrBuf buf(64);
     UINT vertical_order = 1;
@@ -262,7 +262,7 @@ void OR_CFG::dump_node(FILE * h, bool detail)
 }
 
 
-void OR_CFG::dump_edge(FILE * h)
+void ORCFG::dump_edge(FILE * h)
 {
     EdgeIter c;
     for (xcom::Edge * e = get_first_edge(c);
@@ -276,7 +276,7 @@ void OR_CFG::dump_edge(FILE * h)
 
 
 //Print graph structure description.
-void OR_CFG::dump_head(FILE * h)
+void ORCFG::dump_head(FILE * h)
 {
     fprintf(h, "graph: {"
               "title: \"Graph\"\n"
@@ -315,7 +315,7 @@ void OR_CFG::dump_head(FILE * h)
 }
 
 
-void OR_CFG::dumpVCG(CHAR const* name, bool detail)
+void ORCFG::dumpVCG(CHAR const* name, bool detail)
 {
     if (name == nullptr) {
         name = "graph_cfg.vcg";

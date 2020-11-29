@@ -220,7 +220,7 @@ ORScheInfo const* xgen::tmGetORScheInfo(OR_TYPE ot)
 }
 
 
-CGMgr * xgen::allocCGMgr()
+CGMgr * xgen::allocCGMgr(RegionMgr * rm)
 {
-    return new ARMCGMgr();
+    return new ARMCGMgr(rm);
 }

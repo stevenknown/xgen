@@ -38,17 +38,14 @@ class ARMCGMgr : public CGMgr {
 protected:
     virtual SRMgr * allocSRMgr() { return new ARMSRMgr(); }
     virtual ORMgr * allocORMgr(SRMgr * srmgr) { return new ARMORMgr(srmgr); }
+    void initBuiltin();
 
 public:
-    ARMCGMgr() { init(); }
+    ARMCGMgr(RegionMgr * rg) : CGMgr(rg) { initBuiltin(); }
     COPY_CONSTRUCTOR(ARMCGMgr);
     virtual ~ARMCGMgr() {}
-
-    //Allocate CG.
     virtual CG * allocCG(Region * rg);
-
-    //Allocate VarMgr.
-    virtual AsmPrinter * allocAsmPrinter(CG * cg, AsmPrinterMgr * asmprtmgr);
+    virtual AsmPrinter * allocAsmPrinter(CG const* cg);
 };
 //END ARMCGMgr
 

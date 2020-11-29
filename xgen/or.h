@@ -36,6 +36,8 @@ namespace xgen {
 class OR;
 class ORMgr;
 class ORBB;
+class IR2OR;
+class RecycORListMgr;
 
 typedef xcom::C<OR*> ORCt; //OR container
 typedef Vector<OR*> ORVec; //OR vector
@@ -77,6 +79,10 @@ typedef Vector<OR*> ORVec; //OR vector
 #define OTD_is_subi(o) ((o)->is_subi)
 class ORTypeDesc {
 public:
+    //////////////////////////////////////////////////////////////////////////
+    //NOTE: DO NOT CHANGE THE LAYOUT OF MEMBER.                             //
+    //THE LAYOUT OF MEMBER CORRESPONDS TO TERGET DEPENDENT CONFIG FILE.     //
+    //////////////////////////////////////////////////////////////////////////
     OR_TYPE code;
     CHAR const* name;
 
@@ -157,6 +163,7 @@ public:
 #define OR_is_subi(o) OTD_is_subi(tmGetORTypeDesc(o->getCode()))
 #define OR_flag(o) ((o)->u1.s1byte)
 class OR {
+    COPY_CONSTRUCTOR(OR);
     friend class ORMgr;
 protected:
     typedef SimpleVector<SR*, 2, MAX_OR_OPERAND_NUM> OpndVec;
@@ -495,9 +502,14 @@ public:
 typedef List<OR const*> ConstORList;
 
 class ORList : public List<OR*> {
+    COPY_CONSTRUCTOR(ORList);
 public:
     ORList() {}
-    virtual ~ORList() {}
+    ~ORList() {}
+
+    void append_tail(OR * o);
+    void append_tail(ORList & ors);
+
     void copyDbx(IR const* ir)
     {
         ASSERT0(ir);
@@ -508,7 +520,6 @@ public:
             OR_dbx(o).copy(da->dbx);
         }
     }
-
     void copyDbx(Dbx const* dbx)
     {
         ASSERT0(dbx);
@@ -517,6 +528,8 @@ public:
         }
     }
 
+    void dump(CG * cg);
+
     void set_pred(IN SR * pred, CG * cg)
     {
         ASSERT0(pred);
@@ -524,13 +537,23 @@ public:
             o->set_pred(pred, cg);
         }
     }
-    virtual void append_tail(OR * o);
-    virtual void append_tail(ORList & ors);
-    void dump(CG * cg);
+};
+
+//This class defined ORList that often used as shared object during functions.
+//If an preemptive object is set as 'occupied', it can not be used for new
+//propuse until it released.
+class PreemptiveORList : public ORList {
+    COPY_CONSTRUCTOR(PreemptiveORList);
+    BYTE m_is_occupied:1;
+public:
+    PreemptiveORList() { m_is_occupied = false; }
+    bool is_occupied() const { return m_is_occupied; }
+    void occupy() { clean(); m_is_occupied = true; }
+    void release() { m_is_occupied = false; }
 };
 
 
-typedef xcom::Hash<OR*> OR_HASH;
+typedef xcom::Hash<OR*> ORHash;
 typedef xcom::TTab<OR*> ORTab;
 typedef xcom::TTab<UINT> ORIdTab;
 typedef xcom::TTabIter<OR*> ORTabIter;
@@ -539,14 +562,16 @@ typedef xcom::TTabIter<OR*> ORTabIter;
 //START ORMgr
 //
 class ORMgr : public Vector<OR*> {
+    COPY_CONSTRUCTOR(ORMgr);
     friend class OR;
 protected:
-    List<OR*> m_free_or_list;
     CG * m_cg;
     SRMgr * m_sr_mgr;
     SMemPool * m_pool;
+    List<OR*> m_free_or_list;
 
 protected:
+    //Alllocate memory of OR.
     virtual OR * allocOR();
 
 public:
@@ -554,14 +579,66 @@ public:
     virtual ~ORMgr() { clean(); }
 
     void clean();
+    virtual size_t count_mem() const
+    {
+        size_t count = sizeof(*this);
+        count += m_free_or_list.count_mem();
+        count -= sizeof(m_free_or_list);
+        return count;
+    }
 
     SMemPool * get_pool() const { return m_pool; }
     OR * getOR(UINT id);
-    virtual OR * genOR(OR_TYPE ort, CG * cg);
+    //Generate OR object.
+    OR * genOR(OR_TYPE ort, CG * cg);
     virtual void freeOR(IN OR * o);
     void freeSR(OR * o);
 };
 //END ORMgr
+
+
+//
+//START RecycORList
+//
+//This class defined recyclable ORList.
+//The object will be recycled when it destructed.
+class RecycORList {
+    COPY_CONSTRUCTOR(RecycORList);
+    ORList * m_entity;
+    RecycORListMgr * m_mgr;
+public:
+    RecycORList(RecycORListMgr * mgr);
+    RecycORList(IR2OR * ir2or); //to facilitate IR2OR invocation.
+    ~RecycORList();
+
+    void append_tail(OR * o) { m_entity->append_tail(o); }
+    void append_tail(ORList & ors) { m_entity->append_tail(ors); }
+    void append_tail(RecycORList & ors)
+    { m_entity->append_tail(ors.getList()); }
+
+    void copyDbx(IR const* ir) { m_entity->copyDbx(ir); }
+    void copyDbx(Dbx const* dbx) { m_entity->copyDbx(dbx); }
+    void clean() { m_entity->clean(); }
+
+    void dump(CG * cg) { m_entity->dump(cg); }
+
+    ORList & getList() const { return *m_entity; }
+    UINT get_elem_count() const { return m_entity->get_elem_count(); }
+
+    void set_pred(IN SR * pred, CG * cg) { m_entity->set_pred(pred, cg); }
+};
+
+
+class RecycORListMgr {
+    COPY_CONSTRUCTOR(RecycORListMgr);
+    List<ORList*> m_free_list;
+public:
+    RecycORListMgr() {}
+    ~RecycORListMgr();
+    ORList * getFree() { return m_free_list.remove_head(); }
+    void addFree(ORList * e) { m_free_list.append_head(e); }
+};
+//END RecycORList
 
 } //namespace xgen
 #endif

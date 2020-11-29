@@ -32,19 +32,21 @@ author: Su Zhenyu
 #define _ARMIR2OR_H_
 
 class ARMCG;
+class ARMCGMgr;
 
 class ARMIR2OR : public IR2OR {
 protected:
-    void convertAddSubFp(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    void convertMulofFloat(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    void convertMulofLongLong(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    void convertMulofInt(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    void convertReturnValue(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    void convertTruebrFp(IR const* ir, OUT ORList & ors, IN IOC * cont);
+    void convertAddSubFp(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    void convertMulofFloat(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    void convertMulofLongLong(IR const* ir, OUT RecycORList & ors,
+                              IN IOC * cont);
+    void convertMulofInt(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    void convertReturnValue(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    void convertTruebrFp(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertStoreVar(IR const* ir,
-                                 OUT ORList & ors,
+                                 OUT RecycORList & ors,
                                  IN IOC * cont);
-    void convertCvt(IR const* ir, OUT ORList & ors, IN IOC * cont);
+    void convertCvt(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
 
     //Convert Bitwise NOT into OR list. bnot is unary operation.
     //e.g BNOT(0x0001) = 0xFFFE
@@ -52,7 +54,7 @@ protected:
     //This implementation is just used to verify the function of BNOT,
     //in the sake of excessive redundant operations has been generated.
     void convertBitNotLowPerformance(IR const* ir,
-                                     OUT ORList & ors,
+                                     OUT RecycORList & ors,
                                      IN IOC * cont);
 
     void getResultPredByIRTYPE(IR_TYPE code,
@@ -60,12 +62,13 @@ protected:
                                SR ** falsepd,
                                bool is_signed);
     ARMCG * getCG() { return (ARMCG*)m_cg; }
+    ARMCGMgr * getCGMgr() { return (ARMCGMgr*)m_cg->getCGMgr(); }
 
     Var const* fp2fp(IR const* tgt, IR const* src);
     Var const* fp2int(IR const* tgt, IR const* src);
 
     Var const* int2fp(IR const* tgt, IR const* src);
-    void invertBoolValue(Dbx * dbx, SR * val, OUT ORList & ors);
+    void invertBoolValue(Dbx * dbx, SR * val, OUT RecycORList & ors);
     IR * insertCvt(IR const* ir);
 public:
     ARMIR2OR(CG * cg) : IR2OR(cg) {}
@@ -73,40 +76,49 @@ public:
     virtual ~ARMIR2OR() {}
 
     //Interface function.
-    virtual void convertBinaryOp(IR const* ir, OUT ORList & ors, IN IOC * cont);
+    virtual void convertBinaryOp(IR const* ir, OUT RecycORList & ors,
+                                 IN IOC * cont);
     virtual void convertLda(Var const* var,
                             HOST_INT lda_ofst,
                             Dbx const* dbx,
-                            OUT ORList & ors,
+                            OUT RecycORList & ors,
                             IN IOC * cont);
-    virtual void convertLda(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    virtual void convertICall(IR const* ir, OUT ORList & ors, IN IOC * cont)
+    virtual void convertLda(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    virtual void convertICall(IR const* ir, OUT RecycORList & ors,
+                              IN IOC * cont)
     { convertCall(ir, ors, cont); }
-    virtual void convertCall(IR const* ir,    OUT ORList & ors, IN IOC * cont);
-    virtual void convertDiv(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    virtual void convertRem(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    virtual void convertMul(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    virtual void convertNeg(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    void convertRelationOpFp(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    void convertRelationOpDWORD(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    virtual void convertRelationOp(IR const* ir, OUT ORList & ors,
+    virtual void convertCall(IR const* ir, OUT RecycORList & ors,
+                             IN IOC * cont);
+    virtual void convertDiv(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    virtual void convertRem(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    virtual void convertMul(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    virtual void convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    void convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
+                             IN IOC * cont);
+    void convertRelationOpDWORD(IR const* ir, OUT RecycORList & ors,
+                                IN IOC * cont);
+    virtual void convertRelationOp(IR const* ir, OUT RecycORList & ors,
                                    IN IOC * cont);
     
     //Bitwise NOT.
     //e.g BNOT(0x0001) = 0xFFFE
     //Note ONLY thumb supports ORN logical OR NOT operation.
-    virtual void convertBitNot(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    virtual void convertIgoto(IR const* ir, OUT ORList & ors, IN IOC *);
-    virtual void convertSelect(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    virtual void convertReturn(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    virtual void convertTruebr(IR const* ir, OUT ORList & ors, IN IOC * cont);
-    virtual void convert(IR const* ir, OUT ORList & ors, IN IOC * cont);
+    virtual void convertBitNot(IR const* ir, OUT RecycORList & ors,
+                               IN IOC * cont);
+    virtual void convertIgoto(IR const* ir, OUT RecycORList & ors, IN IOC *);
+    virtual void convertSelect(IR const* ir, OUT RecycORList & ors,
+                               IN IOC * cont);
+    virtual void convertReturn(IR const* ir, OUT RecycORList & ors,
+                               IN IOC * cont);
+    virtual void convertTruebr(IR const* ir, OUT RecycORList & ors,
+                               IN IOC * cont);
+    virtual void convert(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
 
     void recordRelationOpResult(IR const* ir,
                                 SR * truepd,
                                 SR * falsepd,
                                 SR * result_pred,
-                                OUT ORList & ors,
+                                OUT RecycORList & ors,
                                 IN OUT IOC * cont);
 };
 #endif

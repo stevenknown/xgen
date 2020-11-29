@@ -28,18 +28,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-#include "../opt/cominc.h"
-#include "../opt/comopt.h"
 #include "xgeninc.h"
 
 namespace xgen {
 
-bool CLRegionMgr::compileFuncRegion(xoc::Region * func,
-                                    CGMgr * cgmgr,
-                                    FILE * asmh,
+bool CLRegionMgr::compileFuncRegion(xoc::Region * func, CGMgr * cgmgr,
                                     xoc::OptCtx * oc)
 {
-    ASSERT0(func && cgmgr && asmh && oc);
+    ASSERT0(func && cgmgr && oc);
     ASSERT0(func->is_function() || func->is_program() || func->is_inner());
     START_TIMER_FMT(t, ("compileFuncRegion '%s'", func->getRegionName()));
     //Note we regard INNER region as FUNCTION region.
@@ -47,12 +43,11 @@ bool CLRegionMgr::compileFuncRegion(xoc::Region * func,
         return false;
     }
     if (g_do_cg) {
-        cgmgr->CodeGen(func, asmh);
+        cgmgr->generate(func); 
         if (g_dump_opt.isDumpMemUsage()) {
             func->dumpMemUsage();
         }
     }
-    xoc::tfree();
     END_TIMER_FMT(t, ("compileFuncRegion '%s'", func->getRegionName()));
     return true;
 }

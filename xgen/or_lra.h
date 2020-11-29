@@ -72,8 +72,8 @@ class LifeTimeMgr;
 class RefORBBList;
 
 typedef xcom::TMapIter<xoc::Var const*, RefORBBList*> VAR2ORIter;
-typedef xcom::TMap<xoc::Var const*, RefORBBList*> VAR2OR;
-typedef xcom::TMap<xoc::Var const*, RefORBBList*> VAR2OR;
+typedef xcom::TMap<xoc::Var const*, RefORBBList*> Var2OR;
+typedef xcom::TMap<xoc::Var const*, RefORBBList*> Var2OR;
 typedef xcom::TMap<LifeTime*, SR*> LifeTime2SR;
 typedef xcom::TMap<LifeTime*, List<LifeTime*>*> LifeTime2SibList;
 typedef xcom::TMap<SR*, LifeTime*> SR2LifeTime;
@@ -121,6 +121,10 @@ public:
 #define LT_has_may_def(c) (c)->has_may_def_point
 #define LT_has_may_use(c) (c)->has_may_use_point
 #define LT_preferred_reg(c) (c)->preferred_reg
+
+typedef xcom::BitSet PosSet;
+typedef xcom::BSVec<PosInfo*> DescSet;
+
 class LifeTime {
 public:
     UINT uid:30; //unique id
@@ -132,10 +136,18 @@ public:
     SR * sr;
     xcom::BitSet * pos;
     xcom::BSVec<PosInfo*> desc; //desc is indexed in dense integer.
-
-
 public:
     void dump(LifeTimeMgr * mgr);
+
+    PosSet * getPos() const { return pos; }
+    DescSet & getDesc() { return desc; }
+    float getPrio() const { return priority; }
+    SR * getSR() const { return sr; }
+    REG getPreferReg() const { return preferred_reg; }
+
+    bool has_may_def() const { return has_may_def_point; }
+    bool has_may_use() const { return has_may_use_point; }
+
     UINT id() const { return uid; }
 };
 
@@ -283,14 +295,21 @@ public:
     }
     ~RefORBBList() { destroy(); }
 
-    ORBBUnit * getBBUnit(ORBB * bb);
     ORBBUnit * addBB(ORBB * bb);
     OR * addOR(ORBB * bb, OR * o);
-    List<OR*> * getORList(ORBB * bb);
-    OR * removeOR(ORBB * bb, OR * o);
-    ORBB * removeBB(ORBB * bb);
-    void init();
+
     void destroy();
+
+    ORBBUnit * getBBUnit(ORBB * bb);
+    List<OR*> * getORList(ORBB * bb);
+
+    void init();
+
+    OR * removeOR(ORBB * bb, OR * o);
+    //This function remove 'bb' from current list.
+    //It can be used to find designate bb.
+    //Return false when not found.
+    bool removeBB(ORBB const* bb);
 };
 
 
@@ -377,7 +396,7 @@ protected:
     CG * m_cg;
     xoc::Region * m_rg;
     SMemPool * m_pool;
-    LifeTimeVec m_lt_tab;
+    LifeTimeVec m_lt_tab; //indexed by dense integer
     SR2LifeTime m_sr2lt_map;
     xcom::Vector<OR*> m_pos2or_map; //position is dense integer
     xcom::TMap<UINT, INT> m_or2pos_map;
@@ -396,6 +415,10 @@ protected:
     SibMgr m_sibmgr;
 
 protected:
+    //Destroy and free allocated memory object.
+    void freeAllLifeTime();
+    //Free resource used by lt.
+    void freeLifeTime(LifeTime * lt);
     void processFuncExitBB(IN OUT List<LifeTime*> & liveout_exitbb_lts,
                            IN OUT LifeTimeTab & live_lt_list,
                            INT pos);
@@ -442,11 +465,9 @@ public:
     //Enumerate and collect function units that 'lt' traversed.
     virtual void enumTraversedUnits(LifeTime const* lt, OUT UnitSet & us);
 
-    void freeLifeTime(LifeTime * lt);
-    void freeAllLifeTime();
-
     Region * getRegion() const { return m_rg; }
     CG * getCG() const { return m_cg; }
+    xcom::BitSetMgr * getBitSetMgr() const;
     SibMgr * getSibMgr() { return &m_sibmgr; }
     OR * getOR(UINT pos);
     INT getPos(OR * o, bool is_result);
@@ -841,6 +862,7 @@ public:
 
     CG * getCG() const { return m_cg; }
     Region * getRegion() const { return m_rg; }
+    xcom::BitSetMgr * getBitSetMgr() const;
     bool getResideinHole(OUT INT * startpos,
                          OUT INT * endpos,
                          IN LifeTime * owner,

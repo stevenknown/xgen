@@ -33,36 +33,31 @@ author: Su Zhenyu
 
 namespace xgen {
 
-#define RAMGR_var2or_map(lm) (lm)->m_var2or_map
-#define RAMGR_can_alloc_callee(lm) (lm)->m_can_alloc_callee
 #define RAMGR_gra(lm) (lm)->m_gra
 class RaMgr {
 friend class LRA;
 protected:
-    bool m_is_func;
-    bool m_need_save_asm_effect;
+    BYTE m_is_func:1;
+    BYTE m_need_save_asm_effect:1;    
+    BYTE m_can_alloc_callee:1; //Set true if callee-register is allocable.
     Vector<ParallelPartMgr*> * m_ppm_vec;
-    //Supply callee-saved regs usage information for LRA.
-    RegSet m_lra_used_callee_saved_reg[RF_NUM];
     List<ORBB*> * m_bb_list;
     GRA * m_gra;
-
-    //Supply callee-saved regs usage information for Asm effect.
-    RegSet m_lra_asmclobber_callee_saved_reg[RF_NUM];
     SMemPool * m_pool;
     CG * m_cg;
     Region * m_rg;
+    //Supply callee-saved regs usage information for LRA.
+    RegSet m_lra_used_callee_saved_reg[RF_NUM];
+    //Supply callee-saved regs usage information for Asm effect.
+    RegSet m_lra_asmclobber_callee_saved_reg[RF_NUM];
+    Var2OR m_var2or_map;
 
 protected:
+    void postProcessFunc();
     void * xmalloc(INT size);
+    void cleanVar2OR();
 
-public:
-    VAR2OR m_var2or_map;
-
-    //Set true if callee-register is allocable.
-    bool m_can_alloc_callee;
-
-public:
+public:    
     RaMgr(List<ORBB*> * bbs, bool is_func, CG * cg);
     virtual ~RaMgr() { destroy(); }
     virtual void addVARRefList(ORBB * bb, OR * o, Var const* loc);
@@ -72,11 +67,14 @@ public:
                            RaMgr * lm);
     virtual LifeTimeMgr * allocLifeTimeMgr();
 
+    bool canAllocCallee() const { return m_can_alloc_callee; }
+
     virtual void destroy();
     virtual void dumpGlobalVAR2OR();
     virtual void dumpCalleeRegUsedByGra();
     void dumpBBList();
 
+    Var2OR * getVar2OR() { return &m_var2or_map; }
     List<ORBB*> * getBBList() { return m_bb_list; }
     Vector<ParallelPartMgr*> * getParallelPartMgrVec() { return m_ppm_vec; }
     Region * getRegion() { return m_rg; }
@@ -91,8 +89,8 @@ public:
 
     void performLRA();
     void performGRA();
-    virtual void postBuild();
-    virtual void preBuild();
+    virtual void postProcess();
+    virtual void preProcess();
 
     virtual void setParallelPartMgrVec(Vector<ParallelPartMgr*> * ppm_vec);
     virtual void saveCalleePredicateAtEntry(REGFILE regfile,

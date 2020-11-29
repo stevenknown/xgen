@@ -306,6 +306,78 @@ typedef enum _REGFILE {
 #define REG_LAST 114 //The last physical register
 #define REG_NUM (REG_LAST+1) //The number of physical register
 
+typedef enum _BUILTIN_TYPE {
+    BUILTIN_UNDEF = 0,
+    BUILTIN_BASE_BEGIN = BUILTIN_UNDEF + 1,
+    BUILTIN_MEMCPY = BUILTIN_BASE_BEGIN,
+
+    //////////////////////////////////////////////////////////////////////////
+    //MOTE: The target specific builtin that inherited from base type should//
+    //encode BUILTIN type based on BUILTIN_BASE_END.                        //
+    //////////////////////////////////////////////////////////////////////////
+    BUILTIN_BASE_END = BUILTIN_MEMCPY,
+
+    //BEGIN: arm specific builtin function.
+    BUILTIN_UIMOD = BUILTIN_BASE_END + 1,
+    BUILTIN_IMOD,
+    BUILTIN_UIDIV,
+    BUILTIN_ASHLDI3,
+    BUILTIN_LSHRDI3,
+    BUILTIN_ASHRDI3,
+    BUILTIN_MODSI3,
+    BUILTIN_UMODSI3,
+    BUILTIN_MODDI3,
+    BUILTIN_UMODDI3,
+    BUILTIN_ADDSF3,
+    BUILTIN_ADDDF3,
+    BUILTIN_SUBSF3,
+    BUILTIN_SUBDF3,
+    BUILTIN_DIVSI3,
+    BUILTIN_UDIVSI3,
+    BUILTIN_DIVSF3,
+    BUILTIN_DIVDI3,
+    BUILTIN_UDIVDI3,
+    BUILTIN_DIVDF3,
+    BUILTIN_MULDI3,
+    BUILTIN_MULSF3,
+    BUILTIN_MULDF3,
+    BUILTIN_LTSF2,
+    BUILTIN_GTSF2,
+    BUILTIN_GESF2,
+    BUILTIN_EQSF2,
+    BUILTIN_NESF2,
+    BUILTIN_LESF2,
+    BUILTIN_LTDF2,
+    BUILTIN_GTDF2,
+    BUILTIN_GEDF2,
+    BUILTIN_EQDF2,
+    BUILTIN_NEDF2,
+    BUILTIN_LEDF2,
+    BUILTIN_FIXSFSI,
+    BUILTIN_FIXDFSI,
+    BUILTIN_FIXUNSSFSI,
+    BUILTIN_FIXUNSDFSI,
+    BUILTIN_FIXUNSSFDI,
+    BUILTIN_FIXUNSDFDI,
+    BUILTIN_TRUNCDFSF2,
+    BUILTIN_FLOATSISF,
+    BUILTIN_FLOATDISF,
+    BUILTIN_FLOATSIDF,
+    BUILTIN_FLOATDIDF,
+    BUILTIN_FIXSFDI,
+    BUILTIN_FIXDFDI,
+    BUILTIN_FLOATUNSISF,
+    BUILTIN_FLOATUNDISF,
+    BUILTIN_FLOATUNSIDF,
+    BUILTIN_FLOATUNDIDF,
+    BUILTIN_EXTENDSFDF2,
+
+    ///////////////////////////////////////
+    //DO NOT ADD NEW TYPE AFTER THIS LINE//
+    ///////////////////////////////////////
+    BUILTIN_NUM,
+} BUILTIN_TYPE;
+
 //Instruction Operation Type.
 typedef enum _OR_TYPE {
     OR_UNDEF = 0,

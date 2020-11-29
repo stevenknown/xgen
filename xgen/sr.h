@@ -43,6 +43,7 @@ class SRVecMgr;
 #define MAX_SRVEC_NUM 64
 #define SYMREG_UNDEF 0
 #define SRVEC_IDX_UNDEF -1
+#define SRID_UNDEF 0
 
 typedef enum _SR_TYPE {
     SR_UNDEF = 0,
@@ -191,11 +192,14 @@ public:
                       CG * cg = nullptr);
     virtual void clean();
 
+    //Do not count m_sr_vec into size because it is allocated in outside pool.
+    virtual size_t count_mem() const { return sizeof(*this); }
+
     virtual void dump(CG * cg) const;
 
     SR_TYPE getType() const { return SR_type(this); } 
-    virtual CHAR const* getAsmName(StrBuf & buf, CG * cg);
-    virtual CHAR const* get_name(StrBuf & buf, CG * cg) const;
+    virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg);
+    virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const;
     virtual UINT getByteSize() const;
     REGFILE getRegFile() const { return SR_regfile(this); }
 
@@ -251,17 +255,30 @@ typedef xcom::Hash<SR*> SRHash; //SR hash table
 
 //This class defined SR manager that used to manange the
 //allocation and recycling.
-class SRMgr : public List<SR*> {
+class SRMgr {
 protected:
-    List<SR*> m_freesr_list;
-    Vector<SR*> m_sridx2sr_map;
+    xcom::List<SR*> m_freesr_list;
+    xcom::Vector<SR*> m_sridx2sr; //sridx is dense integer.
 
     virtual SR * allocSR();
 public:
     SRMgr() {}
     virtual ~SRMgr() { clean(); }
     virtual void clean();
+    size_t count_mem() const
+    {
+        size_t count = m_freesr_list.count_mem();
+        count += m_sridx2sr.count_mem();
+        SR * sr = nullptr;
+        for (INT i = 0; i <= m_sridx2sr.get_last_idx(); i++) {
+            sr = m_sridx2sr[i];
+            if (sr != nullptr) { break; }
+        }
+        if (sr != nullptr) { count += sr->count_mem() * getSRNum(); }
+        return count;
+    }
     void freeSR(SR * sr);
+    UINT getSRNum() const { return m_sridx2sr.get_last_idx() + 1; }
     virtual SR * get(UINT unique_id);
     virtual SR * genSR();
 };
@@ -271,10 +288,13 @@ public:
 class SRVecMgr {
     SMemPool * m_pool;
 protected:
-    SRVec * newSRVec();
+    SRVec * allocSRVec();
 public:
     SRVecMgr() { m_pool = nullptr; init(); }
     ~SRVecMgr() { destroy(); }
+
+    size_t count_mem() const
+    { return sizeof(*this) + smpoolGetPoolSize(m_pool); }
 
     void init();
     void destroy()

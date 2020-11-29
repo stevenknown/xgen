@@ -152,7 +152,7 @@ void OR_DF_MGR::computeGlobalLiveness()
     }
     bool change;
     INT count = 0;
-    OR_CFG * cfg = m_cg->getORCfg();
+    ORCFG * cfg = m_cg->getORCFG();
     xcom::BitSet news;
     List<ORBB*> succs;
     do {
@@ -477,7 +477,7 @@ bool G_INTERF_GRAPH::isInterferred(IN G_LIFE_TIME * glt1,
             ("sr must be register"));
     if (GLT_id(glt1) == GLT_id(glt2)) return true;
     if (!GLT_livebbs(glt1)->is_intersect(*GLT_livebbs(glt2))) return false;
-    OR_CFG * cfg = m_cg->getORCfg();
+    ORCFG * cfg = m_cg->getORCFG();
     xcom::BitSet inte;
     bs_intersect(*GLT_livebbs(glt1), *GLT_livebbs(glt2), inte);
     for (INT i = inte.get_first(); i >= 0; i = inte.get_next(i)) {

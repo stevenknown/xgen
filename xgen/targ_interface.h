@@ -119,7 +119,7 @@ RegSet const* tmGetRegSetOfCalleeSaved();
 ORScheInfo const* tmGetORScheInfo(OR_TYPE ot);
 
 //Allocate CGMgr for target machine.
-CGMgr * allocCGMgr();
+CGMgr * allocCGMgr(RegionMgr * rm);
 
 } //namespace
 #endif

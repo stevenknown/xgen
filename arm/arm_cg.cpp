@@ -28,73 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-#include "../opt/cominc.h"
-#include "../opt/comopt.h"
-#include "../opt/cfs_opt.h"
-#include "../opt/liveness_mgr.h"
 #include "../xgen/xgeninc.h"
-#include "../cfe/cfexport.h"
-#include "../opt/util.h"
-
-void ARMCG::initBuiltin()
-{
-    CG::initBuiltin();
-
-    m_builtin_uimod = addBuiltinVar("__aeabi_uidivmod");
-    m_builtin_imod = addBuiltinVar("__aeabi_idivmod");
-    m_builtin_uidiv = addBuiltinVar("__aeabi_uidiv");
-    m_builtin_ashldi3 = addBuiltinVar("__ashldi3");
-    m_builtin_lshrdi3 = addBuiltinVar("__lshrdi3");
-    m_builtin_ashrdi3 = addBuiltinVar("__ashrdi3");
-    m_builtin_modsi3 = addBuiltinVar("__modsi3");
-    m_builtin_umodsi3 = addBuiltinVar("__umodsi3");
-    m_builtin_moddi3 = addBuiltinVar("__moddi3");
-    m_builtin_umoddi3 = addBuiltinVar("__umoddi3");
-    m_builtin_addsf3 = addBuiltinVar("__addsf3");
-    m_builtin_adddf3 = addBuiltinVar("__adddf3");
-    m_builtin_subsf3 = addBuiltinVar("__subsf3");
-    m_builtin_subdf3 = addBuiltinVar("__subdf3");
-    m_builtin_divsi3 = addBuiltinVar("__divsi3");
-    m_builtin_udivsi3 = addBuiltinVar("__udivsi3");
-    m_builtin_divsf3 = addBuiltinVar("__divsf3");
-    m_builtin_divdi3 = addBuiltinVar("__divdi3");
-    m_builtin_udivdi3 = addBuiltinVar("__udivdi3");
-    m_builtin_divdf3 = addBuiltinVar("__divdf3");
-    m_builtin_muldi3 = addBuiltinVar("__muldi3");
-    m_builtin_mulsf3 = addBuiltinVar("__mulsf3");
-    m_builtin_muldf3 = addBuiltinVar("__muldf3");
-    m_builtin_ltsf2 = addBuiltinVar("__ltsf2");
-    m_builtin_gtsf2 = addBuiltinVar("__gtsf2");
-    m_builtin_gesf2 = addBuiltinVar("__gesf2");
-    m_builtin_eqsf2 = addBuiltinVar("__eqsf2");
-    m_builtin_nesf2 = addBuiltinVar("__nesf2");
-    m_builtin_lesf2 = addBuiltinVar("__lesf2");
-    m_builtin_ltdf2 = addBuiltinVar("__ltdf2");
-    m_builtin_gtdf2 = addBuiltinVar("__gtdf2");
-    m_builtin_gedf2 = addBuiltinVar("__gedf2");
-    m_builtin_eqdf2 = addBuiltinVar("__eqdf2");
-    m_builtin_nedf2 = addBuiltinVar("__nedf2");
-    m_builtin_ledf2 = addBuiltinVar("__ledf2");
-    m_builtin_fixsfsi = addBuiltinVar("__fixsfsi");
-    m_builtin_fixdfsi = addBuiltinVar("__fixdfsi");
-    m_builtin_fixunssfsi = addBuiltinVar("__fixunssfsi");
-    m_builtin_fixunsdfsi = addBuiltinVar("__fixunsdfsi");
-    m_builtin_fixunssfdi = addBuiltinVar("__fixunssfdi");
-    m_builtin_fixunsdfdi = addBuiltinVar("__fixunsdfdi");
-    m_builtin_truncdfsf2 = addBuiltinVar("__truncdfsf2");
-    m_builtin_floatsisf = addBuiltinVar("__floatsisf");
-    m_builtin_floatdisf = addBuiltinVar("__floatdisf");
-    m_builtin_floatsidf = addBuiltinVar("__floatsidf");
-    m_builtin_floatdidf = addBuiltinVar("__floatdidf");
-    m_builtin_fixsfdi = addBuiltinVar("__fixsfdi");
-    m_builtin_fixdfdi = addBuiltinVar("__fixdfdi");
-    m_builtin_floatunsisf = addBuiltinVar("__floatunsisf");
-    m_builtin_floatundisf = addBuiltinVar("__floatundisf");
-    m_builtin_floatunsidf = addBuiltinVar("__floatunsidf");
-    m_builtin_floatundidf = addBuiltinVar("__floatundidf");
-    m_builtin_extendsfdf2 = addBuiltinVar("__extendsfdf2");
-}
-
 
 void ARMCG::initDedicatedSR()
 {
@@ -917,10 +851,10 @@ void ARMCG::buildMemAssignLoop(SR * tgt,
     //1. iv = bytesize
     buildGeneralLoad(genIntImm((HOST_INT)bytesize, true), 0, ors, &tc);
     SR * iv = tc.get_reg(0);
-    ASSERT0(iv && iv->is_reg());
+    ASSERT0(iv && iv->is_reg());    
 
     //2. LOOP_START
-    SR * loop_start_lab = genLabel(m_rg->buildIlabel()->getLabel());
+    SR * loop_start_lab = genLabel(m_rg->genILabel());
     buildLabel(SR_label(loop_start_lab), ors, &tc);
 
     //3. x = [src]

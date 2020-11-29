@@ -62,7 +62,7 @@ protected:
     ORDesc * m_br_ord; //description of branch operation.
     ORTab m_ready_list;
     ORTab m_br_all_preds; //all of ors which are predecessors of branch-or.
-
+    PreemptiveORList m_tmp_orlist; //used as tmp local variable.
 protected:
     bool isScheduleDelaySlot() const { return m_br_ord != nullptr; }
     bool isBranch(OR const* o) const
@@ -81,7 +81,7 @@ protected:
         return p;
     }
     virtual OR * selectBestOR(ORTab & cand_tab, SLOT slot);
-    virtual void updateIssueORs(IN OUT ORList & cand_list,
+    virtual void updateIssueORs(IN OUT PreemptiveORList & cand_list,
                                 SLOT slot,
                                 IN OR * issue_or,
                                 IN OUT OR * issue_ors[SLOT_NUM]);
@@ -187,21 +187,21 @@ public:
     virtual SLOT rollBackORs(bool be_changed[SLOT_NUM],
                              OR * issue_ors[SLOT_NUM],
                              SLOT to_slot);
-    virtual bool selectIssueORs(IN ORList & cand_list,
+    virtual bool selectIssueORs(IN PreemptiveORList & cand_list,
                                 OUT OR * issue_ors[SLOT_NUM]);
     virtual OR * selectBestORByPriority(ORTab const& cand_hash) const;
 
     //Find valid OR that can be issued at slot.
     //Return true if avaiable issue ors found.
     //'cand_list': list of candidate operations which
-    //             can be issue at this cycle.
+    //             can be issue at this cycle. Element in list may be changed.
     //'slot': slot need to fill
     //'issue_or': record issued ors selected.
     //'change_slot': set to true indicate the routine allows modification
     //  of operations in other slot. Note that the modification may
     //  change the function unit of operation.
     //Note this functio will attempt to change OR's slot if possible.
-    virtual bool selectIssueOR(IN ORList & cand_list, //OR may be changed.
+    virtual bool selectIssueOR(OUT PreemptiveORList & cand_list,
                                SLOT slot,
                                OUT OR * issue_ors[SLOT_NUM],
                                bool change_slot);
