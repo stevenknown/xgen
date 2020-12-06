@@ -5,6 +5,7 @@ COM_OBJS +=\
 ../../com/ltype.o \
 ../../com/smempool.o \
 ../../com/strbuf.o \
+../../com/diagnostic.o \
 ../../com/bs.o
 
 gentminfo.exe: gen_objs com_objs

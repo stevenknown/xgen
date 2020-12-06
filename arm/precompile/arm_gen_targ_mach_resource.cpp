@@ -2070,6 +2070,7 @@ void initAndPrtCluster2Allocable(
 }
 
 
+#ifdef _DEBUG_
 static bool verifyORTypeDesc()
 {
     for (UINT i = OR_UNDEF; i < sizeof(g_or_type_desc) /
@@ -2078,6 +2079,7 @@ static bool verifyORTypeDesc()
     }
     return true;
 }
+#endif
 
 
 int main()
