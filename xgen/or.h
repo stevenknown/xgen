@@ -606,6 +606,8 @@ class RecycORList {
     COPY_CONSTRUCTOR(RecycORList);
     ORList * m_entity;
     RecycORListMgr * m_mgr;
+
+    void init(RecycORListMgr * mgr);
 public:
     RecycORList(RecycORListMgr * mgr);
     RecycORList(IR2OR * ir2or); //to facilitate IR2OR invocation.

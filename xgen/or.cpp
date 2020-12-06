@@ -441,17 +441,26 @@ void ORMgr::freeOR(OR * o)
 //
 RecycORList::RecycORList(RecycORListMgr * mgr)
 {
+    init(mgr);
+}
+
+
+//On Linux, gcc claimed RecycORList is not a direct base of RecycORList.
+//RecycORList::RecycORList(IR2OR * ir2or) :
+//    RecycORList(ir2or->getRecycORListMgr())
+RecycORList::RecycORList(IR2OR * ir2or)
+{
+    init(ir2or->getRecycORListMgr());
+}
+
+
+void RecycORList::init(RecycORListMgr * mgr)
+{
     m_mgr = mgr;
     m_entity = mgr->getFree();
     if (m_entity == nullptr) {
         m_entity = new ORList();
     }
-}
-
-
-RecycORList::RecycORList(IR2OR * ir2or) :
-    RecycORList(ir2or->getRecycORListMgr())
-{
 }
 
 
