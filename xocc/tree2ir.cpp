@@ -846,8 +846,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         //WorkAround: We always translate TR_ID into LD(ID),
         //here it is callee actually.
         ASSERT0(callee->is_id());
-        Var * v = ID_info(callee);
-        ASSERT0(v);
+        ASSERT0(ID_info(callee));
         tmp.sprint("$retval_buf_of_%d_bytes", return_val_size);
         Sym const* name = m_rg->getRegionMgr()->addToSymbolTab(tmp.buf);
         retval_buf = m_rg->getVarMgr()->findVarByName(name);
@@ -1632,6 +1631,22 @@ BYTE CTree2IR::getMantissaNum(CHAR const* fpval)
 }
 
 
+IR * CTree2IR::convertDeclInit(Decl const* decl, IN T2IRCtx * cont)
+{
+    IR * ir = nullptr;
+    IR * last = nullptr;
+    for (Decl const* dcl = decl; dcl != nullptr; dcl = DECL_next(dcl)) {
+        if (!is_initialized(dcl)) { continue; }
+        Tree * initval = get_decl_init_tree(dcl);
+        ASSERT0(initval);        
+        Tree * assign = buildAssign(dcl, initval);
+        TypeTran(assign, nullptr);
+        xcom::add_next(&ir, &last, convert(assign, nullptr));        
+    }    
+    return ir;
+}
+
+
 //Convert TREE AST to IR.
 IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
 {
@@ -1899,7 +1914,9 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         }
         case TR_SCOPE:
             ASSERT0(TREE_scope(t));
-            ir = convert(SCOPE_stmt_list(TREE_scope(t)), nullptr);
+            ir = convertDeclInit(SCOPE_decl_list(TREE_scope(t)), nullptr);
+            xcom::add_next(&ir,
+                           convert(SCOPE_stmt_list(TREE_scope(t)), nullptr));
             break;
         case TR_IF: {
             IR * det = convert(TREE_if_det(t), cont);
@@ -1996,7 +2013,15 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             break;
         }
         case TR_FOR: {
+            IR * last = nullptr;
+            IR * decl_init = nullptr;
+            if (TREE_for_scope(t) != nullptr) {
+                xcom::add_next(&decl_init, &last, 
+                    convertDeclInit(SCOPE_decl_list(TREE_for_scope(t)),
+                                    nullptr));
+            }
             IR * init = convert(TREE_for_init(t), nullptr);
+            xcom::add_next(&decl_init, &last, init);
 
             T2IRCtx ct2;
             ASSERT0(cont);
@@ -2004,7 +2029,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             CONT_toplirlist(&ct2) = &stmt_in_det;
             IR * det = convert(TREE_for_det(t), &ct2);
             if (stmt_in_det != nullptr) {
-                xcom::add_next(&init, stmt_in_det);
+                xcom::add_next(&decl_init, &last, stmt_in_det);
             }
 
             det = only_left_last(det);
@@ -2028,8 +2053,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
 
             IR * whiledo = m_rg->buildWhileDo(det, body);
             setLineNum(whiledo, lineno, m_rg);
-            xcom::add_next(&init, whiledo);
-            ir = init;
+            xcom::add_next(&decl_init, &last, whiledo);
+            ir = decl_init;
             break;
         }
         case TR_SWITCH:
@@ -2149,9 +2174,9 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
 
 
 //Count up the number of local-variables.
-static void scanScopeDeclList(SCOPE * s, OUT xoc::Region * rg, bool scan_sib)
+static void scanScopeDeclList(Scope * s, OUT xoc::Region * rg, bool scan_sib)
 {
-    if (s == nullptr) return;
+    if (s == nullptr) { return; }
     Decl * decl = SCOPE_decl_list(s);
     while (decl != nullptr) {
         if (DECL_is_formal_para(decl) && get_decl_sym(decl) == nullptr) {
@@ -2305,7 +2330,11 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
 
     //Generate IRs.
     CTree2IR ct2ir(r, dcl);
-    xoc::IR * irs = ct2ir.convert(SCOPE_stmt_list(DECL_fun_body(dcl)), nullptr);
+    xoc::IR * irs = ct2ir.convertDeclInit(SCOPE_decl_list(DECL_fun_body(dcl)),
+                                          nullptr);
+    xcom::add_next(&irs,
+                   ct2ir.convert(SCOPE_stmt_list(DECL_fun_body(dcl)),
+                                 nullptr));
     if (g_err_msg_list.get_elem_count() > 0) {
         return ST_ERR;
     }
@@ -2340,7 +2369,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
     r->setIRList(irs);
 
     END_TIMER_FMT(t, ("GenerateFuncRegion '%s'",
-                        r->getRegionVar()->get_name()->getStr()));
+                      r->getRegionVar()->get_name()->getStr()));
 
     if (xoc::g_dump_opt.isDumpALL()) {
         xoc::note(rm, "\n==---- AFTER REFINE IR -----==", get_decl_name(dcl));
@@ -2355,7 +2384,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
 bool generateRegion(RegionMgr * rm)
 {
     START_TIMER(t, "CAst2IR");
-    SCOPE * s = get_global_scope();
+    Scope * s = get_global_scope();
     ASSERT0(s == get_global_scope());
 
     //Generate Program region.
@@ -2373,7 +2402,8 @@ bool generateRegion(RegionMgr * rm)
     }
 
     //Iterate each declaration in scope.
-    for (Decl * dcl = SCOPE_decl_list(s); dcl != nullptr; dcl = DECL_next(dcl)) {
+    for (Decl * dcl = SCOPE_decl_list(s);
+         dcl != nullptr; dcl = DECL_next(dcl)) {
         if (is_fun_decl(dcl)) {
             if (DECL_is_fun_def(dcl)) {
                 //It is function definition.

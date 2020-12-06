@@ -475,7 +475,7 @@ bool G_INTERF_GRAPH::isInterferred(IN G_LIFE_TIME * glt1,
 {
     ASSERTN(GLT_sr(glt1)->is_reg() && GLT_sr(glt2)->is_reg(),
             ("sr must be register"));
-    if (GLT_id(glt1) == GLT_id(glt2)) return true;
+    if (GLT_id(glt1) == GLT_id(glt2)) { return true; }
     if (!GLT_livebbs(glt1)->is_intersect(*GLT_livebbs(glt2))) return false;
     ORCFG * cfg = m_cg->getORCFG();
     xcom::BitSet inte;
@@ -516,69 +516,36 @@ void G_INTERF_GRAPH::build()
 //END G_INTERF_GRAPH
 
 
-//
-//START G_ACTION
-//
-G_ACTION::G_ACTION()
-{
-}
-
-
-G_ACTION::~G_ACTION()
-{
-}
-
-
-UINT G_ACTION::get_action(G_LIFE_TIME * lt)
-{
-    return m_lt2action.get(GLT_id(lt));
-}
-
-
-void G_ACTION::set_action(G_LIFE_TIME * lt, UINT action)
-{
-    m_lt2action.set(GLT_id(lt), action);
-}
-//END G_ACTION
-
-
-
 //START GRA
 //
 void GRA::assignRegFile(IN GLT_MGR &)
 {
-
 }
 
 
 void GRA::assignCluster()
 {
-
 }
 
 
 void GRA::buildPriorityList(OUT List<G_LIFE_TIME*> &, IN G_INTERF_GRAPH &)
 {
-
 }
 
 
-bool GRA::allocatePrioList(
-            OUT List<G_LIFE_TIME*> &,
-            OUT List<G_LIFE_TIME*> &,
-            IN G_INTERF_GRAPH &)
+bool GRA::allocatePrioList(OUT List<G_LIFE_TIME*> &,
+                           OUT List<G_LIFE_TIME*> &,
+                           IN G_INTERF_GRAPH &)
 {
     return false;
 }
 
 
-void GRA::solveConflict(
-            OUT List<G_LIFE_TIME*> &,
-            OUT List<G_LIFE_TIME*> &,
-            IN G_INTERF_GRAPH &,
-            G_ACTION &)
+void GRA::solveConflict(OUT List<G_LIFE_TIME*> &,
+                        OUT List<G_LIFE_TIME*> &,
+                        IN G_INTERF_GRAPH &,
+                        G_ACTION &)
 {
-
 }
 
 
@@ -602,8 +569,11 @@ void GRA::perform()
     buildPriorityList(prio_list, ig);
 
     List<G_LIFE_TIME*> uncolored_list; //Record uncolored life times.
+
+    //FIXME: Hoist action's declaration from if-clause to avoid gcc bug
+    //which gcc can not recognize the control-flow-structure scope at gcc 6.3.
+    G_ACTION action;
     if (!allocatePrioList(prio_list, uncolored_list, ig)) {
-        G_ACTION action;
         for (G_LIFE_TIME * lt = uncolored_list.get_head();
              lt != nullptr; lt = uncolored_list.get_next()) {
             action.set_action(lt, G_ACTION_SPLIT);

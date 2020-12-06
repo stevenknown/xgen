@@ -20,11 +20,17 @@ include ../opt/Makefile.inc
 ifdef WIN
 #Add predefined macro if build host is Windows.
 CFLAGS += -D_ON_WINDOWS_
+CFLAGS += -D_USE_GCC_
+endif
+
+#Default is debug mode.
+CFLAGS += -O0 -g2 -D_DEBUG_
+
+ifdef RELEASE
+CFLAGS += -O3 -U_DEBUG_
 endif
 
 CFLAGS +=\
-   -D_DEBUG_ \
-   -O0 -g2 \
    -D$(TARG) \
    -Wno-unknown-pragmas \
    -Wno-write-strings \

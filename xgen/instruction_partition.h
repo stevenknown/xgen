@@ -194,7 +194,7 @@ void InstructionPartition<Mat, T>::formulateDependenceConstraints(
             tmp_leq.set(0, vm.map_or_cyc2varidx(opj, c2), -c2);
         }
         OR * o = m_cg->getOR(opi);
-        CHECK_DUMMYUSE(o);
+        CHECK0_DUMMYUSE(o);
 
         //tmp_leq.set(0, rhs_idx, -(sim.getMinLatency(o) + 1));
         tmp_leq.set(0, rhs_idx, -1);

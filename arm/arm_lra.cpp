@@ -101,6 +101,7 @@ void ARMLifeTimeMgr::handlePreferredReg(OR const* o)
     SR * low = nullptr;
     SR * high = nullptr;
     bool is_result = false;
+    DUMMYUSE(is_result);
     if (m_cg->isMultiLoad(o->getCode(), 2)) {
         low = const_cast<OR*>(o)->get_load_val(0);
         high = const_cast<OR*>(o)->get_load_val(1);

@@ -177,6 +177,7 @@ public:
     IR * convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertDeref(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertPragma(IN Tree * t, INT lineno, IN T2IRCtx * cont);
+    IR * convertDeclInit(Decl const* decl, IN T2IRCtx * cont);
     IR * convert(IN Tree * t, IN T2IRCtx * cont);
 };
 

@@ -229,8 +229,7 @@ void ORCFG::dump_node(FILE * h, bool detail)
     UINT vertical_order = 1;
     for (ORBB * bb = m_bb_list->get_head();
          bb != nullptr; bb = m_bb_list->get_next()) {
-        xcom::Vertex * v = getVertex(bb->id());
-        ASSERTN(v, ("bb is not in cfg"));
+        ASSERTN(getVertex(bb->id()), ("bb is not in cfg"));
 
         CHAR const* shape = "box";
         CHAR const* font = "courB";

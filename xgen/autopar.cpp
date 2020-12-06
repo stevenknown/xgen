@@ -1012,7 +1012,7 @@ OR * dupOR(OR * o)
 ORBB * dupBB(ORBB * bb, bool rename_lcl_sr)
 {
     SR2SRDmap dmap;
-    ORBB * newBB = Gen_BB();
+    ORBB * newbb = Gen_BB();
 
     for (OR * o = ORBB_orlist(bb).get_head(); o;
          o = ORBB_orlist(bb).get_next()) {
@@ -1046,9 +1046,9 @@ ORBB * dupBB(ORBB * bb, bool rename_lcl_sr)
                 }
             }
         }
-        newBB->appendOR(new_or);
+        newbb->appendOR(new_or);
     }
-    return newBB;
+    return newbb;
 }
 #endif
 

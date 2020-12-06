@@ -660,14 +660,14 @@ static Var * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
 
 
 //Constructing a variable table to map each of DECLARATIONs to an unique Var.
-//Scanning SCOPE trees to construct such table.
-//e.g: SCOPE tree
+//Scanning Scope trees to construct such table.
+//e.g: Scope tree
 //    SCOPE0
 //      --SCOPE1
 //          --SCOPE2
 //          --SCOPE3
 //      --SCOPE4
-static void scanAndInitVar(SCOPE * s, VarMgr * vm, TypeMgr * tm)
+static void scanAndInitVar(Scope * s, VarMgr * vm, TypeMgr * tm)
 {
     if (s == nullptr) { return; }
     do {

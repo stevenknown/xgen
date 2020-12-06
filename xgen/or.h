@@ -238,7 +238,7 @@ public:
 
     virtual SR * get_pred() //get predicate register
     {
-        ASSERTN_DUMMYUSE(HAS_PREDICATE_REGISTER, ("target not support"));
+        ASSERTN(HAS_PREDICATE_REGISTER, ("target not support"));
         return get_opnd(0);
     }
 
@@ -467,7 +467,7 @@ public:
     void set_result(INT i, SR * sr, CG * cg);
     virtual void set_pred(SR * v, CG * cg) //set predicate register
     {
-        ASSERTN_DUMMYUSE(HAS_PREDICATE_REGISTER, ("target not support"));
+        ASSERTN(HAS_PREDICATE_REGISTER, ("target not support"));
         set_opnd(0, v, cg);
     }
 

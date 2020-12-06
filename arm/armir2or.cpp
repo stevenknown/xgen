@@ -546,7 +546,7 @@ void ARMIR2OR::convertMul(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     ASSERTN(ir->is_mul(), ("illegal ir"));
     IR * op0 = BIN_opnd0(ir);
     IR * or1 = BIN_opnd1(ir);
-    CHECK_DUMMYUSE(or1);
+    CHECK0_DUMMYUSE(or1);
     //TO BE DETERMINED:Ineuqal byte size loading should be handled.
     //ASSERT0(op0->getTypeSize(m_tm) == or1->getTypeSize(m_tm));
     if (op0->getTypeSize(m_tm) <= BYTESIZE_OF_WORD) {
@@ -578,8 +578,7 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
             ASSERT0(cont != nullptr);
             cont->set_reg(RESULT_REGISTER_INDEX, res);
         } else if (ir->getTypeSize(m_tm) <= BYTESIZE_OF_DWORD) {
-            ASSERT0_DUMMYUSE(sizeof(LONGLONG) ==
-                             BYTESIZE_OF_DWORD);
+            ASSERT0(sizeof(LONGLONG) == BYTESIZE_OF_DWORD);
             LONGLONG v = -CONST_int_val(opnd);
             SR * res = getCG()->genIntImm((HOST_INT)v, true);
             SR * res2 = getCG()->genIntImm((HOST_INT)(v >> 32), true);
@@ -606,8 +605,8 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
         cont->set_reg(RESULT_REGISTER_INDEX, res);
     } else if (ir->getTypeSize(m_tm) <= BYTESIZE_OF_DWORD) {
         SR * res = tc.get_reg(0);
-        SR * res2 = SR_vec(res)->get(1);;
-        ASSERT0(res && res2);
+        ASSERT0(res); //result0
+        ASSERT0(SR_vec(res)->get(1)); //result1
         SR * src = getCG()->genZero();
         SR * src2 = getCG()->genZero();
         RecycORList tors(this);
@@ -618,8 +617,9 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
         ors.append_tail(tors);
         ASSERT0(cont && tc.get_reg(0)->getByteSize() == BYTESIZE_OF_DWORD);
         res = tc.get_reg(0);
-        res2 = SR_vec(res)->get(1);
         cont->set_reg(RESULT_REGISTER_INDEX, res);
+
+        //SR * res2 = SR_vec(res)->get(1); //get result2
         //cont->set_reg(1, res2);
     } else {
         UNREACHABLE();
@@ -900,8 +900,7 @@ void ARMIR2OR::convertBitNotLowPerformance(IR const* ir,
     convert(mov_ir, tors, cont);
 
     ASSERT0(cont != nullptr);
-    SR * tgt = cont->get_reg(0);
-    ASSERT0(tgt && tgt->is_reg());
+    ASSERTN(cont->get_reg(0) && cont->get_reg(0)->is_reg(), ("check tgt reg"));
 
     tors.copyDbx(ir);
     ors.append_tail(tors);
@@ -1070,7 +1069,7 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors,
     tors.copyDbx(SELECT_pred(ir));
     ors.append_tail(tors);
     SR * cres = tmp.get_reg(0);
-    CHECK_DUMMYUSE(cres);
+    CHECK0_DUMMYUSE(cres);
 
     SR * true_pr = tmp.get_reg(1);
     SR * false_pr = tmp.get_reg(2);

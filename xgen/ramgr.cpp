@@ -254,14 +254,16 @@ void RaMgr::setParallelPartMgrVec(Vector<ParallelPartMgr*> * ppm_vec)
 }
 
 
+#ifdef _DEBUG_
 static bool verifyORS(ORList const& ors, ORBB * bb)
 {
     ORCt * ct;
     for (ors.get_head(&ct); ct != ors.end(); ct = ors.get_next(ct)) {
-        CHECK_DUMMYUSE(ct->val()->getBB() == bb);
+        CHECK0_DUMMYUSE(ct->val()->getBB() == bb);
     }
     return true;
 }
+#endif
 
 
 //Save predicate register at entry BB

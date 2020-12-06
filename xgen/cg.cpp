@@ -86,13 +86,13 @@ CG::CG(xoc::Region * rg, CGMgr * cgmgr): m_ip_mgr(self())
     m_rg = rg;
     m_cgmgr = cgmgr;
     m_tm = rg->getTypeMgr();
-    m_or_bb_idx = 1; //the id of first bb is 1.
+    m_or_bb_idx = ORBBID_UNDEF + 1; //initialize to be the id of first BB.
     m_or_bb_mgr = nullptr;
     m_or_mgr = cgmgr->getORMgr();
     m_or_cfg = nullptr;
     m_ppm_vec = nullptr;
     m_max_real_arg_size = 0;
-    m_pr2sr_map.init(MAX(4, getNearestPowerOf2(rg->getPRCount())));
+    m_pr2sr_map.init(MAX(4, xcom::getNearestPowerOf2(rg->getPRCount())));
 
     //TODO: To ensure alignment for performance gain.
     m_sect_count = 0;
@@ -108,7 +108,6 @@ CG::~CG()
 {
     m_pr2sr_map.clean();
     m_regid2sr_map.clean();
-
     if (m_or_cfg != nullptr) {
         delete m_or_cfg;
         m_or_cfg = nullptr;
@@ -546,7 +545,7 @@ void CG::buildTypeCvt(xoc::IR const* tgt,
         } else {
             //Just do some check.
             SR * src_low = cont->get_reg(0);
-            CHECK_DUMMYUSE(src_low);
+            CHECK0_DUMMYUSE(src_low);
             ASSERT0(SR_vec(src_low) != nullptr && SR_vec_idx(src_low) == 0);
             ASSERT0(SR_vec(src_low)->get(1) != nullptr);
             ASSERT0(src_low->getByteSize() == 8);
@@ -702,7 +701,7 @@ ORBB * CG::allocBB()
         m_or_bb_mgr = new ORBBMgr();
     }
 
-    ORBB * bb = m_or_bb_mgr->newBB(this);
+    ORBB * bb = m_or_bb_mgr->allocBB(this);
     ORBB_id(bb) = m_or_bb_idx++;
     return bb;
 }
@@ -2013,7 +2012,7 @@ CLUST CG::computeORCluster(OR const* o) const
     if (clust != CLUST_UNDEF) { return clust; }
 
     //Can not find any cluster info, set default cluster.
-    ASSERTN_DUMMYUSE(CLUST_UNDEF + 2 == CLUST_NUM, ("Only one cluster."));
+    ASSERTN(CLUST_UNDEF + 2 == CLUST_NUM, ("Only one cluster."));
     return (CLUST)(CLUST_UNDEF + 1);
 }
 
@@ -2031,7 +2030,7 @@ void CG::fixCluster(IN OUT ORList & spill_ors, CLUST clust)
 {
     DUMMYUSE(spill_ors);
     DUMMYUSE(clust);
-    ASSERT0_DUMMYUSE(CLUST_UNDEF + 2 == CLUST_NUM);
+    ASSERT0(CLUST_UNDEF + 2 == CLUST_NUM);
 }
 
 
@@ -2417,7 +2416,7 @@ void CG::package(Vector<BBSimulator*> & simvec)
         UINT cyc = sim->getCurCycle();
         ORVec const* ss = sim->getExecSnapshot();
 
-        ASSERT0_DUMMYUSE(FIRST_SLOT == LAST_SLOT);
+        ASSERT0(FIRST_SLOT == LAST_SLOT);
         for (SLOT s = FIRST_SLOT; s <= LAST_SLOT; s = (SLOT)(s + 1)) {
             for (UINT i = 0; i < cyc; i++) {
                 OR * o = ss[s].get(i);
@@ -2743,7 +2742,7 @@ HOST_UINT CG::getMaskByByte(UINT bytesize)
 
 REGFILE CG::getPredicateRegfile() const
 {
-    ASSERT0_DUMMYUSE(HAS_PREDICATE_REGISTER);
+    ASSERT0(HAS_PREDICATE_REGISTER);
     ASSERTN(0, ("Target Dependent Code"));
     return RF_UNDEF;
 }
@@ -2859,7 +2858,7 @@ void CG::renameOpndAndResultFollowed(SR * oldsr,
 {
     ORCt * ct = nullptr;
     bool is = ors->find(start, &ct);
-    CHECK_DUMMYUSE(is);
+    CHECK0_DUMMYUSE(is);
     renameOpndAndResultFollowed(oldsr, newsr, ct, ors);
 }
 
@@ -3454,8 +3453,7 @@ void CG::reviseFormalParameterAndSpadjust()
     m_param_sect_start_offset = framesize;
 
     if (isPassArgumentThroughRegister()) {
-        RegSet const* phyregset = tmGetRegSetOfArgument();
-        ASSERT0(phyregset);
+        ASSERT0(tmGetRegSetOfArgument()); //phy regset should exist.
         List<Var const*> param_list;
         m_rg->findFormalParam(param_list, true);
         UINT bytesize_of_arg_passed_via_reg =

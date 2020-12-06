@@ -991,12 +991,31 @@ void ARMCG::buildCopy(CLUST clust,
 }
 
 
+#ifdef _DEBUG_
+//Return true if val is 32bit integer more than 16bit.
+//e.g: 0xFFFF is not more than 16bit.
+//     0x1FFFF is more than 32bit.
+static bool isInteger32bit(UINT64 val)
+{    
+    ASSERT0(sizeof(UINT64) >= sizeof(UINT32));
+    return (((UINT32)val) & (UINT32)0x0000FFFF) != val;
+}
+
+
+//Return true if val is 64bit integer more than 32bit.
+//e.g: 0xffffFFFF is not more than 32bit.
+//     0x1ffffFFFF is more than 32bit.
+static bool isInteger64bit(UINT64 val)
+{    
+    return (val & (UINT64)0xFFFFFFFF) != val;
+}
+#endif
+
+
 void ARMCG::buildMove(SR * to, SR * from, OUT ORList & ors, IN IOC *)
 {
     ASSERT0(to->is_reg());
-    ASSERT0(from->is_reg() ||
-            from->is_var() ||
-            from->is_int_imm() ||
+    ASSERT0(from->is_reg() || from->is_var() || from->is_int_imm() ||
             from->is_fp_imm());
     switch (SR_type(from)) {
     case SR_REG:
@@ -2185,7 +2204,7 @@ bool ARMCG::isValidRegInSRVec(OR const*, SR const* sr,
                               UINT idx, bool is_result) const
 {
     DUMMYUSE(is_result);
-    CHECK_DUMMYUSE(sr);
+    CHECK0_DUMMYUSE(sr);
     ASSERT0(SR_vec(sr));
     if (idx == 0) {
         ASSERTN(isEvenReg(sr->getPhyReg()),

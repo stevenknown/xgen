@@ -144,25 +144,23 @@ void IR2OR::convertLoadConst(IR const* ir, OUT RecycORList & ors,
         if (ir->getTypeSize(m_tm) == BYTE_PER_FLOAT) {
             //Float
             float val = (float)CONST_fp_val(ir);
-
-            ASSERTN_DUMMYUSE(sizeof(UINT32) == BYTE_PER_FLOAT,
-                             ("use suitably integer type"));
+            ASSERTN(sizeof(UINT32) == BYTE_PER_FLOAT,
+                    ("use suitably integer type"));
             UINT32 * pb = (UINT32*)&val;
             m_cg->buildMove(load_val, m_cg->genIntImm((HOST_INT)*pb, false),
                             tors.getList(), cont);
         } else {
             //Double
             double val = CONST_fp_val(ir);
-            ASSERTN_DUMMYUSE(sizeof(ULONGLONG) == BYTE_PER_FLOAT * 2,
-                ("use the suitably integer type to match with question"));
+            ASSERTN(sizeof(ULONGLONG) == BYTE_PER_FLOAT * 2,
+                    ("use the suitably integer type to match with question"));
 
-            ASSERTN_DUMMYUSE(sizeof(ULONGLONG) == BYTE_PER_FLOAT * 2,
-                             ("use suitably integer type"));
+            ASSERTN(sizeof(ULONGLONG) == BYTE_PER_FLOAT * 2,
+                    ("use suitably integer type"));
 
             ULONGLONG * pb = (ULONGLONG*)&val;
-
-            ASSERTN_DUMMYUSE(sizeof(ULONGLONG) == 8,
-                             ("use suitably macro to take low part"));
+            ASSERTN(sizeof(ULONGLONG) == 8,
+                    ("use suitably macro to take low part"));
 
             m_cg->buildMove(load_val,
                 m_cg->genIntImm((HOST_INT)GET_LOW_32BIT(*pb), false),
@@ -736,7 +734,7 @@ void IR2OR::processRealParams(IR const* ir, OUT RecycORList & ors,
         return;
     }
 
-    ASSERTN_DUMMYUSE(PUSH_PARAM_FROM_RIGHT_TO_LEFT, ("Not yet support"));
+    ASSERTN(PUSH_PARAM_FROM_RIGHT_TO_LEFT, ("Not yet support"));
     //Find the most rightside parameter in order to coincide with
     //accessing order of the calling convention of stack varaible.
     //e.g:1

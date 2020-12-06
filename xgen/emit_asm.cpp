@@ -52,7 +52,7 @@ Region * AsmPrinter::getRegion() const
 //Print instructions to assembly file.
 void AsmPrinter::printCode(FILE * asmfile)
 {
-    ASSERTN_DUMMYUSE(FIRST_SLOT == LAST_SLOT, ("Target Dependent Code"));
+    ASSERTN(FIRST_SLOT == LAST_SLOT, ("Target Dependent Code"));
     CHAR const* code_indent = "      ";
     Vector<IssuePackageList*> * ipcvec =
         const_cast<CG*>(m_cg)->getIssuePackageListVec();

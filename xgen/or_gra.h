@@ -145,12 +145,13 @@ public:
 #define G_ACTION_BFS_REASSIGN_REGFILE 4
 #define G_ACTION_MOVE_HOUSE 5
 class G_ACTION {
-    Vector<UINT> m_lt2action;
+    xcom::Vector<UINT> m_lt2action;
 public:
-    G_ACTION();
-    ~G_ACTION();
-    UINT get_action(G_LIFE_TIME * lt);
-    void set_action(G_LIFE_TIME * lt, UINT action);
+    G_ACTION() {}
+    ~G_ACTION() {}
+    UINT get_action(G_LIFE_TIME * lt) { return m_lt2action.get(GLT_id(lt)); }
+    void set_action(G_LIFE_TIME * lt, UINT action)
+    { m_lt2action.set(GLT_id(lt), action); }
 };
 
 

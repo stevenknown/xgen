@@ -33,6 +33,9 @@ author: Su Zhenyu
 
 namespace xgen {
 
+#define ORBBID_UNDEF 0
+#define OR_ORDER_INTERVAL 5
+
 typedef xcom::List<ORBB*> ORBBList;
 typedef xcom::C<ORBB*> * ORBBListIter;
 
@@ -54,7 +57,6 @@ public:
 //
 typedef xcom::C<OR*> * BBORListIter;
 
-#define OR_ORDER_INTERVAL 5
 class BBORList : public EList<OR*, OR2Holder> {
     ORBB * m_bb;
 public:
@@ -238,7 +240,7 @@ public:
         }
     }
 
-    ORBB * newBB(CG * cg)
+    ORBB * allocBB(CG * cg)
     {
         ORBB * bb = new ORBB(cg);
         m_bbs_list.append_tail(bb);
