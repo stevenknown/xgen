@@ -51,6 +51,9 @@ extern bool g_is_enable_fp;
 //Perform Code Generation.
 extern bool g_do_cg;
 
+//Enable scheduling delay-slot of branch/call operations.
+extern bool g_enable_schedule_delay_slot;
+
 } //namespace xgen
 
 #endif

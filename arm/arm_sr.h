@@ -39,8 +39,8 @@ public:
     ARMSR() {}
     COPY_CONSTRUCTOR(ARMSR);
 
-    virtual CHAR const* get_name(StrBuf & buf, CG * cg) const;
-    virtual CHAR const* getAsmName(StrBuf & buf, CG * cg);
+    virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const;
+    virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const;
 };
 //END ARMSR
 

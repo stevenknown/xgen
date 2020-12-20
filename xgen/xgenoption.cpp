@@ -58,4 +58,7 @@ bool g_is_enable_fp = false;
 //Perform Code Generation.
 bool g_do_cg = true;
 
+//Enable scheduling delay-slot of branch/call operations.
+bool g_enable_schedule_delay_slot = false;
+
 } //namespace xgen

@@ -46,8 +46,13 @@ public:
         SCH_CHANGE_SLOT = 0x8, //Allow schedulor changes Issue Slot/FunctionUnit
                                //of OR if needed during scheduling
         SCH_CHANGE_CLUSTER = 0x10, //Allow schedulor changes cluster if needed
-                                   //during scheduling
-        SCH_ALLOW_RESCHED = 0x20, //allow rescheduling if needed
+                                   //during scheduling.
+
+        //Allow rescheduling if needed. For now, if the strategy is scheduling
+        //delay-slot, rescheduling is necessary because the default
+        //scheduling-direction is top-down, the BR will be issued as soon as
+        //possible which may be illegal, it need rescheduling to fixup.
+        SCH_ALLOW_RESCHED = 0x20, 
     };
 
 protected:
@@ -103,7 +108,8 @@ public:
     virtual ~LIS() { destroy(); }
 
     //Return true if allowing rescheduling ORs when sch-mode is SCH_DEALY_SLOT.
-    //Note this will increase compilation time obviously.
+    //Note rescheduling delay-slot may getting more speedup of performance,
+    //but it will increase compilation time obviously also.
     virtual bool allowReschedule() const
     { return HAVE_FLAG(m_sch_mode, SCH_ALLOW_RESCHED); }
     bool allowChangeSlot() const

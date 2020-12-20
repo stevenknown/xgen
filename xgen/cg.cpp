@@ -3833,10 +3833,12 @@ void CG::preLS(IN ORBB * bb,
 
     //Init BBSimulator
     BBSimulator * tsim = allocBBSimulator(bb);
-    UINT mode = LIS::SCH_BRANCH_DELAY_SLOT;
-    if (g_opt_level > OPT_LEVEL2) {
+    UINT mode = LIS::SCH_TOP_DOWN;
+    if (g_enable_schedule_delay_slot) {
+        mode |= LIS::SCH_BRANCH_DELAY_SLOT;
         mode |= LIS::SCH_ALLOW_RESCHED;
-    }
+    }    
+
     //Init LIS
     LIS * tlis = allocLIS(bb, tddg, tsim, mode);
     //Post LRA scheduling does NOT need regfile info.

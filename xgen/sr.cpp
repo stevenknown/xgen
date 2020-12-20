@@ -105,7 +105,7 @@ void SR::clean()
 
 
 //Return SR name during print assembly file.
-CHAR const* SR::getAsmName(StrBuf & buf, CG const* cg)
+CHAR const* SR::getAsmName(StrBuf & buf, CG const* cg) const
 {
     CHAR const* strformatx = "0x%x";
     CHAR const* strformatd = "%d";

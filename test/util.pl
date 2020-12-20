@@ -11,12 +11,13 @@ our @EXPORT_OK = qw(
     computeRelatedPathToXocRootDir
     computeAbsolutePathToXocRootDir
     compareDumpFile
-    getDumpFilePath
     clean
+    getDumpFilePath
+    generateGR 
     findCurrent 
     findRecursively 
     findFileRecursively
-    generateGR 
+    is_exist
     moveToPassed
     runSimulator 
     runHostExe
@@ -25,7 +26,8 @@ our @EXPORT_OK = qw(
     runBaseCC
     runCPP
     runXOCC
-    tryCreateDir);
+    tryCreateDir
+    systemx);
 our $g_base_cc = "";
 our $g_xocc = "";
 our $g_cpp = "cpp";
@@ -111,7 +113,7 @@ sub removeLine
     my $removeline_script_path = $xoc_root_path."test/removeLine.py";
     $cmdline = "$removeline_script_path $inputfile";
     print("\nCMD>>", $cmdline, "\n");
-    $retval = system($cmdline);
+    $retval = systemx($cmdline);
 }
 
 sub runArmToolChainToComputeBaseResult
@@ -122,7 +124,7 @@ sub runArmToolChainToComputeBaseResult
     my $base_result_outputfile = $_[2];
     my $cmdline = "$g_base_cc $file -O0 -o $outputfilename";
     print("\nCMD>>", $cmdline, "\n");
-    my $retval = system($cmdline);
+    my $retval = systemx($cmdline);
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $g_ld FAILED!! RES:$retval\n";
@@ -135,7 +137,7 @@ sub runArmToolChainToComputeBaseResult
 
     open (my $OLDVALUE, '>&', STDOUT); #save stdout to oldvalue
     open (STDOUT, '>>', $base_result_outputfile); #redirect stdout to file
-    $retval = system($cmdline);
+    $retval = systemx($cmdline);
     open (STDOUT, '>&', $OLDVALUE); #reload stdout from oldvalue
 
     if ($retval != 0) {
@@ -157,7 +159,7 @@ sub runArmExe
 
     open (my $OLDVALUE, '>&', STDOUT); #save stdout to oldvalue
     open (STDOUT, '>>', $outputfile); #redirect stdout to file
-    $retval = system($cmdline);
+    $retval = systemx($cmdline);
     open (STDOUT, '>&', $OLDVALUE); #reload stdout from oldvalue
 
     if ($retval != 0) {
@@ -178,7 +180,7 @@ sub runHostExe
 
     open (my $OLDVALUE, '>&', STDOUT); #save stdout to oldvalue
     open (STDOUT, '>>', $outputfile); #redirect stdout to file
-    $retval = system($cmdline);
+    $retval = systemx($cmdline);
     open (STDOUT, '>&', $OLDVALUE); #reload stdout from oldvalue
 
     if ($retval != 0) {
@@ -195,15 +197,12 @@ sub runSimulator
     my $binfile = $_[0];
     my $outputfile = $_[1];
     $cmdline = "$g_simulator $binfile";
-    print("\nCMD>>", $cmdline, " >& ", $outputfile, "\n");
 
-    open (my $OLDVALUE, '>&', STDOUT); #save stdout to oldvalue
-    open (STDOUT, '>>', $outputfile); #redirect stdout to file
-    $retval = system($cmdline);
-    open (STDOUT, '>&', $OLDVALUE); #reload stdout from oldvalue
-
+    open(my $OLDVALUE, '>&', STDOUT); #save stdout to oldvalue
+    open(STDOUT, '>>', $outputfile); #redirect stdout to file
+    $retval = systemx($cmdline);
+    open(STDOUT, '>&', $OLDVALUE); #reload stdout from oldvalue
     if ($retval != 0) {
-        print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $cmdline FAILED!! RES:$retval\n";
         #Base compiler might also failed, thus we just compare
         #the result of base compiler even if it is failed.
@@ -226,7 +225,7 @@ sub generateGR
     unlink($grname);
     $cmdline = "$g_xocc $g_cflags $fullpath -dumpgr";
     print("\nCMD>>", $cmdline, "\n");
-    $retval = system($cmdline);
+    $retval = systemx($cmdline);
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE XOCC FAILED!! RES:$retval\n";
@@ -260,7 +259,7 @@ sub compileGR
     #compile GR to asm
     $cmdline = "$g_xocc $g_cflags $grname -o $asmname";
     print("\nCMD>>", $cmdline, "\n");
-    $retval = system($cmdline);
+    $retval = systemx($cmdline);
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE XOCC FAILED!! RES:$retval\n";
@@ -275,7 +274,7 @@ sub runAssembler
     my $outputfilename = $_[1];
     my $cmdline = "$g_as $asmname -o $outputfilename";
     print("\nCMD>>", $cmdline, "\n");
-    my $retval = system($cmdline);
+    my $retval = systemx($cmdline);
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $g_as FAILED!! RES:$retval\n";
@@ -290,7 +289,7 @@ sub runLinker
     my $inputasmname = $_[1];
     my $cmdline = "$g_ld $inputasmname -o $output $g_ld_flag";
     print("\nCMD>>", $cmdline, "\n");
-    my $retval = system($cmdline);
+    my $retval = systemx($cmdline);
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $g_ld FAILED!! RES:$retval\n";
@@ -305,7 +304,7 @@ sub runBaseCC
     my $outputfilename = $_[1];
     my $cmdline = "$g_base_cc $file -std=c99 -O0 -DSTACK_SIZE=1024 -lm -lc -lm -o $outputfilename";
     print("\nCMD>>", $cmdline, "\n");
-    my $retval = system($cmdline);
+    my $retval = systemx($cmdline);
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $g_ld FAILED!! RES:$retval\n";
@@ -320,7 +319,7 @@ sub runPACC
     my $outputfilename = $_[1];
     my $cmdline = "$g_pacc $file -std=c99 -O0 -DSTACK_SIZE=1024 -lm -lc -lsim  -lm -Tpac.ld -o $outputfilename";
     print("\nCMD>>", $cmdline, "\n");
-    my $retval = system($cmdline);
+    my $retval = systemx($cmdline);
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $g_ld FAILED!! RES:$retval\n";
@@ -344,7 +343,7 @@ sub runCPP
     unlink($preprocessed_name);
     $cmdline = "$g_cpp $src_fullpath -o $preprocessed_name -C";
     print("\nCMD>>", $cmdline, "\n");
-    my $retval = system($cmdline);
+    my $retval = systemx($cmdline);
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nFAILED! -- EXECUTE CPP FAILED!! RES:$retval\n";
@@ -365,13 +364,19 @@ sub runXOCC
     my $asmname = $src_fullpath.".asm";
     my $outname = computeOutputName($src_fullpath);
     my $objname = $src_fullpath.".o";
+    if (!is_exist($g_xocc)) {
+        abortex(1);
+    }
+    if (!is_exist($src_fullpath)) {
+        abortex(1);
+    }
 
     #compile
     unlink($asmname);
     $cmdline = "$g_xocc $g_cflags $src_fullpath -o $asmname $g_xocc_flag";
     $cmdline = "$cmdline $src_fullpath";
     print("\nCMD>>", $cmdline, "\n");
-    my $retval = system($cmdline);
+    my $retval = systemx($cmdline);
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
         print "\nFAILED! -- EXECUTE XOCC FAILED!! RES:$retval\n";
@@ -484,6 +489,17 @@ sub checkExistence
            }
        }
     }
+}
+
+sub is_exist
+{
+    my $filepath = $_[0];
+    if (!-e $filepath) { 
+        print "\n$_ DOES NOT EXIST!!\n";
+        abortex();
+        return 0;
+    }
+    return 1;
 }
 
 sub parseCmdLine
@@ -694,9 +710,9 @@ sub usage
 sub clean
 {
     my $cmdline = "find -name \"*.asm\" | xargs rm -f";
-    system($cmdline);
+    systemx($cmdline);
     $cmdline = "rm -rf log";
-    system($cmdline);
+    systemx($cmdline);
 }
 
 #This function infer absolute root path for XOC project directory.
@@ -866,7 +882,7 @@ sub moveToPassed
     tryCreateDir($passedpath);
     #my $cmdline;
     #$cmdline = "mkdir -p $passedpath";
-    #my $retval = system($cmdline);
+    #my $retval = systemx($cmdline);
     #if ($retval != 0) {
     #    print("\nCMD>>", $cmdline, "\n");
     #    print "\nEXECUTE $cmdline FAILED!! RES:$retval\n";
@@ -879,6 +895,16 @@ sub moveToPassed
     #NOTE: Do NOT delete testcase file in 'passed' directory.
     print("\nCMD>>move $fullpath, $passedpath\n");
     move($fullpath, $passedpath) or abortex();
+}
+
+sub systemx()
+{
+    #Perl does not return multiplied exit values. So it returns a 16 bit
+    #value, with the exit code in the higher 8 bits. It's often the same,
+    #but not always.
+    my $cmdline = $_[0];
+    my $retval = system($cmdline)/256;
+    return $retval;
 }
 
 1;

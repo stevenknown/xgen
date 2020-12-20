@@ -198,7 +198,7 @@ public:
     virtual void dump(CG * cg) const;
 
     SR_TYPE getType() const { return SR_type(this); } 
-    virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg);
+    virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const;
     virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const;
     virtual UINT getByteSize() const;
     REGFILE getRegFile() const { return SR_regfile(this); }

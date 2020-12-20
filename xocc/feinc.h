@@ -31,19 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __FEINC_H__
 
 //Front end level included files
-#include "../cfe/cfe_targ_const_info.h"
-#include "../cfe/cfexport.h"
-#include "../cfe/cfecommacro.h"
-#include "../cfe/err.h"
-#include "../cfe/lex.h"
-#include "../cfe/typeck.h"
-#include "../cfe/scope.h"
-#include "../cfe/decl.h"
-#include "../cfe/tree.h"
-#include "../cfe/st.h"
-#include "../cfe/cell.h"
-#include "../cfe/treegen.h"
-#include "../cfe/exectree.h"
+#include "../cfe/cfeinc.h"
 #include "canon.h"
 #include "tree2ir.h"
 #include "driver.h"

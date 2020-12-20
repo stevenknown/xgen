@@ -413,6 +413,9 @@ static bool processOneLevelCmdLine(INT argc, CHAR * argv[], INT & i)
     } else if (!strcmp(cmdstr, "lower_to_pr_mode")) {
         g_is_lower_to_pr_mode = true;
         i++;
+    } else if (!strcmp(cmdstr, "schedule_delay_slot")) {
+        g_enable_schedule_delay_slot = true;
+        i++;
     } else if (!strcmp(cmdstr, "dump-cfg")) {
         g_dump_opt.is_dump_cfg = true;
         i++;
@@ -721,8 +724,8 @@ static void scanAndInitVar(Scope * s, VarMgr * vm, TypeMgr * tm)
 UINT FrontEnd(RegionMgr * rm)
 {
     START_TIMER(t, "CFE");
-
     setLogMgr(rm->getLogMgr());
+    initTypeTran();
 
 //#define LR0_FE
 #ifdef LR0_FE
@@ -731,22 +734,30 @@ UINT FrontEnd(RegionMgr * rm)
 #else
     INT s = Parser();
     if (s != ST_SUCC) {
-        goto FIN;
+        END_TIMER(t, "CFE");
+        return s;
     }
 #endif
+    s = processDeclInit();
+    if (s != ST_SUCC) {
+        END_TIMER(t, "CFE");
+        return s;
+    }
+
     s = TypeTransform();
     if (s != ST_SUCC) {
-        goto FIN;
+        END_TIMER(t, "CFE");
+        return s;
     }
 
     s = TypeCheck();
     if (s != ST_SUCC) {
-        goto FIN;
+        END_TIMER(t, "CFE");
+        return s;
     }
 
-FIN:
     END_TIMER(t, "CFE");
-    return s;
+    return ST_SUCC;
 }
 
 
@@ -1052,6 +1063,7 @@ bool compileCFile()
 
     if (FrontEnd(rm) != ST_SUCC) {
         res = false;
+        ASSERTN(g_err_msg_list.get_elem_count() > 0, ("miss error msg"));
         goto FIN;
     }
     //In the file scope, generate function region.

@@ -445,9 +445,11 @@ RecycORList::RecycORList(RecycORListMgr * mgr)
 }
 
 
-//On Linux, gcc claimed RecycORList is not a direct base of RecycORList.
-//RecycORList::RecycORList(IR2OR * ir2or) :
-//    RecycORList(ir2or->getRecycORListMgr())
+//Lower version (<=4.6) gcc may claim RecycORList is not a direct base of
+//RecycORList. Thus we avoid invoking constructor at initializing list in
+//other constructor.
+//e.g:RecycORList::RecycORList(IR2OR * ir2or) :
+//      RecycORList(ir2or->getRecycORListMgr())
 RecycORList::RecycORList(IR2OR * ir2or)
 {
     init(ir2or->getRecycORListMgr());

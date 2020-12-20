@@ -1087,8 +1087,8 @@ IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
     ASSERTN(TREE_type(TREE_field(t)) == TR_ID, ("illegal struct/union exp"));
     if (is_struct(base_decl)) {
         Struct * st = TYPE_struct_type(DECL_spec(base_decl));
-        field_ofst = get_struct_field_ofst(st,
-            SYM_name(TREE_id(TREE_field(t))));
+        field_ofst = get_struct_field(st, TREE_id(TREE_field(t))->getStr(),
+                                      nullptr);
     }
 
     //Revise result type of ir accroding to 'field'.
@@ -1154,8 +1154,8 @@ IR * CTree2IR::convertIndirectMemAccess(Tree * t,
     UINT field_ofst = 0; //All Field of union start at offset 0.
     if (is_struct(base_decl)) {
         Struct * st = TYPE_struct_type(DECL_spec(base_decl));
-        field_ofst = get_struct_field_ofst(st,
-            SYM_name(TREE_id(TREE_field(t))));
+        field_ofst = get_struct_field(st, TREE_id(TREE_field(t))->getStr(),
+                                      nullptr);
     }
 
     UINT sz;
@@ -1631,22 +1631,6 @@ BYTE CTree2IR::getMantissaNum(CHAR const* fpval)
 }
 
 
-IR * CTree2IR::convertDeclInit(Decl const* decl, IN T2IRCtx * cont)
-{
-    IR * ir = nullptr;
-    IR * last = nullptr;
-    for (Decl const* dcl = decl; dcl != nullptr; dcl = DECL_next(dcl)) {
-        if (!is_initialized(dcl)) { continue; }
-        Tree * initval = get_decl_init_tree(dcl);
-        ASSERT0(initval);        
-        Tree * assign = buildAssign(dcl, initval);
-        TypeTran(assign, nullptr);
-        xcom::add_next(&ir, &last, convert(assign, nullptr));        
-    }    
-    return ir;
-}
-
-
 //Convert TREE AST to IR.
 IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
 {
@@ -1698,7 +1682,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             //Convert string to hex value , that is in order to generate
             //single load instruction to load float point value during
             //Code Generator.
-            Sym * fp = TREE_fp_str_val(t);
+            Sym const* fp = TREE_fp_str_val(t);
 
             //Default float point type is 64bit.
             ir = m_rg->buildImmFp(::atof(SYM_name(fp)),
@@ -1914,9 +1898,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         }
         case TR_SCOPE:
             ASSERT0(TREE_scope(t));
-            ir = convertDeclInit(SCOPE_decl_list(TREE_scope(t)), nullptr);
-            xcom::add_next(&ir,
-                           convert(SCOPE_stmt_list(TREE_scope(t)), nullptr));
+            ir = convert(SCOPE_stmt_list(TREE_scope(t)), nullptr);
             break;
         case TR_IF: {
             IR * det = convert(TREE_if_det(t), cont);
@@ -2014,14 +1996,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         }
         case TR_FOR: {
             IR * last = nullptr;
-            IR * decl_init = nullptr;
-            if (TREE_for_scope(t) != nullptr) {
-                xcom::add_next(&decl_init, &last, 
-                    convertDeclInit(SCOPE_decl_list(TREE_for_scope(t)),
-                                    nullptr));
-            }
             IR * init = convert(TREE_for_init(t), nullptr);
-            xcom::add_next(&decl_init, &last, init);
+            xcom::add_next(&ir, &last, init);
 
             T2IRCtx ct2;
             ASSERT0(cont);
@@ -2029,13 +2005,12 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             CONT_toplirlist(&ct2) = &stmt_in_det;
             IR * det = convert(TREE_for_det(t), &ct2);
             if (stmt_in_det != nullptr) {
-                xcom::add_next(&decl_init, &last, stmt_in_det);
+                xcom::add_next(&ir, &last, stmt_in_det);
             }
 
             det = only_left_last(det);
             if (det == nullptr) {
-                det = m_rg->buildJudge(m_rg->buildImmInt(1,
-                    m_tm->getI32()));
+                det = m_rg->buildJudge(m_rg->buildImmInt(1, m_tm->getI32()));
             }
 
             IR * body = convert(TREE_for_body(t), nullptr);
@@ -2053,8 +2028,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
 
             IR * whiledo = m_rg->buildWhileDo(det, body);
             setLineNum(whiledo, lineno, m_rg);
-            xcom::add_next(&decl_init, &last, whiledo);
-            ir = decl_init;
+            xcom::add_next(&ir, &last, whiledo);
             break;
         }
         case TR_SWITCH:
@@ -2072,11 +2046,13 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             ir = convertReturn(t, lineno, cont);
             break;
         case TR_GOTO:
-            ir = m_rg->buildGoto(getUniqueLabel(TREE_lab_info(t)));
+            ir = m_rg->buildGoto(getUniqueLabel(
+                const_cast<LabelInfo*>(TREE_lab_info(t))));
             setLineNum(ir, lineno, m_rg);
             break;
         case TR_LABEL:
-            ir = m_rg->buildLabel(getUniqueLabel(TREE_lab_info(t)));
+            ir = m_rg->buildLabel(getUniqueLabel(
+                const_cast<LabelInfo*>(TREE_lab_info(t))));
             setLineNum(ir, lineno, m_rg);
             break;
         case TR_CASE: {
@@ -2330,11 +2306,7 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
 
     //Generate IRs.
     CTree2IR ct2ir(r, dcl);
-    xoc::IR * irs = ct2ir.convertDeclInit(SCOPE_decl_list(DECL_fun_body(dcl)),
-                                          nullptr);
-    xcom::add_next(&irs,
-                   ct2ir.convert(SCOPE_stmt_list(DECL_fun_body(dcl)),
-                                 nullptr));
+    xoc::IR * irs = ct2ir.convert(SCOPE_stmt_list(DECL_fun_body(dcl)), nullptr);
     if (g_err_msg_list.get_elem_count() > 0) {
         return ST_ERR;
     }

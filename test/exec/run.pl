@@ -95,6 +95,8 @@ sub TryCompileAsmLinkRunCompare
         chomp;
         my $fullpath = $_; 
         print "\n-------------------------------------------";
+        #Extract path prefix from 'fullpath'.
+        #e.g: $fullpath is /a/b/c.cpp, then $path is /a/b/
         my $path = substr($fullpath, 0, rindex($fullpath, "/") + 1);
 
         my $org_cflags = $g_cflags;

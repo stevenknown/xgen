@@ -512,10 +512,8 @@ void LIS::serialize()
     }
 
     //END_TIMER_FMT(t, ("LIS: Serialize: BB%d", getBB()->id()));
-    if (g_is_dump_after_pass && g_dump_opt.isDumpLIS()) {
-        START_TIMER(t3, "LIS:dump");
+    if (g_is_dump_after_pass && g_dump_opt.isDumpLIS()) {        
         dump(true);
-        END_TIMER(t3, "LIS:dump");
     }
 }
 
@@ -532,18 +530,28 @@ bool LIS::schedule()
     DataDepGraph * stepddg = m_cg->allocDDG();
     stepddg->init(m_bb);
     stepddg->clone(*m_ddg);
-    stepddg->computeEstartAndLstart(*m_sim, nullptr);
+    OR * latest = nullptr;
+    stepddg->computeEstartAndLstart(*m_sim, &latest);
+    OR * last = m_bb->getLastOR();
+    if (!isScheduleDelaySlot() && last->is_br() && latest != last) {
+        //Have to guarrantee BR is the last OR.
+        stepddg->appendEdge(DEP_HYB, latest, last);
+    }
+
     DefMiscBitSetMgr sm;
     DefSBitSet visited(sm.getSegMgr());
     m_or_changed = false;
 
-    INT last_res_cyc = 0;
-    if (isScheduleDelaySlot()) {
+    INT br_latency = 0;
+    if (isScheduleDelaySlot() && allowReschedule()) {
+        //If strategy is to fill BR delay slot as much as possible, the
+        //schedulor will schedule BR operation and its dependence ORs as
+        //soon as possible. This may lead rescheduling if current schdueling
+        //is illegal, because the scheduling strategy is top-down scheduling.
         ORDESC_start_cyc(m_br_ord) = -1;
         stepddg->getDependentPreds(m_br_all_preds, m_br_ord->getOR());
         m_br_all_preds.append(m_br_ord->getOR());
-        last_res_cyc = ORSI_last_result_avail_cyc(
-            m_br_ord->getScheInfo());
+        br_latency = ORSI_last_result_avail_cyc(m_br_ord->getScheInfo());
     }
 
 RESCH:
@@ -557,10 +565,12 @@ RESCH:
         //result.
         UINT end_cyc = m_sim->getCurCycle() - 1;
         INT br_start_cyc = m_br_ord->getStartCycle();
-        ASSERT0(br_start_cyc >= 0);
-        if (br_start_cyc <= (INT)(end_cyc - last_res_cyc)) {
-            //Once again, 'max_try' can not less than 'last_res_cyc'.
-            INT max_try = last_res_cyc + getAddendOfMaxTryTime();
+        ASSERTN(br_start_cyc >= 0, ("BR is not scheduled"));
+        if (br_start_cyc < (INT)(end_cyc - br_latency)) {
+            //Illegal scheduling, BR will terminate the execution sequence
+            //too early. Thus, update BR's start cycle and rescheduling.
+            //Note 'max_try' can not less than 'br_latency'.
+            INT max_try = br_latency + getAddendOfMaxTryTime();
             if (((INT)(end_cyc - br_start_cyc)) > max_try) {
                 ORDESC_start_cyc(m_br_ord) = end_cyc - max_try;
             } else {
@@ -579,11 +589,8 @@ RESCH:
     //END_TIMER_FMT(t, ("LIS: Schedule: BB%d", getBB()->id()));
 
     if (g_is_dump_after_pass && g_dump_opt.isDumpLIS()) {
-        START_TIMER(t3, "LIS:dump");
         dump(true);
-        END_TIMER(t3, "LIS:dump");
     }
-
     return m_or_changed;
 }
 

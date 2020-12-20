@@ -34,7 +34,7 @@ author: Su Zhenyu
 //START ARMSR
 //
 //Return SR name during print assembly file.
-CHAR const* ARMSR::getAsmName(StrBuf & buf, CG * cg)
+CHAR const* ARMSR::getAsmName(StrBuf & buf, CG const* cg) const
 {
     switch (SR_type(this)) {
     case SR_INT_IMM:
@@ -64,7 +64,7 @@ CHAR const* ARMSR::getAsmName(StrBuf & buf, CG * cg)
 
 //Return symbol register name and info, used by tracing routines.
 //'buf': output string buffer.
-CHAR const* ARMSR::get_name(StrBuf & buf, CG * cg) const
+CHAR const* ARMSR::get_name(StrBuf & buf, CG const* cg) const
 {
     switch (SR_type(this)) {
     case SR_REG: {
