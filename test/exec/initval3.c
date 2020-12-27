@@ -17,11 +17,11 @@ union U
 int main()
 {
   union T t = { 1, 2, (void*)0x1000, 3};
-  if (t.b != 3) { return 1; }
-  if (t.c != 3) { return 1; }
-  if (t.d != (void*)0x3) { return 1; }
-  if (t.e != 3) { return 1; }
-  
+  if (t.b != 0x1003) { return 1; }
+  if (t.c != 0x1003) { return 2; }
+  if (t.d != (void*)0x1003) { return 3; }
+  if (t.e != 3) { return 4; }
+
   union S s = { 4, {5, 6} };
   if (s.a != 6) { return 2; }   
   if (s.f.b != 6) { return 2; }   

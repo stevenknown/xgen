@@ -35,6 +35,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../reader/grreader.h"
 #include "../opt/comopt.h"
 
+//#define LR0_FE
+
 CHAR * g_c_file_name = nullptr;
 CHAR * g_gr_file_name = nullptr;
 CHAR * g_dump_file_name = nullptr;
@@ -727,12 +729,12 @@ UINT FrontEnd(RegionMgr * rm)
     setLogMgr(rm->getLogMgr());
     initTypeTran();
 
-//#define LR0_FE
+    INT s = ST_SUCC;
 #ifdef LR0_FE
     init_rule_info();
     reduce();
 #else
-    INT s = Parser();
+    s = Parser();
     if (s != ST_SUCC) {
         END_TIMER(t, "CFE");
         return s;

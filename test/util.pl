@@ -197,6 +197,7 @@ sub runSimulator
     my $binfile = $_[0];
     my $outputfile = $_[1];
     $cmdline = "$g_simulator $binfile";
+    print("\nCMD>>", $cmdline, "\n");
 
     open(my $OLDVALUE, '>&', STDOUT); #save stdout to oldvalue
     open(STDOUT, '>>', $outputfile); #redirect stdout to file

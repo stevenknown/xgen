@@ -423,8 +423,7 @@ void BBORList::dump(CG * cg)
 
         buf.clean();
         o->dump(buf, cg);
-        note(cg->getRegion(), "%s", buf.buf);
-        note(cg->getRegion(), "\n");
+        note(cg->getRegion(), "\n%s", buf.buf);
     }
 }
 //END BBORList

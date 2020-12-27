@@ -1087,8 +1087,8 @@ IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
     ASSERTN(TREE_type(TREE_field(t)) == TR_ID, ("illegal struct/union exp"));
     if (is_struct(base_decl)) {
         Struct * st = TYPE_struct_type(DECL_spec(base_decl));
-        field_ofst = get_struct_field(st, TREE_id(TREE_field(t))->getStr(),
-                                      nullptr);
+        field_ofst = get_aggr_field(st, TREE_id(TREE_field(t))->getStr(),
+                                    nullptr);
     }
 
     //Revise result type of ir accroding to 'field'.
@@ -1154,8 +1154,8 @@ IR * CTree2IR::convertIndirectMemAccess(Tree * t,
     UINT field_ofst = 0; //All Field of union start at offset 0.
     if (is_struct(base_decl)) {
         Struct * st = TYPE_struct_type(DECL_spec(base_decl));
-        field_ofst = get_struct_field(st, TREE_id(TREE_field(t))->getStr(),
-                                      nullptr);
+        field_ofst = get_aggr_field(st, TREE_id(TREE_field(t))->getStr(),
+                                    nullptr);
     }
 
     UINT sz;
@@ -2306,7 +2306,8 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
 
     //Generate IRs.
     CTree2IR ct2ir(r, dcl);
-    xoc::IR * irs = ct2ir.convert(SCOPE_stmt_list(DECL_fun_body(dcl)), nullptr);
+    xoc::IR * irs = ct2ir.convert(SCOPE_stmt_list(DECL_fun_body(dcl)),
+                                  nullptr);
     if (g_err_msg_list.get_elem_count() > 0) {
         return ST_ERR;
     }
