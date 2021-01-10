@@ -1080,7 +1080,7 @@ public:
                        Action & action);
     void setOptPhase(UINT opt_phase) { m_opt_phase = opt_phase; }
     void setParallelPartMgr(ParallelPartMgr * ppm) { m_ppm = ppm; }
-    void show_phase(CHAR * phase_name);
+    void show_phase(CHAR const* phase_name);
     void spillPassthroughGSR(LifeTime * lt, LifeTimeMgr & mgr);
     void spillGSR(LifeTime * lt, LifeTimeMgr & mgr);
     void spillLSR(LifeTime * lt, LifeTimeMgr & mgr);

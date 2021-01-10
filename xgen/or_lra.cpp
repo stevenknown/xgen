@@ -2600,7 +2600,7 @@ LRA::LRA(ORBB * bb, RaMgr * ra_mgr)
 
 
 //Display phase name
-void LRA::show_phase(CHAR * phase_name)
+void LRA::show_phase(CHAR const* phase_name)
 {
     if (!g_dump_opt.isDumpRA() || !getRegion()->isLogMgrInit()) { return; }
     note(getRegion(), "\nREGION(%d)%s, ORBB(%d)Len(%d), PHASE:%s",
@@ -7182,7 +7182,7 @@ bool LRA::optimal_partition(DataDepGraph & ddg,
     if (ORBB_ornum(m_bb) == 0) {
         return true;
     }
-    CHAR * name = "zsimpddg.vcg";
+    CHAR const* name = "zsimpddg.vcg";
     FILE * h = fopen(name, "a+");
     ASSERTN(h, ("%s create failed!!!", name));
     fprintf(h, "\nPU:%s,ORBB:%d,len:%d\n",

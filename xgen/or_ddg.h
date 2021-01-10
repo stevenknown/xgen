@@ -159,7 +159,8 @@ public:
     }
 
     virtual void destroy();
-    void dump(INT flag = 0xF, INT rootoridx = -1, CHAR * name = nullptr);
+    void dump(INT flag = 0xF, INT rootoridx = -1,
+              CHAR const* name = nullptr) const;
 
     ORBB * getBB() const
     {

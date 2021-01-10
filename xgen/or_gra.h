@@ -130,7 +130,7 @@ public:
 public:
     G_INTERF_GRAPH(RaMgr * ra_mgr, GLT_MGR * glt_mgr, CG * cg);
 
-    void dump(IN CHAR * name = nullptr);
+    void dump(CHAR const* name = nullptr) const;
     bool isInterferred(IN G_LIFE_TIME * glt1, IN G_LIFE_TIME * glt2);
     void rebuild();
     void build();

@@ -401,7 +401,7 @@ void G_INTERF_GRAPH::rebuild()
 }
 
 
-void G_INTERF_GRAPH::dump(IN CHAR * name)
+void G_INTERF_GRAPH::dump(CHAR const* name) const
 {
     if (name == nullptr) {
         name = "zgif_graph.vcg";

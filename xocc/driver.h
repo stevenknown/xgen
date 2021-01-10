@@ -34,13 +34,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //If one need to export variables, or types to other
 //module, please put them in fexp.h.
 extern UINT const g_formal_parameter_start;
-extern bool g_is_dumpgr;
-extern CHAR * g_gr_file_name;
-extern CHAR * g_dump_file_name;
 
 bool compileCFile();
-bool compileGRFile(CHAR * gr_file_name);
+bool compileGRFile(CHAR const* gr_file_name);
 Var * mapDecl2VAR(Decl * decl);
 Decl * mapVAR2Decl(Var * var);
-bool processCmdLine(INT argc, CHAR *argv[]);
 #endif

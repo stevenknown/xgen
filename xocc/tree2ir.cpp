@@ -1069,13 +1069,14 @@ IR * CTree2IR::convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx *)
 //Convert direct memory access.
 IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
 {
-    Decl * base_decl = TREE_result_type(TREE_base_region(t));
-    ASSERTN(is_struct(base_decl) || is_union(base_decl),
-            ("illegal base type"));
+    Decl const* base_decl = TREE_result_type(TREE_base_region(t));
+    ASSERTN(!is_pointer(base_decl), ("'.' node must not be pointer type"));
+
+    TypeSpec const* ty = DECL_spec(base_decl);
+    ASSERTN(is_struct(ty) || is_union(ty), ("illegal base type"));
     ASSERTN(TREE_type(TREE_field(t)) == TR_ID, ("illegal offset type"));
 
-    Decl * field_decl = TREE_result_type(TREE_field(t));
-
+    Decl const* field_decl = TREE_result_type(TREE_field(t));
     T2IRCtx tc;
     if (is_array(field_decl)) {
         CONT_is_compute_addr(&tc) = true;
@@ -1085,8 +1086,8 @@ IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
     //Compute 'byte ofst' of 'ir' accroding to field at structured type.
     UINT field_ofst = 0; //All field of union start at offset 0.
     ASSERTN(TREE_type(TREE_field(t)) == TR_ID, ("illegal struct/union exp"));
-    if (is_struct(base_decl)) {
-        Struct * st = TYPE_struct_type(DECL_spec(base_decl));
+    if (is_struct(ty)) {
+        Struct const* st = TYPE_struct_type(ty);
         field_ofst = get_aggr_field(st, TREE_id(TREE_field(t))->getStr(),
                                     nullptr);
     }
@@ -1140,26 +1141,26 @@ IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
 
 
 //Convert indirect memory access.
-IR * CTree2IR::convertIndirectMemAccess(Tree * t,
-                                        INT lineno,
+IR * CTree2IR::convertIndirectMemAccess(Tree * t, INT lineno,
                                         IN T2IRCtx * cont)
 {
-    Decl * base_decl = TREE_result_type(TREE_base_region(t));
-    ASSERTN(is_struct(base_decl) || is_union(base_decl),
-            ("illegal base type"));
-    ASSERTN(TREE_type(TREE_field(t)) == TR_ID, ("illegal offset type"));
+    Decl const* base_decl = TREE_result_type(TREE_base_region(t));
     ASSERTN(is_pointer(base_decl), ("'->' node must be pointer type"));
 
+    TypeSpec const* ty = DECL_spec(base_decl);
+    ASSERTN(is_struct(ty) || is_union(ty), ("illegal base type"));
+    ASSERTN(TREE_type(TREE_field(t)) == TR_ID, ("illegal offset type"));
+
     //Compute 'field_offst' accroding to 'field' of struct.
-    UINT field_ofst = 0; //All Field of union start at offset 0.
-    if (is_struct(base_decl)) {
-        Struct * st = TYPE_struct_type(DECL_spec(base_decl));
+    UINT field_ofst = 0; //All field of union start at offset 0.
+    if (is_struct(ty)) {
+        Struct const* st = TYPE_struct_type(ty);
         field_ofst = get_aggr_field(st, TREE_id(TREE_field(t))->getStr(),
                                     nullptr);
     }
 
     UINT sz;
-    Decl * field_decl = TREE_result_type(TREE_field(t));
+    Decl const* field_decl = TREE_result_type(TREE_field(t));
     DATA_TYPE dt = D_UNDEF;
     IR * ir = nullptr;
     IR * base = convert(TREE_base_region(t), nullptr);
@@ -1499,6 +1500,9 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
         }
         ILD_base(base) = nullptr;
         m_rg->freeIRTree(base);
+    } else if (base->is_lda()) {
+        ASSERT0(is_fun_decl(TREE_result_type(TREE_lchild(t))));
+        ir = base;
     } else {
         UNREACHABLE();
     }
@@ -1571,7 +1575,7 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
         } else {
             //In C, function name referrence can be represented
             //as LDA operation.
-            //e.g: f take the address of hook.
+            //e.g: f takes the address of hook.
             //void hook();
             //void foo() {
             //    typedef void (*F)();

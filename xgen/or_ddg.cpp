@@ -1497,7 +1497,7 @@ void DataDepGraph::simplifyGraph()
 
 //Pass 'root',  when we need to see all
 //the elements which belong to the group root at 'root'.
-void DataDepGraph::dump(INT flag, INT rootoridx, CHAR * name)
+void DataDepGraph::dump(INT flag, INT rootoridx, CHAR const* name) const
 {
     DUMMYUSE(rootoridx);
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
@@ -1646,7 +1646,7 @@ void DataDepGraph::dump(INT flag, INT rootoridx, CHAR * name)
         }
 
         //Cluster info
-        CHAR * shape = "";
+        CHAR const* shape = "";
         if (HAVE_FLAG(flag, DDG_DUMP_CLUSTER_INFO)) {
             CLUST clst = m_cg->computeORCluster(o);
             if (clst == CLUST_UNDEF) {

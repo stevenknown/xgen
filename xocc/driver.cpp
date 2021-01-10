@@ -37,13 +37,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define LR0_FE
 
-CHAR * g_c_file_name = nullptr;
-CHAR * g_gr_file_name = nullptr;
-CHAR * g_dump_file_name = nullptr;
-static CHAR * g_output_file_name = nullptr;
-bool g_is_dumpgr = false;
-static CHAR const* g_xocc_version = "1.0.0";
-
 //Record the start position of formal parameter.
 //The position 0 is reserved for hidden parameter which used for
 //structure return value in C/C++.
@@ -161,403 +154,6 @@ void CLDbxMgr::printSrcLine(xcom::StrBuf & output, Dbx const* dbx, PrtCtx * ctx)
     }
 }
 //END DbxMgr
-
-
-static void usage()
-{
-    fprintf(stdout,
-    "\nXOCC Version %s"
-    "\nUsage: xocc [options] file"
-    "\nOptions: "
-    "\n  -O0,           compile without any optimization"
-    "\n  -O1,-O2,-O3    compile with optimizations"
-    "\n  -dump <file>   generate dump file and enable dump"
-    "\n  -o <file>      output file name"
-    "\n  -gra=<on|off>  switch for global register allocation"
-    "\n  -ipa           enable IPA"
-    "\n  -dumpgr        dump GR file"
-    "\n  -prmode        simplify to the lowest IR"
-    "\n  -readgr <file> read GR file"
-    "\n  -nolicm        disable loop invariant code motion optimization"
-    "\n  -nodce         disable dead code elimination optimization"
-    "\n  -norp          disable register promotion optimization"
-    "\n  -nocp          disable copy propagation optimization"
-    "\n  -nogcse        disable global common subexpression elimination optimization"
-    "\n  -nolcse        disable local common subexpression elimination optimization"
-    "\n", g_xocc_version);
-}
-
-
-static bool is_c_source_file(CHAR const* fn)
-{
-    UINT len = (UINT)strlen(fn) + 1;
-    CHAR * buf = (CHAR*)ALLOCA(len);
-    upper(getfilesuffix(fn, buf, (UINT)len));
-    if (strcmp(buf, "C") == 0 ||
-        strcmp(buf, "I") == 0) {
-        return true;
-    }
-    return false;
-}
-
-
-static bool is_gr_source_file(CHAR const* fn)
-{
-    UINT len = (UINT)strlen(fn) + 2;
-    CHAR * buf = (CHAR*)ALLOCA(len);
-    upper(getfilesuffix(fn, buf, len));
-    if (strcmp(buf, "GR") == 0 ||
-        strcmp(buf, "I") == 0) {
-        return true;
-    }
-    return false;
-}
-
-
-static bool process_O(INT argc, CHAR * argv[], INT & i)
-{
-    DUMMYUSE(argc);
-    CHAR * cmdstr = &argv[i][1];
-    switch (cmdstr[1]) {
-    case '0':
-        xoc::g_opt_level = OPT_LEVEL0;
-        break;
-    case '1':
-        xoc::g_opt_level = OPT_LEVEL1;
-        xoc::g_do_pr_ssa = true;
-        xoc::g_do_md_ssa = true;
-        //Only do refinement.
-        break;
-    case '2':
-        xoc::g_opt_level = OPT_LEVEL2;        
-        xoc::g_do_dce = true;
-        xoc::g_do_licm = true;
-        xoc::g_do_rp = true;
-        xoc::g_do_pr_ssa = true;
-        xoc::g_do_md_ssa = true;
-        break;    
-    case '3':
-        xoc::g_opt_level = OPT_LEVEL3;
-        xoc::g_do_dce = true;
-        xoc::g_do_licm = true;
-        xoc::g_do_rp = true;
-        xoc::g_do_pr_ssa = true;
-        xoc::g_do_md_ssa = true;
-        break;
-    case 's':
-    case 'S':
-        xoc::g_opt_level = SIZE_OPT;
-        xoc::g_do_dce = true;
-        xoc::g_do_licm = true;
-        xoc::g_do_rp = true;
-        xoc::g_do_pr_ssa = true;
-        xoc::g_do_md_ssa = true;
-        break;
-    default:
-        xoc::g_opt_level = OPT_LEVEL1;
-        xoc::g_do_pr_ssa = true;
-        xoc::g_do_md_ssa = true;
-    }
-    i++;
-    return true;
-}
-
-
-static bool process_o(INT argc, CHAR * argv[], INT & i)
-{
-    if (i + 1 < argc && argv[i + 1] != nullptr) {
-        g_output_file_name = argv[i + 1];
-    }
-    i += 2;
-    return true;
-}
-
-
-
-static CHAR * process_d(INT argc, CHAR * argv[], INT & i)
-{
-    CHAR * n = nullptr;
-    if (i + 1 < argc && argv[i + 1] != nullptr) {
-        n = argv[i + 1];
-    }
-    i += 2;
-    return n;
-}
-
-
-static bool process_thres_opt_bb_num(INT argc, CHAR * argv[], INT & i)
-{
-    CHAR * n = nullptr;
-    if (i + 1 < argc && argv[i + 1] != nullptr) {
-        n = argv[i + 1];
-    }
-    if (n == nullptr) { return false; } 
-    xoc::g_thres_opt_bb_num = (UINT)xcom::xatoll(n, false);
-    i += 2;
-    return true;
-}
-
-
-static bool process_thres_opt_ir_num(INT argc, CHAR * argv[], INT & i)
-{
-    CHAR * n = nullptr;
-    if (i + 1 < argc && argv[i + 1] != nullptr) {
-        n = argv[i + 1];
-    }
-    if (n == nullptr) { return false; } 
-    xoc::g_thres_opt_ir_num = (UINT)xcom::xatoll(n, false);
-    i += 2;
-    return true;
-}
-
-
-static bool process_g(INT argc, CHAR * argv[], INT & i)
-{
-    DUMMYUSE(argc);
-    CHAR * cmdstr = &argv[i][1];
-    if (xstrcmp(cmdstr, "gra=", 4) != 0) {
-        return false;
-    }
-    cmdstr += 4;
-    if (strcmp(cmdstr, "on") == 0) {
-        i++;
-        g_do_gra = true;
-        return true;
-    } else if (strcmp(cmdstr, "off") == 0) {
-        i++;
-        g_do_gra = false;
-        return true;
-    }
-    return true;
-}
-
-
-static bool process_i(INT argc, CHAR * argv[], INT & i)
-{
-    DUMMYUSE(argc);
-    CHAR * cmdstr = &argv[i][1];
-    if (xstrcmp(cmdstr, "ipa", 3) != 0) {
-        return 1;
-    }
-    i++;
-    g_do_ipa = true;
-    return 0;
-}
-
-
-static bool processOneLevelCmdLine(INT argc, CHAR * argv[], INT & i)
-{
-    CHAR const* cmdstr = &argv[i][1];
-    if (cmdstr[0] == 'O') {
-        if (!process_O(argc, argv, i)) {
-            return false;
-        }
-    } else if (cmdstr[0] == 'o') {
-        if (!process_o(argc, argv, i)) {
-            return false;
-        }
-    } else if (cmdstr[0] == 'g') {
-        if (!process_g(argc, argv, i)) {
-            return false;
-        }
-    } else if (cmdstr[0] == 'i') {
-        if (!process_i(argc, argv, i)) {
-            return false;
-        }
-    } else if (!strcmp(cmdstr, "time")) {
-        g_show_time = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump")) {
-        CHAR * n = process_d(argc, argv, i);
-        if (n == nullptr) {
-            return false;
-        }
-        g_dump_file_name = n;
-    } else if (!strcmp(cmdstr, "nodce")) {
-        g_do_dce = false;
-        i++;
-    } else if (!strcmp(cmdstr, "licm")) {
-        g_do_licm = true;
-        i++;
-    } else if (!strcmp(cmdstr, "rp")) {
-        g_do_rp = true;
-        i++;
-    } else if (!strcmp(cmdstr, "cp")) {
-        g_do_cp = true;
-        i++;
-    } else if (!strcmp(cmdstr, "rce")) {
-        g_do_rce = true;
-        i++;            
-    } else if (!strcmp(cmdstr, "dce")) {
-        g_do_dce = true;
-        i++;
-    } else if (!strcmp(cmdstr, "nocg")) {
-        g_do_cg = false;
-        i++;
-    } else if (!strcmp(cmdstr, "mdssa")) {
-        g_do_md_ssa = true;
-        i++;
-    } else if (!strcmp(cmdstr, "prmode")) {
-        g_is_lower_to_pr_mode = true;
-        i++;
-    } else if (!strcmp(cmdstr, "prdu")) {
-        g_compute_pr_du_chain = true;
-        i++;
-    } else if (!strcmp(cmdstr, "nonprdu")) {
-        g_compute_nonpr_du_chain = true;
-        i++;
-    } else if (!strcmp(cmdstr, "prssa")) {
-        g_do_pr_ssa = true;
-        i++;
-    } else if (!strcmp(cmdstr, "redirect_stdout_to_dump_file")) {
-        g_redirect_stdout_to_dump_file = true;
-        i++;
-    } else if (!strcmp(cmdstr, "lower_to_pr_mode")) {
-        g_is_lower_to_pr_mode = true;
-        i++;
-    } else if (!strcmp(cmdstr, "schedule_delay_slot")) {
-        g_enable_schedule_delay_slot = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-cfg")) {
-        g_dump_opt.is_dump_cfg = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-lis")) {
-        g_dump_opt.is_dump_lis = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-aa")) {
-        g_dump_opt.is_dump_aa = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-dumgr")) {
-        g_dump_opt.is_dump_dumgr = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-prssamgr")) {
-        g_dump_opt.is_dump_prssamgr = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-mdssamgr")) {
-        g_dump_opt.is_dump_mdssamgr = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-dce")) {
-        g_dump_opt.is_dump_dce = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-rp")) {
-        g_dump_opt.is_dump_rp = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-licm")) {
-        g_dump_opt.is_dump_licm = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-rce")) {
-        g_dump_opt.is_dump_rce = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-ra")) {
-        g_dump_opt.is_dump_ra = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-cg")) {
-        g_dump_opt.is_dump_cg = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-cdg")) {
-        g_dump_opt.is_dump_cdg = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-simplification")) {
-        g_dump_opt.is_dump_simplification = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-refine-duchain")) {
-        g_dump_opt.is_dump_refine_duchain = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-gvn")) {
-        g_dump_opt.is_dump_gvn = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-all")) {
-        g_dump_opt.is_dump_all = true;
-        i++;
-    } else if (!strcmp(cmdstr, "dump-nothing")) {
-        g_dump_opt.is_dump_nothing = true;
-        i++;
-    } else if (!strcmp(cmdstr, "thres_opt_ir_num")) {
-        if (!process_thres_opt_ir_num(argc, argv, i)) {
-            return false;
-        }
-    } else if (!strcmp(cmdstr, "thres_opt_bb_num")) {
-        if (!process_thres_opt_bb_num(argc, argv, i)) {
-            return false;
-        }
-    } else if (!strcmp(cmdstr, "dumpgr")) {
-        g_is_dumpgr = true;
-        i++;
-    } else {
-        return false;
-    }
-    return true;
-}
-
-
-bool processCmdLine(INT argc, CHAR * argv[])
-{
-    if (argc <= 1) { usage(); return false; }
-
-    INT i = 1;
-    while (i < argc) {
-        if (argv[i][0] == '-') {
-            if (!processOneLevelCmdLine(argc, argv, i)) {
-                usage();
-                return false; 
-            }
-            continue;
-        }
-
-        if (is_c_source_file(argv[i])) {
-            g_c_file_name = argv[i];
-            i++;
-            continue;
-        }
-
-        if (is_gr_source_file(argv[i])) {
-            g_gr_file_name = argv[i];
-            i++;
-            continue;
-        }
-
-        //Unsupport option.
-        usage();
-        return false;
-    }
-
-    if (g_c_file_name != nullptr) {
-        g_hsrc = fopen(g_c_file_name, "rb");
-        if (g_hsrc == nullptr) {
-            fprintf(stdout, "xoc: cannot open %s, error information is %s\n",
-                            g_c_file_name, strerror(errno));
-            return false;
-        }
-    }
-    if (g_output_file_name != nullptr) {
-        UNLINK(g_output_file_name);
-    }
-    if (g_opt_level == OPT_LEVEL0) {
-        g_do_cfg_remove_empty_bb = false;
-        g_do_cfg_remove_unreach_bb = false;
-        g_do_cfg_remove_trampolin_bb = false;
-        g_do_cfg_remove_unreach_bb = false;
-        g_do_cfg_remove_trampolin_bb = false;
-        g_do_cfg_dom = false;
-        g_do_cfg_pdom = false;
-        g_do_loop_ana = false;
-        g_do_cdg = false;
-        g_do_cfg_remove_redundant_branch = false;
-        g_do_cfg_invert_condition_and_remove_trampolin_bb = false;
-        g_do_aa = false;
-        g_do_md_du_analysis = false;
-        g_is_support_dynamic_type = false;
-        g_do_md_ssa = false;
-        g_do_pr_ssa = false;
-        g_compute_pr_du_chain = false;
-        g_compute_nonpr_du_chain = false;        
-        g_do_refine = false;
-        g_do_refine_auto_insert_cvt = true;
-        g_do_call_graph = false;
-        g_do_ipa = false;
-    }
-    return true;
-}
 
 
 Var * mapDecl2VAR(Decl * decl)
@@ -712,7 +308,7 @@ static void scanAndInitVar(Scope * s, VarMgr * vm, TypeMgr * tm)
                 !(DECL_is_formal_para(decl) && get_decl_sym(decl) == nullptr)) {
                 //No need to generate Var for parameter that does not
                 //have a name.
-                //e.g: parameter of foo(char*)
+                //e.g: parameter of foo(CHAR*)
                 addDecl(decl, vm, tm);
             }
         }
@@ -740,6 +336,7 @@ UINT FrontEnd(RegionMgr * rm)
         return s;
     }
 #endif
+
     s = processDeclInit();
     if (s != ST_SUCC) {
         END_TIMER(t, "CFE");
@@ -940,7 +537,7 @@ static CLRegionMgr * initRegionMgr()
 }
 
 
-static void dumpRegionMgrGR(RegionMgr * rm, CHAR * srcname)
+static void dumpRegionMgrGR(RegionMgr * rm, CHAR const* srcname)
 {
     ASSERT0(rm);
     for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
@@ -998,7 +595,7 @@ static void finiCompile(CLRegionMgr * rm,
 }
 
 
-bool compileGRFile(CHAR * gr_file_name)
+bool compileGRFile(CHAR const* gr_file_name)
 {
     bool res = true;
     ASSERT0(gr_file_name);
@@ -1050,11 +647,11 @@ bool compileCFile()
     CLRegionMgr * rm = nullptr;
     CGMgr * cgmgr = nullptr;
     FILE * asmh = nullptr;
-    START_TIMER(t, "Compile C File");
+    START_TIMER(t2, "Init Parser");
     initParser();
-    initCompile(&rm, &asmh, &cgmgr, &ti);    
-    g_fe_sym_tab = rm->getSymTab();
-    g_dbx_mgr = new CLDbxMgr();
+    END_TIMER(t2, "Init Parser");
+
+    initCompile(&rm, &asmh, &cgmgr, &ti);
     if (g_dump_file_name != nullptr) {
         rm->getLogMgr()->init(g_dump_file_name, true);
     }
@@ -1062,6 +659,9 @@ bool compileCFile()
         g_unique_dumpfile = rm->getLogMgr()->getFileHandler();
         ASSERT0(g_unique_dumpfile);
     }
+    START_TIMER(t, "Compile C File");
+    g_fe_sym_tab = rm->getSymTab();
+    g_dbx_mgr = new CLDbxMgr();
 
     if (FrontEnd(rm) != ST_SUCC) {
         res = false;
@@ -1087,8 +687,9 @@ FIN:
     g_decl2var_map.clean();
     g_var2decl_map.clean();
     destroy_scope_list();
-    finiCompile(rm, asmh, cgmgr, ti);
+    //Timer use prt2C.
     END_TIMER_FMT(t, ("Total Time To Compile '%s'", g_c_file_name));
+    finiCompile(rm, asmh, cgmgr, ti);
     show_err();
     show_warn();
     fprintf(stdout, "\n%s - (%d) error(s), (%d) warnging(s)\n",

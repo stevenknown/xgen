@@ -103,6 +103,7 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg));
     UINT cp_count = 0;
     UINT licm_count = 0;
+
     do {
         change = false;
         for (Pass * pass = passlist.get_head();

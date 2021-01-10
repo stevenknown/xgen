@@ -40,3 +40,9 @@ Pass * ARMPassMgr::allocScalarOpt()
 {
     return new ARMScalarOpt(m_rg);
 }
+
+
+Pass * ARMPassMgr::allocRefine()
+{
+    return new ARMRefine(m_rg);
+}

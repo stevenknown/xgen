@@ -1027,6 +1027,7 @@ void IR2OR::convertLabel(IRBB const* bb, OUT RecycORList & ors, IN IOC * cont)
 void IR2OR::convert(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     ASSERT0(ir && ir->verify(m_rg));
+
     RecycORList tors(this);
     switch (ir->getCode()) {
     case IR_CONST:

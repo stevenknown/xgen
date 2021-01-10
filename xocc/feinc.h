@@ -35,5 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "canon.h"
 #include "tree2ir.h"
 #include "driver.h"
+#include "cmdline.h"
 
 #endif

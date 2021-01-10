@@ -108,7 +108,7 @@ public:
     void destroy();
     bool done();
     void dump(FILE * h, bool dump_exec_detail) const;
-    void dump(CHAR * name = nullptr,
+    void dump(CHAR const* name = nullptr,
               bool is_del = true,
               bool dump_exec_detail = true) const;
 

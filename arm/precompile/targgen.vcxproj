@@ -1,4 +1,4 @@
-ï»¿<?xml version="1.0" encoding="utf-8"?>
+ï»??xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -76,6 +76,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\com\bs.cpp" />
+    <ClCompile Include="..\..\com\diagnostic.cpp" />
     <ClCompile Include="..\..\com\ltype.cpp" />
     <ClCompile Include="..\..\com\smempool.cpp" />
     <ClCompile Include="..\..\com\strbuf.cpp" />

@@ -30,6 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __CANON_H__
 #define __CANON_H__
 
+//The class canonicalize IR tree into well-formed layout that conform to
+//the guidelines of XOC IR pass preferred.
+
 class CanonCtx {
 public:
     IR * new_stmts;

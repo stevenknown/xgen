@@ -38,6 +38,7 @@ public:
 
     virtual Pass * allocDUMgr();
     virtual Pass * allocScalarOpt();
+    virtual Pass * allocRefine();
 };
 
 #endif

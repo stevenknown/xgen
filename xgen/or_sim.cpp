@@ -361,7 +361,8 @@ void BBSimulator::runOneCycle(IN OUT ORList * finished_ors)
 }
 
 
-void BBSimulator::dump(CHAR * name, bool is_del, bool dump_exec_detail) const
+void BBSimulator::dump(CHAR const* name, bool is_del,
+                       bool dump_exec_detail) const
 {
     ASSERT0(m_pool);
     #define SIMM_DUMP_NAME "zsim.tmp"
