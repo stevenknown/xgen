@@ -15,4 +15,5 @@ ARM_OBJS +=\
 ../arm/arm_scalar_opt.o\
 ../arm/arm_refine.o\
 ../arm/arm_sr.o\
-../arm/arm_var.o
+../arm/arm_var.o\
+../arm/arm_ddg.o

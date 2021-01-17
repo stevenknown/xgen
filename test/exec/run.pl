@@ -22,6 +22,7 @@ our $g_is_quit_early; #finish test if error occurred.
 our $g_osname;
 our $g_xoc_root_path;
 our $g_single_testcase; #record the single testcase
+our $g_find_testcase; #record the single testcase
 our $g_pacc;
 our $g_as;
 our $g_ld;
@@ -55,7 +56,9 @@ sub TryCompileAsmLinkRunCompare
     #my @f = findCurrent($curdir, 'c'); 
     my @f; 
     if ($g_single_testcase ne "") {
-        @f = findFileRecursively($curdir, $g_single_testcase);
+        @f = $curdir."/".$g_single_testcase;
+    } elsif ($g_find_testcase ne "") {
+        @f = findFileRecursively($curdir, $g_find_testcase);
     } elsif ($g_is_recur) {
         if ($g_is_input_gr) {
             @f = findRecursively($curdir, 'gr'); 
@@ -69,8 +72,8 @@ sub TryCompileAsmLinkRunCompare
             @f = findCurrent($curdir, 'c'); 
         }
     }
-    #my @f = `find -name "*.c"`;
 
+    #my @f = `find -name "*.c"`;
     if ($g_is_create_base_result == 1) {
         #Generate base-output log.
         foreach (@f) {

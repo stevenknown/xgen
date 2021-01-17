@@ -28,35 +28,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
+#ifndef _ARM_DDG_H_
+#define _ARM_DDG_H_
 
-#include "../xgen/xgeninc.h"
+class ARMDDG : public DataDepGraph {
+    COPY_CONSTRUCTOR(ARMDDG);
+    RegSet m_alias_regset_pred;
+protected:
+    bool m_use_rflag;
 
-//Return true if OR can be issued at given slot.
-bool ARMLIS::isValidResourceUsage(OR const* o,
-                                  SLOT slot,
-                                  OR * issue_ors[SLOT_NUM],
-                                  OR * conflict_ors[SLOT_NUM]) const
-{
-    ASSERT0(m_cg->computeORSlot(o) == slot);
-    ASSERT0(issue_ors[slot] == nullptr);
-    return true;
-}
+    //Collect the alias register into set.
+    //Registers in alias set will be add dependence in building DDG.
+    virtual void collectAliasRegSet(REG reg, OUT RegSet & alias_regset);
 
+public:
+    ARMDDG(ARMCG * cg);
+    virtual ~ARMDDG() {};
+    virtual bool handleDedicatedSR(SR const* sr, OR const* o,
+                                   bool is_result) const;
+};
 
-//Change OR to issue slot 'to_slot'.
-bool ARMLIS::changeSlot(OR * o, SLOT to_slot)
-{
-    CLUST or_clst = m_cg->computeORCluster(o);
-    CLUST to_slot_clst = m_cg->mapSlot2Cluster(to_slot);
-    ASSERT0(to_slot_clst != CLUST_UNDEF);
-    if (or_clst != CLUST_UNDEF && or_clst != to_slot_clst) {
-        if (!allowChangeCluster()) {
-            return false;
-        }
-    }
-
-    UNIT slot_unit = m_cg->mapSlot2Unit(to_slot);
-    bool succ = m_cg->changeORUnit(o, slot_unit, to_slot_clst,
-                                   m_is_regfile_unique, false);
-    return succ;
-}
+#endif

@@ -12,7 +12,7 @@ double get1(int a)
 
 float get2(int a)
 {
-    return (float)(a * 13);
+    return (float)(a + 13);
 }
 
 int run1()
@@ -25,7 +25,7 @@ int run1()
             g = get2(g);
         }
     }
-    printf("\n%d\n",g);
+    printf("\n0x%x\n",g);
 }
 
 int main()

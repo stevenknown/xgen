@@ -31,32 +31,45 @@ author: Su Zhenyu
 
 #include "../xgen/xgeninc.h"
 
-//Return true if OR can be issued at given slot.
-bool ARMLIS::isValidResourceUsage(OR const* o,
-                                  SLOT slot,
-                                  OR * issue_ors[SLOT_NUM],
-                                  OR * conflict_ors[SLOT_NUM]) const
+ARMDDG::ARMDDG(ARMCG * cg)
 {
-    ASSERT0(m_cg->computeORSlot(o) == slot);
-    ASSERT0(issue_ors[slot] == nullptr);
+    //Initialize predicated regiseter alias set.
+    m_alias_regset_pred.bunion(cg->genRflag()->getPhyReg());
+    m_alias_regset_pred.bunion(cg->genEQPred()->getPhyReg());
+    m_alias_regset_pred.bunion(cg->genNEPred()->getPhyReg());
+    m_alias_regset_pred.bunion(cg->genCSPred()->getPhyReg());
+    m_alias_regset_pred.bunion(cg->genCCPred()->getPhyReg());
+    m_alias_regset_pred.bunion(cg->genHSPred()->getPhyReg());
+    m_alias_regset_pred.bunion(cg->genLOPred()->getPhyReg());
+    m_alias_regset_pred.bunion(cg->genMIPred()->getPhyReg());
+    m_alias_regset_pred.bunion(cg->genPLPred()->getPhyReg());
+    m_alias_regset_pred.bunion(cg->genGEPred()->getPhyReg());
+    m_alias_regset_pred.bunion(cg->genLTPred()->getPhyReg());
+    m_alias_regset_pred.bunion(cg->genGTPred()->getPhyReg());
+    m_alias_regset_pred.bunion(cg->genLEPred()->getPhyReg());
+    m_alias_regset_pred.bunion(cg->genHIPred()->getPhyReg());
+    m_alias_regset_pred.bunion(cg->genLSPred()->getPhyReg());
+}
+
+
+//Return true if 'sr' need to be processed.
+bool ARMDDG::handleDedicatedSR(SR const* sr, OR const*, bool is_result) const
+{
+    //if (is_result) {
+    //    ASSERT0(m_cg);
+    //    if (sr == m_cg->getRflag()) {
+    //        return false;
+    //    }
+    //}
     return true;
 }
 
 
-//Change OR to issue slot 'to_slot'.
-bool ARMLIS::changeSlot(OR * o, SLOT to_slot)
+void ARMDDG::collectAliasRegSet(REG reg, OUT RegSet & alias_regset)
 {
-    CLUST or_clst = m_cg->computeORCluster(o);
-    CLUST to_slot_clst = m_cg->mapSlot2Cluster(to_slot);
-    ASSERT0(to_slot_clst != CLUST_UNDEF);
-    if (or_clst != CLUST_UNDEF && or_clst != to_slot_clst) {
-        if (!allowChangeCluster()) {
-            return false;
-        }
+    if (m_alias_regset_pred.is_contain(reg)) {
+        alias_regset.bunion(m_alias_regset_pred);
+        return;
     }
-
-    UNIT slot_unit = m_cg->mapSlot2Unit(to_slot);
-    bool succ = m_cg->changeORUnit(o, slot_unit, to_slot_clst,
-                                   m_is_regfile_unique, false);
-    return succ;
+    DataDepGraph::collectAliasRegSet(reg, alias_regset);
 }

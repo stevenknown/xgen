@@ -52,6 +52,7 @@ our $g_is_recur = 0;
 our $g_osname = $^O;
 our $g_xoc_root_path = "";
 our $g_single_testcase = ""; #record the single testcase
+our $g_find_testcase = ""; #record the testcase pattern to be find
 our $g_override_xocc_path = "";
 our $g_override_xocc_flag = "";
 our $g_is_compare_dump = 0;
@@ -289,6 +290,7 @@ sub runLinker
     my $output = $_[0];
     my $inputasmname = $_[1];
     my $cmdline = "$g_ld $inputasmname -o $output $g_ld_flag";
+
     print("\nCMD>>", $cmdline, "\n");
     my $retval = systemx($cmdline);
     if ($retval != 0) {
@@ -376,7 +378,7 @@ sub runXOCC
     unlink($asmname);
     $cmdline = "$g_xocc $g_cflags $src_fullpath -o $asmname $g_xocc_flag";
     $cmdline = "$cmdline $src_fullpath";
-    print("\nCMD>>", $cmdline, "\n");
+    print("\nCMD>>$cmdline");
     my $retval = systemx($cmdline);
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
@@ -496,8 +498,7 @@ sub is_exist
 {
     my $filepath = $_[0];
     if (!-e $filepath) { 
-        print "\n$_ DOES NOT EXIST!!\n";
-        abortex();
+        print "\n$filepath DOES NOT EXIST!!\n";
         return 0;
     }
     return 1;
@@ -522,6 +523,18 @@ sub parseCmdLine
             $g_is_recur = 1;
         } elsif ($ARGV[$i] eq "NotQuitEarly") {
             $g_is_quit_early = 0;
+        } elsif ($ARGV[$i] eq "FindCase") {
+            $i++;
+            if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                usage();
+                abort();
+            }
+            $i++;
+            if (!$ARGV[$i]) {
+                usage();
+                abort();
+            }
+            $g_find_testcase = $ARGV[$i];
         } elsif ($ARGV[$i] eq "Case") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
@@ -588,6 +601,19 @@ sub parseCmdLine
                 abortex();
             }
             $g_override_xocc_flag = $ARGV[$i];
+        } elsif ($ARGV[$i] eq "LinkerFlag") {
+            $i++;
+            if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                usage();
+                abort();
+            }
+            $i++;
+            if (!$ARGV[$i]) {
+                #Note ""(empty string) and undef are both in the case.
+                usage();
+                abortex();
+            }
+            $g_ld_flag = $ARGV[$i];
         } else {
             abort("UNSUPPORT COMMAND LINE:'$ARGV[$i]'");
         }
@@ -608,6 +634,9 @@ sub printEnvVar
     print "\ng_ld_flag = $g_ld_flag";
     print "\ng_is_test_gr = $g_is_test_gr";
     print "\ng_xoc_root_path = $g_xoc_root_path";
+    if ($g_find_testcase ne "") {
+        print "\ng_find_testcase = $g_find_testcase";
+    }
     if ($g_single_testcase ne "") {
         print "\ng_single_testcase = $g_single_testcase";
     }
@@ -627,7 +656,7 @@ sub selectTarget
         print "\nNOT SPECIFY A TARGET!\n";
         abort();
     }
-    if($g_osname eq 'MSWin32') {
+    if ($g_osname eq 'MSWin32') {
         if ($g_target eq "pac") {
            $g_xocc = "$g_xoc_root_path/src/xocc.prj/Debug/xocc.exe";
            $g_base_cc = "pacc";
@@ -636,11 +665,13 @@ sub selectTarget
            $g_ld_flag = "-lc -lm -lgcc -lsim";
            $g_simulator = "pacdsp-elf-run";
         } elsif ($g_target eq "arm") {
-           $g_base_cc = "arm-linux-gnueabihf-gcc";
            $g_xocc = "$g_xoc_root_path/src/xocc.arm.prj/x64/build/xocc.exe";
-           $g_as = "arm-linux-gnueabihf-as";
-           $g_ld = "arm-linux-gnueabihf-gcc";
-           $g_ld_flag = "";
+           #$g_base_cc = "arm-linux-gnueabihf-gcc";
+           #$g_as = "arm-linux-gnueabihf-as";
+           #$g_ld = "arm-linux-gnueabihf-gcc";
+           $g_base_cc = "arm-linux-gnueabi-gcc";
+           $g_as = "arm-linux-gnueabi-as";
+           $g_ld = "arm-linux-gnueabi-gcc";
            $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
         } elsif ($g_target eq "x86") {
            $g_xocc = "$g_xoc_root_path/src/xocc.x64.prj/debug/xocc.exe";
@@ -657,11 +688,13 @@ sub selectTarget
             $g_ld_flag = "-lc -lm -lgcc -lsim";
             $g_simulator = "pacdsp-elf-run";
         } elsif ($g_target eq "arm") {
-            $g_base_cc = "arm-linux-gnueabihf-gcc";
             $g_xocc = "$g_xoc_root_path/src/arm/xocc.exe";
-            $g_as = "arm-linux-gnueabihf-as";
-            $g_ld = "arm-linux-gnueabihf-gcc";
-            $g_ld_flag = "";
+            #$g_base_cc = "arm-linux-gnueabihf-gcc";
+            #$g_as = "arm-linux-gnueabihf-as";
+            #$g_ld = "arm-linux-gnueabihf-gcc";
+            $g_base_cc = "arm-linux-gnueabi-gcc";
+            $g_as = "arm-linux-gnueabi-as";
+            $g_ld = "arm-linux-gnueabi-gcc";
             $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
         } elsif ($g_target eq "x86") {
             $g_xocc = "$g_xoc_root_path/src/x86/xocc.exe";

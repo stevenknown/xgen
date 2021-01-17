@@ -1,2 +1,2 @@
 int printf(char const*,...);
-int main(void) { return printf("Hello ARM!\n"); }
+int main(void) { printf("Hello ARM!\n"); return 0; }

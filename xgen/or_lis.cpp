@@ -372,6 +372,42 @@ void LIS::updateReadyList(OR const* o, DataDepGraph const& ddg,
 }
 
 
+bool LIS::tryIssueCandList(PreemptiveORList & cand_list, DataDepGraph * stepddg,
+                           DefSBitSet * visited)
+{
+    //Appropriate OR has been selected and issued.
+    bool issued = false;
+
+    //Record selected OR that is ready to issue, and these ORs
+    //will not has conflict with ones already issued both in
+    //hardware resources and data dependences.
+    OR * issue_ors[SLOT_NUM] = {0};
+    if (cand_list.get_elem_count() > 0) {
+        //Note OR in cand_list may be changed.
+        if (selectIssueORs(cand_list, issue_ors)) {
+            for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {
+                if (issue_ors[i] == nullptr) { continue; }
+                if (isScheduleDelaySlot() &&
+                    issue_ors[i] == m_br_ord->getOR()) {
+                    //Branch-OR is ready to schedule!
+                    ORDESC_start_cyc(m_br_ord) = m_sim->getCurCycle();
+                }
+                if (m_sim->issue(issue_ors[i], (SLOT)(FIRST_SLOT + i))) {
+                    m_ready_list.remove(issue_ors[i]);
+                }
+                if (stepddg != nullptr) {
+                    updateReadyList(issue_ors[i], *stepddg, visited);
+                    stepddg->removeOR(issue_ors[i]);
+                }
+                issued = true;
+            }
+        }
+    }
+    m_sim->runOneCycle(nullptr);
+    return issued; 
+}
+
+
 //Choose candidate OR from ready-list, and fill available issue slot.
 //Return true if there are ORs issued, and ready-list should
 //be recomputed.
@@ -402,34 +438,7 @@ bool LIS::fillIssueSlot(DataDepGraph * stepddg, DefSBitSet * visited)
     }
 
     //Appropriate OR has been selected and issued.
-    bool issued = false;
-
-    //Record selected OR that is ready to issue, and these ORs
-    //will not has conflict with ones already issued both in
-    //hardware resources and data dependences.
-    OR * issue_ors[SLOT_NUM] = {0};
-    if (cand_list->get_elem_count() > 0) {
-        //Note OR in cand_list may be changed.
-        if (selectIssueORs(*cand_list, issue_ors)) {
-            for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {
-                if (issue_ors[i] == nullptr) { continue; }
-                if (isScheduleDelaySlot() &&
-                    issue_ors[i] == m_br_ord->getOR()) {
-                    //Branch-OR is ready to schedule!
-                    ORDESC_start_cyc(m_br_ord) = m_sim->getCurCycle();
-                }
-                if (m_sim->issue(issue_ors[i], (SLOT)(FIRST_SLOT + i))) {
-                    m_ready_list.remove(issue_ors[i]);
-                }
-                if (stepddg != nullptr) {
-                    updateReadyList(issue_ors[i], *stepddg, visited);
-                    stepddg->removeOR(issue_ors[i]);
-                }
-                issued = true;
-            }
-        }
-    }
-    m_sim->runOneCycle(nullptr);
+    bool issued = tryIssueCandList(*cand_list, stepddg, visited);
     cand_list->release();
     return issued;
 }
@@ -532,10 +541,13 @@ bool LIS::schedule()
     stepddg->clone(*m_ddg);
     OR * latest = nullptr;
     stepddg->computeEstartAndLstart(*m_sim, &latest);
-    OR * last = m_bb->getLastOR();
-    if (!isScheduleDelaySlot() && last->is_br() && latest != last) {
-        //Have to guarrantee BR is the last OR.
-        stepddg->appendEdge(DEP_HYB, latest, last);
+
+    OR * left = nullptr;
+    if (!isScheduleDelaySlot()) {
+        left = get_br();
+        if (left != nullptr) {
+            stepddg->removeOR(left);
+        }
     }
 
     DefMiscBitSetMgr sm;
@@ -558,6 +570,15 @@ RESCH:
     computeReadyList(*stepddg, visited, true);
     while (stepddg->getVertexNum() > 0 || !m_sim->done()) {
         fillIssueSlot(stepddg, &visited);
+    }
+
+    if (left != nullptr) {
+        ASSERT0(!m_tmp_orlist.is_occupied());
+        m_tmp_orlist.occupy();
+        m_tmp_orlist.append_tail(left);
+        //There is no need to update stepddg any more.
+        tryIssueCandList(m_tmp_orlist, nullptr, nullptr);
+        m_tmp_orlist.release();
     }
 
     if (isScheduleDelaySlot() && allowReschedule()) {

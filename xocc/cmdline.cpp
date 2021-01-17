@@ -148,6 +148,8 @@ protected:
 
     static Desc const option_desc[];
     static Desc const dump_option_desc[];
+
+public:
     static CHAR const* dump_option_prefix;
     static CHAR const* disable_option_prefix;
 
@@ -260,12 +262,16 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "redirect internal compiler output information to given dump file", },
     { "ipa", &xoc::g_do_ipa,
       "enable interprocedual analysis", },
+    { "cfg", &xoc::g_do_cfg,
+      "enable control-flow-graph optimization", },
     { "schedule_delay_slot", &xgen::g_enable_schedule_delay_slot,
       "enable scheduling branch-delay-slot", },
     { "cg", &xgen::g_do_cg,
       "enable target code generation", },
     { "gra", &xgen::g_do_gra,
       "enable global-register-allocation", },
+    { "lis", &xgen::g_do_lis,
+      "enable instruction-scheduling", },      
 };
 
 
@@ -290,6 +296,8 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump md-ssa information", },
     { "rce", &xoc::g_dump_opt.is_dump_rce,
       "dump redundant-code-elimination", },
+    { "cp", &xoc::g_dump_opt.is_dump_cp,
+      "dump copy-propagation", },
     { "ra", &xoc::g_dump_opt.is_dump_ra,
       "dump register allocation", },
     { "cg", &xoc::g_dump_opt.is_dump_cg,
@@ -424,17 +432,18 @@ static bool dispatchByPrefix(CHAR const* cmdstr, INT argc, CHAR const* argv[],
 
     ASSERT0(boption);
 
-    CHAR const* prefix = "no-";
-    if (xstrcmp(cmdstr, prefix, (INT)strlen(prefix))) {
+    CHAR const* prefix = BoolOption::disable_option_prefix;
+    if (xcom::xstrcmp(cmdstr, prefix, (INT)strlen(prefix))) {
         bool res = dispatchByPrefix(cmdstr + strlen(prefix), argc, argv,
                                     i, boption);
+        if (!res) { return res; }
         ASSERT0(*boption);
         **boption = !(**boption);
         return res;
     }
 
-    prefix = "dump-";
-    if (xstrcmp(cmdstr, prefix, (INT)strlen(prefix))) {
+    prefix = BoolOption::dump_option_prefix;
+    if (xcom::xstrcmp(cmdstr, prefix, (INT)strlen(prefix))) {
         return dispatchByPrefixDump(cmdstr + strlen(prefix), argc, argv, i);
     }
 
@@ -562,6 +571,8 @@ bool processCmdLine(INT argc, CHAR const* argv[])
         g_do_refine_auto_insert_cvt = true;
         g_do_call_graph = false;
         g_do_ipa = false;
+        g_do_lis = false;
+        g_do_cfg = false;
     }
     return true;
 }

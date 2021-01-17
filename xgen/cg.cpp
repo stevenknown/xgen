@@ -3774,8 +3774,6 @@ void CG::computeMaxRealParamSpace()
 }
 
 
-//is_log: false value means that Caller will delete
-//        the object allocated utilmately.
 DataDepGraph * CG::allocDDG()
 {
     return new DataDepGraph();
@@ -3819,7 +3817,8 @@ void CG::preLS(IN ORBB * bb,
     tddg->setParam(DEP_PHY_REG|DEP_MEM_FLOW|DEP_MEM_OUT|DEP_REG_ANTI|
                    DEP_MEM_ANTI|DEP_SYM_REG);
     Vector<ParallelPartMgr*> * ppm_vec = ra_mgr->getParallelPartMgrVec();
-    ParallelPartMgr * ppm = ppm_vec == nullptr ? nullptr : ppm_vec->get(bb->id());
+    ParallelPartMgr * ppm = ppm_vec == nullptr ?
+        nullptr : ppm_vec->get(bb->id());
     tddg->init(bb);
     tddg->setParallelPartMgr(ppm);
 
@@ -3837,7 +3836,7 @@ void CG::preLS(IN ORBB * bb,
     if (g_enable_schedule_delay_slot) {
         mode |= LIS::SCH_BRANCH_DELAY_SLOT;
         mode |= LIS::SCH_ALLOW_RESCHED;
-    }    
+    }
 
     //Init LIS
     LIS * tlis = allocLIS(bb, tddg, tsim, mode);
@@ -4258,8 +4257,7 @@ bool CG::perform()
     //DO NOT DUMP ORBB LIST AFTER THIS LINE//
     /////////////////////////////////////////
 
-    END_TIMER_FMT(tcg, ("Code Generation Perform '%s'",
-                        m_rg->getRegionName()));    
+    END_TIMER_FMT(tcg, ("Code Generation Perform '%s'", m_rg->getRegionName()));
     return true;
 }
 #endif

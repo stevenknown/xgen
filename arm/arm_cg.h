@@ -212,6 +212,20 @@ public:
     SR * genLEPred(); //Signed LE
     SR * genHIPred(); //Unsigned GT
     SR * genLSPred(); //Unsigned LE
+    SR * getEQPred() const;
+    SR * getNEPred() const;
+    SR * getCSPred() const; //Carry set.
+    SR * getCCPred() const; //Carry clear.
+    SR * getHSPred() const; //Signed higher (identical to CS, Unsigned GE).
+    SR * getLOPred() const; //Unsigned lower (identical to CC, Unsigned LT)
+    SR * getMIPred() const; //Minus, negative, less-than.
+    SR * getPLPred() const; //Plus, positive or zero.
+    SR * getGEPred() const; //Signed GE
+    SR * getLTPred() const; //Signed LT
+    SR * getGTPred() const; //Signed GT
+    SR * getLEPred() const; //Signed LE
+    SR * getHIPred() const; //Unsigned GT
+    SR * getLSPred() const; //Unsigned LE
 
     //FIXME, only for passing the compilation.
     virtual SR * genPredReg() { return genTruePred(); }
@@ -397,6 +411,7 @@ public:
     virtual CLUST mapReg2Cluster(REG reg) const;
     virtual CLUST mapSR2Cluster(OR const* o, SR const* sr) const;
 
+    virtual DataDepGraph * allocDDG();
     virtual LIS * allocLIS(ORBB * bb, DataDepGraph * ddg,
                            BBSimulator * sim, UINT sch_mode);
     virtual IR2OR * allocIR2OR();

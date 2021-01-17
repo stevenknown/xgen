@@ -18,7 +18,7 @@ sub removeDesignatedFile
     my $project_dir = $curdir;
     sub wanted
     {
-        push(@srclist, $File::Find::name) if ($_ =~ m/.*\.(xocc_output.txt|xocc_dump.txt|o|i|map|vcg|js|d.ts|swp|swo|asm)$/);
+        push(@srclist, $File::Find::name) if ($_ =~ m/.*\.(xocc_output.txt|xocc_dump.txt|o|i|map|vcg|js|d.ts|swp|swo|asm|out)$/);
     }
     &find(\&wanted, $project_dir);
     foreach (@srclist){

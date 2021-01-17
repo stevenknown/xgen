@@ -91,6 +91,7 @@ protected:
     SMemPool * m_pool;    
     Stack<DDGParam> m_params_stack;
     DDGParam m_ddg_param;
+    RegSet m_tmp_alias_regset; //for local tmp used.
 
     typedef TMap<UINT, UINT> ID2Cyc;
     ID2Cyc m_estart;
@@ -111,30 +112,49 @@ protected:
 
     void * cloneEdgeInfo(xcom::Edge * e);
     void * cloneVertexInfo(xcom::Vertex * v);
+    //Collect the alias register into set.
+    //Registers in alias set will be add dependence in building DDG.
+    virtual void collectAliasRegSet(REG reg, OUT RegSet & alias_regset);
 
-    void handle_results(OR const* o,
-                        OUT Reg2ORList & map_reg2defors,
-                        OUT Reg2ORList & map_reg2useors,
-                        OUT SR2ORList & map_sr2defors,
-                        OUT SR2ORList & map_sr2useors);
-    void handle_opnds(OR const* o,
-                      OUT Reg2ORList & map_reg2defors,
-                      OUT Reg2ORList & map_reg2useors,
-                      OUT SR2ORList & map_sr2defors,
-                      OUT SR2ORList & map_sr2useors);
-    void handle_store(OR const* o,
-                      ULONG mem_loc_idx,
-                      OUT UINT2ConstORList & map_memloc2defors,
-                      OUT UINT2ConstORList & map_memloc2useors);
-    void handle_load(OR const* o,
-                     ULONG mem_loc_idx,
+    void handleResultsPhyRegOut(OR const* o, REG reg,
+                                OUT Reg2ORList & map_reg2defors,
+                                OUT Reg2ORList & map_reg2useors);
+    void handleResultsPhyRegOut(OR const* o, SR const* sr,
+                                OUT Reg2ORList & map_reg2defors,
+                                OUT Reg2ORList & map_reg2useors);
+    void handleResultsSymRegOut(OR const* o, SR const* sr,
+                                OUT SR2ORList & map_sr2defors,
+                                OUT SR2ORList & map_sr2useors);
+    void handleOpndsPhyRegFlow(OR const* o, REG reg,
+                               OUT Reg2ORList & map_reg2defors,
+                               OUT Reg2ORList & map_reg2useors);
+    void handleOpndsPhyRegFlow(OR const* o, SR const* sr,
+                               OUT Reg2ORList & map_reg2defors,
+                               OUT Reg2ORList & map_reg2useors);
+    void handleOpndsSymRegRead(OR const* o, SR const* sr,
+                               OUT SR2ORList & map_sr2defors,
+                               OUT SR2ORList & map_sr2useors);
+    void handleResults(OR const* o,
+                       OUT Reg2ORList & map_reg2defors,
+                       OUT Reg2ORList & map_reg2useors,
+                       OUT SR2ORList & map_sr2defors,
+                       OUT SR2ORList & map_sr2useors);
+    void handleOpnds(OR const* o,
+                     OUT Reg2ORList & map_reg2defors,
+                     OUT Reg2ORList & map_reg2useors,
+                     OUT SR2ORList & map_sr2defors,
+                     OUT SR2ORList & map_sr2useors);
+    void handleStore(OR const* o, ULONG mem_loc_idx,
                      OUT UINT2ConstORList & map_memloc2defors,
                      OUT UINT2ConstORList & map_memloc2useors);
+    void handleLoad(OR const* o, ULONG mem_loc_idx,
+                    OUT UINT2ConstORList & map_memloc2defors,
+                    OUT UINT2ConstORList & map_memloc2useors);
 
     virtual void * xmalloc(UINT size); //Given size of byte
 public:
     DataDepGraph();
-    ~DataDepGraph();
+    virtual ~DataDepGraph();
 
     virtual bool appendEdge(ULONG deptype, OR const* from, OR const* to);
     virtual void appendOR(OR * o);
@@ -196,6 +216,10 @@ public:
     DDGParam get_param() { return m_ddg_param; }
     virtual INT get_slack(OR const* o) const;
 
+    //Return true if 'sr' need to be processed.
+    //If return true, 'sr' and 'or' will be analyzed to build
+    //dependence if there exist use-OR or def-OR.
+    //The decision always used to reduce compilation time and memory.
     virtual bool handleDedicatedSR(SR const* sr, OR const* o,
                                    bool is_result) const;
     bool has_mem_out_dep() const { return HAVE_FLAG(m_ddg_param, DEP_MEM_OUT); }

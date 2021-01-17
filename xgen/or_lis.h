@@ -76,6 +76,9 @@ protected:
         return o == ORDESC_or(m_br_ord);
     }
 
+    bool tryIssueCandList(PreemptiveORList & cand_list, DataDepGraph * stepddg,
+                          DefSBitSet * visited);
+
     inline void * xmalloc(INT size)
     {
         ASSERTN(size > 0, ("xmalloc: size less zero!"));

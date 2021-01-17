@@ -435,7 +435,10 @@ void DataDepGraph::removeRedundantDep()
 }
 
 
-//Return true if 'sr' need to process.
+//Return true if 'sr' need to be processed.
+//If return true, 'sr' and 'or' will be analyzed to build
+//dependence if there exist use-OR or def-OR.
+//The decision always used to reduce compilation time and memory.
 bool DataDepGraph::handleDedicatedSR(SR const*, OR const*, bool is_result) const
 {
     DUMMYUSE(is_result);
@@ -443,153 +446,233 @@ bool DataDepGraph::handleDedicatedSR(SR const*, OR const*, bool is_result) const
 }
 
 
-void DataDepGraph::handle_results(OR const* o,
-                                  OUT Reg2ORList & map_reg2defors,
-                                  OUT Reg2ORList & map_reg2useors,
-                                  OUT SR2ORList & map_sr2defors,
-                                  OUT SR2ORList & map_sr2useors)
+//Build dependence of physical register.
+void DataDepGraph::handleResultsPhyRegOut(OR const* o, SR const* sr,
+                                          OUT Reg2ORList & map_reg2defors,
+                                          OUT Reg2ORList & map_reg2useors)
+{
+    ASSERT0(o && sr);
+    REG reg = sr->getPhyReg();
+    ASSERT0(reg != REG_UNDEF);
+
+    m_tmp_alias_regset.clean();
+    collectAliasRegSet(reg, m_tmp_alias_regset);
+    for (INT i = m_tmp_alias_regset.get_first();
+         i >= 0; i = m_tmp_alias_regset.get_next(i)) {
+        handleResultsPhyRegOut(o, (REG)i, map_reg2defors, map_reg2useors);
+    }
+}
+
+                                          
+//Build dependence of physical register.
+void DataDepGraph::handleResultsPhyRegOut(OR const* o, REG reg,
+                                          OUT Reg2ORList & map_reg2defors,
+                                          OUT Reg2ORList & map_reg2useors)
+{
+    ASSERT0(o && reg != REG_UNDEF);
+    ConstORList * orlst = map_reg2defors.get(reg);
+    if (orlst != nullptr) {
+        //Build REG_OUT dependence.
+        for (OR const* defor = orlst->get_head();
+             defor != nullptr; defor = orlst->get_next()) {
+            if (defor == o) {
+                continue;
+            }
+            appendEdge(DEP_REG_OUT, defor, o);
+        }
+    }
+    
+    orlst = map_reg2useors.get(reg);
+    if (orlst != nullptr) {
+        //Build REG_ANTI dependence.
+        for (OR const* useor = orlst->get_head();
+             useor != nullptr; useor = orlst->get_next()) {
+            if (useor == o) {
+                continue;
+            }
+            appendEdge(DEP_REG_ANTI, useor, o);
+        }
+    }
+    
+    map_reg2defors.set(reg, o);
+    
+    //Kill all USE ors.
+    map_reg2useors.clean(reg);
+}
+                                 
+
+void DataDepGraph::handleResultsSymRegOut(OR const* o, SR const* sr,
+                                          OUT SR2ORList & map_sr2defors,
+                                          OUT SR2ORList & map_sr2useors)
+{
+    ASSERT0(o && sr);
+    SR * tsr = const_cast<SR*>(sr);
+    ConstORList * orlst = map_sr2defors.get(tsr);
+    if (orlst != nullptr) {
+        //Build REG_OUT dependence.
+        for (OR const* defor = orlst->get_head();
+             defor != nullptr; defor = orlst->get_next()) {
+            if (defor == o) {
+                continue;
+            }
+            appendEdge(DEP_REG_OUT, defor, o);
+        }
+    }
+
+    orlst = map_sr2useors.get(tsr);
+    if (orlst != nullptr) {
+        //Build REG_ANTI dependence.
+        for (OR const* useor = orlst->get_head();
+             useor != nullptr; useor = orlst->get_next()) {
+            if (useor == o) {
+                continue;
+            }
+            appendEdge(DEP_REG_ANTI, useor, o);
+        }
+    }
+
+    map_sr2defors.set(tsr, o);
+
+    //Kill all USE ors.
+    map_sr2useors.clean(tsr);
+}
+
+
+void DataDepGraph::handleResults(OR const* o,
+                                 OUT Reg2ORList & map_reg2defors,
+                                 OUT Reg2ORList & map_reg2useors,
+                                 OUT SR2ORList & map_sr2defors,
+                                 OUT SR2ORList & map_sr2useors)
 {
     for (UINT i = 0; i < o->result_num(); i++) {
-        SR * sr = o->get_result(i);
+        SR const* sr = o->get_result(i);
         if (sr == m_cg->getTruePred() ||
             !sr->is_reg()) {
             continue;
         }
 
-        if (m_cg->isDedicatedSR(sr) &&
-            !handleDedicatedSR(sr, o, true)) {
-            continue;
-        }
-
-        if (has_phy_reg_dep() &&
-            sr->getPhyReg() != REG_UNDEF) {
-            //Dep of physical register.
-            REG reg = sr->getPhyReg();
-            ConstORList * orlst = map_reg2defors.get(reg);
-            if (orlst != nullptr) {
-                for (OR const* defor = orlst->get_head();
-                     defor != nullptr; defor = orlst->get_next()) {
-                    if (defor == o) {
-                        continue;
-                    }
-                    appendEdge(DEP_REG_OUT, defor, o);
-                }
-            }
-
-            orlst = map_reg2useors.get(reg);
-            if (orlst != nullptr) {
-                for (OR const* useor = orlst->get_head();
-                     useor != nullptr; useor = orlst->get_next()) {
-                    if (useor == o) {
-                        continue;
-                    }
-                    appendEdge(DEP_REG_ANTI, useor, o);
-                }
-            }
-
-            map_reg2defors.set(reg, o);
-
-            //Kill all USE ors.
-            map_reg2useors.clean(reg);
-        }
-
-        if (has_sym_reg_dep()) {
-            ConstORList * orlst = map_sr2defors.get(sr);
-            if (orlst != nullptr) {
-                for (OR const* defor = orlst->get_head();
-                     defor != nullptr; defor = orlst->get_next()) {
-                    if (defor == o) {
-                        continue;
-                    }
-                    appendEdge(DEP_REG_OUT, defor, o);
-                }
-            }
-
-            orlst = map_sr2useors.get(sr);
-            if (orlst != nullptr) {
-                for (OR const* useor = orlst->get_head();
-                     useor != nullptr; useor = orlst->get_next()) {
-                    if (useor == o) {
-                        continue;
-                    }
-                    appendEdge(DEP_REG_ANTI, useor, o);
-                }
-            }
-
-            map_sr2defors.set(sr, o);
-
-            //Kill all USE ors.
-            map_sr2useors.clean(sr);
-        } //end if
-    } //end for each of result
-}
-
-
-void DataDepGraph::handle_opnds(OR const* o,
-                                OUT Reg2ORList & map_reg2defors,
-                                OUT Reg2ORList & map_reg2useors,
-                                OUT SR2ORList & map_sr2defors,
-                                OUT SR2ORList & map_sr2useors)
-{
-    for (UINT i = 0; i < o->opnd_num(); i++) {
-        SR * sr = o->get_opnd(i);
-        if (sr == m_cg->getTruePred() || !sr->is_reg()) {
-            continue;
-        }
-        if (m_cg->isDedicatedSR(sr) &&
-            !handleDedicatedSR(sr, o, false)) {
+        if (m_cg->isDedicatedSR(sr) && !handleDedicatedSR(sr, o, true)) {
             continue;
         }
 
         if (has_phy_reg_dep() && sr->getPhyReg() != REG_UNDEF) {
-            //Dep of physical register.
-            REG reg = sr->getPhyReg();
-            ConstORList * orlst = map_reg2defors.get(reg);
-            if (orlst != nullptr) {
-                for (OR const* defor = orlst->get_head();
-                     defor != nullptr; defor = orlst->get_next()) {
-                    appendEdge(DEP_REG_FLOW, defor, o);
-                }
-            }
-            if (has_reg_read_dep()) {
-                //Dep of read-read of register.
-                ConstORList * orlst2 = map_reg2useors.get(reg);
-                if (orlst2 != nullptr) {
-                    for (OR const* useor = orlst2->get_head();
-                         useor != nullptr; useor = orlst2->get_next()) {
-                        if (useor == o) {
-                            continue;
-                        }
-                        appendEdge(DEP_REG_READ, useor, o);
-                    }
-                }
-            }
-            map_reg2useors.append(reg, const_cast<OR*>(o));
+            handleResultsPhyRegOut(o, sr, map_reg2defors, map_reg2useors);
         }
 
         if (has_sym_reg_dep()) {
-            ConstORList * orlst = map_sr2defors.get(sr);
+            handleResultsSymRegOut(o, sr, map_sr2defors, map_sr2useors);
+        }
+    }
+}
 
-            if (orlst != nullptr) {
-                for (OR const* defor = orlst->get_head();
-                     defor != nullptr; defor = orlst->get_next()) {
-                    appendEdge(DEP_REG_FLOW, defor, o);
+
+void DataDepGraph::collectAliasRegSet(REG reg, OUT RegSet & alias_regset)
+{
+    alias_regset.bunion(reg);
+}
+
+
+//Build dependence of physical register.
+void DataDepGraph::handleOpndsPhyRegFlow(OR const* o, SR const* sr,
+                                         OUT Reg2ORList & map_reg2defors,
+                                         OUT Reg2ORList & map_reg2useors)
+{
+    ASSERT0(o && sr);
+    REG reg = sr->getPhyReg();
+    ASSERT0(reg != REG_UNDEF);
+
+    m_tmp_alias_regset.clean();
+    collectAliasRegSet(reg, m_tmp_alias_regset);
+    for (INT i = m_tmp_alias_regset.get_first();
+         i >= 0; i = m_tmp_alias_regset.get_next(i)) {
+        handleOpndsPhyRegFlow(o, (REG)i, map_reg2defors, map_reg2useors);
+    }
+}
+
+
+void DataDepGraph::handleOpndsPhyRegFlow(OR const* o, REG reg,
+                                         OUT Reg2ORList & map_reg2defors,
+                                         OUT Reg2ORList & map_reg2useors)
+{
+    ASSERT0(reg != REG_UNDEF);
+    ConstORList * orlst = map_reg2defors.get(reg);
+    if (orlst != nullptr) {
+        //Build REG_FLOW dependence.
+        for (OR const* defor = orlst->get_head();
+             defor != nullptr; defor = orlst->get_next()) {
+            appendEdge(DEP_REG_FLOW, defor, o);
+        }
+    }
+    if (has_reg_read_dep()) {
+        ConstORList * orlst2 = map_reg2useors.get(reg);
+        if (orlst2 != nullptr) {
+            //Build REG_READ dependence.
+            for (OR const* useor = orlst2->get_head();
+                 useor != nullptr; useor = orlst2->get_next()) {
+                if (useor == o) {
+                    continue;
                 }
+                appendEdge(DEP_REG_READ, useor, o);
             }
-            if (has_reg_read_dep()) {
-                //Dep of read-read of register.
-                ConstORList * orlst2 = map_sr2useors.get(sr);
-                if (orlst2 != nullptr) {
-                    for (OR const* useor = orlst2->get_head();
-                         useor != nullptr; useor = orlst2->get_next()) {
-                        if (useor == o) {
-                            continue;
-                        }
-                        appendEdge(DEP_REG_READ, useor, o);
-                    }
+        }
+    }
+    map_reg2useors.append(reg, const_cast<OR*>(o));
+}
+
+
+void DataDepGraph::handleOpndsSymRegRead(OR const* o, SR const* sr,
+                                         OUT SR2ORList & map_sr2defors,
+                                         OUT SR2ORList & map_sr2useors)
+{
+    ASSERT0(o && sr);
+    SR * tsr = const_cast<SR*>(sr);
+    ConstORList * orlst = map_sr2defors.get(tsr);
+    if (orlst != nullptr) {
+        //Build REG_FLOW dependence.
+        for (OR const* defor = orlst->get_head();
+             defor != nullptr; defor = orlst->get_next()) {
+            appendEdge(DEP_REG_FLOW, defor, o);
+        }
+    }
+    if (has_reg_read_dep()) {
+        //Build REG_READ dependence.
+        ConstORList * orlst2 = map_sr2useors.get(tsr);
+        if (orlst2 != nullptr) {
+            for (OR const* useor = orlst2->get_head();
+                 useor != nullptr; useor = orlst2->get_next()) {
+                if (useor == o) {
+                    continue;
                 }
+                appendEdge(DEP_REG_READ, useor, o);
             }
-            map_sr2useors.append(sr, const_cast<OR*>(o));
+        }
+    }
+    map_sr2useors.append(tsr, const_cast<OR*>(o));
+}
+
+
+void DataDepGraph::handleOpnds(OR const* o,
+                               OUT Reg2ORList & map_reg2defors,
+                               OUT Reg2ORList & map_reg2useors,
+                               OUT SR2ORList & map_sr2defors,
+                               OUT SR2ORList & map_sr2useors)
+{
+    for (UINT i = 0; i < o->opnd_num(); i++) {
+        SR const* sr = o->get_opnd(i);
+        if (sr == m_cg->getTruePred() || !sr->is_reg()) {
+            continue;
+        }
+
+        if (m_cg->isDedicatedSR(sr) && !handleDedicatedSR(sr, o, false)) {
+            continue;
+        }
+
+        if (has_phy_reg_dep() && sr->getPhyReg() != REG_UNDEF) {
+            handleOpndsPhyRegFlow(o, sr, map_reg2defors, map_reg2useors);
+        }
+
+        if (has_sym_reg_dep()) {
+            handleOpndsSymRegRead(o, sr, map_sr2defors, map_sr2useors);
         }
     }
 }
@@ -610,9 +693,9 @@ void DataDepGraph::buildRegDep()
          ct = ((List<OR*>*)ORBB_orlist(m_bb))->get_next(ct)) {
         OR * o = ct->val();
         addVertex(o->id());
-        handle_opnds(o, map_reg2defors, map_reg2useors,
+        handleOpnds(o, map_reg2defors, map_reg2useors,
                      map_sr2defors, map_sr2useors);
-        handle_results(o, map_reg2defors, map_reg2useors,
+        handleResults(o, map_reg2defors, map_reg2useors,
                        map_sr2defors, map_sr2useors);
     }
 }
@@ -719,13 +802,12 @@ void DataDepGraph::getORListWhichAccessSameMem(OUT ORList & mem_ors,
 
 
 //OR is LOAD.
-void DataDepGraph::handle_load(OR const* o,
-                               ULONG mem_loc_idx,
-                               OUT UINT2ConstORList & map_memloc2defors,
-                               OUT UINT2ConstORList & map_memloc2useors)
+void DataDepGraph::handleLoad(OR const* o, ULONG mem_loc_idx,
+                              OUT UINT2ConstORList & map_memloc2defors,
+                              OUT UINT2ConstORList & map_memloc2useors)
 {
     ASSERT0(o->is_load());
-    //Processing DEF of mem
+    //Processing DEF of memory location.
     ConstORList * orlst = map_memloc2defors.get(mem_loc_idx);
     if (orlst != nullptr) {
         for (OR const* defor = orlst->get_head();
@@ -736,7 +818,7 @@ void DataDepGraph::handle_load(OR const* o,
     }
 
     if (has_mem_read_dep()) {
-        //Processing USE of mem
+        //Processing USE of memory location.
         ConstORList * orlst2 = map_memloc2useors.get(mem_loc_idx);
         if (orlst2 != nullptr) {
             for (OR const* useor = orlst2->get_head();
@@ -752,14 +834,13 @@ void DataDepGraph::handle_load(OR const* o,
 
 
 //OR is STORE.
-void DataDepGraph::handle_store(OR const* o,
-                                ULONG mem_loc_idx,
-                                OUT UINT2ConstORList & map_memloc2defors,
-                                OUT UINT2ConstORList & map_memloc2useors)
+void DataDepGraph::handleStore(OR const* o, ULONG mem_loc_idx,
+                               OUT UINT2ConstORList & map_memloc2defors,
+                               OUT UINT2ConstORList & map_memloc2useors)
 {
     ASSERT0(o->is_store());
 
-    //Processing DEF of mem
+    //Processing DEF of memory location.
     ConstORList * orlst = map_memloc2defors.get(mem_loc_idx);
     if (orlst != nullptr) {
         for (OR const* defor = orlst->get_head();
@@ -770,7 +851,7 @@ void DataDepGraph::handle_store(OR const* o,
     }
 
     if (has_mem_read_dep()) {
-        //Processing USE of mem
+        //Processing USE of memory location.
         ConstORList * orlst2 = map_memloc2useors.get(mem_loc_idx);
         if (orlst2 != nullptr) {
             for (OR const* useor = orlst2->get_head();
@@ -811,12 +892,12 @@ void DataDepGraph::buildMemDep()
             ASSERT0(mem->is_mem());
 
             if (mem->is_load()) {
-                handle_load(mem, mem_loc_idx, map_memloc2defors,
+                handleLoad(mem, mem_loc_idx, map_memloc2defors,
                             map_memloc2useors);
             }
 
             if (mem->is_store()) {
-                handle_store(mem, mem_loc_idx, map_memloc2defors,
+                handleStore(mem, mem_loc_idx, map_memloc2defors,
                              map_memloc2useors);
             }
 
@@ -1292,8 +1373,9 @@ void DataDepGraph::getEstartAndLstart(OUT UINT & estart,
 
 //Return memory operations which may access same memory location.
 //Calculate the length of critical path.
-//fin_or: record the OR which at the maximum path length.
-//Record the result
+//fin_or: record the OR which at the end of maximum path length.
+//        Note the fin_or may not be unique.
+//Record the result.
 UINT DataDepGraph::computeEstartAndLstart(BBSimulator const& sim,
                                           OUT OR ** fin_or)
 {

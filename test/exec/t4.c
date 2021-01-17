@@ -91,5 +91,5 @@ int main()
   result = test_control();
 //  printf("a = %d\n", a);
 
-  return result;
+  return result == 3 ? 0 : 1;
 }

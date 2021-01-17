@@ -120,5 +120,5 @@ int main(void)
   one = 1;
   void *p;
   foo (&one, 1, &p);
-  abort ();
+  return 0;
 }

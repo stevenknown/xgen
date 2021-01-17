@@ -39,6 +39,12 @@ void ARMCG::initDedicatedSR()
 }
 
 
+DataDepGraph * ARMCG::allocDDG()
+{
+    return new ARMDDG(this);
+}
+
+
 LIS * ARMCG::allocLIS(ORBB * bb, DataDepGraph * ddg, BBSimulator * sim,
                       UINT sch_mode)
 {
@@ -184,6 +190,92 @@ SR * ARMCG::genTruePred()
 SR * ARMCG::getTruePred() const
 {
     return getDedicatedReg(REG_TRUE_PRED);
+}
+
+
+SR * ARMCG::getEQPred() const
+{
+    return getDedicatedReg(REG_EQ_PRED);
+}
+
+
+SR * ARMCG::getNEPred() const
+{
+    return getDedicatedReg(REG_NE_PRED);
+}
+
+
+SR * ARMCG::getCSPred() const
+{
+    return getDedicatedReg(REG_CS_PRED);
+}
+
+
+SR * ARMCG::getHSPred() const
+{
+    return getDedicatedReg(REG_HS_PRED);
+}
+
+
+SR * ARMCG::getCCPred() const
+{
+    return getDedicatedReg(REG_CC_PRED);
+}
+
+
+SR * ARMCG::getLOPred() const
+{
+    return getDedicatedReg(REG_LO_PRED);
+}
+
+
+//Unsigned GT
+SR * ARMCG::getHIPred() const
+{
+    return getDedicatedReg(REG_HI_PRED);
+}
+
+
+//Unsigned LE
+SR * ARMCG::getLSPred() const
+{
+    return getDedicatedReg(REG_LS_PRED);
+}
+
+
+SR * ARMCG::getMIPred() const
+{
+    return getDedicatedReg(REG_MI_PRED);
+}
+
+
+SR * ARMCG::getPLPred() const
+{
+    return getDedicatedReg(REG_PL_PRED);
+}
+
+
+SR * ARMCG::getGEPred() const
+{
+    return getDedicatedReg(REG_GE_PRED);
+}
+
+
+SR * ARMCG::getLTPred() const
+{
+    return getDedicatedReg(REG_LT_PRED);
+}
+
+
+SR * ARMCG::getGTPred() const
+{
+    return getDedicatedReg(REG_GT_PRED);
+}
+
+
+SR * ARMCG::getLEPred() const
+{
+    return getDedicatedReg(REG_LE_PRED);
 }
 
 
