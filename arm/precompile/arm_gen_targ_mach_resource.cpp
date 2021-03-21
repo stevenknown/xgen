@@ -1815,7 +1815,7 @@ static void initAndPrtScheInfoImpl(OR_TYPE ot)
     si->init();
     SRDescGroup<> const* sdg = OTD_srd_group(otd);
     if (sdg == nullptr) {
-        //This OR does NOT need schedul info.
+        //The OR does NOT require scheduling info.
         return;
     }
 

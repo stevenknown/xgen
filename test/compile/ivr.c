@@ -1,3 +1,11 @@
+int test_ivr1()
+{
+    int a[100], i;
+    for (i = 0; i < 100; i++) {
+        a[i] = 202 - 2 * i;
+    }
+}
+
 int test_ivr(int b[], int c[])
 {
     int i,j,l,n;
@@ -26,14 +34,6 @@ int test_ivr(int b[], int c[])
     return 0;
 }
 
-
-int test_ivr1()
-{
-    int a[100], i;
-    for (i = 0; i < 100; i++) {
-        a[i] = 202 - 2 * i;
-    }
-}
 
 
 //Case comes from membench.

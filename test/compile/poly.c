@@ -71,8 +71,10 @@ struct img_par {
 
 void copyblock_sp(struct img_par *img,int block_x,int block_y)
 {
-  //可通过多面体变换使相关的计算尽可能的靠近以增加数据局部性，有利于数据重用, 不相关的计算尽可能的分离，有利于并行性。
-  //  Horizontal transform
+  //Through polyhedral trans, move dependent computation closer to improve
+  //locality, and move independent computation further away to explore
+  //parallelism.
+  //Horizontal transform
   int j;
   int i;
   for (j=0; j< BLOCK_SIZE; j++)

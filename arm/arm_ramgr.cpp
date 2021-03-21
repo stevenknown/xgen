@@ -31,7 +31,7 @@ author: Su Zhenyu
 #include "../xgen/xgeninc.h"
 
 //Save predicate register at entry BB
-//'bblist': records BBs need to reallocate register.
+//'bblist': records BBs that have to reallocate register.
 void ARMRaMgr::saveCalleePredicateAtEntry(
         REGFILE regfile,
         IN ORBB * entry,
@@ -45,7 +45,7 @@ void ARMRaMgr::saveCalleePredicateAtEntry(
 
 
 //Save predicate register at exit BB
-//'bblist': records BBs need to reallocate register.
+//'bblist': records BBs that have to reallocate register.
 void ARMRaMgr::saveCalleePredicateAtExit(
         REGFILE regfile,
         IN ORBB * exit,
@@ -58,7 +58,7 @@ void ARMRaMgr::saveCalleePredicateAtExit(
 
 
 //Saving region-used callee registers.
-//'bblist': records BBs need to reallocate register.
+//'bblist': records BBs that have to reallocate register.
 void ARMRaMgr::saveCalleeRegFileAtEntry(
         REGFILE regfile,
         IN ORBB * entry,
@@ -72,7 +72,7 @@ void ARMRaMgr::saveCalleeRegFileAtEntry(
 
 
 //Saving region-used callee registers.
-//'bblist': records BBs need to reallocate register.
+//'bblist': records BBs that have to reallocate register.
 void ARMRaMgr::saveCalleeRegFileAtExit(
         REGFILE regfile,
         IN ORBB * exit,

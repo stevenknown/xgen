@@ -56,6 +56,52 @@ protected:
     void convertBitNotLowPerformance(IR const* ir,
                                      OUT RecycORList & ors,
                                      IN IOC * cont);
+    void convertRelationOpDWORDForEquality(IR const* ir,
+                                           SR * sr0, SR * sr1, 
+                                           bool is_signed,
+                                           OUT RecycORList & ors,
+                                           OUT RecycORList & tors,
+                                           IN IOC * cont);
+
+    //Info about ARM Conditions Flag that need to know.
+    //Note LT and GE do not have the completely consistent inverse-behaviors
+    //compared to LE and GT, namely, it is not correct to replace GT/LE
+    //combination with GE/LT combination, vice versa.
+    //e.g: 64bit signed comparation:
+    //  if (a > b) TrueBody
+    //  FalseBody:
+    //
+    //Correct code ===>:
+    //  cmp b_lo, a_lo //use subs b_lo, a_lo is also work, because compare
+    //                 //is substract essentially.
+    //  sbcs ip, b_hi, a_hi
+    //  bge FalseBody
+    //  TrueBody:
+    //
+    //Incorrect code, swap a, b ===>:
+    //  cmp a_lo, b_lo
+    //  sbcs ip, a_hi, a_hi
+    //  ble FalseBody
+    //  TrueBody:
+    void convertRelationOpDWORDForLTandGE(IR const* ir,
+                                          SR * sr0, SR * sr1, 
+                                          bool is_signed,
+                                          OUT RecycORList & ors,
+                                          OUT RecycORList & tors,
+                                          IN IOC * cont);
+    void convertRelationOpDWORDForLEandGT(IR const* ir,
+                                          SR * sr0, SR * sr1, 
+                                          bool is_signed,
+                                          OUT RecycORList & ors,
+                                          OUT RecycORList & tors,
+                                          IN IOC * cont);
+    void convertRelationOpDWORDForLTGELEGT(IR const* ir,
+                                           SR * sr0_l, SR * sr0_h,
+                                           SR * sr1_l, SR * sr1_h, 
+                                           bool is_signed,
+                                           OUT RecycORList & ors,
+                                           OUT RecycORList & tors,
+                                           IN IOC * cont);
 
     void getResultPredByIRTYPE(IR_TYPE code,
                                SR ** truepd,
@@ -95,8 +141,27 @@ public:
     virtual void convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     void convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
                              IN IOC * cont);
+    //Generate compare operations and return the comparation result registers.
+    // e.g:
+    //     a - 1 > b + 2
+    // =>
+    //     sr0 = a - 1
+    //     sr1 = b + 2
+    //     res, truepd, falsepd <- cmp sr0, sr1
+    //     return res, truepd, falsepd
     void convertRelationOpDWORD(IR const* ir, OUT RecycORList & ors,
                                 IN IOC * cont);
+    //Generate compare operations and return the comparation result registers.
+    //The output registers in IOC are ResultSR, TruePredicatedSR, and
+    //FalsePredicatedSR.
+    //The ResultSR records the boolean value of comparison of relation operation.
+    // e.g:
+    //     a - 1 > b + 2
+    // =>
+    //     sr0 = a - 1
+    //     sr1 = b + 2
+    //     res, truepd, falsepd <- cmp sr0, sr1
+    //     return res, truepd, falsepd 
     virtual void convertRelationOp(IR const* ir, OUT RecycORList & ors,
                                    IN IOC * cont);
     

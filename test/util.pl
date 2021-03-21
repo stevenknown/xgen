@@ -1,42 +1,48 @@
 #!/usr/bin/perl -w
 use strict;
 
-# these CAN be exported.
+# These functions are exported.
 our @EXPORT_OK = qw(
     abort 
     abortex 
     computeDirFromFilePath
-    computeOutputName
+    computeExeName
+    computeSourceFileNameByExeName
     compileGR 
     computeRelatedPathToXocRootDir
     computeAbsolutePathToXocRootDir
     compareDumpFile
     clean
     getDumpFilePath
+    getBaseResultDumpFilePath
+    getOutputFilePath
+    getBaseOutputFilePath
     generateGR 
     findCurrent 
     findRecursively 
     findFileRecursively
     is_exist
     moveToPassed
+    invokeSimulator
     runSimulator 
     runHostExe
     runArmToolChainToComputeBaseResult
-    runPACC 
     runBaseCC
     runCPP
     runXOCC
     tryCreateDir
     systemx);
+
+# These variables are exported.
 our $g_base_cc = "";
+our $g_base_cc_cflags = "";
 our $g_xocc = "";
 our $g_cpp = "cpp";
 our $g_xocc_flag = "";
-our $g_pacc = "pacc";
-our $g_as = "pacdsp-elf-as";
-our $g_ld = "pacdsp-elf-ld";
-our $g_simulator = "pacdsp-elf-run";
 our $g_cflags = "-O0"; 
+our $g_simulator = "";
+our $g_as = "";
+our $g_ld = "";
 our $g_ld_flag = "";
 our $g_is_quit_early = 1; #finish test if error occurred.
 our $g_target; #indicate target machine.
@@ -54,11 +60,17 @@ our $g_xoc_root_path = "";
 our $g_single_testcase = ""; #record the single testcase
 our $g_find_testcase = ""; #record the testcase pattern to be find
 our $g_override_xocc_path = "";
+our $g_config_file_path = "";
 our $g_override_xocc_flag = "";
 our $g_is_compare_dump = 0;
+our $g_is_compare_result = 0;
 our $g_is_nocg = 0;
 our $g_is_basedumpfile_must_exist = 0;
+our $g_is_baseresultfile_must_exist = 0;
 our $g_error_count = 0;
+
+# These functions are imported.
+## selectTargetFromConfigFile
 
 sub findCurrent {
     my $dir = $_[0];
@@ -105,14 +117,16 @@ sub findCore2 {
     push(@g_filelist, $File::Find::name) if ($_ =~ m/$g_testcase$/);
 }
 
+# Remove one line from start of the given file.
 sub removeLine
 {
     my $cmdline;
     my $retval;
     my $xoc_root_path = $_[0];
     my $inputfile = $_[1];
-    my $removeline_script_path = $xoc_root_path."test/removeLine.py";
-    $cmdline = "$removeline_script_path $inputfile";
+    my $num_of_line = $_[2];
+    my $removeline_script_path = $xoc_root_path."test/remove_line.py";
+    $cmdline = "$removeline_script_path $inputfile $num_of_line";
     print("\nCMD>>", $cmdline, "\n");
     $retval = systemx($cmdline);
 }
@@ -123,7 +137,7 @@ sub runArmToolChainToComputeBaseResult
     my $file = $_[0];
     my $outputfilename = $_[1];
     my $base_result_outputfile = $_[2];
-    my $cmdline = "$g_base_cc $file -O0 -o $outputfilename";
+    my $cmdline = "$g_base_cc $file $g_base_cc_cflags -o $outputfilename";
     print("\nCMD>>", $cmdline, "\n");
     my $retval = systemx($cmdline);
     if ($retval != 0) {
@@ -147,7 +161,6 @@ sub runArmToolChainToComputeBaseResult
         #die($retval);
     }
 }
-
 
 sub runArmExe
 {
@@ -193,11 +206,18 @@ sub runHostExe
 
 sub runSimulator
 {
+    my $exefile = $_[0]; #the binary file to execute
+    my $outputfile = $_[1]; #redirect stdout to the file
     my $cmdline;
     my $retval;
-    my $binfile = $_[0];
-    my $outputfile = $_[1];
-    $cmdline = "$g_simulator $binfile";
+
+    if (!-e $exefile) { 
+        #Not equal
+        print "\n$exefile DOES NOT EXIST!\n";
+        abortex();
+    }
+
+    $cmdline = "$g_simulator $exefile";
     print("\nCMD>>", $cmdline, "\n");
 
     open(my $OLDVALUE, '>&', STDOUT); #save stdout to oldvalue
@@ -205,13 +225,11 @@ sub runSimulator
     $retval = systemx($cmdline);
     open(STDOUT, '>&', $OLDVALUE); #reload stdout from oldvalue
     if ($retval != 0) {
-        print "\nEXECUTE $cmdline FAILED!! RES:$retval\n";
         #Base compiler might also failed, thus we just compare
         #the result of base compiler even if it is failed.
-        #die($retval);
+        abortex("\nEXECUTE $cmdline FAILED!! RES:$retval\n"); #die($retval);
     }
 }
-
 
 #Generate GR from C file.
 sub generateGR
@@ -236,12 +254,11 @@ sub generateGR
 
     if (!-e $grname) { 
         #Not equal
-        print "\n$grname does not exist!\n";
+        print "\n$grname DOES NOT EXIST!\n";
         abortex();
     }
     return;
 }
-
 
 #compile GR to asm
 sub compileGR
@@ -254,7 +271,7 @@ sub compileGR
     my $asmname = $grname.".asm";
     if (!-e $grname) { 
         #Not equal
-        print "\n$grname does not exist!\n";
+        print "\n$grname DOES NOT EXIST!\n";
         abortex();
     }
 
@@ -269,7 +286,6 @@ sub compileGR
     }
 }
 
-
 sub runAssembler
 {
     my $asmname = $_[0];
@@ -283,7 +299,6 @@ sub runAssembler
         abortex($retval);
     }
 }
-
 
 sub runLinker
 {
@@ -305,7 +320,7 @@ sub runBaseCC
 {
     my $file = $_[0];
     my $outputfilename = $_[1];
-    my $cmdline = "$g_base_cc $file -std=c99 -O0 -DSTACK_SIZE=1024 -lm -lc -lm -o $outputfilename";
+    my $cmdline = "$g_base_cc $file $g_base_cc_cflags -o $outputfilename";
     print("\nCMD>>", $cmdline, "\n");
     my $retval = systemx($cmdline);
     if ($retval != 0) {
@@ -314,22 +329,6 @@ sub runBaseCC
         abortex($retval);
     }
 }
-
-#Use pacc to compile, assembly and link.
-sub runPACC 
-{
-    my $file = $_[0];
-    my $outputfilename = $_[1];
-    my $cmdline = "$g_pacc $file -std=c99 -O0 -DSTACK_SIZE=1024 -lm -lc -lsim  -lm -Tpac.ld -o $outputfilename";
-    print("\nCMD>>", $cmdline, "\n");
-    my $retval = systemx($cmdline);
-    if ($retval != 0) {
-        print("\nCMD>>", $cmdline, "\n");
-        print "\nEXECUTE $g_ld FAILED!! RES:$retval\n";
-        abortex($retval);
-    }
-}
-
 
 #Use cpp to preprocess C file.
 #Output preprocessed file that postfix with *.i.
@@ -339,7 +338,7 @@ sub runCPP
     my $src_fullpath = $_[0]; 
     my $input_file_name = substr($src_fullpath, rindex($src_fullpath, "/") + 1);
     my $preprocessed_name = $src_fullpath.".i";
-    my $outname = computeOutputName($src_fullpath);
+    my $exename = computeExeName($src_fullpath);
     my $objname = $src_fullpath.".o";
 
     #preprcessing
@@ -355,7 +354,6 @@ sub runCPP
     return $preprocessed_name; 
 }
 
-
 #Use xocc to compile, assembly and link.
 sub runXOCC
 {
@@ -365,7 +363,7 @@ sub runXOCC
     my $is_invoke_assembler = $_[1]; 
     my $is_invoke_linker = $_[2]; 
     my $asmname = $src_fullpath.".asm";
-    my $outname = computeOutputName($src_fullpath);
+    my $exename = computeExeName($src_fullpath);
     my $objname = $src_fullpath.".o";
     if (!is_exist($g_xocc)) {
         abortex(1);
@@ -389,19 +387,19 @@ sub runXOCC
         runAssembler($asmname, $objname);
     }
     if ($is_invoke_linker) {
-        runLinker($outname, $objname); 
+        runLinker($exename, $objname); 
     }
 }
 
 sub abortex
 {
     $g_error_count += 1;
-    if (!$g_is_quit_early) {
-        return;
-    }
     my $msg = $_[0];
     if ($msg) { 
         print "\n$msg\n";
+    }
+    if (!$g_is_quit_early) {
+        return;
     }
     exit(1);
 }
@@ -415,11 +413,37 @@ sub abort
     exit(1);
 }
 
-#Compute the output binary file name.
-sub computeOutputName
+#Compute the executable binary file name.
+sub computeExeName
 {
     my $fullpath = $_[0];
     return $fullpath.".out";
+}
+
+sub computeSourceFileNameByExeName
+{
+    my $filepath = $_[0];
+    my @segs = split(/\./, $filepath);
+    my $seg;
+    my $n = 0; #the number of seg
+    while (defined($seg = $segs[$n])) { $n++; }
+
+    #Drop the last seg off.
+    $n--;
+    my $path = "";
+    my $i = 0; 
+    while (defined($seg = $segs[$i])) {
+        if ($i == 0) {
+            $path = $seg;
+        } else {
+            $path = "$path.$seg";
+        }
+        $i++;
+        if ($i >= $n) {
+          last;
+        }
+    }
+    return $path;
 }
 
 #First param must be file path, not the directory.
@@ -431,11 +455,13 @@ sub computeDirFromFilePath
     my $seg;
     my $n = 0; #directory level
     my $dir;
-    while(defined($seg = $segs[$n])) { $n++; }
+    while (defined($seg = $segs[$n])) { $n++; }
+
+    #Drop the last seg off.
     $n--;
     $dir = "";
     my $i = 0; 
-    while(defined($seg = $segs[$i])) {
+    while (defined($seg = $segs[$i])) {
         $dir = "$dir/$seg";
         $i++;
         if ($i >= $n) {
@@ -443,6 +469,14 @@ sub computeDirFromFilePath
         }
     }
     return $dir;
+}
+
+sub readConfigFile
+{
+    if (!-e $g_config_file_path) {
+        return;
+    }
+    require $g_config_file_path;
 }
 
 sub prolog
@@ -455,6 +489,7 @@ sub prolog
         abort();
     }
     parseCmdLine();
+    readConfigFile();
     selectTarget();
     if ($g_is_nocg) {
         $g_cflags = $g_cflags." -nocg ";
@@ -486,7 +521,7 @@ sub checkExistence
     }
     foreach (@filelist) {
        if (!-e $_) { 
-           print "\n$_ does not exist!\n";
+           print "\n$_ DOES NOT EXIST!\n";
            if ($g_is_quit_early) {
                abort();
            }
@@ -551,32 +586,26 @@ sub parseCmdLine
             $g_is_invoke_assembler = 0; 
             $g_is_invoke_linker = 0; 
             $g_is_invoke_simulator = 0;
-            $g_is_nocg = 1; 
+            $g_is_nocg = 1;
         } elsif ($ARGV[$i] eq "NoAsm") {
             $g_is_invoke_assembler = 0; 
             $g_is_invoke_linker = 0; 
             $g_is_invoke_simulator = 0;
         } elsif ($ARGV[$i] eq "NoLink") {
-            $g_is_invoke_assembler = 1; 
             $g_is_invoke_linker = 0; 
             $g_is_invoke_simulator = 0;
         } elsif ($ARGV[$i] eq "NoRun") {
-            $g_is_invoke_assembler = 1; 
-            $g_is_invoke_linker = 1; 
             $g_is_invoke_simulator = 0;
         } elsif ($ARGV[$i] eq "CompareDump") {
-            $g_is_invoke_assembler = 0; 
-            $g_is_invoke_linker = 0; 
-            $g_is_invoke_simulator = 0;
             $g_is_compare_dump = 1; 
             $g_is_basedumpfile_must_exist = 1;
         } elsif ($ARGV[$i] eq "CompareDumpIfExist") {
-            $g_is_invoke_assembler = 0; 
-            $g_is_invoke_linker = 0; 
-            $g_is_invoke_simulator = 0;
             $g_is_compare_dump = 1; 
             $g_is_basedumpfile_must_exist = 0;
-        } elsif ($ARGV[$i] eq "OverrideXoccPath") {
+        } elsif ($ARGV[$i] eq "CompareResultIfExist") {
+            $g_is_compare_result = 1;
+            $g_is_baseresultfile_must_exist = 0;
+        } elsif ($ARGV[$i] eq "XoccPath") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
                 usage();
@@ -588,7 +617,19 @@ sub parseCmdLine
                 abort();
             }
             $g_override_xocc_path = $ARGV[$i];
-        } elsif ($ARGV[$i] eq "OverrideXoccFlag") {
+        } elsif ($ARGV[$i] eq "ConfigFilePath") {
+            $i++;
+            if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                usage();
+                abort();
+            }
+            $i++;
+            if (!$ARGV[$i]) {
+                usage();
+                abort();
+            }
+            $g_config_file_path = $ARGV[$i];
+        } elsif ($ARGV[$i] eq "XoccFlag") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
                 usage();
@@ -627,7 +668,6 @@ sub printEnvVar
     print "\ng_simulator = $g_simulator";
     print "\ng_base_cc = $g_base_cc";
     print "\ng_xocc = $g_xocc";
-    print "\ng_pacc = $g_pacc";
     print "\ng_cflags = $g_cflags";
     print "\ng_as = $g_as";
     print "\ng_ld = $g_ld";
@@ -656,53 +696,55 @@ sub selectTarget
         print "\nNOT SPECIFY A TARGET!\n";
         abort();
     }
+
     if ($g_osname eq 'MSWin32') {
-        if ($g_target eq "pac") {
-           $g_xocc = "$g_xoc_root_path/src/xocc.prj/Debug/xocc.exe";
-           $g_base_cc = "pacc";
-           $g_as = "pacdsp-elf-as --horizontaledit";
-           $g_ld = "pacdsp-elf-ld -L/home/zhenyu/gj310/install/linux/pacdsp-elf/lib/ -Tpac.ld /home/zhenyu/gj310/install/linux/pacdsp-elf/lib/crt1.o -lc -lsim -lm -lc -lgcc ";
-           $g_ld_flag = "-lc -lm -lgcc -lsim";
-           $g_simulator = "pacdsp-elf-run";
-        } elsif ($g_target eq "arm") {
+        if ($g_target eq "arm") {
            $g_xocc = "$g_xoc_root_path/src/xocc.arm.prj/x64/build/xocc.exe";
-           #$g_base_cc = "arm-linux-gnueabihf-gcc";
-           #$g_as = "arm-linux-gnueabihf-as";
-           #$g_ld = "arm-linux-gnueabihf-gcc";
            $g_base_cc = "arm-linux-gnueabi-gcc";
            $g_as = "arm-linux-gnueabi-as";
            $g_ld = "arm-linux-gnueabi-gcc";
+           $g_base_cc_cflags = "-std=c99 -O0";
+           $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
+        } elsif ($g_target eq "armhf") {
+           $g_xocc = "$g_xoc_root_path/src/xocc.arm.prj/x64/build/xocc.exe";
+           $g_base_cc = "arm-linux-gnueabihf-gcc";
+           $g_as = "arm-linux-gnueabihf-as";
+           $g_ld = "arm-linux-gnueabihf-gcc";
+           $g_base_cc_cflags = "-std=c99 -O0";
            $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
         } elsif ($g_target eq "x86") {
            $g_xocc = "$g_xoc_root_path/src/xocc.x64.prj/debug/xocc.exe";
+        } elsif ($g_config_file_path ne "" &&
+                 selectTargetFromConfigFile() == 1) {
+            ; ## Has already selected target info from config file.
         } else {
-            print "\nNOT RERER VALID TARGET!\n";
+            print "\nUNSUPPORT TARGET! PLEASE IMPORT TARGET FROM CONFIG FILE\n";
             abort();
         }
     } else {
-        if ($g_target eq "pac") {
-            $g_base_cc = "pacc";
-            $g_xocc = "$g_xoc_root_path/src/pac/xocc.exe";
-            $g_as = "pacdsp-elf-as --horizontaledit";
-            $g_ld = "pacdsp-elf-ld -L/home/zhenyu/gj310/install/linux/pacdsp-elf/lib/ -Tpac.ld /home/zhenyu/gj310/install/linux/pacdsp-elf/lib/crt1.o -lc -lsim -lm -lc -lgcc ";
-            $g_ld_flag = "-lc -lm -lgcc -lsim";
-            $g_simulator = "pacdsp-elf-run";
-        } elsif ($g_target eq "arm") {
+        if ($g_target eq "arm") {
             $g_xocc = "$g_xoc_root_path/src/arm/xocc.exe";
-            #$g_base_cc = "arm-linux-gnueabihf-gcc";
-            #$g_as = "arm-linux-gnueabihf-as";
-            #$g_ld = "arm-linux-gnueabihf-gcc";
             $g_base_cc = "arm-linux-gnueabi-gcc";
             $g_as = "arm-linux-gnueabi-as";
             $g_ld = "arm-linux-gnueabi-gcc";
             $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
+        } elsif ($g_target eq "armhf") {
+            $g_xocc = "$g_xoc_root_path/src/arm/xocc.exe";
+            $g_base_cc = "arm-linux-gnueabihf-gcc";
+            $g_as = "arm-linux-gnueabihf-as";
+            $g_ld = "arm-linux-gnueabihf-gcc";
+            $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
         } elsif ($g_target eq "x86") {
             $g_xocc = "$g_xoc_root_path/src/x86/xocc.exe";
+        } elsif ($g_config_file_path ne "" &&
+                 selectTargetFromConfigFile() == 1) {
+            ; ## Has already selected target info from config file.
         } else {
-            print "\nNOT RERER VALID TARGET!\n";
+            print "\nUNSUPPORT TARGET! PLEASE IMPORT TARGET FROM CONFIG FILE\n";
             abort();
         }
     }
+
     #$g_xocc = "/home/zhenyu/x/src.passed_all_execute_test_in_test_exec/xocc/xocc.exe";
     if (!$g_xocc) {
         usage();
@@ -713,31 +755,32 @@ sub selectTarget
 
 sub usage
 {
-    print "NOTE: You have to make sure the file name of testcase is unqiue.\n";
-    print "USAGE: ./run.pl pac|x64|arm [CreateBaseResult] [MovePassed] ",
-          "[TestGr] [ShowTime] [Recur] [NotQuitEarly] [CompareDump] ",
-          "[CompareDumpIfExist] ",
-          "[NoCG] ",
-          "[NoASM] ",
-          "[NoLINK] ",
-          "[Case = your_test_file_name]  ",
-          "[OverrideXoccPath = your_xocc_file_path] ",
-          "[OverrideXoccFlag = your_xocc_flag] ",
-          "\n";
-    print "\nMovePassed:        move passed testcase to 'passed' directory",
+    print "\n==-- NOTE: YOU HAVE TO ENSURE THE FILE NAME OF TESTCASE IS UNQIUE. --==",
+          "\n\nUSAGE: ./run.pl x64|arm|armhf [Option List ...]",
+          "\n       e.g: ./run.pl arm Case = hello.c XoccFlag = \"-O3\" NotQuitEarly",
+          "\n\nOption List can be the following:",
+          "\nMovePassed         move passed testcase to 'passed' directory",
           "\n                   NOTE: do not delete testcase in 'passed' directory",
-          "\nCreateBaseResult:  generate result if there is no one",
+          "\nCreateBaseResult   generate result if there is no one",
           "\n                   NOTE: deleting the exist one will regenerate base result",
-          "\nTestGr:            generate GR for related C file and test GR file",
-          "\nShowTime:          show compiling time for each compiler pass",
-          "\nRecur:             perform test recursively",
-          "\nNotQuitEarly:      perform test always even if there is failure",
-          "\nCase = ...:        run single case",
-          "\nCompareDump:       only compile and compare the dump file",
-          "\nOverrideXoccPath = ...:",
-          "\n                   refer xocc path",
-          "\nOverrideXoccFlag = ...:",
-          "\n                   xocc command line option",
+          "\nTestGr             generate GR for related C file and test GR file",
+          "\nShowTime           show compiling time for each compiler pass",
+          "\nRecur              perform test recursively",
+          "\nNotQuitEarly       perform test always even if there is failure",
+          "\nCase = ...         run single case, e.g: Case = your_test_file_name",
+          "\nCompareDump        only compile and compare the dump file",
+          "\nCompareDumpIfExist only compile and compare the dump file if the base-dump-file exist",
+          "\nXoccPath = ...     refer to xocc.exe path, e.g: XoccPath = your_xocc_file_path",
+          "\nXoccFlag = ...     xocc.exe command line option, e.g: XoccFlag = \"-O3 -time\"",
+          "\nConfigFilePath = ...",
+          "\n                   refer to imported config file path if exist",
+          "\nNoCG               do not run Code Generation of xocc",
+          "\nNoAsm              do not generate assembly and linking",
+          "\nNoLink             do not perform linking",
+          "\nNoRun              do not run execuable binary file",
+          "\nCompareResultIfExist",
+          "\n                   compile result-dump-file of execuable binary file if base-result-dump-file exist",
+          "\nNotQuitEarly       do not quit even if any errors occur",
           "\n";
 }
 
@@ -799,23 +842,24 @@ sub computeRelatedPathToXocRootDir
     }
 }
 
+#The function encapsulates runSimulator and do some preparatory works.
 sub invokeSimulator
 {
-    my $fullpath = $_[0];
-    my $curdir = $_[1];
-    my $xocc_output = $_[2];
-    my $rundir = $_[3];
+    my $fullpath = $_[0]; #fullpath of source file, NOT the executable file.
+    my $curdir = $_[1]; #the directory where current perl invoked.
+    my $xocc_output = $_[2]; #redirect stdout to the file
+    my $rundir = $_[3]; #the directory where simulator should be run.
 
     print("\nCMD>>unlink $xocc_output\n");
     unlink($xocc_output);
-    my $outname = computeOutputName($fullpath);
+    my $exefile = computeExeName($fullpath);
     
     #Some testcase need input file to run, the default location of
     #input file is same with testcase.
     if ($rundir ne $curdir) {
         chdir $rundir;
     }
-    runSimulator($outname, $xocc_output);
+    runSimulator($exefile, $xocc_output);
 }
 
 sub generateGRandCompile
@@ -858,11 +902,35 @@ sub extractAndSetCflag
     close ($file);
 }
 
+#This function compose and return new file path to output file.
+sub getOutputFilePath
+{
+    my $fullpath = $_[0]; #path to src file.
+    my $path = $fullpath.".xocc_output.txt";
+    return $path;
+}
+
+#This function compose and return new file path to base output file.
+sub getBaseOutputFilePath
+{
+    my $fullpath = $_[0]; #path to src file.
+    my $path = $fullpath.".base_output.txt";
+    return $path;
+}
+
 #This function compose and return new file path to dump file.
 sub getDumpFilePath
 {
     my $fullpath = $_[0]; #path to src file.
     my $dumpfilepath = $fullpath.".xocc_dump.txt";
+    return $dumpfilepath;
+}
+
+#This function compose and return new file path to base result dump file.
+sub getBaseResultDumpFilePath
+{
+    my $fullpath = $_[0]; #path to src file.
+    my $dumpfilepath = $fullpath.".base_dump.txt";
     return $dumpfilepath;
 }
 
@@ -875,7 +943,7 @@ sub compareDumpFile
 
     #Compare baseline dump and latest dump.
     #The baseline result file.
-    my $base_dump_file = $fullpath.".base_dump.txt";
+    my $base_dump_file = getBaseResultDumpFilePath($fullpath);
     if (!-e $base_dump_file) {
         if ($is_basedumpfile_must_exist) {
             #Baseline dump file does not exist.
@@ -931,7 +999,7 @@ sub moveToPassed
     move($fullpath, $passedpath) or abortex();
 }
 
-sub systemx()
+sub systemx
 {
     #Perl does not return multiplied exit values. So it returns a 16 bit
     #value, with the exit code in the higher 8 bits. It's often the same,

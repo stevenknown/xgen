@@ -50,16 +50,16 @@ class ArgDescMgr;
 #define IOC_int_imm(cont) ((cont)->u1.int_imm)
 class IOC {
 public:
-    //Used as output result, set by convertRelationOp(),
-    //true if the relation operation inverted.
     union {
         struct {
+            //Used as output result, set by convertRelationOp(),
+            //true if the relation operation inverted.
             UINT is_inverted:1;
         } s1;
         UINT u2val;
     } u2;
 
-    SR * pred; //used as input parameter, record predicate register if need.
+    SR * pred; //used as input parameter, record predicate register if required.
     SR * addr; //used as input parameter, record memory address pseduo register.
     Vector<SR*> reg_vec;
     OR_TYPE ortype; //used as output, record OR_TYPE of result if exist.

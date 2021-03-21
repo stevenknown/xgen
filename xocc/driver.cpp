@@ -212,6 +212,7 @@ static Var * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
     Type const* type = nullptr;
     if (IS_PTR(data_type)) {
         ASSERT0(is_pointer(decl));
+
         UINT basesize = get_pointer_base_size(decl);
 
         //Note: If pointer_base_size is 0, then the pointer can not
@@ -668,6 +669,7 @@ bool compileCFile()
         ASSERTN(g_err_msg_list.get_elem_count() > 0, ("miss error msg"));
         goto FIN;
     }
+
     //In the file scope, generate function region.
     if (g_dump_opt.isDumpALL()) {
         dump_scope(get_global_scope(), 0xffffffff);

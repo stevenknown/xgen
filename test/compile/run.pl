@@ -21,7 +21,6 @@ our $g_is_quit_early; #finish test if error occurred.
 our $g_osname;
 our $g_xoc_root_path;
 our $g_single_testcase; #record the single testcase
-our $g_pacc;
 our $g_as;
 our $g_ld;
 our $g_ld_flag;
@@ -45,6 +44,80 @@ sub main
     print "\nTEST FINISH!\n";
 }
 
+sub compileFile
+{
+    my $fullpath = $_; 
+
+    #Save original flags.
+    my $org_cflags = $g_cflags;
+    
+    #Extract CFLAG from *.conf and append it to g_cflags.
+    extractAndSetCflag($fullpath);
+    
+    if ($g_is_compare_dump == 1) {
+        #Add the dump file path to flags of xocc.exe.
+        #Compose the path of the new dump file.
+        my $dump_file = getDumpFilePath($fullpath);
+        $g_cflags = $g_cflags." -dump $dump_file ";
+        unlink($dump_file);
+    } elsif ($g_is_create_base_result == 1) {
+        #Add the dump file path to flags of xocc.exe.
+        my $base_dump_file = getBaseResultDumpFilePath($fullpath);
+        if (!-e $base_dump_file) {
+            #Compose the path of the new dump file.
+            my $dump_file = getDumpFilePath($fullpath);
+            $g_cflags = $g_cflags." -dump $dump_file ";
+            unlink($dump_file);
+        }
+    }
+    
+    #Running CPP.
+    my $fullpathaftercpp = runCPP($fullpath);
+    
+    #Running XOCC.
+    runXOCC($fullpathaftercpp, 0, 0, 0);
+
+    #Restore original flags.
+    $g_cflags = $org_cflags;
+}
+
+
+sub compileFileList
+{
+    my @filelist = @_; 
+    foreach (@filelist) {
+        chomp;
+        my $fullpath = $_; 
+
+        print "\n-------------------------------------------";
+        
+        compileFile($fullpath);
+
+        if ($g_is_create_base_result == 1) {
+            #Copy current dumpfile to be the base-result dumpfile.
+            my $base_dump_file = getBaseResultDumpFilePath($fullpath);
+            if (!-e $base_dump_file) {
+                #Copy file if not exist.
+                my $dump_file = getDumpFilePath($fullpath);
+                print("\nCMD>>copy $dump_file, $base_dump_file\n");
+                copy($dump_file, $base_dump_file) or
+                    abortex("COPY FILE FAILED!");
+            }
+        }
+       
+        if ($g_is_compare_dump == 1) {
+            my $dump_file = getDumpFilePath($fullpath);
+            compareDumpFile($fullpath, $dump_file,
+                            $g_is_basedumpfile_must_exist);
+        }
+
+        if ($g_is_move_passed_case == 1) {
+            moveToPassed($fullpath);
+        }
+    }
+}
+
+
 sub tryCompile
 {   
     #$is_test_gr is true to generate GR and compile GR to asm, then compare the
@@ -62,42 +135,6 @@ sub tryCompile
         @f = findCurrent($curdir, 'c'); 
     }
     #my @f = `find -name "*.c"`;
-    foreach (@f) {
-        chomp;
-        my $fullpath = $_; 
 
-        print "\n-------------------------------------------";
-        #The new dump file.
-        my $dump_file = getDumpFilePath($fullpath);
-        unlink($dump_file);
-
-        #Backup original flags.
-        my $org_cflags = $g_cflags;
-
-        #Extract CFLAG from *.conf and append it to g_cflags.
-        extractAndSetCflag($fullpath);
-
-        if ($g_is_compare_dump == 1) {
-            #Add the dump file path to flags of xocc.exe.
-            $g_cflags = $g_cflags." -dump $dump_file ";
-        }
-
-        #Running CPP.
-        my $fullpathaftercpp = runCPP($fullpath);
-
-        #Running XOCC.
-        runXOCC($fullpathaftercpp, 0, 0, 0);
-
-        #Restore original flags.
-        $g_cflags = $org_cflags;
-       
-        if ($g_is_compare_dump == 1) {
-            compareDumpFile($fullpath, $dump_file,
-                            $g_is_basedumpfile_must_exist);
-        }
-
-        if ($g_is_move_passed_case == 1) {
-            moveToPassed($fullpath);
-        }
-    }
+    compileFileList(@f);
 }

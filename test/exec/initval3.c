@@ -21,8 +21,8 @@ int main()
   if (t.c != 0x1003) { return 2; }
   if (t.d != (void*)0x1003) { return 3; }
   if (t.e != 3) { return 4; }
-
-  union S s = { 4, {5, 6} };
+  
+  union S s = { 4, {5, 6}, };
   if (s.a != 6) { return 2; }   
   if (s.f.b != 6) { return 2; }   
   if (s.f.c != 6) { return 2; }   

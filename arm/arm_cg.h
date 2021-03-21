@@ -194,28 +194,67 @@ public:
     SR * gen_r1();
     SR * gen_r2();
     SR * gen_r3();
-    SR * gen_r12();
+    SR * gen_r12(); //Scratch Register, the synonym is IP register.
     virtual SR * genReturnAddr();
     virtual SR * genRflag();
     virtual SR * genTruePred();
+
+    //ARM Conditions Flag
+    //Note LT and GE do not have the completely consistent inverse-behaviors
+    //compared to LE and GT, namely, it is not correct to replace GT/LE
+    //combination with GE/LT combination, vice versa.
+    //e.g: 64bit signed comparation:
+    //  if (a > b) TrueBody
+    //  FalseBody:
+    //
+    //Correct code ===>:
+    //  cmp b_lo, a_lo //use subs b_lo, a_lo is also work, because compare
+    //                 //is substract essentially.
+    //  sbcs ip, b_hi, a_hi
+    //  bge FalseBody
+    //  TrueBody:
+    //
+    //Incorrect code, swap a, b ===>:
+    //  cmp a_lo, b_lo
+    //  sbcs ip, a_hi, a_hi
+    //  ble FalseBody
+    //  TrueBody:
+    //
+    // Name Condition                    State of Flags
+    // EQ   Equal / equals zero          Z set
+    // NE   Not equal                    Z clear
+    // CS   Carry set                    C set
+    // CC   Carry clear                  C clear
+    // MI   Minus / negative             N set
+    // PL   Plus / positive or zero      N clear
+    // VS   Overflow                     V set
+    // VC   No overflow                  V clear
+    // HS   Unsigned higher or same      C set
+    // LO   Unsigned lower               C clear
+    // HI   Unsigned higher              C set and Z clear
+    // LS   Unsigned lower or same       C clear or Z set
+    // GE   Signed greater than or equal N equals V
+    // LT   Signed less than             N is not equal to V
+    // GT   Signed greater than          Z clear and N equals V
+    // LE   Signed less than or equal    Z set or N is not equal to V
     SR * genEQPred();
     SR * genNEPred();
-    SR * genCSPred(); //Carry set.
-    SR * genCCPred(); //Carry clear.
+    SR * genCSPred(); //Carry set.(identical to HS, Unsigned GE)
+    SR * genCCPred(); //Carry clear.(identical to LO, Unsigned LT)
     SR * genHSPred(); //Signed higher (identical to CS, Unsigned GE).
     SR * genLOPred(); //Unsigned lower (identical to CC, Unsigned LT)
     SR * genMIPred(); //Minus, negative, less-than.
     SR * genPLPred(); //Plus, positive or zero.
-    SR * genGEPred(); //Signed GE
-    SR * genLTPred(); //Signed LT
-    SR * genGTPred(); //Signed GT
-    SR * genLEPred(); //Signed LE
-    SR * genHIPred(); //Unsigned GT
-    SR * genLSPred(); //Unsigned LE
+    SR * genGEPred(); //Signed greater than or equal, Signed GE
+    SR * genLTPred(); //Signed less than, Signed LT.
+    SR * genGTPred(); //Signed greater than, Signed GT
+    SR * genLEPred(); //Signed less than or equal, Signed LE
+    SR * genHIPred(); //Unsigned higher, the synonym of Unsigned GT
+    SR * genLSPred(); //Unsigned lower or same, the synonym of Unsigned LE
     SR * getEQPred() const;
     SR * getNEPred() const;
-    SR * getCSPred() const; //Carry set.
-    SR * getCCPred() const; //Carry clear.
+    SR * getCSPred() const; //Carry set.(identical to HS, Unsigned GE)
+    SR * getCCPred() const; //Carry clear.(identical to LO, Unsigned LT)
     SR * getHSPred() const; //Signed higher (identical to CS, Unsigned GE).
     SR * getLOPred() const; //Unsigned lower (identical to CC, Unsigned LT)
     SR * getMIPred() const; //Minus, negative, less-than.

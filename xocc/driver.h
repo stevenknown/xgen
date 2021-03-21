@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _DRIVER_H_
 
 //Exported Variables, only used in FE.
-//If one need to export variables, or types to other
+//If one requires to export variables, or types to other
 //module, please put them in fexp.h.
 extern UINT const g_formal_parameter_start;
 

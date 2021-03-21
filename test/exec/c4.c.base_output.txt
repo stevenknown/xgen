@@ -1,3 +1,16 @@
 
-argc:1, *argv:c4.c
-14: duplicate global definition
+
+argc:1, *argv:c4.input.c
+
+ stmt 
+
+ stmt 
+1: int main() { printf("Hello ARM!\n"); return 0; }
+    ENT  0
+    IMM  -161357816
+    PSH 
+    PRTF
+    ADJ  1
+    IMM  0
+    LEV 
+    LEV 

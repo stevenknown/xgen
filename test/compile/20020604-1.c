@@ -1,18 +1,4 @@
-/* The array is too big. */
-/* { dg-xfail-if "The array too big" { "h8300-*-*" } { "-mno-h" "-mn" } { "" } } */
-/* { dg-do assemble { xfail m6811-*-* m6812-*-* } } */
-/* { dg-skip-if "" { m32c-*-* } { } { } } */
-
-/* PR c/6957
-   This testcase ICEd at -O2 on IA-32, because
-   (insn 141 139 142 (set (subreg:SF (reg:QI 72) 0)
-	   (plus:SF (reg:SF 73)
-	       (reg:SF 76))) 525 {*fop_sf_comm_nosse} (insn_list 134 (nil))
-       (expr_list:REG_DEAD (reg:SF 73) (nil)))
-   couldn't be reloaded. */
-
-void
-foo (unsigned int n, int x, int y, unsigned char *z)
+void foo (unsigned int n, int x, int y, unsigned char *z)
 {
   int a, b;
   float c[2048][4];

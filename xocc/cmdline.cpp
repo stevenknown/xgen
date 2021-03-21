@@ -36,11 +36,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../opt/comopt.h"
 
 CHAR const* g_output_file_name = nullptr;
-CHAR const* g_xocc_version = "1.0.0";
+CHAR const* g_xocc_version = "1.2.1";
 CHAR const* g_c_file_name = nullptr;
 CHAR const* g_gr_file_name = nullptr;
 CHAR const* g_dump_file_name = nullptr;
 bool g_is_dumpgr = false;
+static bool g_cfg_opt = true;
 
 static bool is_c_source_file(CHAR const* fn)
 {
@@ -73,6 +74,7 @@ static bool process_optimize(INT argc, CHAR const* argv[], INT & i)
     switch (cmdstr[1]) {
     case '0':
         xoc::g_opt_level = OPT_LEVEL0;
+        //Note the essential options will be set at the end.
         break;
     case '1':
         xoc::g_opt_level = OPT_LEVEL1;
@@ -81,7 +83,8 @@ static bool process_optimize(INT argc, CHAR const* argv[], INT & i)
         //Only do refinement.
         break;
     case '2':
-        xoc::g_opt_level = OPT_LEVEL2;        
+        xoc::g_opt_level = OPT_LEVEL2;  
+        xoc::g_do_cp = true;
         xoc::g_do_dce = true;
         xoc::g_do_licm = true;
         xoc::g_do_rp = true;
@@ -90,9 +93,13 @@ static bool process_optimize(INT argc, CHAR const* argv[], INT & i)
         break;    
     case '3':
         xoc::g_opt_level = OPT_LEVEL3;
+        xoc::g_do_cp = true;
+        xoc::g_do_cp_aggressive = true; 
         xoc::g_do_dce = true;
+        xoc::g_do_dce_aggressive = true;
         xoc::g_do_licm = true;
         xoc::g_do_rp = true;
+        xoc::g_do_lftr = true;
         xoc::g_do_pr_ssa = true;
         xoc::g_do_md_ssa = true;
         break;
@@ -110,6 +117,7 @@ static bool process_optimize(INT argc, CHAR const* argv[], INT & i)
         xoc::g_do_pr_ssa = true;
         xoc::g_do_md_ssa = true;
     }
+
     i++;
     return true;
 }
@@ -244,10 +252,18 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "enable register-promotion optimization", },
     { "cp", &xoc::g_do_cp,
       "enable copy-propagation optimization", },
+    { "cp_aggr", &xoc::g_do_cp_aggressive,
+      "enable aggressive copy-propagation optimization", },
     { "rce", &xoc::g_do_rce,
       "enable redundant-code-elimination optimization", },
     { "dce", &xoc::g_do_dce,
+      "enable dead-code-elimination optimization", },
+    { "dce_aggr", &xoc::g_do_dce_aggressive,
       "enable aggressive-dead-code-elimination optimization", },
+    { "lftr", &xoc::g_do_lftr,
+      "enable linear-function-test-replacement optimization", },
+    { "ivr", &xoc::g_do_ivr,
+      "enable induction-variable-recognization", },
     { "mdssa", &xoc::g_do_md_ssa,
       "enable md-ssa analysis", },
     { "prssa", &xoc::g_do_pr_ssa,
@@ -262,7 +278,7 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "redirect internal compiler output information to given dump file", },
     { "ipa", &xoc::g_do_ipa,
       "enable interprocedual analysis", },
-    { "cfg", &xoc::g_do_cfg,
+    { "cfg", &g_cfg_opt,
       "enable control-flow-graph optimization", },
     { "schedule_delay_slot", &xgen::g_enable_schedule_delay_slot,
       "enable scheduling branch-delay-slot", },
@@ -284,6 +300,10 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump alias-analysis", },
     { "dce", &xoc::g_dump_opt.is_dump_dce,
       "dump dead-code-elimination", },
+    { "lftr", &xoc::g_dump_opt.is_dump_lftr,
+      "dump linear-function-test-replacement optimization", },
+    { "ivr", &xoc::g_dump_opt.is_dump_ivr,
+      "dump induction-variable-recognization", },
     { "rp", &xoc::g_dump_opt.is_dump_rp,
       "dump register-promotion", },
     { "licm", &xoc::g_dump_opt.is_dump_licm,
@@ -499,6 +519,40 @@ static void usage()
 }
 
 
+static void setOptionO0()
+{
+    if (xoc::g_opt_level == OPT_LEVEL0) {
+        xoc::g_do_cfg_dom = false;
+        xoc::g_do_cfg_pdom = false;
+        xoc::g_do_loop_ana = false;
+        xoc::g_do_cdg = false;
+        xoc::g_do_cfg_remove_redundant_branch = false;
+        xoc::g_do_cfg_invert_condition_and_remove_trampolin_bb = false;
+        xoc::g_do_aa = false;
+        xoc::g_do_md_du_analysis = false;
+        xoc::g_is_support_dynamic_type = false;
+        xoc::g_do_md_ssa = false;
+        xoc::g_do_pr_ssa = false;
+        xoc::g_compute_pr_du_chain = false;
+        xoc::g_compute_nonpr_du_chain = false;        
+        xoc::g_do_refine = false;
+        xoc::g_do_refine_auto_insert_cvt = true;
+        xoc::g_do_call_graph = false;
+        xoc::g_do_ipa = false;
+        g_cfg_opt = false;
+        xgen::g_do_lis = false;
+    }
+
+    if (!g_cfg_opt) {
+        g_do_cfg_remove_empty_bb = false;
+        g_do_cfg_remove_unreach_bb = false;
+        g_do_cfg_remove_trampolin_bb = false;
+        g_do_cfg_invert_condition_and_remove_trampolin_bb = false;
+        g_do_cfg_remove_redundant_branch = false;
+    }
+}
+
+
 bool processCmdLine(INT argc, CHAR const* argv[])
 {
     if (argc <= 1) { usage(); return false; }
@@ -540,39 +594,16 @@ bool processCmdLine(INT argc, CHAR const* argv[])
     if (g_c_file_name != nullptr) {
         g_hsrc = fopen(g_c_file_name, "rb");
         if (g_hsrc == nullptr) {
-            fprintf(stdout, "xoc: cannot open %s, error information is %s\n",
-                            g_c_file_name, strerror(errno));
+            fprintf(stdout, "xocc: cannot open %s, error information is %s\n",
+                    g_c_file_name, strerror(errno));
             return false;
         }
     }
+
     if (g_output_file_name != nullptr) {
         UNLINK(g_output_file_name);
     }
-    if (g_opt_level == OPT_LEVEL0) {
-        g_do_cfg_remove_empty_bb = false;
-        g_do_cfg_remove_unreach_bb = false;
-        g_do_cfg_remove_trampolin_bb = false;
-        g_do_cfg_remove_unreach_bb = false;
-        g_do_cfg_remove_trampolin_bb = false;
-        g_do_cfg_dom = false;
-        g_do_cfg_pdom = false;
-        g_do_loop_ana = false;
-        g_do_cdg = false;
-        g_do_cfg_remove_redundant_branch = false;
-        g_do_cfg_invert_condition_and_remove_trampolin_bb = false;
-        g_do_aa = false;
-        g_do_md_du_analysis = false;
-        g_is_support_dynamic_type = false;
-        g_do_md_ssa = false;
-        g_do_pr_ssa = false;
-        g_compute_pr_du_chain = false;
-        g_compute_nonpr_du_chain = false;        
-        g_do_refine = false;
-        g_do_refine_auto_insert_cvt = true;
-        g_do_call_graph = false;
-        g_do_ipa = false;
-        g_do_lis = false;
-        g_do_cfg = false;
-    }
+
+    setOptionO0();
     return true;
 }

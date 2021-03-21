@@ -43,7 +43,7 @@ protected:
     xoc::Region * m_program;
 
 public:
-    CLRegionMgr() {}
+    CLRegionMgr() { m_program = nullptr; }
     virtual ~CLRegionMgr() {}
 
     xoc::Region * get_program() { return m_program; }

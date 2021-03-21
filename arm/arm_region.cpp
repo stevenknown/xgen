@@ -149,7 +149,7 @@ bool ARMRegion::simplifyToPRmode(OptCtx & oc)
     simplifyBBlist(bbl, &simp);
     if (SIMP_need_recon_bblist(&simp) && g_cst_bb_list &&
         reconstructBBList(oc)) {
-        ASSERTN(g_do_cfg, ("construct BB list need CFG"));
+        ASSERTN(g_do_cfg, ("construct BB list requires CFG"));
         IRCFG * cfg = getCFG();
         ASSERT0(cfg);
         cfg->rebuild(oc);
@@ -209,7 +209,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
 {
     if (g_do_cfg) {
         ASSERT0(g_cst_bb_list);
-        checkValidAndRecompute(&oc, PASS_CFG, PASS_UNDEF);
+        getPassMgr()->checkValidAndRecompute(&oc, PASS_CFG, PASS_UNDEF);
 
         //Remove empty bb when cfg rebuilted because
         //rebuilding cfg may generate redundant empty bb.
@@ -221,15 +221,16 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         ASSERT0(getCFG()->verify());
 
         if (g_do_cfg_dom) {
-            //Infer pointer arith need loopinfo.
-            checkValidAndRecompute(&oc, PASS_DOM, PASS_UNDEF);
+            //Infer pointer arith requires loopinfo.
+            getPassMgr()->checkValidAndRecompute(&oc, PASS_DOM, PASS_UNDEF);
         }
 
         if (g_do_loop_ana) {
-            //Infer pointer arith need loopinfo.
-            checkValidAndRecompute(&oc, PASS_LOOP_INFO, PASS_UNDEF);
+            //Infer pointer arith requires loopinfo.
+            getPassMgr()->checkValidAndRecompute(&oc, PASS_LOOP_INFO,
+                                                 PASS_UNDEF);
         }
-
+    
         getCFG()->performMiscOpt(oc);
     }
 
@@ -239,8 +240,8 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
 
     if (g_do_aa) {
         ASSERT0(g_cst_bb_list && oc.is_cfg_valid());
-        checkValidAndRecompute(&oc, PASS_DOM, PASS_LOOP_INFO,
-                               PASS_AA, PASS_UNDEF);        
+        getPassMgr()->checkValidAndRecompute(&oc, PASS_DOM, PASS_LOOP_INFO,
+                                             PASS_AA, PASS_UNDEF);        
     }
 
     if (g_do_md_du_analysis) {
@@ -299,8 +300,8 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
     
     //START HACK CODE
     //Test code, to force recomputing AA and DUChain.
-    //AA and DU Chain need not to be recompute, because
-    //simplification maintained them.
+    //AA and DU Chain do NOT to be recomputed, because
+    //simplification have maintained them.
     bool org_compute_pr_du_chain = g_compute_pr_du_chain;
     bool org_compute_nonpr_du_chain = g_compute_nonpr_du_chain;
     OC_is_ref_valid(oc) = false;

@@ -30,10 +30,8 @@ author: Su Zhenyu
 @*/
 #include "../xgen/xgeninc.h"
 
-static bool worthToDo(Pass const* pass, UINT & cp_count,
-                      UINT & licm_count) {
-    if (pass->getPassType() == PASS_LICM &&
-        licm_count > 1 && cp_count > 1) {
+static bool worthToDo(Pass const* pass, UINT & cp_count, UINT & licm_count) {
+    if (pass->getPassType() == PASS_LICM && licm_count > 1 && cp_count > 1) {
         //LICM has performed at least once.
         //Sometime, LICM doing the counter-effect to CP.
         //We make the simplest choose that if both LICM and CP have performed
@@ -41,8 +39,7 @@ static bool worthToDo(Pass const* pass, UINT & cp_count,
         return false;
     }
 
-    if (pass->getPassType() == PASS_CP &&
-        licm_count > 1 && cp_count > 1) {
+    if (pass->getPassType() == PASS_CP && licm_count > 1 && cp_count > 1) {
         //CP has performed at least once.
         //Sometime, LICM doing the counter-effect to CP.
         //We make the simplest choose that if both LICM and CP have performed
@@ -54,7 +51,7 @@ static bool worthToDo(Pass const* pass, UINT & cp_count,
 }
 
 
-static void updateCounter(Pass const* pass, UINT & cp_count,
+static void updateCounter(Pass const* pass, UINT & cp_count, 
                           UINT & licm_count) {
     licm_count += pass->getPassType() == PASS_LICM ? 1 : 0;
     cp_count += pass->getPassType() == PASS_CP ? 1 : 0;
@@ -66,35 +63,48 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     ASSERT0(oc.is_cfg_valid());
     ASSERT0(m_rg && m_rg->getCFG()->verify());
     List<Pass*> passlist; //A list of Optimization.
-    if (g_do_ivr) { passlist.append_tail(m_pass_mgr->registerPass(PASS_IVR)); }
+    if (g_do_ivr) {
+        passlist.append_tail(m_pass_mgr->registerPass(PASS_IVR));
+    }
     if (g_do_licm) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_LICM));
     }
-    if (g_do_cp) {
-        passlist.append_tail(m_pass_mgr->registerPass(PASS_CP));
-        ((CopyProp*)m_pass_mgr->registerPass(PASS_CP))->setPropagationKind(
-            CP_PROP_SIMPLEX);
+
+    CopyProp * cp = nullptr;
+    if (g_do_cp || g_do_cp_aggressive) {
+        cp = (CopyProp*)m_pass_mgr->registerPass(PASS_CP);
+        cp->setPropagationKind(g_do_cp_aggressive ?
+                               CP_PROP_UNARY_AND_SIMPLEX : CP_PROP_SIMPLEX);
+        passlist.append_tail(cp);
     }
 
-    if (g_do_rp) { passlist.append_tail(m_pass_mgr->registerPass(PASS_RP)); }
-    if (g_do_rce) { passlist.append_tail(m_pass_mgr->registerPass(PASS_RCE)); }
+    if (g_do_rp) {
+        passlist.append_tail(m_pass_mgr->registerPass(PASS_RP));
+    }
+    if (g_do_rce) {
+        passlist.append_tail(m_pass_mgr->registerPass(PASS_RCE));
+    }
     if (g_do_gcse) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_GCSE));
     }
-
-    if (g_do_cp) {
-        passlist.append_tail(m_pass_mgr->registerPass(PASS_CP));
-        ((CopyProp*)m_pass_mgr->queryPass(PASS_CP))->setPropagationKind(
-            CP_PROP_SIMPLEX);
+    if (g_do_cp || g_do_cp_aggressive) {
+        ASSERT0(cp);
+        passlist.append_tail(cp);
     }
-
-    if (g_do_dce) {
-        passlist.append_tail(m_pass_mgr->registerPass(PASS_DCE));        
+    if (g_do_dce || g_do_dce_aggressive) {
+        DeadCodeElim * dce = (DeadCodeElim*)m_pass_mgr->registerPass(PASS_DCE);
+        dce->set_elim_cfs(g_do_dce_aggressive);
+        passlist.append_tail(dce);
     }
-
-    if (g_do_dse) { passlist.append_tail(m_pass_mgr->registerPass(PASS_DSE)); }
+    if (g_do_dse) {
+        passlist.append_tail(m_pass_mgr->registerPass(PASS_DSE));
+    }
     if (g_do_loop_convert) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_LOOP_CVT));
+    }
+
+    if (g_do_lftr) {
+        passlist.append_tail(m_pass_mgr->registerPass(PASS_LFTR));
     }
 
     bool res = false;

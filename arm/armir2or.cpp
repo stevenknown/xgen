@@ -111,21 +111,31 @@ void ARMIR2OR::convertStoreVar(IR const* ir, OUT RecycORList & ors,
         return;
     }
 
-    ASSERT0(ST_rhs(ir)->is_ld());
-    ASSERT0(((HOST_INT)ST_rhs(ir)->getTypeSize(m_tm)) == resbytesize);
+    SR * src = nullptr; //record source address reg.
+    IR const* rhs = ST_rhs(ir);
+    ASSERT0(((HOST_INT)rhs->getTypeSize(m_tm)) == resbytesize);
+    if (rhs->is_ld()) {
+        //CASE: st(x)(200) = ld(x):mc(200)
+        //Load the address of source Var into register.
+        cont->clean_bottomup();
+        convertLda(LD_idinfo(rhs), LD_ofst(rhs), ::getDbx(rhs), ors, cont);
+        src = cont->get_reg(0);
+    } else if (rhs->is_ild()) {
+        //CASE: st(x)(200) = ild(ld(p)):mc(200)
+        //Load the address of source via pointer.
+        cont->clean_bottomup();
+        convertGeneralLoad(ILD_base(rhs), ors, cont);
+        src = cont->get_reg(0);
+    } else {
+        ASSERTN(0, ("support more kind of mc to mc copy"));
+    }
+    ASSERT0(src && src->is_reg());
 
     //Load the address of target Var into register.
     cont->clean_bottomup();
     convertLda(ST_idinfo(ir), ST_ofst(ir), ::getDbx(ir), ors, cont);
     SR * tgt = cont->get_reg(0);
     ASSERT0(tgt && tgt->is_reg());
-
-    //Load the address of source Var into register.
-    cont->clean_bottomup();
-    convertLda(LD_idinfo(ST_rhs(ir)), LD_ofst(ST_rhs(ir)),
-        ::getDbx(ST_rhs(ir)), ors, cont);
-    SR * src = cont->get_reg(0);
-    ASSERT0(src && src->is_reg());
 
     //Generate ::memcpy.
     RecycORList tors(this);
@@ -606,7 +616,7 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     } else if (ir->getTypeSize(m_tm) <= BYTESIZE_OF_DWORD) {
         SR * res = tc.get_reg(0);
         ASSERT0(res); //result0
-        ASSERT0(SR_vec(res)->get(1)); //result1
+        ASSERT0(res->getVec()->get(1)); //result1
         SR * src = getCG()->genZero();
         SR * src2 = getCG()->genZero();
         RecycORList tors(this);
@@ -619,7 +629,7 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
         res = tc.get_reg(0);
         cont->set_reg(RESULT_REGISTER_INDEX, res);
 
-        //SR * res2 = SR_vec(res)->get(1); //get result2
+        //SR * res2 = res->getVec()->get(1); //get result2
         //cont->set_reg(1, res2);
     } else {
         UNREACHABLE();
@@ -709,16 +719,220 @@ void ARMIR2OR::getResultPredByIRTYPE(IR_TYPE code, SR ** truepd,
 }
 
 
+void ARMIR2OR::convertRelationOpDWORDForEquality(IR const* ir,
+                                                 SR * sr0, SR * sr1, 
+                                                 bool is_signed,
+                                                 OUT RecycORList & ors,
+                                                 OUT RecycORList & tors,
+                                                 IN IOC * cont)
+{
+    ASSERT0(ir->is_eq() || ir->is_ne());
+    //Compare high part equality.
+    //truepd, falsepd = cmp sr0_h, sr1_h
+    SR * sr0_l = sr0->getVec()->get(0);
+    SR * sr0_h = sr0->getVec()->get(1);
+    SR * sr1_l = sr1->getVec()->get(0);
+    SR * sr1_h = sr1->getVec()->get(1);
+
+    //Compare <sr0_l,sr0_h> is equal to <sr1_l,sr1_h>:
+    //  truepd is EQ, falsepd is NE
+    //  cmp sr0_h, sr1_h
+    //  ifeq cmp sr0_l, sr1_l
+    //  return res, truepd
+    //Compare <sr0_l,sr0_h> is not equal to <sr1_l,sr1_h>:
+    //  truepd is NE, falsepd is EQ
+    //  cmp sr0_h, sr1_h
+    //  ifeq cmp sr0_l, sr1_l
+    //  return res, truepd
+  
+    getCG()->buildARMCmp(OR_cmp, getCG()->getTruePred(),
+                         sr0_h, sr1_h, tors.getList(), cont);
+
+    //Compare low part if high part is equal.
+    //truepd, falsepd = (ifeq) cmp sr0_l, sr1_l
+    getCG()->buildARMCmp(OR_cmp, getCG()->genEQPred(),
+                         sr0_l, sr1_l, tors.getList(), cont);
+
+    SR * truepd = nullptr;
+    SR * falsepd = nullptr;
+    getResultPredByIRTYPE(ir->getCode(), &truepd, &falsepd, is_signed);
+    tors.copyDbx(ir);
+    ors.append_tail(tors);
+    recordRelationOpResult(ir, truepd, falsepd, truepd, ors, cont);
+}
+
+
+void ARMIR2OR::convertRelationOpDWORDForLTGELEGT(IR const* ir,
+                                                 SR * sr0_l, SR * sr0_h,
+                                                 SR * sr1_l, SR * sr1_h, 
+                                                 bool is_signed,
+                                                 OUT RecycORList & ors,
+                                                 OUT RecycORList & tors,
+                                                 IN IOC * cont)
+{
+    ASSERT0(ir->is_lt() || ir->is_ge() || ir->is_le() || ir->is_gt());
+    SR * truepd = nullptr;
+    SR * falsepd = nullptr;
+    IR_TYPE code;
+    //Note truepd/falsepd of IR_GT is same with LT, and
+    //truepd/falsepd of IR_LE is same with GE.
+    if (ir->is_le()) {
+        code = IR_GE;
+    } else if (ir->is_gt()) {
+        code = IR_LT;
+    } else {
+        code = ir->getCode();
+    }
+    getResultPredByIRTYPE(code, &truepd, &falsepd, is_signed);
+
+    if (is_signed) {
+        //SBCS: If S is specified, the SBC instruction updates the
+        //N, Z, C and V flags according to the result.
+        //
+        //Compare <sr0_l,sr0_h> is less-than <sr1_l,sr1_h>:
+        //  truepd is LT, falsepd is GE 
+        //  cmp sr0_l, sr1_l
+        //  sbcs res, sr0_h, sr1_h
+        //  return res, truepd
+        getCG()->buildARMCmp(OR_cmp, m_cg->getTruePred(),
+                             sr0_l, sr1_l, tors.getList(), cont);
+        OR * o = m_cg->buildOR(OR_sbcs, 2, 4,
+                               m_cg->genReg(), m_cg->getRflag(),
+                               m_cg->getTruePred(), sr0_h, sr1_h,
+                               m_cg->getRflag());
+        tors.append_tail(o);
+        tors.copyDbx(ir);
+        ors.append_tail(tors);
+        recordRelationOpResult(ir, truepd, falsepd, truepd, ors, cont);
+        return;
+    }
+
+    //Unsigned less-than.
+    getCG()->buildARMCmp(OR_cmp, getCG()->getTruePred(),
+                         sr0_h, sr1_h, tors.getList(), cont);
+
+    //Compare low part if high part is equal.
+    //truepd, falsepd = (ifeq) cmp sr0_l, sr1_l
+    getCG()->buildARMCmp(OR_cmp, getCG()->genEQPred(),
+                         sr0_l, sr1_l, tors.getList(), cont);
+
+    tors.copyDbx(ir);
+    ors.append_tail(tors);
+    recordRelationOpResult(ir, truepd, falsepd, truepd, ors, cont);
+}
+
+
+//Info about ARM Conditions Flag that need to know.
+//Note LT and GE do not have the completely consistent inverse-behaviors
+//compared to LE and GT, namely, it is not correct to replace GT/LE
+//combination with GE/LT combination, vice versa.
+//e.g: 64bit signed comparation:
+//  if (a > b) TrueBody
+//  FalseBody:
+//
+//Correct code ===>:
+//  cmp b_lo, a_lo //use subs b_lo, a_lo is also work, because compare
+//                 //is substract essentially.
+//  sbcs ip, b_hi, a_hi
+//  bge FalseBody
+//  TrueBody:
+//
+//Incorrect code, swap a, b ===>:
+//  cmp a_lo, b_lo
+//  sbcs ip, a_hi, a_hi
+//  ble FalseBody
+//  TrueBody:
+void ARMIR2OR::convertRelationOpDWORDForLTandGE(IR const* ir,
+                                                SR * sr0, SR * sr1, 
+                                                bool is_signed,
+                                                OUT RecycORList & ors,
+                                                OUT RecycORList & tors,
+                                                IN IOC * cont)
+{
+    ASSERT0(ir->is_lt() || ir->is_ge());
+    SR * sr0_l = sr0->getVec()->get(0);
+    SR * sr0_h = sr0->getVec()->get(1);
+    SR * sr1_l = sr1->getVec()->get(0);
+    SR * sr1_h = sr1->getVec()->get(1);
+
+    //SBCS: If S is specified, the SBC instruction updates the
+    //N, Z, C and V flags according to the result.
+    //
+    //Compare <sr0_l,sr0_h> is less-than <sr1_l,sr1_h>:
+    //  truepd is LT, falsepd is GE 
+    //  cmp sr0_l, sr1_l
+    //  sbcs res, sr0_h, sr1_h
+    //  return res, truepd
+    convertRelationOpDWORDForLTGELEGT(ir, sr0_l, sr0_h, sr1_l, sr1_h, 
+                                      is_signed, ors, tors, cont);
+    return;
+}
+
+
+//Info about ARM Conditions Flag that need to know.
+//Note LT and GE do not have the completely consistent inverse-behaviors
+//compared to LE and GT, namely, it is not correct to replace GT/LE
+//combination with GE/LT combination, vice versa.
+//e.g: 64bit signed comparation:
+//  if (a > b) TrueBody
+//  FalseBody:
+//
+//Correct code ===>:
+//  cmp b_lo, a_lo //use subs b_lo, a_lo is also work, because compare
+//                 //is substract essentially.
+//  sbcs ip, b_hi, a_hi
+//  bge FalseBody
+//  TrueBody:
+//
+//Incorrect code, swap a, b ===>:
+//  cmp a_lo, b_lo
+//  sbcs ip, a_hi, a_hi
+//  ble FalseBody
+//  TrueBody:
+void ARMIR2OR::convertRelationOpDWORDForLEandGT(IR const* ir,
+                                                SR * sr0, SR * sr1, 
+                                                bool is_signed,
+                                                OUT RecycORList & ors,
+                                                OUT RecycORList & tors,
+                                                IN IOC * cont)
+{
+    ASSERT0(ir->is_le() || ir->is_gt());
+    SR * sr0_l = sr0->getVec()->get(0);
+    SR * sr0_h = sr0->getVec()->get(1);
+    SR * sr1_l = sr1->getVec()->get(0);
+    SR * sr1_h = sr1->getVec()->get(1);
+    SR * truepd = nullptr;
+    SR * falsepd = nullptr;
+
+    //SBCS: If S is specified, the SBC instruction updates the
+    //N, Z, C and V flags according to the result.
+    //
+    //Compare <sr0_l,sr0_h> is less-than <sr1_l,sr1_h>:
+    //  truepd is LT, falsepd is GE 
+    //  cmp sr1_l, sr0_l
+    //  sbcs res, sr1_h, sr0_h
+    //  return res, truepd
+
+    //Herein subtle differences to LT/GE is swapping operand of CMP,
+    //e.g: cmp sr1, sr0.
+    SR * t = sr0_l; sr0_l = sr1_l; sr1_l = t; //SWAP sr0_l, sr1_l
+    t = sr0_h; sr0_h = sr1_h; sr1_h = t; //SWAP sr0_h, sr1_h
+
+    convertRelationOpDWORDForLTGELEGT(ir, sr0_l, sr0_h, sr1_l, sr1_h, 
+                                      is_signed, ors, tors, cont);
+    return;
+}
+
+
 //Generate compare operations and return the comparation result registers.
 // e.g:
 //     a - 1 > b + 2
 // =>
 //     sr0 = a - 1
 //     sr1 = b + 2
-//     sr3, p1, p2 <- cmp sr0, sr1
-//     return sr3, p1, p2
-void ARMIR2OR::convertRelationOpDWORD(IR const* ir,
-                                      OUT RecycORList & ors,
+//     res, truepd, falsepd <- cmp sr0, sr1
+//     return res, truepd, falsepd
+void ARMIR2OR::convertRelationOpDWORD(IR const* ir, OUT RecycORList & ors,
                                       IN IOC * cont)
 {
     ASSERT0(ir && ir->is_relation());
@@ -743,53 +957,61 @@ void ARMIR2OR::convertRelationOpDWORD(IR const* ir,
     convertGeneralLoad(opnd1, tors, &tmp);
     SR * sr1 = tmp.get_reg(0);
     ASSERT0(sr1->is_vec());
-
     ASSERT0(sr0->getByteSize() == opnd0->getTypeSize(m_tm));
     ASSERT0(sr0->getByteSize() == sr1->getByteSize());
 
-    SR * truepd = nullptr;
-    SR * falsepd = nullptr;
-    getResultPredByIRTYPE(ir->getCode(), &truepd, &falsepd,
-                          opnd0->is_signed());
-
-    //Comparison algo:
-    //  compare is <sr1,sr2>, <sr3,sr4> equal:
-    //  cmp sr2, sr4
-    //  ifeq cmp sr1, sr3
-    //  ifle cmp sr2, sr4
-
-    //Compare high part equality.
-    //truepd, falsepd = cmp sr0, sr1
-    getCG()->buildARMCmp(OR_cmp, getCG()->getTruePred(),
-                         SR_vec(sr0)->get(1), SR_vec(sr1)->get(1),
-                         tors.getList(), cont);
-
-    //Compare low part if high part is equal.
-    getCG()->buildARMCmp(OR_cmp, getCG()->genEQPred(),
-                         SR_vec(sr0)->get(0), SR_vec(sr1)->get(0),
-                         tors.getList(), cont);
-
-    //Recompare high part if falsepd is true.
-    getCG()->buildARMCmp(OR_cmp, falsepd, SR_vec(sr0)->get(1),
-                         SR_vec(sr1)->get(1), tors.getList(), cont);
-
-    tors.copyDbx(ir);
-    ors.append_tail(tors);
-    recordRelationOpResult(ir, truepd, falsepd, truepd, ors, cont);
+    //ARM Conditions Flag.
+    // Name Condition                    State of Flags
+    // EQ   Equal / equals zero          Z set
+    // NE   Not equal                    Z clear
+    // CS   Carry set                    C set
+    // CC   Carry clear                  C clear
+    // MI   Minus / negative             N set
+    // PL   Plus / positive or zero      N clear
+    // VS   Overflow                     V set
+    // VC   No overflow                  V clear
+    // HS   Unsigned higher or same      C set
+    // LO   Unsigned lower               C clear
+    // HI   Unsigned higher              C set and Z clear
+    // LS   Unsigned lower or same       C clear or Z set
+    // GE   Signed greater than or equal N equals V
+    // LT   Signed less than             N is not equal to V
+    // GT   Signed greater than          Z clear and N equals V
+    // LE   Signed less than or equal    Z set or N is not equal to V
+    bool is_signed = opnd0->is_signed();
+    switch (ir->getCode()) {
+    case IR_EQ:
+    case IR_NE:
+        convertRelationOpDWORDForEquality(ir, sr0, sr1, is_signed,
+                                          ors, tors, cont);
+        break;
+    case IR_LE:
+    case IR_GT:
+        convertRelationOpDWORDForLEandGT(ir, sr0, sr1, is_signed,
+                                         ors, tors, cont);
+        break;
+    case IR_LT:
+    case IR_GE:
+        convertRelationOpDWORDForLTandGE(ir, sr0, sr1, is_signed,
+                                         ors, tors, cont);
+        break;
+    default:
+        UNREACHABLE();
+    }
 }
 
 
 //Generate compare operations and return the comparation result registers.
-//The output registers in IOC are ResultSR,
-//TruePredicatedSR, FalsePredicatedSR.
-//The ResultSR record the boolean value of comparison of relation operation.
+//The output registers in IOC are ResultSR, TruePredicatedSR, and
+//FalsePredicatedSR.
+//The ResultSR records the boolean value of comparison of relation operation.
 // e.g:
 //     a - 1 > b + 2
 // =>
 //     sr0 = a - 1
 //     sr1 = b + 2
-//     sr3, p1, p2 <- cmp sr0, sr1
-//     return sr3, p1, p2
+//     res, truepd, falsepd <- cmp sr0, sr1
+//     return res, truepd, falsepd 
 void ARMIR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
                                  IN IOC * cont)
 {
@@ -1013,27 +1235,29 @@ void ARMIR2OR::recordRelationOpResult(IR const* ir, SR * truepd,
         RecycORList tors(this);
         getCG()->buildMove(res, getCG()->genOne(), tors.getList(), cont);
         tors.set_pred(truepd, m_cg);
+        tors.copyDbx(ir);
         ors.append_tail(tors);
 
         tors.clean();
         getCG()->buildMove(res, getCG()->genZero(), tors.getList(), cont);
         tors.set_pred(falsepd, m_cg);
+        tors.copyDbx(ir);
         ors.append_tail(tors);
 
         cont->set_reg(RESULT_REGISTER_INDEX, res); //used by non-conditional op
 
-        //truepd, falsepd and result_pred are useless.
+        //truepd, falsepd and result_pred are useless from now on.
         return;
     }
 
-    //Record result.
-    //used by Non-Conditional-Op, such as convertSelect.
+    //Record result-reg.
+    //The reg used by Non-Conditional-Op, such as convertSelect.
     cont->set_reg(RESULT_REGISTER_INDEX, nullptr);
 
-    //Record true-result predicator
+    //Record true-result predicated register.
     cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, truepd);
 
-    //Record false-result predicator    
+    //Record false-result predicated register    
     cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, falsepd);
 
     //Record true-result.
@@ -1057,8 +1281,7 @@ void ARMIR2OR::convertIgoto(IR const* ir, OUT RecycORList & ors, IN IOC *)
 }
 
 
-void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors,
-                             IN IOC * cont)
+void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors, IOC * cont)
 {
     ASSERT0(ir->is_select());
     IOC tmp;
@@ -1091,8 +1314,8 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors,
         } else if (res_size <= BYTESIZE_OF_DWORD) {
             SR * sr0 = tmp.get_reg(0);
             SR * sr1 = nullptr;
-            if (SR_vec(sr0) != nullptr && SR_vec(sr0)->get(1) != nullptr) {
-                sr1 = SR_vec(sr0)->get(1);
+            if (sr0->getVec() != nullptr && sr0->getVec()->get(1) != nullptr) {
+                sr1 = sr0->getVec()->get(1);
             } else {
                 sr1 = getCG()->genReg();
                 getCG()->buildMove(sr1, getCG()->genZero(),
@@ -1122,8 +1345,8 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors,
         } else if (res_size <= BYTESIZE_OF_DWORD) {
             SR * sr0 = tmp.get_reg(0);
             SR * sr1 = nullptr;
-            if (SR_vec(sr0) != nullptr && SR_vec(sr0)->get(1) != nullptr) {
-                sr1 = SR_vec(sr0)->get(1);
+            if (sr0->getVec() != nullptr && sr0->getVec()->get(1) != nullptr) {
+                sr1 = sr0->getVec()->get(1);
             } else {
                 sr1 = getCG()->genReg();
                 getCG()->buildMove(sr1, getCG()->genZero(),
@@ -1413,8 +1636,7 @@ void ARMIR2OR::convertTruebrFp(IR const* ir, OUT RecycORList & ors,
 }
 
 
-void ARMIR2OR::convertTruebr(IR const* ir, OUT RecycORList & ors,
-                             IN IOC * cont)
+void ARMIR2OR::convertTruebr(IR const* ir, OUT RecycORList & ors, IOC * cont)
 {
     ASSERT0(ir && ir->is_truebr());
     IR * opnd0 = BIN_opnd0(BR_det(ir));
@@ -1429,7 +1651,6 @@ void ARMIR2OR::convertTruebr(IR const* ir, OUT RecycORList & ors,
     }
 
     ASSERT0(opnd0->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
-
     convertRelationOpDWORD(BR_det(ir), ors, cont);
 
     RecycORList tors(this);
@@ -1695,9 +1916,9 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT RecycORList & ors,
                                  getCG()->getTruePred(),
                                  getCG()->genReturnAddr(), r0);
         } else {
-            ASSERTN(SR_vec(retv) && SR_vec_idx(retv) == 0,
+            ASSERTN(retv->getVec() && SR_vec_idx(retv) == 0,
                     ("it should be the first SR in vector"));
-            SR * retv_2 = SR_vec(retv)->get(1);
+            SR * retv_2 = retv->getVec()->get(1);
             SR * r1 = getCG()->gen_r1();
             getCG()->buildMove(r1, retv_2, tors.getList(), nullptr);
             o = getCG()->buildOR(OR_ret2, 0, 4,

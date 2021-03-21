@@ -771,7 +771,7 @@ void InterfGraph::dump()
           "edge.color: darkgreen\n");
 
     //Print nodes
-    VertexIter vit;
+    VertexIter vit = VERTEX_UNDEF;
     for(xcom::Vertex * v = get_first_vertex(vit);
         v != nullptr; v = get_next_vertex(vit)){
         fprintf(h, "\nnode: { title:\"%d\" label:\"%d\" "

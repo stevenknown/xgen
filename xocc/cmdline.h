@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _CMDLINE_H_
 
 //Exported Variables, only used in FE.
-//If one need to export variables, or types to other
+//If one requires to export variables, or types to other
 //module, please put them in fexp.h.
 extern CHAR const* g_output_file_name;
 extern CHAR const* g_xocc_version;

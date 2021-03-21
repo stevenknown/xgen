@@ -1,4 +1,4 @@
-int ch;
+long long ch;
 int main()
 {
     ch = 'a';

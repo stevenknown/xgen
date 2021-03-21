@@ -171,6 +171,7 @@ SR * ARMCG::gen_r3()
 }
 
 
+//Scratch Register, the synonym is IP register.
 SR * ARMCG::gen_r12()
 {
     SR * sr = genDedicatedReg(REG_R12);
@@ -480,9 +481,9 @@ void ARMCG::buildLoad(IN SR * load_val,
         OR * o = genOR(OR_ldrd);
         ASSERT0(load_val->getByteSize() == 8);
         ASSERT0(load_val->is_vec());
-        ASSERT0(SR_vec(load_val)->get(0) && SR_vec(load_val)->get(1));
-        o->set_load_val(SR_vec(load_val)->get(0), this, 0);
-        o->set_load_val(SR_vec(load_val)->get(1), this, 1);
+        ASSERT0(load_val->getVec()->get(0) && load_val->getVec()->get(1));
+        o->set_load_val(load_val->getVec()->get(0), this, 0);
+        o->set_load_val(load_val->getVec()->get(1), this, 1);
         o->set_load_base(base, this);
 
         //If the bitsize of sr_ofst exceeded the capacity of operation,
@@ -612,10 +613,10 @@ void ARMCG::buildStoreCase2(IN SR * store_val,
     OR * o = genOR(code);
     ASSERT0(store_val->getByteSize() == 8);
     ASSERT0(store_val->is_vec());
-    ASSERT0(SR_vec(store_val)->get(0) &&
-            SR_vec(store_val)->get(1));
-    o->set_store_val(SR_vec(store_val)->get(0), this, 0);
-    o->set_store_val(SR_vec(store_val)->get(1), this, 1);
+    ASSERT0(store_val->getVec()->get(0) &&
+            store_val->getVec()->get(1));
+    o->set_store_val(store_val->getVec()->get(0), this, 0);
+    o->set_store_val(store_val->getVec()->get(1), this, 1);
     o->set_store_base(base, this);
 
     //If the bitsize of sr_ofst exceeded the capacity of operation,
@@ -1514,8 +1515,8 @@ void ARMCG::buildShiftLeft(IN SR * src,
         //    it  cc
         //    movcc res_hi, r4
         //    strd res_lo, res_hi ->[b_lo, b_hi]
-        SR * hi = SR_vec(src)->get(1);
-        SR * lo = SR_vec(src)->get(0);
+        SR * hi = src->getVec()->get(1);
+        SR * lo = src->getVec()->get(0);
         ASSERT0(hi && lo);
         SR * res_lo = genReg();
         SR * res_hi = genReg();
@@ -1579,8 +1580,8 @@ void ARMCG::buildShiftLeft(IN SR * src,
             //t <- lo << (32 - ofst)
             //hi <- hi | t
             //lo <- lo << ofst
-            SR * hi = SR_vec(src)->get(1);
-            SR * lo = SR_vec(src)->get(0);
+            SR * hi = src->getVec()->get(1);
+            SR * lo = src->getVec()->get(0);
             ASSERT0(hi && lo);
             OR * o = buildOR(OR_lsl_i, 1, 3, hi, getTruePred(),
                              hi, shift_ofst);
@@ -1598,8 +1599,8 @@ void ARMCG::buildShiftLeft(IN SR * src,
         } else if (shift_ofst->getInt() <= 63) {
             //hi <- lo << (ofst - 32)
             //lo <- 0
-            SR * hi = SR_vec(src)->get(1);
-            SR * lo = SR_vec(src)->get(0);
+            SR * hi = src->getVec()->get(1);
+            SR * lo = src->getVec()->get(0);
             ASSERT0(hi && lo);
             OR * o = buildOR(OR_lsl_i, 1, 3, hi, getTruePred(),
                              lo, genIntImm(shift_ofst->getInt() - 32, false));
@@ -1610,8 +1611,8 @@ void ARMCG::buildShiftLeft(IN SR * src,
             cont->set_reg(0, lo);
             return;
         } else {
-            SR * hi = SR_vec(src)->get(1);
-            SR * lo = SR_vec(src)->get(0);
+            SR * hi = src->getVec()->get(1);
+            SR * lo = src->getVec()->get(0);
             ASSERT0(hi && lo);
             // hi <- 0
             OR * set_high = buildOR(OR_mov_i, 1, 2, hi,
@@ -1690,8 +1691,8 @@ void ARMCG::buildShiftRightCase2(IN SR * src,
         ort = OR_lsr;
     }
 
-    SR * src_hi = SR_vec(src)->get(1);
-    SR * src_lo = SR_vec(src)->get(0);
+    SR * src_hi = src->getVec()->get(1);
+    SR * src_lo = src->getVec()->get(0);
     ASSERT0(src_hi && src_lo);
     SR * res_lo = genReg();
     SR * res_hi = genReg();
@@ -1759,8 +1760,8 @@ void ARMCG::buildShiftRightCase3_1(IN SR * src,
     //lo = lo | (hi <<(lsl) (32 - shift_ofst))
     //hi = hi >> shift_ofst
 
-    SR * hi = SR_vec(src)->get(1);
-    SR * lo = SR_vec(src)->get(0);
+    SR * hi = src->getVec()->get(1);
+    SR * lo = src->getVec()->get(0);
     ASSERT0(hi && lo);
 
     //NOTE: Need LOGICAL shift to reserve space to
@@ -1815,8 +1816,8 @@ void ARMCG::buildShiftRightCase3_2(IN SR * src,
         ort = OR_lsr_i;
     }
 
-    SR * hi = SR_vec(src)->get(1);
-    SR * lo = SR_vec(src)->get(0);
+    SR * hi = src->getVec()->get(1);
+    SR * lo = src->getVec()->get(0);
     ASSERT0(hi && lo);
     //Do we need asr_i here?
     //lo <- hi asr (ofst - 32)
@@ -1869,8 +1870,8 @@ void ARMCG::buildShiftRightCase3(IN SR * src,
     //    hi <- 0
     //}
 
-    SR * hi = SR_vec(src)->get(1);
-    SR * lo = SR_vec(src)->get(0);
+    SR * hi = src->getVec()->get(1);
+    SR * lo = src->getVec()->get(0);
     ASSERT0(hi && lo);
     OR * set_high = nullptr;
     OR * set_low = nullptr;
@@ -1969,7 +1970,7 @@ void ARMCG::buildAddRegImm(SR * src,
         cont->set_reg(0, res);
         ors.append_tail(o);
     } else if (sr_size <= 8) {
-        SRVec * sv = SR_vec(src);
+        SRVec * sv = src->getVec();
         ASSERT0(sv != nullptr && SR_vec_idx(src) == 0);
 
         //load low 32bit imm
@@ -1984,7 +1985,7 @@ void ARMCG::buildAddRegImm(SR * src,
         SR * res = genReg();
         SR * res2 = genReg();
         getSRVecMgr()->genSRVec(2, res, res2);
-        ASSERT0(res == SR_vec(res)->get(0) && res2 == SR_vec(res)->get(1));
+        ASSERT0(res == res->getVec()->get(0) && res2 == res->getVec()->get(1));
 
         OR * o = buildOR(OR_adds, 2, 3, res, getRflag(),
                          getTruePred(), src, t);
@@ -2070,18 +2071,18 @@ void ARMCG::buildAddRegReg(bool is_add,
         cont->set_reg(0, res);
         ors.append_tail(o);
     } else if (sr_size <= 8) {
-        SRVec * sv1 = SR_vec(src1);
+        SRVec * sv1 = src1->getVec();
         ASSERT0(sv1 && SR_vec_idx(src1) == 0);
         SR * src1_2 = sv1->get(1);
         ASSERT0(src1_2 != nullptr && SR_vec_idx(src1_2) == 1);
 
-        SRVec * sv2 = SR_vec(src2);
+        SRVec * sv2 = src2->getVec();
         ASSERT0(sv2 && SR_vec_idx(src2) == 0);
         SR * src2_2 = sv2->get(1);
         ASSERT0(src2_2 && SR_vec_idx(src2_2) == 1);
 
         SR * res = getSRVecMgr()->genSRVec(2, genReg(), genReg());
-        SR * res_2 = SR_vec(res)->get(1);
+        SR * res_2 = res->getVec()->get(1);
 
         OR_TYPE orty = OR_UNDEF;
         OR_TYPE orty2 = OR_UNDEF;
@@ -2152,7 +2153,7 @@ void ARMCG::buildAddRegReg(bool is_add,
         //Record the result, also the first element of SRVector.
         cont->set_reg(0, res);
         //cont->set_reg(1, res_2); //no need to record second part.
-        assembleSRVec(SR_vec(res), res, res_2);
+        assembleSRVec(res->getVec(), res, res_2);
     } else {
         ASSERTN(0, ("TODO"));
     }
@@ -2297,7 +2298,7 @@ bool ARMCG::isValidRegInSRVec(OR const*, SR const* sr,
 {
     DUMMYUSE(is_result);
     CHECK0_DUMMYUSE(sr);
-    ASSERT0(SR_vec(sr));
+    ASSERT0(sr->getVec());
     if (idx == 0) {
         ASSERTN(isEvenReg(sr->getPhyReg()),
                 ("Must be even number register."));

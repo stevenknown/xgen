@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define CASEV_lab(c) (c)->label
 #define CASEV_constv(c) (c)->constv
-#define CASEV_is_def(c) (c)->is_default
+#define CASEV_is_default(c) (c)->is_default
 class CaseValue {
 public:
     LabelInfo const* label;
@@ -157,9 +157,10 @@ public:
     IR * buildId(IN Decl * id);
     IR * buildLoad(IN Tree * t);
 
-    bool is_istore_lhs(IN Tree * t);
-    bool is_readonly(Var const* v);
-    bool is_alloc_heap(Var const* v);
+    bool is_istore_lhs(Tree const* t) const;
+    bool is_readonly(Var const* v) const;
+    bool is_alloc_heap(Var const* v) const;
+    bool is_align(Sym const* sym) const;
 
     xoc::Type const* checkAndGenCVTType(Decl const* tgt, Decl const* src);
     IR * convertLDA(Tree * t, INT lineno, T2IRCtx * cont);

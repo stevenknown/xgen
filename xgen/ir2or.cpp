@@ -232,7 +232,7 @@ void IR2OR::convertGeneralLoad(IR const* ir, OUT RecycORList & ors,
         res = cont->get_reg(0);
         ASSERT0(res && res->getByteSize() >= ir->getTypeSize(m_tm));
         if (!res->is_reg()) {
-            SRVec * srvec = SR_vec(res);
+            SRVec * srvec = res->getVec();
             RecycORList tors(this);
             if (srvec == nullptr) {
                 SR * r = m_cg->genReg();
@@ -675,8 +675,8 @@ void IR2OR::flattenSRVec(IOC const* cont, Vector<SR*> * vec)
         if (sr == nullptr) { return; }
         if (sr->is_vec()) {
             ASSERTN(SR_vec_idx(sr) == 0, ("expect first element"));
-            for (UINT j = 0; j <= SR_vec(sr)->get_elem_count(); j++) {
-                vec->set(vec_count, SR_vec(sr)->get(j));
+            for (UINT j = 0; j <= sr->getVec()->get_elem_count(); j++) {
+                vec->set(vec_count, sr->getVec()->get(j));
                 vec_count++;
             }
         } else {
@@ -924,7 +924,7 @@ void IR2OR::convertTruebr(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     IR * br_det = BR_det(ir);
     ASSERT0(br_det->is_lt() || br_det->is_le() || br_det->is_gt() ||
             br_det->is_ge() || br_det->is_eq() || br_det->is_ne());
-
+    
     convertRelationOp(br_det, ors, cont);
 
     RecycORList tors(this);
@@ -1027,7 +1027,6 @@ void IR2OR::convertLabel(IRBB const* bb, OUT RecycORList & ors, IN IOC * cont)
 void IR2OR::convert(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     ASSERT0(ir && ir->verify(m_rg));
-
     RecycORList tors(this);
     switch (ir->getCode()) {
     case IR_CONST:

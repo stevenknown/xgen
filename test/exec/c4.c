@@ -11,6 +11,7 @@
 //#include <memory.h>
 //#include <unistd.h>
 //#include <fcntl.h>
+
 int printf(char const*, ...);
 void exit(int);
 void * malloc(int);
@@ -37,7 +38,7 @@ int *e, *le,  // current position in emitted code
 
 // tokens and classes (operators last and in precedence order)
 enum {
-  Num = 128, Fun, Sys, Glo, Loc, Id,
+  Num = 128, Fun, Sys, Glo, Loc, Id = 133,
   Char, Else, Enum, If, Int, Return, Sizeof, While,
   Assign, Cond, Lor, Lan, Or, Xor, And, Eq, Ne, Lt, Gt, Le, Ge, Shl, Shr, Add, Sub, Mul, Div, Mod, Inc, Dec, Brak
 };
@@ -344,11 +345,16 @@ int main(int argc, char ** argv)
   int fd, bt, ty, poolsz, *idmain;
   int *pc, *sp, *bp, a, cycle; // vm registers
   int i, *t; // temps
-  char ** ppp[2];
-  ppp[0] = "a.out";
-  ppp[1] = "c4.c";
+
+  //Make dummy input parameters for c4.exe
+  char * ppp[3];
+  ppp[0] = "c4.out";
+  ppp[1] = "-s";
+  ppp[2] = "c4.input";
   argv = ppp;
-  argc = 2;
+  argc = 3;
+  //
+
   --argc; ++argv;
   if (argc > 0 && **argv == '-' && (*argv)[1] == 's') { src = 1; --argc; ++argv; }
   if (argc > 0 && **argv == '-' && (*argv)[1] == 'd') { debug = 1; --argc; ++argv; }
@@ -432,7 +438,7 @@ int main(int argc, char ** argv)
           if (tk == Int) next();
           else if (tk == Char) { next(); ty = CHAR; }
           while (tk == Mul) { next(); ty = ty + PTR; }
-          if (tk != Id) { printf("%d: bad parameter declaration\n", line); return -1; }
+          if (tk != Id) { printf("%d: bad parameter declaration tk=%d, expect=Id\n", line, tk); return -1; }
           if (id[Class] == Loc) { printf("%d: duplicate parameter definition\n", line); return -1; }
           id[HClass] = id[Class]; id[Class] = Loc;
           id[HType]  = id[Type];  id[Type] = ty;
@@ -450,7 +456,7 @@ int main(int argc, char ** argv)
           while (tk != ';') {
             ty = bt;
             while (tk == Mul) { next(); ty = ty + PTR; }
-            if (tk != Id) { printf("%d: bad local declaration\n", line); return -1; }
+            if (tk != Id) { printf("%d: bad local declaration, tk=%d, expect=Id\n", line, tk); return -1; }
             if (id[Class] == Loc) { printf("%d: duplicate local definition\n", line); return -1; }
             id[HClass] = id[Class]; id[Class] = Loc;
             id[HType]  = id[Type];  id[Type] = ty;

@@ -115,8 +115,10 @@ protected:
     //True if compute the section offset for global/local variable.
     UINT m_is_compute_sect_offset:1;
 
+    //True to dump OR id when dumpping OR.
+    UINT m_is_dump_or_id:1;
     //Record the max bytesize for callee argument section.
-    UINT m_max_real_arg_size:30;
+    UINT m_max_real_arg_size:29;
     UINT m_sect_count;
     UINT m_reg_count;
     INT m_param_sect_start_offset; //record the parameter start offset.
@@ -184,7 +186,7 @@ protected:
     {
         ASSERTN(size > 0, ("xmalloc: size less zero!"));
         //return MEM_POOL_Alloc(&m_mempool, size);
-        ASSERTN(m_pool != nullptr, ("need graph pool!!"));
+        ASSERTN(m_pool != nullptr, ("requires graph pool"));
         void * p = smpoolMalloc(size, m_pool);
         if (p == nullptr) return nullptr;
         ::memset(p, 0, size);
@@ -217,8 +219,18 @@ public:
 
     //Build nop instruction.
     virtual OR * buildNop(UNIT unit, CLUST clust) = 0;
+
+    //Generate OR with variant number of operands and results.
+    //Note user should pass into the legal number of result and operand SRs
+    //that corresponding to 'orty'.
     virtual OR * buildOR(OR_TYPE orty, UINT resnum, UINT opndnum, ...);
     virtual OR * buildOR(OR_TYPE orty, IN SRList & result, IN SRList & opnd);
+
+    //Generate OR with variant number of operands and results.
+    //Note user should pass into the legal number of result and operand SRs
+    //that corresponding to 'orty'.
+    OR * buildOR(OR_TYPE orty, ...);
+
     virtual void buildSpadjust(OUT ORList & ors, IN IOC * cont);
     virtual void buildSpill(IN SR * store_val,
                             IN xoc::Var * spill_loc,
@@ -444,7 +456,7 @@ public:
                                  IN OUT IOC * cont) = 0;
     //Build memory store operation that store 'reg' into stack.
     //NOTE: user have to assign physical register manually if there is
-    //new OR generated and need register allocation.
+    //new OR generated and requires register allocation.
     //reg: register to be stored.
     //offset: bytesize offset related to SP.
     //ors: record output.
@@ -553,18 +565,14 @@ public:
     //Change the correlated cluster of 'o'
     //If is_test is true, this function only check whether the given
     //OR can be changed.
-    //is_test: true to query whether need to change OR's cluster.
-    virtual bool changeORCluster(OR * o,
-                                 CLUST to_clust,
+    //is_test: true to query whether have to change OR's cluster.
+    virtual bool changeORCluster(OR * o, CLUST to_clust,
                                  RegFileSet const* regfile_unique,
                                  bool is_test);
 
     //Change 'o' to 'ot', modifing all operands and results.
-    virtual bool changeORType(OR * o,
-                              OR_TYPE ot,
-                              CLUST src,
-                              CLUST tgt,
-                              RegFileSet const* regfile_unique);
+    virtual bool changeORType(OR * o, OR_TYPE ot, CLUST src,
+                              CLUST tgt, RegFileSet const* regfile_unique);
 
     virtual SR * dupSR(SR const* sr);
     virtual OR * dupOR(OR const* o);
@@ -592,6 +600,8 @@ public:
             buf.strcat(ILABEL_STR_FORMAT, ILABEL_CONT(lab));
         } else if (LABELINFO_type(lab) == L_CLABEL) {
             buf.strcat(CLABEL_STR_FORMAT, CLABEL_CONT(lab));
+        } else if (LABELINFO_type(lab) == L_PRAGMA) {
+            buf.strcat(PRAGMA_STR_FORMAT, PRAGMA_CONT(lab));
         } else {
             ASSERTN(0, ("unknown label type"));
         }
@@ -860,6 +870,7 @@ public:
         ASSERTN(0, ("Target Dependent Code"));
         return false;
     }
+    bool isDumpORId() const { return m_is_dump_or_id; }
 
     virtual OR_TYPE invertORType(OR_TYPE)
     {
@@ -1017,6 +1028,7 @@ public:
     }
 
     void setCluster(ORList & ors, CLUST clust);
+    void setDumpORId(bool doit) { m_is_dump_or_id = doit; }
     void setComputeSectOffset(bool doit) { m_is_compute_sect_offset = doit; }
     void storeRegisterParameterBackToStack(List<ORBB*> * entry_lst,
                                            UINT param_start);

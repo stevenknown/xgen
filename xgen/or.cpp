@@ -154,16 +154,19 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
         xoc::g_dbx_mgr->printSrcLine(buf, &OR_dbx(this), &prtctx);
     }
 
-    OR * pthis = const_cast<OR*>(this);
-    //Order in BB.
-    if (OR_bb(this) == nullptr) {
-        buf.strcat("[????]");
-    } else {
-        buf.strcat("[O:%d]", OR_order(this));
+    OR * pthis = const_cast<OR*>(this);    
+    if (cg->isDumpORId()) {
+        //Order in BB.
+        if (OR_bb(this) == nullptr) {
+            buf.strcat("[????]");
+        } else {
+            buf.strcat("[O:%d]", OR_order(this));
+        }
+        
+        //Unique id. You can disable it for diminish the output info.
+        buf.strcat("[id:%d] ", OR_id(this));
     }
 
-    //Unique id. You can disable it for diminish the output info.
-    buf.strcat("[id:%d] ", OR_id(this));
     buf.strcat(OR_code_name(this));
     buf.strcat(" ");
 

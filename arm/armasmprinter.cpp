@@ -30,11 +30,10 @@ author: Su Zhenyu
 @*/
 #include "../xgen/xgeninc.h"
 
-//Compute the alignment for specifical var, and return
-//the power of 2.
+//Compute the alignment for specifical var, and return the power of 2.
 static UINT computeAlignIsPowerOf2(Var const* v)
 {
-    UINT byte_align = VAR_align(v);
+    UINT byte_align = v->get_align();
     switch (byte_align) {
     case 0:
     case 1: //1 byte

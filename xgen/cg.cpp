@@ -81,7 +81,7 @@ void ArgDescMgr::updatePassedArgInRegister(UINT bytesize)
 //
 CG::CG(xoc::Region * rg, CGMgr * cgmgr): m_ip_mgr(self())
 {
-    ASSERTN(rg, ("Code generation need region info."));
+    ASSERTN(rg, ("Code generation requires region info."));
     ASSERT0(cgmgr);
     m_rg = rg;
     m_cgmgr = cgmgr;
@@ -101,6 +101,7 @@ CG::CG(xoc::Region * rg, CGMgr * cgmgr): m_ip_mgr(self())
     m_pool = smpoolCreate(64, MEM_COMM);
     m_is_use_fp = false;
     m_is_compute_sect_offset = false;
+    m_is_dump_or_id = true;
 }
 
 
@@ -156,10 +157,48 @@ void CG::destroyVAR()
 
 
 //Generate OR with variant number of operands and results.
+//Note user should pass into the legal number of result and operand SRs
+//that corresponding to 'orty'.
+OR * CG::buildOR(OR_TYPE orty, ...)
+{
+    ASSERT0(orty != OR_UNDEF);
+    UINT resnum = tmGetResultNum(orty);
+    UINT opndnum = tmGetOpndNum(orty);
+    va_list ptr;
+    va_start(ptr, orty);
+    OR * o = genOR(orty);
+    //First extracting results.
+    UINT i = 0;
+    while (i < resnum) {
+        SR * sr = va_arg(ptr, SR*);
+        o->set_result(i, sr, this);
+        i++;
+    }
+    //following are opnds
+    i = 0;
+    while (i < opndnum) {
+        SR * sr = va_arg(ptr, SR*);
+        if (i == 0 && HAS_PREDICATE_REGISTER) {
+            ASSERTN(sr->is_pred(), ("first operand must be predicate SR"));
+        }
+        o->set_opnd(i, sr, this);
+        i++;
+    }
+    va_end(ptr);
+    return o;
+}
+
+
+//Generate OR with variant number of operands and results.
+//Note user should pass into the legal number of result and operand SRs
+//that corresponding to 'orty'.
 OR * CG::buildOR(OR_TYPE orty, UINT resnum, UINT opndnum, ...)
 {
-    //This manner worked well on ia32, but is not on x8664.
+    ASSERT0(orty != OR_UNDEF);
+    //Unportable code, this manner worked well on ia32, but is not on x8664.
     //SR ** sr = (SR**)(((BYTE*)(&opndnum)) + sizeof(opndnum));
+    ASSERT0(resnum == tmGetResultNum(orty));
+    ASSERT0(opndnum == tmGetOpndNum(orty));
 
     va_list ptr;
     va_start(ptr, opndnum);
@@ -418,7 +457,7 @@ void CG::buildSub(SR * src1,
 
         if (sr_size == 8) {
             SR * t = genReg();
-            SR * src1_h = SR_vec(src1)->get(1);
+            SR * src1_h = src1->getVec()->get(1);
             ASSERT0(src1_h != nullptr);
             buildMove(t, src1_h, ors, cont);
             getSRVecMgr()->genSRVec(2, newsrc1, t);
@@ -546,8 +585,8 @@ void CG::buildTypeCvt(xoc::IR const* tgt,
             //Just do some check.
             SR * src_low = cont->get_reg(0);
             CHECK0_DUMMYUSE(src_low);
-            ASSERT0(SR_vec(src_low) != nullptr && SR_vec_idx(src_low) == 0);
-            ASSERT0(SR_vec(src_low)->get(1) != nullptr);
+            ASSERT0(src_low->getVec() != nullptr && SR_vec_idx(src_low) == 0);
+            ASSERT0(src_low->getVec()->get(1) != nullptr);
             ASSERT0(src_low->getByteSize() == 8);
         }
     } else {
@@ -680,14 +719,12 @@ void CG::buildAccumulate(OR * red_or,
 
 //Build memory store operation that store 'reg' into stack.
 //NOTE: user have to assign physical register manually if there is
-//new OR generated and need register allocation.
+//new OR generated and requires register allocation.
 //reg: register to be stored.
 //offset: bytesize offset related to SP.
 //ors: record output.
 //cont: context.
-void CG::buildStoreAndAssignRegister(SR * reg,
-                                     UINT offset,
-                                     ORList & ors,
+void CG::buildStoreAndAssignRegister(SR * reg, UINT offset, ORList & ors,
                                      IOC * cont)
 {
     SR * sr_offset = genIntImm((HOST_INT)offset, false);
@@ -927,7 +964,6 @@ SR * CG::computeAndUpdateOffset(SR * sr)
 {
     ASSERT0(sr);
     xoc::Var const* var = SR_var(sr);
-
     if (var->is_formal_param()) {
         ASSERTN(m_param_sect_start_offset != -1,
                 ("should have been computed at"
@@ -1429,14 +1465,11 @@ bool CG::changeORCluster(OR * o,
 
 
 //Change 'o' to 'ot', modifing all operands and results.
-bool CG::changeORType(OR * o,
-                      OR_TYPE ot,
-                      CLUST src,
-                      CLUST tgt,
+bool CG::changeORType(OR * o, OR_TYPE ot, CLUST src, CLUST tgt,
                       RegFileSet const* regfile_unique)
 {
     DUMMYUSE(src);
-    ASSERTN(tgt != CLUST_UNDEF, ("need cluster info"));
+    ASSERTN(tgt != CLUST_UNDEF, ("requires cluster info"));
     UINT i;
     //Performing verification and substitution certainly.
     for (i = 0; i < o->result_num(); i++) {
@@ -1759,7 +1792,7 @@ bool CG::isValidRegInSRVec(OR const*, SR const* sr,
     DUMMYUSE(is_result);
     DUMMYUSE(idx);
     ASSERTN(0, ("Target Dependent Code"));
-    if (SR_vec(sr) != nullptr) {
+    if (sr->getVec() != nullptr) {
         //Do some verification.
         return true;
     }
@@ -2041,8 +2074,8 @@ void CG::flattenInVec(SR * argval, Vector<SR*> * vec)
 
     if (argval->is_vec()) {
         ASSERTN(SR_vec_idx(argval) == 0, ("expect first element"));
-        for (UINT j = 0; j < SR_vec(argval)->get_elem_count(); j++) {
-            vec->set(vec_count, SR_vec(argval)->get(j));
+        for (UINT j = 0; j < argval->getVec()->get_elem_count(); j++) {
+            vec->set(vec_count, argval->getVec()->get(j));
             vec_count++;
         }
     } else {
@@ -2994,7 +3027,7 @@ bool CG::mustAsmDef(OR const* o, SR const* sr) const
 
 //Check result of o.
 //NOTICE: asm-o also have result tns, but its clobber-set may implicitly
-//override some registers. So 'mustAsmDef()' need to do more inspection.
+//override some registers. So 'mustAsmDef()' has to do more inspection.
 bool CG::mustDef(OR const* o, SR const* sr) const
 {
     if (!sr->is_reg()) {
@@ -3708,7 +3741,7 @@ void CG::performIS(IN OUT Vector<BBSimulator*> & simvec, IN RaMgr * ra_mgr)
        
         ASSERT0(ddg && sim && lis);
 
-        simvec.set(bb->id(), sim); //record sim that need by package().
+        simvec.set(bb->id(), sim); //record sim that required by package().
 
         if (g_do_lis) {
             ddg->build();
@@ -3716,7 +3749,7 @@ void CG::performIS(IN OUT Vector<BBSimulator*> & simvec, IN RaMgr * ra_mgr)
         } else {
             bool cycle_accurate = false;
             if (cycle_accurate) {
-                //Build DDG if one need cycle-accurated scheduling
+                //Build DDG if one requires cycle-accurated scheduling
                 //and output the execution table in simulator as result of IS.
                 //Cycle-accurated scheduling will consider delay-solt
                 //and branch-latency and insert nop if needed.
@@ -3840,7 +3873,7 @@ void CG::preLS(IN ORBB * bb,
 
     //Init LIS
     LIS * tlis = allocLIS(bb, tddg, tsim, mode);
-    //Post LRA scheduling does NOT need regfile info.
+    //Post LRA scheduling does NOT require regfile info.
     tlis->set_unique_regfile(nullptr);
     *ddg = tddg;
     *sim = tsim;
@@ -4173,20 +4206,6 @@ static void performCFGOptimization(CG * cg, OptCtx & oc)
 }
 
 
-#if 0
-bool CG::perform()
-{
-    computeMaxRealParamSpace();
-    convertORBBList(this);
-    OptCtx oc;
-    createORCFG(oc);
-    generateFuncUnitDedicatedCode();
-    localize();
-    RaMgr * rm = performRA();
-    delete rm;
-    return true;
-}
-#else
 //This function generate target dependent information.
 bool CG::perform()
 {
@@ -4228,7 +4247,6 @@ bool CG::perform()
 
     //Perform global and local register allocation.
     RaMgr * ra_mgr = performRA();
-
     performCFGOptimization(this, oc);
 
     //Insert store of parameter register after spadjust at each entry BB
@@ -4260,5 +4278,5 @@ bool CG::perform()
     END_TIMER_FMT(tcg, ("Code Generation Perform '%s'", m_rg->getRegionName()));
     return true;
 }
-#endif
+
 } //namespace xgen
