@@ -33,6 +33,10 @@ author: Su Zhenyu
 
 namespace xgen {
 
+//The class describes layout of each arguments and registers information during
+//converting IR_CALL/IR_ICALL in IR2OR.
+//IR2OR generator generates ORs to store arguments of CALL one by one, the
+//ArgDesc informatin is updated during the generation.
 class ArgDesc {
 public:
     //If is_record_addr is true, src_value records
@@ -43,8 +47,8 @@ public:
         SR * src_startaddr;
     };
 
-    xoc::Dbx const* arg_dbx;
-    UINT is_record_addr:1;
+    xoc::Dbx const* arg_dbx; //describes Dbx to argument.
+    UINT is_record_addr:1; //true if 
     UINT arg_size:30; //stack byte size to be passed.
 
     //byte offset to the base SR record in
@@ -135,8 +139,8 @@ public:
         desc->arg_dbx = dbx;
         desc->arg_size = arg_size;
         desc->src_ofst = src_ofst;
-        desc->tgt_ofst = (UINT)xcom::ceil_align(
-            getArgStartAddrOnStack(), align);
+        desc->tgt_ofst = (UINT)xcom::ceil_align(getArgStartAddrOnStack(),
+                                                align);
         updatePassedArgInStack(arg_size);
         return desc;
     }

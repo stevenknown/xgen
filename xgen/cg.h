@@ -381,12 +381,10 @@ public:
                      OUT ORList & ors,
                      IN IOC * cont);
 
-    //Generate operations: reg = &var
-    virtual void buildLda(xoc::Var const* var,
-                          HOST_INT lda_ofst,
-                          Dbx const* dbx,
-                          OUT ORList & ors,
-                          IN IOC * cont);
+    //Generate operations: reg = &var + lda_ofst
+    //lda_ofst: the offset based to var.
+    virtual void buildLda(xoc::Var const* var, HOST_INT lda_ofst,
+                          Dbx const* dbx, OUT ORList & ors, IN IOC * cont);
 
     //Generate opcode of accumulating operation.
     //Form as: A = A op B
@@ -487,10 +485,12 @@ public:
                                     OUT SR ** base,
                                     OUT SR ** ofst);
     virtual UINT computeTotalParameterStackSize(IR * ir);
-    virtual void computeVarBaseOffset(xoc::Var const* var,
-                                      ULONGLONG var_ofst,
-                                      OUT SR ** base,
-                                      OUT SR ** ofst);
+    //The function compute the base SR and offset SR to given 'var'.
+    //Note var can be global or local.
+    //var_ofst: byte offset related to begin address of 'var'.
+    virtual void computeVarBaseAndOffset(xoc::Var const* var,
+                                         ULONGLONG var_ofst,
+                                         OUT SR ** base, OUT SR ** ofst);
     virtual CLUST computeAsmCluster(OR * o);
 
     //Return the index of copied source operand.

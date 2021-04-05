@@ -420,12 +420,11 @@ void ARMCG::buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,
     if (base->is_var()) {
         SR * sr_base;
         v = SR_var(base);
-        computeVarBaseOffset(SR_var(base),
-            ofst->getInt(), &sr_base, &sr_ofst);
+        computeVarBaseAndOffset(SR_var(base), ofst->getInt(),
+                                &sr_base, &sr_ofst);
         if (VAR_is_global(v) && !sr_base->is_reg()) {
             //ARM does not support load value from memory label directly.
             SR_var_ofst(base) += (UINT)ofst->getInt();
-            SR * res = genReg();
 
             if (sr_ofst->is_int_imm()) {
                 SR_int_imm(sr_ofst) = SR_var_ofst(base);
@@ -434,8 +433,9 @@ void ARMCG::buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,
                 ASSERT0(sr_ofst->is_var());
             }
 
-            //Load address of memory symbol into base register and
-            //indirect load value from the base register.
+            //Write address of memory symbol into base register, then
+            //build an indirect load from the base register.
+            SR * res = genReg();
             buildMove(res, base, ors, cont);
             base = res;
         } else {
@@ -809,11 +809,8 @@ OR_TYPE ARMCG::mapIRType2ORType(IR_TYPE ir_type,
 
 
 //[base + ofst] = store_val
-void ARMCG::buildStore(IN SR * store_val,
-                       IN SR * base,
-                       IN SR * ofst,
-                       OUT ORList & ors,
-                       IN IOC * cont)
+void ARMCG::buildStore(IN SR * store_val, IN SR * base, IN SR * ofst,
+                       OUT ORList & ors, IN IOC * cont)
 {
     ASSERT0(store_val && base && ofst);
     ASSERT0(ofst->is_int_imm() && (base->is_reg() || base->is_var()));
@@ -824,8 +821,8 @@ void ARMCG::buildStore(IN SR * store_val,
     if (base->is_var()) {
         SR * sr_base;
         v = SR_var(base);
-        computeVarBaseOffset(SR_var(base), ofst->getInt(),
-                             &sr_base, &sr_ofst);
+        computeVarBaseAndOffset(SR_var(base), ofst->getInt(),
+                                &sr_base, &sr_ofst);
         if (VAR_is_global(v) && !sr_base->is_reg()) {
             //ARM does not support load value from memory label directly.
             SR_var_ofst(base) += (UINT)ofst->getInt();

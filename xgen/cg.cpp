@@ -66,8 +66,8 @@ void ArgDescMgr::dropArgRegister()
 //  mgr.updatePassedArgInRegister(arg2.bytesize);
 void ArgDescMgr::updatePassedArgInRegister(UINT bytesize)
 {
-    m_passed_arg_in_register_byte_size += (INT)xcom::ceil_align(
-        bytesize, STACK_ALIGNMENT);
+    m_passed_arg_in_register_byte_size += (INT)xcom::ceil_align(bytesize,
+        STACK_ALIGNMENT);
     for (ArgDesc * desc = getArgList()->get_head();
          desc != nullptr; desc = getArgList()->get_next()) {
         desc->tgt_ofst -= bytesize;
@@ -597,14 +597,11 @@ void CG::buildTypeCvt(xoc::IR const* tgt,
 
 //Generate operations: reg = &var + lda_ofst
 //lda_ofst: the offset based to var.
-void CG::buildLda(xoc::Var const* var,
-                  HOST_INT lda_ofst,
-                  Dbx const* dbx,
-                  OUT ORList & ors,
-                  IN IOC * cont)
+void CG::buildLda(xoc::Var const* var, HOST_INT lda_ofst, Dbx const* dbx,
+                  OUT ORList & ors, IN IOC * cont)
 {
     SR * base, * ofst;
-    computeVarBaseOffset(var, lda_ofst, &base, &ofst);
+    computeVarBaseAndOffset(var, lda_ofst, &base, &ofst);
 
     if (base->is_reg()) {
         //Get variable's address: reg = base reg + offset.
@@ -654,9 +651,7 @@ void CG::buildLda(xoc::Var const* var,
 }
 
 
-void CG::buildGeneralLoad(IN SR * val,
-                          HOST_INT ofst,
-                          OUT ORList & ors,
+void CG::buildGeneralLoad(IN SR * val, HOST_INT ofst, OUT ORList & ors,
                           IN IOC * cont)
 {
     if (val->is_int_imm()) {
@@ -666,39 +661,37 @@ void CG::buildGeneralLoad(IN SR * val,
         return;
     }
 
-    if (val->is_var() || val->is_reg()) {
-        ASSERTN(IOC_mem_byte_size(cont) > 0, ("redundant mem size"));
-        if (IOC_mem_byte_size(cont) > GENERAL_REGISTER_SIZE * 2) {
-            //Load too large value into register, convert the load to
-            //memory copy, return the begin address of copy.
-            SR * addr = nullptr;
-            if (val->is_reg()) {
-                addr = val;
-            } else {
-                ASSERT0(val->is_var());
-                buildLda(SR_var(val), SR_var_ofst(val) + ofst, nullptr, ors, cont);
-                addr = cont->get_reg(0);
-            }
-            ASSERT0(addr);
-            cont->clean_regvec();
-            cont->set_addr(addr);
-            return;
+    ASSERT0(val->is_var() || val->is_reg());
+    ASSERTN(IOC_mem_byte_size(cont) > 0, ("illegal/redundant mem size"));
+    if (IOC_mem_byte_size(cont) > GENERAL_REGISTER_SIZE * 2) {
+        //Load too large value into register, convert the load to
+        //memory copy, and return the begin address to copy.
+        SR * addr = nullptr;
+        if (val->is_reg()) {
+            addr = val;
+        } else {
+            ASSERT0(val->is_var());
+            buildLda(SR_var(val), SR_var_ofst(val) + ofst, nullptr, ors, cont);
+            addr = cont->get_reg(0);
         }
-
-        SR * load_val = nullptr;
-        if (IOC_mem_byte_size(cont) <= GENERAL_REGISTER_SIZE) {
-            load_val = genReg();
-        } else if (IOC_mem_byte_size(cont) <= GENERAL_REGISTER_SIZE * 2) {
-            load_val = genReg();
-            load_val = getSRVecMgr()->genSRVec(2, load_val, genReg());
-        } else { UNREACHABLE(); }
-        ASSERT0(load_val);
-        buildLoad(load_val, val, genIntImm(ofst, true), ors, cont);
-        ASSERT0(cont);
-        cont->set_reg(0, load_val);
+        ASSERT0(addr);
+        cont->clean_regvec();
+        cont->set_addr(addr);
         return;
     }
-    UNREACHABLE();
+
+    //Build genernal load.
+    SR * load_val = nullptr;
+    if (IOC_mem_byte_size(cont) <= GENERAL_REGISTER_SIZE) {
+        load_val = genReg();
+    } else if (IOC_mem_byte_size(cont) <= GENERAL_REGISTER_SIZE * 2) {
+        load_val = genReg();
+        load_val = getSRVecMgr()->genSRVec(2, load_val, genReg());
+    } else { UNREACHABLE(); }
+    ASSERT0(load_val);
+    buildLoad(load_val, val, genIntImm(ofst, true), ors, cont);
+    ASSERT0(cont);
+    cont->set_reg(0, load_val);
 }
 
 
@@ -1085,10 +1078,10 @@ void CG::relocateStackVarOffset()
 }
 
 
-void CG::computeVarBaseOffset(xoc::Var const* var,
-                              ULONGLONG var_ofst,
-                              OUT SR ** base,
-                              OUT SR ** ofst)
+//The function compute the base SR and offset SR to given 'var'.
+//var_ofst: byte offset related to begin address of 'var'.
+void CG::computeVarBaseAndOffset(xoc::Var const* var, ULONGLONG var_ofst,
+                                 OUT SR ** base, OUT SR ** ofst)
 {
     ASSERT0(var && base && ofst);
     *base = *ofst = nullptr;
@@ -1102,11 +1095,15 @@ void CG::computeVarBaseOffset(xoc::Var const* var,
             ASSERTN((*ofst)->is_var(), ("offset must be var"));
             SR_var_ofst(*ofst) += (UINT)var_ofst;
         }
-    } else if (VAR_is_global(var)) {
-        computeAndUpdateGlobalVarLayout(var, base, ofst);
-    } else {
-        ASSERTN(0, ("Unsupported"));
+        return;
     }
+
+    if (VAR_is_global(var)) {
+        computeAndUpdateGlobalVarLayout(var, base, ofst);
+        return;
+    }
+
+    ASSERTN(0, ("Unsupported"));
 }
 
 
@@ -1174,7 +1171,7 @@ void CG::initGlobalVar(VarMgr * vm)
             //Do not add file-region-private-var
             //into DATA section ahead of time.
             !v->is_private()) {
-            computeVarBaseOffset(v, 0, &base, &ofst);
+            computeVarBaseAndOffset(v, 0, &base, &ofst);
         }
     }
 }
@@ -2201,18 +2198,16 @@ bool CG::passArgInMemory(SR * argaddr,
 
 //Return true if whole ir has been passed through registers, otherwise
 //return false.
-bool CG::passArgInRegister(SR * argval,
-                           UINT * sz,
-                           ArgDescMgr * argdescmgr,
-                           ORList & ors,
-                           IOC const*)
+bool CG::passArgInRegister(SR * argval, UINT * sz, ArgDescMgr * argdescmgr,
+                           ORList & ors, IOC const*)
 {
     //Target dependent code.
     skipArgRegister(*sz, argdescmgr);
 
-    //Get the LoadValue and spread them into vector.
-    //e.g: return value is {r1, <r4, r5>, r7}
-    //     spread to: {r1, r4, r5, r7}
+    //Get the LoadValue and spreads them into vector.
+    //It is in order to facilitate the processing of arguments passing.
+    //e.g: given value is {r1, <r4, r5>, r7}
+    //     spreads to: {r1, r4, r5, r7}
     UINT i = 0;
     Vector<SR*> vec;
     flattenInVec(argval, &vec);
@@ -2237,8 +2232,16 @@ bool CG::passArgInRegister(SR * argval,
 
         tmp_cont.clean();
         buildMove(argreg, arg_val, ors, &tmp_cont);
-        *sz -= transfer_size;
+
+        //Update avaiable registers info.
         argdescmgr->updatePassedArgInRegister(transfer_size);
+
+        if (*sz >= transfer_size) {
+            *sz -= transfer_size;
+        } else {
+            //*sz is not divisble by 'transfer_size'.    
+            *sz = 0;
+        }
     }
 
     if (*sz > 0) {
