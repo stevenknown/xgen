@@ -51,7 +51,7 @@ static bool worthToDo(Pass const* pass, UINT & cp_count, UINT & licm_count) {
 }
 
 
-static void updateCounter(Pass const* pass, UINT & cp_count, 
+static void updateCounter(Pass const* pass, UINT & cp_count,
                           UINT & licm_count) {
     licm_count += pass->getPassType() == PASS_LICM ? 1 : 0;
     cp_count += pass->getPassType() == PASS_CP ? 1 : 0;
@@ -147,7 +147,7 @@ bool ARMScalarOpt::perform(OptCtx & oc)
                 }
                 ASSERT0(m_rg->getDUMgr());
                 ASSERT0(verifyMDDUChain(m_rg, flag));
-            }            
+            }
             ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
             ASSERT0(m_rg->getCFG()->verify());
             ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg));

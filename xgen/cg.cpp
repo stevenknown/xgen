@@ -356,7 +356,7 @@ void CG::buildBinaryOR(IR_TYPE code,
     //result type is BOOL, opnd type is INT.
     OR_TYPE orty = mapIRType2ORType(code, opnd0->getByteSize(),
                                     opnd0, opnd1, is_signed);
-    ASSERTN(orty != OR_UNDEF, ("mapIRType2ORType() should be overloaded"));    
+    ASSERTN(orty != OR_UNDEF, ("mapIRType2ORType() should be overloaded"));
     SR * res = genReg();
 
     //Load immediate into register if target-machine needed.
@@ -880,9 +880,23 @@ void CG::computeAndUpdateStackVarLayout(xoc::Var const* var,
     VarDesc * vd = nullptr;
     if (section->getVarList()->find(var) == 0) {
         vd = (VarDesc*)xmalloc(sizeof(VarDesc));
+        //Compute the start address of variable.
+        //>Do not perform aligning for stack-variables.
+        //>Because stack variable's address is computed by SP + OFFSET, we
+        //>could not tell the value of SP until runtime. Thus we can not
+        //>guarantee the value of (SP + OFFSET) is aligned as variable declared
+        //>unless inserting a computation of ceil-align, which is low-
+        //>performance.
+        //
+        //UINT align = xcom::slcm(  //align variable in lcm of
+        //   STACK_ALIGNMENT,       //variable's alignment and
+        //   var->get_align() != 0 ?  //STACK default value.
+        //       var->get_align() : 1);
+        UINT align = STACK_ALIGNMENT;
+        VD_ofst(vd) = (ULONG)xcom::ceil_align(section->getSize(), align);
 
-        //Do not perform aligning for stack-variables.
-        VD_ofst(vd) = (ULONG)section->getSize();
+        //Compute the byte size of variable and padding stack with alignment.
+        //Prepare the start address for next variable.
         SECT_size(section) += xcom::ceil_align(var->getByteSize(m_tm),
                                                STACK_ALIGNMENT);
         section->getVar2Desc()->set(var, vd);
@@ -931,9 +945,17 @@ void CG::computeParamLayout(xoc::Var const* var, OUT SR ** base, OUT SR ** ofst)
         vd = (VarDesc*)xmalloc(sizeof(VarDesc));
 
         //Do not attempt to align stack-variable.
+        //Because stack variable's address is computed by SP + OFFSET, we
+        //could not tell the value of SP untill runtime. So we can not
+        //guarantee the value of (SP + OFFSET) is aligned in variable declared
+        //unless we always insert a computation of ceil-align, and that is low-
+        //performance.
         VD_ofst(vd) = (ULONG)section->getSize();
-        SECT_size(section) += xcom::ceil_align(var->getByteSize(m_tm),
-                                               STACK_ALIGNMENT);
+
+        //Align parameter always in STACK default value.
+        UINT align = STACK_ALIGNMENT;
+
+        SECT_size(section) += xcom::ceil_align(var->getByteSize(m_tm), align);
         section->getVar2Desc()->set(var, vd);
         section->getVarList()->append_tail(var);
     } else {
@@ -970,15 +992,37 @@ SR * CG::computeAndUpdateOffset(SR * sr)
                  " reviseFormalParameterAndSpadjust"));
         VarDesc const* vd = SECT_var2vdesc_map(
             m_cgmgr->getParamSection()).get(var);
-        HOST_UINT l = m_param_sect_start_offset + (HOST_UINT)vd->getOfst() +
-                      (HOST_UINT)SR_var_ofst(sr);
+        HOST_UINT l = m_param_sect_start_offset + (HOST_UINT)vd->getOfst();
+        //Recompute the alignment of variable.
+        //>Do not perform aligning for stack-variables.
+        //>Because stack variable's address is computed by SP + OFFSET, we
+        //>could not tell the value of SP until runtime. Thus we can not
+        //>guarantee the value of (SP + OFFSET) is aligned as variable declared
+        //>unless inserting a computation of ceil-align, which is low-
+        //>performance.
+        //l = xcom::ceil_align(l, (HOST_UINT)var->get_align());
+
+        //Compute byte offset inside variable.
+        l += (HOST_UINT)SR_var_ofst(sr);
+
         return genIntImm((HOST_INT)l, false);
     }
 
     VarDesc * vd = SECT_var2vdesc_map(m_cgmgr->getStackSection()).get(var);
     ASSERT0(vd);
-    HOST_UINT x = (HOST_UINT)getMaxArgSectionSize() +
-                  (HOST_UINT)vd->getOfst() + (HOST_UINT)SR_var_ofst(sr);
+    HOST_UINT x = (HOST_UINT)getMaxArgSectionSize() + (HOST_UINT)vd->getOfst();
+    //Recompute the alignment of variable.
+    //>Do not perform aligning for stack-variables.
+    //>Because stack variable's address is computed by SP + OFFSET, we
+    //>could not tell the value of SP until runtime. Thus we can not
+    //>guarantee the value of (SP + OFFSET) is aligned as variable declared
+    //>unless inserting a computation of ceil-align, which is low-
+    //>performance.
+    //x = xcom::ceil_align(x, (HOST_UINT)var->get_align());
+
+    //Compute byte offset inside variable.
+    x += (HOST_UINT)SR_var_ofst(sr);
+
     return genIntImm((HOST_INT)x, false);
 }
 
@@ -2443,7 +2487,7 @@ void CG::package(Vector<BBSimulator*> & simvec)
 
         BBSimulator * sim = simvec.get(bb->id());
         ASSERT0(sim != nullptr);
-        
+
         m_ipl_vec.set(bb->id(), ipl_ptr);
 
         UINT cyc = sim->getCurCycle();
@@ -2735,8 +2779,7 @@ RegFileSet const* CG::getValidRegfileSet(OR_TYPE ortype,
 }
 
 
-RegSet const* CG::getValidRegSet(OR_TYPE ortype,
-                                 UINT idx,
+RegSet const* CG::getValidRegSet(OR_TYPE ortype, UINT idx,
                                  bool is_result) const
 {
     ORTypeDesc const* otd = tmGetORTypeDesc(ortype);
@@ -3602,7 +3645,7 @@ xoc::Var * CG::genTempVar(xoc::Type const* type, UINT align, bool func_level)
     }
 
     xoc::Var * v = getBBLevelVarList()->getFreeVar();
-    if (v == nullptr) {        
+    if (v == nullptr) {
         v = addBBLevelVar(type, align);
     }
     return v;
@@ -3688,7 +3731,7 @@ void CG::constructORBBList(IN ORList & or_list)
 RaMgr * CG::performRA()
 {
     if (g_is_dump_before_pass && g_dump_opt.isDumpRA()) {
-        xoc::note(getRegion(), 
+        xoc::note(getRegion(),
                   "\n==---- DUMP BEFORE REGISTER ALLOCATION of '%s' ----==",
                   m_rg->getRegionName());
         dumpORBBList();
@@ -3712,7 +3755,7 @@ RaMgr * CG::performRA()
     END_TIMER(t, "Register Allocation");
 
     if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
-        xoc::note(getRegion(), 
+        xoc::note(getRegion(),
                   "\n==---- DUMP AFTER REGISTER ALLOCATION %s ----==",
                   m_rg->getRegionName());
         dumpORBBList();
@@ -3738,7 +3781,7 @@ void CG::performIS(IN OUT Vector<BBSimulator*> & simvec, IN RaMgr * ra_mgr)
         BBSimulator * sim = nullptr;
         LIS * lis = nullptr;
         preLS(bb, ra_mgr, &ddg, &sim, &lis);
-       
+
         ASSERT0(ddg && sim && lis);
 
         simvec.set(bb->id(), sim); //record sim that required by package().
@@ -4150,7 +4193,7 @@ static void convertORBBList(CG * cg)
     {
         RecycORList or_list(ir2or);
         ir2or->convertIRBBListToORList(or_list);
-    
+
         //Split OR list into ORBB.
         cg->constructORBBList(or_list.getList());
 
@@ -4213,14 +4256,14 @@ bool CG::perform()
             ("Stack alignment should be power of 2"));
     if ((g_is_dump_after_pass || g_is_dump_before_pass) &&
         g_dump_opt.isDumpCG()) {
-        xoc::note(getRegion(), 
+        xoc::note(getRegion(),
                   "\n==---- DUMP START CODE GENERATION (%d)'%s' ----==\n",
                   m_rg->id(), m_rg->getRegionName());
         m_rg->dump(false);
     }
 
     if (m_rg->getIRList() == nullptr &&
-        m_rg->getBBList()->get_elem_count() == 0) {        
+        m_rg->getBBList()->get_elem_count() == 0) {
         return true;
     }
 

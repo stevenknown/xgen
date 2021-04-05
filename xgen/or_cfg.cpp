@@ -174,7 +174,7 @@ void ORCFG::get_preds(IN OUT List<ORBB*> & preds, ORBB const* bb)
 {
     xcom::Vertex * v = getVertex(bb->id());
     xcom::EdgeC * el = v->getInList();
-    preds.clean();    
+    preds.clean();
     while (el != nullptr) {
         ORBB * pred = getBB(el->getFromId());
         ASSERTN(pred, ("without bb corresponded"));

@@ -197,7 +197,7 @@ public:
 
     virtual void dump(CG * cg) const;
 
-    SR_TYPE getType() const { return SR_type(this); } 
+    SR_TYPE getType() const { return SR_type(this); }
     virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const;
     virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const;
     virtual UINT getByteSize() const;
@@ -215,7 +215,7 @@ public:
 
     //Record the sr's position in the vector, start at 0.
     //sr is either register or immeidate.
-    INT getVecIdx() const { return SR_vec_idx(this); }    
+    INT getVecIdx() const { return SR_vec_idx(this); }
     Var const* getVar() const { return SR_var(this); }
     Var const* getSpillVar() const { return SR_spill_var(this); }
     UINT getVarOfst() const { return SR_var_ofst(this); }
@@ -302,7 +302,7 @@ public:
         if (m_pool == nullptr) { return; }
         smpoolDelete(m_pool);
         m_pool = nullptr;
-    } 
+    }
 
     SMemPool * get_pool() const { return m_pool; }
     SR * genSRVec(UINT num, ...);
@@ -317,7 +317,7 @@ class SRVec : public SimpleVector<SR*, 1, MAX_SRVEC_NUM> {
 public:
     UINT get_elem_count() { return getElemNum(); }
 
-    void set(UINT i, SR * elem, SRVecMgr * mgr) 
+    void set(UINT i, SR * elem, SRVecMgr * mgr)
     { SimpleVector<SR*, 1, MAX_SRVEC_NUM>::set(i, elem, mgr->get_pool()); }
 };
 

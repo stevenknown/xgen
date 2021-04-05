@@ -129,7 +129,7 @@ public:
     {
         SR * val = get_reg(0);
         if (val != nullptr) { return val; }
-        return get_addr();        
+        return get_addr();
     }
     OR_TYPE get_ortype() const { return ortype; }
 
@@ -161,15 +161,23 @@ public:
     COPY_CONSTRUCTOR(IR2OR);
     virtual ~IR2OR() {}
 
-    virtual void convertLabel(IRBB const* bb, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertILoad(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertIStore(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertLoadVar(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    virtual void convertLabel(IRBB const* bb, OUT RecycORList & ors,
+                              IN IOC * cont);
+    virtual void convertILoad(IR const* ir, OUT RecycORList & ors,
+                              IN IOC * cont);
+    virtual void convertIStore(IR const* ir, OUT RecycORList & ors,
+                               IN IOC * cont);
+    virtual void convertLoadVar(IR const* ir, OUT RecycORList & ors,
+                                IN IOC * cont);
     virtual void convertId(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertStorePR(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertStoreVar(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertUnaryOp(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertBinaryOp(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    virtual void convertStorePR(IR const* ir, OUT RecycORList & ors,
+                                IN IOC * cont);
+    virtual void convertStoreVar(IR const* ir, OUT RecycORList & ors,
+                                 IN IOC * cont);
+    virtual void convertUnaryOp(IR const* ir, OUT RecycORList & ors,
+                                IN IOC * cont);
+    virtual void convertBinaryOp(IR const* ir, OUT RecycORList & ors,
+                                 IN IOC * cont);
 
     //Generate compare operations and return the comparation result registers.
     //The output registers in IOC are ResultSR,
@@ -182,28 +190,26 @@ public:
     virtual void convertLSR(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertLSL(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertCvt(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertGoto(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertTruebr(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertFalsebr(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    virtual void convertGoto(IR const* ir, OUT RecycORList & ors,
+                             IN IOC * cont);
+    virtual void convertTruebr(IR const* ir, OUT RecycORList & ors,
+                               IN IOC * cont);
+    virtual void convertFalsebr(IR const* ir, OUT RecycORList & ors,
+                                IN IOC * cont);
     //Generate operations: reg = &var
-    virtual void convertLda(Var const* var,
-                            HOST_INT lda_ofst,
-                            Dbx const* dbx,
-                            OUT RecycORList & ors,
+    virtual void convertLda(Var const* var, HOST_INT lda_ofst, Dbx const* dbx,
+                            OUT RecycORList & ors, IN IOC * cont) = 0;
+    virtual void convertLda(IR const* ir, OUT RecycORList & ors,
                             IN IOC * cont) = 0;
-    virtual void convertLda(IR const* ir, OUT RecycORList & ors, IN IOC * cont) = 0;
-    virtual void convertIgoto(IR const* ir,
-                              OUT RecycORList & ors,
+    virtual void convertIgoto(IR const* ir, OUT RecycORList & ors,
                               IN IOC * cont) = 0;
-    virtual void convertReturn(IR const* ir,
-                               OUT RecycORList & ors,
+    virtual void convertReturn(IR const* ir, OUT RecycORList & ors,
                                IN IOC * cont) = 0;
-    virtual void convertSelect(IR const* ir,
-                               OUT RecycORList & ors,
+    virtual void convertSelect(IR const* ir, OUT RecycORList & ors,
                                IN IOC * cont) = 0;
-    virtual void convertCall(IR const* ir, OUT RecycORList & ors, IN IOC * cont) = 0;
-    virtual void convertICall(IR const* ir,
-                              OUT RecycORList & ors,
+    virtual void convertCall(IR const* ir, OUT RecycORList & ors,
+                             IN IOC * cont) = 0;
+    virtual void convertICall(IR const* ir, OUT RecycORList & ors,
                               IN IOC * cont) = 0;
     virtual void convertGeneralLoadPR(IR const* ir,
                                       OUT RecycORList & ors,
@@ -213,18 +219,13 @@ public:
                                     IN IOC * cont);
     //Store value that given by address 'src_addr' to 'tgtvar'.
     //ofst: offset from base of tgtvar.
-    virtual void convertStoreViaAddress(IN SR * src_addr,
-                                        IN SR * tgtvar,
-                                        HOST_INT ofst,
-                                        OUT RecycORList & ors,
+    virtual void convertStoreViaAddress(IN SR * src_addr, IN SR * tgtvar,
+                                        HOST_INT ofst, OUT RecycORList & ors,
                                         IN IOC * cont);
-    virtual void convertStoreDecompose(IN SR * src,
-                                       IN SR * tgtvar,
-                                       HOST_INT ofst,
-                                       OUT RecycORList & ors,
+    virtual void convertStoreDecompose(IN SR * src, IN SR * tgtvar,
+                                       HOST_INT ofst, OUT RecycORList & ors,
                                        IN IOC * cont);
-    virtual void convertCopyPR(IR const* tgt,
-                               IN SR * src,
+    virtual void convertCopyPR(IR const* tgt, IN SR * src,
                                OUT RecycORList & ors,
                                IN IOC * cont);
     virtual void convertAdd(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
@@ -274,21 +275,24 @@ public:
     }
 
     //Logical OR
-    virtual void convertLogicalOr(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
+    virtual void convertLogicalOr(IR const* ir, OUT RecycORList & ors,
+                                  IN IOC * cont)
     {
         ASSERTN(ir->is_lor(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
 
     //Bitwise AND
-    virtual void convertBitAnd(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
+    virtual void convertBitAnd(IR const* ir, OUT RecycORList & ors,
+                               IN IOC * cont)
     {
         ASSERTN(ir->is_band(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
 
     //Bitwise OR
-    virtual void convertBitOr(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
+    virtual void convertBitOr(IR const* ir, OUT RecycORList & ors,
+                              IN IOC * cont)
     {
         ASSERTN(ir->is_bor(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
@@ -302,7 +306,8 @@ public:
 
     //Bitwise NOT.
     //e.g BNOT(0x0001) = 0xFFFE
-    virtual void convertBitNot(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
+    virtual void convertBitNot(IR const* ir, OUT RecycORList & ors,
+                               IN IOC * cont)
     {
         ASSERTN(ir->is_bnot(), ("illegal ir"));
         convertUnaryOp(ir, ors, cont);

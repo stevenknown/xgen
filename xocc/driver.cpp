@@ -358,6 +358,7 @@ UINT FrontEnd(RegionMgr * rm)
 
     END_TIMER(t, "CFE");
     return ST_SUCC;
+
 }
 
 
@@ -447,7 +448,7 @@ static void compileProgramRegion(Region * rg, CGMgr * cgmgr)
 {
     cgmgr->genAndPrtGlobalVariable(rg);
     if (!g_is_dumpgr) { return; }
-    
+
     ASSERT0(g_c_file_name || g_gr_file_name);
     xcom::StrBuf b(64);
     b.strcat(g_c_file_name != nullptr ? g_c_file_name : g_gr_file_name);
@@ -568,7 +569,7 @@ static void initCompile(CLRegionMgr ** rm,
                         TargInfo ** ti)
 {
     *rm = initRegionMgr();
-    *cgmgr = xgen::allocCGMgr(*rm);    
+    *cgmgr = xgen::allocCGMgr(*rm);
     *asmh = createAsmFileHandler();
     *ti = (*rm)->getTargInfo();
     (*cgmgr)->setAsmFileHandler(*asmh);

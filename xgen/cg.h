@@ -98,7 +98,7 @@ public:
 protected:
     class SimVec : public xcom::Vector<BBSimulator*> {
     public:
-        ~SimVec() 
+        ~SimVec()
         {
             for (INT i = 0; i <= get_last_idx(); i++) {
                 BBSimulator * sim = get(i);
@@ -636,7 +636,7 @@ public:
     //Generate dedicated register by specified physical register.
     SR * genDedicatedReg(REG phy_reg);
     //Get dedicated register by specified physical register.
-    SR * getDedicatedReg(REG phy_reg) const;    
+    SR * getDedicatedReg(REG phy_reg) const;
     virtual SR * getSP() const;
     virtual SR * getFP() const;
     virtual SR * getGP() const;
@@ -711,7 +711,7 @@ public:
 
     virtual void initFuncUnit();
     //Generate dedicated SR for subsequent use.
-    virtual void initDedicatedSR();    
+    virtual void initDedicatedSR();
     virtual bool isPassArgumentThroughRegister() = 0;
     void initGlobalVar(VarMgr * vm);
     bool isComputeStackOffset() const { return m_is_compute_sect_offset; }
@@ -726,7 +726,7 @@ public:
     bool isAssignClust(ORBB const*) const { return true; }
     bool isRegflowDep(OR const* from, OR const* to) const;
     bool isRegoutDep(OR const* from, OR const* to) const;
-    
+
     //Return true if 'test_sr' is the one of operands of 'o' ,
     //it is also the results.
     //'test_sr': can be nullptr. If it is nullptr, we only try to

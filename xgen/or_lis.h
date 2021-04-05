@@ -52,7 +52,7 @@ public:
         //delay-slot, rescheduling is necessary because the default
         //scheduling-direction is top-down, the BR will be issued as soon as
         //possible which may be illegal, it need rescheduling to fixup.
-        SCH_ALLOW_RESCHED = 0x20, 
+        SCH_ALLOW_RESCHED = 0x20,
     };
 
 protected:
@@ -170,7 +170,7 @@ public:
     BBSimulator const* get_simm() const { return m_sim; }
 
     //Return an experimental integer that describe the maximum times to
-    //rescheduling ORs by adjusting issue time of branch operation. 
+    //rescheduling ORs by adjusting issue time of branch operation.
     //Note this is sometime a tricky value, range between [0~N].
     virtual UINT getAddendOfMaxTryTime() const { return 0; }
 

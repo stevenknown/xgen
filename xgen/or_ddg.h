@@ -88,7 +88,7 @@ protected:
     CG * m_cg;
     ORMgr * m_ormgr;
     ParallelPartMgr * m_ppm; //Parallel part manager
-    SMemPool * m_pool;    
+    SMemPool * m_pool;
     Stack<DDGParam> m_params_stack;
     DDGParam m_ddg_param;
     RegSet m_tmp_alias_regset; //for local tmp used.
@@ -271,7 +271,7 @@ public:
 
     virtual void pushParam() { m_params_stack.push(m_ddg_param); }
     virtual void popParam() { m_ddg_param = m_params_stack.pop(); }
-    
+
     //Add edge between OR in 'orlist' and 'tgt'.
     virtual void unifyEdge(List<OR*> & orlist, OR * tgt);
 

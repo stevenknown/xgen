@@ -558,9 +558,13 @@ Var * IR2OR::registerLocalVar(IR const* pr)
 
 void IR2OR::convertStoreVar(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
+    if (ir->id() == 3) {
+        int a = 0;
+        dumpIR(ir, m_rg);
+}
     ASSERT0(ir != nullptr && ir->is_st());
     RecycORList tors(this);
-    //Analyize memory-address expression.
+    //Analyze memory-address expression.
     convertGeneralLoad(ST_rhs(ir), ors, cont);
     SR * store_val = cont->get_reg(0);
     ASSERT0(store_val != nullptr);
@@ -924,7 +928,7 @@ void IR2OR::convertTruebr(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     IR * br_det = BR_det(ir);
     ASSERT0(br_det->is_lt() || br_det->is_le() || br_det->is_gt() ||
             br_det->is_ge() || br_det->is_eq() || br_det->is_ne());
-    
+
     convertRelationOp(br_det, ors, cont);
 
     RecycORList tors(this);

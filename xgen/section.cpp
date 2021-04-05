@@ -144,13 +144,13 @@ SectionMgr::SectionMgr(CGMgr * cgmgr)
     m_vm = cgmgr->getRegionMgr()->getVarMgr();
     m_mdsys = cgmgr->getRegionMgr()->getMDSystem();
 }
- 
+
 
 SectionMgr::~SectionMgr()
 {
     ConstMDIter mdit;
     for (INT i = 0; i <= m_sect_vec.get_last_idx(); i++) {
-        Section * sect = m_sect_vec[i]; 
+        Section * sect = m_sect_vec[i];
         ASSERT0(sect);
 
         //Free md's id and var's id back to MDSystem and VarMgr.
@@ -159,7 +159,7 @@ SectionMgr::~SectionMgr()
         Var * v = sect->getVar();
         m_mdsys->removeMDforVAR(v, mdit);
         m_vm->destroyVar(v);
-        
+
         //NOTE: the variable in section's varlist do not need to be destoried.
         //Because they are not registered in CG.
         //FIXME: spill-var need to be destoried

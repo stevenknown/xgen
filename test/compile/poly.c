@@ -66,7 +66,7 @@ void MbAffPostProc()
 
 
 struct img_par {
-   int mpr[1024][1024];
+   int mpr[64][1024];
 };
 
 void copyblock_sp(struct img_par *img,int block_x,int block_y)

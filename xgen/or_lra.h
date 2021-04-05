@@ -559,7 +559,7 @@ protected:
     CG * m_cg;
     SMemPool * m_pool;
     xcom::Vector<LifeTime*> m_id2lt; //map from id to life time.
-                                     //id is dense integer   
+                                     //id is dense integer
 
     virtual void * cloneEdgeInfo(xcom::Edge * e);
     virtual void * cloneVertexInfo(xcom::Vertex * v);
@@ -574,7 +574,7 @@ protected:
         return p;
     }
 public:
-    RegFileAffinityGraph() { m_is_init = false; }    
+    RegFileAffinityGraph() { m_is_init = false; }
     virtual ~RegFileAffinityGraph() { destroy(); }
     void init(ORBB * bb, bool is_enable_far = false);
     void destroy()
@@ -716,7 +716,7 @@ protected:
                                IN ORCt * orct,
                                IN OUT ORCt ** next_orct);
 public:
-    LRA(IN ORBB * bb, IN RaMgr * ra_mgr);    
+    LRA(IN ORBB * bb, IN RaMgr * ra_mgr);
     virtual ~LRA() { smpoolDelete(m_mem_pool); }
 
     bool assignRegister(LifeTime * lt,

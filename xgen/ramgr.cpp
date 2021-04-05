@@ -141,11 +141,11 @@ void RaMgr::postProcessFunc()
         //    m_lra_used_callee_saved_reg[regfile].diff(
         //                gra_used_callee_save_regs[regfile]);
         //}
-    
+
         //Generate spill and reload.
         saveCallee(m_lra_used_callee_saved_reg);
     }
-    
+
     if (m_need_save_asm_effect) {
         //Only process registers clobbed by asm.
         saveCallee(m_lra_asmclobber_callee_saved_reg);

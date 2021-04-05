@@ -20,7 +20,6 @@ our $g_is_quit_early; #finish test if error occurred.
 our $g_osname;
 our $g_xoc_root_path;
 our $g_single_testcase; #record the single testcase
-our $g_pacc;
 our $g_as;
 our $g_ld;
 our $g_ld_flag;
@@ -126,9 +125,9 @@ sub tryCompileAsmLinkRunCompare
             #The baseline result file.
             my $base_output = $fullpath.".base_output.txt";
 
-            if ($g_target eq "pac") {
-                #Remove the first 2 redundant lines dumped by pac simulator.
-                removeLine($g_xoc_root_path, $xocc_output);
+            if ($g_target eq "apc") {
+                #Remove the first 2 redundant lines dumped by apc simulator.
+                removeLine($g_xoc_root_path, $xocc_output, 2);
             }
 
             if ($rundir ne $curdir) {

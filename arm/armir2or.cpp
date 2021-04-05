@@ -107,6 +107,7 @@ void ARMIR2OR::convertStoreVar(IR const* ir, OUT RecycORList & ors,
     ASSERT0(ir != nullptr && ir->is_st());
     UINT resbytesize = ir->getTypeSize(m_tm);
     if (resbytesize <= BYTESIZE_OF_DWORD) {
+        ASSERT0(ir->getRHS()->getTypeSize(m_tm) <= BYTESIZE_OF_DWORD);
         IR2OR::convertStoreVar(ir, ors, cont);
         return;
     }
@@ -187,7 +188,7 @@ void ARMIR2OR::convertReturnValue(IR const* ir, OUT RecycORList & ors,
 
 void ARMIR2OR::convertCall(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
-    ASSERTN(ir->isCallStmt(), ("illegal ir"));    
+    ASSERTN(ir->isCallStmt(), ("illegal ir"));
     processRealParams(CALL_param_list(ir), ors, cont);
 
     //Collect the maximum parameters size during code generation.
@@ -720,7 +721,7 @@ void ARMIR2OR::getResultPredByIRTYPE(IR_TYPE code, SR ** truepd,
 
 
 void ARMIR2OR::convertRelationOpDWORDForEquality(IR const* ir,
-                                                 SR * sr0, SR * sr1, 
+                                                 SR * sr0, SR * sr1,
                                                  bool is_signed,
                                                  OUT RecycORList & ors,
                                                  OUT RecycORList & tors,
@@ -744,7 +745,7 @@ void ARMIR2OR::convertRelationOpDWORDForEquality(IR const* ir,
     //  cmp sr0_h, sr1_h
     //  ifeq cmp sr0_l, sr1_l
     //  return res, truepd
-  
+
     getCG()->buildARMCmp(OR_cmp, getCG()->getTruePred(),
                          sr0_h, sr1_h, tors.getList(), cont);
 
@@ -764,7 +765,7 @@ void ARMIR2OR::convertRelationOpDWORDForEquality(IR const* ir,
 
 void ARMIR2OR::convertRelationOpDWORDForLTGELEGT(IR const* ir,
                                                  SR * sr0_l, SR * sr0_h,
-                                                 SR * sr1_l, SR * sr1_h, 
+                                                 SR * sr1_l, SR * sr1_h,
                                                  bool is_signed,
                                                  OUT RecycORList & ors,
                                                  OUT RecycORList & tors,
@@ -790,7 +791,7 @@ void ARMIR2OR::convertRelationOpDWORDForLTGELEGT(IR const* ir,
         //N, Z, C and V flags according to the result.
         //
         //Compare <sr0_l,sr0_h> is less-than <sr1_l,sr1_h>:
-        //  truepd is LT, falsepd is GE 
+        //  truepd is LT, falsepd is GE
         //  cmp sr0_l, sr1_l
         //  sbcs res, sr0_h, sr1_h
         //  return res, truepd
@@ -843,7 +844,7 @@ void ARMIR2OR::convertRelationOpDWORDForLTGELEGT(IR const* ir,
 //  ble FalseBody
 //  TrueBody:
 void ARMIR2OR::convertRelationOpDWORDForLTandGE(IR const* ir,
-                                                SR * sr0, SR * sr1, 
+                                                SR * sr0, SR * sr1,
                                                 bool is_signed,
                                                 OUT RecycORList & ors,
                                                 OUT RecycORList & tors,
@@ -859,11 +860,11 @@ void ARMIR2OR::convertRelationOpDWORDForLTandGE(IR const* ir,
     //N, Z, C and V flags according to the result.
     //
     //Compare <sr0_l,sr0_h> is less-than <sr1_l,sr1_h>:
-    //  truepd is LT, falsepd is GE 
+    //  truepd is LT, falsepd is GE
     //  cmp sr0_l, sr1_l
     //  sbcs res, sr0_h, sr1_h
     //  return res, truepd
-    convertRelationOpDWORDForLTGELEGT(ir, sr0_l, sr0_h, sr1_l, sr1_h, 
+    convertRelationOpDWORDForLTGELEGT(ir, sr0_l, sr0_h, sr1_l, sr1_h,
                                       is_signed, ors, tors, cont);
     return;
 }
@@ -890,7 +891,7 @@ void ARMIR2OR::convertRelationOpDWORDForLTandGE(IR const* ir,
 //  ble FalseBody
 //  TrueBody:
 void ARMIR2OR::convertRelationOpDWORDForLEandGT(IR const* ir,
-                                                SR * sr0, SR * sr1, 
+                                                SR * sr0, SR * sr1,
                                                 bool is_signed,
                                                 OUT RecycORList & ors,
                                                 OUT RecycORList & tors,
@@ -908,7 +909,7 @@ void ARMIR2OR::convertRelationOpDWORDForLEandGT(IR const* ir,
     //N, Z, C and V flags according to the result.
     //
     //Compare <sr0_l,sr0_h> is less-than <sr1_l,sr1_h>:
-    //  truepd is LT, falsepd is GE 
+    //  truepd is LT, falsepd is GE
     //  cmp sr1_l, sr0_l
     //  sbcs res, sr1_h, sr0_h
     //  return res, truepd
@@ -918,7 +919,7 @@ void ARMIR2OR::convertRelationOpDWORDForLEandGT(IR const* ir,
     SR * t = sr0_l; sr0_l = sr1_l; sr1_l = t; //SWAP sr0_l, sr1_l
     t = sr0_h; sr0_h = sr1_h; sr1_h = t; //SWAP sr0_h, sr1_h
 
-    convertRelationOpDWORDForLTGELEGT(ir, sr0_l, sr0_h, sr1_l, sr1_h, 
+    convertRelationOpDWORDForLTGELEGT(ir, sr0_l, sr0_h, sr1_l, sr1_h,
                                       is_signed, ors, tors, cont);
     return;
 }
@@ -1011,7 +1012,7 @@ void ARMIR2OR::convertRelationOpDWORD(IR const* ir, OUT RecycORList & ors,
 //     sr0 = a - 1
 //     sr1 = b + 2
 //     res, truepd, falsepd <- cmp sr0, sr1
-//     return res, truepd, falsepd 
+//     return res, truepd, falsepd
 void ARMIR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
                                  IN IOC * cont)
 {
@@ -1257,7 +1258,7 @@ void ARMIR2OR::recordRelationOpResult(IR const* ir, SR * truepd,
     //Record true-result predicated register.
     cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, truepd);
 
-    //Record false-result predicated register    
+    //Record false-result predicated register
     cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, falsepd);
 
     //Record true-result.
@@ -1948,9 +1949,9 @@ IR * ARMIR2OR::insertCvt(IR const* ir)
             //    lda:*<800> 'gd' id:12
             //    ld:i32 'i' id:15
             //=> after insertion
-            //  ist:f64 id:80 attachinfo:Dbx       
+            //  ist:f64 id:80 attachinfo:Dbx
             //    lda:*<800> 'gd' id:12
-            //    cvt:f64    
+            //    cvt:f64
             //      ld:i32 'i' id:15
             IR * newir = m_rg->dupIRTree(ir);
             IR * cvt = m_rg->buildCvt(newir->getRHS(), newir->getType());

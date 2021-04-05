@@ -43,7 +43,7 @@ bool CLRegionMgr::compileFuncRegion(xoc::Region * func, CGMgr * cgmgr,
         return false;
     }
     if (g_do_cg) {
-        cgmgr->generate(func); 
+        cgmgr->generate(func);
         if (g_dump_opt.isDumpMemUsage()) {
             func->dumpMemUsage();
         }

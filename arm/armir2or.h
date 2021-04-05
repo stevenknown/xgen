@@ -57,7 +57,7 @@ protected:
                                      OUT RecycORList & ors,
                                      IN IOC * cont);
     void convertRelationOpDWORDForEquality(IR const* ir,
-                                           SR * sr0, SR * sr1, 
+                                           SR * sr0, SR * sr1,
                                            bool is_signed,
                                            OUT RecycORList & ors,
                                            OUT RecycORList & tors,
@@ -84,20 +84,20 @@ protected:
     //  ble FalseBody
     //  TrueBody:
     void convertRelationOpDWORDForLTandGE(IR const* ir,
-                                          SR * sr0, SR * sr1, 
+                                          SR * sr0, SR * sr1,
                                           bool is_signed,
                                           OUT RecycORList & ors,
                                           OUT RecycORList & tors,
                                           IN IOC * cont);
     void convertRelationOpDWORDForLEandGT(IR const* ir,
-                                          SR * sr0, SR * sr1, 
+                                          SR * sr0, SR * sr1,
                                           bool is_signed,
                                           OUT RecycORList & ors,
                                           OUT RecycORList & tors,
                                           IN IOC * cont);
     void convertRelationOpDWORDForLTGELEGT(IR const* ir,
                                            SR * sr0_l, SR * sr0_h,
-                                           SR * sr1_l, SR * sr1_h, 
+                                           SR * sr1_l, SR * sr1_h,
                                            bool is_signed,
                                            OUT RecycORList & ors,
                                            OUT RecycORList & tors,
@@ -161,10 +161,10 @@ public:
     //     sr0 = a - 1
     //     sr1 = b + 2
     //     res, truepd, falsepd <- cmp sr0, sr1
-    //     return res, truepd, falsepd 
+    //     return res, truepd, falsepd
     virtual void convertRelationOp(IR const* ir, OUT RecycORList & ors,
                                    IN IOC * cont);
-    
+
     //Bitwise NOT.
     //e.g BNOT(0x0001) = 0xFFFE
     //Note ONLY thumb supports ORN logical OR NOT operation.

@@ -421,7 +421,7 @@ void ARMAsmPrinter::printCode(FILE * asmh)
     fprintf(asmh, "\n%s:", func_name);
     fprintf(asmh, "\n");
     fflush(asmh);
-    
+
     Vector<IssuePackageList*> const* iplvec =
         const_cast<CG*>(m_cg)->getIssuePackageListVec();
     List<ORBB*> * bblst = const_cast<CG*>(m_cg)->getORBBList();

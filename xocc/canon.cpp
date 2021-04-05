@@ -131,6 +131,39 @@ IR * Canon::handle_lda(IR * ir, bool & change, CanonCtx * cc)
     //    change = true;
     //    ir = newir;
     //}
+
+    //if (ILD_ofst(base) != 0) {
+    //    //Reform IR tree.
+    //    //e.g:struct S { int a; int b; } * p;
+    //    //    ... = &(p->b);
+    //    //For now base will be:
+    //    //    LDA (ptr)
+    //    //      ILD (ofst 4)
+    //    //        LD ('p', ptr)
+    //    //Normalize to
+    //    //    ADD (ptr)
+    //    //      LD ('p', ptr)
+    //    //      IMM (4)
+    //    ir = m_rg->buildBinaryOpSimp(IR_ADD, ILD_base(base)->getType(),
+    //        ILD_base(base), m_rg->buildImmInt(
+    //            ILD_ofst(base), m_tm->getI32()));
+    //} else if (TREE_type(kid) == TR_INDMEM) {
+    //    //Reform IR tree.
+    //    //e.g:struct S { int a; int b; } * p;
+    //    //    ... = &(p->a);
+    //    //For now base will be:
+    //    //    LDA
+    //    //      ILD <int>
+    //    //        LD ('p', ptr)
+    //    //Normalize to
+    //    //    LD ('p', ptr)
+    //    ir = ILD_base(base);
+    //}
+    //ILD_base(base) = nullptr;
+    //m_rg->freeIRTree(base);
+    //setLineNum(ir, lineno, m_rg);
+    //return ir;
+
     return ir;
 }
 

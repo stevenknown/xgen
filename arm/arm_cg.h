@@ -37,6 +37,9 @@ author: Su Zhenyu
 class ARMCG : public CG {
     COPY_CONSTRUCTOR(ARMCG);
 private:
+    void buildStoreCase13Bytes(IN SR * store_val, IN SR * base,
+                               IN SR * sr_ofst, Var const* v,
+                               OUT ORList & ors, IN IOC * cont);
     void buildStoreCase1(IN SR * store_val,
                          IN SR * base,
                          IN SR * sr_ofst,
@@ -345,6 +348,10 @@ public:
                      IN SR * opnd1,
                      OUT ORList & ors,
                      IN IOC * cont);
+    void buildShiftLeftImm(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
+                           OUT ORList & ors, IN OUT IOC * cont);
+    void buildShiftLeftReg(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
+                           OUT ORList & ors, IN OUT IOC * cont);
     virtual void buildShiftLeft(IN SR * src,
                                 ULONG sr_size,
                                 IN SR * shift_ofst,

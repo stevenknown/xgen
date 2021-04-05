@@ -269,7 +269,7 @@ void SRMgr::clean()
 {
     for (INT i = SRID_UNDEF + 1; i <= m_sridx2sr.get_last_idx(); i++) {
         SR * sr = m_sridx2sr.get(i);
-        ASSERT0(sr); 
+        ASSERT0(sr);
         delete sr; //invoke virtual destructor of SR.
     }
     m_sridx2sr.clean();

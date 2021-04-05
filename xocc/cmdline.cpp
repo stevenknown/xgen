@@ -83,18 +83,18 @@ static bool process_optimize(INT argc, CHAR const* argv[], INT & i)
         //Only do refinement.
         break;
     case '2':
-        xoc::g_opt_level = OPT_LEVEL2;  
+        xoc::g_opt_level = OPT_LEVEL2;
         xoc::g_do_cp = true;
         xoc::g_do_dce = true;
         xoc::g_do_licm = true;
         xoc::g_do_rp = true;
         xoc::g_do_pr_ssa = true;
         xoc::g_do_md_ssa = true;
-        break;    
+        break;
     case '3':
         xoc::g_opt_level = OPT_LEVEL3;
         xoc::g_do_cp = true;
-        xoc::g_do_cp_aggressive = true; 
+        xoc::g_do_cp_aggressive = true;
         xoc::g_do_dce = true;
         xoc::g_do_dce_aggressive = true;
         xoc::g_do_licm = true;
@@ -209,7 +209,7 @@ public:
             }
             alignbuf[j] = 0;
 
-            output.strcat("\n -%s %s", alignbuf, 
+            output.strcat("\n -%s %s", alignbuf,
                           BoolOption::option_desc[i].intro);
         }
     }
@@ -287,7 +287,7 @@ BoolOption::Desc const BoolOption::option_desc[] = {
     { "gra", &xgen::g_do_gra,
       "enable global-register-allocation", },
     { "lis", &xgen::g_do_lis,
-      "enable instruction-scheduling", },      
+      "enable instruction-scheduling", },
 };
 
 
@@ -337,7 +337,7 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
     { "gr", &g_is_dumpgr,
       "output GR language according region information", },
 };
- 
+
 
 UINT BoolOption::getNumOfOption()
 {
@@ -395,7 +395,7 @@ public:
             }
             alignbuf[j] = 0;
 
-            output.strcat("\n -%s = <integer> %s", alignbuf, 
+            output.strcat("\n -%s = <integer> %s", alignbuf,
                           IntOption::option_desc[i].intro);
         }
     }
@@ -481,7 +481,7 @@ static bool dispatchByPrefix(CHAR const* cmdstr, INT argc, CHAR const* argv[],
         if (i + 1 < argc && argv[i + 1] != nullptr) {
             n = argv[i + 1];
         }
-        if (n == nullptr) { return false; } 
+        if (n == nullptr) { return false; }
         *int_option = (INT)xcom::xatoll(n, false);
         i += 2;
         return true;
@@ -534,7 +534,7 @@ static void setOptionO0()
         xoc::g_do_md_ssa = false;
         xoc::g_do_pr_ssa = false;
         xoc::g_compute_pr_du_chain = false;
-        xoc::g_compute_nonpr_du_chain = false;        
+        xoc::g_compute_nonpr_du_chain = false;
         xoc::g_do_refine = false;
         xoc::g_do_refine_auto_insert_cvt = true;
         xoc::g_do_call_graph = false;
@@ -565,7 +565,7 @@ bool processCmdLine(INT argc, CHAR const* argv[])
             if (!dispatchByPrefix(&argv[i][1], argc, argv, i, &boption)) {
                 fprintf(stdout, "\nunknown option:%s\n", argv[i]);
                 usage();
-                return false; 
+                return false;
             }
             continue;
         }

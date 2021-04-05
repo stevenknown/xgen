@@ -38,7 +38,7 @@ class RaMgr {
 friend class LRA;
 protected:
     BYTE m_is_func:1;
-    BYTE m_need_save_asm_effect:1;    
+    BYTE m_need_save_asm_effect:1;
     BYTE m_can_alloc_callee:1; //Set true if callee-register is allocable.
     Vector<ParallelPartMgr*> * m_ppm_vec;
     List<ORBB*> * m_bb_list;
@@ -57,7 +57,7 @@ protected:
     void * xmalloc(INT size);
     void cleanVar2OR();
 
-public:    
+public:
     RaMgr(List<ORBB*> * bbs, bool is_func, CG * cg);
     virtual ~RaMgr() { destroy(); }
     virtual void addVARRefList(ORBB * bb, OR * o, Var const* loc);

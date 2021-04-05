@@ -154,7 +154,7 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
         xoc::g_dbx_mgr->printSrcLine(buf, &OR_dbx(this), &prtctx);
     }
 
-    OR * pthis = const_cast<OR*>(this);    
+    OR * pthis = const_cast<OR*>(this);
     if (cg->isDumpORId()) {
         //Order in BB.
         if (OR_bb(this) == nullptr) {
@@ -162,7 +162,7 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
         } else {
             buf.strcat("[O:%d]", OR_order(this));
         }
-        
+
         //Unique id. You can disable it for diminish the output info.
         buf.strcat("[id:%d] ", OR_id(this));
     }
@@ -240,6 +240,7 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
 
         //memory offset
         SR * ofst = pthis->get_load_ofst();
+        ASSERTN(ofst, ("miss offset"));
         if (cg->isComputeStackOffset() || ofst->is_int_imm()) {
             ASSERT0(ofst->is_int_imm());
             if (ofst->getInt() != 0) {
@@ -393,7 +394,7 @@ OR * ORMgr::genOR(OR_TYPE ort, CG * cg)
         ASSERT0(ORID_UNDEF == 0);
         //Do not use ORID_UNDEF as index.
         INT idx = get_last_idx();
-        OR_id(o) = idx < 0 ? ORID_UNDEF + 1 : idx + 1; 
+        OR_id(o) = idx < 0 ? ORID_UNDEF + 1 : idx + 1;
         set(o->id(), o);
     }
     OR_code(o) = ort;

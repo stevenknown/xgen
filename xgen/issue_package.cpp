@@ -51,7 +51,7 @@ IssuePackageListCt * IssuePackageList::append_tail(IssuePackage * ip,
 {
     IssuePackageListCt * ct = mgr->allocIssuePackageListCt();
     SC_val(ct) = ip;
-    SListCoreEx<IssuePackage*>::append_tail(ct); 
+    SListCoreEx<IssuePackage*>::append_tail(ct);
     return ct;
 }
 

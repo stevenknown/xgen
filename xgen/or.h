@@ -401,7 +401,7 @@ public:
     bool is_gt() const { return OR_is_gt(this); }
     bool is_movi() const { return OR_is_movi(this); }
     bool is_addi() const { return OR_is_addi(this); }
-    bool is_subi() const { return OR_is_subi(this); }    
+    bool is_subi() const { return OR_is_subi(this); }
     bool isMultiConditionalBr() const { return false; }
     bool isSpadjust() const { return OR_code(this) == OR_spadjust; }
     //Return true if ir terminates the control flow.

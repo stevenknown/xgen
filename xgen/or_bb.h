@@ -141,7 +141,7 @@ public:
     UINT m_is_exit:1; //bb is a region exit.
     UINT m_is_entry:1; //bb a region entry.
     UINT m_is_target:1; //bb is the jumping target.
-    INT m_rpo;    
+    INT m_rpo;
     BBORList * m_or_list; //OR list
     CG * m_cg;
     OR * m_entry_spadjust; //record sp-adjust OR if bb is entry bb.
@@ -224,7 +224,7 @@ public:
 
     //Before removing bb, revising phi opnd if there are phis
     //in one of bb's successors.
-    void removeAllSuccessorsPhiOpnd(CFG<ORBB, OR> * cfg) { DUMMYUSE(cfg); }    
+    void removeAllSuccessorsPhiOpnd(CFG<ORBB, OR> * cfg) { DUMMYUSE(cfg); }
 };
 //END ORBB
 

@@ -48,12 +48,12 @@ typedef struct _tagg
  
 int main()
 {
-   //if (sizeof(A) != 4) { return 1; }
-   //if (sizeof(B) != 8) { return 2; }
-   //if (sizeof(C) != 24) { return 3; }
-   //if (sizeof(D) != 16) { return 4; }
-   //if (sizeof(E) != 56) { return 5; }
-   //if (sizeof(F) != 12) { return 6; }
+   if (sizeof(A) != 4) { return 1; }
+   if (sizeof(B) != 8) { return 2; }
+   if (sizeof(C) != 24) { return 3; }
+   if (sizeof(D) != 16) { return 4; }
+   if (sizeof(E) != 56) { return 5; }
+   if (sizeof(F) != 12) { return 6; }
    if (sizeof(G) != 24) { return 7; }
    return 0;
 }

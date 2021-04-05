@@ -92,22 +92,22 @@ void ARMRegion::simplify(OptCtx & oc)
 
         //Simplification may generate new memory operations.
         ASSERT0(verifyMDRef());
-        
+
         //Before CFG building.
         getCFG()->removeEmptyBB(oc);
-        
+
         getCFG()->rebuild(oc);
-        
+
         //After CFG building.
         //Remove empty bb when cfg rebuilted because
         //rebuilding cfg may generate redundant empty bb.
         //It disturbs the computation of entry and exit.
         getCFG()->removeEmptyBB(oc);
-        
+
         //Compute exit bb while cfg rebuilt.
         getCFG()->computeExitList();
         ASSERT0(getCFG()->verify());
-        
+
         getCFG()->performMiscOpt(oc);
     } else if (g_do_md_du_analysis || g_do_md_ssa) {
         ASSERT0(verifyMDRef());
@@ -230,7 +230,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
             getPassMgr()->checkValidAndRecompute(&oc, PASS_LOOP_INFO,
                                                  PASS_UNDEF);
         }
-    
+
         getCFG()->performMiscOpt(oc);
     }
 
@@ -241,7 +241,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
     if (g_do_aa) {
         ASSERT0(g_cst_bb_list && oc.is_cfg_valid());
         getPassMgr()->checkValidAndRecompute(&oc, PASS_DOM, PASS_LOOP_INFO,
-                                             PASS_AA, PASS_UNDEF);        
+                                             PASS_AA, PASS_UNDEF);
     }
 
     if (g_do_md_du_analysis) {
@@ -297,7 +297,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
     if (g_opt_level == OPT_LEVEL0) { return; }
 
     START_TIMER(t, "Middle Process Aggressive Analysis");
-    
+
     //START HACK CODE
     //Test code, to force recomputing AA and DUChain.
     //AA and DU Chain do NOT to be recomputed, because
@@ -391,7 +391,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     //Must and May MD reference should be available now.
     if (g_is_lower_to_pr_mode) {
         simplifyToPRmode(oc);
-    } else {        
+    } else {
         Region::MiddleProcess(oc);
         if (g_do_cp && getPassMgr()->queryPass(PASS_DU_MGR) != nullptr) {
             ((CopyProp*)getPassMgr()->registerPass(PASS_CP))->perform(oc);

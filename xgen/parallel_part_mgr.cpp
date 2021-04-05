@@ -213,7 +213,7 @@ SR2SR_DMAP * ParallelPartMgr::getClusterDMap(UINT n)
     if (n >= m_sr2sr_dmap_lst.get_elem_count()) {
         return nullptr;
     }
-    //Note if n is a big number, this list accessing will be slowly.    
+    //Note if n is a big number, this list accessing will be slowly.
     return m_sr2sr_dmap_lst.get_head_nth(n);
 }
 

@@ -71,7 +71,7 @@ public:
     }
 
     virtual void dump(CG const* cg);
-    
+
     ULONGLONG getSize() const { return SECT_size(this); }
     VarElist * getVarList() { return &SECT_var_list(this); }
     Var * getVar() const { return SECT_var(this); }

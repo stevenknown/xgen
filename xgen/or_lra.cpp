@@ -1188,7 +1188,7 @@ LifeTime * LifeTimeMgr::getNextLifeTime(LifeTimeVecIter & cur)
         }
     }
     cur = i;
-    return nullptr; 
+    return nullptr;
 }
 
 
@@ -2088,9 +2088,9 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
                     if (o->get_opnd(i) != sr) {
                         continue;
                     }
-                    RegSet const* rs = m_cg->getValidRegSet(
-                        o->getCode(), i, false);
-                    ASSERT0(rs);
+                    RegSet const* rs = m_cg->getValidRegSet(o->getCode(),
+                                                            i, false);
+                    ASSERTN(rs, ("operand %d may be not register", i));
                     usable_rs->intersect(*rs);
                 }
 
@@ -2101,8 +2101,8 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
                         SR_regfile(copy_tgt) == sr->getRegFile() &&
                         sr->getRegFile() != RF_UNDEF) {
                         ASSERTN(copy_tgt->is_reg(),
-                            ("invalid copy operation, "
-                             "operand is not a register"));
+                                ("invalid copy operation, "
+                                 "operand is not a register"));
                         addAnticiReg(lt, SR_phy_reg(copy_tgt));
                     }
                 }
@@ -4189,7 +4189,7 @@ bool LRA::mergeRedundantStoreLoad(OR * o,
             ("Illegal pattern"));
 
     if ((!m_cg->isSameCondExec(o, succ, ORBB_orlist(bb)) &&
-        
+
         //'o' and 'succ' must be in same conditional execute path.
         !m_cg->isSafeToOptimize(o, succ)) ||
 

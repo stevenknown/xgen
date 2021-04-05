@@ -46,7 +46,7 @@ void LIS::init(ORBB * bb, DataDepGraph & ddg, BBSimulator * sim, UINT sch_mode)
     m_br_all_preds.init();
     m_or_changed = false;
     m_sch_mode = sch_mode;
-    
+
     OR * br = nullptr;
     if (HAVE_FLAG(m_sch_mode, SCH_BRANCH_DELAY_SLOT) &&
         (br = get_br()) != nullptr) {
@@ -404,7 +404,7 @@ bool LIS::tryIssueCandList(PreemptiveORList & cand_list, DataDepGraph * stepddg,
         }
     }
     m_sim->runOneCycle(nullptr);
-    return issued; 
+    return issued;
 }
 
 
@@ -521,7 +521,7 @@ void LIS::serialize()
     }
 
     //END_TIMER_FMT(t, ("LIS: Serialize: BB%d", getBB()->id()));
-    if (g_is_dump_after_pass && g_dump_opt.isDumpLIS()) {        
+    if (g_is_dump_after_pass && g_dump_opt.isDumpLIS()) {
         dump(true);
     }
 }

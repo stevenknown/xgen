@@ -463,7 +463,7 @@ void DataDepGraph::handleResultsPhyRegOut(OR const* o, SR const* sr,
     }
 }
 
-                                          
+
 //Build dependence of physical register.
 void DataDepGraph::handleResultsPhyRegOut(OR const* o, REG reg,
                                           OUT Reg2ORList & map_reg2defors,
@@ -481,7 +481,7 @@ void DataDepGraph::handleResultsPhyRegOut(OR const* o, REG reg,
             appendEdge(DEP_REG_OUT, defor, o);
         }
     }
-    
+
     orlst = map_reg2useors.get(reg);
     if (orlst != nullptr) {
         //Build REG_ANTI dependence.
@@ -493,13 +493,13 @@ void DataDepGraph::handleResultsPhyRegOut(OR const* o, REG reg,
             appendEdge(DEP_REG_ANTI, useor, o);
         }
     }
-    
+
     map_reg2defors.set(reg, o);
-    
+
     //Kill all USE ors.
     map_reg2useors.clean(reg);
 }
-                                 
+
 
 void DataDepGraph::handleResultsSymRegOut(OR const* o, SR const* sr,
                                           OUT SR2ORList & map_sr2defors,
@@ -1060,7 +1060,7 @@ void DataDepGraph::appendOR(OR * o)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     ASSERT0(o);
-    addVertex(o->id());    
+    addVertex(o->id());
 }
 
 

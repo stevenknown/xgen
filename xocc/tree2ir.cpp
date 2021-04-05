@@ -33,6 +33,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define RETVAL_BUFFER_NAME "retval_buf_of_non_name_func_pointer"
 
+//Check if t is formed in following:
+//e.g:s.bg[3] = ...
+//  ARRAY
+//   |---3
+//   |----DMEM/INDMEM
+//             |----s
+//             |----bg
+static bool is_field_ref_whole_array(Tree const* t)
+{
+    if (TREE_type(t) != TR_DMEM && TREE_type(t) != TR_INDMEM) { return false; }
+
+    Tree * parent = TREE_parent(t);
+    if (parent == nullptr) { return false; }
+
+    Decl const* field_decl = TREE_result_type(TREE_field(t));
+    if (is_array(field_decl) && TREE_type(parent) != TR_ARRAY) { return true; }
+
+    return false;
+}
+
+
 //Generate IR for Tree identifier.
 //And calculate the byte-size of identifier.
 IR * CTree2IR::buildId(IN Decl * id)
@@ -52,6 +73,16 @@ IR * CTree2IR::buildId(IN Tree * t)
     //TREE_result_type is useless for C,
     //but keep it for another langages used.
     return buildId(decl);
+}
+
+
+IR * CTree2IR::buildLda(Tree const* t)
+{
+    ASSERTN(TREE_type(t) == TR_ID, ("illegal tree node , expected TR_ID"));
+    Decl * decl = TREE_id_decl(t);
+    Var * var_info = mapDecl2VAR(decl);
+    ASSERT0(var_info);
+    return m_rg->buildLda(var_info);
 }
 
 
@@ -321,12 +352,9 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             //Generate IR_STARRAY.
             ir = m_rg->buildStoreArray(
                 m_rg->dupIRTree(ARR_base(l)),
-                m_rg->dupIRTree(ARR_sub_list(l)),
-                                l->getType(),
-                                ARR_elemtype(l),
-                                ((CArray*)l)->getDimNum(),
-                                ARR_elem_num_buf(l),
-                                r);
+                m_rg->dupIRTree(ARR_sub_list(l)), l->getType(),
+                                ARR_elemtype(l), ((CArray*)l)->getDimNum(),
+                                ARR_elem_num_buf(l), r);
             ir->setOffset(ARR_ofst(l));
         } else {
             ASSERTN(0, ("unsupport lhs IR type."));
@@ -351,12 +379,9 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             //Generate IR_STARRAY.
             ir = m_rg->buildStoreArray(
                 m_rg->dupIRTree(ARR_base(l)),
-                m_rg->dupIRTree(ARR_sub_list(l)),
-                                l->getType(),
-                                ARR_elemtype(l),
-                                ((CArray*)l)->getDimNum(),
-                                ARR_elem_num_buf(l),
-                                r);
+                m_rg->dupIRTree(ARR_sub_list(l)), l->getType(),
+                                ARR_elemtype(l), ((CArray*)l)->getDimNum(),
+                                ARR_elem_num_buf(l), r);
             ir->setOffset(ARR_ofst(l));
         } else {
             ASSERTN(0, ("unsupport lhs IR type."));
@@ -463,6 +488,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     if (is_pointer(TREE_result_type(t))) {
         ir->setPointerType(get_pointer_base_size(TREE_result_type(t)), m_tm);
     }
+
     CONT_is_record_epilog(cont) = false;
     setLineNum(ir, lineno, m_rg);
     xcom::add_next(CONT_toplirlist(cont), ir);
@@ -489,12 +515,16 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 IR * CTree2IR::convertIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 {
     //Generate base region IR node used into ST
-    T2IRCtx ct;
+    T2IRCtx ct(*cont);
     CONT_toplirlist(&ct) = CONT_toplirlist(cont);
-    CONT_is_lvalue(&ct) = true;
+
+    //In C spec, pre-increment-op has sideeffect, it has WRITE-property.
     //e.g: ++p, p is inc_exp.
+    CONT_is_lvalue(&ct) = true;
+
     IR * inc_exp = convert(TREE_inc_exp(t), &ct); //need ID
-    CONT_is_lvalue(&ct) = false;
+
+    CONT_is_lvalue(&ct) = false; //begin processing READ-property.
 
     //Compute pointer addend.
     INT addend = 1;
@@ -561,16 +591,159 @@ IR * CTree2IR::convertIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 }
 
 
+IR * CTree2IR::convertPointerDeref(Tree * t, INT lineno, IN T2IRCtx * cont)
+{
+    ASSERT0(TREE_type(t) == TR_ARRAY);
+    ASSERT0(is_pointer(TREE_result_type(TREE_array_base(t))));
+
+    //CASE 2. Pointer but used as array.
+    //     char * p;
+    //     p[i] = 11; //=> ST(ILD(LD(p)+LD(i)), 11) => IST((LD(p)+LD(i)), 11)
+    //     a = p[i]; //=> ST(a, ILD(LD(p)+LD(i)))
+
+    //We are in CASE 2, dealing with pointer, but using array-operator.
+    //Operator [] is dereference of pointer actually.
+
+    T2IRCtx tc(*cont);
+
+    //Base and Index have to be value whether or not Caller requires address.
+    CONT_is_compute_addr(&tc) = false;
+
+    IR * base = convert(TREE_array_base(t), &tc);
+    IR * index = convert(TREE_array_indx(t), &tc);
+    ASSERT0(base->is_ptr());
+
+    //In this situation, given 'int ** p';
+    //then address of p[2][3] will be converted(or linearized) to:
+    //    t1 = p
+    //    t2 = t1 + 2*sizeof(int)
+    //    t3 = ild(t2)
+    //    t4 = t3 + 3*sizeof(int)
+    //    t5 = ild(t4)
+    IR * mem_addr = m_rg->buildBinaryOp(IR_ADD, base->getType(),
+                                        base, index);
+    ASSERT0(mem_addr->is_ptr() &&
+            TY_ptr_base_size(mem_addr->getType()) != 0);
+    Type const* type = nullptr;
+    if (is_pointer(TREE_result_type(t))) {
+        type = m_tm->getPointerType(get_pointer_base_size(
+            TREE_result_type(t)));
+    } else {
+        UINT s;
+        DATA_TYPE dt = ::get_decl_dtype(TREE_result_type(t), &s, m_tm);
+        if (dt == D_MC) {
+            type = m_tm->getMCType(s);
+        } else {
+            ASSERT0(IS_SIMPLEX(dt));
+            type = m_tm->getSimplexTypeEx(dt);
+        }
+    }
+
+    IR * ir = mem_addr; //return the address of pointer.
+    if (!CONT_is_compute_addr(cont)) {
+        //Return the value that is of the pointer pointed to.
+        ir = m_rg->buildILoad(ir, type);
+    }
+    setLineNum(ir, lineno, m_rg);
+    return ir;
+}
+
+
+//Convert array element type, the result type of array operator as well.
+//t: array operator Tree node.
+static Type const* computeArrayElementType(Tree const* t, TypeMgr * tm)
+{
+    UINT size;
+    DATA_TYPE dt = ::get_decl_dtype(TREE_result_type(t), &size, tm);
+    if (dt == D_PTR) {
+        return tm->getPointerType(get_pointer_base_size(TREE_result_type(t)));
+    }
+
+    if (dt == D_MC) {
+        return tm->getMCType(size);
+    }
+
+    ASSERT0(IS_SIMPLEX(dt));
+    return tm->getSimplexTypeEx(dt);
+}
+
+
+static IR * computeArrayAddr(Tree * t, IR * ir, Region * rg, T2IRCtx * cont)
+{
+    ASSERT0(ir->isArrayOp() && TREE_type(t) == TR_ARRAY);
+    SimpCtx tc;
+    SIMP_array(&tc) = true;
+    IR * newir = rg->simplifyArrayAddrExp(ir, &tc);
+    rg->freeIRTree(ir);
+    ir = newir;
+    ASSERT0(ir->is_ptr());
+
+    if (is_array(TREE_result_type(t))) {
+        //We are in CASE 3.
+        //Revise pointer-base size according to
+        //the pointed array dimension.
+        TY_ptr_base_size(ir->getType()) = get_array_elem_bytesize(
+            TREE_result_type(t));
+    }
+
+    if (SIMP_stmtlist(&tc) != nullptr) {
+        xcom::add_next(CONT_toplirlist(cont), SIMP_stmtlist(&tc));
+    }
+    return ir;
+}
+
+
+//base: base Tree node of ARRAY.
+IR * CTree2IR::convertArraySubExp(Tree * t, TMWORD * elem_nums, T2IRCtx * cont)
+{
+    ASSERT0(TREE_type(t) == TR_ARRAY);
+    Tree * base = t;
+    UINT n = 0;
+    while (TREE_type(base) == TR_ARRAY) {
+        base = TREE_array_base(base);
+        ASSERT0(base);
+        n++;
+    }
+    ASSERT0(n >= 1);
+
+    Decl * arr_decl = TREE_result_type(base);
+    Tree * lt = t;
+    UINT dim = n - 1;
+    IR * sublist = nullptr;
+    IR * last = nullptr;
+    UINT i = 0;
+
+    //Note the outermost TR_ARRAY means the lowest dimension element of array
+    //will be accessed.
+    T2IRCtx tc(*cont);
+
+    //Do not propagate information to subscribe-expression convertion.
+    CONT_is_compute_addr(&tc) = false;
+
+    while (TREE_type(lt) == TR_ARRAY) {
+        IR * subexp = convert(TREE_array_indx(lt), &tc);
+        ASSERT0(subexp);
+        xcom::add_next(&sublist, &last, subexp);
+        elem_nums[i] = (TMWORD)get_array_elemnum_to_dim(arr_decl, dim);
+        lt = TREE_array_base(lt);
+        dim--;
+        i++;
+    }
+    return sublist;
+}
+
+
 IR * CTree2IR::convertArray(Tree * t, INT lineno, IN T2IRCtx * cont)
 {
-    //There are 3 situations need to resolve.
+    ASSERT0(TREE_type(t) == TR_ARRAY);
+    //There are following situations need to be resolved:
     //CASE 1. Regular array.
     //     char p[100];
     //     p[i] = 11; //=> ST(ILD(LDA(p)+LD(i)), 11) => IST((LDA(p)+LD(i)), 11)
     //     a = p[i]; //=> a=ILD(LDA(p)+LD(i))
     //     p is base, i is index.
     //
-    //CASE 2. Pointer but used as array.
+    //CASE 2. The base of ARRAY operator is a pointer, but is used as array.
     //     char * p;
     //     p[i] = 11; //=> ST(ILD(LD(p)+LD(i)), 11) => IST((LD(p)+LD(i)), 11)
     //     a = p[i]; //=> ST(a, ILD(LD(p)+LD(i)))
@@ -578,123 +751,77 @@ IR * CTree2IR::convertArray(Tree * t, INT lineno, IN T2IRCtx * cont)
     //CASE 3. Taken regular array element address.
     //     char p[2][3];
     //     char * q = p[i]+1; //=> ST(q, LDA(p)+LD(i)+1)
-    IR * ir = nullptr;
+    //     char * w = &p[i][j]; //=> ST(w, LDA(p)+LD(i)*3+LD(j))
+    //
+    //CASE 4. Taken regular array element address.
+    //     char p[2][3];
+    //     char * w = &p[i][j]; //=> ST(w, LDA(p)+LD(i)*3+LD(j))
+    //
+    //CASE 5: Taken array address.
+    //     char p[2];
+    //     char * q = p;
+    //----------------------------------------------------------------
     if (is_pointer(TREE_result_type(TREE_array_base(t)))) {
-        //We are dealing with pointer object.
-        //operator [] is a dereference of pointer.
-        IR * base = convert(TREE_array_base(t), cont);
-        IR * index = convert(TREE_array_indx(t), cont);
-        ASSERT0(base->is_ptr());
-        //In this situation, given 'int ** p';
-        //then address of p[2][3] will be converted(or linearized) to:
-        //    t1 = p
-        //    t2 = t1 + 2*sizeof(int)
-        //    t3 = ild(t2)
-        //    t4 = t3 + 3*sizeof(int)
-        //    t5 = ild(t4)
-        IR * mem_addr = m_rg->buildBinaryOp(IR_ADD, base->getType(),
-                                            base, index);
-        ASSERT0(mem_addr->is_ptr() &&
-                TY_ptr_base_size(mem_addr->getType()) != 0);
-        Type const* type = nullptr;
-        if (is_pointer(TREE_result_type(t))) {
-            type = m_tm->getPointerType(get_pointer_base_size(
-                TREE_result_type(t)));
-        } else {
-            UINT s;
-            DATA_TYPE dt = ::get_decl_dtype(TREE_result_type(t), &s, m_tm);
-            if (dt == D_MC) {
-                type = m_tm->getMCType(s);
-            } else {
-                ASSERT0(IS_SIMPLEX(dt));
-                type = m_tm->getSimplexTypeEx(dt);
-            }
-        }
-        ir = m_rg->buildILoad(mem_addr, type);
-    } else {
-        //Handle regular array.
-        //Compute the number of elements for each dimensions.
-        Tree * basetree = t;
-        UINT n = 0;
-        while (TREE_type(basetree) == TR_ARRAY) {
-            basetree = TREE_array_base(basetree);
-            ASSERT0(basetree);
-            n++;
-        }
-        ASSERT0(n >= 1);
-        IR * base = convert(basetree, cont);
-        if (base->is_array()) {
-            //CASE:
-            //struct S {int w; short e[100];};
-            //struct S s[100][200];
-            //short a1 = s[5][6].e[7];
-            //
-            //The base of e[7] is still an array.
-            SimpCtx cont2;
-            SIMP_ret_array_val(&cont2) = false;
-            SIMP_array(&cont2) = true;
-            base = m_rg->simplifyExpression(base, &cont2);
-            ASSERT0(SIMP_stmtlist(&cont2) == nullptr);
-        }
-        ASSERT0(base->is_ptr());
-
-        Decl * arr_decl = TREE_result_type(basetree);
-        Tree * lt = t;
-        UINT dim = n - 1;
-        TMWORD * elem_nums = (TMWORD*)::malloc(sizeof(TMWORD) * n);
-        IR * sublist = nullptr;
-        IR * last = nullptr;
-        UINT i = 0;
-        //Note the outermost TR_ARRAY indicates the accessing to the lowest
-        //dimension of given array.
-        while (TREE_type(lt) == TR_ARRAY) {
-            IR * subexp = convert(TREE_array_indx(lt), cont);
-            ASSERT0(subexp);
-            xcom::add_next(&sublist, &last, subexp);
-            elem_nums[i] = (TMWORD)get_array_elemnum_to_dim(arr_decl, dim);
-            lt = TREE_array_base(lt);
-            dim--;
-            i++;
-        }
-
-        UINT size;
-        DATA_TYPE rtype = ::get_decl_dtype(TREE_result_type(t), &size, m_tm);
-        Type const* type = nullptr;
-        if (is_pointer(TREE_result_type(t))) {
-            type = m_tm->getPointerType(get_pointer_base_size(
-                TREE_result_type(t)));
-        } else {
-            if (rtype == D_MC) {
-                type = m_tm->getMCType(size);
-            } else {
-                ASSERT0(IS_SIMPLEX(rtype));
-                type = m_tm->getSimplexTypeEx(rtype);
-            }
-        }
-
-        //'base' of array is either a pointer or another array.
-        if (TREE_type(TREE_array_base(t)) != TR_ARRAY) {
-            if (!base->is_ptr()) {
-                base->setPointerType(base->getTypeSize(m_tm), m_tm);
-            }
-        }
-        ir = m_rg->buildArray(base, sublist, type, type, n, elem_nums);
-
-        if (is_array(TREE_result_type(t))) {
-            //We are in case 3.
-            SimpCtx ctx;
-            SIMP_array(&ctx) = true;
-            IR * newir = m_rg->simplifyArrayAddrExp(ir, &ctx);
-            m_rg->freeIRTree(ir);
-            ir = newir;
-            ASSERT0(ir->is_ptr());
-
-            //Revise pointer-base size to be array element size.
-            TY_ptr_base_size(ir->getType()) = get_array_elem_bytesize(
-                TREE_result_type(t));
-        }
-        ::free(elem_nums);
+        return convertPointerDeref(t, lineno, cont);
     }
+
+    //Handle regular array.
+    //Compute the number of elements for each dimensions.
+    Tree * basetree = t;
+    UINT n = 0;
+    while (TREE_type(basetree) == TR_ARRAY) {
+        basetree = TREE_array_base(basetree);
+        ASSERT0(basetree);
+        n++;
+    }
+    ASSERT0(n >= 1);
+
+    T2IRCtx tc(*cont);
+
+    //IR_ARRAY operator requires that the base have to POINTER type.
+    CONT_is_compute_addr(&tc) = true;
+
+    //Convert base of array.
+    IR * base = convert(basetree, &tc);
+    if (base->is_array()) {
+        //CASE:
+        //struct S {int w; short e[100];};
+        //struct S s[100][200];
+        //short a1 = s[5][6].e[7];
+        //
+        //The base of e[7] is still an array.
+        SimpCtx cont2;
+        SIMP_ret_array_val(&cont2) = false;
+        SIMP_array(&cont2) = true;
+        base = m_rg->simplifyExpression(base, &cont2);
+        ASSERT0(SIMP_stmtlist(&cont2) == nullptr);
+    }
+    ASSERT0(base->is_ptr());
+
+    //Convert subscript-expression.
+    TMWORD * elem_nums = (TMWORD*)::malloc(sizeof(TMWORD) * n);
+    IR * sublist = convertArraySubExp(t, elem_nums, cont);
+    ASSERT0(sublist);
+
+    //Convert array element type, and result type of array operator.
+    Type const* type = computeArrayElementType(t, m_tm);
+
+    //There is C language specific situtation, 'base' of array is either
+    //a pointer or another array. Do calibration if that is the case.
+    if (TREE_type(TREE_array_base(t)) != TR_ARRAY && !base->is_ptr()) {
+        //Revise array base's data-type.
+        base->setPointerType(base->getTypeSize(m_tm), m_tm);
+    }
+
+    IR * ir = m_rg->buildArray(base, sublist, type, type, n, elem_nums);
+
+    if (is_array(TREE_result_type(t)) || CONT_is_compute_addr(cont)) {
+        //If current tree node is just array symbol reference, then we have to
+        //take the address of the array, whereas we are in CASE 5.
+        ir = computeArrayAddr(t, ir, m_rg, cont);
+    }
+
+    ::free(elem_nums);
     setLineNum(ir, lineno, m_rg);
     return ir;
 }
@@ -786,7 +913,7 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     }
 
     //Generate callee.
-    T2IRCtx tcont;
+    T2IRCtx tcont(*cont);
     CONT_is_parse_callee(&tcont) = true;
     IR * callee = convert(TREE_fun_exp(t), &tcont);
 
@@ -934,10 +1061,13 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         irt = IR_SUB;
     }
 
-    //Get result IR, it must be pseduo register
-    T2IRCtx ct;
+    //Get result IR, it must be pseduo register.
+    T2IRCtx ct(*cont);
     CONT_toplirlist(&ct) = CONT_toplirlist(cont);
     CONT_epilogirlist(&ct) = CONT_epilogirlist(cont);
+
+    //Post-increment-op has sideeffect, it has both WRITE and READ property.
+    //Begin processing READ-property.
     CONT_is_lvalue(&ct) = false;
 
     //inc_exp is the base of post-dec/inc.
@@ -1078,7 +1208,8 @@ IR * CTree2IR::convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx *)
 
 
 //Convert direct memory access.
-IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
+//Return the value of field, or the address of field.
+IR * CTree2IR::convertDirectMemAccess(Tree const* t, INT lineno, T2IRCtx * cont)
 {
     Decl const* base_decl = TREE_result_type(TREE_base_region(t));
     ASSERTN(!is_pointer(base_decl), ("'.' node must not be pointer type"));
@@ -1088,13 +1219,21 @@ IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
     ASSERTN(TREE_type(TREE_field(t)) == TR_ID, ("illegal offset type"));
 
     Decl const* field_decl = TREE_result_type(TREE_field(t));
-    T2IRCtx tc;
-    if (is_array(field_decl)) {
+    T2IRCtx tc(*cont);
+
+    //Indicates whether if current convertion should return address.
+    bool is_require_addr = CONT_is_compute_addr(cont);
+
+    if (is_field_ref_whole_array(t)) {
+        //In C spec, if user writes code like 'a = s.array;', actually user
+        //expects taking address of array, rather than value.
         CONT_is_compute_addr(&tc) = true;
+        is_require_addr = true;
     }
+
     IR * ir = convert(TREE_base_region(t), &tc);
 
-    //Compute 'byte ofst' of 'ir' accroding to field at structured type.
+    //Compute 'byte ofst' of 'ir' accroding to field in structure type.
     UINT field_ofst = 0; //All field of union start at offset 0.
     ASSERTN(TREE_type(TREE_field(t)) == TR_ID, ("illegal struct/union exp"));
     if (is_struct(ty)) {
@@ -1103,66 +1242,60 @@ IR * CTree2IR::convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx *)
                                     nullptr);
     }
 
-    //Revise result type of ir accroding to 'field'.
-    if (is_pointer(field_decl)) {
-        ir->setPointerType(get_pointer_base_size(field_decl), m_tm);
-        ir->setOffset(ir->getOffset() + field_ofst);
-    } else if (is_array(field_decl)) {
-        if (ir->is_ld()) {
-            //Modify ir's type to be LDA.
-            //After tree-convertor converted TREE_base_region of DMEM, the
-            //convertor generates IR_LD for array base. Revise it to IR_LDA.
-            //e.g: a[], convertor generate arr(ld(a)), change to arr(lda(a))
-            IR * tmp = m_rg->buildLda(LD_idinfo(ir));
-            LDA_ofst(tmp) = LD_ofst(ir);
-            m_rg->freeIRTree(ir);
-            ir = tmp;
+    UINT field_size = 0;
+    DATA_TYPE dt = ::get_decl_dtype(field_decl, &field_size, m_tm);
+    if (is_require_addr) {
+        //Parent tree node requires address.
+        //The returned ir should be pointer.
+        ASSERT0(ir->is_ptr());
+        ir->setPointerType(field_size, m_tm);
+        if (ir->hasOffset()) {
             ir->setOffset(ir->getOffset() + field_ofst);
-        } else if (ir->is_array()) {
-            //CASE: Both dmem's base and field are array.
-            //In this case, the base array will be simplified
-            //to address expression, and the simplification will
-            //performed by convert_array() if it check and found
-            //the base is also an array. Just return here.
-            ;
-        } else {
-            ASSERT0(ir->is_ptr()); //dmem's base is indmem.
-            //ir already be address.
-            if (field_ofst != 0) {
-                ir = m_rg->buildBinaryOpSimp(IR_ADD, ir->getType(), ir,
-                    m_rg->buildImmInt(field_ofst,
-                        m_tm->getSimplexTypeEx(
-                            m_tm->getPointerSizeDtype())));
-            }
+        } else if (field_ofst != 0) {
+            //ir is ADD, SUB, etc, and there is no offset field in ir.
+            //Plus the offset of field in Aggr.
+            ir = m_rg->buildBinaryOpSimp(IR_ADD, ir->getType(), ir,
+                m_rg->buildImmInt(field_ofst,
+                                  m_tm->getSimplexTypeEx(
+                                      m_tm->getPointerSizeDtype())));
         }
-    } else {
-        UINT size = 0;
-        DATA_TYPE dt = get_decl_dtype(field_decl, &size, m_tm);
-        if (dt == D_MC) {
-            IR_dt(ir) = m_tm->getMCType(size);
-        } else {
-            ASSERT0(IS_SIMPLEX(dt));
-            IR_dt(ir) = m_tm->getSimplexTypeEx(dt);
-        }
-        ir->setOffset(ir->getOffset() + field_ofst);
+        setLineNum(ir, lineno, m_rg);
+        return ir;
     }
+
+    //Parent tree node requires value.
+    ASSERT0(!ir->is_lda());
+
+    //Revise result type of 'ir' accroding to 'field_decl'.
+    if (dt == D_PTR) {
+        ir->setPointerType(get_pointer_base_size(field_decl), m_tm);
+    } else if (dt == D_MC) {
+        //DMEM is accessing a memory block. It may be lead a memopy-copy or
+        //vector-operation.
+        IR_dt(ir) = m_tm->getMCType(field_size);
+    } else {
+        ASSERT0(IS_SIMPLEX(dt));
+        IR_dt(ir) = m_tm->getSimplexTypeEx(dt);
+    }
+    ir->setOffset(ir->getOffset() + field_ofst);
     setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
 
 //Convert indirect memory access.
-IR * CTree2IR::convertIndirectMemAccess(Tree * t, INT lineno,
-                                        IN T2IRCtx * cont)
+//Return the value of field, or the address of field.
+IR * CTree2IR::convertIndirectMemAccess(Tree const* t, INT lineno,
+                                        T2IRCtx * cont)
 {
     Decl const* base_decl = TREE_result_type(TREE_base_region(t));
     ASSERTN(is_pointer(base_decl), ("'->' node must be pointer type"));
 
     TypeSpec const* ty = DECL_spec(base_decl);
-    ASSERTN(is_struct(ty) || is_union(ty), ("illegal base type"));
+    ASSERTN(is_aggr(ty), ("illegal base type"));
     ASSERTN(TREE_type(TREE_field(t)) == TR_ID, ("illegal offset type"));
 
-    //Compute 'field_offst' accroding to 'field' of struct.
+    //Compute 'field_offst' according to 'field' of struct.
     UINT field_ofst = 0; //All field of union start at offset 0.
     if (is_struct(ty)) {
         Struct const* st = TYPE_struct_type(ty);
@@ -1170,56 +1303,78 @@ IR * CTree2IR::convertIndirectMemAccess(Tree * t, INT lineno,
                                     nullptr);
     }
 
-    UINT sz;
     Decl const* field_decl = TREE_result_type(TREE_field(t));
-    DATA_TYPE dt = D_UNDEF;
-    IR * ir = nullptr;
-    IR * base = convert(TREE_base_region(t), nullptr);
+
+    T2IRCtx tc(*cont);
+
+    //INDEM node always computes the value of base, whether if parent
+    //node required.
+    CONT_is_compute_addr(&tc) = false;
+    IR * base = convert(TREE_base_region(t), &tc);
     ASSERTN(base->is_ptr(),
             ("base of indirect memory access must be pointer."));
-    if (is_pointer(field_decl)) {
-        Type const* type = m_tm->getPointerType(
-            get_pointer_base_size(field_decl));
-        ASSERT0(type->verify(m_rg->getTypeMgr()));
-        //CASE: generate ild to access field's value.
-        //e.g: p->b, will generate,
-        //t = ld(p)
-        //t2 = ild(t + ofst(b))
-        ir = m_rg->buildILoad(base, type);
+
+    UINT field_size = 0;
+    DATA_TYPE dt = ::get_decl_dtype(field_decl, &field_size, m_tm);
+    if (CONT_is_compute_addr(cont) || is_array(field_decl)) {
+        //Parent node requires address.
+        //Compute the address of field.
+
+        //CASE: If field is just array identifier, return the address
+        //expression of field, rather than value of whole array.
+        //e.g1: struct { char b[] } * p; p->s.b;
+        //e.g2: struct { char b   } * p; &(p->s.b);
+        //Both e.g1 and e.g2 generetes:
+        //  t1 = ld(p) + ofst(b)
+        //where does not have to generete ILD.
+
+        IR * ir = nullptr;
         if (field_ofst != 0) {
-            ir->setOffset(field_ofst);
-        }
-    } else if ((dt = ::get_decl_dtype(field_decl, &sz, m_tm)) == D_MC) {
-        if ((cont != nullptr && CONT_is_compute_addr(cont)) ||
-            is_array(field_decl)) {
-            //CASE: generate ld to load the address of mc.
-            //e.g: p->s.b, will generate,
-            //t = ld(p)
-            //t = t + ofst(b)
-            ir = base;
-            if (field_ofst != 0) {
-                ir = m_rg->buildBinaryOpSimp(IR_ADD, base->getType(),
-                    base, m_rg->buildImmInt(field_ofst,
-                        m_tm->getSimplexTypeEx(
-                            m_tm->getPointerSizeDtype())));
-            }
+            ir = m_rg->buildBinaryOpSimp(IR_ADD, base->getType(),
+                base, m_rg->buildImmInt(field_ofst,
+                    m_tm->getSimplexTypeEx(
+                        m_tm->getPointerSizeDtype())));
         } else {
-            ir = m_rg->buildILoad(base, m_tm->getMCType(sz));
-            if (field_ofst != 0) {
-                ir->setOffset(field_ofst);
-            }
+            ir = base;
         }
-    } else {
-        //CASE: generate ild to access field's value.
-        //e.g: p->b, will generate,
-        //t = ld(p)
-        //t2 = ild(t + ofst(b))
-        ASSERT0(IS_SIMPLEX(dt));
-        Type const* type = m_tm->getSimplexTypeEx(dt);
-        ir = m_rg->buildILoad(base, type);
+        ir->setPointerType(field_size, m_tm);
+        setLineNum(ir, lineno, m_rg);
+        return ir;
+    }
+
+    //Compute the value of field.
+    if (dt == D_MC) {
+        //Field is memory block, means user wants to the value of memory block.
+        //Return the value of field.
+        IR * ir = m_rg->buildILoad(base, m_tm->getMCType(field_size));
         if (field_ofst != 0) {
             ir->setOffset(field_ofst);
         }
+        setLineNum(ir, lineno, m_rg);
+        return ir;
+    }
+
+    Type const* type = nullptr;
+    if (dt == D_PTR) {
+        //e.g: struct { ... char * b ... } * p; then p->b will generate:
+        type = m_tm->getPointerType(get_pointer_base_size(field_decl));
+        ASSERT0(type->verify(m_rg->getTypeMgr()));
+    } else {
+        //e.g: struct { ... int b ... } * p; then p->b will generate:
+        ASSERT0(IS_SIMPLEX(dt));
+        type = m_tm->getSimplexTypeEx(dt);
+    }
+
+    //Return the value of field.
+    //Generate ild to access field's value.
+    //CASE1: struct { ... char * b ... } * p; then p->b will generate:
+    //CASE2: struct { ... int b ... } * p; then p->b will generate:
+    //  field_ofst = offset(b)
+    //  t1 = ld(p)
+    //  t2 = ild:field_ofst (t1)
+    IR * ir = m_rg->buildILoad(base, type);
+    if (field_ofst != 0) {
+        ir->setOffset(field_ofst);
     }
 
     ASSERT0(ir);
@@ -1235,6 +1390,7 @@ IR * CTree2IR::convertDeref(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     Tree * base = TREE_lchild(t);
     IR * deref_addr = convert(base, cont);
     ASSERT0(deref_addr && deref_addr->is_ptr());
+
     IR * ir = nullptr;
     if (is_pointer_point_to_array(TREE_result_type(base))) {
         //Here we are computing the base address of ARRAY accessing.
@@ -1247,23 +1403,25 @@ IR * CTree2IR::convertDeref(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         //lchild is 'deref_addr' who has already convert 'p' to LD(p), here we
         //just return the 'deref_addr' as result of DEREF(ID(p)) at all.
         ir = deref_addr;
-    } else {
-        Type const* type = nullptr;
-        if (is_pointer(TREE_result_type(t))) {
-            type = m_tm->getPointerType(get_pointer_base_size(
-                TREE_result_type(t)));
-        } else {
-            UINT s;
-            DATA_TYPE dt = get_decl_dtype(TREE_result_type(t), &s, m_tm);
-            if (dt == D_MC) {
-                type = m_tm->getMCType(s);
-            } else {
-                ASSERT0(IS_SIMPLEX(dt));
-                type = m_tm->getSimplexTypeEx(dt);
-            }
-        }
-        ir = m_rg->buildILoad(deref_addr, type);
+        setLineNum(ir, lineno, m_rg);
+        return ir;
     }
+
+    Type const* type = nullptr;
+    if (is_pointer(TREE_result_type(t))) {
+        type = m_tm->getPointerType(get_pointer_base_size(
+            TREE_result_type(t)));
+    } else {
+        UINT s;
+        DATA_TYPE dt = get_decl_dtype(TREE_result_type(t), &s, m_tm);
+        if (dt == D_MC) {
+            type = m_tm->getMCType(s);
+        } else {
+            ASSERT0(IS_SIMPLEX(dt));
+            type = m_tm->getSimplexTypeEx(dt);
+        }
+    }
+    ir = m_rg->buildILoad(deref_addr, type);
     setLineNum(ir, lineno, m_rg);
     return ir;
 }
@@ -1443,80 +1601,48 @@ IR * CTree2IR::convertReturn(Tree * t, INT lineno, T2IRCtx * cont)
 IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
 {
     IR * ir = nullptr;
-    IR * base = convert(TREE_lchild(t), cont);
+    Tree * kid = TREE_lchild(t);
+
+    //Actually, convertor does not have to do anything. The processing of kid
+    //should consider the situation that its parent is LDA.
+    T2IRCtx tc(*cont);
+    IR * base = nullptr;
+    if (TREE_type(kid) == TR_DEREF) {
+        //LDA operator will counteract the effect of DEREF, just leave the
+        //type of DEREF as the pointer-base-type of LDA.
+        //e.g: &*(int*)p;  where p is char*.
+        //  The result type of LDA is int*.
+        CONT_is_compute_addr(&tc) = false;
+        base = convert(TREE_lchild(kid), &tc);
+        base->setPointerType(get_decl_size(TREE_result_type(kid)), m_tm);
+        setLineNum(base, lineno, m_rg);
+        return base;
+    }
+
+    CONT_is_compute_addr(&tc) = true;
+    base = convert(kid, &tc);
+
     if (base->is_ld()) {
-        //Need to revise the exp.
-        ir = m_rg->buildLda(LD_idinfo(base));
-        LDA_ofst(ir) = LD_ofst(base);
+        setLineNum(base, lineno, m_rg);
+        return base;
+    }
 
-        //Recompute the pointer's base size.
-        //e.g: struct {short a; char b} s;
-        //     ... = &s.b;
-        //Genereate IR expression:
-        //  LDA(PTR ptbase 3)
-        //    ID(s, ofst:2)
-        //Here is an error, LDA generate a pointer type with
-        //basesize is 3, it point to s! It should point to s.b,
-        //which type is char. So we need to fix the pointer
-        //base size of LDA to be 1.
-        IR_dt(ir) = m_tm->getPointerType(base->getTypeSize(m_tm));
-        m_rg->freeIRTree(base);
-    } else if (base->is_array()) {
-        //e.g:int a[]; int b;
-        //    ...=&a[i];
-        //    ...=&a[i].x;
-        //    ...=&b;
-        //ir = m_rg->buildLda(base);
-        //LDA_ofst(ir) = base->getOffset();
-        //base->setOffset(0);
+    if (base->is_array()) {
+        setLineNum(base, lineno, m_rg);
+        return base;
+    }
 
-        SimpCtx tc;
-        SIMP_array(&tc) = true;
-        ir = m_rg->simplifyArrayAddrExp(base, &tc);
-        if (SIMP_stmtlist(&tc) != nullptr) {
-            xcom::add_next(CONT_toplirlist(cont), SIMP_stmtlist(&tc));
-        }
-    } else if (base->is_id()) {
-        //Need to revise the exp.
-        ir = m_rg->buildLda(ID_info(base));
+    if (base->is_ild()) {
+        setLineNum(base, lineno, m_rg);
+        return base;
+    }
 
-        //Recompute the pointer's base size.
-        //e.g: struct {short a; char b} s;
-        //     ... = &s.b;
-        //genereate code:
-        //    LDA(PTR ptbase 3)
-        //      ID(s, ofst:2)
-        //Here is an error, LDA generate a pointer type with
-        //basesize is 3, it point to s! It should point to s.b,
-        //which type is char. So we need to fix the pointer
-        //base size of LDA to be 1.
-        IR_dt(ir) = m_tm->getPointerType(base->getTypeSize(m_tm));
-        m_rg->freeIRTree(base);
-    } else if (base->is_ild()) {
-        //e.g:struct S { int a; int b; } * p;
-        //    ... = &(p->b);
-        //For now base will be:
-        //    LDA (PTR)
-        //      ILD (ofst 4)
-        //        LD ('p', PTR)
-        //Normalize to
-        //    ADD (PTR)
-        //      LD ('p', PTR)
-        //      IMM (4)
-        ASSERT0(ILD_base(base)->is_ptr());
-        if (ILD_ofst(base) != 0) {
-            ir = m_rg->buildBinaryOpSimp(IR_ADD, ILD_base(base)->getType(),
-                ILD_base(base), m_rg->buildImmInt(
-                    ILD_ofst(base), m_tm->getI32()));
-        } else {
-            ir = ILD_base(base);
-        }
-        ILD_base(base) = nullptr;
-        m_rg->freeIRTree(base);
-    } else if (base->is_lda()) {
-        ASSERT0(is_fun_decl(TREE_result_type(TREE_lchild(t))));
-        ir = base;
-    } else if (base->is_add() && base->is_ptr()) {
+    if (base->is_lda()) {
+        setLineNum(base, lineno, m_rg);
+        return base;
+    }
+
+    if (base->is_add() && base->is_ptr()) {
         //e.g:struct S { int a; int b; } ** p;
         //    ... = &((*p)->b);
         //For now base will be:
@@ -1526,12 +1652,12 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
         //    IMM(4)
         //It already be the address what we want, just
         //return the ADD as result.
-        ir = base;
-    } else {
-        UNREACHABLE();
+        setLineNum(base, lineno, m_rg);
+        return base;
     }
-    setLineNum(ir, lineno, m_rg);
-    return ir;
+
+    UNREACHABLE();
+    return nullptr;
 }
 
 
@@ -1567,6 +1693,7 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
 {
     IR * ir = nullptr;
     Decl * res_ty = TREE_result_type(t);
+
     if (is_array(res_ty)) {
         //In C spec, identifier of array is just a label.
         //The reference of the label should be represented as LDA.
@@ -1576,24 +1703,17 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
             ASSERT0(t == TREE_array_base(TREE_parent(t)));
         }
 
-        IR * array_id = buildId(t);
-        ASSERT0(array_id->is_id());
-        ASSERT0(VAR_is_array(ID_info(array_id)));
-        ASSERTN(!VAR_is_formal_param(ID_info(array_id)),
+        ir = buildLda(t);
+        ASSERT0(ir->is_lda());
+        ASSERT0(VAR_is_array(LDA_idinfo(ir)));
+        ASSERTN(!VAR_is_formal_param(LDA_idinfo(ir)),
                 ("array parameter should be transformed "
                  "to pointer type at FrontEnd's compound_stmt()"));
-        if (TREE_type(TREE_parent(t)) == TR_LDA) {
-            //e.g: int v[100]; ..=&v
-            //In this case, parent tree node is TR_LDA operator,
-            //so leave the work to it to generate IR_LDA.
-            ir = array_id;
-        } else {
-            //Access array via ID means to taken ID's address.
-            //e.g: int * p; int a[10]; p = a;
-            ir = m_rg->buildLda(ID_info(array_id));
-            m_rg->freeIRTree(array_id);
-        }
-    } else if (is_fun_decl(res_ty)) {
+        setLineNum(ir, lineno, m_rg);
+        return ir;
+    }
+
+    if (is_fun_decl(res_ty)) {
         //If current Tree is fun-decl, there will be two case:
         //tree is the callee or parameter of call.
         if (cont != nullptr && CONT_is_parse_callee(cont)) {
@@ -1608,14 +1728,24 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
             //    typedef void (*F)();
             //    F f = hook;
             //}
-            Var * var = mapDecl2VAR(TREE_id_decl(t));
-            ASSERT0(var && VAR_is_func_decl(var));
-            ir = m_rg->buildLda(var);
+            ir = buildLda(t);
+            ASSERT0(VAR_is_func_decl(LDA_idinfo(ir)));
         }
-    } else if (TREE_parent(t) != nullptr &&
-               TREE_type(TREE_parent(t)) == TR_LDA) {
-        ir = buildId(t);
-    } else if (is_bitfield(res_ty)) {
+        setLineNum(ir, lineno, m_rg);
+        return ir;
+    }
+
+    if (CONT_is_compute_addr(cont)) {
+        //e.g: int v[100]; ..=&v
+        //In this case, parent tree node should be TR_LDA operator,
+        ir = buildLda(t);
+        ASSERT0(ir->is_lda());
+        //ir = buildId(t);
+        setLineNum(ir, lineno, m_rg);
+        return ir;
+    }
+
+    if (is_bitfield(res_ty)) {
         //e.g: int a:3;
         //     int b:15;
         //    b = 10;
@@ -1624,10 +1754,10 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
         //    pr1=pr1<<3;
         //    id(b)=ld(b) bor pr1;
         UNREACHABLE();
-    } else {
-        //Normal load.
-        ir = buildLoad(t);
     }
+
+    //Normal load.
+    ir = buildLoad(t);
     setLineNum(ir, lineno, m_rg);
     return ir;
 }
@@ -1726,7 +1856,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             }
             setLineNum(ir, lineno, m_rg);
             break;
-        }        
+        }
         case TR_ENUM_CONST: {
             INT v = get_enum_const_val(TREE_enum(t),TREE_enum_val_idx(t));
             //Default const type of enumerator is 'unsigned int'
@@ -2163,6 +2293,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             ir = convertPragma(t, lineno, cont);
             break;
         case TR_PREP:
+        case TR_DECL:
             break;
         default: ASSERTN(0, ("unknown tree type:%d", TREE_type(t)));
         } //end switch
@@ -2298,56 +2429,71 @@ xoc::DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, xoc::TypeMgr * tm)
 }
 
 
-//Convert AS-Tree of C front-end into the IR.
-//The instructions are
-//    1. building region unit
-//    2. building IR type descriptor
-//    3. simplifing Tree into IR.
-//NOTICE:
-//    Before the converting, declaration of Tree must wire up a Var.
-static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
+//Convert C-language AST into XOC IR.
+//NOTICE: Before the converting, declaration must wire up a XOC Var.
+static INT generateFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
 {
-    
     ASSERT0(DECL_is_fun_def(dcl));
 
-    //Generate region for function.
-    xoc::Region * r = rm->newRegion(xoc::REGION_FUNC);
-    r->setRegionVar(mapDecl2VAR(dcl));
-    ASSERTN(r->getRegionVar(), ("Region miss var"));
+    //In C language, there are two levels kind of region, program region and
+    //function region. Program region describes the whole program that begins
+    //from 'main()' function, and function region describes the normal function
+    //in C-spec.
 
+    //Each region needs a Var.
+    xoc::Var * rvar = mapDecl2VAR(dcl);
+    ASSERT0(rvar);
+
+    //Start a timer to evaluate compilation speed.
     START_TIMER_FMT(t, ("GenerateFuncRegion '%s'",
-                        r->getRegionVar()->get_name()->getStr()));
+                        rvar->get_name()->getStr()));
 
+    //Generates a function region to describe current C-language function.
+    xoc::Region * r = rm->newRegion(xoc::REGION_FUNC);
+    r->setRegionVar(rvar);
     REGION_is_expect_inline(r) = is_inline(dcl);
+
+    //To faciliate RegionMgr to manage the resource of each Region, you have to
+    //add it explicitly.
     rm->addToRegionTab(r);
 
+    //Build the relationship of current region and its parent region.
     ASSERT0(rm->get_program());
     REGION_parent(r) = rm->get_program();
+
+    //Add current function region into VarTab of program region.
     REGION_parent(r)->addToVarTab(r->getRegionVar());
+
+    //Build current function region to a
+    //Region IR, and appent to IR list of program region.
     xoc::IR * lst = rm->get_program()->getIRList();
     xcom::add_next(&lst, rm->get_program()->buildRegion(r));
     rm->get_program()->setIRList(lst);
 
     //Itertive scanning scope to collect and append
-    //all local-variable into VarTab.
+    //all local-variable into VarTab of current region.
     scanScopeDeclList(DECL_fun_body(dcl), r, false);
 
     if (xoc::g_dump_opt.isDumpALL()) {
         dump_scope(DECL_fun_body(dcl), 0xffffFFFF);
     }
 
-    //Generate IRs.
+    //Convert C-language AST into XOC IR.
     CTree2IR ct2ir(r, dcl);
     xoc::IR * irs = ct2ir.convert(SCOPE_stmt_list(DECL_fun_body(dcl)),
                                   nullptr);
     if (g_err_msg_list.get_elem_count() > 0) {
         return ST_ERR;
     }
+
+    //Convertion is successful.
+
     if (xoc::g_dump_opt.isDumpALL()) {
         xoc::note(rm, "\n==---- AFTER TREE2IR CONVERT '%s' -----==",
                   get_decl_name(dcl));
-        xoc::dumpIRList(irs, r);
+        xoc::dumpIRListH(irs, r);
     }
+
     //Ensure RETURN IR at the end of function
     //if its return-type is VOID.
     irs = addReturn(irs, r);
@@ -2355,32 +2501,39 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
     //Reshape IR tree to well formed outlook.
     if (xoc::g_dump_opt.isDumpALL()) {
         xoc::note(rm, "\n==---- AFTER RESHAPE IR -----==", get_decl_name(dcl));
-        xoc::dumpIRList(irs, r);
+        xoc::dumpIRListH(irs, r);
     }
+
+    //In order to sanitize and optimize IRs, we have to canonicalize IR tree
+    //into well-formed layout that conform to the guidelines of XOC IR pass
+    //preferred.
     Canon ic(r);
     bool change = false;
     irs = ic.handle_stmt_list(irs, change);
 
     //Refine and perform peephole optimizations.
     xoc::RefineCtx rc;
+
+    //Do not perform following optimizations.
     RC_refine_div_const(rc) = false;
     RC_refine_mul_const(rc) = false;
     RC_update_mdref(rc) = false;
+
     change = false;
-    r->initPassMgr();
+    r->initPassMgr(); //Optimizations in XOC needs PassMgr.
     Refine * rf = (Refine*)r->getPassMgr()->registerPass(PASS_REFINE);
     irs = rf->refineIRlist(irs, change, rc);
     ASSERT0(xoc::verifyIRList(irs, nullptr, r));
     r->setIRList(irs);
 
-    END_TIMER_FMT(t, ("GenerateFuncRegion '%s'",
-                      r->getRegionVar()->get_name()->getStr()));
-
     if (xoc::g_dump_opt.isDumpALL()) {
         xoc::note(rm, "\n==---- AFTER REFINE IR -----==", get_decl_name(dcl));
-        xoc::dumpIRList(irs, r);
+        xoc::dumpIRListH(irs, r);
         //rg->dumpVARInRegion();
     }
+
+    END_TIMER_FMT(t, ("GenerateFuncRegion '%s'",
+                      r->getRegionVar()->get_name()->getStr()));
     return ST_SUCC;
 }
 
@@ -2388,49 +2541,47 @@ static INT genFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
 //Construct Region and convert C-Language-Ast to XOC IR.
 bool generateRegion(RegionMgr * rm)
 {
-    START_TIMER(t, "CAst2IR");
+    START_TIMER(t, "Tree2IR");
     Scope * s = get_global_scope();
-    ASSERT0(s == get_global_scope());
 
     //Generate Program region.
-    Region * topru = rm->newRegion(REGION_PROGRAM);
-    topru->registerGlobalVAR();
-    rm->addToRegionTab(topru);
-    ((CLRegionMgr*)rm)->set_program(topru);
-    topru->setRegionVar(topru->getVarMgr()->registerVar(".program",
-                        rm->getTypeMgr()->getMCType(0),
-                        1, VAR_GLOBAL|VAR_FAKE));
+    Region * program = rm->newRegion(REGION_PROGRAM);
+    program->registerGlobalVAR();
+    rm->addToRegionTab(program);
 
-    //In the file scope, generate function region.
-    if (g_dump_opt.isDumpALL()) {
-        dump_scope(s, 0xffffffff);
-    }
+    //Record the program region in RegionMgr.
+    ((CLRegionMgr*)rm)->set_program(program);
+    program->setRegionVar(program->getVarMgr()->registerVar(".program",
+                          rm->getTypeMgr()->getMCType(0),
+                          1, VAR_GLOBAL|VAR_FAKE));
 
-    //Iterate each declaration in scope.
+    //Iterates each declarations that is in global scope.
+    //In C-language, global scope amounts to file scope.
     for (Decl * dcl = SCOPE_decl_list(s);
          dcl != nullptr; dcl = DECL_next(dcl)) {
         if (is_fun_decl(dcl)) {
             if (DECL_is_fun_def(dcl)) {
-                //It is function definition.
-                if (ST_ERR == genFuncRegion(dcl, (CLRegionMgr*)rm)) {
+                //'dcl' is function definition.
+                if (ST_ERR == generateFuncRegion(dcl, (CLRegionMgr*)rm)) {
                     return ST_ERR;
                 }
                 if (g_err_msg_list.get_elem_count() > 0) {
                     return false;
                 }
-            } else {
-                //function declaration, not definition.
-                Var * v = mapDecl2VAR(dcl);
-                ASSERT0(v);
-                SET_FLAG(VAR_flag(v), VAR_FUNC_DECL);
-                topru->addToVarTab(v);
+                continue;
             }
+
+            //'dcl' is function declaration, not definition.
+            Var * v = mapDecl2VAR(dcl);
+            ASSERT0(v);
+            SET_FLAG(VAR_flag(v), VAR_FUNC_DECL);
+            program->addToVarTab(v);
             continue;
         }
 
-        //It have to be normal variable declaration, function declaration.
-        //But it can never be function definition.
-        topru->addToVarTab(mapDecl2VAR(dcl));
+        //'dcl' has to be normal variable declaration, or function declaration.
+        //rather than function definition.
+        program->addToVarTab(mapDecl2VAR(dcl));
     }
 
     //Free the temprary memory pool.

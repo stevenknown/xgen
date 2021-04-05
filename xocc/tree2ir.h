@@ -49,32 +49,34 @@ public:
 #define CONT_is_compute_addr(s) ((s)->is_compute_addr)
 class T2IRCtx {
 public:
+    //Progagate information top down and collect information bottom up.
     //Top level of current ir list.
     //because the top level of ir list must be IR_ST or IR_IST.
     //So store cannot be child node of IR.
     IR ** top_level_irlist;
 
+    //Collect information bottom up.
     //Both of Post Dec/Inc will take side effects for base region
     //So we must append the side effect ST operation followed, and
     //record the side-effect ir as epilog of current statement.
     IR ** epilog_ir_list;
 
-    //source of store node only can be IR_PR, so if we
-    //encounter 'b=++a', the recursive ST should be extracted.
-    bool is_need_result;
-
+    //Progagate information top down.
     //Inform the AST convertor that the current Tree is callee.
     //Generate ID for callee rather than LD if it is direct call.
     bool is_parse_callee;
 
+    //Progagate information top down.
     //for lvalue expression , TR_ID should corresponding
     //with IR_ID, but IR_LD.
     bool is_lvalue;
 
+    //Progagate information top down.
     //Whether we need to record operations at epilog.
     //e.g a++, post-add is epilog operation.
     bool is_record_epilog;
 
+    //Progagate information top down.
     //In the case of array address computation, the flag indicate
     //whether generate code to compute address or compute the value.
     //e.g:
@@ -86,7 +88,7 @@ public:
     //
     //Accessing pattern: x = q->b[i]
     //The tree convertor generate code to compute address of array
-    //when access b£¬
+    //when accessing b,
     //    t = ld(q)
     //    t = t + ofst(b)
     //    x = array(t, i)
@@ -98,6 +100,7 @@ public:
     bool is_compute_addr;
 
     T2IRCtx() { ::memset(this, 0, sizeof(T2IRCtx)); }
+    T2IRCtx(T2IRCtx const& src) { *this = src; }
 };
 
 
@@ -156,6 +159,7 @@ public:
     IR * buildId(IN Tree * t);
     IR * buildId(IN Decl * id);
     IR * buildLoad(IN Tree * t);
+    IR * buildLda(Tree const* t);
 
     bool is_istore_lhs(Tree const* t) const;
     bool is_readonly(Var const* v) const;
@@ -171,11 +175,14 @@ public:
     IR * convertIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont);
+    IR * convertPointerDeref(Tree * t, INT lineno, IN T2IRCtx * cont);
+    //base: base Tree node of ARRAY.
+    IR * convertArraySubExp(Tree * base, TMWORD * elem_nums, T2IRCtx * cont);
     IR * convertArray(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertSelect(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx * cont);
-    IR * convertIndirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx * cont);
-    IR * convertDirectMemAccess(IN Tree * t, INT lineno, IN T2IRCtx * cont);
+    IR * convertIndirectMemAccess(Tree const* t, INT lineno, T2IRCtx * cont);
+    IR * convertDirectMemAccess(Tree const* t, INT lineno, T2IRCtx * cont);
     IR * convertDeref(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertPragma(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convert(IN Tree * t, IN T2IRCtx * cont);
