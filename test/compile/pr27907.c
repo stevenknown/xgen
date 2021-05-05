@@ -3,7 +3,7 @@ typedef struct { } _G_fpos64_t;
 struct fann_neuron
 {
     fann_type value;
-}
+};
 struct fann_layer
 {
     struct fann_neuron *last_neuron;

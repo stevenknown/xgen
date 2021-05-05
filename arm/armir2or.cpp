@@ -902,8 +902,6 @@ void ARMIR2OR::convertRelationOpDWORDForLEandGT(IR const* ir,
     SR * sr0_h = sr0->getVec()->get(1);
     SR * sr1_l = sr1->getVec()->get(0);
     SR * sr1_h = sr1->getVec()->get(1);
-    SR * truepd = nullptr;
-    SR * falsepd = nullptr;
 
     //SBCS: If S is specified, the SBC instruction updates the
     //N, Z, C and V flags according to the result.

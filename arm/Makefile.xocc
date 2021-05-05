@@ -9,6 +9,37 @@
 TARG=FOR_ARM
 TARG_DIR=arm
 
+ifeq ($(WIN), true)
+  $(info "On Windows")
+  #Add predefined macro if build host is Windows.
+  CFLAGS += -D_ON_WINDOWS_
+
+  #Set HOST_CC compiler  
+  ifeq ($(WSL), true)
+    CFLAGS += -D_USE_GCC_
+    ifndef HOST_CC
+      HOST_CC := $(shell which clang++ > /dev/null)
+      ifndef HOST_CC
+        HOST_CC = $(if $(shell which clang),clang.exe,gcc.exe)
+      endif
+    endif
+  else
+    #There is no CC compiler avaiable without WSL environment.
+  endif 
+else
+  $(info "On Linux or Unix")
+  CFLAGS += -D_USE_GCC_
+  ifndef HOST_CC
+    HOST_CC := $(shell which clang++ > /dev/null)
+    ifndef HOST_CC
+      HOST_CC = $(if $(shell which clang),clang,gcc)
+    endif
+  else
+    $(info "HOST_CC is defined="$(HOST_CC))
+  endif
+endif
+$(info "HOST_CC=$(HOST_CC),TARGET=$(TARGET),CFLAGS=$(CFLAGS),WIN=$(WIN),WSL=$(WSL)")
+
 include ../$(TARG_DIR)/Makefile.inc
 include ../xocc/Makefile.inc
 include ../reader/Makefile.inc
@@ -17,17 +48,11 @@ include ../com/Makefile.inc
 include ../xgen/Makefile.inc
 include ../opt/Makefile.inc
 
-ifdef WIN
-#Add predefined macro if build host is Windows.
-CFLAGS += -D_ON_WINDOWS_
-CFLAGS += -D_USE_GCC_
-endif
-
 #Default is debug mode.
 CFLAGS += -O0 -g2 -D_DEBUG_
 
 ifdef RELEASE
-CFLAGS += -O3 -U_DEBUG_
+  CFLAGS += -O3 -U_DEBUG_
 endif
 
 CFLAGS +=\
@@ -53,27 +78,21 @@ CFLAGS +=\
    -Wtype-limits \
    -Werror=reorder
 
-CC := $(shell which clang++ > /dev/null)
-
-ifndef CC
-CC = $(if $(shell which clang), clang, gcc)
-endif
-
-ifneq (,$(filter $(CC),g++ gcc))
-    CFLAGS += -Wstrict-aliasing=3 -finline-limit=10000000
+ifneq (,$(filter $(HOST_CC),g++ gcc))
+  CFLAGS += -Wstrict-aliasing=3 -finline-limit=10000000
 endif
 
 xocc.exe: targ_gen xocc_objs opt_objs arm_objs com_objs cfe_objs reader_objs xgen_objs
-	$(CC) $(XOCC_OBJS) $(OPT_OBJS) $(ARM_OBJS) $(CFE_OBJS) $(XGEN_OBJS) $(COM_OBJS) $(READER_OBJS) $(CFLAGS) -o $@ -lstdc++ -lm  #-lgcov -lgcc
+	$(HOST_CC) $(XOCC_OBJS) $(OPT_OBJS) $(ARM_OBJS) $(CFE_OBJS) $(XGEN_OBJS) $(COM_OBJS) $(READER_OBJS) $(CFLAGS) -o $@ -lstdc++ -lm  #-lgcov -lgcc
 	@echo "success!!"
 
 %.o:%.cpp
 	@echo "==---- Build $<"
-	$(INFER) $(CC) $(CFLAGS) -c $< -o $@
+	$(INFER) $(HOST_CC) $(CFLAGS) -c $< -o $@
 
 targ_gen:
 	@echo "==---- Generate target dependent files ----=="
-	make -C ../$(TARG_DIR)/precompile CFLAGS="$(CFLAGS)" TARGET=$(TARG)
+	make -C ../$(TARG_DIR)/precompile CFLAGS="$(CFLAGS)" TARGET=$(TARG) HOST_CC=$(HOST_CC)
 	cd ../$(TARG_DIR)/precompile; ./gentminfo.exe
 
 reader_objs: $(READER_OBJS)

@@ -15,7 +15,6 @@ our $g_is_invoke_linker;
 our $g_is_invoke_simulator;
 our $g_is_recur;
 our $g_target;
-our $g_base_cc;
 our $g_is_quit_early; #finish test if error occurred.
 our $g_osname;
 our $g_xoc_root_path;
@@ -72,8 +71,8 @@ sub tryCompileAsmLinkRunCompare
             if (!-e $base_output) {
                 #Generate baseline output result if it does not exist.
                 if ($g_target eq "arm") {
-                    runArmToolChainToComputeBaseResult(
-                        $fullpath, "base.out", $base_output);
+                    runBaseccToolChainToComputeBaseResult($fullpath,
+                                                          $base_output, $curdir);
                 } else {
                     print "\nUNKNOWN TARGET: $g_target!\n";
                     abortex();

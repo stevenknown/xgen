@@ -243,7 +243,6 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         getPassMgr()->checkValidAndRecompute(&oc, PASS_DOM, PASS_LOOP_INFO,
                                              PASS_AA, PASS_UNDEF);
     }
-
     if (g_do_md_du_analysis) {
         ASSERT0(g_cst_bb_list && oc.is_cfg_valid() && oc.is_aa_valid());
         ASSERT0(getPassMgr());

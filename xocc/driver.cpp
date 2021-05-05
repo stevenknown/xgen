@@ -173,33 +173,35 @@ Decl * mapVAR2Decl(Var * var)
 static Var * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
 {
     ASSERTN(DECL_dt(decl) == DCL_DECLARATION, ("unsupported"));
+    if (decl->is_user_type_decl()) { return nullptr; }
+
     UINT flag = 0;
-    if (is_global_variable(decl)) {
-        ASSERT0(!is_local_variable(decl));
+    if (decl->is_global_variable()) {
+        ASSERT0(!decl->is_local_variable());
         SET_FLAG(flag, VAR_GLOBAL);
-    } else if (is_local_variable(decl)) {
+    } else if (decl->is_local_variable()) {
         SET_FLAG(flag, VAR_LOCAL);
     } else {
         UNREACHABLE();
     }
 
-    if (is_static(decl)) {
+    if (decl->is_static()) {
         SET_FLAG(flag, VAR_PRIVATE);
     }
 
-    if (is_constant(decl)) {
+    if (decl->is_constant()) {
         SET_FLAG(flag, VAR_READONLY);
     }
 
-    if (is_volatile(decl)) {
+    if (decl->is_volatile()) {
         SET_FLAG(flag, VAR_VOLATILE);
     }
 
-    if (is_restrict(decl)) {
+    if (decl->is_restrict()) {
         SET_FLAG(flag, VAR_IS_RESTRICT);
     }
 
-    if (is_initialized(decl)) {
+    if (decl->is_initialized()) {
         //TODO: record initial value in Var at CTree2IR.
         //SET_FLAG(flag, VAR_HAS_INIT_VAL);
     }
@@ -211,9 +213,9 @@ static Var * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
     DATA_TYPE data_type = get_decl_dtype(decl, &data_size, dm);
     Type const* type = nullptr;
     if (IS_PTR(data_type)) {
-        ASSERT0(is_pointer(decl));
+        ASSERT0(decl->is_pointer() || decl->is_fun_return_pointer());
 
-        UINT basesize = get_pointer_base_size(decl);
+        UINT basesize = decl->get_pointer_base_size();
 
         //Note: If pointer_base_size is 0, then the pointer can not
         //do any operation, such as pointer arithmetic.
@@ -234,13 +236,13 @@ static Var * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
         SET_FLAG(flag, VAR_IS_FORMAL_PARAM);
     }
 
-    if (is_array(decl)) {
+    if (decl->is_array()) {
         SET_FLAG(flag, VAR_IS_ARRAY);
     }
 
     ASSERT0(type);
 
-    CHAR * var_name = SYM_name(get_decl_sym(decl));
+    CHAR const* var_name = decl->get_decl_sym()->getStr();
     Var * v = var_mgr->registerVar(var_name, type,
                                    (UINT)xcom::ceil_align(MAX(DECL_align(decl),
                                                           STACK_ALIGNMENT),
@@ -251,8 +253,8 @@ static Var * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
     }
 
     if (DECL_is_formal_para(decl)) {
-        VAR_formal_param_pos(v) =
-            g_formal_parameter_start + DECL_formal_param_pos(decl);
+        VAR_formal_param_pos(v) = g_formal_parameter_start +
+                                  DECL_formal_param_pos(decl);
     }
 
     g_decl2var_map.setAlways(decl, v);
@@ -273,40 +275,44 @@ static void scanAndInitVar(Scope * s, VarMgr * vm, TypeMgr * tm)
 {
     if (s == nullptr) { return; }
     do {
-        for (Decl * decl = SCOPE_decl_list(s);
+        for (Decl * decl = s->getDeclList();
              decl != nullptr; decl = DECL_next(decl)) {
             ASSERT0(DECL_decl_scope(decl) == s);
-            if (is_fun_decl(decl)) {
-                //Function declaration decl.
+            if (decl->is_fun_decl()) {
                 if (DECL_is_fun_def(decl)) {
-                    //Function definition
+                    //Function definition.
                     ASSERT0(DECL_decl_scope(decl) == s);
                     Var * v = addDecl(decl, vm, tm);
+                    ASSERT0(v); //Function definition should not be fake.
                     VAR_is_func_decl(v) = true;
-                } else {
-                    //Function declaration
-                    if (mapDecl2VAR(decl) == nullptr) {
-                        Var * v = addDecl(decl, vm, tm);
+                    continue;
+                }
 
+                if (mapDecl2VAR(decl) == nullptr) {
+                    //Function declaration.
+                    Var * v = addDecl(decl, vm, tm);
+                    if (v != nullptr) {
                         //Function declaration should not be fake, since
                         //it might be taken address.
                         //e.g: extern void foo();
                         //  void * p = &foo;
                         //VAR_is_fake(v) = true;
-
+                        //Note type-variable that defined by 'typedef'
+                        //will NOT be mapped to XOC Variable.
                         VAR_is_func_decl(v) = true;
-                    } else {
-                        //Function/variable declaration, can not
-                        //override real function define.
                     }
                     continue;
                 }
+
+                //Function/variable declaration, can not
+                //override real function define.                
                 continue;
             }
 
             //General variable declaration decl.
             if (mapDecl2VAR(decl) == nullptr &&
-                !(DECL_is_formal_para(decl) && get_decl_sym(decl) == nullptr)) {
+                !(DECL_is_formal_para(decl) &&
+                  decl->get_decl_sym() == nullptr)) {
                 //No need to generate Var for parameter that does not
                 //have a name.
                 //e.g: parameter of foo(CHAR*)

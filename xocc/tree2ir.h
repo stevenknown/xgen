@@ -134,7 +134,7 @@ public:
     {
         ASSERT0(rg && dcl);
         m_func_decl = dcl;
-        m_return_type = get_return_type(dcl);
+        m_return_type = dcl->get_return_type();
         m_rg = rg;
         m_tm = rg->getTypeMgr();
         m_case_list = nullptr;

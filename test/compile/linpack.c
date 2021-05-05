@@ -243,7 +243,7 @@ int dgefa(double a[][201], int lda, int n, int ipvt[])
   nm1 = n - 1;
   if (nm1 >=  0) {
     for (k = 0; k < nm1; k++) {
-      col_k[k] = (double)a[k];
+      col_k[k] = (double)a[lda][k];
       kp1 = k + 1;
 
       // find l = pivot index
@@ -271,7 +271,7 @@ int dgefa(double a[][201], int lda, int n, int ipvt[])
          // row elimination with column indexing
 
          for (j = kp1; j < n; j++) {
-           col_j[j] = (double)a[j];
+           col_j[j] = (double)a[lda][j];
            t = col_j[l];
            if (l != k) {
              col_j[l] = col_j[k];

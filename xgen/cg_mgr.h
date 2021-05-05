@@ -64,7 +64,7 @@ protected:
     inline xoc::Var * addBuiltinVar(CHAR const* buildin_name)
     {
         ASSERT0(m_rm);
-        xoc::Sym * s = m_rm->addToSymbolTab(buildin_name);
+        xoc::Sym const* s = m_rm->addToSymbolTab(buildin_name);
         return m_rm->getVarMgr()->registerStringVar(buildin_name,
                                                     s, MEMORY_ALIGNMENT);
     }

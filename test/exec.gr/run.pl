@@ -283,8 +283,9 @@ sub TryCompileAsmLinkRunCompare
             if (!-e $base_output) {
                 #Generate baseline output result if it does not exist.
                 if ($g_target eq "arm") {
-                    runArmToolChainToComputeBaseResult(
-                        $fullpath, "base.out", $base_output);
+                    runBaseccToolChainToComputeBaseResult($fullpath,
+                                                          $base_output,
+                                                          $curdir);
                 } else {
                     print "\nUNKNOWN TARGET: $g_target!\n";
                     abort();
@@ -367,24 +368,24 @@ sub TryCompileAsmLinkRunCompare
     }
 }
 
-sub invokeSimulator
-{
-    my $fullpath = $_[0];
-    my $curdir = $_[1];
-    my $xocc_output = $_[2];
-    my $rundir = $_[3];
-
-    print("\nCMD>>unlink $xocc_output\n");
-    unlink($xocc_output);
-    my $outname = computeOutputName($fullpath);
-    
-    #Some testcase need input file to run, the default location of
-    #input file is same with testcase.
-    if ($rundir ne $curdir) {
-        chdir $rundir;
-    }
-    runSimulator($outname, $xocc_output);
-}
+#sub invokeSimulator
+#{
+#    my $fullpath = $_[0];
+#    my $curdir = $_[1];
+#    my $xocc_output = $_[2];
+#    my $rundir = $_[3];
+#
+#    print("\nCMD>>unlink $xocc_output\n");
+#    unlink($xocc_output);
+#    my $outname = computeOutputName($fullpath);
+#    
+#    #Some testcase need input file to run, the default location of
+#    #input file is same with testcase.
+#    if ($rundir ne $curdir) {
+#        chdir $rundir;
+#    }
+#    runSimulator($outname, $xocc_output);
+#}
 
 sub generateGRandCompile
 {

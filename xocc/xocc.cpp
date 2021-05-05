@@ -35,13 +35,17 @@ INT main(INT argc, CHAR const* argv[])
         return 1;
     }
 
-    bool res = true;
+    bool compile_failed = false;
     if (g_gr_file_name != nullptr) {
-        res |= compileGRFile(g_gr_file_name);
+        if (!compileGRFile(g_gr_file_name)) {
+            compile_failed = true;
+        }
     }
 
     if (g_c_file_name != nullptr) {
-        res |= compileCFile();
+        if (!compileCFile()) {
+            compile_failed = true;
+        }
     }
 
     if (g_gr_file_name == nullptr && g_c_file_name == nullptr) {
@@ -49,5 +53,5 @@ INT main(INT argc, CHAR const* argv[])
         fflush(stdout);
         return 4;
     }
-    return res ? 0 : 3;
+    return compile_failed ? 3 : 0;
 }

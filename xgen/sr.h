@@ -153,7 +153,7 @@ public:
             xoc::Var * spill_var; //xoc::Var to hold spilled register.
         } u2; //SR is register
 
-        xoc::Sym * str; //present a const string
+        xoc::Sym const* str; //present a const string
 
         struct {
             union {

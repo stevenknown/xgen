@@ -1,3 +1,34 @@
+ifeq ($(WIN), true)
+  $(info "On Windows")
+  #Add predefined macro if build host is Windows.
+  CFLAGS += -D_ON_WINDOWS_
+
+  #Set HOST_CC compiler  
+  ifeq ($(WSL), true)
+    CFLAGS += -D_USE_GCC_
+    ifndef HOST_CC
+      HOST_CC := $(shell which clang++ > /dev/null)
+      ifndef HOST_CC
+        HOST_CC = $(if $(shell which clang),clang,gcc.exe)
+      endif
+    endif
+  else
+    #There is no CC compiler avaiable without WSL environment.
+  endif 
+else
+  $(info "On Linux or Unix")
+  CFLAGS += -D_USE_GCC_
+  ifndef HOST_CC
+    HOST_CC := $(shell which clang++ > /dev/null)
+    ifndef HOST_CC
+      HOST_CC = $(if $(shell which clang),clang,gcc)
+    endif
+  else
+    $(info "HOST_CC is defined="$(HOST_CC))
+  endif
+endif
+$(info "HOST_CC=$(HOST_CC),TARGET=$(TARGET),CFLAGS=$(CFLAGS),WIN=$(WIN),WSL=$(WSL)")
+
 GEN_OBJS +=\
 arm_gen_targ_mach_resource.o
 
@@ -9,26 +40,31 @@ COM_OBJS +=\
 ../../com/bs.o
 
 gentminfo.exe: gen_objs com_objs
+ifeq ($(HOST_CC),)
+	$(error "Miss HOST_CC")
+endif
 ifeq ($(TARGET),)
 	$(error "Miss TARGET")
 endif
 ifeq ($(CFLAGS),) 
 	$(error "Miss CFLAGS") 
 endif
-	$(info CFLAGS=$(CFLAGS),TARGET=$(TARGET))
-	gcc -D$(TARGET) $(GEN_OBJS) $(COM_OBJS) $(CFLAGS) -o $@ -lstdc++ -lm  #-lgcov -lgcc
+	$(HOST_CC) -std=c++0x -D$(TARGET) $(GEN_OBJS) $(COM_OBJS) $(CFLAGS) -o $@ -lstdc++ -lm  #-lgcov -lgcc
 	@echo "success!!"
 
 %.o:%.cpp
+ifeq ($(HOST_CC),)
+	$(error "Miss HOST_CC")
+endif
 ifeq ($(TARGET),)
 	$(error "Miss TARGET") 
 endif
-ifeq ($(CFLAGS),) 
+ifeq ($(CFLAGS),)
 	$(error "Miss CFLAGS") 
 endif
 	$(info CFLAGS=$(CFLAGS),TARGET=$(TARGET))
-	@echo "build $<"
-	$(INFER) gcc  -D$(TARGET) $(CFLAGS) -c $< -o $@
+	@echo "CMD>>$(INFER) $(HOST_CC) -D$(TARGET) $(CFLAGS) -c $< -o $@"
+	$(INFER) $(HOST_CC) -D$(TARGET) $(CFLAGS) -c $< -o $@
 
 gen_objs: $(GEN_OBJS)
 com_objs: $(COM_OBJS)

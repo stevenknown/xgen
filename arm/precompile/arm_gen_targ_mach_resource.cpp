@@ -1000,7 +1000,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     //opnd
     sda->set_opnd(0, sr_p);
     sda->set_opnd(1, sr_r);
-    sda->set_opnd(2, sr_10b_unsig_imm);
+    sda->set_opnd(2, sr_8b_unsig_imm);
     setSRDescGroup(OR_add_i, sda);
     setSRDescGroup(OR_sub_i, sda);
     setSRDescGroup(OR_rsb_i, sda);

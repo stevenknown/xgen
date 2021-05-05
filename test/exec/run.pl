@@ -18,7 +18,6 @@ our $g_is_invoke_simulator;
 our $g_is_recur;
 our $g_target;
 our $g_xocc;
-our $g_base_cc;
 our $g_is_quit_early; #finish test if error occurred.
 our $g_osname;
 our $g_xoc_root_path;
@@ -50,7 +49,8 @@ sub main
 
 sub createBaseResultOutputFile
 {
-    my @filelist = @_; 
+    my $curdir = $_[0];
+    my @filelist = @{$_[1]};
 
     #Generate base-output log.
     foreach (@filelist) {
@@ -61,8 +61,8 @@ sub createBaseResultOutputFile
         if (!-e $base_output) {
             #Generate baseline output result if it does not exist.
             if ($g_target eq "arm" || $g_target eq "armhf") {
-                runArmToolChainToComputeBaseResult($fullpath, "base.out",
-                                                   $base_output);
+                runBaseccToolChainToComputeBaseResult($fullpath,
+                                                      $base_output, $curdir);
             } else {
                 print "\nUNKNOWN TARGET: $g_target!\n";
                 abortex();
@@ -193,7 +193,7 @@ sub tryCompileAsmLinkRunCompare
     #my @f = `find -name "*.c"`;
 
     if ($g_is_create_base_result == 1) {
-        createBaseResultOutputFile(@f);
+        createBaseResultOutputFile($curdir, \@f);
     }
 
     compileLinkRunForFileList($curdir, $is_test_gr, \@f);

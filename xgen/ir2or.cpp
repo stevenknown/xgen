@@ -558,10 +558,6 @@ Var * IR2OR::registerLocalVar(IR const* pr)
 
 void IR2OR::convertStoreVar(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
-    if (ir->id() == 3) {
-        int a = 0;
-        dumpIR(ir, m_rg);
-}
     ASSERT0(ir != nullptr && ir->is_st());
     RecycORList tors(this);
     //Analyze memory-address expression.

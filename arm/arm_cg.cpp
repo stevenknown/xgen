@@ -1151,6 +1151,7 @@ void ARMCG::buildCopy(CLUST clust,
 //     0x1FFFF is more than 32bit.
 static bool isInteger32bit(UINT64 val)
 {
+    DUMMYUSE(isInteger32bit);
     ASSERT0(sizeof(UINT64) >= sizeof(UINT32));
     return (((UINT32)val) & (UINT32)0x0000FFFF) != val;
 }
@@ -1161,6 +1162,7 @@ static bool isInteger32bit(UINT64 val)
 //     0x1ffffFFFF is more than 32bit.
 static bool isInteger64bit(UINT64 val)
 {
+    DUMMYUSE(isInteger64bit);
     return (val & (UINT64)0xFFFFFFFF) != val;
 }
 #endif
