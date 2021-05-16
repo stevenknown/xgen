@@ -37,9 +37,7 @@ ARMSim::ARMSim(ORBB * bb) : BBSimulator(bb)
 
 void ARMSim::getOccupiedSlot(OR const* o, OUT bool occ_slot[SLOT_NUM])
 {
-    if (o->is_bus() ||
-        o->is_asm() ||
-        o->getCode() == OR_spadjust) {
+    if (o->is_bus() || o->is_asm() || o->isSpadjust()) {
         for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {
             occ_slot[i] = true;
         }

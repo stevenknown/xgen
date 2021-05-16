@@ -51,6 +51,7 @@ protected:
     Section * m_stack_sect;
     RegionMgr * m_rm;
     FILE * m_asm_file_handler;
+    IntrinsicMgr * m_intrin_mgr;
     SRVecMgr m_sr_vec_mgr;
     AsmPrinterMgr m_asmprtmgr;
 
@@ -118,6 +119,8 @@ public:
         destroySRAndORMgr();
         destroySectionMgr();
         destroyVAR();
+        delete m_intrin_mgr;
+        m_intrin_mgr = nullptr;
     }
 
     //Allocate CG.
@@ -164,16 +167,24 @@ public:
     Var * getBuiltinVar(BUILTIN_TYPE bt) const
     { return m_builtin_var.get(bt); }
     FILE * getAsmFileHandler() const { return m_asm_file_handler; }
+    IntrinsicMgr * getIntrinMgr() const { return m_intrin_mgr; }
 
     //Return true if there are any section generated.
     bool has_section() const
     { return m_sect_mgr == nullptr ? false : m_sect_mgr->getSectNum() != 0; }
+
+    //Return true if given ir indicates an intrinsic operation.
+    bool isIntrinsic(IR const* ir) const;
+    //Return true if given ir indicates the intrinsic operation
+    //that name is 'code'.
+    bool isIntrinsic(IR const* ir, UINT code) const;
 
     //Print result of CG to asm file.
     void prtCGResult(CG const* cg);
 
     //Set handler for printing assembly into file.
     void setAsmFileHandler(FILE * asmh) { m_asm_file_handler = asmh; }
+    CGMgr * self() { return this; }
 };
 
 } //namespace xgen

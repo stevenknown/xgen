@@ -523,11 +523,7 @@ public:
 
     //Pick out registers which should not be used as allocable register
     //This is always depend on individual target machine.
-    virtual void pickOutUnusableRegs(LifeTime const*, RegSet &)
-    {
-        //Target Dependent Code.
-        //Do nothing by default.
-    }
+    virtual void pickOutUnusableRegs(LifeTime const*, RegSet & rs);
 
     //Verfication to LifeTime and cluster information.
     virtual bool verifyLifeTime();

@@ -107,8 +107,7 @@ public:
 //Transform from C AST to IR.
 class CTree2IR {
 protected:
-    Decl * m_func_decl;
-    Decl const* m_return_type;
+    Decl const* m_declared_return_type;
     Region * m_rg;
     TypeMgr * m_tm;
     Var * m_retval_buf;
@@ -130,11 +129,11 @@ protected:
 
     IR * only_left_last(IR * head);
 public:
-    CTree2IR(Region * rg, Decl * dcl)
+    CTree2IR(Region * rg, Decl const* retty)
     {
-        ASSERT0(rg && dcl);
-        m_func_decl = dcl;
-        m_return_type = dcl->get_return_type();
+        ASSERT0(rg);
+        //retty may be NULL.
+        m_declared_return_type = retty;
         m_rg = rg;
         m_tm = rg->getTypeMgr();
         m_case_list = nullptr;
@@ -154,7 +153,10 @@ public:
     //to generate an implcitly Var to indicate the stack buffer which used
     //to hold the return value.
     IR * genReturnValBuf(IR * ir);
-    BYTE getMantissaNum(CHAR const* fpval);
+    //Return function declared return-type.
+    Decl const* getDeclaredReturnType() const
+    { return m_declared_return_type; }
+    BYTE getMantissaNum(CHAR const* fpval);    
 
     IR * buildId(IN Tree * t);
     IR * buildId(IN Decl * id);

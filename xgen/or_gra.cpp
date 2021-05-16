@@ -382,9 +382,9 @@ void GLT_MGR::build(IN OR_DF_MGR & df_mgr)
 
 
 //
-//START G_INTERF_GRAPH
+//START GInterfGraph
 //
-G_INTERF_GRAPH::G_INTERF_GRAPH(IN RaMgr * ra_mgr, IN GLT_MGR * glt_mgr, CG * cg)
+GInterfGraph::GInterfGraph(IN RaMgr * ra_mgr, IN GLT_MGR * glt_mgr, CG * cg)
 {
     ASSERT0(ra_mgr != nullptr && glt_mgr != nullptr);
     m_glt_mgr = glt_mgr;
@@ -394,14 +394,14 @@ G_INTERF_GRAPH::G_INTERF_GRAPH(IN RaMgr * ra_mgr, IN GLT_MGR * glt_mgr, CG * cg)
 }
 
 
-void G_INTERF_GRAPH::rebuild()
+void GInterfGraph::rebuild()
 {
     erase();
     build();
 }
 
 
-void G_INTERF_GRAPH::dump(CHAR const* name) const
+void GInterfGraph::dump(CHAR const* name) const
 {
     if (name == nullptr) {
         name = "zgif_graph.vcg";
@@ -470,7 +470,7 @@ void G_INTERF_GRAPH::dump(CHAR const* name) const
 }
 
 
-bool G_INTERF_GRAPH::isInterferred(IN G_LIFE_TIME * glt1,
+bool GInterfGraph::isInterferred(IN G_LIFE_TIME * glt1,
                                    IN G_LIFE_TIME * glt2)
 {
     ASSERTN(GLT_sr(glt1)->is_reg() && GLT_sr(glt2)->is_reg(),
@@ -495,7 +495,7 @@ bool G_INTERF_GRAPH::isInterferred(IN G_LIFE_TIME * glt1,
 }
 
 
-void G_INTERF_GRAPH::build()
+void GInterfGraph::build()
 {
     //Check interference
     Vector<G_LIFE_TIME*> * gltvec =
@@ -513,7 +513,7 @@ void G_INTERF_GRAPH::build()
         }
     }
 }
-//END G_INTERF_GRAPH
+//END GInterfGraph
 
 
 //START GRA
@@ -528,14 +528,14 @@ void GRA::assignCluster()
 }
 
 
-void GRA::buildPriorityList(OUT List<G_LIFE_TIME*> &, IN G_INTERF_GRAPH &)
+void GRA::buildPriorityList(OUT List<G_LIFE_TIME*> &, IN GInterfGraph &)
 {
 }
 
 
 bool GRA::allocatePrioList(OUT List<G_LIFE_TIME*> &,
                            OUT List<G_LIFE_TIME*> &,
-                           IN G_INTERF_GRAPH &)
+                           IN GInterfGraph &)
 {
     return false;
 }
@@ -543,7 +543,7 @@ bool GRA::allocatePrioList(OUT List<G_LIFE_TIME*> &,
 
 void GRA::solveConflict(OUT List<G_LIFE_TIME*> &,
                         OUT List<G_LIFE_TIME*> &,
-                        IN G_INTERF_GRAPH &,
+                        IN GInterfGraph &,
                         G_ACTION &)
 {
 }
@@ -561,7 +561,7 @@ void GRA::perform()
     assignCluster();
     assignRegFile(gltmgr);
 
-    G_INTERF_GRAPH ig(GRA_ra_mgr(this), &gltmgr, m_cg);
+    GInterfGraph ig(GRA_ra_mgr(this), &gltmgr, m_cg);
     ig.build();
     ig.dump();
 

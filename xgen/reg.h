@@ -40,7 +40,7 @@ class RegSet : public xcom::BitSet {
 public:
     RegSet(UINT init_pool_size = 32) : xcom::BitSet(init_pool_size) {}
     RegSet(RegSet const& rs) { xcom::BitSet::copy(rs); }
-    void dump_rs(FILE * h);
+    void dump(FILE * h) const;
 };
 
 

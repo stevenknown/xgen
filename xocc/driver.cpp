@@ -213,8 +213,7 @@ static Var * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
     DATA_TYPE data_type = get_decl_dtype(decl, &data_size, dm);
     Type const* type = nullptr;
     if (IS_PTR(data_type)) {
-        ASSERT0(decl->is_pointer() || decl->is_fun_return_pointer());
-
+        ASSERT0(decl->regardAsPointer());
         UINT basesize = decl->get_pointer_base_size();
 
         //Note: If pointer_base_size is 0, then the pointer can not
@@ -679,7 +678,7 @@ bool compileCFile()
 
     //In the file scope, generate function region.
     if (g_dump_opt.isDumpALL()) {
-        dump_scope(get_global_scope(), 0xffffffff);
+        get_global_scope()->dump();
     }
     scanAndInitVar(get_global_scope(), rm->getVarMgr(), rm->getTypeMgr());
     if (generateRegion(rm)) {

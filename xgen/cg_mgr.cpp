@@ -46,6 +46,7 @@ CGMgr::CGMgr(RegionMgr * rm)
     m_rm = rm;
     m_asm_file_handler = nullptr;
     initBuiltin();
+    m_intrin_mgr = new IntrinsicMgr(this);
 }
 
 
@@ -92,6 +93,29 @@ void CGMgr::initSectionMgrAndSections()
     m_bss_sect = m_sect_mgr->genSection(".bss", false, 0);
     m_param_sect = m_sect_mgr->genSection(".param", false, 0);
     m_stack_sect = m_sect_mgr->genStackSection();
+}
+
+
+//Return true if given ir indicates an intrinsic operation.
+bool CGMgr::isIntrinsic(IR const* ir) const
+{
+    if (!ir->is_call()) { return false; }
+
+    xoc::Var const* var = CALL_idinfo(ir);
+    ASSERT0(var);
+    return getIntrinMgr()->isIntrinsic(var->get_name());
+}
+
+
+//Return true if given ir indicates the intrinsic operation
+//that name is 'code'.
+bool CGMgr::isIntrinsic(IR const* ir, UINT code) const
+{
+    if (!ir->is_call() || code == INTRIN_UNDEF) { return false; }
+
+    xoc::Var const* var = CALL_idinfo(ir);
+    ASSERT0(var);
+    return getIntrinMgr()->getCode(var->get_name()) == code;
 }
 
 

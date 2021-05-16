@@ -1579,6 +1579,18 @@ INT LifeTimeMgr::recreate(ORBB * bb, bool is_verify, bool clustering)
 }
 
 
+//Pick out registers which should not be used as allocable register
+//This is always depend on individual target machine.
+void LifeTimeMgr::pickOutUnusableRegs(LifeTime const*, RegSet & rs)
+{
+    //Target Dependent Code.
+    if (m_cg->isUseFP()) {
+        ASSERT0(m_cg->getFP());
+        rs.diff(m_cg->getFP()->getPhyReg());
+    }
+}
+
+
 //Process the function/region returning ORBB.
 void LifeTimeMgr::processFuncExitBB(IN OUT List<LifeTime*> & liveout_exitbb_lts,
                                     IN OUT LifeTimeTab & live_lt_list,
@@ -2013,14 +2025,14 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
     ASSERT0(rf >= RF_UNDEF && rf < RF_NUM);
     ASSERT0(usable_rs);
 
-    //Machine register information should have been initialized.
+    //Register information should have been initialized.
     usable_rs->copy(*tmMapCluster2RegSetAlloable(LT_cluster(lt)));
     pickOutUnusableRegs(lt, *usable_rs);
 
     //If GRA enabled, callee saves registers reserved for GRA use.
     //Sometimes GRA has occupied almost all registers, whereas LRA need more.
     //if (m_cg->isGRAEnable()) {
-    //    usable_regs = RegSet_Difference(usable_regs, getGRAUsedReg());
+    //    usable_rs->diff(*getGRAUsedReg());
     //}
 
     //So far yet, there are not any registers can be used!
@@ -2034,7 +2046,7 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
          occ >= 0; occ = LT_desc(lt).get_next(occ)) {
         PosInfo * pi = LT_desc(lt).get(occ);
 
-        //CASE: Sometime asm-o clobbers phy-registers
+        //CASE: Sometime asm-OR clobbers phy-registers
         //implicitly. Check them at point.
         OR * asm_or = getOR(occ); //occ may be 0
         if (asm_or && OR_is_asm(asm_or)) {
@@ -2048,65 +2060,66 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
             //}
         }
 
-        if (pi != nullptr) {
-            OR * o = m_pos2or_map.get(occ);
-            ASSERTN(o, ("'pos' to 'o' mapping is illegal, not any content!"));
-            considerSpecialConstraints(o, sr, *usable_rs);
+        if (pi == nullptr) { continue; }
 
-            //Deduct clobbered registers from 'usable_regs'.
-            if (pi->is_def()) { //Deal with reuslts
-                for (UINT i = 0; i < o->result_num(); i++) {
-                    SR * res = o->get_result(i);
-                    ASSERT0(res);
-                    if (SR_regfile(res) != rf || rf == RF_UNDEF) {
-                        continue;
-                    }
-                    if (res != sr) {
-                        continue;
-                    }
-                    RegSet const* rs = tmMapRegFile2RegSet(SR_regfile(res));
-                    ASSERT0(rs);
-                    usable_rs->intersect(*rs);
-                }
+        OR * o = m_pos2or_map.get(occ);
+        ASSERTN(o, ("'pos' to 'o' mapping is illegal, not any content!"));
+        considerSpecialConstraints(o, sr, *usable_rs);
 
-                if (m_cg->isCopyOR(o)) {
-                    //Reserve anticipated register for allocation.
-                    UINT opndidx = m_cg->computeCopyOpndIdx(o);
-                    SR * copy_src = o->get_opnd(opndidx);
-                    ASSERT0(copy_src);
-                    if (copy_src->is_reg() &&
-                        SR_regfile(copy_src) == sr->getRegFile() &&
-                        sr->getRegFile() != RF_UNDEF) {
-                        ASSERTN(copy_src->is_reg(),
-                               ("invalid copy operation, "
-                                "operand is not a register"));
-                        addAnticiReg(lt, SR_phy_reg(copy_src));
-                    }
+        //Deduct clobbered registers from 'usable_regs'.
+        if (pi->is_def()) { //Deal with result-SRs
+            for (UINT i = 0; i < o->result_num(); i++) {
+                SR * res = o->get_result(i);
+                ASSERT0(res);
+                if (SR_regfile(res) != rf || rf == RF_UNDEF) {
+                    continue;
                 }
-            } else { //Deal with opnds
-                for (UINT i = 0; i < o->opnd_num(); i++) {
-                    if (o->get_opnd(i) != sr) {
-                        continue;
-                    }
-                    RegSet const* rs = m_cg->getValidRegSet(o->getCode(),
-                                                            i, false);
-                    ASSERTN(rs, ("operand %d may be not register", i));
-                    usable_rs->intersect(*rs);
+                if (res != sr) {
+                    continue;
                 }
-
-                if (m_cg->isCopyOR(o)) {
-                    //Reserve anticipated register for allocation.
-                    SR * copy_tgt = o->get_copy_to();
-                    if (copy_tgt->is_reg() &&
-                        SR_regfile(copy_tgt) == sr->getRegFile() &&
-                        sr->getRegFile() != RF_UNDEF) {
-                        ASSERTN(copy_tgt->is_reg(),
-                                ("invalid copy operation, "
-                                 "operand is not a register"));
-                        addAnticiReg(lt, SR_phy_reg(copy_tgt));
-                    }
-                }
+                RegSet const* rs = tmMapRegFile2RegSet(SR_regfile(res));
+                ASSERT0(rs);
+                usable_rs->intersect(*rs);
             }
+
+            if (!m_cg->isCopyOR(o)) { continue; }
+
+            //OR is copy.
+            //Reserve anticipated register for allocation.
+            UINT opndidx = m_cg->computeCopyOpndIdx(o);
+            SR * copy_src = o->get_opnd(opndidx);
+            ASSERT0(copy_src);
+            if (copy_src->is_reg() && 
+                SR_regfile(copy_src) == sr->getRegFile() &&
+                sr->getRegFile() != RF_UNDEF) {
+                ASSERTN(copy_src->is_reg(),
+                        ("invalid copy operation, operand is not a register"));
+                addAnticiReg(lt, SR_phy_reg(copy_src));
+            }
+            continue;
+        }
+
+        //Deal with opnds
+        for (UINT i = 0; i < o->opnd_num(); i++) {
+            if (o->get_opnd(i) != sr) {
+                continue;
+            }
+            RegSet const* rs = m_cg->getValidRegSet(o->getCode(), i, false);
+            ASSERTN(rs, ("operand %d may be not register", i));
+            usable_rs->intersect(*rs);
+        }
+
+        if (!m_cg->isCopyOR(o)) { continue; }
+
+        //OR is copy.
+        //Reserve anticipated register for allocation.
+        SR * copy_tgt = o->get_copy_to();
+        if (copy_tgt->is_reg() && 
+            SR_regfile(copy_tgt) == sr->getRegFile() &&
+            sr->getRegFile() != RF_UNDEF) {
+            ASSERTN(copy_tgt->is_reg(),
+                    ("invalid copy operation, operand is not a register"));
+            addAnticiReg(lt, SR_phy_reg(copy_tgt));
         }
     }
 }
@@ -2148,7 +2161,7 @@ void LifeTimeMgr::dump(UINT flag)
 
     //Print gra used registers
     fprintf(h, "\nGRA used registers: ");
-    m_gra_used.dump_rs(h);
+    m_gra_used.dump(h);
 
     //Print live-in SR.
     fprintf(h, "\nlivein SR: ");
@@ -2302,7 +2315,7 @@ void LifeTimeMgr::dump(UINT flag)
                 if (rs == nullptr) {
                     fprintf(h, "No usable regs");
                 } else {
-                    rs->dump_rs(h);
+                    rs->dump(h);
                 }
 
                 buf.clean();
@@ -2394,7 +2407,7 @@ void LifeTimeMgr::dump(UINT flag)
             if (rs == nullptr) {
                 fprintf(h, "No usable regs");
             } else {
-                rs->dump_rs(h);
+                rs->dump(h);
             }
 
             buf.clean();
@@ -4403,9 +4416,7 @@ bool LRA::elimRedundantStoreLoad(DataDepGraph & ddg)
          orct != nullptr; orct = next_orct) {
         ORBB_orlist(m_bb)->get_next(&next_orct);
         OR * o = orct->val();
-        if (o->getCode() == OR_spadjust ||
-            o->is_asm() ||
-            o->is_fake() ||
+        if (o->isSpadjust() || o->is_asm() || o->is_fake() ||
             OR_is_volatile(o)) {
             continue;
         }
@@ -6301,7 +6312,7 @@ bool LRA::hasSideEffect(OR * o)
 {
     return  (o->is_mem() && !o->is_load()) ||
             OR_is_call(o) ||
-            o->getCode() == OR_spadjust ||
+            o->isSpadjust() ||
             OR_is_br(o) ||
             (o->is_fake() && !o->is_bus()) ||
             OR_is_side_effect(o) ||
@@ -6779,9 +6790,7 @@ void LRA::deductORCrossBus(DataDepGraph & ddg)
     ORCt * orct;
     for (OR * o = ORBB_orlist(m_bb)->get_head(&orct); o != nullptr;
          o = ORBB_orlist(m_bb)->get_next(&orct)) {
-        if (o->getCode() == OR_spadjust ||
-            OR_is_cond_br(o) ||
-            OR_is_uncond_br(o)) {
+        if (o->isSpadjust() || OR_is_cond_br(o) || OR_is_uncond_br(o)) {
             ddg.removeOR(o);
         }
     }
@@ -7301,7 +7310,7 @@ bool LRA::verifyUsableRegSet(LifeTimeMgr & mgr)
 
 void LRA::verifyRegFileForOpnd(OR * o, INT opnd, bool is_result)
 {
-    if (o->getCode() == OR_spadjust || o->is_asm()) {
+    if (o->isSpadjust() || o->is_asm()) {
         return;
     }
     SR * sr = is_result ? o->get_result(opnd) : o->get_opnd(opnd);
@@ -7858,9 +7867,7 @@ bool LRA::hoistSpillLoc(InterfGraph & ig,
          orct != nullptr; orct = next_orct) {
         ORBB_orlist(m_bb)->get_next(&next_orct);
         OR * o = orct->val();
-        if (o->getCode() == OR_spadjust ||
-            o->is_asm() ||
-            o->is_fake() ||
+        if (o->isSpadjust() || o->is_asm() || o->is_fake() ||
             OR_is_volatile(o)) {
             continue;
         }

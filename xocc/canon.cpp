@@ -47,29 +47,32 @@ IR * Canon::only_left_last(IR * head)
 }
 
 
-IR * Canon::handle_select(IN IR * ir, OUT bool & change, CanonCtx *)
+IR * Canon::handle_select(IN IR * ir, OUT bool & change, CanonCtx * cc)
 {
-    DUMMYUSE(change);
-
     ASSERT0(ir->is_select());
     //e.g:
     //     a>0,x<0 ? b/3,c*2,d:0,1,2
     // normalize to:
     //     x>0 ? d:2
-    if (SELECT_pred(ir)->get_next() != nullptr) {
-        SELECT_pred(ir) = only_left_last(SELECT_pred(ir));
-        if (!SELECT_pred(ir)->is_judge()) {
-            SELECT_pred(ir) = m_rg->buildJudge(SELECT_pred(ir));
-            ir->setParent(SELECT_pred(ir));
-        }
+    bool lchange = false;
+    SELECT_pred(ir) = only_left_last(SELECT_pred(ir));
+    SELECT_pred(ir) = handle_exp(SELECT_pred(ir), lchange, cc);
+
+    if (!SELECT_pred(ir)->is_judge()) {
+        SELECT_pred(ir) = m_rg->buildJudge(SELECT_pred(ir));
+        ir->setParent(SELECT_pred(ir));
     }
-    if (IR_next(SELECT_trueexp(ir)) != nullptr) {
-        SELECT_trueexp(ir) = only_left_last(SELECT_trueexp(ir));
+
+    SELECT_trueexp(ir) = only_left_last(SELECT_trueexp(ir));
+    SELECT_trueexp(ir) = handle_exp(SELECT_trueexp(ir), lchange, cc);
+
+    SELECT_falseexp(ir) = only_left_last(SELECT_falseexp(ir));
+    SELECT_falseexp(ir) = handle_exp(SELECT_falseexp(ir), lchange, cc);
+
+    if (lchange) {
+        ir->setParentPointer(false);
     }
-    if (IR_next(SELECT_falseexp(ir)) != nullptr) {
-        SELECT_falseexp(ir) = only_left_last(SELECT_falseexp(ir));
-    }
-    ir->setParentPointer(false);
+    change |= lchange;
     return ir;
 }
 
@@ -147,7 +150,7 @@ IR * Canon::handle_lda(IR * ir, bool & change, CanonCtx * cc)
     //    ir = m_rg->buildBinaryOpSimp(IR_ADD, ILD_base(base)->getType(),
     //        ILD_base(base), m_rg->buildImmInt(
     //            ILD_ofst(base), m_tm->getI32()));
-    //} else if (TREE_type(kid) == TR_INDMEM) {
+    //} else if (kid->getCode() == TR_INDMEM) {
     //    //Reform IR tree.
     //    //e.g:struct S { int a; int b; } * p;
     //    //    ... = &(p->a);
@@ -180,14 +183,23 @@ IR * Canon::handle_exp(IN IR * ir, OUT bool & change, CanonCtx * cc)
     case IR_LDA: // &a get address of 'a'
         return handle_lda(ir, change, cc);
     SWITCH_CASE_BIN:
+        BIN_opnd0(ir) = only_left_last(BIN_opnd0(ir));
+        BIN_opnd1(ir) = only_left_last(BIN_opnd1(ir));
         BIN_opnd0(ir) = handle_exp(BIN_opnd0(ir), change, cc);
         BIN_opnd1(ir) = handle_exp(BIN_opnd1(ir), change, cc);
         return ir;
     SWITCH_CASE_UNA:
+        UNA_opnd(ir) = only_left_last(UNA_opnd(ir));
         UNA_opnd(ir) = handle_exp(UNA_opnd(ir), change, cc);
         return ir;
     case IR_LABEL:
+        return ir;
     case IR_ARRAY:
+        for (IR * k = ARR_sub_list(ir); k != NULL; k = k->get_next()) {
+            IR * tmp = handle_exp(k, change, cc);
+            ASSERTN(tmp == k, ("need to be replaced from sublist")); 
+        }
+        ARR_base(ir) = handle_exp(ARR_base(ir), change, cc);
         return ir;
     case IR_PR:
         return ir;
@@ -304,5 +316,4 @@ IR * Canon::handle_stmt_list(IR * ir_list, bool & change)
         ir_list = new_list;
     }
     return ir_list;
-
 }

@@ -116,19 +116,19 @@ public:
 };
 
 
-//G_INTERF_GRAPH
+//GInterfGraph
 #define GIG_ru(g) ((g)->m_rg)
 #define GIG_ra_mgr(g) ((g)->m_ramgr)
 #define GIG_glt_mgr(g) ((g)->m_glt_mgr)
 
-class G_INTERF_GRAPH : public xcom::Graph {
+class GInterfGraph : public xcom::Graph {
 public:
     CG * m_cg;
     RaMgr * m_ramgr;
     GLT_MGR * m_glt_mgr;
 
 public:
-    G_INTERF_GRAPH(RaMgr * ra_mgr, GLT_MGR * glt_mgr, CG * cg);
+    GInterfGraph(RaMgr * ra_mgr, GLT_MGR * glt_mgr, CG * cg);
 
     void dump(CHAR const* name = nullptr) const;
     bool isInterferred(IN G_LIFE_TIME * glt1, IN G_LIFE_TIME * glt2);
@@ -175,13 +175,13 @@ public:
     void assignCluster();
     bool allocatePrioList(OUT List<G_LIFE_TIME*> & prio_list,
                           OUT List<G_LIFE_TIME*> & uncolored_list,
-                          IN G_INTERF_GRAPH & ig);
+                          IN GInterfGraph & ig);
     void buildPriorityList(OUT List<G_LIFE_TIME*> & prio_list,
-                           IN G_INTERF_GRAPH & ig);
+                           IN GInterfGraph & ig);
     RegSet * get_used_callee_save_regs() { return m_used_callee_save_regs; }
     void solveConflict(OUT List<G_LIFE_TIME*> & uncolored_list,
                        OUT List<G_LIFE_TIME*> & prio_list,
-                       IN G_INTERF_GRAPH & ig,
+                       IN GInterfGraph & ig,
                        G_ACTION & action);
     void perform();
 };

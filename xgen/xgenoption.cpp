@@ -53,7 +53,7 @@ bool g_do_lis = true;
 bool g_do_gra = false;
 
 //Accessing parameter via FP+ofst
-bool g_is_enable_fp = false;
+bool g_is_enable_fp = true;
 
 //Perform Code Generation.
 bool g_do_cg = true;

@@ -40,54 +40,30 @@ private:
     void buildStoreCase13Bytes(IN SR * store_val, IN SR * base,
                                IN SR * sr_ofst, Var const* v,
                                OUT ORList & ors, IN IOC * cont);
-    void buildStoreCase1(IN SR * store_val,
-                         IN SR * base,
-                         IN SR * sr_ofst,
-                         Var const* v,
-                         OUT ORList & ors,
-                         IN IOC * cont);
-    void buildStoreCase2(IN SR * store_val,
-                         IN SR * base,
-                         IN SR * sr_ofst,
-                         Var const* v,
-                         OUT ORList & ors,
-                         IN IOC * cont);
-    void buildShiftRightCase1(IN SR * src,
-                              ULONG sr_size,
-                              IN SR * shift_ofst,
-                              bool is_signed,
-                              OUT ORList & ors,
-                              IN OUT IOC * cont);
-    void buildShiftRightCase2(IN SR * src,
-                              ULONG sr_size,
-                              IN SR * shift_ofst,
-                              bool is_signed,
-                              OUT ORList & ors,
-                              IN OUT IOC * cont);
-    void buildShiftRightCase3(IN SR * src,
-                              ULONG sr_size,
-                              IN SR * shift_ofst,
-                              bool is_signed,
-                              OUT ORList & ors,
-                              IN OUT IOC * cont);
-    void buildShiftRightCase3_1(IN SR * src,
-                                ULONG sr_size,
-                                IN SR * shift_ofst,
-                                bool is_signed,
-                                OUT ORList & ors,
-                                IN OUT IOC * cont);
-    void buildShiftRightCase3_2(IN SR * src,
-                                ULONG sr_size,
-                                IN SR * shift_ofst,
-                                bool is_signed,
-                                OUT ORList & ors,
-                                IN OUT IOC * cont);
-    void buildShiftRightCase3_3(IN SR * src,
-                                ULONG sr_size,
-                                IN SR * shift_ofst,
-                                bool is_signed,
-                                OUT ORList & ors,
-                                IN OUT IOC * cont);
+    void buildStoreCase1(IN SR * store_val, IN SR * base,
+                         IN SR * sr_ofst, Var const* v,
+                         OUT ORList & ors, IN IOC * cont);
+    void buildStoreCase2(IN SR * store_val, IN SR * base,
+                         IN SR * sr_ofst, Var const* v,
+                         OUT ORList & ors, IN IOC * cont);
+    void buildShiftRightCase1(IN SR * src, ULONG sr_size,
+                              IN SR * shift_ofst, bool is_signed,
+                              OUT ORList & ors, IN OUT IOC * cont);
+    void buildShiftRightCase2(IN SR * src, ULONG sr_size,
+                              IN SR * shift_ofst, bool is_signed,
+                              OUT ORList & ors, IN OUT IOC * cont);
+    void buildShiftRightCase3(IN SR * src, ULONG sr_size,
+                              IN SR * shift_ofst, bool is_signed,
+                              OUT ORList & ors, IN OUT IOC * cont);
+    void buildShiftRightCase3_1(IN SR * src, ULONG sr_size,
+                                IN SR * shift_ofst, bool is_signed,
+                                OUT ORList & ors, IN OUT IOC * cont);
+    void buildShiftRightCase3_2(IN SR * src, ULONG sr_size,
+                                IN SR * shift_ofst, bool is_signed,
+                                OUT ORList & ors, IN OUT IOC * cont);
+    void buildShiftRightCase3_3(IN SR * src, ULONG sr_size,
+                                IN SR * shift_ofst, bool is_signed,
+                                OUT ORList & ors, IN OUT IOC * cont);
     //This is an util function.
     //Build several [tgt] <- [src] operations accroding unrolling factor.
     //e.g: given unrolling factor is 2, two memory assignments will
@@ -98,31 +74,22 @@ private:
     //  [tgt] <- [src];
     //tgt: target memory address register.
     //src: source memory address register.
-    void buildMemAssignUnroll(SR * tgt,
-                              SR * src,
-                              UINT unroll_factor,
-                              OUT ORList & ors,
-                              IN IOC * cont);
+    void buildMemAssignUnroll(SR * tgt, SR * src, UINT unroll_factor,
+                              OUT ORList & ors, IN IOC * cont);
 
     //This is an util function.
     //Build [tgt] <- [src] operation.
     //tgt: target memory address register.
     //src: source memory address register.
-    void buildMemAssign(SR * tgt,
-                        SR * src,
-                        OUT ORList & ors,
-                        IN IOC * cont);
+    void buildMemAssign(SR * tgt, SR * src, OUT ORList & ors, IN IOC * cont);
 
     //This is an util function.
     //Build [tgt] <- [src] operation.
     //tgt: target memory address register.
     //src: source memory address register.
     //bytesize: assigned bytesize that customized by caller.
-    void buildMemAssignBySize(SR * tgt,
-                              SR * src,
-                              UINT bytesize,
-                              OUT ORList & ors,
-                              IN IOC * cont);
+    void buildMemAssignBySize(SR * tgt, SR * src, UINT bytesize,
+                              OUT ORList & ors, IN IOC * cont);
     //Increase 'reg' by 'val'.
     virtual void buildIncReg(SR * reg, UINT val, OUT ORList & ors, IOC * cont);
     //Decrease 'reg' by 'val'.
@@ -277,100 +244,55 @@ public:
 
     //Implement memory block copy.
     //Note tgt and src should not overlap.
-    virtual void buildMemcpyInternal(SR * tgt,
-                                     SR * src,
-                                     UINT bytesize,
-                                     OUT ORList & ors,
-                                     IN IOC * cont);
+    virtual void buildMemcpyInternal(SR * tgt, SR * src, UINT bytesize,
+                                     OUT ORList & ors, IN IOC * cont);
+
+    //The function builds stack-pointer adjustment operation.
+    //Note XGEN supposed that the direction of stack-pointer is always
+    //decrement.
+    //bytesize: bytesize that needed to adjust, it can be immediate or register.
+    virtual void buildAlloca(OUT ORList & ors, SR * bytesize, IN IOC * cont);
     virtual void buildSpadjust(OUT ORList & ors, IN IOC * cont);
     virtual OR * buildNop(UNIT unit, CLUST clust);
-    virtual void buildStore(SR * store_val,
-                            SR * base,
-                            SR * ofst,
-                            OUT ORList & ors,
-                            IN IOC * cont);
-    virtual void buildCopy(CLUST clust,
-                           UNIT unit,
-                           SR * to,
-                           SR * from,
+    virtual void buildStore(SR * store_val, SR * base, SR * ofst,
+                            OUT ORList & ors, IN IOC * cont);
+    virtual void buildCopy(CLUST clust, UNIT unit, SR * to, SR * from,
                            OUT ORList & ors);
-    virtual void buildMove(SR * to,
-                           SR * from,
-                           OUT ORList & ors,
-                           IN IOC * cont);
-    virtual void buildCopyPred(CLUST clust,
-                               UNIT unit,
-                               IN SR * to,
-                               IN SR * from,
-                               IN SR * pd,
-                               OUT ORList & ors);
-    virtual void buildLoad(IN SR * load_val,
-                           IN SR * base,
-                           IN SR * ofst,
-                           OUT ORList & ors,
-                           IN IOC * cont);
-    virtual void buildMul(SR * src1,
-                          SR * src2,
-                          UINT sr_size,
-                          bool is_sign,
-                          OUT ORList & ors,
-                          IN IOC * cont);
-    virtual OR * buildBusCopy(IN SR * src,
-                              IN SR * tgt,
-                              IN SR * pd,
-                              CLUST src_clust,
-                              CLUST tgt_clust);
-    virtual void buildAddRegImm(SR * src,
-                                SR * imm,
-                                UINT sr_size,
-                                bool is_sign,
-                                OUT ORList & ors,
-                                IN IOC * cont);
-    virtual void buildAddRegReg(bool is_add,
-                                SR * src1,
-                                SR * src2,
-                                UINT sr_size,
-                                bool is_sign,
-                                OUT ORList & ors,
-                                IN IOC * cont);
+    virtual void buildMove(SR * to, SR * from, OUT ORList & ors, IN IOC * cont);
+    virtual void buildCopyPred(CLUST clust, UNIT unit, IN SR * to,
+                               IN SR * from, IN SR * pd, OUT ORList & ors);
+    virtual void buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,
+                           OUT ORList & ors, IN IOC * cont);
+    virtual void buildMul(SR * src1, SR * src2, UINT sr_size,
+                          bool is_sign, OUT ORList & ors, IN IOC * cont);
+    virtual OR * buildBusCopy(IN SR * src, IN SR * tgt, IN SR * pd,
+                              CLUST src_clust, CLUST tgt_clust);
+    virtual void buildAddRegImm(SR * src, SR * imm, UINT sr_size,
+                                bool is_sign, OUT ORList & ors, IN IOC * cont);
+    virtual void buildAddRegReg(bool is_add, SR * src1, SR * src2, UINT sr_size,
+                                bool is_sign, OUT ORList & ors, IN IOC * cont);
     virtual void buildCondBr(IN SR * tgt_lab, OUT ORList & ors, IN IOC * cont);
-    virtual void buildCompare(OR_TYPE br_cond,
-                              bool is_truebr,
-                              IN SR * opnd0,
-                              IN SR * opnd1,
-                              OUT ORList & ors,
-                              IN IOC * cont);
+    virtual void buildCompare(OR_TYPE br_cond, bool is_truebr,
+                              IN SR * opnd0, IN SR * opnd1,
+                              OUT ORList & ors, IN IOC * cont);
     virtual void buildUncondBr(IN SR * tgt_lab, OUT ORList & ors,
                                IN IOC * cont);
-    void buildARMCmp(OR_TYPE cmp_ot,
-                     IN SR * pred,
-                     IN SR * opnd0,
-                     IN SR * opnd1,
-                     OUT ORList & ors,
-                     IN IOC * cont);
+    void buildARMCmp(OR_TYPE cmp_ot, IN SR * pred, IN SR * opnd0, IN SR * opnd1,
+                     OUT ORList & ors, IN IOC * cont);
     void buildShiftLeftImm(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
                            OUT ORList & ors, IN OUT IOC * cont);
     void buildShiftLeftReg(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
                            OUT ORList & ors, IN OUT IOC * cont);
-    virtual void buildShiftLeft(IN SR * src,
-                                ULONG sr_size,
-                                IN SR * shift_ofst,
-                                OUT ORList & ors,
+    virtual void buildShiftLeft(IN SR * src, ULONG sr_size,
+                                IN SR * shift_ofst, OUT ORList & ors,
                                 IN OUT IOC * cont);
-    virtual void buildShiftRight(IN SR * src,
-                                 ULONG sr_size,
-                                 IN SR * shift_ofst,
-                                 bool is_signed,
-                                 OUT ORList & ors,
-                                 IN OUT IOC * cont);
-    void buildCall(Var const* callee,
-                   UINT ret_val_size,
-                   OUT ORList & ors,
-                   IOC * cont);
-    void buildICall(SR * callee,
-                    UINT ret_val_size,
-                    OUT ORList & ors,
-                    IOC * cont);
+    virtual void buildShiftRight(IN SR * src, ULONG sr_size,
+                                 IN SR * shift_ofst, bool is_signed,
+                                 OUT ORList & ors, IN OUT IOC * cont);
+    void buildCall(Var const* callee, UINT ret_val_size,
+                   OUT ORList & ors, IOC * cont);
+    void buildICall(SR * callee, UINT ret_val_size,
+                    OUT ORList & ors, IOC * cont);
     //'sr_size': The number of byte-size of SR.
     void buildMulRegReg(SR * src1, SR * src2, UINT sr_size, bool is_sign,
                         OUT ORList & ors, IN IOC * cont);
@@ -407,9 +329,7 @@ public:
     virtual bool isValidOpndRegfile(OR_TYPE ortype, INT opndnum,
                                     REGFILE regfile) const;
     virtual bool isSPUnit(UNIT unit) const;
-    virtual bool isIntRegSR(OR const* o,
-                            SR const* sr,
-                            UINT idx,
+    virtual bool isIntRegSR(OR const* o, SR const* sr, UINT idx,
                             bool is_result) const;
     virtual bool isBusCluster(CLUST clust) const;
     virtual bool isBusSR(SR const* sr) const;
@@ -436,13 +356,10 @@ public:
         return OR_UNDEF;
     }
 
-    virtual OR_TYPE mapIRType2ORType(IR_TYPE ir_type,
-                                     UINT ir_opnd_size,
-                                     IN SR * opnd0,
-                                     IN SR * opnd1,
+    virtual OR_TYPE mapIRType2ORType(IR_TYPE ir_type, UINT ir_opnd_size,
+                                     IN SR * opnd0, IN SR * opnd1,
                                      bool is_signed);
-    virtual UnitSet & mapRegFile2UnitSet(REGFILE regfile,
-                                         SR const* sr,
+    virtual UnitSet & mapRegFile2UnitSet(REGFILE regfile, SR const* sr,
                                          OUT UnitSet & us) const;
     virtual CLUST mapSlot2Cluster(SLOT slot);
     virtual UNIT mapSlot2Unit(SLOT slot) const;
@@ -469,6 +386,12 @@ public:
     //True if current argument register should be bypassed.
     virtual bool skipArgRegister(Var const* param, RegSet const* regset,
                                  REG reg) const;
+
+    //Interface to generate ORs to store physical register on top of stack.
+    virtual void storeRegToStack(SR * reg, OUT ORList & ors);
+
+    //Interface to generate ORs to reload physical register from top of stack.
+    virtual void reloadRegFromStack(SR * reg, OUT ORList & ors);
 };
 //END ARMCG
 

@@ -43,7 +43,6 @@ public:
 
     virtual void considerSpecialConstraints(IN OR *, SR const*,
                                             OUT RegSet & usable_regs);
-
 };
 //END ARMLifeTimeMgr
 

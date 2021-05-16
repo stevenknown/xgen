@@ -197,9 +197,12 @@ static ORTypeDesc g_or_type_desc [] = {
     {OR_ret4,      "ret4",       }, // (px)ret Lr, R0, R1, R2, R3
     {OR_nop,       "nop",        },
     {OR_asm,       "asm",        },
-    {OR_spadjust,  "spadjust",   },
+    {OR_spadjust_i,"spadjust_i", }, // spadjust imm
+    {OR_spadjust_r,"spadjust_r", }, // spadjust Rx
     {OR_label,     "label",      },
     {OR_built_in,  "built_in",   },
+    {OR_push,      "push",       }, //push {Rx}
+    {OR_pop,       "pop",        }, //pop {Rx}
 };
 
 
@@ -945,6 +948,16 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     sda->set_opnd(1, sr_r);
     setSRDescGroup(OR_msr, sda);
 
+    //1 res, 3 opnd: sp <- p, r, sp
+    sda = newSRDescGroup(1, 3);
+    //res
+    sda->set_res(0, sr_r); //sp
+    //opnd
+    sda->set_opnd(0, sr_p); //p
+    sda->set_opnd(1, sr_r); //r
+    sda->set_opnd(2, sr_r); //sp
+    setSRDescGroup(OR_push, sda);
+
     //1 res, 3 opnd: cpsr <- p, r, r
     sda = newSRDescGroup(1, 3);
     //res
@@ -1095,6 +1108,16 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     setSRDescGroup(OR_orr_lsr_i, sda);
     setSRDescGroup(OR_orr_lsl_i, sda);
 
+    //2 res, 2 opnd: r, sp <- p, sp
+    sda = newSRDescGroup(2, 2);
+    //res
+    sda->set_res(0, sr_r); //r
+    sda->set_res(1, sr_r); //sp
+    //opnd
+    sda->set_opnd(0, sr_p); //p
+    sda->set_opnd(1, sr_r); //sp
+    setSRDescGroup(OR_pop, sda);
+
     //2 res, 4 opnd: r, r <- p, r, r, Imm
     sda = newSRDescGroup(2, 4);
     //res
@@ -1194,7 +1217,19 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     sda->set_opnd(0, sr_p); //true pred
     sda->set_opnd(1, sr_r); //sp
     sda->set_opnd(2, sr_32b_unsig_imm);
-    setSRDescGroup(OR_spadjust, sda); //spadjust
+    setSRDescGroup(OR_spadjust_i, sda); //spadjust
+
+    //spadjust
+    //2 res, 3 opnd: sp, r <- p, sp, r
+    sda = newSRDescGroup(2, 3);
+    //res
+    sda->set_res(0, sr_r); //sp
+    sda->set_res(1, sr_r); //tmp
+    //opnd
+    sda->set_opnd(0, sr_p); //true pred
+    sda->set_opnd(1, sr_r); //sp
+    sda->set_opnd(2, sr_r); //addend
+    setSRDescGroup(OR_spadjust_r, sda); //spadjust
 }
 
 
@@ -1285,8 +1320,12 @@ static void initORProperty()
         OTD_is_predicated(od) = 1;
     }
 
-    od = &g_or_type_desc[OR_spadjust];
+    od = &g_or_type_desc[OR_spadjust_i];
     OTD_is_fake(od) = 1; //expand OR if offset is out of range.
+    OTD_is_bus(od) = 1;
+
+    od = &g_or_type_desc[OR_spadjust_r];
+    OTD_is_fake(od) = 1;
     OTD_is_bus(od) = 1;
 
     od = &g_or_type_desc[OR_label];
@@ -1984,7 +2023,8 @@ static void initAndPrtScheInfoImpl(OR_TYPE ot)
         ORSI_first_result_avail_cyc(si) = 1;
         break;
     }
-    case OR_spadjust: {//It will expand to a bus OR
+    case OR_spadjust_i:
+    case OR_spadjust_r: {
         for (UINT i = 0; i < sdg->get_res_num(); i++) {
             ORSI_reg_result_avail_cyc(si, i) = 2;
         }
@@ -1993,6 +2033,8 @@ static void initAndPrtScheInfoImpl(OR_TYPE ot)
         break;
     }
     case OR_asm:
+    case OR_push:
+    case OR_pop:
     case OR_built_in: {
         for (UINT i = 0; i < sdg->get_res_num(); i++) {
             ORSI_reg_result_avail_cyc(si, i) = 1;
@@ -2002,7 +2044,9 @@ static void initAndPrtScheInfoImpl(OR_TYPE ot)
         break;
     }
     case OR_label: break;
-    default: ASSERTN(0, ("unknown tor code"));
+    default:
+        ASSERTN(0, ("unknown tor code, should add case in"
+                    " initAndPrtScheInfoImpl"));
     }
 
     //Print cycle buffer.

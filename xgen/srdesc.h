@@ -96,25 +96,25 @@ public:
 
     void set_opnd(UINT n, SRDesc * srd)
     {
-        ASSERT0(n < opnd_num);
+        ASSERTN(n < opnd_num, ("opnd-idx %d more than opnd-num", n));
         sd_group[res_num + n] = srd;
     }
 
     SRDesc const* get_opnd(UINT n) const
     {
-        ASSERT0(n < opnd_num);
+        ASSERTN(n < opnd_num, ("opnd-idx %d more than opnd-num", n));
         return sd_group[res_num + n];
     }
 
     void set_res(UINT n, SRDesc * srd)
     {
-        ASSERT0(n < res_num);
+        ASSERTN(n < res_num, ("result-idx %d more than result-num", n));
         sd_group[n] = srd;
     }
 
     SRDesc const* get_res(UINT n) const
     {
-        ASSERT0(n < res_num);
+        ASSERTN(n < res_num, ("result-idx %d more than result-num", n));
         return sd_group[n];
     }
 };

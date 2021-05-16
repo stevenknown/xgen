@@ -20,6 +20,7 @@ our $g_is_quit_early; #finish test if error occurred.
 our $g_osname;
 our $g_xoc_root_path;
 our $g_single_testcase; #record the single testcase
+our $g_single_directory; #record the single directory
 our $g_as;
 our $g_ld;
 our $g_ld_flag;
@@ -83,13 +84,13 @@ sub compileFile
 
 sub compileFileList
 {
-    my @filelist = @_; 
+    my @filelist = @_;
     foreach (@filelist) {
         chomp;
-        my $fullpath = $_; 
+        my $fullpath = $_;
 
         print "\n-------------------------------------------";
-        
+
         compileFile($fullpath);
 
         if ($g_is_create_base_result == 1) {
@@ -103,7 +104,7 @@ sub compileFileList
                     abortex("COPY FILE FAILED!");
             }
         }
-       
+
         if ($g_is_compare_dump == 1) {
             my $dump_file = getDumpFilePath($fullpath);
             compareDumpFile($fullpath, $dump_file,
@@ -118,20 +119,26 @@ sub compileFileList
 
 
 sub tryCompile
-{   
+{
     #$is_test_gr is true to generate GR and compile GR to asm, then compare the
     #latest output with the base result.
     my $is_test_gr = $_[0];
     #my @f = `find -maxdepth 1 -name "*.c"`;
     my $curdir = getcwd;
-    #my @f = findCurrent($curdir, 'c'); 
-    my @f; 
+    #my @f = findCurrent($curdir, 'c');
+    my @f;
     if ($g_single_testcase ne "") {
         @f = findFileRecursively($curdir, $g_single_testcase);
+    } elsif ($g_single_directory ne "") {
+    	if ($g_is_recur) {
+        	@f = findRecursively($g_single_directory, 'c');
+        } else {
+        	@f = findCurrent($g_single_directory, 'c');
+        }
     } elsif ($g_is_recur) {
-        @f = findRecursively($curdir, 'c'); 
+        @f = findRecursively($curdir, 'c');
     } else {
-        @f = findCurrent($curdir, 'c'); 
+        @f = findCurrent($curdir, 'c');
     }
     #my @f = `find -name "*.c"`;
 

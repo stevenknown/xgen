@@ -145,6 +145,7 @@ public:
 
 
 class IR2OR {
+    COPY_CONSTRUCTOR(IR2OR);
 protected:
     Region * m_rg; //Current region.
     TypeMgr * m_tm; //Data manager.
@@ -158,7 +159,6 @@ protected:
 
 public:
     IR2OR(CG * cg);
-    COPY_CONSTRUCTOR(IR2OR);
     virtual ~IR2OR() {}
 
     virtual void convertLabel(IRBB const* bb, OUT RecycORList & ors,
@@ -183,8 +183,7 @@ public:
     //The output registers in IOC are ResultSR,
     //TruePredicatedSR, FalsePredicatedSR.
     //The ResultSR record the boolean value of comparison of relation operation.
-    virtual void convertRelationOp(IR const* ir,
-                                   OUT RecycORList & ors,
+    virtual void convertRelationOp(IR const* ir, OUT RecycORList & ors,
                                    IN IOC * cont);
     virtual void convertASR(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertLSR(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
@@ -207,15 +206,17 @@ public:
                                IN IOC * cont) = 0;
     virtual void convertSelect(IR const* ir, OUT RecycORList & ors,
                                IN IOC * cont) = 0;
+    virtual void convertIntrinsic(IR const* ir, OUT RecycORList & ors,
+                                  IN IOC * cont);
+    virtual void convertReturnValue(IR const* ir, OUT RecycORList & ors,
+                                    IN IOC * cont) = 0;
     virtual void convertCall(IR const* ir, OUT RecycORList & ors,
-                             IN IOC * cont) = 0;
+                             IN IOC * cont);
     virtual void convertICall(IR const* ir, OUT RecycORList & ors,
                               IN IOC * cont) = 0;
-    virtual void convertGeneralLoadPR(IR const* ir,
-                                      OUT RecycORList & ors,
+    virtual void convertGeneralLoadPR(IR const* ir, OUT RecycORList & ors,
                                       IN IOC * cont);
-    virtual void convertGeneralLoad(IR const* ir,
-                                    OUT RecycORList & ors,
+    virtual void convertGeneralLoad(IR const* ir, OUT RecycORList & ors,
                                     IN IOC * cont);
     //Store value that given by address 'src_addr' to 'tgtvar'.
     //ofst: offset from base of tgtvar.
@@ -226,8 +227,7 @@ public:
                                        HOST_INT ofst, OUT RecycORList & ors,
                                        IN IOC * cont);
     virtual void convertCopyPR(IR const* tgt, IN SR * src,
-                               OUT RecycORList & ors,
-                               IN IOC * cont);
+                               OUT RecycORList & ors, IN IOC * cont);
     virtual void convertAdd(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     {
         ASSERTN(ir->is_add(), ("illegal ir"));
@@ -266,8 +266,7 @@ public:
     }
 
     //Logical AND
-    virtual void convertLogicalAnd(IR const* ir,
-                                   OUT RecycORList & ors,
+    virtual void convertLogicalAnd(IR const* ir, OUT RecycORList & ors,
                                    IN IOC * cont)
     {
         ASSERTN(ir->is_land(), ("illegal ir"));
@@ -315,8 +314,7 @@ public:
 
     //Boolean logical not.
     //e.g LNOT(non-zero) = 0, LNOT(0) = 1
-    virtual void convertLogicalNot(IR const* ir,
-                                   OUT RecycORList & ors,
+    virtual void convertLogicalNot(IR const* ir, OUT RecycORList & ors,
                                    IN IOC * cont)
     {
         ASSERTN(ir->is_lnot(), ("illegal ir"));
@@ -384,10 +382,8 @@ public:
 
     //Return true if whole ir has been passed through registers, otherwise
     //return false.
-    void processRealParamsThroughRegister(IR const* ir,
-                                          ArgDescMgr * argdesc,
-                                          OUT RecycORList & ors,
-                                          IN IOC * cont);
+    void processRealParamsThroughRegister(IR const* ir, ArgDescMgr * argdesc,
+                                          OUT RecycORList & ors, IN IOC * cont);
     void processRealParams(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
 };
 

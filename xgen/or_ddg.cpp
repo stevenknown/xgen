@@ -367,9 +367,9 @@ void DataDepGraph::removeRedundantDep()
 
         //BB_exit_sp_adj_or(m_bb)
         if ((from->is_mem() &&
-             (to->getCode() == OR_spadjust || to->is_bus())) ||
+             (to->isSpadjust() || to->is_bus())) ||
             (to->is_mem() &&
-             (from->getCode() == OR_spadjust || from->is_bus()))) {
+             (from->isSpadjust() || from->is_bus()))) {
             if (HAVE_FLAG(deptype, DEP_HYB) &&
                 !ONLY_HAVE_FLAG(deptype, DEP_HYB)) {
                 //CASE:
@@ -392,7 +392,7 @@ void DataDepGraph::removeRedundantDep()
             !from->is_volatile() &&
             (!to->is_fake() ||
              to->is_bus() ||
-             to->getCode() == OR_spadjust) &&
+             to->isSpadjust()) &&
             !to->is_mem()) {
 
             if (mustDefSP(to)) {
@@ -416,7 +416,7 @@ void DataDepGraph::removeRedundantDep()
             !from->is_volatile() &&
             (!from->is_fake() ||
              from->is_bus() ||
-             from->getCode() == OR_spadjust) &&
+             from->isSpadjust()) &&
             !from->is_mem()) {
 
             if (mustDefSP(from)) {

@@ -37,7 +37,7 @@ namespace xgen {
 //
 //Dump physical register id.
 //NOTE: phsical register id start at 1.
-void RegSet::dump_rs(FILE * h)
+void RegSet::dump(FILE * h) const
 {
     for (INT i = get_first(); i >= 0;) {
         fprintf(h, "%s", tmGetRegName((REG)i));

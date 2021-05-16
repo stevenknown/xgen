@@ -440,7 +440,9 @@ ORBB::ORBB(CG * cg)
     m_rpo = RPO_UNDEF;
     m_cg = cg;
     m_or_list = new BBORList(this); //OR list
-    m_is_exit = m_is_entry = false;
+    m_is_exit = m_is_entry = m_is_target = false;
+    ORBB_entry_spadjust(this) = nullptr;
+    ORBB_exit_spadjust(this) = nullptr;
 }
 
 

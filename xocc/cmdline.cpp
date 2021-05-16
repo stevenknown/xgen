@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../opt/comopt.h"
 
 CHAR const* g_output_file_name = nullptr;
-CHAR const* g_xocc_version = "1.2.1";
+CHAR const* g_xocc_version = "1.2.3";
 CHAR const* g_c_file_name = nullptr;
 CHAR const* g_gr_file_name = nullptr;
 CHAR const* g_dump_file_name = nullptr;

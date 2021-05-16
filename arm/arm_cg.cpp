@@ -33,6 +33,7 @@ author: Su Zhenyu
 void ARMCG::initDedicatedSR()
 {
     genSP();
+    genFP();
     genTruePred();
     genRflag();
     genParamPointer();
@@ -95,8 +96,7 @@ SR * ARMCG::genGP()
 //Get frame pointer.
 SR * ARMCG::genFP()
 {
-    ASSERTN(0, ("TODO"));
-    SR * sr = genDedicatedReg(0);
+    SR * sr = genDedicatedReg(REG_FP);
     SR_is_fp(sr) = 1;
     return sr;
 }
@@ -128,8 +128,7 @@ SR * ARMCG::getGP() const
 //Get frame pointer.
 SR * ARMCG::getFP() const
 {
-    ASSERTN(0, ("TODO"));
-    return getDedicatedReg(0);
+    return getDedicatedReg(REG_FP);
 }
 
 
@@ -1232,16 +1231,40 @@ void ARMCG::setSpadjustOffset(OR * spadj, INT size)
 {
     DUMMYUSE(spadj);
     DUMMYUSE(size);
-    ASSERT0(spadj && OR_code(spadj) == OR_spadjust);
+    ASSERT0(spadj && spadj->isSpadjustImm());
     spadj->set_opnd(HAS_PREDICATE_REGISTER + SPADJUST_OFFSET_INDX,
                     genIntImm((HOST_INT)size, true), this);
+}
+
+
+//The function builds stack-pointer adjustment operation.
+//Note XGEN supposed that the direction of stack-pointer is always
+//decrement.
+//bytesize: bytesize that needed to adjust, it can be immediate or register.
+void ARMCG::buildAlloca(OUT ORList & ors, SR * bytesize, IN IOC * cont)
+{
+    OR * o;
+    if (bytesize->is_imm()) {
+        o = genOR(OR_spadjust_i);
+    } else {
+        ASSERT0(bytesize->is_reg());
+        o = genOR(OR_spadjust_r);
+    }
+    ASSERT0(o->is_fake());
+    o->set_result(0, getSP(), this);
+    o->set_result(1, gen_r12(), this);
+    o->set_opnd(HAS_PREDICATE_REGISTER + 0, getSP(), this);
+    ASSERT0(cont);
+    o->set_opnd(HAS_PREDICATE_REGISTER + 1, bytesize, this);
+    ors.append_tail(o);
+    cont->set_reg(0, getSP());
 }
 
 
 //Generate sp adjust operation.
 void ARMCG::buildSpadjust(OUT ORList & ors, IN IOC * cont)
 {
-    OR * o = genOR(OR_spadjust);
+    OR * o = genOR(OR_spadjust_i);
     ASSERT0(o->is_fake());
     o->set_result(0, getSP(), this);
     o->set_result(1, gen_r12(), this);
@@ -1250,13 +1273,12 @@ void ARMCG::buildSpadjust(OUT ORList & ors, IN IOC * cont)
     o->set_opnd(HAS_PREDICATE_REGISTER + 1,
                 genIntImm((HOST_INT)IOC_int_imm(cont), true), this);
     ors.append_tail(o);
+    cont->set_reg(0, getSP());
 }
 
 
-void ARMCG::buildICall(SR * callee,
-                       UINT ret_val_size,
-                       OUT ORList & ors,
-                       IOC * cont)
+void ARMCG::buildICall(SR * callee, UINT ret_val_size,
+                       OUT ORList & ors, IOC * cont)
 {
     ASSERT0(callee && callee->is_reg());
     //Function-Call will violate SP,FP,GP, RFLAG register,
@@ -1420,7 +1442,8 @@ CLUST ARMCG::mapSR2Cluster(OR const* o, SR const* sr) const
 
     CLUST clust = CLUST_UNDEF;
     switch (o->getCode()) {
-    case OR_spadjust:
+    case OR_spadjust_i:
+    case OR_spadjust_r:
         //Disable ASSERT0(sr == getSP() || sr == getGP() || sr == getFP());
         //Because alloca generate spadjust operation, such as:
         //    foo (alloca ((int)&main));
@@ -2492,7 +2515,8 @@ bool ARMCG::isRecalcOR(OR const* o) const
         }
         return true;
     }
-    case OR_spadjust:
+    case OR_spadjust_i:
+    case OR_spadjust_r:
         //TODO: increase sp as : sp = sp + N
         return false;
     default: break;
@@ -2790,7 +2814,7 @@ CLUST ARMCG::computeClusterOfBusOR(OR *)
 SLOT ARMCG::computeORSlot(OR const* o)
 {
     SLOT slot = FIRST_SLOT;
-    if (o->is_bus() || o->is_asm() || o->getCode() == OR_spadjust) {
+    if (o->is_bus() || o->is_asm() || o->isSpadjust()) {
         //BUS OR might occupy multiple func unit.
         slot = SLOT_G;
     } else if (OR_clust(o) == CLUST_FIRST) {
@@ -2868,44 +2892,62 @@ void ARMCG::expandFakeStore(IN OR * o, OUT IssuePackageList * ipl)
 void ARMCG::expandFakeSpadjust(IN OR * o, OUT IssuePackageList * ipl)
 {
     SR * ofst = o->get_opnd(HAS_PREDICATE_REGISTER + 1);
-    ASSERT0(ofst->is_int_imm());
     ORList ors;
     IOC cont;
-
-    // spadjust, SIZEOFSTACK
-    //=>
-    // sp = sp - SIZEOFSTACK
-    buildAdd(getSP(), ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
+    if (o->isSpadjustImm()) {
+        ASSERT0(ofst->is_int_imm());
+        // spadjust, SIZEOFSTACK
+        //=>
+        // sp = sp + ((+/-)SIZEOFSTACK)
+        buildAdd(getSP(), ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
+    } else if (o->isSpadjustReg()) {
+        ASSERT0(ofst->is_reg());
+        //Note XGEN supposed that the direction of stack-pointer is always
+        //decrement.
+        // spadjust, ADDEND
+        //=>
+        // sp = sp - ADDEND
+        buildSub(getSP(), ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
+    } else {
+        UNREACHABLE();
+    }
     ors.copyDbx(&OR_dbx(o));
 
     if (ors.get_elem_count() == 1) {
         // add sr66 <--tp, sp, #Imm10
         //=>
         // add sp <--PRED, sp, #Imm10
-        OR * add = ors.get_head();
-        ASSERT0(add && add->get_result(0)->is_reg());
+        OR * adj = ors.get_head();
+        ASSERT0(adj && adj->get_result(0)->is_reg());
 
-        add->set_pred(o->get_pred(), this);
-        add->set_result(0, getSP(), this);
+        adj->set_pred(o->get_pred(), this);
+        adj->set_result(0, getSP(), this);
 
-        if (OR_is_fake(add)) {
-            expandFakeOR(add, ipl);
+        if (adj->is_fake()) {
+            expandFakeOR(adj, ipl);
+            return;
         }
+
+        IssuePackage * ip = m_ip_mgr.allocIssuePackage();
+        ip->set(SLOT_G, adj, this);
+        ipl->append_tail(ip, getIssuePackageMgr());
         return;
     }
+
     if (ors.get_elem_count() == 2) {
         // movw_i sr65 <--tp, #108
         // add sr66 <--tp, sp, sr65
         //=>
         // movw_i t <--tp, #108
         // add sp <--tp, sp, t
-        ASSERT0(OR_is_movi(ors.get_head_nth(0)));
-        ASSERT0(OR_code(ors.get_head_nth(1)) == OR_add);
+        ASSERT0(ors.get_head_nth(0)->is_movi());
+        ASSERT0(ors.get_head_nth(1)->getCode() == OR_add ||
+                ors.get_head_nth(1)->getCode() == OR_sub);
 
         OR * movi = ors.get_head_nth(0);
         SR * res = movi->get_result(0);
         movi->set_mov_to(o->get_result(1), this);
-        ASSERT0(!OR_is_fake(movi));
+        ASSERT0(!movi->is_fake());
 
         OR * add = ors.get_head_nth(1);
         renameOpnd(add, res, o->get_result(1), false);
@@ -2919,6 +2961,7 @@ void ARMCG::expandFakeSpadjust(IN OR * o, OUT IssuePackageList * ipl)
         }
         return;
     }
+
     if (ors.get_elem_count() == 3) {
         // movw_i sr57 <--tp, #65428
         // movt_i sr57 <--tp, #65535
@@ -2929,7 +2972,8 @@ void ARMCG::expandFakeSpadjust(IN OR * o, OUT IssuePackageList * ipl)
         // add sp <--tp, sp, t
         ASSERT0(ors.get_head_nth(0)->is_movi());
         ASSERT0(ors.get_head_nth(1)->is_movi());
-        ASSERT0(ors.get_head_nth(2)->getCode() == OR_add);
+        ASSERT0(ors.get_head_nth(2)->getCode() == OR_add ||
+                ors.get_head_nth(2)->getCode() == OR_sub);
 
         OR * movi = ors.get_head_nth(0);
         ASSERT0(!movi->is_fake());
@@ -3192,28 +3236,29 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
     case OR_strh:
     case OR_strsh:
        expandFakeStore(o, ipl);
-       break;
-    case OR_spadjust:
+       return;
+    case OR_spadjust_i:
+    case OR_spadjust_r:
        expandFakeSpadjust(o, ipl);
-       break;
+       return;
     case OR_ldr:
     case OR_ldrb:
     case OR_ldrsb:
     case OR_ldrh:
     case OR_ldrsh:
        expandFakeLoad(o, ipl);
-       break;
+       return;
     case OR_ldrd:
        expandFakeMultiLoad(o, ipl);
-       break;
+       return;
     case OR_mov32_i:
        expandFakeMov32(o, ipl);
-       break;
+       return;
     case OR_lsr_i32:
     case OR_lsl_i32:
     case OR_asr_i32:
        expandFakeShift(o, ipl);
-       break;
+       return;
     case OR_add_i:
     case OR_sub_i:
     case OR_lsr_i: {
@@ -3255,12 +3300,13 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
             IssuePackage * ip2 = m_ip_mgr.allocIssuePackage();
             ip2->set(SLOT_G, o, this);
             ipl->append_tail(ip2, getIssuePackageMgr());
-        } else {
-            IssuePackage * ip = m_ip_mgr.allocIssuePackage();
-            ip->set(SLOT_G, o, this);
-            ipl->append_tail(ip, getIssuePackageMgr());
+            return;
         }
-        break;
+
+        IssuePackage * ip = m_ip_mgr.allocIssuePackage();
+        ip->set(SLOT_G, o, this);
+        ipl->append_tail(ip, getIssuePackageMgr());
+        return;
     }
     default: UNREACHABLE();
     }
@@ -3294,3 +3340,21 @@ bool ARMCG::skipArgRegister(Var const* param,
     #endif
     return false;
 }
+
+
+//Interface to generate ORs to store physical register on top of stack.
+void ARMCG::storeRegToStack(SR * reg, OUT ORList & ors)
+{
+    ASSERT0(reg->is_reg());
+    OR * push = buildOR(OR_push, 1, 3, getSP(), getTruePred(), reg, getSP());
+    ors.append_tail(push);
+}
+
+
+//Interface to generate ORs to reload physical register from top of stack.
+void ARMCG::reloadRegFromStack(SR * reg, OUT ORList & ors)
+{
+    ASSERT0(reg->is_reg());
+    OR * pop = buildOR(OR_pop, 2, 2, reg, getSP(), getTruePred(), getSP());
+    ors.append_tail(pop);
+}                            

@@ -41,10 +41,10 @@ protected:
     void convertMulofLongLong(IR const* ir, OUT RecycORList & ors,
                               IN IOC * cont);
     void convertMulofInt(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    void convertReturnValue(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    virtual void convertReturnValue(IR const* ir, OUT RecycORList & ors,
+                                    IN IOC * cont);
     void convertTruebrFp(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertStoreVar(IR const* ir,
-                                 OUT RecycORList & ors,
+    virtual void convertStoreVar(IR const* ir, OUT RecycORList & ors,
                                  IN IOC * cont);
     void convertCvt(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
 
@@ -53,11 +53,9 @@ protected:
     //Note ONLY thumb supports ORN logical OR NOT operation.
     //This implementation is just used to verify the function of BNOT,
     //in the sake of excessive redundant operations has been generated.
-    void convertBitNotLowPerformance(IR const* ir,
-                                     OUT RecycORList & ors,
+    void convertBitNotLowPerformance(IR const* ir, OUT RecycORList & ors,
                                      IN IOC * cont);
-    void convertRelationOpDWORDForEquality(IR const* ir,
-                                           SR * sr0, SR * sr1,
+    void convertRelationOpDWORDForEquality(IR const* ir, SR * sr0, SR * sr1,
                                            bool is_signed,
                                            OUT RecycORList & ors,
                                            OUT RecycORList & tors,
@@ -83,19 +81,17 @@ protected:
     //  sbcs ip, a_hi, a_hi
     //  ble FalseBody
     //  TrueBody:
-    void convertRelationOpDWORDForLTandGE(IR const* ir,
-                                          SR * sr0, SR * sr1,
+    void convertRelationOpDWORDForLTandGE(IR const* ir, SR * sr0, SR * sr1,
                                           bool is_signed,
                                           OUT RecycORList & ors,
                                           OUT RecycORList & tors,
                                           IN IOC * cont);
-    void convertRelationOpDWORDForLEandGT(IR const* ir,
-                                          SR * sr0, SR * sr1,
+    void convertRelationOpDWORDForLEandGT(IR const* ir, SR * sr0, SR * sr1,
                                           bool is_signed,
                                           OUT RecycORList & ors,
                                           OUT RecycORList & tors,
                                           IN IOC * cont);
-    void convertRelationOpDWORDForLTGELEGT(IR const* ir,
+    void convertRelationOpDWORDForLTGELEGT(IR const* ir, 
                                            SR * sr0_l, SR * sr0_h,
                                            SR * sr1_l, SR * sr1_h,
                                            bool is_signed,
@@ -103,9 +99,7 @@ protected:
                                            OUT RecycORList & tors,
                                            IN IOC * cont);
 
-    void getResultPredByIRTYPE(IR_TYPE code,
-                               SR ** truepd,
-                               SR ** falsepd,
+    void getResultPredByIRTYPE(IR_TYPE code, SR ** truepd, SR ** falsepd,
                                bool is_signed);
     ARMCG * getCG() { return (ARMCG*)m_cg; }
     ARMCGMgr * getCGMgr() { return (ARMCGMgr*)m_cg->getCGMgr(); }
@@ -124,17 +118,13 @@ public:
     //Interface function.
     virtual void convertBinaryOp(IR const* ir, OUT RecycORList & ors,
                                  IN IOC * cont);
-    virtual void convertLda(Var const* var,
-                            HOST_INT lda_ofst,
-                            Dbx const* dbx,
-                            OUT RecycORList & ors,
+    virtual void convertLda(Var const* var, HOST_INT lda_ofst,
+                            Dbx const* dbx, OUT RecycORList & ors,
                             IN IOC * cont);
     virtual void convertLda(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertICall(IR const* ir, OUT RecycORList & ors,
                               IN IOC * cont)
     { convertCall(ir, ors, cont); }
-    virtual void convertCall(IR const* ir, OUT RecycORList & ors,
-                             IN IOC * cont);
     virtual void convertDiv(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertRem(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertMul(IR const* ir, OUT RecycORList & ors, IN IOC * cont);

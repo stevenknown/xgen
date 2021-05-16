@@ -57,6 +57,7 @@ our $g_is_recur = 0;
 our $g_osname = $^O;
 our $g_xoc_root_path = "";
 our $g_single_testcase = ""; #record the single testcase
+our $g_single_directory = ""; #record the single directory
 our $g_find_testcase = ""; #record the testcase pattern to be find
 our $g_config_file_path = "";
 our $g_is_compare_dump = 0;
@@ -363,7 +364,7 @@ sub runCPP
 
     #preprcessing
     unlink($preprocessed_name);
-    $cmdline = "$g_cpp $src_fullpath -o $preprocessed_name -C";
+    $cmdline = "$g_cpp $src_fullpath -o $preprocessed_name -C -Iinc";
     print("\nCMD>>", $cmdline, "\n");
     my $retval = systemx($cmdline);
     if ($retval != 0) {
@@ -610,6 +611,18 @@ sub parseCmdLine
                 abort();
             }
             $g_single_testcase = $ARGV[$i];
+        } elsif ($ARGV[$i] eq "Dir") {
+            $i++;
+            if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                usage();
+                abort();
+            }
+            $i++;
+            if (!$ARGV[$i]) {
+                usage();
+                abort();
+            }
+            $g_single_directory = $ARGV[$i];
         } elsif ($ARGV[$i] eq "NoCG") {
             $g_is_invoke_assembler = 0; 
             $g_is_invoke_linker = 0; 
@@ -745,6 +758,9 @@ sub printEnvVar
     }
     if ($g_single_testcase ne "") {
         print "\ng_single_testcase = $g_single_testcase";
+    }
+    if ($g_single_directory ne "") {
+        print "\ng_single_directory = $g_single_directory";
     }
     if ($g_override_xocc_path ne "") {
         print "\ng_override_xocc_path = $g_override_xocc_path";

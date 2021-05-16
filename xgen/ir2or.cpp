@@ -27,7 +27,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @*/
 #include "../xgen/xgeninc.h"
-#include "ir2or.h"
 
 namespace xgen {
 
@@ -44,10 +43,8 @@ IR2OR::IR2OR(CG * cg)
 
 //Store value that given by address 'src_addr' to 'tgtvar'.
 //ofst: offset from base of tgtvar.
-void IR2OR::convertStoreViaAddress(IN SR * src_addr,
-                                   IN SR * tgtvar,
-                                   HOST_INT ofst,
-                                   OUT RecycORList & ors,
+void IR2OR::convertStoreViaAddress(IN SR * src_addr, IN SR * tgtvar,
+                                   HOST_INT ofst, OUT RecycORList & ors,
                                    IN IOC * cont)
 {
     ASSERT0(src_addr && tgtvar && tgtvar->is_var() && SR_var(tgtvar));
@@ -76,10 +73,8 @@ void IR2OR::convertStoreViaAddress(IN SR * src_addr,
 
 //Decompose 'mem_addr_sr' into the form 'base+offset'.
 //'tgtvar': symbol describes memory location
-void IR2OR::convertStoreDecompose(IN SR * src,
-                                  IN SR * tgtvar,
-                                  HOST_INT ofst,
-                                  OUT RecycORList & ors,
+void IR2OR::convertStoreDecompose(IN SR * src, IN SR * tgtvar,
+                                  HOST_INT ofst, OUT RecycORList & ors,
                                   IN IOC * cont)
 {
     ASSERT0(src && tgtvar && tgtvar->is_var() && SR_var(tgtvar));
@@ -441,10 +436,8 @@ void IR2OR::convertGeneralLoadPR(IR const* ir, OUT RecycORList & ors,
 //Copy 'src' to 'tgt's PR'.
 //'tgt': must be PR.
 //'src': register or imm.
-void IR2OR::convertCopyPR(IR const* tgt,
-                          IN SR * src,
-                          OUT RecycORList & ors,
-                          IN IOC * cont)
+void IR2OR::convertCopyPR(IR const* tgt, IN SR * src,
+                          OUT RecycORList & ors, IN IOC * cont)
 {
     ASSERT0(tgt->isReadPR() || tgt->isWritePR() || tgt->isCallStmt());
     UINT tgtprno = tgt->getPrno();
@@ -507,7 +500,8 @@ void IR2OR::convertStorePR(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
         RecycORList tors(this);
         if (store_val == nullptr) {
             ASSERTN(cont->get_addr(), ("miss RHS value"));
-            //ASSERTN(0, ("can not convert IR_STPR by loading from an address"));
+            //ASSERTN(0,
+            //        ("can not convert IR_STPR by loading from an address"));
             store_val = cont->get_addr();
             ASSERT0(mm->is_var());
             IOC_mem_byte_size(&tc) = ir->getTypeSize(m_tm);
@@ -524,25 +518,26 @@ void IR2OR::convertStorePR(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
         }
         tors.copyDbx(ir);
         ors.append_tail(tors);
-    } else {
-        if (ir->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE &&
-            m_cg->isGRAEnable()) {
-            //Store to register.
-            m_cg->setMapPR2SR(STPR_no(ir), m_cg->genReg());
-        } else {
-            //Store to local-variable(memory) instead of register.
-            Var * v = m_rg->mapPR2Var(STPR_no(ir));
-            if (v == nullptr) {
-                v = registerLocalVar(ir);
-            } else {
-                ASSERT0(m_rg->getVarTab()->find(v));
-            }
-            ASSERT0(v != nullptr);
-            ASSERT0(ir->getTypeSize(m_tm) == v->getByteSize(m_tm));
-            m_cg->setMapPR2SR(STPR_no(ir), m_cg->genVAR(v));
-        }
-        convertStorePR(ir, ors, cont);
+        return;
     }
+
+    if (ir->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE && m_cg->isGRAEnable()) {
+        //Store to register.
+        m_cg->setMapPR2SR(STPR_no(ir), m_cg->genReg());
+    } else {
+        //Store to local-variable(memory) instead of register.
+        Var * v = m_rg->mapPR2Var(STPR_no(ir));
+        if (v == nullptr) {
+            v = registerLocalVar(ir);
+        } else {
+            ASSERT0(m_rg->getVarTab()->find(v));
+        }
+        ASSERT0(v != nullptr);
+        ASSERT0(ir->getTypeSize(m_tm) == v->getByteSize(m_tm));
+        m_cg->setMapPR2SR(STPR_no(ir), m_cg->genVAR(v));
+    }
+
+    convertStorePR(ir, ors, cont);
 }
 
 
@@ -737,8 +732,7 @@ void IR2OR::processRealParams(IR const* ir, OUT RecycORList & ors,
     ASSERTN(PUSH_PARAM_FROM_RIGHT_TO_LEFT, ("Not yet support"));
     //Find the most rightside parameter in order to coincide with
     //accessing order of the calling convention of stack varaible.
-    //e.g:1
-    //    f(a, b, c)
+    //e.g:f(a, b, c)
     //    {
     //      int i;
     //    }
@@ -780,11 +774,12 @@ void IR2OR::processRealParams(IR const* ir, OUT RecycORList & ors,
     //            -----
     //            | i |
     //            -----
-    if (g_is_enable_fp) {
+    if (m_cg->isUseFP()) {
         //FP will record the frame start address.
         //Caller is not responsible for pulling the SP down,
         //and callee should do it.
-        ASSERTN(0, ("TODO"));
+        //TBD: Do we have to consider real-arguments when FP enabled.
+        //ASSERTN(0, ("TBD")); 
     }
 
     ArgDescMgr argdescmgr;
@@ -1021,6 +1016,84 @@ void IR2OR::convertLabel(IRBB const* bb, OUT RecycORList & ors, IN IOC * cont)
         LabelInfo const* li = ct->val();
         m_cg->buildLabel(li, ors.getList(), cont);
     }
+}
+
+
+void IR2OR::convertIntrinsic(IR const* ir, OUT RecycORList & ors,
+                             IN IOC * cont)
+{
+    ASSERT0(ir->is_call()); //call may be have 'INTRINSIC' flag set.
+    Sym const* name = ((CCall*)ir)->getIdinfo()->get_name();
+    UINT code = m_cgmgr->getIntrinMgr()->getCode(name);
+    ASSERTN(code != INTRIN_UNDEF, ("Target Dependent Intrinsic Code"));
+    RecycORList tors(this);
+    IOC tmp;
+    switch (code) {
+    case INTRIN_ALLOCA: {
+        IR const* addend_ir = CALL_param_list(ir);
+        ASSERT0(addend_ir);
+        convert(addend_ir, tors, &tmp); 
+        SR * opnd0 = tmp.get_reg(0);
+        ASSERT0(opnd0 && opnd0->is_reg());
+        tmp.clean();
+        m_cg->buildAlloca(tors.getList(), opnd0, &tmp);
+
+        //The result register is SP.
+        SR * sp = tmp.get_reg(0);
+        ASSERT0(sp && sp->is_sp());
+
+        //Generate copy operation from SP to PR.
+        tmp.clean();
+        convertCopyPR(ir, sp, tors, &tmp);
+        break;
+    }
+    default: ASSERTN(0, ("Target Dependent Intrinsic Code"));
+    }
+    tors.copyDbx(ir);
+    ors.append_tail(tors);
+}
+
+
+void IR2OR::convertCall(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
+{
+    ASSERTN(ir->isCallStmt(), ("illegal ir"));
+    if (m_cgmgr->isIntrinsic(ir)) {
+        convertIntrinsic(ir, ors, cont);
+        return;
+    }
+
+    processRealParams(CALL_param_list(ir), ors, cont);
+
+    //Collect the maximum parameters size during code generation.
+    //And revise spadjust operation afterwards.
+    m_cg->updateMaxCalleeArgSize(IOC_param_size(cont));
+
+    if (IOC_param_size(cont) > 0) {
+        //DO not adjust SP here for parameters, callee will
+        //do this job.
+    }
+
+    RecycORList tors(this);
+    UINT retv_sz = GENERAL_REGISTER_SIZE;
+
+    if (ir->hasReturnValue()) {
+        retv_sz = ir->getTypeSize(m_tm);
+    }
+
+    if (ir->is_call()) {
+        getCG()->buildCall(CALL_idinfo(ir), retv_sz, tors.getList(), cont);
+    } else {
+        ASSERT0(ir->is_icall());
+        IOC tc;
+        convert(ICALL_callee(ir), tors, &tc);
+        SR * addr = tc.get_reg(0);
+        ASSERT0(addr);
+        getCG()->buildICall(addr, retv_sz, tors.getList(), cont);
+    }
+    tors.copyDbx(ir);
+    ors.append_tail(tors);
+
+    convertReturnValue(ir, ors, cont);
 }
 
 

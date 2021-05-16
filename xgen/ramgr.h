@@ -62,9 +62,7 @@ public:
     virtual ~RaMgr() { destroy(); }
     virtual void addVARRefList(ORBB * bb, OR * o, Var const* loc);
     virtual GRA * allocGRA();
-    virtual LRA * allocLRA(ORBB * bb,
-                           ParallelPartMgr * ppm,
-                           RaMgr * lm);
+    virtual LRA * allocLRA(ORBB * bb, ParallelPartMgr * ppm, RaMgr * lm);
     virtual LifeTimeMgr * allocLifeTimeMgr();
 
     bool canAllocCallee() const { return m_can_alloc_callee; }
@@ -93,45 +91,37 @@ public:
     virtual void preProcess();
 
     virtual void setParallelPartMgrVec(Vector<ParallelPartMgr*> * ppm_vec);
-    virtual void saveCalleePredicateAtEntry(REGFILE regfile,
-                                            IN ORBB * entry,
+    virtual void saveCalleePredicateAtEntry(REGFILE regfile, ORBB * entry,
                                             IN RegSet used_callee_regs[],
-                                            OUT List<ORBB*> & bblist,
+                                            OUT ORBBList & bblist,
                                             OUT TMap<REG, Var*> & reg2var);
-    virtual void saveCalleePredicateAtExit(REGFILE regfile,
-                                           IN ORBB * exit,
+    virtual void saveCalleePredicateAtExit(REGFILE regfile, ORBB * exit,
                                            IN RegSet used_callee_regs[],
-                                           OUT List<ORBB*> & bblist,
+                                           OUT ORBBList & bblist,
                                            TMap<REG, Var*> const& reg2var);
-    virtual void saveCalleeRegFileAtEntry(REGFILE regfile,
-                                          IN ORBB * entry,
+    virtual void saveCalleeRegFileAtEntry(REGFILE regfile, ORBB * entry,
                                           IN RegSet used_callee_regs[],
-                                          OUT List<ORBB*> & bblist,
+                                          OUT ORBBList & bblist,
                                           OUT TMap<REG, Var*> & reg2var);
-    virtual void saveCalleeRegFileAtExit(REGFILE regfile,
-                                         IN ORBB * exit,
+    virtual void saveCalleeRegFileAtExit(REGFILE regfile, ORBB * exit,
                                          IN RegSet used_callee_regs[],
-                                         OUT List<ORBB*> & bblist,
+                                         OUT ORBBList & bblist,
                                          TMap<REG, Var*> const& reg2var);
-    virtual void saveCalleeIntRegisterAtEntry(REGFILE regfile,
-                                              IN ORBB * entry,
+    virtual void saveCalleeIntRegisterAtEntry(REGFILE regfile, ORBB * entry,
                                               IN RegSet used_callee_regs[],
-                                              OUT List<ORBB*> & bblist,
+                                              OUT ORBBList & bblist,
                                               OUT TMap<REG, Var*> & reg2var);
-    virtual void saveCalleeIntRegisterAtExit(REGFILE regfile,
-                                            IN ORBB * exit,
+    virtual void saveCalleeIntRegisterAtExit(REGFILE regfile, ORBB * exit,
                                             IN RegSet used_callee_regs[],
-                                            OUT List<ORBB*> & bblist,
+                                            OUT ORBBList & bblist,
                                             TMap<REG, Var*> const& reg2var);
-    virtual void saveCalleeFPRegisterAtEntry(REGFILE regfile,
-                                             IN ORBB * entry,
+    virtual void saveCalleeFPRegisterAtEntry(REGFILE regfile, ORBB * entry,
                                              IN RegSet used_callee_regs[],
-                                             OUT List<ORBB*> & bblist,
+                                             OUT ORBBList & bblist,
                                              OUT TMap<REG, Var*> & reg2var);
-    virtual void saveCalleeFPRegisterAtExit(REGFILE regfile,
-                                            IN ORBB * exit,
+    virtual void saveCalleeFPRegisterAtExit(REGFILE regfile, ORBB * exit,
                                             IN RegSet used_callee_regs[],
-                                            OUT List<ORBB*> & bblist,
+                                            OUT ORBBList & bblist,
                                             TMap<REG, Var*> const& reg2var);
     virtual void saveCallee(IN RegSet used_callee_regs[]);
     virtual void updateAsmClobberCallee(REGFILE regfile, REG reg);

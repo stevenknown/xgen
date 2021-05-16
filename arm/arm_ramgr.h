@@ -43,23 +43,22 @@ public:
 
     virtual void postProcess();
 
-    virtual void saveCalleePredicateAtEntry(
-        REGFILE regfile, IN ORBB * entry,
-        IN RegSet used_callee_regs[],
-        OUT List<ORBB*> & bblist,
-        OUT xcom::TMap<REG, Var*> & reg2var);
-    virtual void saveCalleePredicateAtExit(REGFILE regfile, IN ORBB * exit,
+    virtual void saveCalleePredicateAtEntry(REGFILE regfile, ORBB * entry,
+                                            IN RegSet used_callee_regs[],
+                                            OUT ORBBList & bblist,
+                                            OUT TMap<REG, Var*> & reg2var);
+    virtual void saveCalleePredicateAtExit(REGFILE regfile, ORBB * exit,
                                            IN RegSet used_callee_regs[],
-                                           OUT List<ORBB*> & bblist,
+                                           OUT ORBBList & bblist,
                                            TMap<REG, Var*> const& reg2var);
-    virtual void saveCalleeRegFileAtEntry(REGFILE regfile, IN ORBB * entry,
+    virtual void saveCalleeRegFileAtEntry(REGFILE regfile, ORBB * entry,
                                           IN RegSet used_callee_regs[],
-                                          OUT List<ORBB*> & bblist,
-                                          OUT xcom::TMap<REG, Var*> & reg2var);
-    virtual void saveCalleeRegFileAtExit(REGFILE regfile, IN ORBB * exit,
+                                          OUT ORBBList & bblist,
+                                          OUT TMap<REG, Var*> & reg2var);
+    virtual void saveCalleeRegFileAtExit(REGFILE regfile, ORBB * exit,
                                          IN RegSet used_callee_regs[],
-                                         OUT List<ORBB*> & bblist,
-                                         xcom::TMap<REG, Var*> const& reg2var);
+                                         OUT ORBBList & bblist,
+                                         TMap<REG, Var*> const& reg2var);
 };
 
 #endif

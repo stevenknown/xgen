@@ -248,10 +248,7 @@ OR * CG::buildOR(OR_TYPE orty, IN SRList & result, IN SRList & opnd)
 
 
 //Generate ::memcpy.
-void CG::buildMemcpy(SR * tgt,
-                     SR * src,
-                     UINT bytesize,
-                     OUT ORList & ors,
+void CG::buildMemcpy(SR * tgt, SR * src, UINT bytesize, OUT ORList & ors,
                      IN IOC * cont)
 {
     ASSERT0(tgt && src && cont);
@@ -277,11 +274,8 @@ void CG::buildMemcpy(SR * tgt,
 }
 
 
-void CG::buildStore(SR * store_val,
-                    xoc::Var const* base,
-                    HOST_INT ofst,
-                    OUT ORList & ors,
-                    IN IOC * cont)
+void CG::buildStore(SR * store_val, xoc::Var const* base, HOST_INT ofst,
+                    OUT ORList & ors, IN IOC * cont)
 {
     ASSERT0(store_val->is_reg());
     SR * mem_base_addr = genVAR(base);
@@ -291,10 +285,8 @@ void CG::buildStore(SR * store_val,
 
 //Build spilling operation.
 //This function generate memory store operation to the spill location.
-void CG::buildSpill(IN SR * store_val,
-                    IN xoc::Var * spill_var,
-                    IN ORBB *,
-                    OUT ORList & ors)
+void CG::buildSpill(IN SR * store_val, IN xoc::Var * spill_var,
+                    IN ORBB *, OUT ORList & ors)
 {
     ASSERT0(store_val->is_reg() && VAR_is_spill(spill_var));
     SR * mem_base_addr = genVAR(spill_var);
@@ -313,10 +305,8 @@ void CG::buildSpill(IN SR * store_val,
 
 //Build reloading operation.
 //This function generate memory load operation from the spill location.
-void CG::buildReload(IN SR * result_val,
-                     IN xoc::Var * reload_var,
-                     IN ORBB *,
-                     OUT ORList & ors)
+void CG::buildReload(IN SR * result_val, IN xoc::Var * reload_var,
+                     IN ORBB *, OUT ORList & ors)
 {
     ASSERT0(result_val->is_reg() && VAR_is_spill(reload_var));
     IOC tc;
@@ -345,12 +335,8 @@ void CG::buildLabel(LabelInfo const* li, OUT ORList & ors, IN IOC *)
 //This function build OR according to given 'code'.
 //Implement the target dependent version if needed.
 //'sr_size': The number of integral multiple of byte-size of single SR.
-void CG::buildBinaryOR(IR_TYPE code,
-                       SR * opnd0,
-                       SR * opnd1,
-                       bool is_signed,
-                       OUT ORList & ors,
-                       IN IOC * cont)
+void CG::buildBinaryOR(IR_TYPE code, SR * opnd0, SR * opnd1, bool is_signed,
+                       OUT ORList & ors, IN IOC * cont)
 {
     //Result's type-size might be not same as opnd. e,g: a < b,
     //result type is BOOL, opnd type is INT.
@@ -412,12 +398,8 @@ void CG::buildBinaryOR(IR_TYPE code,
 
 
 //'sr_size': The number of byte-size of SR.
-void CG::buildAdd(SR * src1,
-                  SR * src2,
-                  UINT sr_size,
-                  bool is_sign,
-                  OUT ORList & ors,
-                  IN IOC * cont)
+void CG::buildAdd(SR * src1, SR * src2, UINT sr_size, bool is_sign,
+                  OUT ORList & ors, IN IOC * cont)
 {
     if (src1->is_int_imm() && src2->is_int_imm()) {
         SR * result = genIntImm((HOST_INT)(src1->getInt() +
@@ -437,12 +419,8 @@ void CG::buildAdd(SR * src1,
 
 
 //'sr_size': The number of integral multiple of byte-size of single SR.
-void CG::buildSub(SR * src1,
-                  SR * src2,
-                  UINT sr_size,
-                  bool is_sign,
-                  OUT ORList & ors,
-                  IN IOC * cont)
+void CG::buildSub(SR * src1, SR * src2, UINT sr_size, bool is_sign,
+                  OUT ORList & ors, IN IOC * cont)
 {
     if (src1->is_int_imm() && src2->is_int_imm()) {
         SR * result = genIntImm((HOST_INT)(src1->getInt() -
@@ -504,14 +482,8 @@ void CG::buildDecReg(SR * reg, UINT val, OUT ORList & ors, IOC * cont)
 
 
 //'sr_size': The number of integral multiple of byte-size of single SR.
-void CG::buildMod(CLUST clust,
-                  SR ** result,
-                  SR * src1,
-                  SR * src2,
-                  UINT sr_size,
-                  bool is_sign,
-                  OUT ORList & ors,
-                  IN IOC *)
+void CG::buildMod(CLUST clust, SR ** result, SR * src1, SR * src2,
+                  UINT sr_size, bool is_sign, OUT ORList & ors, IN IOC *)
 {
     DUMMYUSE(is_sign);
     DUMMYUSE(sr_size);
@@ -533,7 +505,7 @@ void CG::buildMod(CLUST clust,
 //Generate sp adjust operation.
 void CG::buildSpadjust(OUT ORList & ors, IN IOC * cont)
 {
-    OR * o = genOR(OR_spadjust);
+    OR * o = genOR(OR_spadjust_i);
     ASSERT0(o->is_fake());
     o->set_result(0, getSP(), this);
     o->set_opnd(HAS_PREDICATE_REGISTER + 0, getSP(), this);
@@ -541,14 +513,35 @@ void CG::buildSpadjust(OUT ORList & ors, IN IOC * cont)
     o->set_opnd(HAS_PREDICATE_REGISTER + 1,
                 genIntImm((HOST_INT)IOC_int_imm(cont), true), this);
     ors.append_tail(o);
+    cont->set_reg(0, getSP());
+}
+
+
+//The function builds stack-pointer adjustment operation.
+//Note XGEN supposed that the direction of stack-pointer is always decrement.
+//bytesize: bytesize that needed to adjust, it can be immediate or register.
+void CG::buildAlloca(OUT ORList & ors, SR * bytesize, IN IOC * cont)
+{
+    OR * o;
+    if (bytesize->is_imm()) {
+        o = genOR(OR_spadjust_i);
+    } else {
+        ASSERT0(bytesize->is_reg());
+        o = genOR(OR_spadjust_r);
+    }
+    ASSERT0(o->is_fake());
+    o->set_result(0, getSP(), this);
+    o->set_opnd(HAS_PREDICATE_REGISTER + 0, getSP(), this);
+    ASSERT0(cont != nullptr);
+    o->set_opnd(HAS_PREDICATE_REGISTER + 1, bytesize, this);
+    ors.append_tail(o);
+    cont->set_reg(0, getSP());
 }
 
 
 //Convert data type from 'src' to 'tgt'.
-void CG::buildTypeCvt(xoc::IR const* tgt,
-                      xoc::IR const* src,
-                      OUT ORList & ors,
-                      IN OUT IOC * cont)
+void CG::buildTypeCvt(xoc::IR const* tgt, xoc::IR const* src,
+                      OUT ORList & ors, IN OUT IOC * cont)
 {
     ASSERTN(!tgt->is_vec() && !src->is_vec(), ("TODO"));
     UINT tgt_size = tgt->getTypeSize(m_tm);
@@ -697,9 +690,7 @@ void CG::buildGeneralLoad(IN SR * val, HOST_INT ofst, OUT ORList & ors,
 
 //Generate opcode of accumulating operation.
 //Form as: A = A op B
-void CG::buildAccumulate(OR * red_or,
-                         SR * red_var,
-                         SR * restore_val,
+void CG::buildAccumulate(OR * red_or, SR * red_var, SR * restore_val,
                          List<OR*> & ors)
 {
     DUMMYUSE(red_or);
@@ -801,8 +792,7 @@ UINT CG::computeTotalParameterStackSize(xoc::IR * ir)
 
 //Calculate the section and corresponding byte offset in section for given
 //'var'.
-void CG::computeAndUpdateGlobalVarLayout(xoc::Var const* var,
-                                         OUT SR ** base,
+void CG::computeAndUpdateGlobalVarLayout(xoc::Var const* var, OUT SR ** base,
                                          OUT SR ** base_ofst)
 {
     ASSERT0(var);
@@ -871,7 +861,7 @@ void CG::computeAndUpdateStackVarLayout(xoc::Var const* var,
 
     Section * section = m_cgmgr->getStackSection();
     VarDesc * vd = nullptr;
-    if (section->getVarList()->find(var) == 0) {
+    if (!section->getVarList()->find(var)) {
         vd = (VarDesc*)xmalloc(sizeof(VarDesc));
         //Compute the start address of variable.
         //>Do not perform aligning for stack-variables.
@@ -898,7 +888,7 @@ void CG::computeAndUpdateStackVarLayout(xoc::Var const* var,
         vd = section->getVar2Desc()->get(var);
     }
 
-    if (m_is_use_fp) {
+    if (isUseFP()) {
         if (base != nullptr) {
             *base = getFP();
         }
@@ -958,7 +948,7 @@ void CG::computeParamLayout(xoc::Var const* var, OUT SR ** base, OUT SR ** ofst)
 
     if (base != nullptr) {
         //*base = genParamPointer();
-        if (m_is_use_fp) {
+        if (isUseFP()) {
             *base = getFP();
         } else {
             *base = getSP();
@@ -1386,11 +1376,8 @@ CLUST CG::mapSlot2Cluster(SLOT slot)
 //Change the function unit and related cluster of 'o'.
 //If is_test is true, this function only check whether the given
 //OR can be changed.
-bool CG::changeORUnit(OR * o,
-                      UNIT to_unit,
-                      CLUST to_clust,
-                      RegFileSet const* regfile_unique,
-                      bool is_test)
+bool CG::changeORUnit(OR * o, UNIT to_unit, CLUST to_clust,
+                      RegFileSet const* regfile_unique, bool is_test)
 {
     ASSERTN(o && to_unit != 0 && to_clust != CLUST_UNDEF, ("o is nullptr"));
 
@@ -1489,10 +1476,8 @@ bool CG::changeORUnit(OR * o,
 //Change the correlated cluster of 'o'
 //If is_test is true, this function only check whether the given
 //OR can be changed.
-bool CG::changeORCluster(OR * o,
-                         CLUST to_clust,
-                         RegFileSet const* regfile_unique,
-                         bool is_test)
+bool CG::changeORCluster(OR * o, CLUST to_clust,
+                         RegFileSet const* regfile_unique, bool is_test)
 {
     if (o->is_bus() ||
         o->is_asm() ||
@@ -1574,10 +1559,8 @@ bool CG::changeORType(OR * o, OR_TYPE ot, CLUST src, CLUST tgt,
 
 
 //Return true if regfile can be assigned to referred operand.
-bool CG::isValidRegFile(OR_TYPE ot,
-                        INT opndnum,
-                        REGFILE regfile,
-                        bool is_result) const
+bool CG::isValidRegFile(OR_TYPE ot, INT opndnum,
+                        REGFILE regfile, bool is_result) const
 {
     if (is_result) {
         return isValidResultRegfile(ot, opndnum, regfile);
@@ -1588,9 +1571,7 @@ bool CG::isValidRegFile(OR_TYPE ot,
 
 
 //Return true if regfile can be assigned to referred operand.
-bool CG::isValidRegFile(OR * o,
-                        SR const* opnd,
-                        REGFILE regfile,
+bool CG::isValidRegFile(OR * o, SR const* opnd, REGFILE regfile,
                         bool is_result) const
 {
     bool is_valid = false;
@@ -1609,18 +1590,20 @@ bool CG::isValidRegFile(OR * o,
             }
             //TODO: Should check if regfile is consistent with other operand.
         }
-    } else {
-        for (UINT i = 0; i < o->opnd_num(); i++) {
-            if (isSREqual(opnd, o->get_opnd(i))) {
-                if (isValidOpndRegfile(o->getCode(), i, regfile)) {
-                    is_valid = true;
-                } else {
-                    return false;
-                }
-            }
-            //TODO: Should check if regfile is consistent with other operand.
-        }
+        return is_valid;
     }
+
+    //operand
+    for (UINT i = 0; i < o->opnd_num(); i++) {
+        if (isSREqual(opnd, o->get_opnd(i))) {
+            if (isValidOpndRegfile(o->getCode(), i, regfile)) {
+                is_valid = true;
+            } else {
+                return false;
+            }
+        }
+        //TODO: Should check if regfile is consistent with other operand.
+    }   
     return is_valid;
 }
 
@@ -2154,10 +2137,8 @@ bool CG::skipArgRegister(UINT sz, OUT ArgDescMgr * argdescmgr)
 
 //Return true if whole ir has been passed through registers, otherwise
 //return false.
-bool CG::passArgInMemory(SR * argaddr,
-                         UINT * argsz,
-                         OUT ArgDescMgr * argdescmgr,
-                         OUT ORList & ors,
+bool CG::passArgInMemory(SR * argaddr, UINT * argsz,
+                         OUT ArgDescMgr * argdescmgr, OUT ORList & ors,
                          IOC *)
 {
     UINT total_size = *argsz;
@@ -2261,12 +2242,9 @@ bool CG::passArgInRegister(SR * argval, UINT * sz, ArgDescMgr * argdescmgr,
 
 //Return true if whole ir has been passed through registers, otherwise
 //return false.
-bool CG::tryPassArgThroughRegister(SR * argval,
-                                   SR * argaddr,
-                                   UINT * argsz,
-                                   IN OUT ArgDescMgr * argdescmgr,
-                                   OUT ORList & ors,
-                                   IOC * cont)
+bool CG::tryPassArgThroughRegister(SR * argval, SR * argaddr,
+                                   UINT * argsz, IN OUT ArgDescMgr * argdescmgr,
+                                   OUT ORList & ors, IOC * cont)
 {
     ASSERT0((argval != nullptr) ^ (argaddr != nullptr));
     if (argaddr != nullptr) {
@@ -2288,9 +2266,7 @@ bool CG::tryPassArgThroughRegister(SR * argval,
 // argaddr1,
 // argsz1,
 // argdb1,
-void CG::passArgVariant(ArgDescMgr * argdescmgr,
-                        OUT ORList & ors,
-                        UINT num,
+void CG::passArgVariant(ArgDescMgr * argdescmgr, OUT ORList & ors, UINT num,
                         ...)
 {
     va_list ptr;
@@ -2317,11 +2293,8 @@ void CG::passArgVariant(ArgDescMgr * argdescmgr,
 //This function try to pass all arguments through registers.
 //Otherwise pass remaining arguments through stack memory.
 //'ir': the first parameter of CALL.
-void CG::passArg(SR * argval,
-                 SR * argaddr,
-                 UINT argsz,
-                 OUT ArgDescMgr * argdescmgr,
-                 OUT ORList & ors,
+void CG::passArg(SR * argval, SR * argaddr, UINT argsz,
+                 OUT ArgDescMgr * argdescmgr, OUT ORList & ors,
                  IN IOC * cont)
 {
     ASSERT0((argval != nullptr) ^ (argaddr != nullptr));
@@ -2362,9 +2335,7 @@ void CG::passArg(SR * argval,
 
 //Generate code to store SR on top of stack.
 //argdescmgr: record the parameter which tend to store on the stack.
-void CG::storeArgToStack(ArgDescMgr * argdescmgr,
-                         OUT ORList & ors,
-                         IN IOC *)
+void CG::storeArgToStack(ArgDescMgr * argdescmgr, OUT ORList & ors, IN IOC *)
 {
     ASSERT0(argdescmgr);
     IOC tc;
@@ -2432,9 +2403,11 @@ void CG::storeArgToStack(ArgDescMgr * argdescmgr,
                        genIntImm((HOST_INT)desc->tgt_ofst, false),
                        tors, &tc);
         }
+
         if (desc->arg_dbx != nullptr) {
             tors.copyDbx(desc->arg_dbx);
         }
+
         ors.append_tail(tors);
     }
 }
@@ -2464,7 +2437,8 @@ void CG::expandFakeOR(OR * o, OUT IssuePackageList * ipl)
 {
     ASSERT0(o->is_fake());
     switch (o->getCode()) {
-    case OR_spadjust:
+    case OR_spadjust_i:
+    case OR_spadjust_r:    
         expandSpadjust(o, ipl);
         break;
     default: ASSERTN(0, ("Target Dependent Code"));
@@ -2636,14 +2610,15 @@ SR * CG::genReg(UINT bytes_size)
             ls.append_tail(sr);
         }
         first = getSRVecMgr()->genSRVec(ls);
-    } else {
-        first = getSRMgr()->genSR();
-        SR_type(first) = SR_REG;
-        SR_sregid(first) = ++m_reg_count;
-        setMapSymbolReg2SR(SR_sregid(first), first);
-        SR_phy_reg(first) = REG_UNDEF;
-        SR_regfile(first) = RF_UNDEF;
+        return first;
     }
+
+    first = getSRMgr()->genSR();
+    SR_type(first) = SR_REG;
+    SR_sregid(first) = ++m_reg_count;
+    setMapSymbolReg2SR(SR_sregid(first), first);
+    SR_phy_reg(first) = REG_UNDEF;
+    SR_regfile(first) = RF_UNDEF;    
     return first;
 }
 
@@ -2763,8 +2738,7 @@ OR * CG::getOR(UINT id)
 }
 
 
-RegFileSet const* CG::getValidRegfileSet(OR_TYPE ortype,
-                                         UINT idx,
+RegFileSet const* CG::getValidRegfileSet(OR_TYPE ortype, UINT idx,
                                          bool is_result) const
 {
     ORTypeDesc const* otd = tmGetORTypeDesc(ortype);
@@ -2847,7 +2821,7 @@ void CG::setSpadjustOffset(OR * spadj, INT size)
 {
     DUMMYUSE(spadj);
     DUMMYUSE(size);
-    ASSERT0(spadj && OR_code(spadj) == OR_spadjust);
+    ASSERT0(spadj && spadj->isSpadjust());
     ASSERTN(0, ("Target Dependent Code"));
 }
 
@@ -2900,11 +2874,12 @@ void CG::renameOpnd(OR * o, SR * oldsr, SR * newsr, bool match_phy_reg)
                 o->set_opnd(i, newsr, this);
             }
         }
-    } else {
-        for (UINT i = 0; i < o->opnd_num(); i++) {
-            if (o->get_opnd(i) == oldsr) {
-                o->set_opnd(i, newsr, this);
-            }
+        return;
+    }
+
+    for (UINT i = 0; i < o->opnd_num(); i++) {
+        if (o->get_opnd(i) == oldsr) {
+            o->set_opnd(i, newsr, this);
         }
     }
 }
@@ -2913,9 +2888,7 @@ void CG::renameOpnd(OR * o, SR * oldsr, SR * newsr, bool match_phy_reg)
 //Rename opnd and result of OR from oldsr to newsr in range
 //between 'start' and the end OR of BB.
 //The renaming process does not consider physical register if SR assigned.
-void CG::renameOpndAndResultFollowed(SR * oldsr,
-                                     SR * newsr,
-                                     ORCt * start,
+void CG::renameOpndAndResultFollowed(SR * oldsr, SR * newsr, ORCt * start,
                                      BBORList * ors)
 {
     for (OR * o = start->val(); start != ors->end();
@@ -2930,9 +2903,7 @@ void CG::renameOpndAndResultFollowed(SR * oldsr,
 //Rename opnd and result of OR from oldsr to newsr in range
 //between 'start' and the end OR of BB.
 //The renaming process does not consider physical register if SR assigned.
-void CG::renameOpndAndResultFollowed(SR * oldsr,
-                                     SR * newsr,
-                                     OR * start,
+void CG::renameOpndAndResultFollowed(SR * oldsr, SR * newsr, OR * start,
                                      BBORList * ors)
 {
     ORCt * ct = nullptr;
@@ -2945,11 +2916,8 @@ void CG::renameOpndAndResultFollowed(SR * oldsr,
 //Rename opnd and result of OR from 'oldsr' to 'newsr' in between
 //'start' and 'end'.
 //Note that 'start' will be renamed, but 'end' is not.
-void CG::renameOpndAndResultInRange(SR * oldsr,
-                                    SR * newsr,
-                                    ORCt * start,
-                                    ORCt * end,
-                                    BBORList * orlist)
+void CG::renameOpndAndResultInRange(SR * oldsr, SR * newsr, ORCt * start,
+                                    ORCt * end, BBORList * orlist)
 {
     ASSERTN(start && end && oldsr != newsr, ("not in list"));
     for (OR * o = start->val();
@@ -2965,11 +2933,8 @@ void CG::renameOpndAndResultInRange(SR * oldsr,
 //Rename opnd and result of OR from 'oldsr' to 'newsr' in between
 //'start' and 'end'.
 //Note that 'start' will be renamed, but 'end' is not.
-void CG::renameOpndAndResultInRange(SR * oldsr,
-                                    SR * newsr,
-                                    OR * start,
-                                    OR * end,
-                                    BBORList * orlist)
+void CG::renameOpndAndResultInRange(SR * oldsr, SR * newsr, OR * start,
+                                    OR * end, BBORList * orlist)
 {
     if (start == nullptr) { return; }
     ASSERT0(oldsr != newsr);
@@ -3087,7 +3052,7 @@ bool CG::mustDef(OR const* o, SR const* sr) const
         }
     }
 
-    if (isSP(sr) && o->getCode() == OR_spadjust) {
+    if (isSP(sr) && o->isSpadjust()) {
         return true;
     }
 
@@ -3118,9 +3083,7 @@ bool CG::mustUse(OR const* o, SR const* sr) const
 
 //Return true if sr was recomputed between 'start' and 'end'.
 //That processing does not include 'start','end'.
-bool CG::mayDefInRange(SR const* sr,
-                       IN ORCt * start,
-                       IN ORCt * end,
+bool CG::mayDefInRange(SR const* sr, IN ORCt * start, IN ORCt * end,
                        IN ORList & ors)
 {
     ASSERT0(ors.find(start->val()) && ors.find(end->val()));
@@ -3240,7 +3203,7 @@ void CG::generateFuncUnitDedicatedCode()
             ORBB_orlist(bb)->append_head(ors);
         }
 
-        //Spadjust operations
+        //Add spadjust operations
         ors.clean();
         IOC_int_imm(&cont) = 0;
         buildSpadjust(ors, &cont);
@@ -3284,7 +3247,7 @@ void CG::generateFuncUnitDedicatedCode()
             }
         }
 
-        //Spadjust operations
+        //Add spadjust operations
         ors.clean();
         IOC_int_imm(&cont) = 0;
         buildSpadjust(ors, &cont);
@@ -3376,7 +3339,7 @@ xoc::Var * CG::genSpillVar(SR * sr)
 //    callee parameter size).
 void CG::reviseFormalParamAccess(UINT lv_size)
 {
-    ASSERT0(!g_is_enable_fp);
+    ASSERT0(!isUseFP());
     for (ORBB * bb = m_or_bb_list.get_head();
          bb != nullptr; bb = m_or_bb_list.get_next()) {
         for (OR * o = ORBB_first_or(bb); o != nullptr; o = ORBB_next_or(bb)) {
@@ -3387,13 +3350,17 @@ void CG::reviseFormalParamAccess(UINT lv_size)
                     ASSERT0(offset->is_int_imm() && offset->getInt() >= 0);
                     SR_int_imm(offset) += lv_size;
                 }
-            } else if (o->is_store()) {
+                continue;
+            }
+
+            if (o->is_store()) {
                 if (o->get_store_base() == genParamPointer()) {
                     o->set_store_base(getSP(), this);
                     SR * offset = o->get_store_ofst();
                     ASSERT0(offset->is_int_imm() && offset->getInt() >= 0);
                     SR_int_imm(offset) += lv_size;
                 }
+                continue;
             }
         }
     }
@@ -3499,9 +3466,67 @@ void CG::storeRegisterParameterBackToStack(List<ORBB*> * entry_lst,
 }
 
 
+//The function inserts code to initialize and finialize frame pointer register.
+//e.g: foo() { int x; x = 20; }
+//    --- frame start ---
+//    sp <- sp - 4 #spadjust operation.
+//    [sp + 0] = 20
+//    sp <- sp + 4 #spadjust operation.
+//    --- frame end ---
+// If user invoke alloca, spadjust operation will be generated. Thus local
+// variable should be accessed through FP.
+//e.g: foo() { int x; x = 20; void * p = alloca(64); ... }
+//    --- frame start ---
+//    sp <- sp - 4 #spadjust operation.
+//    fp <- sp # sp store operation.
+//    [fp + 0] = 20
+//    sp <- sp - 64 #alloca
+//    ...
+//    sp <- fp # sp reload operation.
+//    sp <- sp + 4 #spadjust operation.
+//    --- frame end ---
+void CG::insertCodeToUseFP(List<ORBB*> & entry_lst, List<ORBB*> & exit_lst)
+{
+    ORList ors;
+    IOC tc;
+    for (ORBB * bb = entry_lst.get_head();
+         bb != nullptr; bb = entry_lst.get_next()) {
+        OR * spadj = ORBB_entry_spadjust(bb);
+        if (spadj == nullptr) { continue; }
+
+        //Insert save-or before spadjust-or.
+        ors.clean();
+        //storeRegToStack(getFP(), ors);
+        tc.clean();
+        buildMove(getFP(), getSP(), ors, &tc);
+        ORBB_orlist(bb)->insert_after(ors, spadj);
+    }
+
+    for (ORBB * bb = exit_lst.get_head(); bb != nullptr;
+         bb = exit_lst.get_next()) {
+        OR * spadj = ORBB_exit_spadjust(bb);
+        if (spadj == nullptr) { continue; }
+
+        //Insert reload-or after spadjust-or.
+        ors.clean();
+        tc.clean();
+        //reloadRegFromStack(getFP(), ors);
+        buildMove(getSP(), getFP(), ors, &tc);
+        ORBB_orlist(bb)->insert_before(ors, spadj);
+    }
+
+    if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
+        xoc::note(getRegion(),
+                  "\n==---- DUMP AFTER INSERT CODE TO USER FP ----==");
+        dumpORBBList();
+    }
+}
+
+
 //Insert store of parameter register after spadjust at each entry BB
 //if target machine support pass argument through register.
-void CG::reviseFormalParameterAndSpadjust()
+void CG::reviseFormalParameterAndSpadjust(List<ORBB*> & entry_lst,
+                                          List<ORBB*> & exit_lst)
 {
     //framesize = (register caller parameter size + local variable +
     //             temporary variable + callee parameter size).
@@ -3509,23 +3534,19 @@ void CG::reviseFormalParameterAndSpadjust()
                     getMaxArgSectionSize();
 
     //Adjust size by stack alignment.
-    ASSERTN(isPowerOf2(STACK_ALIGNMENT),
+    ASSERTN(xcom::isPowerOf2(STACK_ALIGNMENT),
             ("For the convenience of generating double load/store"));
-    ASSERTN(isPowerOf2(SPADJUST_ALIGNMENT),
+    ASSERTN(xcom::isPowerOf2(SPADJUST_ALIGNMENT),
             ("For the convenience of generating double load/store"));
     ASSERTN(SPADJUST_ALIGNMENT - 1 <= 0xFFFF, ("Stack alignment is too big"));
 
     framesize = (INT)xcom::ceil_align(framesize, SPADJUST_ALIGNMENT);
 
-    if (!g_is_enable_fp &&
+    if (!isUseFP() &&
         (getMaxArgSectionSize() > 0 &&
          SECT_size(m_cgmgr->getParamSection()) > 0)) {
         reviseFormalParamAccess(framesize);
     }
-
-    List<ORBB*> entry_lst;
-    List<ORBB*> exit_lst;
-    computeEntryAndExit(*m_or_cfg, entry_lst, exit_lst);
 
     //Update the parameter section start.
     ASSERTN(m_param_sect_start_offset == -1, ("already set"));
@@ -3533,7 +3554,7 @@ void CG::reviseFormalParameterAndSpadjust()
 
     if (isPassArgumentThroughRegister()) {
         ASSERT0(tmGetRegSetOfArgument()); //phy regset should exist.
-        List<Var const*> param_list;
+        xcom::List<xoc::Var const*> param_list;
         m_rg->findFormalParam(param_list, true);
         UINT bytesize_of_arg_passed_via_reg =
             calcSizeOfParameterPassedViaRegister(&param_list);
@@ -3594,16 +3615,15 @@ void CG::reviseFormalParameterAndSpadjust()
 //it is also the results.
 //'test_sr': can be nullptr. If it is nullptr, we only try to
 //           get the index-info of the same opnd and result.
-bool CG::isOpndSameWithResult(SR const* test_sr,
-                              OR const* o,
-                              OUT INT * opndnum,
-                              OUT INT * resnum) const
+bool CG::isOpndSameWithResult(SR const* test_sr, OR const* o,
+                              OUT INT * opndnum, OUT INT * resnum) const
 {
     INT o1, o2;
     if (opndnum == nullptr) { opndnum = &o1;}
     if (resnum == nullptr) { resnum = &o2;}
     *opndnum = -1;
     *resnum = -1;
+
     //Find the sr with 'same_res' property.
     SR * the_sr = nullptr;
     for (UINT resn = 0; resn < o->result_num(); resn++) {
@@ -3658,9 +3678,8 @@ xoc::Var * CG::genTempVar(xoc::Type const* type, UINT align, bool func_level)
 //Split OR list into ORBB.
 void CG::constructORBBList(IN ORList & or_list)
 {
-    if (or_list.get_elem_count() == 0) {
-        return;
-    }
+    if (or_list.get_elem_count() == 0) { return; }
+
     START_TIMER(t, "Construct ORBB list");
     ORBB * cur_bb = nullptr;
     for (OR * o = or_list.get_head(); o != nullptr; o = or_list.get_next()) {
@@ -3685,7 +3704,10 @@ void CG::constructORBBList(IN ORList & or_list)
             //Generate new BB
             m_or_bb_list.append_tail(cur_bb);
             cur_bb = allocBB();
-        } else if (cur_bb->isUpperBoundary(o)) {
+            continue;
+        }
+
+        if (cur_bb->isUpperBoundary(o)) {
             ORBB_is_target(cur_bb) = true;
             m_or_bb_list.append_tail(cur_bb);
 
@@ -3699,13 +3721,17 @@ void CG::constructORBBList(IN ORList & or_list)
             } else {
                 ORBB_orlist(cur_bb)->append_tail(o);
             }
-        } else {
-            ORBB_orlist(cur_bb)->append_tail(o);
+            continue;
         }
+
+        ORBB_orlist(cur_bb)->append_tail(o);        
     }
     ASSERT0(cur_bb);
+
     m_or_bb_list.append_tail(cur_bb);
+
     END_TIMER(t, "Construct ORBB list");
+
     #ifdef _DEBUG_
     //Do some verifications.
     for (ORBB * bb = m_or_bb_list.get_head();
@@ -3803,6 +3829,7 @@ void CG::performIS(IN OUT Vector<BBSimulator*> & simvec, IN RaMgr * ra_mgr)
             }
             lis->serialize();
         }
+
         postLS(lis, ddg);
     }
     END_TIMER(t, "Instruction Schedule");
@@ -3815,24 +3842,13 @@ RaMgr * CG::allocRaMgr(List<ORBB*> * bblist, bool is_func)
 }
 
 
-//Return true if ir is ALLOCA.
-bool CG::isAlloca(xoc::IR const* ir) const
-{
-    if (!ir->is_call()) { return false; }
-
-    xoc::Var const* var = CALL_idinfo(ir);
-    ASSERT0(var);
-    if (strcmp(SYM_name(var->get_name()), "alloca") == 0) {
-        return true;
-    }
-    return false;
-}
-
-
 //Estimate and reserve stack memory space for real parameters.
+//The function also collecting the information to determine whether enable
+//the using of FP register.
 void CG::computeMaxRealParamSpace()
 {
     START_TIMER(t, "Compute Max Real Parameter Space");
+
     BBList * ir_bb_list = m_rg->getBBList();
     for (IRBB * bb = ir_bb_list->get_head();
          bb != nullptr; bb = ir_bb_list->get_next()) {
@@ -3841,14 +3857,16 @@ void CG::computeMaxRealParamSpace()
              ir = BB_irlist(bb).get_next(&ct)) {
             if (!ir->isCallStmt()) { continue; }
             updateMaxCalleeArgSize(computeTotalParameterStackSize(ir));
-            if (isAlloca(ir)) {
+            if (m_cgmgr->isIntrinsic(ir, INTRIN_ALLOCA)) {
                 m_is_use_fp = true;
             }
         }
     }
+
     if (getMaxArgSectionSize() > 0) {
         SECT_size(m_cgmgr->getStackSection()) += getMaxArgSectionSize();
     }
+
     END_TIMER(t, "Compute Max Real Parameter Space");
 }
 
@@ -3861,8 +3879,8 @@ DataDepGraph * CG::allocDDG()
 
 //'is_log': false value means that Caller will delete
 //    the object allocated utilmately.
-LIS * CG::allocLIS(ORBB * bb, DataDepGraph * ddg,
-                   BBSimulator * sim, UINT sch_mode)
+LIS * CG::allocLIS(ORBB * bb, DataDepGraph * ddg, BBSimulator * sim,
+                   UINT sch_mode)
 {
     return new LIS(bb, *ddg, sim, sch_mode);
 }
@@ -3885,11 +3903,8 @@ void CG::postLS(LIS * lis, DataDepGraph * ddg)
 
 
 //Create components that schedulor dependents on.
-void CG::preLS(IN ORBB * bb,
-               IN RaMgr * ra_mgr,
-               OUT DataDepGraph ** ddg,
-               OUT BBSimulator ** sim,
-               OUT LIS ** lis)
+void CG::preLS(IN ORBB * bb, IN RaMgr * ra_mgr, OUT DataDepGraph ** ddg,
+               OUT BBSimulator ** sim, OUT LIS ** lis)
 {
     //Init DDG
     DataDepGraph * tddg = allocDDG();
@@ -4118,6 +4133,7 @@ void CG::localize()
         delete orbbtab;
     }
     END_TIMER(t0, "CG Localization");
+
     if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
         note(getRegion(), "\n==---- DUMP AFTER LOCALIZE ----==");
         dumpORBBList();
@@ -4167,6 +4183,7 @@ bool CG::verifyOR(OR const* o)
             ASSERT0(isValidImmOpnd(o->getCode(), sr->getInt()));
         }
     }
+
     for (UINT i = 0; i < o->opnd_num(); i++) {
         SR * sr = o->get_opnd(i);
         ASSERT0(sr);
@@ -4188,7 +4205,8 @@ bool CG::verifyOR(OR const* o)
 
 static void convertORBBList(CG * cg)
 {
-    IR2OR * ir2or = cg->allocIR2OR(); //allocate convertor that dependend on target
+    //allocate convertor that dependend on target
+    IR2OR * ir2or = cg->allocIR2OR();
     ASSERT0(ir2or);
 
     //Translate IR in IRBB to a list of OR.
@@ -4202,6 +4220,7 @@ static void convertORBBList(CG * cg)
 
         //destruct or_list.
     }
+
     //Object in ir2or is refered by or_list, thus destroy it till
     //constructORBBList is completed.
     delete ir2or;
@@ -4255,7 +4274,7 @@ static void performCFGOptimization(CG * cg, OptCtx & oc)
 //This function generate target dependent information.
 bool CG::perform()
 {
-    ASSERTN(isPowerOf2(STACK_ALIGNMENT),
+    ASSERTN(xcom::isPowerOf2(STACK_ALIGNMENT),
             ("Stack alignment should be power of 2"));
     if ((g_is_dump_after_pass || g_is_dump_before_pass) &&
         g_dump_opt.isDumpCG()) {
@@ -4273,11 +4292,17 @@ bool CG::perform()
     START_TIMER_FMT(tcg, ("Code Generation Perform '%s'",
                           m_rg->getRegionName()));
     //Estimate and reserve stack memory space for real parameters.
+    //The function also collecting the information to determine whether enable
+    //the using of FP register.
     computeMaxRealParamSpace();
+
+    //Generate OR.
     convertORBBList(this);
 
+    //Build CFG.
     OptCtx oc;
     createORCFG(oc);
+
     if (m_rg->is_function()) {
         //Generate SP adjustment operation, and the code protecting the
         //Return Address if region has a call.
@@ -4295,10 +4320,18 @@ bool CG::perform()
     RaMgr * ra_mgr = performRA();
     performCFGOptimization(this, oc);
 
-    //Insert store of parameter register after spadjust at each entry BB
-    //if target machine support pass argument through register.
+    List<ORBB*> entry_lst;
+    List<ORBB*> exit_lst;
+    computeEntryAndExit(*m_or_cfg, entry_lst, exit_lst);
+
     if (m_rg->is_function()) {
-        reviseFormalParameterAndSpadjust();
+        //Insert store of parameter register after spadjust at each entry BB
+        //if target machine support pass argument through register.
+        reviseFormalParameterAndSpadjust(entry_lst, exit_lst);
+    }
+
+    if (isUseFP()) {
+        insertCodeToUseFP(entry_lst, exit_lst);
     }
 
     //Perform Local instruction scheduling.

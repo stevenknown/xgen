@@ -186,53 +186,6 @@ void ARMIR2OR::convertReturnValue(IR const* ir, OUT RecycORList & ors,
 }
 
 
-void ARMIR2OR::convertCall(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
-{
-    ASSERTN(ir->isCallStmt(), ("illegal ir"));
-    processRealParams(CALL_param_list(ir), ors, cont);
-
-    //Collect the maximum parameters size during code generation.
-    //And revise spadjust operation afterwards.
-    m_cg->updateMaxCalleeArgSize(IOC_param_size(cont));
-
-    if (IOC_param_size(cont) > 0) {
-        //DO not adjust SP here for parameters, callee will
-        //do this job.
-    }
-
-    ASSERTN(!CALL_is_intrinsic(ir), ("TODO"));
-
-    RecycORList tors(this);
-    UINT retv_sz = GENERAL_REGISTER_SIZE;
-
-    if (ir->hasReturnValue()) {
-        retv_sz = ir->getTypeSize(m_tm);
-    }
-
-    if (ir->is_call()) {
-        getCG()->buildCall(CALL_idinfo(ir), retv_sz, tors.getList(), cont);
-    } else {
-        ASSERT0(ir->is_icall());
-        //ICALL
-        IR * callee = ICALL_callee(ir);
-        ASSERT0(callee->is_ld() || callee->is_lda() ||
-                (callee->is_cvt() && CVT_exp(callee)->is_const()));
-        IOC tc;
-        if (callee->is_ld() || callee->is_lda()) {
-            convertGeneralLoad(callee, tors, &tc);
-        } else {
-            convertGeneralLoad(CVT_exp(callee), tors, &tc);
-        }
-        SR * tgtsr = tc.get_reg(0);
-        getCG()->buildICall(tgtsr, retv_sz, tors.getList(), cont);
-    }
-    tors.copyDbx(ir);
-    ors.append_tail(tors);
-
-    convertReturnValue(ir, ors, cont);
-}
-
-
 void ARMIR2OR::convertRem(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     ASSERTN(ir->is_rem(), ("illegal ir"));
@@ -1017,7 +970,12 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
     ASSERT0(ir->is_relation());
     IR * opnd0 = BIN_opnd0(ir);
     IR * opnd1 = BIN_opnd1(ir);
-    ASSERT0(opnd0->getTypeSize(m_tm) == opnd1->getTypeSize(m_tm));
+    if (opnd0->getType()->is_pointer()) {
+        ASSERT0(opnd0->getTypeSize(m_tm) >= opnd1->getTypeSize(m_tm));
+    }
+    if (opnd1->getType()->is_pointer()) {
+        ASSERT0(opnd1->getTypeSize(m_tm) >= opnd0->getTypeSize(m_tm));
+    }
     ASSERT0(opnd0 && opnd1);
 
     if (opnd0->is_fp()) {

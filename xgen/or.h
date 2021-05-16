@@ -403,7 +403,9 @@ public:
     bool is_addi() const { return OR_is_addi(this); }
     bool is_subi() const { return OR_is_subi(this); }
     bool isMultiConditionalBr() const { return false; }
-    bool isSpadjust() const { return OR_code(this) == OR_spadjust; }
+    bool isSpadjustImm() const { return OR_code(this) == OR_spadjust_i; }
+    bool isSpadjustReg() const { return OR_code(this) == OR_spadjust_r; }
+    bool isSpadjust() const { return isSpadjustImm() || isSpadjustReg(); }
     //Return true if ir terminates the control flow.
     bool is_terminate() const { return OR_is_terminate(this); }
 

@@ -62,6 +62,7 @@ author: Su Zhenyu
 #include "section.h"
 #include "emit_asm.h"
 #include "builtin.h"
+#include "intrinsic_mgr.h"
 #include "cg_mgr.h"
 #include "ir2or.h"
 #include "argdesc.h"
