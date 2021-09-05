@@ -333,7 +333,7 @@ bool BBSimulator::canBeIssued(OR const* o, SLOT slot,
 }
 
 
-void BBSimulator::runOneCycle(IN OUT ORList * finished_ors)
+void BBSimulator::runOneCycle(MOD ORList * finished_ors)
 {
     ASSERTN(m_pool, ("not yet initialized."));
     m_cyc_counter++;

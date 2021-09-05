@@ -133,7 +133,6 @@ static bool process_output_file(INT argc, CHAR const* argv[], INT & i)
 }
 
 
-
 static CHAR const* process_dump(INT argc, CHAR const* argv[], INT & i)
 {
     CHAR const* n = nullptr;
@@ -218,8 +217,9 @@ public:
     {
         UINT max_name_len = 0;
         for (UINT i = 0; i < BoolOption::getNumOfDumpOption(); i++) {
-            max_name_len = MAX((UINT)strlen(BoolOption::dump_option_desc[i].name),
-                               max_name_len);
+            max_name_len =
+                MAX((UINT)strlen(BoolOption::dump_option_desc[i].name),
+                    max_name_len);
         }
         UINT alignbuflen = max_name_len + 2;
 
@@ -278,7 +278,7 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "redirect internal compiler output information to given dump file", },
     { "ipa", &xoc::g_do_ipa,
       "enable interprocedual analysis", },
-    { "cfg", &g_cfg_opt,
+    { "cfgopt", &g_cfg_opt,
       "enable control-flow-graph optimization", },
     { "schedule_delay_slot", &xgen::g_enable_schedule_delay_slot,
       "enable scheduling branch-delay-slot", },
@@ -288,12 +288,16 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "enable global-register-allocation", },
     { "lis", &xgen::g_do_lis,
       "enable instruction-scheduling", },
+    { "refine_duchain", &xoc::g_do_refine_duchain,
+      "enable refine-duchain optimization", },    
 };
 
 
 BoolOption::Desc const BoolOption::dump_option_desc[] = {
     { "cfg", &xoc::g_dump_opt.is_dump_cfg,
       "dump control-flow-graph", },
+    { "cfgopt", &xoc::g_dump_opt.is_dump_cfgopt,
+      "dump control-flow-graph optimizations", },
     { "lis", &xoc::g_dump_opt.is_dump_lis,
       "dump instruction-scheduling", },
     { "aa", &xoc::g_dump_opt.is_dump_aa,
@@ -327,6 +331,8 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
     { "simplification", &xoc::g_dump_opt.is_dump_simplification,
       "dump IR simplification", },
     { "refine-duchain", &xoc::g_dump_opt.is_dump_refine_duchain,
+      "dump refine-duchain optimization", },
+    { "refine", &xoc::g_dump_opt.is_dump_refine,
       "dump refine-duchain optimization", },
     { "gvn", &xoc::g_dump_opt.is_dump_gvn,
       "dump global-value-numbering", },

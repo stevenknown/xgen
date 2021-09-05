@@ -80,13 +80,13 @@ void ARMIR2OR::convertBinaryOp(IR const* ir, OUT RecycORList & ors,
         getCG()->buildAdd(opnd0, opnd1, BIN_opnd0(ir)->getTypeSize(m_tm),
                           ir->is_signed(), tors.getList(), cont);
         tors.copyDbx(ir);
-        ors.append_tail(tors);
+        ors.move_tail(tors);
         break;
     case IR_SUB:
         getCG()->buildSub(opnd0, opnd1, BIN_opnd0(ir)->getTypeSize(m_tm),
                           ir->is_signed(), tors.getList(), cont);
         tors.copyDbx(ir);
-        ors.append_tail(tors);
+        ors.move_tail(tors);
         break;
     default: UNREACHABLE();
     }
@@ -143,7 +143,7 @@ void ARMIR2OR::convertStoreVar(IR const* ir, OUT RecycORList & ors,
     cont->clean_bottomup();
     getCG()->buildMemcpy(tgt, src, resbytesize, tors.getList(), cont);
     tors.copyDbx(ir);
-    ors.append_tail(tors);
+    ors.move_tail(tors);
 }
 
 
@@ -245,7 +245,7 @@ void ARMIR2OR::convertRem(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     }
     getCG()->buildCall(builtin, retv_sz, tors.getList(), cont);
     tors.copyDbx(ir);
-    ors.append_tail(tors);
+    ors.move_tail(tors);
 }
 
 
@@ -304,7 +304,7 @@ void ARMIR2OR::convertAddSubFp(IR const* ir, OUT RecycORList & ors,
     RecycORList tors(this);
     getCG()->buildCall(builtin, retv_sz, tors.getList(), cont);
     tors.copyDbx(ir);
-    ors.append_tail(tors);
+    ors.move_tail(tors);
 }
 
 
@@ -364,7 +364,7 @@ void ARMIR2OR::convertDiv(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     RecycORList tors(this);
     getCG()->buildCall(builtin, retv_sz, tors.getList(), cont);
     tors.copyDbx(ir);
-    ors.append_tail(tors);
+    ors.move_tail(tors);
 }
 
 
@@ -390,7 +390,7 @@ void ARMIR2OR::convertMulofInt(IR const* ir, OUT RecycORList & ors,
     if (dbx != nullptr) {
         tors.copyDbx(dbx);
     }
-    ors.append_tail(tors);
+    ors.move_tail(tors);
 }
 
 
@@ -438,7 +438,7 @@ void ARMIR2OR::convertMulofLongLong(IR const* ir, OUT RecycORList & ors,
     getCG()->buildCall(getBuiltinVar(BUILTIN_MULDI3), ir->getTypeSize(m_tm),
                        tors.getList(), cont);
     tors.copyDbx(ir);
-    ors.append_tail(tors);
+    ors.move_tail(tors);
 }
 
 
@@ -501,7 +501,7 @@ void ARMIR2OR::convertMulofFloat(IR const* ir, OUT RecycORList & ors,
     RecycORList tors(this);
     getCG()->buildCall(builtin, ir->getTypeSize(m_tm), tors.getList(), cont);
     tors.copyDbx(ir);
-    ors.append_tail(tors);
+    ors.move_tail(tors);
 }
 
 
@@ -578,7 +578,7 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
         getCG()->buildSub(src, res, BYTESIZE_OF_DWORD, true,
                           tors.getList(), &tc);
         tors.copyDbx(ir);
-        ors.append_tail(tors);
+        ors.move_tail(tors);
         ASSERT0(cont && tc.get_reg(0)->getByteSize() == BYTESIZE_OF_DWORD);
         res = tc.get_reg(0);
         cont->set_reg(RESULT_REGISTER_INDEX, res);
@@ -711,7 +711,7 @@ void ARMIR2OR::convertRelationOpDWORDForEquality(IR const* ir,
     SR * falsepd = nullptr;
     getResultPredByIRTYPE(ir->getCode(), &truepd, &falsepd, is_signed);
     tors.copyDbx(ir);
-    ors.append_tail(tors);
+    ors.move_tail(tors);
     recordRelationOpResult(ir, truepd, falsepd, truepd, ors, cont);
 }
 
@@ -756,7 +756,7 @@ void ARMIR2OR::convertRelationOpDWORDForLTGELEGT(IR const* ir,
                                m_cg->getRflag());
         tors.append_tail(o);
         tors.copyDbx(ir);
-        ors.append_tail(tors);
+        ors.move_tail(tors);
         recordRelationOpResult(ir, truepd, falsepd, truepd, ors, cont);
         return;
     }
@@ -771,7 +771,7 @@ void ARMIR2OR::convertRelationOpDWORDForLTGELEGT(IR const* ir,
                          sr0_l, sr1_l, tors.getList(), cont);
 
     tors.copyDbx(ir);
-    ors.append_tail(tors);
+    ors.move_tail(tors);
     recordRelationOpResult(ir, truepd, falsepd, truepd, ors, cont);
 }
 
@@ -1018,13 +1018,13 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
     //    getCG()->buildMove(res, getCG()->gen_one(), tors.getList(), cont);
     //    tors.set_pred(truepd, m_cg));
     //    tors.copyDbx(ir);
-    //    ors.append_tail(tors);
+    //    ors.move_tail(tors);
 
     //    tors.clean();
     //    getCG()->buildMove(res, getCG()->genZero(), tors.getList(), cont);
     //    tors.set_pred(falsepd, m_cg);
     //    tors.copyDbx(ir);
-    //    ors.append_tail(tors);
+    //    ors.move_tail(tors);
 
     //    //used by non-conditional op
     //    cont->set_reg(RESULT_REGISTER_INDEX, res);
@@ -1082,7 +1082,7 @@ void ARMIR2OR::convertBitNotLowPerformance(IR const* ir,
     ASSERTN(cont->get_reg(0) && cont->get_reg(0)->is_reg(), ("check tgt reg"));
 
     tors.copyDbx(ir);
-    ors.append_tail(tors);
+    ors.move_tail(tors);
     m_rg->freeIRTree(mov_ir);
 }
 
@@ -1178,14 +1178,14 @@ void ARMIR2OR::convertBitNot(IR const* ir, OUT RecycORList & ors,
     if (res_sr1 != nullptr) {
         cont->set_reg(1, res_sr1);
     }
-    ors.append_tail(tors);
+    ors.move_tail(tors);
 }
 
 
 void ARMIR2OR::recordRelationOpResult(IR const* ir, SR * truepd,
                                       SR * falsepd, SR * result_pred,
                                       OUT RecycORList & ors,
-                                      IN OUT IOC * cont)
+                                      MOD IOC * cont)
 {
     if (!ir->getParent()->isConditionalBr()) {
         SR * res = getCG()->genReg();
@@ -1193,13 +1193,13 @@ void ARMIR2OR::recordRelationOpResult(IR const* ir, SR * truepd,
         getCG()->buildMove(res, getCG()->genOne(), tors.getList(), cont);
         tors.set_pred(truepd, m_cg);
         tors.copyDbx(ir);
-        ors.append_tail(tors);
+        ors.move_tail(tors);
 
         tors.clean();
         getCG()->buildMove(res, getCG()->genZero(), tors.getList(), cont);
         tors.set_pred(falsepd, m_cg);
         tors.copyDbx(ir);
-        ors.append_tail(tors);
+        ors.move_tail(tors);
 
         cont->set_reg(RESULT_REGISTER_INDEX, res); //used by non-conditional op
 
@@ -1228,11 +1228,14 @@ void ARMIR2OR::convertIgoto(IR const* ir, OUT RecycORList & ors, IN IOC *)
 {
     ASSERT0(ir->is_igoto());
     IOC tmp;
-    convertLoadVar(IGOTO_vexp(ir), ors, &tmp);
+    convertGeneralLoad(IGOTO_vexp(ir), ors, &tmp);
     SR * tgt_addr = tmp.get_reg(0);
     ASSERT0(tgt_addr);
-
-    OR * o = getCG()->buildOR(OR_bx, 0, 2, getCG()->getTruePred(), tgt_addr);
+    SR * ll = m_cg->genLabelList(m_cg->buildLabelInfoList(
+                                     IGOTO_case_list(ir)));
+    ASSERT0(xgen::tmGetOpndSRDesc(OR_bx, 1)->is_label_list());
+    OR * o = getCG()->buildOR(OR_bx, 0, 3, getCG()->getTruePred(),
+                              ll, tgt_addr);
     OR_dbx(o).copy(*getDbx(ir));
     ors.append_tail(o);
 }
@@ -1247,7 +1250,7 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors, IOC * cont)
     //Generate Compare operation
     convertRelationOp(SELECT_pred(ir), tors, &tmp);
     tors.copyDbx(SELECT_pred(ir));
-    ors.append_tail(tors);
+    ors.move_tail(tors);
     SR * cres = tmp.get_reg(0);
     CHECK0_DUMMYUSE(cres);
 
@@ -1287,7 +1290,7 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors, IOC * cont)
         }
         tors.set_pred(true_pr, m_cg);
         tors.copyDbx(SELECT_trueexp(ir));
-        ors.append_tail(tors);
+        ors.move_tail(tors);
     }
 
     //False exp value
@@ -1320,7 +1323,7 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors, IOC * cont)
 
         tors.set_pred(false_pr, m_cg);
         tors.copyDbx(SELECT_falseexp(ir));
-        ors.append_tail(tors);
+        ors.move_tail(tors);
     }
     cont->set_reg(RESULT_REGISTER_INDEX, res);
 }
@@ -1396,7 +1399,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
     //getCG()->buildMove(retv, getCG()->gen_r0(), tors.getList(), cont);
 
     tors.copyDbx(ir);
-    ors.append_tail(tors);
+    ors.move_tail(tors);
     tors.clean();
 
     SR * r0 = getCG()->gen_r0();
@@ -1409,7 +1412,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
         getCG()->buildCompare(OR_cmp_i, true, getCG()->gen_r0(),
                               getCG()->genZero(), tors.getList(), cont);
         tors.copyDbx(ir);
-        ors.append_tail(tors);
+        ors.move_tail(tors);
         tors.clean();
     }
     switch (ir->getCode()) {
@@ -1424,7 +1427,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(falsepd, m_cg);
             tors.copyDbx(ir);
-            ors.append_tail(tors);
+            ors.move_tail(tors);
             tors.clean();
 
             //(lt)r0 = 1;
@@ -1432,7 +1435,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(truepd, m_cg);
             tors.copyDbx(ir);
-            ors.append_tail(tors);
+            ors.move_tail(tors);
             tors.clean();
         }
         break;
@@ -1447,7 +1450,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(falsepd, m_cg);
             tors.copyDbx(ir);
-            ors.append_tail(tors);
+            ors.move_tail(tors);
             tors.clean();
 
             //(le)r0 = 1;
@@ -1455,7 +1458,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(truepd, m_cg);
             tors.copyDbx(ir);
-            ors.append_tail(tors);
+            ors.move_tail(tors);
             tors.clean();
         }
         break;
@@ -1470,7 +1473,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(falsepd, m_cg);
             tors.copyDbx(ir);
-            ors.append_tail(tors);
+            ors.move_tail(tors);
             tors.clean();
 
             //(gt)r0 = 1;
@@ -1478,7 +1481,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(truepd, m_cg);
             tors.copyDbx(ir);
-            ors.append_tail(tors);
+            ors.move_tail(tors);
             tors.clean();
         }
         break;
@@ -1493,7 +1496,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(falsepd, m_cg);
             tors.copyDbx(ir);
-            ors.append_tail(tors);
+            ors.move_tail(tors);
             tors.clean();
 
             //(ge)r0 = 1;
@@ -1501,7 +1504,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(truepd, m_cg);
             tors.copyDbx(ir);
-            ors.append_tail(tors);
+            ors.move_tail(tors);
             tors.clean();
         }
         break;
@@ -1516,7 +1519,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(falsepd, m_cg);
             tors.copyDbx(ir);
-            ors.append_tail(tors);
+            ors.move_tail(tors);
             tors.clean();
 
             //(eq)r0 = 1;
@@ -1524,7 +1527,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(truepd, m_cg);
             tors.copyDbx(ir);
-            ors.append_tail(tors);
+            ors.move_tail(tors);
             tors.clean();
         }
         break;
@@ -1539,7 +1542,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(falsepd, m_cg);
             tors.copyDbx(ir);
-            ors.append_tail(tors);
+            ors.move_tail(tors);
             tors.clean();
 
             //(ne)r0 = 1;
@@ -1547,7 +1550,7 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
             ASSERT0(tors.get_elem_count() == 1);
             tors.set_pred(truepd, m_cg);
             tors.copyDbx(ir);
-            ors.append_tail(tors);
+            ors.move_tail(tors);
             tors.clean();
         }
         break;
@@ -1589,7 +1592,7 @@ void ARMIR2OR::convertTruebrFp(IR const* ir, OUT RecycORList & ors,
     getCG()->buildCondBr(tgt_lab, tors.getList(), cont);
     tors.copyDbx(ir);
     cont->set_pred(nullptr); //clean status
-    ors.append_tail(tors);
+    ors.move_tail(tors);
 }
 
 
@@ -1613,7 +1616,7 @@ void ARMIR2OR::convertTruebr(IR const* ir, OUT RecycORList & ors, IOC * cont)
     RecycORList tors(this);
     getCG()->buildCondBr(getCG()->genLabel(BR_lab(ir)), tors.getList(), cont);
     tors.copyDbx(ir);
-    ors.append_tail(tors);
+    ors.move_tail(tors);
     return;
 }
 
@@ -1815,7 +1818,7 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     }
 
     tors.copyDbx(ir); //copy dbx from origin ir.
-    ors.append_tail(tors);
+    ors.move_tail(tors);
     if (newir != ir) {
         m_rg->freeIRTree(newir);
     }
@@ -1885,7 +1888,7 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT RecycORList & ors,
         tors.append_tail(o);
     }
     tors.copyDbx(ir);
-    ors.append_tail(tors);
+    ors.move_tail(tors);
 }
 
 

@@ -9,7 +9,7 @@ int alias4_1(int i)
     struct S s1;
     s1.a = 10;
     s1.b[i] = 100; //s.b[i] not alias with s.a
-    return s1.a;
+    return s1.a; //after CP, equal to: return 10;
 }
 
 
@@ -31,10 +31,10 @@ int alias4_2(int i)
     //c[i] = 30;
     p->b[i] = 40;
     s2.b[i] = 10;
-    if (i > 0) {
-        s2.b[i] = 10;
+    if (i > 0) { //should be removed by DCE
+        s2.b[i] = 10; //should be removed by DCE
     } else {
-        s2.b[i] = 20;
+        s2.b[i] = 20; //should be removed by DCE
     }
-    return s2.a;
+    return s2.a; //s2.a is not alias with s2.b.
 }

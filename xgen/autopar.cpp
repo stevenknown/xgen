@@ -123,7 +123,7 @@ static bool FindMainIV(ORBB * bb, DataDepGraph & ddg,
 //'red_or': reduction o of 'iv'
 static void fillBB1(OUT ORBB * bb1, //early exit from loop
                     ORBB const* orig_bb,
-                    IN OUT ORBB * bb3, //early exit from loop
+                    MOD ORBB * bb3, //early exit from loop
                     UINT num_para_part,
                     IN SR * iv,
                     OUT SR ** remaing_count,
@@ -225,7 +225,7 @@ static bool fullyUnrollBB(ORBB * bb, DataDepGraph & ddg)
 }
 
 
-static void modifyBB2(IN OUT ORBB * bb2, ORBB const* orig_bb,
+static void modifyBB2(MOD ORBB * bb2, ORBB const* orig_bb,
                       SR * rem_count_sr, UINT num_para_part)
 {
     //Modify ORBB info
@@ -338,7 +338,7 @@ static void modifyBB2(IN OUT ORBB * bb2, ORBB const* orig_bb,
 
 //Generate code for BB3 and target label for BB5
 //TRUEBR to bb5 if iv > UB
-static void fillBB3(OUT ORBB * bb3, IN OUT ORBB * bb5,
+static void fillBB3(OUT ORBB * bb3, MOD ORBB * bb5,
                     IN SR * ub_sr, IN SR * iv)
 {
     ORList ors;
@@ -418,7 +418,7 @@ static void markGSR(ORBB const* bb, bool is_clear)
 
 
 //Update original bb loop info.
-static void modifyBB(IN OUT ORBB * bb,
+static void modifyBB(MOD ORBB * bb,
                      SR * trip_count_sr,
                      UINT num_para_part)
 {
@@ -468,7 +468,7 @@ static void modifyBB(IN OUT ORBB * bb,
 //Looking for the sr that recording low bound of
 //induction variable of DO-LOOP.
 //'bb': the ors generated to compute upper bound will inserted into bb.
-static SR * genUpperBound(IN SR * iv, IN OR * cmp_or, IN OUT ORBB * bb)
+static SR * genUpperBound(IN SR * iv, IN OR * cmp_or, MOD ORBB * bb)
 {
     SR * ub_sr = nullptr;
     ORList ors;
@@ -622,7 +622,7 @@ static SR * genLowBound(SR * iv, ORBB * bb, ORBB * imm_pred)
 
 //Computing trip_count = UpperBound - LowBound + 1.
 //'bb': insert ors which computing trip count into ORBB.
-static SR * genTripCount(IN SR * lb_sr, IN SR * ub_sr, IN OUT ORBB * bb)
+static SR * genTripCount(IN SR * lb_sr, IN SR * ub_sr, MOD ORBB * bb)
 {
     SR * trip_count_sr = nullptr;
     if (lb_sr->is_int_imm() && ub_sr->is_int_imm()) {

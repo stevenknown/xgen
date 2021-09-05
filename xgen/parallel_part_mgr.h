@@ -131,7 +131,7 @@ public:
 
     bool prepare_distribute(OR * red_or, OR * cmp_or, SR * iv);
 
-    void renameSR(IN OUT OR * o, IN SR2SR_DMAP & dmap);
+    void renameSR(MOD OR * o, IN SR2SR_DMAP & dmap);
 
     void setBB(ORBB * bb) { m_bb = bb; }
 

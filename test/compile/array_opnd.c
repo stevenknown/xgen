@@ -4,9 +4,8 @@ void foo() {
         int opnd[2];
     } S;
     S * ir;
-
-
-    int * k1, k2; //k has type with 'int*'
+    int * k1; //k1 has type with 'int*'
+    int k2;
     k1 = *(ir->opnd + 2);
     k2 = ir->opnd[2];
 

@@ -80,7 +80,7 @@ void LIS::destroy()
 }
 
 
-void LIS::computeReadyList(IN OUT DataDepGraph & ddg,
+void LIS::computeReadyList(MOD DataDepGraph & ddg,
                            OUT DefSBitSet & visited,
                            bool topdown)
 {
@@ -267,10 +267,9 @@ bool LIS::selectIssueOR(IN PreemptiveORList & cand_list, //OR may be changed
 
 //Mark and update candidate-list of OR to record which operation
 //has been selected to be issued subsequently.
-void LIS::updateIssueORs(IN OUT PreemptiveORList & cand_list,
-                         SLOT slot,
-                         IN OR * issue_or,
-                         IN OUT OR * issue_ors[SLOT_NUM])
+void LIS::updateIssueORs(MOD PreemptiveORList & cand_list,
+                         SLOT slot, IN OR * issue_or,
+                         MOD OR * issue_ors[SLOT_NUM])
 {
     issue_ors[slot - FIRST_SLOT] = issue_or;
     cand_list.remove(issue_or);

@@ -50,75 +50,77 @@ typedef Vector<OR*> ORVec; //OR vector
 #define ORID_UNDEF 0
 
 //OR Descriptor
-#define OTD_code(o) ((o)->code)
-#define OTD_name(o) ((o)->name)
-#define OTD_unit(o) ((o)->unit)
-#define OTD_equ_or_types(o) ((o)->equ_or_types)
-#define OTD_srd_group(o) ((o)->sr_desc_group)
-#define OTD_sche_info(o) ((o)->sche_info)
-#define OTD_is_fake(o) ((o)->is_fake)
-#define OTD_is_bus(o) ((o)->is_bus)
-#define OTD_is_nop(o) ((o)->is_nop)
-#define OTD_is_volatile(o)  ((o)->is_volatile)
-#define OTD_is_side_effect(o) ((o)->is_side_effect)
-#define OTD_is_asm(o) ((o)->is_asm)
-#define OTD_is_predicated(o) ((o)->is_predicated)
-#define OTD_is_call(o) ((o)->isCallStmt)
-#define OTD_is_cond_br(o) ((o)->isConditionalBr)
-#define OTD_is_uncond_br(o) ((o)->isUnconditionalBr)
-#define OTD_is_indirect_br(o) ((o)->isIndirectBr)
-#define OTD_is_return(o) ((o)->is_return)
-#define OTD_is_unaligned(o) ((o)->is_unaligned)
-#define OTD_is_store(o) ((o)->is_store)
-#define OTD_is_load(o) ((o)->is_ld)
-#define OTD_is_eq(o) ((o)->is_eq)
-#define OTD_is_lt(o) ((o)->is_lt)
-#define OTD_is_gt(o) ((o)->is_gt)
-#define OTD_is_movi(o) ((o)->is_movi)
-#define OTD_is_addi(o) ((o)->is_addi)
-#define OTD_is_subi(o) ((o)->is_subi)
+#define OTD_code(o) ((o)->m_code)
+#define OTD_name(o) ((o)->m_name)
+#define OTD_unit(o) ((o)->m_unit)
+#define OTD_equ_or_types(o) ((o)->m_equ_or_types)
+#define OTD_srd_group(o) ((o)->m_sr_desc_group)
+#define OTD_sche_info(o) ((o)->m_sche_info)
+#define OTD_is_fake(o) ((o)->m_is_fake)
+#define OTD_is_bus(o) ((o)->m_is_bus)
+#define OTD_is_nop(o) ((o)->m_is_nop)
+#define OTD_is_volatile(o)  ((o)->m_is_volatile)
+#define OTD_is_side_effect(o) ((o)->m_is_side_effect)
+#define OTD_is_asm(o) ((o)->m_is_asm)
+#define OTD_is_predicated(o) ((o)->m_is_predicated)
+#define OTD_is_call(o) ((o)->m_is_call_stmt)
+#define OTD_is_cond_br(o) ((o)->m_is_conditional_br)
+#define OTD_is_uncond_br(o) ((o)->m_is_unconditional_br)
+#define OTD_is_indirect_br(o) ((o)->m_is_indirect_br)
+#define OTD_is_return(o) ((o)->m_is_return)
+#define OTD_is_unaligned(o) ((o)->m_is_unaligned)
+#define OTD_is_store(o) ((o)->m_is_store)
+#define OTD_is_load(o) ((o)->m_is_ld)
+#define OTD_is_eq(o) ((o)->m_is_eq)
+#define OTD_is_lt(o) ((o)->m_is_lt)
+#define OTD_is_gt(o) ((o)->m_is_gt)
+#define OTD_is_movi(o) ((o)->m_is_movi)
+#define OTD_is_addi(o) ((o)->m_is_addi)
+#define OTD_is_subi(o) ((o)->m_is_subi)
 class ORTypeDesc {
 public:
     //////////////////////////////////////////////////////////////////////////
     //NOTE: DO NOT CHANGE THE LAYOUT OF MEMBER.                             //
     //THE LAYOUT OF MEMBER CORRESPONDS TO TERGET DEPENDENT CONFIG FILE.     //
     //////////////////////////////////////////////////////////////////////////
-    OR_TYPE code;
-    CHAR const* name;
+    OR_TYPE m_code;
+    CHAR const* m_name;
 
     //Hardware unit.
-    UNIT unit;
+    UNIT m_unit;
 
     //The equivalent or-types that are same in utilities for
     //different hardware function-unit.
-    EquORTypes * equ_or_types;
+    EquORTypes * m_equ_or_types;
 
     //Description of source operands and result operands.
-    SRDescGroup<> * sr_desc_group;
+    SRDescGroup<> * m_sr_desc_group;
 
-    ORScheInfo sche_info;
+    ORScheInfo m_sche_info;
 
-    UINT is_predicated:1; //True if OR has a preidcate register.
-    UINT is_fake:1;
-    UINT is_bus:1;
-    UINT is_nop:1;
-    UINT is_volatile:1;
-    UINT is_side_effect:1;
-    UINT is_asm:1;
-    UINT isCallStmt:1;
-    UINT isConditionalBr:1;
-    UINT isUnconditionalBr:1;
-    UINT isIndirectBr:1;
-    UINT is_return:1;
-    UINT is_unaligned:1;
-    UINT is_store:1;
-    UINT is_ld:1;
-    UINT is_eq:1;
-    UINT is_lt:1;
-    UINT is_gt:1;
-    UINT is_movi:1;
-    UINT is_addi:1;
-    UINT is_subi:1;
+    UINT m_is_predicated:1; //True if OR has a preidcate register.
+    UINT m_is_fake:1;
+    UINT m_is_bus:1;
+    UINT m_is_nop:1;
+    UINT m_is_volatile:1;
+    UINT m_is_side_effect:1;
+    UINT m_is_asm:1;
+    UINT m_is_call_stmt:1;
+    UINT m_is_conditional_br:1;
+    UINT m_is_unconditional_br:1;
+    UINT m_is_indirect_br:1;
+    UINT m_is_return:1;
+    UINT m_is_unaligned:1;
+    UINT m_is_store:1;
+    UINT m_is_ld:1;
+    UINT m_is_eq:1;
+    UINT m_is_lt:1;
+    UINT m_is_gt:1;
+    UINT m_is_movi:1;
+    UINT m_is_addi:1;
+    UINT m_is_subi:1;
+public:
+    SRDescGroup<> const* getSRDGroup() const { return OTD_srd_group(this); }
 };
 
 
@@ -267,8 +269,23 @@ public:
     virtual LabelInfo const* getLabel() const
     {
         SR * sr = get_opnd(HAS_PREDICATE_REGISTER + 0);
-        ASSERT0(sr && SR_is_label(sr));
+        ASSERT0(sr && sr->is_label());
         return SR_label(sr);
+    }
+
+    //Get Label List, it should be a label-list SR, the default operand index
+    //is HAS_PREDICATE_REGISTER + 0.
+    //Layout of opnds:
+    //-----------------------------------------------------------
+    // 0         | 1     | 2   |
+    // predicate | label | ... |
+    // register  | list  |     |
+    //-----------------------------------------------------------
+    virtual LabelInfoList const* getLabelList() const
+    {
+        SR * sr = get_opnd(HAS_PREDICATE_REGISTER + 0);
+        ASSERT0(sr && sr->is_label_list());
+        return SR_label_list(sr);
     }
 
     //OR format is : <- base, ofst, store_value0, store_value1, ...
@@ -490,12 +507,17 @@ public:
     // predicate | label | ... |
     // register  |       |     |
     //-----------------------------------------------------------
-    virtual void setLabel(SR * v, CG * cg)
-    {
-        ASSERT0(v && v->is_label());
-        set_opnd(HAS_PREDICATE_REGISTER + 0, v, cg);
-    }
+    virtual void setLabel(SR * v, CG * cg);
 
+    //Get Label List, it should be a label-list SR, the default operand index
+    //is HAS_PREDICATE_REGISTER + 0.
+    //Layout of opnds:
+    //-----------------------------------------------------------
+    // 0         | 1     | 2   |
+    // predicate | label | ... |
+    // register  | list  |     |
+    //-----------------------------------------------------------
+    virtual void setLabelList(SR * v, CG * cg);
     virtual void set_lda_result(SR * v, CG * cg) { set_result(0, v, cg); }
     virtual void set_mov_to(SR * v, CG * cg) { set_result(0, v, cg); }
     virtual void set_copy_to(SR * v, CG * cg) { set_result(0, v, cg); }
@@ -510,7 +532,8 @@ public:
     ~ORList() {}
 
     void append_tail(OR * o);
-    void append_tail(ORList & ors);
+    //Move elements in 'ors' to tail of current list.
+    void move_tail(MOD ORList & ors);
 
     void copyDbx(IR const* ir)
     {
@@ -616,9 +639,10 @@ public:
     ~RecycORList();
 
     void append_tail(OR * o) { m_entity->append_tail(o); }
-    void append_tail(ORList & ors) { m_entity->append_tail(ors); }
-    void append_tail(RecycORList & ors)
-    { m_entity->append_tail(ors.getList()); }
+
+    //Move elements in 'ors' to tail of current list.
+    void move_tail(ORList & ors) { m_entity->move_tail(ors); }
+    void move_tail(RecycORList & ors) { m_entity->move_tail(ors.getList()); }
 
     void copyDbx(IR const* ir) { m_entity->copyDbx(ir); }
     void copyDbx(Dbx const* dbx) { m_entity->copyDbx(dbx); }

@@ -11,6 +11,6 @@ int foo()
     char *** p3;
     p3 = &p2;
 
-    ***p3 = p;
-    return ***p3;
+    ***p3 = p; //equal to: x = p;
+    return ***p3; //equal to: return x;
 }

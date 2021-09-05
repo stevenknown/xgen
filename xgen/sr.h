@@ -38,6 +38,21 @@ class SR;
 class SRVec;
 class SRVecMgr;
 
+#define LILIST_label(l) ((l)->m_label)
+
+class LabelInfoList {
+public:
+    xoc::LabelInfo const* m_label;
+    LabelInfoList * prev;
+    LabelInfoList * next;
+public:
+    LabelInfoList() {}
+
+    LabelInfoList * get_prev() const { return prev; }
+    LabelInfoList * get_next() const { return next; }
+    xoc::LabelInfo const* getLabel() const { return m_label; }
+};
+
 //This macro defined the maximum number of element that SRVec can recorded.
 //User can extend this value if it is not big enough.
 #define MAX_SRVEC_NUM 64
@@ -53,6 +68,7 @@ typedef enum _SR_TYPE {
     SR_VAR,
     SR_STR,
     SR_LAB,
+    SR_LAB_LIST,
 }  SR_TYPE;
 
 #define MAX_SR_NAME_BUF_LEN 1024
@@ -60,18 +76,21 @@ typedef enum _SR_TYPE {
 #ifdef _DEBUG_
 SR const* checkSRVAR(SR const* ir);
 SR const* checkSRLAB(SR const* ir);
+SR const* checkSRLABList(SR const* ir);
 SR const* checkSRREG(SR const* ir);
 SR const* checkSRSTR(SR const* ir);
 SR const* checkSRIMM(SR const* ir);
 
 #define CK_SR_VAR(sr) (const_cast<SR*>(checkSRVAR(sr)))
 #define CK_SR_LAB(sr) (const_cast<SR*>(checkSRLAB(sr)))
+#define CK_SR_LAB_LIST(sr) (const_cast<SR*>(checkSRLABList(sr)))
 #define CK_SR_IMM(sr) (const_cast<SR*>(checkSRIMM(sr)))
 #define CK_SR_STR(sr) (const_cast<SR*>(checkSRSTR(sr)))
 #define CK_SR_REG(sr) (const_cast<SR*>(checkSRREG(sr)))
 #else
 #define CK_SR_VAR(sr) (sr)
 #define CK_SR_LAB(sr) (sr)
+#define CK_SR_LAB_LIST(sr) (sr)
 #define CK_SR_IMM(sr) (sr)
 #define CK_SR_STR(sr) (sr)
 #define CK_SR_REG(sr) (sr)
@@ -97,6 +116,7 @@ SR const* checkSRIMM(SR const* ir);
 #define SR_var_ir(sr) (CK_SR_VAR(sr))->u1.u4.ir
 #define SR_label(sr) (CK_SR_LAB(sr))->u1.label
 #define SR_label_ofst(sr) (CK_SR_LAB(sr)) //Reserved
+#define SR_label_list(sr) (CK_SR_LAB_LIST(sr))->u1.label_list
 
 //If sr belong to a sr-vector, record the vector.
 //sr is either register or immeidate.
@@ -109,6 +129,7 @@ SR const* checkSRIMM(SR const* ir);
 #define SR_is_str(sr) (SR_type(sr) == SR_STR)
 #define SR_is_label(sr) (SR_type(sr) == SR_LAB)
 #define SR_is_var(sr) (SR_type(sr) == SR_VAR)
+#define SR_is_label_list(sr) (SR_type(sr) == SR_LAB_LIST)
 #define SR_is_sp(sr) ((sr)->u2.s2.is_sp)
 #define SR_is_fp(sr) ((sr)->u2.s2.is_fp)
 #define SR_is_gp(sr) ((sr)->u2.s2.is_gp)
@@ -123,7 +144,8 @@ SR const* checkSRIMM(SR const* ir);
 #define SR_is_fp_imm(sr) ((sr)->type == SR_FP_IMM)
 #define SR_is_imm(sr) (SR_is_int_imm(sr) || SR_is_fp_imm(sr))
 #define SR_is_reg(sr) ((sr)->type == SR_REG)
-#define SR_is_constant(sr) (SR_is_imm(sr) || SR_is_label(sr) || SR_is_var(sr))
+#define SR_is_constant(sr) (SR_is_imm(sr) || SR_is_label(sr) || \
+                            SR_is_var(sr) || SR_is_label_list(sr))
 class SR {
     COPY_CONSTRUCTOR(SR);
 public:
@@ -176,6 +198,7 @@ public:
         } u4;
 
         xoc::LabelInfo const* label; //present Internal-Label or Custom-Label
+        LabelInfoList const* label_list; //the list of LabelInfo.
     } u1;
 
     //Note SR which has composed SRVec can not make up another SRVec.
@@ -220,6 +243,7 @@ public:
     Var const* getSpillVar() const { return SR_spill_var(this); }
     UINT getVarOfst() const { return SR_var_ofst(this); }
     LabelInfo const* getLabel() const { return SR_label(this); }
+    LabelInfoList const* getLabelList() const { return SR_label_list(this); }
     IR const* getVarIR() const { return SR_var_ir(this); }
     Sym const* getStr() const { return SR_str(this); }
     UINT getImmSize() const { return SR_imm_size(this); }
@@ -231,6 +255,7 @@ public:
     bool is_vec() const { return SR_is_vec(this); }
     bool is_str() const { return SR_is_str(this); }
     bool is_label() const { return SR_is_label(this); }
+    bool is_label_list() const { return SR_is_label_list(this); }
     bool is_var() const { return SR_is_var(this); }
     bool is_sp() const { return SR_is_sp(this); }
     bool is_fp() const { return SR_is_fp(this); }

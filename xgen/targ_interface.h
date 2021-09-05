@@ -36,6 +36,7 @@ namespace xgen {
 typedef UINT REG;
 class RegSet;
 class ORTypeDesc;
+class SRDesc;
 struct EquORTypes;
 class TargMach;
 class CGMgr;
@@ -72,6 +73,12 @@ RegSet const* tmMapCluster2RegSetAlloable(CLUST clust);
 
 //Return description for given or-type.
 ORTypeDesc const* tmGetORTypeDesc(OR_TYPE);
+
+//Return SR description of the operand indexed by 'idx' for given or-type.
+SRDesc const* tmGetOpndSRDesc(OR_TYPE ot, UINT idx);
+
+//Return SR description of the result indexed by 'idx' for given or-type.
+SRDesc const* tmGetResultSRDesc(OR_TYPE ot, UINT idx);
 
 //Return true if regfile is integer register file.
 bool tmIsIntRegFile(REGFILE rf);

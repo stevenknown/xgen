@@ -64,14 +64,14 @@ public:
     virtual ~BBORList() {}
 
     //Insert OR prior to cond_br, uncond_br, call, return.
-    void append_tail_ex(List<OR*> & list);
+    void append_tail_ex(MOD List<OR*> & list);
 
     //Insert OR prior to cond_br, uncond_br, call, return.
-    xcom::C<OR*> * append_tail_ex(OR * o);
-    ORCt * append_tail(OR * o);
-    void append_tail(IN List<OR*> & list);
-    ORCt * append_head(IN OR * o);
-    void append_head(IN List<OR*> & list);
+    xcom::C<OR*> * append_tail_ex(MOD OR * o);
+    ORCt * append_tail(MOD OR * o);
+    ORCt * append_head(MOD OR * o);
+    void append_tail(MOD List<OR*> & list);
+    void append_head(MOD List<OR*> & list);
 
     ORCt * insert_before(IN OR * o, IN OR * marker);
     ORCt * insert_before(IN OR * o, IN ORCt * marker);
@@ -96,16 +96,16 @@ public:
     virtual OR * get_prev() //update 'm_cur'
     { return List<OR*>::get_prev(); }
 
-    virtual OR * get_next(IN OUT ORCt ** holder) //NOT update 'm_cur'
+    virtual OR * get_next(MOD ORCt ** holder) //NOT update 'm_cur'
     { return List<OR*>::get_next(holder); }
 
-    virtual ORCt * get_next(IN OUT ORCt * holder) //NOT update 'm_cur'
+    virtual ORCt * get_next(MOD ORCt * holder) //NOT update 'm_cur'
     { return List<OR*>::get_next(holder); }
 
-    virtual OR * get_prev(IN OUT ORCt ** holder) //NOT update 'm_cur'
+    virtual OR * get_prev(MOD ORCt ** holder) //NOT update 'm_cur'
     { return List<OR*>::get_prev(holder); }
 
-    virtual ORCt * get_prev(IN OUT ORCt * holder) //NOT update 'm_cur'
+    virtual ORCt * get_prev(MOD ORCt * holder) //NOT update 'm_cur'
     { return List<OR*>::get_prev(holder); }
 
     virtual OR * get_next(IN OR * marker);
@@ -155,12 +155,11 @@ public:
     explicit ORBB(CG * cg);
     ~ORBB();
 
-    inline void addLabel(LabelInfo const* li)
+    void addLabel(LabelInfo const* li)
     {
         ASSERT0(li != nullptr);
-        if (!m_lab_list.find(li)) {
-            m_lab_list.append_tail(li);
-        }
+        ASSERTN(!m_lab_list.find(li), ("avoid doing slowly search"));
+        m_lab_list.append_tail(li);
     }
 
     void cleanLabelInfoList() { getLabelList().clean(); }

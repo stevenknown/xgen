@@ -32,6 +32,28 @@ author: Su Zhenyu
 
 namespace xgen {
 
+static bool canOpndBeLabel(OR const* o, UINT idx)
+{
+    ORTypeDesc const* otd = tmGetORTypeDesc(o->getCode());
+    SRDescGroup<> const* sdg = OTD_srd_group(otd);
+    ASSERT0(sdg);
+    SRDesc const* sr_desc = sdg->get_opnd(idx);
+    ASSERT0(sr_desc);
+    return sr_desc->is_label();
+}
+
+
+static bool canOpndBeLabelList(OR const* o, UINT idx)
+{
+    ORTypeDesc const* otd = tmGetORTypeDesc(o->getCode());
+    SRDescGroup<> const* sdg = OTD_srd_group(otd);
+    ASSERT0(sdg);
+    SRDesc const* sr_desc = sdg->get_opnd(idx);
+    ASSERT0(sr_desc);
+    return sr_desc->is_label_list();
+}
+
+
 //
 //START ORList
 //
@@ -46,7 +68,8 @@ void ORList::append_tail(OR * o)
 }
 
 
-void ORList::append_tail(ORList & ors)
+//Move elements in 'ors' to tail of current list.
+void ORList::move_tail(MOD ORList & ors)
 {
     #ifdef _DEBUG_
     for (OR * o = get_head(); o != nullptr; o = get_next()) {
@@ -55,7 +78,7 @@ void ORList::append_tail(ORList & ors)
         }
     }
     #endif
-    List<OR*>::append_tail(ors);
+    List<OR*>::move_tail(ors);
 }
 
 
@@ -345,6 +368,22 @@ void OR::set_result(INT i, SR * sr, CG * cg)
 {
     ASSERT0(sr && (UINT)i < result_num());
     m_result.set(i, sr, cg->getORMgr()->get_pool());
+}
+
+
+void OR::setLabel(SR * v, CG * cg)
+{
+    ASSERT0(v && v->is_label());
+    ASSERT0(canOpndBeLabel(this, HAS_PREDICATE_REGISTER + 0));
+    set_opnd(HAS_PREDICATE_REGISTER + 0, v, cg);
+}
+
+
+void OR::setLabelList(SR * v, CG * cg)
+{
+    ASSERT0(v && v->is_label_list());
+    ASSERT0(canOpndBeLabelList(this, HAS_PREDICATE_REGISTER + 0));
+    set_opnd(HAS_PREDICATE_REGISTER + 0, v, cg);
 }
 //END OR
 

@@ -30,8 +30,7 @@ author: Su Zhenyu
 @*/
 #include "../xgen/xgeninc.h"
 
-void ARMLifeTimeMgr::considerSpecialConstraints(IN OR * o,
-                                                SR const* sr,
+void ARMLifeTimeMgr::considerSpecialConstraints(IN OR * o, SR const* sr,
                                                 OUT RegSet & usable_regs)
 {
     ASSERTN(o && sr, ("nullptr input"));

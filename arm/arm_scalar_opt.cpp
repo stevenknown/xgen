@@ -113,7 +113,6 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg));
     UINT cp_count = 0;
     UINT licm_count = 0;
-
     do {
         change = false;
         for (Pass * pass = passlist.get_head();
@@ -145,9 +144,9 @@ bool ARMScalarOpt::perform(OptCtx & oc)
                 if (oc.is_nonpr_du_chain_valid()) {
                     SET_FLAG(flag, DUOPT_COMPUTE_NONPR_DU);
                 }
-                ASSERT0(m_rg->getDUMgr());
                 ASSERT0(verifyMDDUChain(m_rg, flag));
             }
+
             ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
             ASSERT0(m_rg->getCFG()->verify());
             ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg));

@@ -36,27 +36,56 @@ namespace xgen {
 class RegFileSet;
 
 //SR Descriptor
-#define SRD_valid_regfile_set(sd) ((sd)->valid_regfile_set)
-#define SRD_valid_reg_set(sd) ((sd)->valid_regset)
-#define SRD_is_imm(sd) ((sd)->is_imm)
-#define SRD_bitsize(sd) ((sd)->bitsize)
-#define SRD_is_signed(sd) ((sd)->is_signed)
-typedef struct SRDesc {
-    RegFileSet const* valid_regfile_set;
-    RegSet const* valid_regset;
-    UINT bitsize;
-    BYTE is_signed:1;
-    BYTE is_imm:1;
+#define SRD_is_imm(sd) ((sd)->m_is_imm)
+#define SRD_is_signed(sd) ((sd)->m_is_signed)
+#define SRD_is_label(sd) ((sd)->m_is_label)
+#define SRD_is_label_list(sd) ((sd)->m_is_label_list)
+#define SRD_bitsize(sd) ((sd)->m_bitsize)
+#define SRD_valid_regfile_set(sd) ((sd)->m_valid_regfile_set)
+#define SRD_valid_reg_set(sd) ((sd)->m_valid_regset)
+class SRDesc {
+    COPY_CONSTRUCTOR(SRDesc);
+public:
+    ////////////////////////////////////////////////////////////////////////////
+    //NOTE: DURING PRECOMPILE STAGE, THE PRINT ORDER OF FOLLOWING FIELD MUST  //
+    //BE CONFORM TO THE RESPECTIVE DECLARATION ORDER.                         //
+    ////////////////////////////////////////////////////////////////////////////
+    BYTE m_is_signed:1; //1th printed
+    BYTE m_is_imm:1; //2nd printed
+    BYTE m_is_label:1; //3rd printed
+    BYTE m_is_label_list:1; //4th printed
+    UINT m_bitsize; //5th printed
+    RegFileSet const* m_valid_regfile_set; //6th printed
+    RegSet const* m_valid_regset; //7th printed
+public:
+    SRDesc() {}
+    SRDesc(bool is_signed, bool is_imm, bool is_label, bool is_label_list, 
+           UINT bs, RegFileSet const* rfs, RegSet const* rs) :
+        m_is_signed(is_signed), m_is_imm(is_imm), m_is_label(is_label),
+        m_is_label_list(is_label_list), m_bitsize(bs), m_valid_regfile_set(rfs),
+        m_valid_regset(rs) {}
+
+    RegFileSet const* getValidRegFileSet() const
+    { return SRD_valid_regfile_set(this); }
+    RegSet const* getValidRegSet() const { return SRD_valid_reg_set(this); }
+    UINT getBitSize() const { return SRD_bitsize(this); }
 
     void init()
     {
-        valid_regfile_set = nullptr;
-        valid_regset = nullptr;
-        bitsize = 0;
-        is_imm = false;
-        is_signed = false;
+        m_is_imm = false;
+        m_is_signed = false;
+        m_is_label = false;
+        m_is_label_list = false;
+        m_bitsize = 0;
+        m_valid_regfile_set = nullptr;
+        m_valid_regset = nullptr;
     }
-} SRDesc;
+    bool is_imm() const { return SRD_is_imm(this); }
+    bool is_signed() const { return SRD_is_signed(this); }
+    bool is_label() const { return SRD_is_label(this); }
+    bool is_label_list() const { return SRD_is_label_list(this); }    
+};
+
 
 //Group of SRDesc
 template <UINT DefaultSize = 0>
@@ -120,6 +149,7 @@ public:
 };
 
 
+//Compute the bytesize of SRDescGroup by given the number of operand and result.
 inline UINT computeSRDescGroupSize(UINT resnum, UINT opndnum)
 {
     return sizeof(SRDescGroup<0>) + sizeof(SRDesc*) * (opndnum + resnum);

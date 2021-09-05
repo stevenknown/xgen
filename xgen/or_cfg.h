@@ -75,17 +75,15 @@ public:
     void dumpVCG(CHAR const* name = nullptr, bool detail = true);
 
     virtual ORBB * findBBbyLabel(LabelInfo const* lab) const;
-    virtual void findTargetBBOfMulticondBranch(OR const*,
-                                               OUT List<ORBB*>&)
-    { ASSERTN(0, ("TODO")); }
-    virtual void findTargetBBOfIndirectBranch(OR const*, OUT List<ORBB*>&)
-    { ASSERTN(0, ("TODO")); }
+    virtual void findTargetBBOfMulticondBranch(OR const*, OUT List<ORBB*>&)
+    { ASSERTN(0, ("Target Dependent Code")); }
+    virtual void findTargetBBOfIndirectBranch(OR const*, OUT List<ORBB*>&);
 
     virtual ORBB * getBB(UINT id) const;
     virtual INT getNumOfBB();
     virtual List<ORBB*> * getBBList();
-    virtual void get_preds(IN OUT List<ORBB*> & preds, ORBB const* bb);
-    virtual void get_succs(IN OUT List<ORBB*> & succs, ORBB const* bb);
+    virtual void get_preds(MOD List<ORBB*> & preds, ORBB const* bb);
+    virtual void get_succs(MOD List<ORBB*> & succs, ORBB const* bb);
     OR * get_first_xr(ORBB * bb);
     OR * get_last_xr(ORBB * bb);
     CG * getCG() const { return m_cg; }

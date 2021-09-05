@@ -134,7 +134,7 @@ void ParallelPartMgr::destroy()
 //Rename and make mapping between newtn and original sr.
 //Rename local and global SR in a list of OR with new SR come from 'map'.
 //Return overall new global TNs used.
-void ParallelPartMgr::renameSR(IN OUT OR * o, IN SR2SR_DMAP & dmap)
+void ParallelPartMgr::renameSR(MOD OR * o, IN SR2SR_DMAP & dmap)
 {
     UINT i;
     for (i = 0;  i < o->result_num(); i++) {

@@ -33,7 +33,10 @@ author: Su Zhenyu
 
 namespace xgen {
 
+class OR;
+class SR;
 class IR2OR;
+class ORAsmInfo;
 
 //Map Symbol Register Id to specifical SR.
 typedef xcom::HMap<UINT, SR*> SRegid2SR;
@@ -219,6 +222,8 @@ public:
     xoc::Var * addBBLevelVar(xoc::Type const* type, UINT align);
     xoc::Var * addFuncLevelVar(xoc::Type const* type, UINT align);
     void appendReload(ORBB * bb, ORList & ors);
+    LabelInfoList * allocLabelInfoList()
+    { return (LabelInfoList*)xmalloc(sizeof(LabelInfoList)); }
     ORBB * allocBB();
     RegSet * allocRegSet() { return m_regset_mgr.allocRegSet(); }
     virtual BBSimulator * allocBBSimulator(ORBB * bb);
@@ -235,6 +240,8 @@ public:
     //Build pseduo instruction that indicate LabelInfo.
     //Note OR_label must be supplied by Target.
     void buildLabel(xoc::LabelInfo const* li, OUT ORList & ors, IN IOC * cont);
+
+    LabelInfoList * buildLabelInfoList(IR const* castlst);
 
     //Build nop instruction.
     virtual OR * buildNop(UNIT unit, CLUST clust) = 0;
@@ -336,7 +343,7 @@ public:
     virtual void buildGeneralLoad(IN SR * val, HOST_INT ofst,
                                   OUT ORList & ors, IN IOC * cont);
     virtual void buildTypeCvt(IR const* tgt, IR const* src,
-                              OUT ORList & ors, IN OUT IOC * cont);
+                              OUT ORList & ors, MOD IOC * cont);
 
     //Implement memory block copy.
     //Note tgt and src should not overlap.
@@ -390,10 +397,10 @@ public:
     virtual OR * buildBusCopy(IN SR * src, IN SR * tgt, IN SR * pd,
                               CLUST src_clust, CLUST tgt_clust) = 0;
     virtual void buildShiftLeft(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
-                                OUT ORList & ors, IN OUT IOC * cont) = 0;
+                                OUT ORList & ors, MOD IOC * cont) = 0;
     virtual void buildShiftRight(IN SR * src, ULONG sr_size,
                                  IN SR * shift_ofst, bool is_signed,
-                                 OUT ORList & ors, IN OUT IOC * cont) = 0;
+                                 OUT ORList & ors, MOD IOC * cont) = 0;
     //Build memory store operation that store 'reg' into stack.
     //NOTE: user have to assign physical register manually if there is
     //new OR generated and requires register allocation.
@@ -529,12 +536,25 @@ public:
     //Note this function is target dependent.
     virtual void expandFakeOR(OR * o, OUT IssuePackageList * ipl);
 
+    //Format label list string in 'buf'.
+    CHAR * formatLabelListString(LabelInfoList const* lablst,
+                                 OUT xcom::StrBuf & buf) const
+    {
+        for (LabelInfoList const* ll = lablst;
+             ll != nullptr; ll = ll->get_next()) {
+            formatLabelName(ll->getLabel(), buf);
+            if (ll->get_next() != nullptr) {
+                buf.strcat(",");
+            }
+        }
+        return buf.buf;
+    }
+
     //Format label name string in 'buf'.
     CHAR * formatLabelName(xoc::LabelInfo const* lab,
                            OUT xcom::StrBuf & buf) const
     {
-        CHAR const* prefix = nullptr;
-        prefix = SYM_name(m_rg->getRegionVar()->get_name());
+        CHAR const* prefix = m_rg->getRegionVar()->get_name()->getStr();
         buf.strcat("%s_", prefix);
         if (LABELINFO_type(lab) == L_ILABEL) {
             buf.strcat(ILABEL_STR_FORMAT, ILABEL_CONT(lab));
@@ -556,6 +576,7 @@ public:
 
     SR * genVAR(xoc::Var const* var);
     SR * genLabel(LabelInfo const* li);
+    SR * genLabelList(LabelInfoList const* lilst);
     SR * genSR();
     SR * genSR(REG reg, REGFILE regfile);
 

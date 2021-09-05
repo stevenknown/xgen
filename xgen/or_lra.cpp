@@ -687,8 +687,7 @@ UINT InterfGraph::getInterfDegree(LifeTime * lt)
 }
 
 
-void InterfGraph::getNeighborList(IN OUT List<LifeTime*> & ni_list,
-                                  LifeTime * lt)
+void InterfGraph::getNeighborList(MOD List<LifeTime*> & ni_list, LifeTime * lt)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     List<UINT> int_ni_list;
@@ -1334,7 +1333,7 @@ RegSet * LifeTimeMgr::getGRAUsedReg()
 //Get occurrences in between of 'pos1' and 'pos2',
 //and also include both of them.
 void LifeTimeMgr::getOccInRange(INT start, INT end, IN LifeTime * lt,
-                                IN OUT List<INT> &occs)
+                                MOD List<INT> &occs)
 {
     ASSERTN(start <= end && start >= 0 && end >= 0, ("out of range"));
     ASSERTN(start >= LT_FIRST_POS && end <= (INT)(getMaxLifeTimeLen() - 1),
@@ -1354,7 +1353,7 @@ void LifeTimeMgr::getOccInRange(INT start, INT end, IN LifeTime * lt,
 
 //Get backward occurrences of 'pos'
 //e.g:Lowest_Pos...Backward_Occ....Pos.....Highest_Pos
-INT LifeTimeMgr::getBackwardOcc(INT pos, IN LifeTime * lt, IN OUT bool * is_def)
+INT LifeTimeMgr::getBackwardOcc(INT pos, IN LifeTime * lt, MOD bool * is_def)
 {
     INT backwpos = -1;
     if (pos <= LT_FIRST_POS) {
@@ -1390,7 +1389,7 @@ INT LifeTimeMgr::getBackwardOcc(INT pos, IN LifeTime * lt, IN OUT bool * is_def)
 
 //Get forward occurrences of 'pos'
 //e.g:Lowest_Pos....Pos...Forward_Occ...Highest_Pos
-INT LifeTimeMgr::getForwardOcc(INT pos, IN LifeTime * lt, IN OUT bool * is_def)
+INT LifeTimeMgr::getForwardOcc(INT pos, IN LifeTime * lt, MOD bool * is_def)
 {
     INT forwpos = -1;
     ASSERTN(pos >= LT_FIRST_POS && pos <= (INT)(getMaxLifeTimeLen() - 1),
@@ -1592,9 +1591,8 @@ void LifeTimeMgr::pickOutUnusableRegs(LifeTime const*, RegSet & rs)
 
 
 //Process the function/region returning ORBB.
-void LifeTimeMgr::processFuncExitBB(IN OUT List<LifeTime*> & liveout_exitbb_lts,
-                                    IN OUT LifeTimeTab & live_lt_list,
-                                    INT pos)
+void LifeTimeMgr::processFuncExitBB(MOD List<LifeTime*> & liveout_exitbb_lts,
+                                    MOD LifeTimeTab & live_lt_list, INT pos)
 {
     RegSet const* regs = tmGetRegSetOfReturnValue();
     for (INT reg = regs->get_first(); reg != -1; reg = regs->get_next(reg)) {
@@ -1641,7 +1639,7 @@ void LifeTimeMgr::processLiveOutSR(OUT LifeTimeTab & live_lt_list, INT pos)
 
 
 //Process the live in sr.
-void LifeTimeMgr::processLiveInSR(IN OUT LifeTimeTab & live_lt_list)
+void LifeTimeMgr::processLiveInSR(MOD LifeTimeTab & live_lt_list)
 {
     //Live in gsr
     for (INT id = ORBB_livein(m_bb).get_first();
@@ -1662,7 +1660,7 @@ void LifeTimeMgr::processLiveInSR(IN OUT LifeTimeTab & live_lt_list)
 }
 
 
-void LifeTimeMgr::appendPosition(IN OUT LifeTimeTab & live_lt_list, INT pos)
+void LifeTimeMgr::appendPosition(MOD LifeTimeTab & live_lt_list, INT pos)
 {
     //Keep the track of live-point for the remainder live srs.
     LifeTimeTabIter c;
@@ -3455,9 +3453,8 @@ bool LRA::canBeSpillCandidate(LifeTime * lt, LifeTime * cand)
 
 
 //Reassign reg file if there are srs without regfile assigned.
-void LRA::reassignRegFileForNewSR(IN OUT ClustRegInfo cri[CLUST_NUM],
-                                  IN LifeTimeMgr & mgr,
-                                  IN DataDepGraph & ddg)
+void LRA::reassignRegFileForNewSR(MOD ClustRegInfo cri[CLUST_NUM],
+                                  IN LifeTimeMgr & mgr, IN DataDepGraph & ddg)
 {
     bool doit = false;
     RegFileSet is_regfile_unique;
@@ -3486,11 +3483,8 @@ void LRA::reassignRegFileForNewSR(IN OUT ClustRegInfo cri[CLUST_NUM],
 
 //Rename SR and the match of physical register is neglected.
 //Rename the operand and result SR till the end position of LifeTime.
-void LRA::renameOpndsFollowedLT(SR * oldsr,
-                                SR * newsr,
-                                INT start,
-                                LifeTime * lt,
-                                LifeTimeMgr & mgr)
+void LRA::renameOpndsFollowedLT(SR * oldsr, SR * newsr, INT start,
+                                LifeTime * lt, LifeTimeMgr & mgr)
 {
     PosInfo * pi = nullptr;
     for (INT i = start; i >= 0; i = LT_desc(lt).get_next(i)) {
@@ -3530,11 +3524,9 @@ void LRA::renameOpndInRange(SR * oldsr,
 
 void LRA::reallocateLifeTime(List<LifeTime*> & prio_list,
                              List<LifeTime*> & uncolored_list,
-                             LifeTimeMgr & mgr,
-                             DataDepGraph & ddg,
-                             RegFileGroup * rfg,
-                             InterfGraph & ig,
-                             IN OUT ClustRegInfo cri[CLUST_NUM])
+                             LifeTimeMgr & mgr, DataDepGraph & ddg,
+                             RegFileGroup * rfg, InterfGraph & ig,
+                             MOD ClustRegInfo cri[CLUST_NUM])
 {
     //Need to update mgr, ig, ddg, prio_list.
     prio_list.clean();
@@ -3585,16 +3577,11 @@ void LRA::pure_spill(LifeTime * lt, LifeTimeMgr & mgr)
 }
 
 
-void LRA::spill(LifeTime * lt,
-                List<LifeTime*> & prio_list,
-                List<LifeTime*> & uncolored_list,
-                LifeTimeMgr & mgr,
-                DataDepGraph & ddg,
-                RegFileGroup * rfg,
-                InterfGraph & ig,
-                REG spill_location,
-                Action & action,
-                IN OUT ClustRegInfo cri[CLUST_NUM])
+void LRA::spill(LifeTime * lt, List<LifeTime*> & prio_list,
+                List<LifeTime*> & uncolored_list, LifeTimeMgr & mgr,
+                DataDepGraph & ddg, RegFileGroup * rfg,
+                InterfGraph & ig, REG spill_location,
+                Action & action, MOD ClustRegInfo cri[CLUST_NUM])
 {
     DUMMYUSE(spill_location);
     bool has_hole;
@@ -4035,12 +4022,10 @@ bool LRA::splitTwoLT(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
 //    the best USE between 'pos1' and 'pos2' to insert reload code.
 //    While both positions are useless, we do not insert any code in
 //    those positions, and set 'pos1' and 'pos2' to -1.
-void LRA::selectReasonableSplitPos(IN OUT INT * pos1,
-                                   IN OUT INT * pos2,
-                                   IN OUT bool * is_pos1_spill,
-                                   IN OUT bool * is_pos2_spill,
-                                   LifeTime * lt,
-                                   LifeTimeMgr & mgr)
+void LRA::selectReasonableSplitPos(MOD INT * pos1, MOD INT * pos2,
+                                   MOD bool * is_pos1_spill,
+                                   MOD bool * is_pos2_spill,
+                                   LifeTime * lt, LifeTimeMgr & mgr)
 {
     ASSERTN(lt && *pos1 >= 0 && *pos2 > 0 && *pos1 < *pos2,
         ("Illegal position"));
@@ -4674,16 +4659,11 @@ bool LRA::elimRedundantStoreLoad(DataDepGraph & ddg)
 }
 
 
-bool LRA::split(LifeTime * lt,
-                List<LifeTime*> & prio_list,
-                List<LifeTime*> & uncolored_list,
-                LifeTimeMgr & mgr,
-                DataDepGraph & ddg,
-                RegFileGroup * rfg,
-                InterfGraph & ig,
-                REG spill_location,
-                Action & action,
-                IN OUT ClustRegInfo cri[CLUST_NUM])
+bool LRA::split(LifeTime * lt, List<LifeTime*> & prio_list,
+                List<LifeTime*> & uncolored_list, LifeTimeMgr & mgr,
+                DataDepGraph & ddg, RegFileGroup * rfg, InterfGraph & ig,
+                REG spill_location, Action & action,
+                MOD ClustRegInfo cri[CLUST_NUM])
 {
     show_phase("---Split start");
     bool has_hole = false;
@@ -4729,10 +4709,8 @@ bool LRA::split(LifeTime * lt,
 
 //Return true if there is hole in lifetime of 'owner' that
 //'inner' can be lived in, and 'startpos','endpos' represented the hole.
-bool LRA::getResideinHole(IN OUT INT * startpos,
-                          IN OUT INT * endpos,
-                          IN LifeTime * owner,
-                          IN LifeTime * inner,
+bool LRA::getResideinHole(MOD INT * startpos, MOD INT * endpos,
+                          IN LifeTime * owner, IN LifeTime * inner,
                           IN LifeTimeMgr & mgr)
 {
     INT start = 0;
@@ -4772,12 +4750,8 @@ bool LRA::getResideinHole(IN OUT INT * startpos,
 
 //Return true if there is hole in lifetime of 'lt',
 //and 'startpos','endpos' represented the hole.
-bool LRA::getMaxHole(IN OUT INT * startpos,
-                     IN OUT INT * endpos,
-                     IN LifeTime * lt,
-                     InterfGraph & ig,
-                     IN LifeTimeMgr & mgr,
-                     INT info_type)
+bool LRA::getMaxHole(MOD INT * startpos, MOD INT * endpos, IN LifeTime * lt,
+                     InterfGraph & ig, IN LifeTimeMgr & mgr, INT info_type)
 {
     INT maxlen = 0;
     INT start = 0;
@@ -4846,9 +4820,8 @@ bool LRA::getMaxHole(IN OUT INT * startpos,
 
 //Calculate the number of lifetimes which only living in the 'hole'.
 //Only compute the longest hole for each of life times.
-void LRA::computeLTResideInHole(IN OUT List<LifeTime*> & reside_in_lts,
-                                IN LifeTime * lt,
-                                IN InterfGraph & ig,
+void LRA::computeLTResideInHole(MOD List<LifeTime*> & reside_in_lts,
+                                IN LifeTime * lt, IN InterfGraph & ig,
                                 IN LifeTimeMgr & mgr)
 {
     INT hole_startpos, hole_endpos;
@@ -5029,10 +5002,9 @@ LifeTime * LRA::computeBestSpillCand(LifeTime * lt,
 bool LRA::reassignRegFile(LifeTime * lt,
                           List<LifeTime*> & prio_list,
                           List<LifeTime*> & uncolored_list,
-                          IN OUT ClustRegInfo cri[CLUST_NUM],
+                          MOD ClustRegInfo cri[CLUST_NUM],
                           RegFileSet const& is_regfile_unique,
-                          LifeTimeMgr & mgr,
-                          InterfGraph & ig,
+                          LifeTimeMgr & mgr, InterfGraph & ig,
                           RegFileGroup * rfg)
 {
     ASSERT0(lt && SR_regfile(LT_sr(lt)) != RF_UNDEF);
@@ -5050,15 +5022,12 @@ bool LRA::reassignRegFile(LifeTime * lt,
 
 //Moving life time out of their house to keep away from regfile of 'lt'.
 //So that 'lt' could survive get down.
-bool LRA::moving_house(LifeTime * lt,
-                       List<LifeTime*> & prio_list,
+bool LRA::moving_house(LifeTime * lt, List<LifeTime*> & prio_list,
                        List<LifeTime*> & uncolored_list,
-                       IN OUT ClustRegInfo cri[CLUST_NUM],
+                       MOD ClustRegInfo cri[CLUST_NUM],
                        RegFileSet const& is_regfile_unique,
-                       LifeTimeMgr & mgr,
-                       InterfGraph & ig,
-                       Action & action,
-                       RegFileGroup * rfg)
+                       LifeTimeMgr & mgr, InterfGraph & ig,
+                       Action & action, RegFileGroup * rfg)
 {
     List<LifeTime*> ni_list, ordered_list;
     ig.getNeighborList(ni_list, lt);
@@ -5094,12 +5063,10 @@ bool LRA::moving_house(LifeTime * lt,
 bool LRA::solveConflictRecursive(LifeTime * lt,
                                  List<LifeTime*> & uncolored_list,
                                  List<LifeTime*> & prio_list,
-                                 IN OUT ClustRegInfo cri[CLUST_NUM],
+                                 MOD ClustRegInfo cri[CLUST_NUM],
                                  RegFileSet const& is_regfile_unique,
-                                 InterfGraph & ig,
-                                 LifeTimeMgr & mgr,
-                                 DataDepGraph & ddg,
-                                 RegFileGroup * rfg,
+                                 InterfGraph & ig, LifeTimeMgr & mgr,
+                                 DataDepGraph & ddg, RegFileGroup * rfg,
                                  Action & action)
 {
     REG spill_location = REG_UNDEF;
@@ -5162,12 +5129,10 @@ bool LRA::solveConflictRecursive(LifeTime * lt,
 
 bool LRA::solveConflict(List<LifeTime*> & uncolored_list,
                         List<LifeTime*> & prio_list,
-                        IN OUT ClustRegInfo cri[CLUST_NUM],
+                        MOD ClustRegInfo cri[CLUST_NUM],
                         RegFileSet const& is_regfile_unique,
-                        InterfGraph & ig,
-                        LifeTimeMgr & mgr,
-                        DataDepGraph & ddg,
-                        RegFileGroup * rfg,
+                        InterfGraph & ig, LifeTimeMgr & mgr,
+                        DataDepGraph & ddg, RegFileGroup * rfg,
                         Action & action)
 {
     for (;uncolored_list.get_elem_count();) {
@@ -5214,9 +5179,8 @@ void LRA::assignPreferRegFilePressure(IN LifeTime * lt,
 
 
 //Assign 'regfile' to 'lt', and update 'cri'.
-void LRA::assignDesignatedRegFile(IN LifeTime * lt,
-                                  REGFILE regfile,
-                                  IN OUT ClustRegInfo cri[CLUST_NUM])
+void LRA::assignDesignatedRegFile(IN LifeTime * lt, REGFILE regfile,
+                                  MOD ClustRegInfo cri[CLUST_NUM])
 {
     SR_regfile(LT_sr(lt)) = regfile;
     CLUST clust = LT_cluster(lt);
@@ -5227,12 +5191,11 @@ void LRA::assignDesignatedRegFile(IN LifeTime * lt,
 //Only considering D1,D2 regfile of 'expvalue'
 //Assign the same regfile to 'lt' with the regfile of the most
 //expectant lifetime.
-void LRA::assignPreferAnticipation(IN OUT LifeTime * lt,
+void LRA::assignPreferAnticipation(MOD LifeTime * lt,
                                    IN RegFileAffinityGraph & rdg,
                                    IN ClustRegInfo expvalue[CLUST_NUM],
-                                   IN OUT ClustRegInfo cri[CLUST_NUM],
-                                   REGFILE best_rf,
-                                   REGFILE better_rf)
+                                   MOD ClustRegInfo cri[CLUST_NUM],
+                                   REGFILE best_rf, REGFILE better_rf)
 {
     //Evaluate register pressure.
     INT expv_1 = CRI_regfile_count(expvalue[LT_cluster(lt)], best_rf);
@@ -5308,7 +5271,7 @@ bool LRA::assignUniqueRegFile(SR * sr, OR *, bool is_result)
 
 //Analysis sr's regfile if it is unique and which
 //register-file can not be changed.
-void LRA::computeUniqueRegFile(IN OUT RegFileSet & is_regfile_unique)
+void LRA::computeUniqueRegFile(MOD RegFileSet & is_regfile_unique)
 {
     ORCt * orct;
     for (OR * o = ORBB_orlist(m_bb)->get_head(&orct);
@@ -5378,7 +5341,7 @@ void LRA::computeUniqueRegFile(IN OUT RegFileSet & is_regfile_unique)
 //to change that HOT regfile to another one used seldom.
 void LRA::refineAssignedRegFile(IN LifeTimeMgr & mgr,
                                 RegFileSet const& is_regfile_unique,
-                                IN OUT ClustRegInfo cri[CLUST_NUM])
+                                MOD ClustRegInfo cri[CLUST_NUM])
 {
     DUMMYUSE(mgr);
     DUMMYUSE(is_regfile_unique);
@@ -5389,10 +5352,8 @@ void LRA::refineAssignedRegFile(IN LifeTimeMgr & mgr,
 //Evaluate the reference situation by looking through OR
 //occurrence of lifetime.
 //'units': function units lifetime traversed.
-void LRA::chooseRegFileCandInLifeTime(IN UnitSet & us,
-                                      IN LifeTime *,
-                                      IN LifeTimeMgr &,
-                                      IN DataDepGraph &,
+void LRA::chooseRegFileCandInLifeTime(IN UnitSet & us, IN LifeTime *,
+                                      IN LifeTimeMgr &, IN DataDepGraph &,
                                       OUT List<REGFILE> & regfile_cand)
 {
     m_cg->mapUnitSet2RegFileList(us, regfile_cand);
@@ -5401,7 +5362,7 @@ void LRA::chooseRegFileCandInLifeTime(IN UnitSet & us,
 
 void LRA::chooseBestRegFileFromMultipleCand(IN LifeTime * lt,
                                             IN List<REGFILE> & regfile_cand,
-                                            IN OUT ClustRegInfo cri[CLUST_NUM],
+                                            MOD ClustRegInfo cri[CLUST_NUM],
                                             IN LifeTimeMgr & mgr,
                                             IN RegFileAffinityGraph & rdg)
 {
@@ -5509,7 +5470,7 @@ void LRA::chooseBestRegFileFromMultipleCand(IN LifeTime * lt,
 //NOTICE: 'cri' should be maintained.
 void LRA::assignRegFileInResourceView(IN LifeTime * lt,
                                       IN List<REGFILE> & regfile_cand,
-                                      IN OUT ClustRegInfo cri[CLUST_NUM],
+                                      MOD ClustRegInfo cri[CLUST_NUM],
                                       IN LifeTimeMgr & mgr,
                                       IN RegFileAffinityGraph & rdg)
 {
@@ -5525,10 +5486,8 @@ void LRA::assignRegFileInResourceView(IN LifeTime * lt,
 
 
 //Adopt heuristic strategy to assign register file.
-void LRA::choose_regfile(IN LifeTime * lt,
-                         IN OUT ClustRegInfo cri[CLUST_NUM],
-                         IN LifeTimeMgr & mgr,
-                         IN DataDepGraph & ddg,
+void LRA::choose_regfile(IN LifeTime * lt, MOD ClustRegInfo cri[CLUST_NUM],
+                         IN LifeTimeMgr & mgr, IN DataDepGraph & ddg,
                          IN RegFileAffinityGraph & rdg)
 {
     UnitSet us;
@@ -5539,10 +5498,9 @@ void LRA::choose_regfile(IN LifeTime * lt,
 }
 
 
-void LRA::assignRegFile(IN OUT ClustRegInfo cri[CLUST_NUM],
+void LRA::assignRegFile(MOD ClustRegInfo cri[CLUST_NUM],
                         RegFileSet const& is_regfile_unique,
-                        IN LifeTimeMgr & mgr,
-                        IN DataDepGraph & ddg,
+                        IN LifeTimeMgr & mgr, IN DataDepGraph & ddg,
                         IN RegFileAffinityGraph & rdg)
 {
     //1. Assign sr with local-regbank if sr has
@@ -5720,9 +5678,8 @@ float LRA::computePrority(REG spill_location,
 //
 // TO BE ESTIMATED:
 // * Life time in longer live-range has higher priority.
-void LRA::buildPriorityList(IN OUT List<LifeTime*> & prio_list,
-                            IN InterfGraph & ig,
-                            IN LifeTimeMgr & mgr,
+void LRA::buildPriorityList(MOD List<LifeTime*> & prio_list,
+                            IN InterfGraph & ig, IN LifeTimeMgr & mgr,
                             DataDepGraph & ddg)
 {
     ASSERTN(prio_list.get_elem_count() == 0,
@@ -6083,7 +6040,7 @@ bool LRA::coalescing(DataDepGraph & ddg, bool cp_any)
 
 //Return ture if changed.
 //'handled': add OR to table if it has been handled.
-bool LRA::cse(IN OUT DataDepGraph & ddg, IN OUT ORIdTab & handled)
+bool LRA::cse(MOD DataDepGraph & ddg, MOD ORIdTab & handled)
 {
     bool is_resch = false;
     if (!HAVE_FLAG(m_opt_phase, (UINT)LRA_OPT_RCIE)) {
@@ -6239,14 +6196,14 @@ bool LRA::cse(IN OUT DataDepGraph & ddg, IN OUT ORIdTab & handled)
                 //dependences of 'cand' to 'o'.
                 ORList tmp, op_all_edges, cand_all_edges;
                 ddg.get_succs(tmp, o);
-                op_all_edges.append_tail(tmp);
+                op_all_edges.move_tail(tmp);
                 ddg.get_preds(tmp, o);
-                op_all_edges.append_tail(tmp);
+                op_all_edges.move_tail(tmp);
 
                 ddg.get_succs(tmp, cand);
-                cand_all_edges.append_tail(tmp);
+                cand_all_edges.move_tail(tmp);
                 ddg.get_preds(tmp, cand);
-                cand_all_edges.append_tail(tmp);
+                cand_all_edges.move_tail(tmp);
 
                 ddg.unifyEdge(op_all_edges, cand);
                 ddg.unifyEdge(cand_all_edges, o);
@@ -6834,9 +6791,7 @@ CLUST LRA::chooseDefaultCluster(OR *)
 
 //Partitioning operations according to data dependence relations.
 //Return true if ORs that have been generated need to be rescheduled.
-bool LRA::PureAssignCluster(IN OR * o,
-                            IN OUT ORCt **,
-                            IN DataDepGraph &,
+bool LRA::PureAssignCluster(IN OR * o, MOD ORCt **, IN DataDepGraph &,
                             RegFileSet const&)
 {
     ASSERT0(!isMultiCluster());
@@ -7150,7 +7105,7 @@ FIN:
 }
 
 
-bool LRA::preOpt(IN OUT DataDepGraph & ddg)
+bool LRA::preOpt(MOD DataDepGraph & ddg)
 {
     bool again;
     INT count = 0;
@@ -7349,7 +7304,7 @@ bool LRA::verifyCluster()
 
 
 //Return the OR with uncolored SR.
-bool LRA::isAllAllocated(IN OUT OR ** wop)
+bool LRA::isAllAllocated(MOD OR ** wop)
 {
     for (OR * o = m_bb->getFirstOR(); o != nullptr; o = m_bb->getNextOR()) {
         UINT i;
@@ -7441,9 +7396,8 @@ void LRA::markRegFileUnique(RegFileSet & is_regfile_unique)
 //Schedule function unit and considering resource conflict.
 //Return true if REGFILE need to be reassigned.
 //NOTICE: Info of cluster of o is necessary.
-bool LRA::cyc_estimate(IN DataDepGraph & ddg,
-                       IN OUT BBSimulator * sim,
-                       IN OUT RegFileSet & is_regfile_unique)
+bool LRA::cyc_estimate(IN DataDepGraph & ddg, MOD BBSimulator * sim,
+                       MOD RegFileSet & is_regfile_unique)
 {
     if (sim == nullptr) { return false; }
 
@@ -7479,10 +7433,9 @@ bool LRA::cyc_estimate(IN DataDepGraph & ddg,
 
 
 //Scheduling function unit iteratively.
-bool LRA::schedulFuncUnit(IN LifeTimeMgr & mgr,
-                          IN DataDepGraph & ddg,
-                          IN OUT BBSimulator * sim,
-                          IN OUT RegFileSet & is_regfile_unique,
+bool LRA::schedulFuncUnit(IN LifeTimeMgr & mgr, IN DataDepGraph & ddg,
+                          MOD BBSimulator * sim,
+                          MOD RegFileSet & is_regfile_unique,
                           ClustRegInfo cri[CLUST_NUM])
 {
     if (ORBB_ornum(m_bb) <= 0 || ORBB_ornum(m_bb) > MAX_SCH_OR_BB_LEN) {
@@ -7605,10 +7558,9 @@ bool LRA::checkSpillCanBeRemoved(xoc::Var const* spill_loc)
 //'followed_lds': record reload after spilling, which the
 //   access same memory location.
 //o: store memory operation
-void LRA::findFollowedLoad(OUT ORList & followed_lds,
-                           IN OR * o,
+void LRA::findFollowedLoad(OUT ORList & followed_lds, IN OR * o,
                            xoc::Var const* spill_loc,
-                           IN OUT bool & spill_can_be_removed,
+                           MOD bool & spill_can_be_removed,
                            IN DataDepGraph & ddg)
 {
     //Check for the case:
@@ -7650,10 +7602,9 @@ void LRA::findFollowedLoad(OUT ORList & followed_lds,
 
 
 SR * LRA::findAvailPhyRegFromLoadList(IN OR * o,
-                                      IN OUT bool & spill_can_be_removed,
+                                      MOD bool & spill_can_be_removed,
                                       IN ORList & followed_lds,
-                                      IN LifeTimeMgr & mgr,
-                                      IN InterfGraph & ig)
+                                      IN LifeTimeMgr & mgr, IN InterfGraph & ig)
 {
     SR * spill_loc_sr = nullptr;
     INT start = mgr.getPos(o, true);
@@ -7684,12 +7635,9 @@ SR * LRA::findAvailPhyRegFromLoadList(IN OR * o,
 
 
 //Hoist spill location for Store operation.
-bool LRA::hoistSpillLocForStore(IN OR * o,
-                                IN InterfGraph & ig,
-                                IN LifeTimeMgr & mgr,
-                                IN OUT DataDepGraph & ddg,
-                                IN ORCt * orct,
-                                IN OUT ORCt ** next_orct)
+bool LRA::hoistSpillLocForStore(IN OR * o, IN InterfGraph & ig,
+                                IN LifeTimeMgr & mgr, MOD DataDepGraph & ddg,
+                                IN ORCt * orct, MOD ORCt ** next_orct)
 {
     ASSERT0(orct && next_orct && o->is_store());
     bool is_resch = false;
@@ -7766,9 +7714,9 @@ bool LRA::hoistSpillLocForStore(IN OR * o,
     ORList newcp_lst;
     List<OR*> concern_ors; //record all concerned ORs.
     ddg.get_succs(ors, o);
-    concern_ors.append_tail(ors);
+    concern_ors.move_tail(ors);
     ddg.get_preds(ors, o);
-    concern_ors.append_tail(ors);
+    concern_ors.move_tail(ors);
 
     //Record new copy-or.
     concern_ors.append_tail(newcp);
@@ -7810,9 +7758,9 @@ bool LRA::hoistSpillLocForStore(IN OR * o,
 
         //Chain up edges of pred and succ of 'f'.
         ddg.get_succs(ors, f);
-        concern_ors.append_tail(ors);
+        concern_ors.move_tail(ors);
         ddg.get_preds(ors, f);
-        concern_ors.append_tail(ors);
+        concern_ors.move_tail(ors);
         is_resch = true;
     }
 
@@ -7910,11 +7858,9 @@ bool LRA::updateInfoEffectedByInlineASM()
 }
 
 
-void LRA::middleLRAOpt(IN OUT DataDepGraph & ddg,
-                       IN OUT LifeTimeMgr & mgr,
-                       IN OUT BBSimulator & sim,
-                       IN RegFileSet & is_regfile_unique,
-                       IN OUT ClustRegInfo cri[CLUST_NUM])
+void LRA::middleLRAOpt(MOD DataDepGraph & ddg, MOD LifeTimeMgr & mgr,
+                       MOD BBSimulator & sim, IN RegFileSet & is_regfile_unique,
+                       MOD ClustRegInfo cri[CLUST_NUM])
 {
     //Following passes have to analyze REG-IN and
     //PHY-REG dependence.

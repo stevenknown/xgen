@@ -174,6 +174,6 @@ public:
                                 SR * falsepd,
                                 SR * result_pred,
                                 OUT RecycORList & ors,
-                                IN OUT IOC * cont);
+                                MOD IOC * cont);
 };
 #endif

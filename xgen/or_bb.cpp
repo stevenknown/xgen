@@ -549,12 +549,8 @@ OR * ORBB::getBranchOR()
 
 void ORBB::mergeLabeInfoList(ORBB * from)
 {
-    for (LabelInfo const* li = from->getLabelList().get_head();
-         li != nullptr; li = from->getLabelList().get_next()) {
-        if (!m_lab_list.find(li)) {
-            m_lab_list.append_tail(li);
-        }
-    }
+    //Note src's labellist will be moved to current BB.
+    getLabelList().move_head(from->getLabelList());
 }
 
 

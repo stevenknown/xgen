@@ -39,7 +39,7 @@ CHAR const* ARMVar::dumpVARDecl(StrBuf & buf) const
     Decl * decl = mapVAR2Decl(const_cast<ARMVar*>(this));
     if (decl != nullptr) {
         ASSERT0(DECL_dt(decl) == DCL_DECLARATION);
-        format_declaration(buf, decl);
+        format_declaration(buf, decl, true);
         return buf.buf;
     }
     return nullptr;

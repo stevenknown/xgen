@@ -33,6 +33,12 @@ author: Su Zhenyu
 
 namespace xgen {
 
+class ORMgr;
+class SRMgr;
+class Section;
+class SectionMgr;
+class IntrinsicMgr;
+
 typedef TMap<BUILTIN_TYPE, Var*> Bltin2Var;
 typedef TMapIter<BUILTIN_TYPE, Var*> Bltin2VarIter;
 

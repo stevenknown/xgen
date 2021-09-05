@@ -1,6 +1,6 @@
 int alias3(int * p, int a[10], int i, int j)
 {
-    //Test if pointer alias with array.
+    //Test if pointer p is alias with array a.
     int b, c;
     int x[200];
     *p = 20;

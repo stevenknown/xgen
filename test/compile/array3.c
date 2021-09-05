@@ -2,7 +2,7 @@ struct S {int a; int b;} p[10];
 int q;
 int foo(int i)
 {
-    //This function test Array, StoreArray's IR reference.
+    //This function test Array, StoreArray's MD reference.
     q = p[1].b; //S1
     q = p[1].a; //S2
     q = p[i].b; //S3

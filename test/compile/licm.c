@@ -45,6 +45,7 @@ int licm_t3()
 
 int licm_t2()
 {
+    //i,j,l,n should be promoted to PR.
     int i,j,l,n;
     int a[100][100];
     for (i = 1; i <= 100; i++) {
@@ -66,10 +67,8 @@ int licm_t1()
     char C[20];
     char A[100];
     for (i = 0; i != 10; ++i) {
-          C[0] = A[i];          /* One byte store */
-          C[1] = A[9-i];        /* One byte store */
+          C[0] = A[i];          // One byte store
+          C[1] = A[9-i];        // One byte store
     }
 }
-
-
 

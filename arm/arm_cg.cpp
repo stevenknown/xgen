@@ -1058,7 +1058,7 @@ void ARMCG::buildMemAssignLoop(SR * tgt,
     ORList tors;
     buildCompare(OR_teq_i, true, iv, genZero(), tors, &tc);
     ASSERT0(tors.get_elem_count() == 1);
-    ors.append_tail(tors);
+    ors.move_tail(tors);
 
     //9. b.ne, LOOP_START
     cont->set_pred(genNEPred());
@@ -1298,14 +1298,11 @@ void ARMCG::buildICall(SR * callee, UINT ret_val_size,
 }
 
 
-void ARMCG::buildCall(Var const* callee,
-                      UINT ret_val_size,
-                      OUT ORList & ors,
+void ARMCG::buildCall(Var const* callee, UINT ret_val_size, OUT ORList & ors,
                       IOC * cont)
 {
-    //Function-Call will violate SP,FP,GP,
-    //RFLAG register, return-value register,
-    //return address register.
+    //Function-Call will violate SP,FP,GP, RFLAG register, return-value
+    //register, return address register.
     OR * o = buildOR(OR_bl, 1, 2, genReturnAddr(), getTruePred(),
                      genVAR(callee));
     ors.append_tail(o);
@@ -1334,8 +1331,7 @@ CLUST ARMCG::mapSlot2Cluster(SLOT slot)
 
 //Return the regisiter-file set which 'clust' corresponded with.
 List<REGFILE> & ARMCG::mapCluster2RegFileList(
-        CLUST clust,
-        OUT List<REGFILE> & regfiles) const
+        CLUST clust, OUT List<REGFILE> & regfiles) const
 {
     switch (clust) {
     case CLUST_FIRST:
@@ -1489,7 +1485,7 @@ CLUST ARMCG::computeORCluster(OR const*) const
 
 //Change 'or' to 'ortype', modifing all operands and results.
 //Performing verification and substitution certainly.
-bool ARMCG::changeORType(IN OUT OR * o, OR_TYPE ortype, CLUST src,
+bool ARMCG::changeORType(MOD OR * o, OR_TYPE ortype, CLUST src,
                          CLUST tgt, RegFileSet const* regfile_unique)
 {
     DUMMYUSE(src);
@@ -1552,7 +1548,7 @@ bool ARMCG::changeORType(IN OUT OR * o, OR_TYPE ortype, CLUST src,
 
 
 void ARMCG::buildShiftLeftReg(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
-                              OUT ORList & ors, IN OUT IOC * cont)
+                              OUT ORList & ors, MOD IOC * cont)
 {
     //e.g:long long a,b; int j;
     //    a = b << j;
@@ -1631,7 +1627,7 @@ void ARMCG::buildShiftLeftReg(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
 
 
 void ARMCG::buildShiftLeftImm(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
-                              OUT ORList & ors, IN OUT IOC * cont)
+                              OUT ORList & ors, MOD IOC * cont)
 {
     if (shift_ofst->getInt() <= 31) {
         //hi <- hi << ofst
@@ -1691,7 +1687,7 @@ void ARMCG::buildShiftLeftImm(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
 
 
 void ARMCG::buildShiftLeft(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
-                           OUT ORList & ors, IN OUT IOC * cont)
+                           OUT ORList & ors, MOD IOC * cont)
 {
     if (sr_size <= 4) {
         //There is no different between signed and unsigned left shift.
@@ -1731,7 +1727,7 @@ void ARMCG::buildShiftRightCase1(IN SR * src,
                                  IN SR * shift_ofst,
                                  bool is_signed,
                                  OUT ORList & ors,
-                                 IN OUT IOC * cont)
+                                 MOD IOC * cont)
 {
     SR * res = genReg();
     OR_TYPE ort = OR_UNDEF;
@@ -1756,7 +1752,7 @@ void ARMCG::buildShiftRightCase2(IN SR * src,
                                  IN SR * shift_ofst,
                                  bool is_signed,
                                  OUT ORList & ors,
-                                 IN OUT IOC * cont)
+                                 MOD IOC * cont)
 {
     //e.g:long long res;
     //    long long src;
@@ -1846,7 +1842,7 @@ void ARMCG::buildShiftRightCase3_1(IN SR * src,
                                    IN SR * shift_ofst,
                                    bool is_signed,
                                    OUT ORList & ors,
-                                   IN OUT IOC * cont)
+                                   MOD IOC * cont)
 {
     //Algo:
     //lo = lo >>(lsr) shift_ofst
@@ -1891,7 +1887,7 @@ void ARMCG::buildShiftRightCase3_2(IN SR * src,
                                    IN SR * shift_ofst,
                                    bool is_signed,
                                    OUT ORList & ors,
-                                   IN OUT IOC * cont)
+                                   MOD IOC * cont)
 {
     //Algo:
     //lo <- hi asr (ofst - 32)
@@ -1942,7 +1938,7 @@ void ARMCG::buildShiftRightCase3(IN SR * src,
                                  IN SR * shift_ofst,
                                  bool is_signed,
                                  OUT ORList & ors,
-                                 IN OUT IOC * cont)
+                                 MOD IOC * cont)
 {
     if (shift_ofst->getInt() <= 31) {
         buildShiftRightCase3_1(src, sr_size, shift_ofst, is_signed, ors, cont);
@@ -1998,7 +1994,7 @@ void ARMCG::buildShiftRight(IN SR * src,
                             IN SR * shift_ofst,
                             bool is_signed,
                             OUT ORList & ors,
-                            IN OUT IOC * cont)
+                            MOD IOC * cont)
 {
     if (sr_size <= 4) {
         buildShiftRightCase1(src, sr_size, shift_ofst, is_signed, ors, cont);
@@ -2356,7 +2352,7 @@ void ARMCG::buildStoreAndAssignRegister(SR * reg,
     }
     default: UNREACHABLE();
     }
-    ors.append_tail(tors);
+    ors.move_tail(tors);
 }
 
 

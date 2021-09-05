@@ -89,10 +89,9 @@ protected:
         return p;
     }
     virtual OR * selectBestOR(ORTab & cand_tab, SLOT slot);
-    virtual void updateIssueORs(IN OUT PreemptiveORList & cand_list,
-                                SLOT slot,
-                                IN OR * issue_or,
-                                IN OUT OR * issue_ors[SLOT_NUM]);
+    virtual void updateIssueORs(MOD PreemptiveORList & cand_list,
+                                SLOT slot, IN OR * issue_or,
+                                MOD OR * issue_ors[SLOT_NUM]);
 
     //Add more ready-OR into ready-list when removing 'or'.
     //or: OR will be removed.
@@ -121,8 +120,7 @@ public:
     { return HAVE_FLAG(m_sch_mode, SCH_CHANGE_CLUSTER); }
 
     //Scheduling method
-    void computeReadyList(IN OUT DataDepGraph & ddg,
-                          IN OUT DefSBitSet & visited,
+    void computeReadyList(MOD DataDepGraph & ddg, MOD DefSBitSet & visited,
                           bool topdown);
 
     //Change OR to given issue slot.

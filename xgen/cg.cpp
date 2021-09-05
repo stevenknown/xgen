@@ -247,6 +247,23 @@ OR * CG::buildOR(OR_TYPE orty, IN SRList & result, IN SRList & opnd)
 }
 
 
+//The function will allocate memory from CG's pool and build a list of Label
+//according to the label info that carried by given IR.
+//caselst: should be a list of IR_CASE.
+LabelInfoList * CG::buildLabelInfoList(IR const* caselst)
+{
+    LabelInfoList * head = nullptr;
+    LabelInfoList * last = nullptr;
+    for (IR const* c = caselst; c != nullptr; c = c->get_next()) {
+        ASSERT0(c->is_case() && CASE_lab(c));
+        LabelInfoList * li = allocLabelInfoList();
+        LILIST_label(li) = CASE_lab(c);
+        xcom::add_next(&head, &last, li); 
+    }
+    return head;
+}
+
+
 //Generate ::memcpy.
 void CG::buildMemcpy(SR * tgt, SR * src, UINT bytesize, OUT ORList & ors,
                      IN IOC * cont)
@@ -541,7 +558,7 @@ void CG::buildAlloca(OUT ORList & ors, SR * bytesize, IN IOC * cont)
 
 //Convert data type from 'src' to 'tgt'.
 void CG::buildTypeCvt(xoc::IR const* tgt, xoc::IR const* src,
-                      OUT ORList & ors, IN OUT IOC * cont)
+                      OUT ORList & ors, MOD IOC * cont)
 {
     ASSERTN(!tgt->is_vec() && !src->is_vec(), ("TODO"));
     UINT tgt_size = tgt->getTypeSize(m_tm);
@@ -571,7 +588,7 @@ void CG::buildTypeCvt(xoc::IR const* tgt, xoc::IR const* src,
                 buildMove(tgt_high, genZero(), tors, &tmp);
             }
             tors.copyDbx(tgt);
-            ors.append_tail(tors);
+            ors.move_tail(tors);
             cont->set_reg(0, tgt_low);
             getSRVecMgr()->genSRVec(2, tgt_low, tgt_high);
         } else {
@@ -638,7 +655,7 @@ void CG::buildLda(xoc::Var const* var, HOST_INT lda_ofst, Dbx const* dbx,
     if (dbx != nullptr) {
         tors.copyDbx(dbx);
     }
-    ors.append_tail(tors);
+    ors.move_tail(tors);
     ASSERT0(cont);
     cont->set_reg(0, addr);
 }
@@ -1341,8 +1358,7 @@ xoc::Var const* CG::mapOR2Var(OR const* o) const
 
 
 //Compute regfile set that 'regs' indicated.
-bool CG::mapRegSet2RegFile(IN OUT Vector<INT> & regfilev,
-                           RegSet const* regs)
+bool CG::mapRegSet2RegFile(MOD Vector<INT> & regfilev, RegSet const* regs)
 {
     for (INT reg = regs->get_first(); reg != -1; reg = regs->get_next(reg)) {
         ASSERTN(reg > 0, ("First register number starts from zero at least."));
@@ -1933,9 +1949,7 @@ bool CG::isValidImmOpnd(OR_TYPE ot, HOST_INT imm) const
 //Return true if specified immediate operand is in valid range.
 bool CG::isValidImmOpnd(OR_TYPE ot, UINT idx, HOST_INT imm) const
 {
-    ORTypeDesc const* otd = tmGetORTypeDesc(ot);
-    SRDescGroup<> const* sdg = OTD_srd_group(otd);
-    SRDesc const* sr_desc = sdg->get_opnd(idx);
+    SRDesc const* sr_desc = tmGetOpndSRDesc(ot, idx);
     ASSERT0(sr_desc && SRD_is_imm(sr_desc));
     return isValidImm(SRD_bitsize(sr_desc), imm);
 }
@@ -2083,7 +2097,7 @@ SLOT CG::computeORSlot(OR const*)
 
 
 //Amendment the illegal BASE-SR of memory load/store.
-void CG::fixCluster(IN OUT ORList & spill_ors, CLUST clust)
+void CG::fixCluster(MOD ORList & spill_ors, CLUST clust)
 {
     DUMMYUSE(spill_ors);
     DUMMYUSE(clust);
@@ -2242,8 +2256,8 @@ bool CG::passArgInRegister(SR * argval, UINT * sz, ArgDescMgr * argdescmgr,
 
 //Return true if whole ir has been passed through registers, otherwise
 //return false.
-bool CG::tryPassArgThroughRegister(SR * argval, SR * argaddr,
-                                   UINT * argsz, IN OUT ArgDescMgr * argdescmgr,
+bool CG::tryPassArgThroughRegister(SR * argval, SR * argaddr, UINT * argsz,
+                                   MOD ArgDescMgr * argdescmgr,
                                    OUT ORList & ors, IOC * cont)
 {
     ASSERT0((argval != nullptr) ^ (argaddr != nullptr));
@@ -2284,7 +2298,7 @@ void CG::passArgVariant(ArgDescMgr * argdescmgr, OUT ORList & ors, UINT num,
         if (dbx != nullptr) {
             tors.copyDbx(dbx);
         }
-        ors.append_tail(tors);
+        ors.move_tail(tors);
     }
     va_end(ptr);
 }
@@ -2408,7 +2422,7 @@ void CG::storeArgToStack(ArgDescMgr * argdescmgr, OUT ORList & ors, IN IOC *)
             tors.copyDbx(desc->arg_dbx);
         }
 
-        ors.append_tail(tors);
+        ors.move_tail(tors);
     }
 }
 
@@ -2666,6 +2680,17 @@ SR * CG::genPredReg()
 }
 
 
+SR * CG::genLabelList(LabelInfoList const* lilst)
+{
+    SR * sr = getSRMgr()->genSR();
+    SR_type(sr) = SR_LAB_LIST;
+
+    //label list
+    SR_label_list(sr) = lilst;
+    return sr;
+}
+
+
 SR * CG::genLabel(LabelInfo const* li)
 {
     SR * sr = getSRMgr()->genSR();
@@ -2802,7 +2827,7 @@ REGFILE CG::getPredicateRegfile() const
 
 
 //Set predicate register of each operation in 'ops' same as 'o'.
-void CG::setORListWithSamePredicate(IN OUT ORList & ops, IN OR * o)
+void CG::setORListWithSamePredicate(MOD ORList & ops, IN OR * o)
 {
     if (!HAS_PREDICATE_REGISTER) {
         return;
@@ -3796,7 +3821,7 @@ RaMgr * CG::performRA()
 //Local instruction scheduling.
 //simvec: record instruction layout that will be used to package.
 //        Note BBSimulators in simvec must be freed by caller.
-void CG::performIS(IN OUT Vector<BBSimulator*> & simvec, IN RaMgr * ra_mgr)
+void CG::performIS(MOD Vector<BBSimulator*> & simvec, IN RaMgr * ra_mgr)
 {
     START_TIMER(t, "Instruction Schedule");
     List<ORBB*> * bblist = getORBBList();

@@ -1099,7 +1099,7 @@ OR * DataDepGraph::getNextOR(INT & cur)
 
 
 //Return all predecessors with ordered lexicographicly.
-void DataDepGraph::getPredsByOrder(IN OUT ORList & preds, IN OR * o)
+void DataDepGraph::getPredsByOrder(MOD ORList & preds, IN OR * o)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     preds.clean();
@@ -1129,7 +1129,7 @@ void DataDepGraph::getPredsByOrder(IN OUT ORList & preds, IN OR * o)
 
 
 //Return all successors with ordered lexicographicly.
-void DataDepGraph::getSuccsByOrder(IN OUT ORList & succs, IN OR * o)
+void DataDepGraph::getSuccsByOrder(MOD ORList & succs, IN OR * o)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     ASSERTN(o != nullptr, ("Node:%d is not on DDG.", o->id()));
@@ -1192,7 +1192,7 @@ void DataDepGraph::getDependentPreds(OUT ORTab & preds, OR const* o)
 //e.g:a->b->c->d, a->d
 //  c and a are immediate predecessors of d, whereas a,b,c are
 //  dependent predecessors of d.
-void DataDepGraph::getPredsByOrderTraverseNode(IN OUT ORList & preds,
+void DataDepGraph::getPredsByOrderTraverseNode(MOD ORList & preds,
                                                OR const* o)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
@@ -1223,7 +1223,7 @@ void DataDepGraph::getPredsByOrderTraverseNode(IN OUT ORList & preds,
 
 
 //Return all successors with ordered lexicographicly.
-void DataDepGraph::getSuccsByOrderTraverseNode(IN OUT ORList & succs,
+void DataDepGraph::getSuccsByOrderTraverseNode(MOD ORList & succs,
                                                OR const* o)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
@@ -1283,7 +1283,7 @@ void DataDepGraph::getSuccsByOrderTraverseNode(IN OUT ORList & succs,
 
 
 //Return all successors.
-void DataDepGraph::get_succs(IN OUT ORList & succs, OR const* o)
+void DataDepGraph::get_succs(MOD ORList & succs, OR const* o)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     succs.clean();
@@ -1302,7 +1302,7 @@ void DataDepGraph::get_succs(IN OUT ORList & succs, OR const* o)
 
 
 //Return all predecessors.
-void DataDepGraph::get_preds(IN OUT List<xcom::Vertex*> & preds,
+void DataDepGraph::get_preds(MOD List<xcom::Vertex*> & preds,
                              IN xcom::Vertex * v)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
@@ -1318,7 +1318,7 @@ void DataDepGraph::get_preds(IN OUT List<xcom::Vertex*> & preds,
 
 
 //Return all predecessors.
-void DataDepGraph::get_preds(IN OUT ORList & preds, OR const* o)
+void DataDepGraph::get_preds(MOD ORList & preds, OR const* o)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     preds.clean();
@@ -1337,7 +1337,7 @@ void DataDepGraph::get_preds(IN OUT ORList & preds, OR const* o)
 }
 
 
-void DataDepGraph::get_neighbors(IN OUT ORList & nis, OR const* o)
+void DataDepGraph::get_neighbors(MOD ORList & nis, OR const* o)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     xcom::Vertex * v = getVertex(o->id());

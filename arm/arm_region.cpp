@@ -267,6 +267,11 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         if (g_do_pr_ssa) {
             ((PRSSAMgr*)getPassMgr()->registerPass(PASS_PR_SSA_MGR))->
                 construction(oc);
+            if (getDUMgr() != nullptr && !oc.is_du_chain_valid()) {
+                //PRSSAMgr will destruct classic DU-chain.
+                getDUMgr()->cleanDUSet();
+                oc.setInvalidDUChain();
+            }
         }
         if (g_do_md_ssa) {
             ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MD_SSA_MGR))->
@@ -279,6 +284,9 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
                 refdu->setUseGvn(true);
                 GVN * gvn = (GVN*)getPassMgr()->registerPass(PASS_GVN);
                 gvn->perform(oc);
+            } else {
+                //TODO: do GVN according to SSA.
+                refdu->setUseGvn(false);
             }
             refdu->perform(oc);
         }
@@ -337,6 +345,11 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
                 ASSERT0(ssamgr);
                 if (!ssamgr->is_valid()) {
                     ssamgr->construction(oc);
+                    if (getDUMgr() != nullptr && !oc.is_du_chain_valid()) {
+                        //PRSSAMgr will destruct classic DU-chain.
+                        getDUMgr()->cleanDUSet();
+                        oc.setInvalidDUChain();
+                    }
                 }
             } else if (getDUMgr() != nullptr) {
                 getDUMgr()->perform(oc, DUOPT_COMPUTE_PR_REF|

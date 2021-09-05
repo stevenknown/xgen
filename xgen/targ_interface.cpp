@@ -32,6 +32,17 @@ author: Su Zhenyu
 
 namespace xgen {
 
+//Return SR description of the operand indexed by 'idx' for given or-type.
+SRDesc const* tmGetOpndSRDesc(OR_TYPE ot, UINT idx)
+{
+    return tmGetORTypeDesc(ot)->getSRDGroup()->get_opnd(idx);
+}
 
+
+//Return SR description of the result indexed by 'idx' for given or-type.
+SRDesc const* tmGetResultSRDesc(OR_TYPE ot, UINT idx)
+{
+    return tmGetORTypeDesc(ot)->getSRDGroup()->get_res(idx);
+}
 
 } //namespace xgen

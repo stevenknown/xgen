@@ -48,9 +48,19 @@ static bool is_field_ref_whole_array(Tree const* t)
     if (parent == nullptr) { return false; }
 
     Decl const* field_decl = TREE_result_type(TREE_field(t));
-    if (field_decl->is_array() && parent->getCode() != TR_ARRAY) { return true; }
-
+    if (field_decl->is_array() && parent->getCode() != TR_ARRAY) {
+        return true;
+    }
     return false;
+}
+
+
+static bool isAncestorsIncludeLDA(Tree const* t)
+{
+    while (t != nullptr && t->getCode() != TR_LDA) {
+        t = TREE_parent(t);
+    }
+    return t != nullptr && t->getCode() == TR_LDA;
 }
 
 
@@ -694,20 +704,23 @@ static IR * computeArrayAddr(Tree * t, IR * ir, Region * rg, T2IRCtx * cont)
 }
 
 
-//base: base Tree node of ARRAY.
-IR * CTree2IR::convertArraySubExp(Tree * t, TMWORD * elem_nums, T2IRCtx * cont)
+//The function handles the array accessing for real array type declaration.
+//e.g: int a[10][20]; 
+//     ..= a[i][j], where a is real array.
+//     ..= ((int*)0x1234)[i], where 0x1234 is not real array.
+//  The array which is not real only could using 1-dimension array operator.
+//  namely, ..= ((int*)0x1234)[i][j] is illegal. 
+IR * CTree2IR::convertArraySubExpForArray(Tree * t, Tree * base, UINT n,
+                                          TMWORD * elem_nums, T2IRCtx * cont)
 {
     ASSERT0(t->getCode() == TR_ARRAY);
-    Tree * base = t;
-    UINT n = 0;
-    while (base->getCode() == TR_ARRAY) {
-        base = TREE_array_base(base);
-        ASSERT0(base);
-        n++;
-    }
     ASSERT0(n >= 1);
+    ASSERT0(base->getCode() == TR_LDA);
+    base = TREE_lchild(base);
 
     Decl * arr_decl = base->getResultType();
+    ASSERT0(arr_decl->is_array());
+
     Tree * lt = t;
     UINT dim = n - 1;
     IR * sublist = nullptr;
@@ -721,6 +734,7 @@ IR * CTree2IR::convertArraySubExp(Tree * t, TMWORD * elem_nums, T2IRCtx * cont)
     //Do not propagate information to subscribe-expression convertion.
     CONT_is_compute_addr(&tc) = false;
 
+    //Iterate array-dimension from lowest dimension to highest.
     while (lt->getCode() == TR_ARRAY) {
         IR * subexp = convert(TREE_array_indx(lt), &tc);
         ASSERT0(subexp);
@@ -734,9 +748,53 @@ IR * CTree2IR::convertArraySubExp(Tree * t, TMWORD * elem_nums, T2IRCtx * cont)
 }
 
 
+//base: base Tree node of ARRAY.
+IR * CTree2IR::convertArraySubExp(Tree * t, TMWORD * elem_nums, T2IRCtx * cont)
+{
+    ASSERT0(t->getCode() == TR_ARRAY);
+    Tree * base = t;
+    UINT n = 0;
+    while (base->getCode() == TR_ARRAY) {
+        base = TREE_array_base(base);
+        ASSERT0(base);
+        n++;
+    }
+    ASSERT0(n >= 1);
+    if (base->getCode() == TR_LDA &&
+        base->getResultType()->isPointerPointToArray()) {
+        return convertArraySubExpForArray(t, base, n, elem_nums, cont); 
+    }
+
+    ASSERT0(n == 1);
+    Decl * base_decl = base->getResultType();
+    ASSERT0(base_decl->isPointer());
+
+    //Note the outermost TR_ARRAY means the lowest dimension element of array
+    //will be accessed.
+    T2IRCtx tc(*cont);
+
+    //Do not propagate information to subscribe-expression convertion.
+    CONT_is_compute_addr(&tc) = false;
+
+    //Iterate array-dimension from lowest dimension to highest.
+    IR * subexp = convert(TREE_array_indx(t), &tc);
+    ASSERT0(subexp);
+    elem_nums[0] = 0;
+    return subexp;
+}
+
+
 IR * CTree2IR::convertArray(Tree * t, INT lineno, IN T2IRCtx * cont)
 {
     ASSERT0(t->getCode() == TR_ARRAY);
+    Tree * basetree = t;
+    UINT n = 0;
+    while (basetree->getCode() == TR_ARRAY) {
+        basetree = TREE_array_base(basetree);
+        ASSERT0(basetree);
+        n++;
+    }
+
     //There are following situations need to be resolved:
     //CASE 1. Regular array.
     //     char p[100];
@@ -762,25 +820,23 @@ IR * CTree2IR::convertArray(Tree * t, INT lineno, IN T2IRCtx * cont)
     //     char p[2];
     //     char * q = p;
     //----------------------------------------------------------------
-    if (TREE_result_type(TREE_array_base(t))->isPointer()) {
+    if (basetree->getCode() != TR_LDA) {
+        ASSERT0(basetree->getResultType()->isPointer() ||
+                basetree->getResultType()->is_array());
+        //e.g: int (*a)[10]; .. = (*a)[i]; the base of array operator is
+        //     DEREF which result-type is ARRAY.
         return convertPointerDeref(t, lineno, cont);
     }
 
+    ASSERT0(basetree->getResultType()->regardAsPointer());
+    ASSERT0(n >= 1);
     //Handle regular array.
     //Compute the number of elements for each dimensions.
-    Tree * basetree = t;
-    UINT n = 0;
-    while (basetree->getCode() == TR_ARRAY) {
-        basetree = TREE_array_base(basetree);
-        ASSERT0(basetree);
-        n++;
-    }
-    ASSERT0(n >= 1);
-
     T2IRCtx tc(*cont);
 
     //IR_ARRAY operator requires that the base have to POINTER type.
-    CONT_is_compute_addr(&tc) = true;
+    //Array's base have been canonicalized to LDA in TreeCanon already.
+    CONT_is_compute_addr(&tc) = false;
 
     //Convert base of array.
     IR * base = convert(basetree, &tc);
@@ -903,6 +959,8 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     if (t->getResultType()->regardAsPointer()) {
         rettype = m_tm->getPointerType(t->getResultType()->
                                        get_pointer_base_size());
+    } else if (t->getResultType()->is_any()) {
+        rettype = m_tm->getAny();
     } else {
         UINT size = 0;
         DATA_TYPE dt = get_decl_dtype(t->getResultType(), &size, m_tm);
@@ -1199,24 +1257,25 @@ IR * CTree2IR::convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx *)
 IR * CTree2IR::convertDirectMemAccess(Tree const* t, INT lineno, T2IRCtx * cont)
 {
     Decl const* base_decl = TREE_result_type(TREE_base_region(t));
-    ASSERTN(!base_decl->isPointer(), ("'.' node must not be pointer type"));
+    ASSERTN(!base_decl->isPointer(), ("base of dmem can not be pointer type"));
 
     TypeAttr const* ty = base_decl->getTypeAttr();
-    ASSERTN(ty->isAggrExpanded(), ("illegal base type"));
-    ASSERTN(TREE_field(t)->getCode() == TR_ID, ("illegal offset type"));
+    ASSERTN(ty->isAggrExpanded(), ("base of dmem must be aggregate"));
+    ASSERTN(TREE_field(t)->getCode() == TR_ID, ("field must be ID"));
 
     Decl const* field_decl = TREE_result_type(TREE_field(t));
     T2IRCtx tc(*cont);
 
     //Indicates whether if current convertion should return address.
-    bool is_require_addr = CONT_is_compute_addr(cont);
+    bool is_parent_require_addr = CONT_is_compute_addr(cont);
 
-    if (is_field_ref_whole_array(t)) {
-        //In C spec, if user writes code like 'a = s.array;', actually user
-        //expects taking address of array, rather than value.
-        CONT_is_compute_addr(&tc) = true;
-        is_require_addr = true;
-    }
+    //hack
+    //if (is_field_ref_whole_array(t)) {
+    //    //In C language, if user writes code like 'a = s.array;', actually user
+    //    //expects taking address of array, rather than value.
+    //    CONT_is_compute_addr(&tc) = true;
+    //    is_parent_require_addr = true;
+    //}
 
     IR * ir = convert(TREE_base_region(t), &tc);
 
@@ -1232,7 +1291,7 @@ IR * CTree2IR::convertDirectMemAccess(Tree const* t, INT lineno, T2IRCtx * cont)
 
     UINT field_size = 0;
     DATA_TYPE dt = ::get_decl_dtype(field_decl, &field_size, m_tm);
-    if (is_require_addr) {
+    if (is_parent_require_addr) {
         //Parent tree node requires address.
         //The returned ir should be pointer.
         ASSERT0(ir->is_ptr());
@@ -1438,6 +1497,7 @@ IR * CTree2IR::convertSelect(Tree * t, INT lineno, T2IRCtx * cont)
     Type const* d0 = texp->getType();
     Type const* d1 = fexp->getType();
     ASSERT0(d0 && d1);
+    //Try to infer result type of SELECT operation.
     Type const* type = nullptr;
     if (d0->is_pointer() || d1->is_pointer()) {
         //Pointer should have same ptr-base-size.
@@ -1450,9 +1510,16 @@ IR * CTree2IR::convertSelect(Tree * t, INT lineno, T2IRCtx * cont)
             ASSERT0(d0 == d1);
         }
     } else if (d0->is_mc() || d1->is_mc()) {
-        //Should be same mc type.
+        //Should be same MC type.
         ASSERT0(d0 == d1);
         type = texp->getType();
+    } else if (d0->is_any() || d1->is_any()) {
+        //C language permits either TrueExp or FalseExp to be VOID.
+        if (d0->is_any()) {
+            type = d1;
+        } else {
+            type = d0;
+        }
     } else {
         type = m_tm->hoistDtypeForBinop(texp, fexp);
         if (texp->getType() != type) {
@@ -1607,8 +1674,20 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
         return base;
     }
 
+    if (kid->getCode() == TR_ID) {
+        base = buildLda(kid);
+        ASSERT0(base->is_lda());
+        setLineNum(base, lineno, m_rg);
+        return base;
+    }
+
     CONT_is_compute_addr(&tc) = true;
     base = convert(kid, &tc);
+
+    ASSERT0(t->getResultType()->regardAsPointer());
+    //Use t's pointer type as the output ir's type. Because the pointer
+    //base size that computed by 'kid' may be not same with 't'.
+    base->setPointerType(t->getResultType()->get_pointer_base_size(), m_tm);
 
     if (base->is_ld()) {
         setLineNum(base, lineno, m_rg);
@@ -1680,28 +1759,31 @@ IR * CTree2IR::convertCVT(Tree * t, INT lineno, T2IRCtx * cont)
 IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
 {
     IR * ir = nullptr;
-    Decl * res_ty = t->getResultType();
-    ASSERT0(res_ty);
-    if (res_ty->is_array()) {
-        //In C spec, identifier of array is just a label.
+    Decl * idty = t->getResultType();
+    ASSERT0(idty);
+    if (idty->is_array()) {
+        //In C language, identifier of array is just a label.
         //The reference of the label should be represented as LDA.
         //e.g: int * p; int a[10]; p = a;
         //  will generate: ST(p) = LDA(a)
+        //if (TREE_parent(t)->getCode() == TR_ARRAY) {
+        //    ASSERT0(t == TREE_array_base(TREE_parent(t)));
+        //}
         if (TREE_parent(t)->getCode() == TR_ARRAY) {
-            ASSERT0(t == TREE_array_base(TREE_parent(t)));
+            ASSERTN(0, ("should be handled in TreeCanon")); //hack
         }
 
-        ir = buildLda(t);
-        ASSERT0(ir->is_lda());
-        ASSERT0(VAR_is_array(LDA_idinfo(ir)));
-        ASSERTN(!VAR_is_formal_param(LDA_idinfo(ir)),
-                ("array parameter should be transformed "
-                 "to pointer type at FrontEnd's compound_stmt()"));
-        setLineNum(ir, lineno, m_rg);
-        return ir;
+        //ir = buildLda(t);
+        //ASSERT0(ir->is_lda());
+        //ASSERT0(VAR_is_array(LDA_idinfo(ir)));
+        //ASSERTN(!VAR_is_formal_param(LDA_idinfo(ir)),
+        //        ("array parameter should be transformed "
+        //         "to pointer type at FrontEnd's compound_stmt()"));
+        //setLineNum(ir, lineno, m_rg);
+        //return ir;
     }
 
-    if (res_ty->is_fun_decl()) {
+    if (idty->is_fun_decl()) {
         //If current Tree is fun-decl, there will be two case:
         //tree is the callee or parameter of call.
         if (cont != nullptr && CONT_is_parse_callee(cont)) {
@@ -1724,8 +1806,8 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
     }
 
     if (CONT_is_compute_addr(cont)) {
-        //e.g: int v[100]; ..=&v
-        //In this case, parent tree node should be TR_LDA operator,
+        //In this case, ancestors tree should include TR_LDA operator,
+        ASSERT0(isAncestorsIncludeLDA(t));
         ir = buildLda(t);
         ASSERT0(ir->is_lda());
         //ir = buildId(t);
@@ -1733,7 +1815,7 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
         return ir;
     }
 
-    if (res_ty->is_bitfield()) {
+    if (idty->is_bitfield()) {
         //e.g: int a:3;
         //     int b:15;
         //    b = 10;
@@ -2304,7 +2386,7 @@ static void scanDeclList(Scope * s, OUT xoc::Region * rg, bool scan_sib)
 
     for (Decl * decl = s->getDeclList();
          decl != nullptr; decl = DECL_next(decl)) {
-        if (DECL_is_formal_para(decl) && decl->get_decl_sym() == nullptr) {
+        if (decl->is_formal_param() && decl->get_decl_sym() == nullptr) {
             //void function(void*), parameter does not have name.
             continue;
         }
@@ -2335,7 +2417,7 @@ static void scanDeclList(Scope * s, OUT xoc::Region * rg, bool scan_sib)
 }
 
 
-//Ensure IR_RETURN at the end of function if its return-type is VOID.
+//Ensure IR_RETURN at the end of function if its return-type is ANY.
 static IR * addReturn(IR * irs, Region * rg)
 {
     IR * last = xcom::get_last(irs);
@@ -2415,10 +2497,12 @@ xoc::DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, xoc::TypeMgr * tm)
 //       return-type.
 static bool convertTreeStmtList(Tree * stmts, Region * rg, Decl const* retty)
 {
+    if (stmts == nullptr) { return true; }
+
     //Convert C-language AST into XOC IR.
     CTree2IR ct2ir(rg, retty);
     xoc::IR * irs = ct2ir.convert(stmts, nullptr);
-    if (g_err_msg_list.get_elem_count() > 0) {
+    if (g_err_msg_list.has_msg()) {
         return false;
     }
 
@@ -2432,7 +2516,7 @@ static bool convertTreeStmtList(Tree * stmts, Region * rg, Decl const* retty)
 
     if (rg->is_function()) {
         //Ensure RETURN IR at the end of function
-        //if its return-type is VOID.
+        //if its return-type is ANY.
         irs = addReturn(irs, rg);
     }
 
@@ -2464,6 +2548,7 @@ static bool convertTreeStmtList(Tree * stmts, Region * rg, Decl const* retty)
     irs = rf->refineIRlist(irs, change, rc);
 
     ASSERT0(xoc::verifyIRList(irs, nullptr, rg));
+    ASSERT0(irs);
     rg->setIRList(irs);
 
     return true;
@@ -2492,6 +2577,7 @@ static bool generateFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
     //Generates a function region to describe current C-language function.
     xoc::Region * r = rm->newRegion(xoc::REGION_FUNC);
     r->setRegionVar(rvar);
+    r->initAttachInfoMgr();
     REGION_is_expect_inline(r) = dcl->is_inline();
 
     //To faciliate RegionMgr to manage the resource of each Region, you have to
@@ -2548,7 +2634,7 @@ static bool scanProgramDeclList(Scope * s, OUT xoc::Region * rg)
                                         (CLRegionMgr*)rg->getRegionMgr())) {
                     return false;
                 }
-                if (g_err_msg_list.get_elem_count() > 0) {
+                if (g_err_msg_list.has_msg()) {
                     return false;
                 }
                 continue;
@@ -2585,6 +2671,7 @@ bool generateRegion(RegionMgr * rm)
     //Generate Program region.
     Region * program = rm->newRegion(REGION_PROGRAM);
     program->registerGlobalVAR();
+    program->initAttachInfoMgr();
     rm->addToRegionTab(program);
 
     //Record the program region in RegionMgr.

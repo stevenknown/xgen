@@ -1,4 +1,5 @@
-struct S {int a; int b;} p[10];
+struct S {int a; int b; int c; int d; } p[10];
+struct S s;
 int foo(int i)
 {
     p[0].b = 1; //S1
@@ -74,14 +75,14 @@ int foo14(int i)
     p[i].b = 20; //S4
     return p[i].b;
 }
-int foo15(int i)
+struct S foo15(int i)
 {
-    p[i] = 20; //S4
+    p[i].c = 20; //S4
     return p[i];
 }
-int foo16(int i)
+struct S foo16(int i)
 {
-    p[i].a = 20; //S4
+    p[i] = s; //S4
     return p[i];
 }
 int foo17(int i)
@@ -91,16 +92,11 @@ int foo17(int i)
 }
 int foo18(int i)
 {
-    p[i] = 20; //S4
+    p[i] = s; //S4
     return p[i].a;
 }
 int foo19(int i)
 {
-    p[i] = 20; //S4
+    p[i] = s; //S4
     return p[i].b;
 }
-//int foo20(int i)
-//{
-//    p[0].a = 1; //S1
-//    return p[0].a; //S2
-//}

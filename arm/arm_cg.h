@@ -48,22 +48,22 @@ private:
                          OUT ORList & ors, IN IOC * cont);
     void buildShiftRightCase1(IN SR * src, ULONG sr_size,
                               IN SR * shift_ofst, bool is_signed,
-                              OUT ORList & ors, IN OUT IOC * cont);
+                              OUT ORList & ors, MOD IOC * cont);
     void buildShiftRightCase2(IN SR * src, ULONG sr_size,
                               IN SR * shift_ofst, bool is_signed,
-                              OUT ORList & ors, IN OUT IOC * cont);
+                              OUT ORList & ors, MOD IOC * cont);
     void buildShiftRightCase3(IN SR * src, ULONG sr_size,
                               IN SR * shift_ofst, bool is_signed,
-                              OUT ORList & ors, IN OUT IOC * cont);
+                              OUT ORList & ors, MOD IOC * cont);
     void buildShiftRightCase3_1(IN SR * src, ULONG sr_size,
                                 IN SR * shift_ofst, bool is_signed,
-                                OUT ORList & ors, IN OUT IOC * cont);
+                                OUT ORList & ors, MOD IOC * cont);
     void buildShiftRightCase3_2(IN SR * src, ULONG sr_size,
                                 IN SR * shift_ofst, bool is_signed,
-                                OUT ORList & ors, IN OUT IOC * cont);
+                                OUT ORList & ors, MOD IOC * cont);
     void buildShiftRightCase3_3(IN SR * src, ULONG sr_size,
                                 IN SR * shift_ofst, bool is_signed,
-                                OUT ORList & ors, IN OUT IOC * cont);
+                                OUT ORList & ors, MOD IOC * cont);
     //This is an util function.
     //Build several [tgt] <- [src] operations accroding unrolling factor.
     //e.g: given unrolling factor is 2, two memory assignments will
@@ -280,15 +280,15 @@ public:
     void buildARMCmp(OR_TYPE cmp_ot, IN SR * pred, IN SR * opnd0, IN SR * opnd1,
                      OUT ORList & ors, IN IOC * cont);
     void buildShiftLeftImm(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
-                           OUT ORList & ors, IN OUT IOC * cont);
+                           OUT ORList & ors, MOD IOC * cont);
     void buildShiftLeftReg(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
-                           OUT ORList & ors, IN OUT IOC * cont);
+                           OUT ORList & ors, MOD IOC * cont);
     virtual void buildShiftLeft(IN SR * src, ULONG sr_size,
                                 IN SR * shift_ofst, OUT ORList & ors,
-                                IN OUT IOC * cont);
+                                MOD IOC * cont);
     virtual void buildShiftRight(IN SR * src, ULONG sr_size,
                                  IN SR * shift_ofst, bool is_signed,
-                                 OUT ORList & ors, IN OUT IOC * cont);
+                                 OUT ORList & ors, MOD IOC * cont);
     void buildCall(Var const* callee, UINT ret_val_size,
                    OUT ORList & ors, IOC * cont);
     void buildICall(SR * callee, UINT ret_val_size,
@@ -299,7 +299,7 @@ public:
     virtual void buildStoreAndAssignRegister(SR * reg, UINT offset,
                                              OUT ORList & ors, IN IOC * cont);
 
-    virtual bool changeORType(IN OUT OR * o, OR_TYPE ortype, CLUST src,
+    virtual bool changeORType(MOD OR * o, OR_TYPE ortype, CLUST src,
                               CLUST tgt, RegFileSet const* regfile_unique);
     virtual CLUST computeORCluster(OR const* o) const;
     virtual INT computeCopyOpndIdx(OR * o);

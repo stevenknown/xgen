@@ -141,7 +141,7 @@ public:
         return 0;
     }
 
-    virtual void runOneCycle(IN OUT ORList * finished_ors);
+    virtual void runOneCycle(MOD ORList * finished_ors);
     void reset();
 
     void setCurCycle(UINT cur_cyc) { m_cyc_counter = cur_cyc; }

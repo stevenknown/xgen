@@ -36,8 +36,8 @@ static FILE * g_output = nullptr;
 static List<EquORTypes*> g_or_types_list;
 static List<RegFileSet*> g_regfile_set_list;
 static List<RegSet*> g_reg_set_list;
-static List<SRDescGroup<>*> g_sr_resc_group_list;
-static List<SRDesc*> g_sr_resc_list;
+static List<SRDescGroup<>*> g_sr_desc_group_list;
+static List<SRDesc*> g_sr_desc_list;
 static List<UINT*> g_uint_buffer_list;
 static CHAR const* g_reg_result_cyc_buf_name = "reg_result_cyc_buf";
 static CHAR const* g_mem_result_cyc_buf_name = "mem_result_cyc_buf";
@@ -269,7 +269,7 @@ static SRDescGroup<> * newSRDescGroup(UINT resnum, UINT opndnum)
     UINT x = computeSRDescGroupSize(resnum, opndnum);
     SRDescGroup<> * sda = (SRDescGroup<>*)malloc(x);
     sda->init(resnum, opndnum);
-    g_sr_resc_group_list.append_tail(sda);
+    g_sr_desc_group_list.append_tail(sda);
     return sda;
 }
 
@@ -278,7 +278,7 @@ static SRDesc * newSRDesc()
 {
     SRDesc * sd = new SRDesc();
     sd->init();
-    g_sr_resc_list.append_tail(sd);
+    g_sr_desc_list.append_tail(sd);
     return sd;
 }
 
@@ -301,8 +301,7 @@ static void prtROBitSet(CHAR const* byte_buffer_name)
 }
 
 
-static void prtBitSet(xcom::BitSet const& bs,
-                      CHAR const* var_name,
+static void prtBitSet(xcom::BitSet const& bs, CHAR const* var_name,
                       bool is_static)
 {
     ASSERT0(g_output && var_name);
@@ -637,105 +636,123 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     //Create SR Descriptor of literal.
     //Indicates 4GB of address space.
     SRDesc * sr_32b_unsig_imm = newSRDesc();
-    SRD_is_imm(sr_32b_unsig_imm) = 1;
+    SRD_is_imm(sr_32b_unsig_imm) = true;
     SRD_bitsize(sr_32b_unsig_imm) = 32;
-    SRD_is_signed(sr_32b_unsig_imm) = 0;
+    SRD_is_signed(sr_32b_unsig_imm) = false;
 
     //Indicates 4GB of address space.
     SRDesc * sr_32b_sig_imm = newSRDesc();
-    SRD_is_imm(sr_32b_sig_imm) = 1;
+    SRD_is_imm(sr_32b_sig_imm) = true;
     SRD_bitsize(sr_32b_sig_imm) = 32;
-    SRD_is_signed(sr_32b_sig_imm) = 1;
+    SRD_is_signed(sr_32b_sig_imm) = true;
 
     //Indicates 32MB of address space.
     SRDesc * sr_25b_unsig_imm = newSRDesc();
-    SRD_is_imm(sr_25b_unsig_imm) = 1;
+    SRD_is_imm(sr_25b_unsig_imm) = true;
     SRD_bitsize(sr_25b_unsig_imm) = 25;
-    SRD_is_signed(sr_25b_unsig_imm) = 0;
+    SRD_is_signed(sr_25b_unsig_imm) = false;
 
     //Indicates 16MB byte of address space.
     SRDesc * sr_24b_sig_imm = newSRDesc();
-    SRD_is_imm(sr_24b_sig_imm) = 1;
+    SRD_is_imm(sr_24b_sig_imm) = true;
     SRD_bitsize(sr_24b_sig_imm) = 24;
-    SRD_is_signed(sr_24b_sig_imm) = 1;
+    SRD_is_signed(sr_24b_sig_imm) = true;
 
-    //Indicates 65536 byte of address space.
+    //Indicates 16MB of address space.
     SRDesc * sr_24b_unsig_imm = newSRDesc();
-    SRD_is_imm(sr_24b_unsig_imm) = 1;
+    SRD_is_imm(sr_24b_unsig_imm) = true;
     SRD_bitsize(sr_24b_unsig_imm) = 24;
-    SRD_is_signed(sr_24b_unsig_imm) = 0;
+    SRD_is_signed(sr_24b_unsig_imm) = false;
 
-    //Indicates 65536 byte of address space.
+    //Indicates 65536 byte(64KB) of address space.
     SRDesc * sr_16b_unsig_imm = newSRDesc();
-    SRD_is_imm(sr_16b_unsig_imm) = 1;
+    SRD_is_imm(sr_16b_unsig_imm) = true;
     SRD_bitsize(sr_16b_unsig_imm) = 16;
-    SRD_is_signed(sr_16b_unsig_imm) = 0;
+    SRD_is_signed(sr_16b_unsig_imm) = false;
 
     //Indicates 65536 byte of address space.
     SRDesc * sr_16b_sig_imm = newSRDesc();
-    SRD_is_imm(sr_16b_sig_imm) = 1;
+    SRD_is_imm(sr_16b_sig_imm) = true;
     SRD_bitsize(sr_16b_sig_imm) = 16;
-    SRD_is_signed(sr_16b_sig_imm) = 1;
+    SRD_is_signed(sr_16b_sig_imm) = true;
 
     //Indicates 8192 byte of address space.
     SRDesc * sr_13b_unsig_imm = newSRDesc();
-    SRD_is_imm(sr_13b_unsig_imm) = 1;
+    SRD_is_imm(sr_13b_unsig_imm) = true;
     SRD_bitsize(sr_13b_unsig_imm) = 13;
-    SRD_is_signed(sr_13b_unsig_imm) = 0;
+    SRD_is_signed(sr_13b_unsig_imm) = false;
 
     //Indicates 4096 byte of address space.
     SRDesc * sr_12b_unsig_imm = newSRDesc();
-    SRD_is_imm(sr_12b_unsig_imm) = 1;
+    SRD_is_imm(sr_12b_unsig_imm) = true;
     SRD_bitsize(sr_12b_unsig_imm) = 12;
-    SRD_is_signed(sr_12b_unsig_imm) = 0;
+    SRD_is_signed(sr_12b_unsig_imm) = false;
 
     //Indicates 1024 byte of address space.
     SRDesc * sr_10b_unsig_imm = newSRDesc();
-    SRD_is_imm(sr_10b_unsig_imm) = 1;
+    SRD_is_imm(sr_10b_unsig_imm) = true;
     SRD_bitsize(sr_10b_unsig_imm) = 10;
-    SRD_is_signed(sr_10b_unsig_imm) = 0;
+    SRD_is_signed(sr_10b_unsig_imm) = false;
 
     //Indicates 512 byte of address space.
     SRDesc * sr_9b_unsig_imm = newSRDesc();
-    SRD_is_imm(sr_9b_unsig_imm) = 1;
+    SRD_is_imm(sr_9b_unsig_imm) = true;
     SRD_bitsize(sr_9b_unsig_imm) = 9;
-    SRD_is_signed(sr_9b_unsig_imm) = 0;
+    SRD_is_signed(sr_9b_unsig_imm) = false;
 
     //Indicates 255 byte of address space.
     SRDesc * sr_8b_unsig_imm = newSRDesc();
-    SRD_is_imm(sr_8b_unsig_imm) = 1;
+    SRD_is_imm(sr_8b_unsig_imm) = true;
     SRD_bitsize(sr_8b_unsig_imm) = 8;
-    SRD_is_signed(sr_8b_unsig_imm) = 0;
+    SRD_is_signed(sr_8b_unsig_imm) = false;
 
     //Indicates 64 byte of address space.
     SRDesc * sr_6b_unsig_imm = newSRDesc();
-    SRD_is_imm(sr_6b_unsig_imm) = 1;
+    SRD_is_imm(sr_6b_unsig_imm) = true;
     SRD_bitsize(sr_6b_unsig_imm) = 6;
-    SRD_is_signed(sr_6b_unsig_imm) = 0;
+    SRD_is_signed(sr_6b_unsig_imm) = false;
 
     //Indicates 32 byte of address space.
     SRDesc * sr_5b_unsig_imm = newSRDesc();
-    SRD_is_imm(sr_5b_unsig_imm) = 1;
+    SRD_is_imm(sr_5b_unsig_imm) = true;
     SRD_bitsize(sr_5b_unsig_imm) = 5;
-    SRD_is_signed(sr_5b_unsig_imm) = 0;
+    SRD_is_signed(sr_5b_unsig_imm) = false;
 
     //Indicates 16 byte of address space.
     SRDesc * sr_4b_unsig_imm = newSRDesc();
-    SRD_is_imm(sr_4b_unsig_imm) = 1;
+    SRD_is_imm(sr_4b_unsig_imm) = true;
     SRD_bitsize(sr_4b_unsig_imm) = 4;
-    SRD_is_signed(sr_4b_unsig_imm) = 0;
+    SRD_is_signed(sr_4b_unsig_imm) = false;
 
     //Indicates 4 byte of address space.
     SRDesc * sr_2b_unsig_imm = newSRDesc();
-    SRD_is_imm(sr_2b_unsig_imm) = 1;
+    SRD_is_imm(sr_2b_unsig_imm) = true;
     SRD_bitsize(sr_2b_unsig_imm) = 2;
-    SRD_is_signed(sr_2b_unsig_imm) = 0;
+    SRD_is_signed(sr_2b_unsig_imm) = false;
 
     //Indicates 0 byte of address space.
     SRDesc * sr_0b_unsig_imm = newSRDesc();
-    SRD_is_imm(sr_0b_unsig_imm) = 1;
+    SRD_is_imm(sr_0b_unsig_imm) = true;
     SRD_bitsize(sr_0b_unsig_imm) = 1;
-    SRD_is_signed(sr_0b_unsig_imm) = 0;
+    SRD_is_signed(sr_0b_unsig_imm) = false;
+
+    //Indicates label which address 4GB memory.
+    SRDesc * sr_label_32bits = newSRDesc();
+    SRD_is_imm(sr_label_32bits) = true;
+    SRD_bitsize(sr_label_32bits) = 32;
+    SRD_is_signed(sr_label_32bits) = false;
+    SRD_is_label(sr_label_32bits) = true;
+
+    //Indicates label which address 32MB memory.
+    SRDesc * sr_label_25bits = newSRDesc();
+    SRD_is_imm(sr_label_25bits) = true;
+    SRD_bitsize(sr_label_25bits) = 25;
+    SRD_is_signed(sr_label_25bits) = false;
+    SRD_is_label(sr_label_25bits) = true;
+
+    //Indicates label list.
+    SRDesc * sr_label_list = newSRDesc();
+    SRD_is_label_list(sr_label_list) = true;
 
     /////////////////////////////////////////////////////
     //Create SR Descriptor of related RegFileSet, RegSet.
@@ -778,7 +795,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     sda = newSRDescGroup(0, 2);
     //opnd
     sda->set_opnd(0, sr_r);
-    sda->set_opnd(1, sr_32b_unsig_imm); //label
+    sda->set_opnd(1, sr_label_32bits); //label
     setSRDescGroup(OR_label, sda);
 
     //0 res, 2 opnd:-- <- p, r
@@ -786,14 +803,21 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     //opnd
     sda->set_opnd(0, sr_p);
     sda->set_opnd(1, sr_r); //LR
-    setSRDescGroup(OR_bx, sda);
     setSRDescGroup(OR_ret, sda);
+
+    //0 res, 3 opnd:-- <- p, label_list, r
+    sda = newSRDescGroup(0, 3);
+    //opnd
+    sda->set_opnd(0, sr_p);
+    sda->set_opnd(1, sr_label_list); //label list
+    sda->set_opnd(2, sr_r); //branch target register
+    setSRDescGroup(OR_bx, sda);
 
     //0 res, 3 opnd:-- <- p, +/-32MB
     sda = newSRDescGroup(0, 3);
     //opnd
     sda->set_opnd(0, sr_p);
-    sda->set_opnd(1, sr_25b_unsig_imm); //label
+    sda->set_opnd(1, sr_label_25bits); //label
     sda->set_opnd(2, sr_cpsr); //Rflag
     setSRDescGroup(OR_b, sda);
 
@@ -894,7 +918,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     sda->set_res(0, sr_r);
     //opnd
     sda->set_opnd(0, sr_p);
-    sda->set_opnd(1, sr_r);
+    sda->set_opnd(1, sr_label_32bits); //label
     setSRDescGroup(OR_bl, sda);
 
     //1 res, 2 opnd: r <- p, r
@@ -1305,7 +1329,7 @@ static void initEquORType()
     for (UINT i = OR_UNDEF + 1; i < OR_LAST; i++) {
         EquORTypes * g = newEquORType();
         EQUORTY_unit2ortype(g, UNIT_A) = (OR_TYPE)i;
-        g_or_type_desc[i].equ_or_types = g;
+        OTD_equ_or_types(&g_or_type_desc[i]) = g;
     }
 }
 
@@ -1317,27 +1341,27 @@ static void initORProperty()
 
     for (INT i = OR_UNDEF + 1; i < OR_NUM; i++) {
         od = &g_or_type_desc[i];
-        OTD_is_predicated(od) = 1;
+        OTD_is_predicated(od) = true;
     }
 
     od = &g_or_type_desc[OR_spadjust_i];
-    OTD_is_fake(od) = 1; //expand OR if offset is out of range.
-    OTD_is_bus(od) = 1;
+    OTD_is_fake(od) = true; //expand OR if offset is out of range.
+    OTD_is_bus(od) = true;
 
     od = &g_or_type_desc[OR_spadjust_r];
-    OTD_is_fake(od) = 1;
-    OTD_is_bus(od) = 1;
+    OTD_is_fake(od) = true;
+    OTD_is_bus(od) = true;
 
     od = &g_or_type_desc[OR_label];
-    OTD_is_fake(od) = 1;
+    OTD_is_fake(od) = true;
 
     od = &g_or_type_desc[OR_asm];
-    OTD_is_volatile(od) = 1;
-    OTD_is_side_effect(od) = 1;
-    OTD_is_asm(od) = 1;
+    OTD_is_volatile(od) = true;
+    OTD_is_side_effect(od) = true;
+    OTD_is_asm(od) = true;
 
     od = &g_or_type_desc[OR_nop];
-    OTD_is_nop(od) = 1;
+    OTD_is_nop(od) = true;
 
     //load
     OR_TYPE load[] = {
@@ -1357,7 +1381,7 @@ static void initORProperty()
     };
     for (UINT i = 0; i < sizeof(load) / sizeof(load[0]); i++) {
         od = &g_or_type_desc[load[i]];
-        OTD_is_load(od) = 1;
+        OTD_is_load(od) = true;
         switch (load[i]) {
         case OR_ldr:
         case OR_ldrb:
@@ -1365,23 +1389,23 @@ static void initORProperty()
         case OR_ldrh:
         case OR_ldrsh:
         case OR_ldrd:
-            OTD_is_fake(od) = 1; //expand OR if offset is out of range.
+            OTD_is_fake(od) = true; //expand OR if offset is out of range.
             break;
         default: {}
         }
     }
 
     od = &g_or_type_desc[OR_lsr_i];
-    OTD_is_fake(od) = 1; //expand OR if shift-size is out of range.
+    OTD_is_fake(od) = true; //expand OR if shift-size is out of range.
 
     od = &g_or_type_desc[OR_lsr_i32];
-    OTD_is_fake(od) = 1; //expand OR if shift-size is out of range.
+    OTD_is_fake(od) = true; //expand OR if shift-size is out of range.
 
     od = &g_or_type_desc[OR_lsl_i32];
-    OTD_is_fake(od) = 1; //expand OR if shift-size is out of range.
+    OTD_is_fake(od) = true; //expand OR if shift-size is out of range.
 
     od = &g_or_type_desc[OR_asr_i32];
-    OTD_is_fake(od) = 1; //expand OR if shift-size is out of range.
+    OTD_is_fake(od) = true; //expand OR if shift-size is out of range.
 
     OR_TYPE store[] = {
         OR_stm,
@@ -1398,7 +1422,7 @@ static void initORProperty()
     };
     for (UINT i = 0; i < sizeof(store) / sizeof(store[0]); i++) {
         od = &g_or_type_desc[store[i]];
-        OTD_is_store(od) = 1;
+        OTD_is_store(od) = true;
         switch (store[i]) {
         case OR_str:
         case OR_strd:
@@ -1406,60 +1430,60 @@ static void initORProperty()
         case OR_strsb:
         case OR_strh:
         case OR_strsh:
-            OTD_is_fake(od) = 1; //expand OR if offset is out of range.
+            OTD_is_fake(od) = true; //expand OR if offset is out of range.
             break;
         default: {}
         }
     }
 
     od = &g_or_type_desc[OR_bl];
-    OTD_is_call(od) = 1;
+    OTD_is_call(od) = true;
 
     od = &g_or_type_desc[OR_ret];
-    OTD_is_return(od) = 1;
+    OTD_is_return(od) = true;
 
     od = &g_or_type_desc[OR_ret1];
-    OTD_is_return(od) = 1;
+    OTD_is_return(od) = true;
 
     od = &g_or_type_desc[OR_ret2];
-    OTD_is_return(od) = 1;
+    OTD_is_return(od) = true;
 
     od = &g_or_type_desc[OR_ret3];
-    OTD_is_return(od) = 1;
+    OTD_is_return(od) = true;
 
     od = &g_or_type_desc[OR_ret4];
-    OTD_is_return(od) = 1;
+    OTD_is_return(od) = true;
 
     od = &g_or_type_desc[OR_b];
-    OTD_is_cond_br(od) = 1;
+    OTD_is_cond_br(od) = true;
 
     od = &g_or_type_desc[OR_bx];
-    OTD_is_uncond_br(od) = 1;
-    OTD_is_indirect_br(od) = 1;
+    OTD_is_uncond_br(od) = true;
+    OTD_is_indirect_br(od) = true;
 
     od = &g_or_type_desc[OR_nop];
-    OTD_is_nop(od) = 1;
+    OTD_is_nop(od) = true;
 
     od = &g_or_type_desc[OR_add_i];
-    OTD_is_addi(od) = 1;
-    OTD_is_fake(od) = 1; //expand OR if immediate-addend is out of range.
+    OTD_is_addi(od) = true;
+    OTD_is_fake(od) = true; //expand OR if immediate-addend is out of range.
 
     od = &g_or_type_desc[OR_sub_i];
-    OTD_is_subi(od) = 1;
-    OTD_is_fake(od) = 1; //expand OR if immediate-addend is out of range.
+    OTD_is_subi(od) = true;
+    OTD_is_fake(od) = true; //expand OR if immediate-addend is out of range.
 
     od = &g_or_type_desc[OR_mov_i];
-    OTD_is_movi(od) = 1;
+    OTD_is_movi(od) = true;
 
     od = &g_or_type_desc[OR_mov32_i];
-    OTD_is_movi(od) = 1;
-    OTD_is_fake(od) = 1; //expand OR if immediate-addend is out of range.
+    OTD_is_movi(od) = true;
+    OTD_is_fake(od) = true; //expand OR if immediate-addend is out of range.
 
     od = &g_or_type_desc[OR_movw_i];
-    OTD_is_movi(od) = 1;
+    OTD_is_movi(od) = true;
 
     od = &g_or_type_desc[OR_movt_i];
-    OTD_is_movi(od) = 1;
+    OTD_is_movi(od) = true;
 }
 
 
@@ -1480,13 +1504,13 @@ static void fini()
         delete rs;
     }
 
-    for (SRDescGroup<> * sda = g_sr_resc_group_list.get_head();
-         sda != nullptr; sda = g_sr_resc_group_list.get_next()) {
+    for (SRDescGroup<> * sda = g_sr_desc_group_list.get_head();
+         sda != nullptr; sda = g_sr_desc_group_list.get_next()) {
         free(sda);
     }
 
-    for (SRDesc * sd = g_sr_resc_list.get_head();
-         sd != nullptr; sd = g_sr_resc_list.get_next()) {
+    for (SRDesc * sd = g_sr_desc_list.get_head();
+         sd != nullptr; sd = g_sr_desc_list.get_next()) {
         delete sd;
     }
 
@@ -1503,7 +1527,7 @@ inline static void prtUnit(UINT u)
 }
 
 
-inline static void prtEquORTypeAddress(EquORTypes * equort)
+inline static void prtEquORTypeAddress(EquORTypes const* equort)
 {
     if (equort == nullptr) {
         fprintf(g_output, "nullptr,");
@@ -1514,14 +1538,14 @@ inline static void prtEquORTypeAddress(EquORTypes * equort)
 }
 
 
-inline static void prtSRDescGroupAddress(SRDescGroup<> * srdgroup)
+inline static void prtSRDescGroupAddress(SRDescGroup<> const* srdgroup)
 {
     if (srdgroup == nullptr) {
         fprintf(g_output, "nullptr,");
         return;
     }
 
-    fprintf(g_output, "(SRDescGroup<>*)&g_sr_resc_group_%p,", srdgroup);
+    fprintf(g_output, "(SRDescGroup<>*)&g_sr_desc_group_%p,", srdgroup);
 }
 
 
@@ -1539,13 +1563,13 @@ static CHAR const* getORTypeName(OR_TYPE ot, OUT xcom::StrBuf & buf)
 }
 
 
-static void prtContentOfEquORTypes(xcom::StrBuf & buf)
+static void prtEquORTypesList()
 {
+    xcom::StrBuf buf(64);
     //Print a list of EquORTypes.
     fprintf(g_output, "\n//Initialize EquORTypes.\n");
     for (EquORTypes * e = g_or_types_list.get_head();
          e != nullptr; e = g_or_types_list.get_next()) {
-
         fprintf(g_output, "static EquORTypes g_equort_%p = {", e);
 
         //Initialize first class member.
@@ -1573,73 +1597,84 @@ static void prtContentOfEquORTypes(xcom::StrBuf & buf)
 }
 
 
-static void prtContentOfSRDescs()
+static void prtSRDesc(SRDesc const* srd, CHAR const* byte_buffer_name,
+                      CHAR const* byte_buffer_name2)
 {
-    //Print a list of SRDescGroup.
+    StrBuf buf(64);
+    ASSERT0(srd);
+    if (srd->getValidRegFileSet() != nullptr) {
+        //Print ROBitSet of valid register file set to current SRDesc.
+        buf.sprint("%s_%p", byte_buffer_name, srd);
+        prtBitSet(*srd->getValidRegFileSet(), buf.buf, true);
+
+        fprintf(g_output,
+        "static ROBitSet robs_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
+        buf.buf, buf.buf, buf.buf, buf.buf);
+    }
+
+    if (srd->getValidRegSet() != nullptr) {
+        //Print ROBitSet of valid register set to current SRDesc.
+        buf.sprint("%s_%p", byte_buffer_name2, srd);
+        prtBitSet(*srd->getValidRegSet(), buf.buf, true);
+
+        fprintf(g_output,
+            "static ROBitSet robs_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
+            buf.buf, buf.buf, buf.buf, buf.buf);
+    }
+
+    //Print the initialization of SRDesc to current SRDesc.
+    fprintf(g_output, "static SRDesc g_sr_desc_%p(", srd);
+
+    //NOTE THE PRINT ORDER OF FOLLOWING FIELD MUST BE CONFORM TO THE
+    //RESPECTIVE DECLARATION ORDER.
+    fprintf(g_output, "%d,", srd->is_signed()); //1th field
+    fprintf(g_output, "%d,", srd->is_imm()); //2nd field
+    fprintf(g_output, "%d,", srd->is_label()); //3rd field
+    fprintf(g_output, "%d,", srd->is_label_list()); //4th field
+    fprintf(g_output, "%u,", srd->getBitSize()); //5th field
+
+     //6th field
+    if (srd->getValidRegFileSet() != nullptr) {
+        buf.sprint("robs_%s_%p", byte_buffer_name, srd);
+        fprintf(g_output, "(RegFileSet*)&%s,", buf.buf);
+    } else {
+        fprintf(g_output, "nullptr,");
+    }
+
+    //7th field
+    if (srd->getValidRegSet() != nullptr) {
+        buf.sprint("robs_%s_%p", byte_buffer_name2, srd);
+        fprintf(g_output, "(RegSet*)&%s", buf.buf);
+    } else {
+        fprintf(g_output, "nullptr");
+    }
+    fprintf(g_output, ");\n");
+}
+
+
+static void prtSRDescList()
+{
+    //Print a list of SRDesc.
     fprintf(g_output, "\n//List of SRDesc.\n");
     xcom::StrBuf buf(64); //name buffer, can not overflow the length.
     CHAR const* byte_buffer_name = "byte_valid_rfset";
     CHAR const* byte_buffer_name2 = "byte_valid_regset";
-
-    for (SRDesc * srd = g_sr_resc_list.get_head();
-         srd != nullptr; srd = g_sr_resc_list.get_next()) {
-        if (SRD_valid_regfile_set(srd) != nullptr) {
-            //Print ROBitSet of valid register file set to current SRDesc.
-            buf.sprint("%s_%p", byte_buffer_name, srd);
-            prtBitSet(*SRD_valid_regfile_set(srd), buf.buf, true);
-
-            fprintf(g_output,
-            "static ROBitSet robs_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
-            buf.buf, buf.buf, buf.buf, buf.buf);
-        }
-
-        if (SRD_valid_reg_set(srd) != nullptr) {
-            //Print ROBitSet of valid register set to current SRDesc.
-            buf.sprint("%s_%p", byte_buffer_name2, srd);
-            prtBitSet(*SRD_valid_reg_set(srd), buf.buf, true);
-
-            fprintf(g_output,
-                "static ROBitSet robs_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
-                buf.buf, buf.buf, buf.buf, buf.buf);
-        }
-
-        //Print the initialization of SRDesc to current SRDesc.
-        fprintf(g_output, "static SRDesc g_sr_resc_%p = {", srd);
-
-        if (SRD_valid_regfile_set(srd) != nullptr) {
-            buf.sprint("robs_%s_%p", byte_buffer_name, srd);
-            fprintf(g_output, "(RegFileSet*)&%s,", buf.buf);
-        } else {
-            fprintf(g_output, "nullptr,");
-        }
-
-        if (SRD_valid_reg_set(srd) != nullptr) {
-            buf.sprint("robs_%s_%p", byte_buffer_name2, srd);
-            fprintf(g_output, "(RegSet*)&%s,", buf.buf);
-        } else {
-            fprintf(g_output, "nullptr,");
-        }
-
-        fprintf(g_output, "%d,", SRD_bitsize(srd));
-        fprintf(g_output, "%d,", SRD_is_signed(srd));
-        fprintf(g_output, "%d,", SRD_is_imm(srd));
-
-        fprintf(g_output, "};\n");
+    for (SRDesc const* srd = g_sr_desc_list.get_head();
+         srd != nullptr; srd = g_sr_desc_list.get_next()) {
+        prtSRDesc(srd, byte_buffer_name, byte_buffer_name2);
     }
 }
 
 
-static void prtContentOfSRDescGroups()
+static void prtSRDescGroupList()
 {
     //Print a list of SRDescGroup.
     fprintf(g_output, "\n//List of SRDescGroup.\n");
-    for (SRDescGroup<> * sdg = g_sr_resc_group_list.get_head();
-         sdg != nullptr; sdg = g_sr_resc_group_list.get_next()) {
-        fprintf(g_output, "static SRDescGroup<%d> g_sr_resc_group_%p(%d, %d",
+    for (SRDescGroup<> const* sdg = g_sr_desc_group_list.get_head();
+         sdg != nullptr; sdg = g_sr_desc_group_list.get_next()) {
+        fprintf(g_output, "static SRDescGroup<%d> g_sr_desc_group_%p(%d, %d",
                 sdg->get_opnd_num() + sdg->get_res_num(),
-                sdg,
-                sdg->get_res_num(),
-                sdg->get_opnd_num());
+                sdg, sdg->get_res_num(), sdg->get_opnd_num());
 
         if (sdg->get_opnd_num() + sdg->get_res_num() == 0) {
             fprintf(g_output, ");\n");
@@ -1649,13 +1684,13 @@ static void prtContentOfSRDescGroups()
         for (UINT i = 0; i < sdg->get_res_num(); i++) {
             SRDesc const* sd = sdg->get_res(i);
             ASSERT0(sd);
-            fprintf(g_output, ",&g_sr_resc_%p", sd);
+            fprintf(g_output, ",&g_sr_desc_%p", sd);
         }
 
         for (UINT i = 0; i < sdg->get_opnd_num(); i++) {
             SRDesc const* sd = sdg->get_opnd(i);
             ASSERT0(sd);
-            fprintf(g_output, ",&g_sr_resc_%p", sd);
+            fprintf(g_output, ",&g_sr_desc_%p", sd);
         }
 
         fprintf(g_output, ");\n");
@@ -1663,39 +1698,91 @@ static void prtContentOfSRDescGroups()
 }
 
 
-static void prtORScheInfoContent(ORScheInfo & si)
+static void prtORScheInfoContent(ORScheInfo const& si)
 {
     fprintf(g_output, "{");
+
+    //NOTE THE PRINT ORDER OF FOLLOWING FIELD MUST BE CONFORM TO THE
+    //RESPECTIVE DECLARATION ORDER.
+    //1th field.
     if (ORSI_reg_result_cyc_buf(&si) != nullptr) {
-        fprintf(g_output, "%s_%p,",
-                g_reg_result_cyc_buf_name,
+        fprintf(g_output, "%s_%p,", g_reg_result_cyc_buf_name,
                 ORSI_reg_result_cyc_buf(&si));
     } else {
         fprintf(g_output, "nullptr,");
     }
 
+    //2nd field.
     if (ORSI_mem_result_cyc_buf(&si) != nullptr) {
-        fprintf(g_output, "%s_%p,",
-                g_mem_result_cyc_buf_name,
+        fprintf(g_output, "%s_%p,", g_mem_result_cyc_buf_name,
                 ORSI_mem_result_cyc_buf(&si));
     } else {
         fprintf(g_output, "nullptr,");
     }
 
+    //3rd field.
     fprintf(g_output, "%d,", ORSI_last_result_avail_cyc(&si));
+
+    //4th field.
     fprintf(g_output, "%d,", ORSI_first_result_avail_cyc(&si));
 
     fprintf(g_output, "},");
 }
 
 
-static void prtContentOfORTypeDesc()
+static void prtORTypeDesc(ORTypeDesc const* otd)
+{
+    StrBuf buf(64);
+    fprintf(g_output, "  {");
+
+    //Print ORType and name.
+    fprintf(g_output, "%s,", getORTypeName(OTD_code(otd), buf));
+    fprintf(g_output, "\"%s\",", OTD_name(otd));
+
+    //Print function unit.
+    prtUnit(OTD_unit(otd));
+
+    //Print EquORTypes.
+    prtEquORTypeAddress(OTD_equ_or_types(otd));
+
+    //Print SRDescGroup.
+    prtSRDescGroupAddress(OTD_srd_group(otd));
+
+    //Print ORScheInfo.
+    prtORScheInfoContent(OTD_sche_info(otd));
+
+    fprintf(g_output, "%s,", OTD_is_predicated(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_fake(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_bus(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_nop(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_volatile(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_side_effect(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_asm(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_call(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_cond_br(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_uncond_br(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_indirect_br(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_return(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_unaligned(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_store(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_load(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_eq(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_lt(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_gt(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_movi(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_addi(otd) ? "1":"0");
+    fprintf(g_output, "%s,", OTD_is_subi(otd) ? "1":"0");
+
+    fprintf(g_output, "},");
+
+    fprintf(g_output, "\n");
+
+}
+
+
+static void prtORTypeDescTab()
 {
     xcom::StrBuf buf(64);
-
-    prtContentOfEquORTypes(buf);
-    prtContentOfSRDescs();
-    prtContentOfSRDescGroups();
 
     //Print ORTypeDesc.
     fprintf(g_output, "\n//Initialize ORTypeDesc.\n");
@@ -1703,53 +1790,8 @@ static void prtContentOfORTypeDesc()
     UINT num = sizeof(g_or_type_desc) / sizeof(g_or_type_desc[0]);
     for (UINT i = 0; i < num; i++) {
         ASSERT0(i < OR_NUM);
-        fprintf(g_output, "  {");
-
-        ORTypeDesc * otd = &g_or_type_desc[i];
-
-        //Print ORType and name.
-        fprintf(g_output, "%s,", getORTypeName((OR_TYPE)i, buf));
-        fprintf(g_output, "\"%s\",", OTD_name(otd));
-
-        //Print function unit.
-        prtUnit(OTD_unit(otd));
-
-        //Print EquORTypes.
-        prtEquORTypeAddress(OTD_equ_or_types(otd));
-
-        //Print SRDescGroup.
-        prtSRDescGroupAddress(OTD_srd_group(otd));
-
-        //Print ORScheInfo.
-        prtORScheInfoContent(OTD_sche_info(otd));
-
-        fprintf(g_output, "%s,", OTD_is_predicated(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_fake(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_bus(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_nop(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_volatile(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_side_effect(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_asm(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_call(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_cond_br(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_uncond_br(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_indirect_br(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_return(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_unaligned(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_store(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_load(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_eq(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_lt(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_gt(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_movi(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_addi(otd) ? "1":"0");
-        fprintf(g_output, "%s,", OTD_is_subi(otd) ? "1":"0");
-
-        fprintf(g_output, "},");
-
-        fprintf(g_output, "\n");
+        prtORTypeDesc(&g_or_type_desc[i]);
     }
-
     fprintf(g_output, "};\n");
     fflush(g_output);
 }
@@ -1814,25 +1856,24 @@ static void prtSlotName()
 
 
 //Return true if specified operand or result is cpsr register.
-//Note SRDescGroup information must be available before invoke
-//this function.
+//NOTE SRDescGroup INFORMATION MUST BE AVAILABLE BEFORE INVOKE
+//THIS FUNCTION.
 static bool isRflagRegister(OR_TYPE ot, UINT idx, bool is_result)
 {
-    ORTypeDesc const* otd = &g_or_type_desc[ot];
+    ORTypeDesc const* otd = &g_or_type_desc[ot];    
     SRDescGroup<> const* sdg = OTD_srd_group(otd);
-
     RegFileSet cpsr;
     cpsr.bunion(RF_CPSR);
     if (is_result) {
-        SRDesc const* sr_resc = sdg->get_res(idx);
-        if (SRD_valid_regfile_set(sr_resc)->is_contain(cpsr)) {
+        SRDesc const* sr_desc = sdg->get_res(idx);
+        if (sr_desc->getValidRegFileSet()->is_contain(cpsr)) {
             return true;
         }
         return false;
     }
 
-    SRDesc const* sr_resc = sdg->get_opnd(idx);
-    if (SRD_valid_regfile_set(sr_resc)->is_contain(cpsr)) {
+    SRDesc const* sr_desc = sdg->get_opnd(idx);
+    if (sr_desc->getValidRegFileSet()->is_contain(cpsr)) {
         return true;
     }
 
@@ -2154,13 +2195,16 @@ int main()
     xcom::BitSet cluster2regset[CLUST_NUM];
     initCluster2RegSet(regfile2regset, cluster2regset);
     initAndPrtCluster2Allocable(allocable, cluster2regset);
-
     initSRDesc(regfile2regset);
     initORProperty();
     initEquORType();
     initFuncUnit();
     initScheInfo();
-    prtContentOfORTypeDesc();
+
+    prtEquORTypesList();
+    prtSRDescList();
+    prtSRDescGroupList();
+    prtORTypeDescTab();
 
     fclose(g_output);
     fini();

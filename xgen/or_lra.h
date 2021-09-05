@@ -419,17 +419,14 @@ protected:
     void freeAllLifeTime();
     //Free resource used by lt.
     void freeLifeTime(LifeTime * lt);
-    void processFuncExitBB(IN OUT List<LifeTime*> & liveout_exitbb_lts,
-                           IN OUT LifeTimeTab & live_lt_list,
-                           INT pos);
-    void processLiveOutSR(IN OUT LifeTimeTab & live_lt_list, INT pos);
+    void processFuncExitBB(MOD List<LifeTime*> & liveout_exitbb_lts,
+                           MOD LifeTimeTab & live_lt_list, INT pos);
+    void processLiveOutSR(MOD LifeTimeTab & live_lt_list, INT pos);
     void reviseLTCase1(LifeTime * lt);
-    void processLiveInSR(IN OUT LifeTimeTab & live_lt_list);
-    void appendPosition(IN OUT LifeTimeTab & live_lt_list, INT pos);
-    void recordPhysicalRegOcc(IN SR * sr,
-                              IN LifeTimeTab & live_lt_list,
-                              INT pos,
-                              IN PosInfo * pi);
+    void processLiveInSR(MOD LifeTimeTab & live_lt_list);
+    void appendPosition(MOD LifeTimeTab & live_lt_list, INT pos);
+    void recordPhysicalRegOcc(IN SR * sr, IN LifeTimeTab & live_lt_list,
+                              INT pos, IN PosInfo * pi);
     void * xmalloc(INT size)
     {
         ASSERTN(m_is_init, ("Life time manager should initialized first."));
@@ -452,8 +449,7 @@ public:
     void computeLifeTimeCluster(LifeTime * lt, OR * o);
     void computeUsableRegs();
     void computeLifeTimeUsableRegs(LifeTime * lt, RegSet * usable_rs);
-    virtual void considerSpecialConstraints(OR * o,
-                                            SR const* sr,
+    virtual void considerSpecialConstraints(OR * o, SR const* sr,
                                             RegSet & usable_regs);
     LifeTime * clone_lifetime(LifeTime * lt);
     bool clone(LifeTimeMgr & mgr);
@@ -481,9 +477,9 @@ public:
     LifeTime * getNextLifeTime(LifeTimeVecIter & cur);
     LifeTime * getFirstLifeTime(LifeTimeVecIter & cur);
     void getOccInRange(INT start, INT end, IN LifeTime * lt,
-                       IN OUT List<INT> & occs);
-    INT getBackwardOcc(INT pos, IN LifeTime * lt, IN OUT bool * is_def);
-    INT getForwardOcc(INT pos, IN LifeTime * lt, IN OUT bool * is_def);
+                       MOD List<INT> & occs);
+    INT getBackwardOcc(INT pos, IN LifeTime * lt, MOD bool * is_def);
+    INT getForwardOcc(INT pos, IN LifeTime * lt, MOD bool * is_def);
     INT get_backward_use_occ(INT pos, IN LifeTime * lt);
     INT getForwardOccForUSE(INT pos, IN LifeTime * lt);
     INT getBackwardOccForDEF(INT pos, IN LifeTime * lt);
@@ -633,7 +629,7 @@ public:
     virtual ORBB * bb();
     virtual bool isGraphNode(LifeTime const* lt) const;
     virtual bool isInterferred(LifeTime * lt1, LifeTime * lt2);
-    virtual void getNeighborList(IN OUT List<LifeTime*> & ni_list,
+    virtual void getNeighborList(MOD List<LifeTime*> & ni_list,
                                  LifeTime * lt);
     virtual UINT getInterfDegree(LifeTime * lt);
     virtual void dump();
@@ -694,115 +690,90 @@ protected:
                          SR * pd,
                          ORList & ors);
 
-    void findFollowedLoad(OUT ORList & followed_lds,
-                          IN OR * o,
+    void findFollowedLoad(OUT ORList & followed_lds, IN OR * o,
                           xoc::Var const* spill_loc,
-                          IN OUT bool & spill_can_be_removed,
+                          MOD bool & spill_can_be_removed,
                           IN DataDepGraph & ddg);
     SR * findAvailPhyRegFromLoadList(IN OR * o,
-                                     IN OUT bool & spill_can_be_removed,
+                                     MOD bool & spill_can_be_removed,
                                      IN ORList & followed_lds,
                                      IN LifeTimeMgr & mgr,
                                      IN InterfGraph & ig);
 
-    bool hoistSpillLocForStore(IN OR * o,
-                               IN InterfGraph & ig,
-                               IN LifeTimeMgr & mgr,
-                               IN OUT DataDepGraph & ddg,
-                               IN ORCt * orct,
-                               IN OUT ORCt ** next_orct);
+    bool hoistSpillLocForStore(IN OR * o, IN InterfGraph & ig,
+                               IN LifeTimeMgr & mgr, MOD DataDepGraph & ddg,
+                               IN ORCt * orct, MOD ORCt ** next_orct);
 public:
     LRA(IN ORBB * bb, IN RaMgr * ra_mgr);
     virtual ~LRA() { smpoolDelete(m_mem_pool); }
 
-    bool assignRegister(LifeTime * lt,
-                        InterfGraph & ig,
-                        LifeTimeMgr & mgr,
+    bool assignRegister(LifeTime * lt, InterfGraph & ig, LifeTimeMgr & mgr,
                         RegFileGroup * rfg);
     virtual void assignRegFileInResourceView(IN LifeTime * lt,
                                              IN List<REGFILE> & regfile_cand,
-                                             IN OUT ClustRegInfo cri[CLUST_NUM],
+                                             MOD ClustRegInfo cri[CLUST_NUM],
                                              IN LifeTimeMgr & mgr,
                                              IN RegFileAffinityGraph & rdg);
-    virtual void assignRegFile(IN OUT ClustRegInfo cri[CLUST_NUM],
+    virtual void assignRegFile(MOD ClustRegInfo cri[CLUST_NUM],
                                RegFileSet const& is_regfile_unique,
-                               IN LifeTimeMgr & mgr,
-                               IN DataDepGraph & ddg,
+                               IN LifeTimeMgr & mgr, IN DataDepGraph & ddg,
                                IN RegFileAffinityGraph & rdg);
     virtual void assignPreferRegFilePressure(IN LifeTime * lt,
                                              IN ClustRegInfo cri[CLUST_NUM],
                                              IN List<REGFILE> & regfile_cand);
-    void assignDesignatedRegFile(IN LifeTime * lt,
-                                 REGFILE regfile,
-                                 IN OUT ClustRegInfo cri[CLUST_NUM]);
-    void assignPreferAnticipation(IN OUT LifeTime * lt,
-                                  IN RegFileAffinityGraph & rdg,
+    void assignDesignatedRegFile(IN LifeTime * lt, REGFILE regfile,
+                                 MOD ClustRegInfo cri[CLUST_NUM]);
+    void assignPreferAnticipation(MOD LifeTime * lt, IN RegFileAffinityGraph & rdg,
                                   IN ClustRegInfo expvalue[CLUST_NUM],
-                                  IN OUT ClustRegInfo cri[CLUST_NUM],
-                                  REGFILE best_rf,
-                                  REGFILE better_rf);
+                                  MOD ClustRegInfo cri[CLUST_NUM],
+                                  REGFILE best_rf, REGFILE better_rf);
     virtual void assignDedicatedCluster() {}
     virtual void assignCluster(DataDepGraph & ddg,
                                RegFileSet const& is_regfile_unique,
                                bool partitioning);
 
-    void buildPriorityList(IN OUT List<LifeTime*> & prio_list,
-                           IN InterfGraph & ig,
-                           IN LifeTimeMgr & mgr,
+    void buildPriorityList(MOD List<LifeTime*> & prio_list,
+                           IN InterfGraph & ig, IN LifeTimeMgr & mgr,
                            DataDepGraph & ddg);
 
     virtual bool computePrioList(List<LifeTime*> & prio_list,
                                  List<LifeTime*> & uncolored_list,
-                                 InterfGraph & ig,
-                                 LifeTimeMgr & mgr,
+                                 InterfGraph & ig, LifeTimeMgr & mgr,
                                  RegFileGroup * rfg);
     //Return true if registers of all sibling of lt are continuous and valid.
-    bool checkAndAssignPrevSiblingLT(REG treg,
-                                     LifeTime const* lt,
+    bool checkAndAssignPrevSiblingLT(REG treg, LifeTime const* lt,
                                      LifeTimeMgr * mgr,
                                      RegSet const* usable_rs);
-    bool checkAndAssignNextSiblingLT(REG treg,
-                                     LifeTime const* lt,
+    bool checkAndAssignNextSiblingLT(REG treg, LifeTime const* lt,
                                      LifeTimeMgr * mgr,
                                      RegSet const* usable_rs);
-    virtual void chooseRegFileCandInLifeTime(IN UnitSet & us,
-                                             IN LifeTime * lt,
+    virtual void chooseRegFileCandInLifeTime(IN UnitSet & us, IN LifeTime * lt,
                                              IN LifeTimeMgr & mgr,
                                              IN DataDepGraph & ddg,
                                              OUT List<REGFILE> & regfile_cand);
-    void choose_regfile(IN LifeTime * lt,
-                        IN OUT ClustRegInfo cri[CLUST_NUM],
-                        IN LifeTimeMgr & mgr,
-                        IN DataDepGraph & ddg,
+    void choose_regfile(IN LifeTime * lt, MOD ClustRegInfo cri[CLUST_NUM],
+                        IN LifeTimeMgr & mgr, IN DataDepGraph & ddg,
                         IN RegFileAffinityGraph & rdg);
     //Return ture if changed.
     //'handled': add OR to table if it has been handled.
-    bool cse(IN OUT DataDepGraph & ddg, IN OUT ORIdTab & handled);
+    bool cse(MOD DataDepGraph & ddg, MOD ORIdTab & handled);
     void coalesceCopy(OR * o, DataDepGraph & ddg, bool * is_resch);
-    void coalesceMovi(OR * o,
-                      DataDepGraph & ddg,
-                      bool * is_resch,
-                      ORCt * orct,
-                      ORCt ** next_orct);
+    void coalesceMovi(OR * o, DataDepGraph & ddg, bool * is_resch,
+                      ORCt * orct, ORCt ** next_orct);
     bool coalescing(DataDepGraph & ddg, bool cp_any);
     virtual bool canOpndCrossCluster(OR * o);
     virtual bool canResultCrossCluster(OR * o);
     bool canBeSpillCandidate(LifeTime * lt, LifeTime * cand);
     bool canBeSpilled(LifeTime * lt, LifeTimeMgr & mgr);
-    REG chooseByRegFileGroup(RegSet & regs,
-                             LifeTime * lt,
-                             LifeTimeMgr & mgr,
+    REG chooseByRegFileGroup(RegSet & regs, LifeTime * lt, LifeTimeMgr & mgr,
                              RegFileGroup * rfg);
-    void computeLTResideInHole(IN OUT List<LifeTime*> & reside_in_lts,
-                               IN LifeTime * lt,
-                               IN InterfGraph & ig,
+    void computeLTResideInHole(MOD List<LifeTime*> & reside_in_lts,
+                               IN LifeTime * lt, IN InterfGraph & ig,
                                IN LifeTimeMgr & mgr);
-    virtual LifeTime * computeBestSpillCand(LifeTime * lt,
-                                            InterfGraph & ig,
-                                            LifeTimeMgr & mgr,
-                                            bool try_self,
+    virtual LifeTime * computeBestSpillCand(LifeTime * lt, InterfGraph & ig,
+                                            LifeTimeMgr & mgr, bool try_self,
                                             bool * has_hole);
-    void computeUniqueRegFile(IN OUT RegFileSet & is_regfile_unique);
+    void computeUniqueRegFile(MOD RegFileSet & is_regfile_unique);
 
     //Compute the cost for copying SR from
     virtual float computeCopyCost(OR const*) const { return 1.0f; }
@@ -813,14 +784,10 @@ public:
     //Compute the reload cost for reloading given SR of OR.
     virtual float computeReloadCost(SR const*, OR const*) const { return 1.0f; }
     virtual float computeRematCost(SR * sr, OR * o);
-    virtual float computePrority(REG spill_location,
-                                 LifeTime * lt,
-                                 LifeTimeMgr & mgr,
-                                 DataDepGraph & ddg);
-    virtual RegSet & computeUnusedRegSet(REGFILE regfile,
-                                         INT start,
-                                         INT end,
-                                         InterfGraph & ig,
+    virtual float computePrority(REG spill_location, LifeTime * lt,
+                                 LifeTimeMgr & mgr, DataDepGraph & ddg);
+    virtual RegSet & computeUnusedRegSet(REGFILE regfile, INT start,
+                                         INT end, InterfGraph & ig,
                                          RegSet & rs);
 
     //Return true if given hardware resource can be used as spill location.
@@ -828,16 +795,13 @@ public:
     //This function always invoked by register hoisting which can spilling
     //a value into another register.
     virtual bool canBeSpillLoc(CLUST, REGFILE) { return true; }
-    virtual REG chooseAvailSpillLoc(CLUST clust,
-                                    INT start,
-                                    INT end,
+    virtual REG chooseAvailSpillLoc(CLUST clust, INT start, INT end,
                                     InterfGraph & ig);
     virtual CLUST chooseDefaultCluster(OR * o);
     virtual void chooseExpectClust(ORList const ors[CLUST_NUM],
-                                   IN OUT List<CLUST> & expcls);
-    virtual bool cyc_estimate(IN DataDepGraph & ddg,
-                              IN OUT BBSimulator * sim,
-                              IN OUT RegFileSet & is_regfile_unique);
+                                   MOD List<CLUST> & expcls);
+    virtual bool cyc_estimate(IN DataDepGraph & ddg, MOD BBSimulator * sim,
+                              MOD RegFileSet & is_regfile_unique);
 
     void dumpPrioList(List<LifeTime*> & prio_list);
     void deductORCrossBus(DataDepGraph & ddg);
@@ -859,36 +823,20 @@ public:
     CG * getCG() const { return m_cg; }
     Region * getRegion() const { return m_rg; }
     xcom::BitSetMgr * getBitSetMgr() const;
-    bool getResideinHole(OUT INT * startpos,
-                         OUT INT * endpos,
-                         IN LifeTime * owner,
-                         IN LifeTime * inner,
+    bool getResideinHole(OUT INT * startpos, OUT INT * endpos,
+                         IN LifeTime * owner, IN LifeTime * inner,
                          IN LifeTimeMgr & mgr);
-    bool getMaxHole(OUT INT * startpos,
-                    OUT INT * endpos,
-                    IN LifeTime * lt,
-                    InterfGraph & ig,
-                    IN LifeTimeMgr & mgr,
-                    INT info_type);
-    void genSpill(IN LifeTime * lt,
-                  IN SR * oldsr,
-                  INT pos,
-                  IN xoc::Var * spill_var,
-                  IN LifeTimeMgr & mgr,
-                  bool is_rename,
-                  OUT ORList * sors);
-    void genCopyOR(CLUST clust,
-                   UNIT unit,
-                   SR * src,
-                   SR * tgt,
-                   SR * pd,
+    bool getMaxHole(OUT INT * startpos, OUT INT * endpos,
+                    IN LifeTime * lt, InterfGraph & ig,
+                    IN LifeTimeMgr & mgr, INT info_type);
+    void genSpill(IN LifeTime * lt, IN SR * oldsr,
+                  INT pos, IN xoc::Var * spill_var, IN LifeTimeMgr & mgr,
+                  bool is_rename, OUT ORList * sors);
+    void genCopyOR(CLUST clust, UNIT unit, SR * src, SR * tgt, SR * pd,
                    ORList & ors);
     SR * genNewReloadSR(SR * oldsr, xoc::Var * spill_var);
-    SR * genReload(IN LifeTime * lt,
-                   IN SR * oldsr,
-                   INT pos,
-                   IN xoc::Var * spill_var,
-                   IN LifeTimeMgr &mgr,
+    SR * genReload(IN LifeTime * lt, IN SR * oldsr, INT pos,
+                   IN xoc::Var * spill_var, IN LifeTimeMgr &mgr,
                    OUT ORList * ors);
 
     bool hasMemSideEffect(OR * o);
@@ -899,7 +847,7 @@ public:
                                LifeTimeMgr & mgr,
                                DataDepGraph & ddg);
 
-    virtual bool isAllAllocated(IN OUT OR ** wor);
+    virtual bool isAllAllocated(MOD OR ** wor);
     bool isSRAffectClusterAssign(SR * sr);
     bool isMultiCluster();
     bool isAlwaysColored(LifeTime * lt,
@@ -929,11 +877,11 @@ public:
 
 
     virtual void markRegFileUnique(RegFileSet & is_regfile_unique);
-    virtual void middleLRAOpt(IN OUT DataDepGraph & ddg,
-                              IN OUT LifeTimeMgr & mgr,
-                              IN OUT BBSimulator & sim,
+    virtual void middleLRAOpt(MOD DataDepGraph & ddg,
+                              MOD LifeTimeMgr & mgr,
+                              MOD BBSimulator & sim,
                               IN RegFileSet & is_regfile_unique,
-                              IN OUT ClustRegInfo cri[CLUST_NUM]);
+                              MOD ClustRegInfo cri[CLUST_NUM]);
     bool mergeRedundantStoreLoad(OR * o,
                                  OR * succ,
                                  ORList & remainder_succs,
@@ -942,13 +890,13 @@ public:
                                  DataDepGraph & ddg);
     void chooseBestRegFileFromMultipleCand(IN LifeTime * lt,
                                            IN List<REGFILE> & regfile_cand,
-                                           IN OUT ClustRegInfo cri[CLUST_NUM],
+                                           MOD ClustRegInfo cri[CLUST_NUM],
                                            IN LifeTimeMgr & mgr,
                                            IN RegFileAffinityGraph & rdg);
     bool moving_house(LifeTime * lt,
                       List<LifeTime*> & prio_list,
                       List<LifeTime*> & uncolored_list,
-                      IN OUT ClustRegInfo cri[CLUST_NUM],
+                      MOD ClustRegInfo cri[CLUST_NUM],
                       RegFileSet const& is_regfile_unique,
                       LifeTimeMgr & mgr,
                       InterfGraph & ig,
@@ -963,12 +911,12 @@ public:
                                    RegFileSet & is_regfile_unique);
 
     virtual bool PureAssignCluster(IN OR * o,
-                                   IN OUT ORCt ** next_orct,
+                                   MOD ORCt ** next_orct,
                                    IN DataDepGraph & ddg,
                                    RegFileSet const& is_regfile_unique);
     virtual bool partitionGroup(DataDepGraph & ddg,
                                 RegFileSet const& is_regfile_unique);
-    virtual bool preOpt(IN OUT DataDepGraph & ddg);
+    virtual bool preOpt(MOD DataDepGraph & ddg);
     bool processORSpill(OR * sw,
                         LifeTimeMgr & mgr,
                         List<LifeTime*> & uncolored_list);
@@ -984,7 +932,7 @@ public:
 
     virtual void refineAssignedRegFile(IN LifeTimeMgr & mgr,
                                        RegFileSet const& is_regfile_unique,
-                                       IN OUT ClustRegInfo cri[CLUST_NUM]);
+                                       MOD ClustRegInfo cri[CLUST_NUM]);
     bool reviseORBase(LifeTimeMgr & mgr, List<LifeTime*> & uncolored_list);
     virtual void renameOpndsFollowedLT(SR * oldsr,
                                        SR * newsr,
@@ -997,7 +945,7 @@ public:
                                    INT end,
                                    LifeTime * lt,
                                    LifeTimeMgr & mgr);
-    void reassignRegFileForNewSR(IN OUT ClustRegInfo cri[CLUST_NUM],
+    void reassignRegFileForNewSR(MOD ClustRegInfo cri[CLUST_NUM],
                                  IN LifeTimeMgr & mgr,
                                  IN DataDepGraph & ddg);
     void reallocateLifeTime(List<LifeTime*> & prio_list,
@@ -1006,7 +954,7 @@ public:
                             DataDepGraph & ddg,
                             RegFileGroup * rfg,
                             InterfGraph & ig,
-                            IN OUT ClustRegInfo cri[CLUST_NUM]);
+                            MOD ClustRegInfo cri[CLUST_NUM]);
     virtual bool removeRedundantStoreLoadAfterLoad(OR * o,
                                                    ORList & succs,
                                                    ORBB * bb,
@@ -1016,7 +964,7 @@ public:
     virtual bool reassignRegFile(LifeTime * lt,
                                  List<LifeTime*> & prio_list,
                                  List<LifeTime*> & uncolored_list,
-                                 IN OUT ClustRegInfo cri[CLUST_NUM],
+                                 MOD ClustRegInfo cri[CLUST_NUM],
                                  RegFileSet const& is_regfile_unique,
                                  LifeTimeMgr & mgr,
                                  InterfGraph & ig,
@@ -1034,7 +982,7 @@ public:
 
     //Refining scheduling result, return true if DDG need to be updated.
     virtual bool refineScheduling(CLUST,
-                                  IN OUT ORList &,
+                                  MOD ORList &,
                                   IN LifeTimeMgr &,
                                   IN DataDepGraph &,
                                   IN RegFileSet & regfile_unique,
@@ -1052,13 +1000,13 @@ public:
 
     virtual bool schedulFuncUnit(IN LifeTimeMgr & mgr,
                                  IN DataDepGraph & ddg,
-                                 IN OUT BBSimulator * sim,
-                                 IN OUT RegFileSet & is_regfile_unique,
+                                 MOD BBSimulator * sim,
+                                 MOD RegFileSet & is_regfile_unique,
                                  ClustRegInfo cri[CLUST_NUM]);
     bool solveConflictRecursive(LifeTime * lt,
                                 List<LifeTime*> & uncolored_list,
                                 List<LifeTime*> & prio_list,
-                                IN OUT ClustRegInfo cri[CLUST_NUM],
+                                MOD ClustRegInfo cri[CLUST_NUM],
                                 RegFileSet const& is_regfile_unique,
                                 InterfGraph & ig,
                                 LifeTimeMgr & mgr,
@@ -1067,7 +1015,7 @@ public:
                                 Action & action);
     bool solveConflict(List<LifeTime*> & uncolored_list,
                        List<LifeTime*> & prio_list,
-                       IN OUT ClustRegInfo cri[CLUST_NUM],
+                       MOD ClustRegInfo cri[CLUST_NUM],
                        RegFileSet const& is_regfile_unique,
                        InterfGraph & ig,
                        LifeTimeMgr & mgr,
@@ -1089,7 +1037,7 @@ public:
                InterfGraph & ig,
                REG spill_location,
                Action & action,
-               IN OUT ClustRegInfo cri[CLUST_NUM]);
+               MOD ClustRegInfo cri[CLUST_NUM]);
     bool split(LifeTime * lt,
                List<LifeTime*> & prio_list,
                List<LifeTime*> & uncolored_list,
@@ -1099,7 +1047,7 @@ public:
                InterfGraph & ig,
                REG spill_location,
                Action & action,
-               IN OUT ClustRegInfo cri[CLUST_NUM]);
+               MOD ClustRegInfo cri[CLUST_NUM]);
     void splitLTAt(INT start,
                    INT end,
                    bool is_start_spill,
@@ -1119,10 +1067,10 @@ public:
     bool splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr);
     bool splitTwoLT(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr);
     bool spillFirstDef(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr);
-    void selectReasonableSplitPos(IN OUT INT * pos1,
-                                  IN OUT INT * pos2,
-                                  IN OUT bool * is_pos1_spill,
-                                  IN OUT bool * is_pos2_spill,
+    void selectReasonableSplitPos(MOD INT * pos1,
+                                  MOD INT * pos2,
+                                  MOD bool * is_pos1_spill,
+                                  MOD bool * is_pos2_spill,
                                   IN LifeTime * lt,
                                   IN LifeTimeMgr & mgr);
 

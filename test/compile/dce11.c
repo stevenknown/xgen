@@ -14,8 +14,8 @@ int dce2(int b[], int c[])
     int i,j,l,n;
     int a[100][100];
     int u;
-    //test while-do.
-    //All loop code should be removed.
+    //while-do.
+    //Whole loop should be removed.
     for (i = 1; i <= 100; i++) {
         l = i * (n + 2);
         u = i + 2;
@@ -25,22 +25,18 @@ int dce2(int b[], int c[])
     }
 
     //do-while
-    //All code should NOT be removed.
     i = 10;
     do {
-        b[i] = c[i];
+        b[i] = c[i]; //b,c is outer pointer, should NOT be removed by DCE.
         i--;
     } while (i >= 0);
 
-    //All code should NOT be removed.
     i = 100;
     for (;i>0;i-=2) {
-        c[i] = b[i];
+        c[i] = b[i]; //b,c is outer pointer, should NOT be removed by DCE.
     }
     return 0;
 }
-
-
 
 //Case comes from membench.
 int da;
@@ -49,9 +45,6 @@ int dx[200];
 void dce3(int dy_off, int dx_off, int n)
 {
     for (int i = 0; i < n; i++) {
-        dy[i + dy_off] += da * dx[i + dx_off];
+        dy[i + dy_off] += da * dx[i + dx_off]; //nothing can be removed.
     }
 }
-
-
-

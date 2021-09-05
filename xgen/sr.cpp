@@ -40,6 +40,13 @@ SR const* checkSRVAR(SR const* sr)
 }
 
 
+SR const* checkSRLABList(SR const* sr)
+{
+    ASSERT0(sr->is_label_list());
+    return sr;
+}
+
+
 SR const* checkSRLAB(SR const* sr)
 {
     ASSERT0(sr->is_label());
@@ -146,6 +153,9 @@ CHAR const* SR::getAsmName(StrBuf & buf, CG const* cg) const
     case SR_LAB:
         ASSERT0(cg);
         return cg->formatLabelName(SR_label(this), buf);
+    case SR_LAB_LIST:
+        //LabelList string is not necessary to asm file.
+        break;
     default: UNREACHABLE();
     }
     return buf.buf;
@@ -235,6 +245,10 @@ CHAR const* SR::get_name(StrBuf & buf, CG const* cg) const
     case SR_LAB:
         ASSERT0(cg);
         cg->formatLabelName(SR_label(this), buf);
+        break;
+    case SR_LAB_LIST:
+        ASSERT0(cg);
+        cg->formatLabelListString(SR_label_list(this), buf);
         break;
     default: UNREACHABLE();
     }

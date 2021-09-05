@@ -191,25 +191,25 @@ public:
     OR * getOR(UINT orid) const { return m_ormgr->getOR(orid); }
     OR * getFirstOR(INT & cur);
     OR * getNextOR(INT & cur);
-    void get_neighbors(IN OUT ORList & nis, OR const* o);
-    void getSuccsByOrder(IN OUT ORList & succs, IN OR * o);
-    void getSuccsByOrderTraverseNode(IN OUT ORList & succs, OR const* o);
+    void get_neighbors(MOD ORList & nis, OR const* o);
+    void getSuccsByOrder(MOD ORList & succs, IN OR * o);
+    void getSuccsByOrderTraverseNode(MOD ORList & succs, OR const* o);
 
     //Return all dependent predecessors in lexicographicly order.
     //e.g:a->b->c->d, a->d
     //  c and a are immediate predecessors of d, whereas a,b,c are
     //  dependent predecessors of d.
-    void getPredsByOrderTraverseNode(IN OUT ORList & succs, OR const* o);
+    void getPredsByOrderTraverseNode(MOD ORList & succs, OR const* o);
 
     //Return all dependent predecessors of OR.
     //e.g:a->b->c->d, a->d
     //  c and a are immediate predecessors of d, whereas a,b,c are
     //  dependent predecessors of d.
     void getDependentPreds(OUT ORTab & preds, OR const* o);
-    void get_succs(IN OUT ORList & succs, OR const* o);
-    void getPredsByOrder(IN OUT ORList & preds, IN OR * o);
-    void get_preds(IN OUT List<xcom::Vertex*> & preds, IN xcom::Vertex * v);
-    void get_preds(IN OUT ORList & preds, OR const* o);
+    void get_succs(MOD ORList & succs, OR const* o);
+    void getPredsByOrder(MOD ORList & preds, IN OR * o);
+    void get_preds(MOD List<xcom::Vertex*> & preds, IN xcom::Vertex * v);
+    void get_preds(MOD ORList & preds, OR const* o);
     void getORListWhichAccessSameMem(OUT ORList & mem_ors, OR const* o);
     void getEstartAndLstart(OUT UINT & estart, OUT UINT & lstart,
                             OR const* o) const;

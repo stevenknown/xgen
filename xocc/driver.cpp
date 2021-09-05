@@ -170,7 +170,7 @@ Decl * mapVAR2Decl(Var * var)
 
 //Transforming Decl into Var.
 //'decl': variable declaration in front end.
-static Var * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
+static Var * addDecl(IN Decl * decl, MOD VarMgr * var_mgr, TypeMgr * dm)
 {
     ASSERTN(DECL_dt(decl) == DCL_DECLARATION, ("unsupported"));
     if (decl->is_user_type_decl()) { return nullptr; }
@@ -230,7 +230,7 @@ static Var * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
         type = dm->getSimplexTypeEx(data_type);
     }
 
-    if (DECL_is_formal_para(decl)) {
+    if (decl->is_formal_param()) {
         //Declaration is formal parameter.
         SET_FLAG(flag, VAR_IS_FORMAL_PARAM);
     }
@@ -251,7 +251,7 @@ static Var * addDecl(IN Decl * decl, IN OUT VarMgr * var_mgr, TypeMgr * dm)
         VAR_is_addr_taken(v) = true;
     }
 
-    if (DECL_is_formal_para(decl)) {
+    if (decl->is_formal_param()) {
         VAR_formal_param_pos(v) = g_formal_parameter_start +
                                   DECL_formal_param_pos(decl);
     }
@@ -310,7 +310,7 @@ static void scanAndInitVar(Scope * s, VarMgr * vm, TypeMgr * tm)
 
             //General variable declaration decl.
             if (mapDecl2VAR(decl) == nullptr &&
-                !(DECL_is_formal_para(decl) &&
+                !(decl->is_formal_param() &&
                   decl->get_decl_sym() == nullptr)) {
                 //No need to generate Var for parameter that does not
                 //have a name.
@@ -342,13 +342,12 @@ UINT FrontEnd(RegionMgr * rm)
         return s;
     }
 #endif
-
     s = processDeclInit();
     if (s != ST_SUCC) {
         END_TIMER(t, "CFE");
         return s;
     }
-
+    
     s = TypeTransform();
     if (s != ST_SUCC) {
         END_TIMER(t, "CFE");
@@ -356,6 +355,12 @@ UINT FrontEnd(RegionMgr * rm)
     }
 
     s = TypeCheck();
+    if (s != ST_SUCC) {
+        END_TIMER(t, "CFE");
+        return s;
+    }
+
+    s = TreeCanonicalize();
     if (s != ST_SUCC) {
         END_TIMER(t, "CFE");
         return s;
@@ -427,6 +432,7 @@ static void test_ru(RegionMgr * rm, CGMgr * cgmgr)
     INT i = 0;
     Var * v = func->getRegionVar();
     Region * x = rm->newRegion(REGION_FUNC);
+    x->initAttachInfoMgr();
     //Note Local Vars and MDs will be freed and collected by Mgr.
     //The test region should not have global var.
     while (i < 10000) {
@@ -568,9 +574,7 @@ static void dumpRegionMgrGR(RegionMgr * rm, CHAR const* srcname)
 }
 
 
-static void initCompile(CLRegionMgr ** rm,
-                        FILE ** asmh,
-                        CGMgr ** cgmgr,
+static void initCompile(CLRegionMgr ** rm, FILE ** asmh, CGMgr ** cgmgr,
                         TargInfo ** ti)
 {
     *rm = initRegionMgr();
@@ -610,6 +614,7 @@ bool compileGRFile(CHAR const* gr_file_name)
     CLRegionMgr * rm = nullptr;
     CGMgr * cgmgr = nullptr;
     FILE * asmh = nullptr;
+
     START_TIMER_FMT(t, ("Compile GR File"));
     initCompile(&rm, &asmh, &cgmgr, &ti);
     if (g_dump_file_name != nullptr) {
@@ -654,25 +659,29 @@ bool compileCFile()
     CLRegionMgr * rm = nullptr;
     CGMgr * cgmgr = nullptr;
     FILE * asmh = nullptr;
+
     START_TIMER(t2, "Init Parser");
     initParser();
     END_TIMER(t2, "Init Parser");
 
     initCompile(&rm, &asmh, &cgmgr, &ti);
+
     if (g_dump_file_name != nullptr) {
         rm->getLogMgr()->init(g_dump_file_name, true);
     }
+
     if (g_redirect_stdout_to_dump_file) {
         g_unique_dumpfile = rm->getLogMgr()->getFileHandler();
         ASSERT0(g_unique_dumpfile);
     }
+
     START_TIMER(t, "Compile C File");
     g_fe_sym_tab = rm->getSymTab();
     g_dbx_mgr = new CLDbxMgr();
 
     if (FrontEnd(rm) != ST_SUCC) {
         res = false;
-        ASSERTN(g_err_msg_list.get_elem_count() > 0, ("miss error msg"));
+        ASSERTN(g_err_msg_list.has_msg(), ("miss error msg"));
         goto FIN;
     }
 
@@ -695,14 +704,18 @@ FIN:
     g_decl2var_map.clean();
     g_var2decl_map.clean();
     destroy_scope_list();
+
     //Timer use prt2C.
     END_TIMER_FMT(t, ("Total Time To Compile '%s'", g_c_file_name));
+
     finiCompile(rm, asmh, cgmgr, ti);
+
     show_err();
     show_warn();
     fprintf(stdout, "\n%s - (%d) error(s), (%d) warnging(s)\n",
             g_c_file_name, g_err_msg_list.get_elem_count(),
             g_warn_msg_list.get_elem_count());
+
     finiParser();
     return res;
 }

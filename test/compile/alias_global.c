@@ -15,7 +15,7 @@ dw_fde_node;
 unsigned fde_table_in_use;
 dw_fde_node * fde_table;
 
-void strdup(const char*);
+void * strdup(const char*);
 const char* dwarf2out_cfi_label ();
 dw_cfi_node * new_cfi();
 

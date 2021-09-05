@@ -119,15 +119,15 @@ void ORCFG::addBB(ORBB * bb)
 //Move Labels from 'src' to 'tgt'.
 void ORCFG::moveLabels(ORBB * src, ORBB * tgt)
 {
-    tgt->mergeLabeInfoList(src);
-
-    //Set label2bb map.
-    for (xoc::LabelInfo const* li = tgt->getLabelList().get_head();
-         li != nullptr; li = tgt->getLabelList().get_next()) {
+    //Remap label2bb.
+    for (LabelInfo const* li = src->getLabelList().get_head();
+         li != nullptr; li = src->getLabelList().get_next()) {
         m_lab2bb.setAlways(li, tgt);
     }
+    tgt->mergeLabeInfoList(src);
 
-    src->getLabelList().clean();
+    //Cutoff the relation between src and labels.
+    ASSERT0(src->getLabelList().get_elem_count() == 0);
 }
 
 
@@ -139,6 +139,19 @@ void ORCFG::resetMapBetweenLabelAndBB(ORBB * bb)
         m_lab2bb.setAlways(li, nullptr);
     }
     bb->cleanLabelInfoList();
+}
+
+
+//Find a list bb that referred labels which is the target of ir.
+void ORCFG::findTargetBBOfIndirectBranch(OR const* o, OUT List<ORBB*> & tgtlst)
+{
+    ASSERT0(o->isIndirectBr());
+    for (LabelInfoList const* lablst = o->getLabelList();
+         lablst != nullptr; lablst = lablst->get_next()) {
+        ORBB * bb = m_lab2bb.get(lablst->getLabel());
+        ASSERT0(bb); //no bb is correspond to lab.
+        tgtlst.append_tail(bb);
+    }
 }
 
 
@@ -155,7 +168,7 @@ ORBB * ORCFG::getBB(UINT id) const
 
 
 //Return all successors.
-void ORCFG::get_succs(IN OUT List<ORBB*> & succs, ORBB const* bb)
+void ORCFG::get_succs(MOD List<ORBB*> & succs, ORBB const* bb)
 {
     xcom::Vertex * v = getVertex(bb->id());
     xcom::EdgeC * el = v->getOutList();
@@ -170,7 +183,7 @@ void ORCFG::get_succs(IN OUT List<ORBB*> & succs, ORBB const* bb)
 
 
 //Return all predecessors.
-void ORCFG::get_preds(IN OUT List<ORBB*> & preds, ORBB const* bb)
+void ORCFG::get_preds(MOD List<ORBB*> & preds, ORBB const* bb)
 {
     xcom::Vertex * v = getVertex(bb->id());
     xcom::EdgeC * el = v->getInList();
