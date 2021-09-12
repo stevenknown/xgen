@@ -1,5 +1,5 @@
 /*@
-Copyright (c) 2013-2014, Su Zhenyu steven.known@gmail.com
+Copyright (c) 2013-2021, Su Zhenyu steven.known@gmail.com
 
 All rights reserved.
 
@@ -154,6 +154,14 @@ protected:
     RecycORListMgr m_recyc_orlist_mgr;
 
 protected:
+    void convertLoadConstFP(IR const* ir, OUT RecycORList & ors,
+                            IN IOC * cont);
+    void convertLoadConstInt(IR const* ir, OUT RecycORList & ors,
+                             IN IOC * cont);
+    void convertLoadConstBool(IR const* ir, OUT RecycORList & ors,
+                              IN IOC * cont);
+    void convertLoadConstStr(IR const* ir, OUT RecycORList & ors,
+                             IN IOC * cont);
     void convertLoadConst(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     void flattenSRVec(IOC const* cont, Vector<SR*> * vec);
 

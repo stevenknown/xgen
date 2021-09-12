@@ -1,5 +1,5 @@
 /*@
-Copyright (c) 2013-2014, Su Zhenyu steven.known@gmail.com
+Copyright (c) 2013-2021, Su Zhenyu steven.known@gmail.com
 
 All rights reserved.
 
@@ -235,8 +235,8 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
     }
 
     //Make MD id more grouped together.
-    assignMD(false, true);
-    assignMD(true, false);
+    getMDMgr()->assignMD(false, true);
+    getMDMgr()->assignMD(true, false);
 
     if (g_do_aa) {
         ASSERT0(g_cst_bb_list && oc.is_cfg_valid());
@@ -327,7 +327,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
             (!oc.is_aa_valid() || !oc.is_ref_valid())) {
             //Recompute and set MD reference to avoid AA's complaint.
             //Compute AA to build coarse-grained DU chain.
-            assignMD(true, true);
+            getMDMgr()->assignMD(true, true);
             if (!aa->is_init()) {
                 aa->initAliasAnalysis();
             }
@@ -359,7 +359,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
             }
             //checkValidAndRecompute(&oc, PASS_LOOP_INFO, PASS_UNDEF);
             //Recompute and set MD reference to avoid AA's complaint.
-            assignMD(true, true);
+            getMDMgr()->assignMD(true, true);
 
             //Compute the threshold to perform AA.
             UINT numir = 0;

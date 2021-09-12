@@ -1,5 +1,5 @@
 /*@
-Copyright (c) 2013-2014, Su Zhenyu steven.known@gmail.com
+Copyright (c) 2013-2021, Su Zhenyu steven.known@gmail.com
 
 All rights reserved.
 
@@ -32,6 +32,10 @@ author: Su Zhenyu
 #define _ARM_REFINE_H_
 
 class ARMRefine : public Refine {
+    //Kid is float.
+    IR * insertCvtForFloatCase2(IR * parent, IR * kid, bool & change);
+    //Parent is float.
+    IR * insertCvtForFloatCase1(IR * parent, IR * kid, bool & change);
 public:
     ARMRefine(Region * rg) : Refine(rg) {}
     virtual ~ARMRefine() {}

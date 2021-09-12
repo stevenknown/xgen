@@ -60,7 +60,7 @@ int licm_t2()
 
 int licm_t1()
 {
-    //In this case, the Loop Invariant Code Motion (LICM) pass can
+    //In this case, the LICM can
     //use store motion to remove the stores from the loop.
     //or use register promotion/scalar replacement to remove the stores from the loop.
     int i;

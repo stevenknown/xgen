@@ -1,5 +1,5 @@
 /*@
-Copyright (c) 2013-2014, Su Zhenyu steven.known@gmail.com
+Copyright (c) 2013-2021, Su Zhenyu steven.known@gmail.com
 
 All rights reserved.
 
@@ -94,110 +94,174 @@ void IR2OR::convertStoreDecompose(IN SR * src, IN SR * tgtvar,
 }
 
 
-void IR2OR::convertLoadConst(IR const* ir, OUT RecycORList & ors,
-                             IN IOC * cont)
+void IR2OR::convertLoadConstFP(IR const* ir, OUT RecycORList & ors,
+                               IN IOC * cont)
 {
-    ASSERT0(ir->is_const());
-    ASSERTN(ir->getTypeSize(m_tm) <= 2 * GENERAL_REGISTER_SIZE,
-            ("Target Dependent Code"));
-    RecycORList tors(this);
-    SR * load_val = nullptr;
+    //Immediate can be pointer, e.g: int * p = 0;
+    ASSERT0(ir->is_fp());
+    SR * load_val = m_cg->genReg();
     SR * load_val2 = nullptr;
-    if (ir->is_int() ||
-        ir->is_ptr()) { //Immediate can be pointer, e.g: int * p = 0;
-        load_val = m_cg->genReg();
-
-        HOST_INT v = CONST_int_val(ir);
-        if (ir->getTypeSize(m_tm) == 2 * GENERAL_REGISTER_SIZE) {
-            HOST_UINT v2 = (HOST_UINT)(((ULONGLONG)v) <<
-                                       WORD_LENGTH_OF_TARGET_MACHINE);
-            v = v2 >> WORD_LENGTH_OF_TARGET_MACHINE;
-        }
-
-        //Load low part.
-        m_cg->buildMove(load_val, m_cg->genIntImm(v, ir->is_signed()),
+    RecycORList tors(this);
+    if (ir->getTypeSize(m_tm) == BYTE_PER_FLOAT) {
+        //Float
+        float val = (float)CONST_fp_val(ir);
+        ASSERTN(sizeof(UINT32) == BYTE_PER_FLOAT,
+                ("use suitably integer type"));
+        UINT32 * pb = (UINT32*)&val;
+        m_cg->buildMove(load_val, m_cg->genIntImm((HOST_INT)*pb, false),
                         tors.getList(), cont);
-
-        if (ir->getTypeSize(m_tm) == 2 * GENERAL_REGISTER_SIZE) {
-            //Load high part.
-            load_val2 = m_cg->genReg();
-
-            HOST_INT v2 = 0;
-            if (ir->is_signed()) {
-                v2 = (HOST_INT)(((LONGLONG)CONST_int_val(ir)) >>
-                                WORD_LENGTH_OF_TARGET_MACHINE);
-            } else {
-                v2 = (HOST_INT)(((ULONGLONG)(HOST_UINT)CONST_int_val(ir)) >>
-                                WORD_LENGTH_OF_TARGET_MACHINE);
-            }
-
-            m_cg->buildMove(load_val2, m_cg->genIntImm(v2, ir->is_signed()),
-                            tors.getList(), cont);
-            m_cg->getSRVecMgr()->genSRVec(2, load_val, load_val2);
-        }
-    } else if (ir->is_fp()) {
-        load_val = m_cg->genReg();
-        if (ir->getTypeSize(m_tm) == BYTE_PER_FLOAT) {
-            //Float
-            float val = (float)CONST_fp_val(ir);
-            ASSERTN(sizeof(UINT32) == BYTE_PER_FLOAT,
-                    ("use suitably integer type"));
-            UINT32 * pb = (UINT32*)&val;
-            m_cg->buildMove(load_val, m_cg->genIntImm((HOST_INT)*pb, false),
-                            tors.getList(), cont);
-        } else {
-            //Double
-            double val = CONST_fp_val(ir);
-            ASSERTN(sizeof(ULONGLONG) == BYTE_PER_FLOAT * 2,
-                    ("use the suitably integer type to match with question"));
-
-            ASSERTN(sizeof(ULONGLONG) == BYTE_PER_FLOAT * 2,
-                    ("use suitably integer type"));
-
-            ULONGLONG * pb = (ULONGLONG*)&val;
-            ASSERTN(sizeof(ULONGLONG) == 8,
-                    ("use suitably macro to take low part"));
-
-            m_cg->buildMove(load_val,
-                m_cg->genIntImm((HOST_INT)GET_LOW_32BIT(*pb), false),
-                tors.getList(), cont);
-
-            load_val2 = m_cg->genReg();
-            m_cg->buildMove(load_val2,
-                m_cg->genIntImm((HOST_INT)GET_HIGH_32BIT(*pb), false),
-                tors.getList(), cont);
-
-            m_cg->getSRVecMgr()->genSRVec(2, load_val, load_val2);
-        }
-    } else if (ir->is_bool()) {
-        load_val = m_cg->genReg();
-        m_cg->buildMove(load_val, m_cg->genIntImm(CONST_int_val(ir), false),
-                        tors.getList(), cont);
-    } else if (ir->is_str()) {
-        //Support loading const to lda(string-variable)
-        Region * rg = m_cg->getRegion();
-        IR * lda = rg->buildLdaString(nullptr, CONST_str_val(ir));
-        //Record string-variable into program-region to facilitate asm-print.
-        //This will storage string content at .data section.
-        ASSERT0(lda->is_lda() && LDA_idinfo(lda)->is_global() &&
-                rg->getTopRegion() != nullptr &&
-                rg->getTopRegion()->is_program());
-        ASSERT0(rg->getTopRegion()->getVarTab()->find(LDA_idinfo(lda)));
-        //rg->getTopRegion()->addToVarTab(LDA_idinfo(lda));
-        convertLda(lda, tors, cont);
-        load_val = cont->get_reg(0);
-        ASSERT0(load_val && load_val->is_reg());
-        cont->clean_bottomup();
     } else {
-        ASSERTN(0, ("unsupport immediate value DATA_TYPE:%d", ir->getDType()));
-    }
+        //Double
+        double val = CONST_fp_val(ir);
+        ASSERTN(sizeof(ULONGLONG) == BYTE_PER_FLOAT * 2,
+                ("use the suitably integer type to match with question"));
 
+        ASSERTN(sizeof(ULONGLONG) == BYTE_PER_FLOAT * 2,
+                ("use suitably integer type"));
+
+        ULONGLONG * pb = (ULONGLONG*)&val;
+        ASSERTN(sizeof(ULONGLONG) == 8,
+                ("use suitably macro to take low part"));
+
+        m_cg->buildMove(load_val,
+            m_cg->genIntImm((HOST_INT)GET_LOW_32BIT(*pb), false),
+            tors.getList(), cont);
+
+        load_val2 = m_cg->genReg();
+        m_cg->buildMove(load_val2,
+            m_cg->genIntImm((HOST_INT)GET_HIGH_32BIT(*pb), false),
+            tors.getList(), cont);
+
+        m_cg->getSRVecMgr()->genSRVec(2, load_val, load_val2);
+    }
     tors.copyDbx(ir);
     ors.move_tail(tors);
     cont->set_reg(0, load_val);
     //if (load_val2 != nullptr) {
     //    cont->set_reg(1, load_val2);
     //}
+}
+
+
+void IR2OR::convertLoadConstInt(IR const* ir, OUT RecycORList & ors,
+                                IN IOC * cont)
+{
+    //Immediate can be pointer, e.g: int * p = 0;
+    ASSERT0(ir->is_int() || ir->is_ptr());
+    SR * load_val = m_cg->genReg();
+    SR * load_val2 = nullptr;
+    RecycORList tors(this);
+    HOST_INT v = CONST_int_val(ir);
+    if (ir->getTypeSize(m_tm) == 2 * GENERAL_REGISTER_SIZE) {
+        HOST_UINT v2 = (HOST_UINT)(((ULONGLONG)v) <<
+                                   WORD_LENGTH_OF_TARGET_MACHINE);
+        v = v2 >> WORD_LENGTH_OF_TARGET_MACHINE;
+    }
+
+    //Load low part.
+    m_cg->buildMove(load_val, m_cg->genIntImm(v, ir->is_signed()),
+                    tors.getList(), cont);
+
+    if (ir->getTypeSize(m_tm) == 2 * GENERAL_REGISTER_SIZE) {
+        //Load high part.
+        load_val2 = m_cg->genReg();
+
+        HOST_INT v2 = 0;
+        if (ir->is_signed()) {
+            v2 = (HOST_INT)(((LONGLONG)CONST_int_val(ir)) >>
+                            WORD_LENGTH_OF_TARGET_MACHINE);
+        } else {
+            v2 = (HOST_INT)(((ULONGLONG)(HOST_UINT)CONST_int_val(ir)) >>
+                            WORD_LENGTH_OF_TARGET_MACHINE);
+        }
+
+        m_cg->buildMove(load_val2, m_cg->genIntImm(v2, ir->is_signed()),
+                        tors.getList(), cont);
+        m_cg->getSRVecMgr()->genSRVec(2, load_val, load_val2);
+    }
+    tors.copyDbx(ir);
+    ors.move_tail(tors);
+    cont->set_reg(0, load_val);
+    //if (load_val2 != nullptr) {
+    //    cont->set_reg(1, load_val2);
+    //}
+}
+
+
+void IR2OR::convertLoadConstBool(IR const* ir, OUT RecycORList & ors,
+                                 IN IOC * cont)
+{
+    //Immediate can be pointer, e.g: int * p = 0;
+    ASSERT0(ir->is_int() || ir->is_ptr());
+    SR * load_val = m_cg->genReg();
+    SR * load_val2 = nullptr;
+    RecycORList tors(this);
+    m_cg->buildMove(load_val, m_cg->genIntImm(CONST_int_val(ir), false),
+                    tors.getList(), cont);
+    tors.copyDbx(ir);
+    ors.move_tail(tors);
+    cont->set_reg(0, load_val);
+    //if (load_val2 != nullptr) {
+    //    cont->set_reg(1, load_val2);
+    //}
+}
+
+
+void IR2OR::convertLoadConstStr(IR const* ir, OUT RecycORList & ors,
+                                IN IOC * cont)
+{
+    //Immediate can be pointer, e.g: int * p = 0;
+    ASSERT0(ir->is_int() || ir->is_ptr());
+    RecycORList tors(this);
+
+    //Support loading const to lda(string-variable)
+    Region * rg = m_cg->getRegion();
+    IR * lda = rg->buildLdaString(nullptr, CONST_str_val(ir));
+    //Record string-variable into program-region to facilitate asm-print.
+    //This will storage string content at .data section.
+    ASSERT0(lda->is_lda() && LDA_idinfo(lda)->is_global() &&
+            rg->getTopRegion() != nullptr &&
+            rg->getTopRegion()->is_program());
+    ASSERT0(rg->getTopRegion()->getVarTab()->find(LDA_idinfo(lda)));
+    //rg->getTopRegion()->addToVarTab(LDA_idinfo(lda));
+    convertLda(lda, tors, cont);
+    SR * load_val = cont->get_reg(0);
+    ASSERT0(load_val && load_val->is_reg());
+    cont->clean_bottomup();
+ 
+    tors.copyDbx(ir);
+    ors.move_tail(tors);
+    cont->set_reg(0, load_val);
+    //if (load_val2 != nullptr) {
+    //    cont->set_reg(1, load_val2);
+    //}
+}
+
+
+void IR2OR::convertLoadConst(IR const* ir, OUT RecycORList & ors,
+                             IN IOC * cont)
+{
+    ASSERT0(ir->is_const());
+    ASSERTN(ir->getTypeSize(m_tm) <= 2 * GENERAL_REGISTER_SIZE,
+            ("Target Dependent Code"));
+    if (ir->is_int() ||
+        ir->is_ptr()) { //Immediate can be pointer, e.g: int * p = 0;
+        convertLoadConstInt(ir, ors, cont);
+        return;
+    }
+    if (ir->is_fp()) {
+        convertLoadConstFP(ir, ors, cont);
+        return;
+    }
+    if (ir->is_bool()) {
+        convertLoadConstBool(ir, ors, cont);
+        return;
+    }
+    if (ir->is_str()) {
+        convertLoadConstStr(ir, ors, cont);
+        return;
+    }
+    ASSERTN(0, ("unsupport immediate value DATA_TYPE:%d", ir->getDType()));
 }
 
 

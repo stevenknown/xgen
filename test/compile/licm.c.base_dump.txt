@@ -5,363 +5,125 @@
    intconst:i32 1|0x1 id:23 attachinfo:Dbx
 
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'licm_t3' ----==
--- Invariant Expression (num=2) -- :
-   cvt:i32 id:32 attachinfo:Dbx       
-       ld:i16 'm' decl:short  m  id:19 attachinfo:Dbx
+-- Invariant Expression (num=1) -- :
    asr:i32 id:21 attachinfo:Dbx       
-       $4:i32 id:56 attachinfo:Dbx       
-       intconst:i32 1|0x1 id:20 attachinfo:Dbx
--- Invariant Statement (num=1) -- :
-
-   [36]            n = m/2;
-
-   stpr $4:i32 id:57 attachinfo:Dbx       
        cvt:i32 id:32 attachinfo:Dbx           
-           ld:i16 'm' decl:short  m  id:19 attachinfo:Dbx
+           ld:i16 'm' id:19 attachinfo:Dbx,MDSSA       
+       intconst:i32 1|0x1 id:20 attachinfo:Dbx
+
 ==---- DUMP Loop Invariant Code Motion 'licm_t3' ----==
 ==---- DUMP IRBBList 'licm_t3' ----==
 ----- BB11 --- rpo:0 -----
 ATTR:entry_bb fall_through 
 STMT NUM:0
 
------ BB12 --- rpo:4 -----
-ATTR:fall_through 
-STMT NUM:1
-   falsebr label _L5 id:63       
-       ne:bool id:23 attachinfo:Dbx           
-           $1:i32 id:62 attachinfo:Dbx           
-           intconst:i32 1|0x1 id:24 attachinfo:Dbx
-
 ----- BB1 --- rpo:5 -----
-ATTR:
-STMT NUM:5
+ATTR:fall_through 
+STMT NUM:4
 
-   [30]    i = 0;
-
-   st:i32 'i' decl:int  i  id:3 attachinfo:Dbx       
+   [29]    i = 0;
+   
+   st:i32 'i' id:3 attachinfo:Dbx,MDSSA       
        intconst:i32 0|0x0 id:2 attachinfo:Dbx
 
-   [31]    n = 10;
-
-   st:i16 'n' decl:short  n  id:6 attachinfo:Dbx       
+   [30]    n = 10;
+   
+   st:i16 'n' id:6 attachinfo:Dbx,MDSSA       
        intconst:i32 10|0xa id:5 attachinfo:Dbx
 
-   [32]    m = 10;
-
-   st:i16 'm' decl:short  m  id:9 attachinfo:Dbx       
+   [31]    m = 10;
+   
+   st:i16 'm' id:9 attachinfo:Dbx,MDSSA       
        intconst:i32 10|0xa id:8 attachinfo:Dbx
-
-   [36]            n = m/2;
-
-   stpr $4:i32 id:57 attachinfo:Dbx       
-       cvt:i32 id:32 attachinfo:Dbx           
-           ld:i16 'm' decl:short  m  id:19 attachinfo:Dbx
-   stpr $7:i32 id:65       
+   stpr $1:i32 id:61       
        asr:i32 id:21 attachinfo:Dbx           
-           $4:i32 id:56 attachinfo:Dbx           
+           cvt:i32 id:32 attachinfo:Dbx               
+               ld:i16 'm' id:19 attachinfo:Dbx,MDSSA           
            intconst:i32 1|0x1 id:20 attachinfo:Dbx
 
 ----- BB2 --- rpo:10 -----
-LABEL:_L5 
+LABEL:_$L5 
 ATTR:fall_through branch_target 
-STMT NUM:2
+STMT NUM:1
 
-   [33]    while (n != 1) {
-
-   stpr $1:i32 id:51 attachinfo:Dbx       
-       cvt:i32 id:42 attachinfo:Dbx           
-           ld:i16 'n' decl:short  n  id:1 attachinfo:Dbx
-   truebr label _L6 id:37 attachinfo:Dbx       
-       eq:bool id:12 attachinfo:Dbx           
-           $1:i32 id:18 attachinfo:Dbx           
+   [32]    while (n != 1) {
+   
+   falsebr label _$L6 id:37 attachinfo:Dbx       
+       ne:bool id:12 attachinfo:Dbx           
+           cvt:i32 id:42 attachinfo:Dbx               
+               ld:i16 'n' id:1 attachinfo:Dbx,MDSSA           
            intconst:i32 1|0x1 id:11 attachinfo:Dbx
 
 ----- BB3 --- rpo:20 -----
 ATTR:fall_through 
-STMT NUM:3
+STMT NUM:1
 
-   [34]        if ((n & 1) == 0) {
-
-   stpr $2:i32 id:53 attachinfo:Dbx       
-       cvt:i32 id:43 attachinfo:Dbx           
-           ld:i16 'n' decl:short  n  id:13 attachinfo:Dbx
-   stpr $3:i32 id:55 attachinfo:Dbx       
-       band:i32 id:15 attachinfo:Dbx           
-           $2:i32 id:52 attachinfo:Dbx           
-           intconst:i32 1|0x1 id:14 attachinfo:Dbx
-   falsebr label _L7 id:25 attachinfo:Dbx       
+   [33]        if ((n & 1) == 0) {
+   
+   falsebr label _$L7 id:25 attachinfo:Dbx       
        eq:bool id:17 attachinfo:Dbx           
-           $3:i32 id:54 attachinfo:Dbx           
+           band:i32 id:15 attachinfo:Dbx               
+               cvt:i32 id:43 attachinfo:Dbx                   
+                   ld:i16 'n' id:13 attachinfo:Dbx,MDSSA               
+               intconst:i32 1|0x1 id:14 attachinfo:Dbx           
            intconst:i32 0|0x0 id:16 attachinfo:Dbx
 
 ----- BB4 --- rpo:30 -----
 ATTR:
 STMT NUM:2
 
-   [36]            n = m/2;
+   [35]            n = m/2;
+   
+   st:i16 'n' id:22 attachinfo:Dbx,MDSSA       
+       $1:i32 id:60
 
-   st:i16 'n' decl:short  n  id:22 attachinfo:Dbx       
-       $7:i32 id:64
-
-   [34]        if ((n & 1) == 0) {
-
-   goto label _L8 id:33 attachinfo:Dbx
+   [33]        if ((n & 1) == 0) {
+   
+   goto label _$L8 id:33 attachinfo:Dbx
 
 ----- BB6 --- rpo:25 -----
-LABEL:_L7 
-ATTR:branch_target 
-STMT NUM:3
+LABEL:_$L7 
+ATTR:fall_through branch_target 
+STMT NUM:1
 
-   [39]            n = n*3 + 1;
-
-   stpr $5:i32 id:59 attachinfo:Dbx       
-       cvt:i32 id:35 attachinfo:Dbx           
-           ld:i16 'n' decl:short  n  id:26 attachinfo:Dbx
-   stpr $6:i32 id:61 attachinfo:Dbx       
-       mul:i32 id:28 attachinfo:Dbx           
-           $5:i32 id:58 attachinfo:Dbx           
-           intconst:i32 3|0x3 id:27 attachinfo:Dbx
-   st:i16 'n' decl:short  n  id:31 attachinfo:Dbx       
+   [38]            n = n*3 + 1;
+   
+   st:i16 'n' id:31 attachinfo:Dbx,MDSSA       
        add:i32 id:30 attachinfo:Dbx           
-           $6:i32 id:60 attachinfo:Dbx           
+           mul:i32 id:28 attachinfo:Dbx               
+               cvt:i32 id:35 attachinfo:Dbx                   
+                   ld:i16 'n' id:26 attachinfo:Dbx,MDSSA               
+               intconst:i32 3|0x3 id:27 attachinfo:Dbx           
            intconst:i32 1|0x1 id:29 attachinfo:Dbx
 
 ----- BB7 --- rpo:35 -----
-LABEL:_L8 
+LABEL:_$L8 
 ATTR:branch_target 
 STMT NUM:2
 
-   [41]        i = i+1;
-
-   st:i32 'i' decl:int  i  id:41 attachinfo:Dbx       
+   [40]        i = i+1;
+   
+   st:i32 'i' id:41 attachinfo:Dbx,MDSSA       
        add:i32 id:40 attachinfo:Dbx           
-           ld:i32 'i' decl:int  i  id:38 attachinfo:Dbx           
+           ld:i32 'i' id:38 attachinfo:Dbx,MDSSA           
            intconst:i32 1|0x1 id:39 attachinfo:Dbx
-   goto label _L5 id:34
+   goto label _$L5 id:34
 
 ----- BB9 --- rpo:15 -----
-LABEL:_L6 
+LABEL:_$L6 
 ATTR:fall_through branch_target 
 STMT NUM:1
 
-   [43]    return i;
-
+   [42]    return i;
+   
    return id:46 attachinfo:Dbx
-       ld:i32 'i' decl:int  i  id:45 attachinfo:Dbx
+       ld:i32 'i' id:45 attachinfo:Dbx,MDSSA
 
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'licm_t2' ----==
--- Invariant Expression (num=4) -- :
-   mul:i32 id:34 attachinfo:Dbx       
-       ld:i32 'l' decl:int  l  id:33 attachinfo:Dbx       
-       intconst:i32 10|0xa id:32 attachinfo:Dbx
-   mul:u32 id:46       
-       ld:i32 'i' decl:int  i  id:27 attachinfo:Dbx       
-       intconst:u32 100|0x64 id:44
-   mul:i32 id:31 attachinfo:Dbx       
-       ld:i32 'n' decl:int  n  id:30 attachinfo:Dbx       
-       intconst:i32 100|0x64 id:29 attachinfo:Dbx
-   add:i32 id:35 attachinfo:Dbx       
-       $4:i32 id:45 attachinfo:Dbx       
-       $5:i32 id:42 attachinfo:Dbx
--- Invariant Statement (num=4) -- :
 
-   [54]            a[i][j] = 100 * n + 10 * l + j;
 
-   stpr $4:i32 id:71 attachinfo:Dbx       
-       mul:i32 id:31 attachinfo:Dbx           
-           ld:i32 'n' decl:int  n  id:30 attachinfo:Dbx           
-           intconst:i32 100|0x64 id:29 attachinfo:Dbx
-   stpr $5:i32 id:72 attachinfo:Dbx       
-       mul:i32 id:34 attachinfo:Dbx           
-           ld:i32 'l' decl:int  l  id:33 attachinfo:Dbx           
-           intconst:i32 10|0xa id:32 attachinfo:Dbx
-   stpr $7:u32 id:74       
-       mul:u32 id:46           
-           ld:i32 'i' decl:int  i  id:27 attachinfo:Dbx           
-           intconst:u32 100|0x64 id:44
-   stpr $6:i32 id:73 attachinfo:Dbx       
-       add:i32 id:35 attachinfo:Dbx           
-           $4:i32 id:45 attachinfo:Dbx           
-           $5:i32 id:42 attachinfo:Dbx
 ==---- DUMP LICM Analysis Result : LoopInfo2 : 'licm_t2' ----==
--- Invariant Expression (num=2) -- :
-   add:i32 id:11 attachinfo:Dbx       
-       ld:i32 'n' decl:int  n  id:9 attachinfo:Dbx       
-       intconst:i32 2|0x2 id:10 attachinfo:Dbx
-   mul:i32 id:31 attachinfo:Dbx       
-       ld:i32 'n' decl:int  n  id:30 attachinfo:Dbx       
-       intconst:i32 100|0x64 id:29 attachinfo:Dbx
--- Invariant Statement (num=2) -- :
 
-   [52]        l = i * (n + 2);
-
-   stpr $3:i32 id:70 attachinfo:Dbx       
-       add:i32 id:11 attachinfo:Dbx           
-           ld:i32 'n' decl:int  n  id:9 attachinfo:Dbx           
-           intconst:i32 2|0x2 id:10 attachinfo:Dbx
-
-   [54]            a[i][j] = 100 * n + 10 * l + j;
-
-   stpr $4:i32 id:71 attachinfo:Dbx       
-       mul:i32 id:31 attachinfo:Dbx           
-           ld:i32 'n' decl:int  n  id:30 attachinfo:Dbx           
-           intconst:i32 100|0x64 id:29 attachinfo:Dbx
-==---- DUMP Loop Invariant Code Motion 'licm_t2' ----==
-==---- DUMP IRBBList 'licm_t2' ----==
------ BB11 --- rpo:0 -----
-ATTR:entry_bb fall_through 
-STMT NUM:0
-
------ BB13 --- rpo:4 -----
-ATTR:fall_through 
-STMT NUM:1
-   falsebr label _L9 id:84       
-       le:bool id:81 attachinfo:Dbx           
-           ld:i32 'i' decl:int  i  id:82 attachinfo:Dbx           
-           intconst:i32 100|0x64 id:83 attachinfo:Dbx
-
------ BB1 --- rpo:5 -----
-ATTR:
-STMT NUM:3
-
-   [51]    for (i = 1; i <= 100; i++) {
-
-   st:i32 'i' decl:int  i  id:3 attachinfo:Dbx       
-       intconst:i32 1|0x1 id:2 attachinfo:Dbx
-
-   [52]        l = i * (n + 2);
-
-   stpr $3:i32 id:70 attachinfo:Dbx       
-       add:i32 id:11 attachinfo:Dbx           
-           ld:i32 'n' decl:int  n  id:9 attachinfo:Dbx           
-           intconst:i32 2|0x2 id:10 attachinfo:Dbx
-
-   [54]            a[i][j] = 100 * n + 10 * l + j;
-
-   stpr $4:i32 id:71 attachinfo:Dbx       
-       mul:i32 id:31 attachinfo:Dbx           
-           ld:i32 'n' decl:int  n  id:30 attachinfo:Dbx           
-           intconst:i32 100|0x64 id:29 attachinfo:Dbx
-
------ BB2 --- rpo:10 -----
-LABEL:_L9 
-ATTR:fall_through branch_target 
-STMT NUM:1
-
-   [51]    for (i = 1; i <= 100; i++) {
-
-   falsebr label _L10 id:62 attachinfo:Dbx       
-       le:bool id:6 attachinfo:Dbx           
-           ld:i32 'i' decl:int  i  id:1 attachinfo:Dbx           
-           intconst:i32 100|0x64 id:5 attachinfo:Dbx
-
------ BB12 --- rpo:19 -----
-ATTR:fall_through 
-STMT NUM:1
-   falsebr label _L11 id:80       
-       le:bool id:17 attachinfo:Dbx           
-           ld:i32 'j' decl:int  j  id:79 attachinfo:Dbx           
-           intconst:i32 100|0x64 id:4 attachinfo:Dbx
-
------ BB3 --- rpo:20 -----
-ATTR:
-STMT NUM:5
-
-   [52]        l = i * (n + 2);
-
-   st:i32 'l' decl:int  l  id:13 attachinfo:Dbx       
-       mul:i32 id:12 attachinfo:Dbx           
-           ld:i32 'i' decl:int  i  id:8 attachinfo:Dbx           
-           $3:i32 id:47 attachinfo:Dbx
-
-   [53]        for (j = i; j <= 100; j++) {
-
-   st:i32 'j' decl:int  j  id:20 attachinfo:Dbx       
-       ld:i32 'i' decl:int  i  id:19 attachinfo:Dbx
-
-   [54]            a[i][j] = 100 * n + 10 * l + j;
-
-   stpr $5:i32 id:72 attachinfo:Dbx       
-       mul:i32 id:34 attachinfo:Dbx           
-           ld:i32 'l' decl:int  l  id:33 attachinfo:Dbx           
-           intconst:i32 10|0xa id:32 attachinfo:Dbx
-   stpr $7:u32 id:74       
-       mul:u32 id:46           
-           ld:i32 'i' decl:int  i  id:27 attachinfo:Dbx           
-           intconst:u32 100|0x64 id:44
-   stpr $6:i32 id:73 attachinfo:Dbx       
-       add:i32 id:35 attachinfo:Dbx           
-           $4:i32 id:45 attachinfo:Dbx           
-           $5:i32 id:42 attachinfo:Dbx
-
------ BB4 --- rpo:25 -----
-LABEL:_L11 
-ATTR:fall_through branch_target 
-STMT NUM:1
-
-   [53]        for (j = i; j <= 100; j++) {
-
-   falsebr label _L12 id:54 attachinfo:Dbx       
-       le:bool id:23 attachinfo:Dbx           
-           ld:i32 'j' decl:int  j  id:21 attachinfo:Dbx           
-           intconst:i32 100|0x64 id:22 attachinfo:Dbx
-
------ BB5 --- rpo:35 -----
-ATTR:
-STMT NUM:6
-   stpr $8:u32 id:75       
-       add:u32 id:41           
-           ld:i32 'j' decl:int  j  id:26 attachinfo:Dbx           
-           $7:u32 id:16
-   stpr $9:u32 id:77       
-       lsl:u32 id:14           
-           $8:u32 id:7           
-           intconst:u32 2|0x2 id:43
-
-   [54]            a[i][j] = 100 * n + 10 * l + j;
-
-   ist:i32 id:78 attachinfo:Dbx       
-       add:*<4> base id:15           
-           lda:*<40000> 'a' decl:int  a [100][100] id:25 attachinfo:Dbx           
-           $9:u32 id:76       
-       add:i32 id:37 attachinfo:Dbx           
-           $6:i32 id:18 attachinfo:Dbx           
-           ld:i32 'j' decl:int  j  id:36 attachinfo:Dbx
-
-   [53]        for (j = i; j <= 100; j++) {
-
-   stpr $1:i32 id:52 attachinfo:Dbx       
-       ld:i32 'j' decl:int  j  id:51
-   st:i32 'j' decl:int  j  id:53 attachinfo:Dbx       
-       add:i32 id:50           
-           ld:i32 'j' decl:int  j  id:48 attachinfo:Dbx           
-           intconst:i32 1|0x1 id:49
-   goto label _L11 id:39
-
------ BB7 --- rpo:30 -----
-LABEL:_L12 
-ATTR:branch_target 
-STMT NUM:3
-
-   [51]    for (i = 1; i <= 100; i++) {
-
-   stpr $2:i32 id:60 attachinfo:Dbx       
-       ld:i32 'i' decl:int  i  id:59
-   st:i32 'i' decl:int  i  id:61 attachinfo:Dbx       
-       add:i32 id:58           
-           ld:i32 'i' decl:int  i  id:56 attachinfo:Dbx           
-           intconst:i32 1|0x1 id:57
-   goto label _L9 id:40
-
------ BB9 --- rpo:15 -----
-LABEL:_L10 
-ATTR:fall_through branch_target 
-STMT NUM:1
-
-   [57]    return 0;
-
-   return id:65 attachinfo:Dbx
-       intconst:i32 0|0x0 id:64 attachinfo:Dbx
 
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'licm_t1' ----==
 

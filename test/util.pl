@@ -983,18 +983,17 @@ sub extractAndSetCflag
     if (!-e $configure_file_path) { 
         return;
     }
-    my $pattern = qr/World/;
+    my $pattern = qr/^#/;
     # read file content
     open my $file, '<', $configure_file_path or
         abortex("FAILED! -- ERROR OPENNING FILE: $!\n");
     while (defined(my $line = <$file>)) {
         chomp $line;
+        #Match the pattern with the content in each line of file
+        if ($line =~ /$pattern/) {
+           next;
+        }
         $g_cflags = $g_cflags." ".$line;
-
-        # match the pattern with the content in each line of file
-        #if ($line =~ /$pattern/) {
-        #   last;
-        #}
     }
     close ($file);
 }
