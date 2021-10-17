@@ -37,7 +37,8 @@ COM_OBJS +=\
 ../../com/smempool.o \
 ../../com/strbuf.o \
 ../../com/diagnostic.o \
-../../com/bs.o
+../../com/bs.o\
+../../com/comf.o
 
 gentminfo.exe: gen_objs com_objs
 ifeq ($(HOST_CC),)
