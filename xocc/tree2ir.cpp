@@ -191,7 +191,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
                 ASSERTN(tmpir->is_ptr(),
                         ("I think tmpir should already be set to"
                          "pointer in buildStore()"));
-                setLineNum(tmpir, lineno, m_rg);
+                xoc::setLineNum(tmpir, lineno, m_rg);
                 xcom::add_next(CONT_toplirlist(cont), tmpir);
                 ir = m_rg->buildIStore(m_rg->buildPRdedicated(
                     STPR_no(tmpir), tmpir->getType()), r, rtype);
@@ -500,7 +500,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     }
 
     CONT_is_record_epilog(cont) = false;
-    setLineNum(ir, lineno, m_rg);
+    xoc::setLineNum(ir, lineno, m_rg);
     xcom::add_next(CONT_toplirlist(cont), ir);
 
     //Record the post side effect operations.
@@ -595,7 +595,7 @@ IR * CTree2IR::convertIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
 
     //ST is statement, and only can be appended on top level
     //statement list.
-    setLineNum(ir, lineno, m_rg);
+    xoc::setLineNum(ir, lineno, m_rg);
     xcom::add_next(CONT_toplirlist(cont), ir);
     return m_rg->dupIRTree(inc_exp);
 }
@@ -654,7 +654,7 @@ IR * CTree2IR::convertPointerDeref(Tree * t, INT lineno, IN T2IRCtx * cont)
         //Return the value that is of the pointer pointed to.
         ir = m_rg->buildILoad(ir, type);
     }
-    setLineNum(ir, lineno, m_rg);
+    xoc::setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -663,6 +663,7 @@ IR * CTree2IR::convertPointerDeref(Tree * t, INT lineno, IN T2IRCtx * cont)
 //t: array operator Tree node.
 static Type const* computeArrayElementType(Tree const* t, TypeMgr * tm)
 {
+    ASSERT0(t->getCode() == TR_ARRAY);
     UINT size;
     DATA_TYPE dt = ::get_decl_dtype(t->getResultType(), &size, tm);
     if (dt == D_PTR) {
@@ -705,11 +706,11 @@ static IR * computeArrayAddr(Tree * t, IR * ir, Region * rg, T2IRCtx * cont)
 
 
 //The function handles the array accessing for real array type declaration.
-//e.g: int a[10][20]; 
+//e.g: int a[10][20];
 //     ..= a[i][j], where a is real array.
 //     ..= ((int*)0x1234)[i], where 0x1234 is not real array.
 //  The array which is not real only could using 1-dimension array operator.
-//  namely, ..= ((int*)0x1234)[i][j] is illegal. 
+//  namely, ..= ((int*)0x1234)[i][j] is illegal.
 IR * CTree2IR::convertArraySubExpForArray(Tree * t, Tree * base, UINT n,
                                           TMWORD * elem_nums, T2IRCtx * cont)
 {
@@ -762,7 +763,7 @@ IR * CTree2IR::convertArraySubExp(Tree * t, TMWORD * elem_nums, T2IRCtx * cont)
     ASSERT0(n >= 1);
     if (base->getCode() == TR_LDA &&
         base->getResultType()->isPointerPointToArray()) {
-        return convertArraySubExpForArray(t, base, n, elem_nums, cont); 
+        return convertArraySubExpForArray(t, base, n, elem_nums, cont);
     }
 
     ASSERT0(n == 1);
@@ -787,9 +788,10 @@ IR * CTree2IR::convertArraySubExp(Tree * t, TMWORD * elem_nums, T2IRCtx * cont)
 IR * CTree2IR::convertArray(Tree * t, INT lineno, IN T2IRCtx * cont)
 {
     ASSERT0(t->getCode() == TR_ARRAY);
-    Tree * basetree = t;
-    UINT n = 0;
-    while (basetree->getCode() == TR_ARRAY) {
+    Tree * basetree = TREE_array_base(t);
+    UINT n = 1;
+    while (basetree->getCode() == TR_ARRAY &&
+           basetree->getResultType()->is_array()) {
         basetree = TREE_array_base(basetree);
         ASSERT0(basetree);
         n++;
@@ -797,28 +799,33 @@ IR * CTree2IR::convertArray(Tree * t, INT lineno, IN T2IRCtx * cont)
 
     //There are following situations need to be resolved:
     //CASE 1. Regular array.
-    //     char p[100];
-    //     p[i] = 11; //=> ST(ILD(LDA(p)+LD(i)), 11) => IST((LDA(p)+LD(i)), 11)
-    //     a = p[i]; //=> a=ILD(LDA(p)+LD(i))
-    //     p is base, i is index.
+    //  char p[100];
+    //  p[i] = 11; //=> ST(ILD(LDA(p)+LD(i)), 11) => IST((LDA(p)+LD(i)), 11)
+    //  a = p[i]; //=> a=ILD(LDA(p)+LD(i))
+    //  p is base, i is index.
     //
     //CASE 2. The base of ARRAY operator is a pointer, but is used as array.
-    //     char * p;
-    //     p[i] = 11; //=> ST(ILD(LD(p)+LD(i)), 11) => IST((LD(p)+LD(i)), 11)
-    //     a = p[i]; //=> ST(a, ILD(LD(p)+LD(i)))
+    //  e.g1:
+    //  char * p;
+    //  p[i] = 11; //=> ST(ILD(LD(p)+LD(i)), 11) => IST((LD(p)+LD(i)), 11)
+    //  a = p[i]; //=> ST(a, ILD(LD(p)+LD(i)))
+    //
+    //  e.g2: the 1th dimension operator is a pointer dereference.
+    //  char * string_array[2];
+    //  char c = string_array[1][0]; //=> ST(c, ILD(ARRAY(string_array, 1)))
     //
     //CASE 3. Taken regular array element address.
-    //     char p[2][3];
-    //     char * q = p[i]+1; //=> ST(q, LDA(p)+LD(i)+1)
-    //     char * w = &p[i][j]; //=> ST(w, LDA(p)+LD(i)*3+LD(j))
+    //  char p[2][3];
+    //  char * q = p[i]+1; //=> ST(q, LDA(p)+LD(i)+1)
+    //  char * w = &p[i][j]; //=> ST(w, LDA(p)+LD(i)*3+LD(j))
     //
     //CASE 4. Taken regular array element address.
-    //     char p[2][3];
-    //     char * w = &p[i][j]; //=> ST(w, LDA(p)+LD(i)*3+LD(j))
+    //  char p[2][3];
+    //  char * w = &p[i][j]; //=> ST(w, LDA(p)+LD(i)*3+LD(j))
     //
     //CASE 5: Taken array address.
-    //     char p[2];
-    //     char * q = p;
+    //  char p[2];
+    //  char * q = p;
     //----------------------------------------------------------------
     if (basetree->getCode() != TR_LDA) {
         ASSERT0(basetree->getResultType()->isPointer() ||
@@ -879,7 +886,7 @@ IR * CTree2IR::convertArray(Tree * t, INT lineno, IN T2IRCtx * cont)
     }
 
     ::free(elem_nums);
-    setLineNum(ir, lineno, m_rg);
+    xoc::setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -913,7 +920,7 @@ IR * CTree2IR::convertPragma(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         }
     }
     IR * ir = m_rg->buildLabel(m_rg->genPragmaLabel(buf.buf));
-    setLineNum(ir, lineno, m_rg);
+    xoc::setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -952,31 +959,38 @@ bool CTree2IR::is_alloc_heap(Var const* v) const
 }
 
 
-IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
+static Type const* convertCallReturnType(Tree const* t, xoc::TypeMgr * tm)
 {
-    //Generate return value type.
-    Type const* rettype = nullptr;
+    ASSERT0(t->getCode() == TR_CALL);
     if (t->getResultType()->regardAsPointer()) {
-        rettype = m_tm->getPointerType(t->getResultType()->
-                                       get_pointer_base_size());
-    } else if (t->getResultType()->is_any()) {
-        rettype = m_tm->getAny();
-    } else {
-        UINT size = 0;
-        DATA_TYPE dt = get_decl_dtype(t->getResultType(), &size, m_tm);
-        if (dt == D_MC) {
-            rettype = m_tm->getMCType(size);
-        } else {
-            rettype = m_tm->getSimplexTypeEx(dt);
-        }
+        return tm->getPointerType(t->getResultType()->
+                                  get_pointer_base_size());
     }
+    if (t->getResultType()->is_any()) {
+        //The function does NOT have return value.
+        return tm->getAny();
+    }
+    UINT size = 0;
+    DATA_TYPE dt = get_decl_dtype(t->getResultType(), &size, tm);
+    Type const* rettype = nullptr;
+    if (dt == D_MC) {
+        rettype = tm->getMCType(size);
+    } else {
+        rettype = tm->getSimplexTypeEx(dt);
+    }
+    return rettype;
+}
 
-    //Generate callee.
+
+IR * CTree2IR::convertCallee(Tree const* t, bool * is_direct,
+                             T2IRCtx const* cont)
+{
+    ASSERT0(t->getCode() == TR_CALL);
     T2IRCtx tcont(*cont);
     CONT_is_parse_callee(&tcont) = true;
     IR * callee = convert(TREE_fun_exp(t), &tcont);
 
-    //Handle C language trait
+    //Handle C language trait.
     //Omit meaningless ILD operation.
     IR * real_callee = callee;
     while (real_callee->is_ild()) {
@@ -1004,25 +1018,29 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         callee->setPointerType(4, m_tm);
     }
 
-    bool is_direct = true;
     if (!callee->is_id()) {
         if (callee->is_ptr() ||
             (callee->is_const() && callee->is_int())) {
-            is_direct = false; //Current call is indirect function call.
+            *is_direct = false; //Current call is indirect function call.
         } else {
             UNREACHABLE(); //unsupport.
         }
     }
+    return callee;
+}
 
-    //Handle return value buffer.
+
+//Handle return value buffer.
+IR * CTree2IR::convertCallReturnBuf(Type const* rettype, IR const* callee,
+                                    UINT * return_val_size, Var ** retval_buf)
+{
     //If memory size of return-value is too big to store in
     //return registers, generate a return-value-buffer and
     //transfering its address as the first implict parameter to
     //the call.
-    IR * callarglist = nullptr;
-    Var * retval_buf = nullptr;
-    UINT return_val_size = m_tm->getByteSize(rettype);
-    if (return_val_size > NUM_OF_RETURN_VAL_REGISTERS *
+    IR * arglist = nullptr;
+    *return_val_size = rettype->is_any() ? 0 : m_tm->getByteSize(rettype);
+    if (*return_val_size > NUM_OF_RETURN_VAL_REGISTERS *
                           GENERAL_REGISTER_SIZE) {
         xcom::StrBuf tmp(64);
 
@@ -1030,35 +1048,43 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         //here it is callee actually.
         ASSERT0(callee->is_id());
         ASSERT0(ID_info(callee));
-        tmp.sprint("$retval_buf_of_%d_bytes", return_val_size);
+        tmp.sprint("$retval_buf_of_%d_bytes", *return_val_size);
         Sym const* name = m_rg->getRegionMgr()->addToSymbolTab(tmp.buf);
-        retval_buf = m_rg->getVarMgr()->findVarByName(name);
-        if (retval_buf == nullptr) {
-            retval_buf = m_rg->getVarMgr()->registerVar(SYM_name(name),
+        *retval_buf = m_rg->getVarMgr()->findVarByName(name);
+        if (*retval_buf == nullptr) {
+            *retval_buf = m_rg->getVarMgr()->registerVar(SYM_name(name),
                 rettype, STACK_ALIGNMENT, VAR_LOCAL);
             //retval_buf only used in current region.
-            m_rg->addToVarTab(retval_buf);
-            VAR_formal_param_pos(retval_buf) = g_formal_parameter_start - 1;
+            m_rg->addToVarTab(*retval_buf);
+            VAR_formal_param_pos(*retval_buf) = g_formal_parameter_start - 1;
         }
 
-        ASSERT0(VAR_formal_param_pos(retval_buf) ==
+        ASSERT0(VAR_formal_param_pos(*retval_buf) ==
                 g_formal_parameter_start - 1);
 
         //The var will be the first parameter of current function,
         //it is hidden and can not see by programmer.
-        IR * first_arg = m_rg->buildLda(retval_buf);
-        xcom::add_next(&callarglist, first_arg);
+        IR * first_arg = m_rg->buildLda(*retval_buf);
+        xcom::add_next(&arglist, first_arg);
     }
-    //----------
+    return arglist;
+}
 
-    //----------
+
+IR * CTree2IR::convertCallItself(Tree * t, IR * arglist,
+                                 IR * callee, bool is_direct, INT lineno,
+                                 T2IRCtx * cont)
+{
+    ASSERT0(t->getCode() == TR_CALL);
     //Convert the real parameter-expression.
-    xcom::add_next(&callarglist, convert(TREE_para_list(t), cont));
+    xcom::add_next(&arglist, convert(TREE_para_list(t), cont));
+
+    //Generate CALL stmt.
     IR * call = nullptr;
     if (is_direct) {
         ASSERT0(callee->is_id());
         Var * v = ID_info(callee);
-        call = m_rg->buildCall(v, callarglist, 0, m_tm->getAny());
+        call = m_rg->buildCall(v, arglist, 0, m_tm->getAny());
         if (is_readonly(v)) {
             CALL_is_readonly(call) = true;
         }
@@ -1066,28 +1092,70 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             CALL_is_alloc_heap(call) = true;
         }
     } else {
-        call = m_rg->buildICall(callee, callarglist, 0, m_tm->getAny());
+        call = m_rg->buildICall(callee, arglist, 0, m_tm->getAny());
     }
     call->verify(m_rg);
-    setLineNum(call, lineno, m_rg);
+    xoc::setLineNum(call, lineno, m_rg);
     xcom::add_next(CONT_toplirlist(cont), call);
-    //----------
+    return call;
+}
 
-    //Generate return-exprssion.
+
+IR * CTree2IR::convertCallReturnVal(IR * call, UINT return_val_size,
+                                    Var * retval_buf, Type const* rettype,
+                                    INT lineno)
+{
     IR * ret_exp = nullptr;
     if (return_val_size > NUM_OF_RETURN_VAL_REGISTERS *
                           GENERAL_REGISTER_SIZE) {
         ASSERT0(retval_buf);
         ret_exp = m_rg->buildLoad(retval_buf);
-    } else {
+    } else if (return_val_size >= 0) {
+        //Note if 'return_val_size' is 0, the CALL does not have a return
+        //value accroding to its declaration. But in C language, this is
+        //NOT an error, just a warning. Thus we still give a return result.
+        //e.g: void get_bar(void) { return 10; }
+        //  C warning: 'return' with a value, in function returning void.
+        if (rettype->is_any()) {
+            //CASE: In C langage, the return value may be used even if the
+            //function declared with no return value! So regard return value
+            //is INT type if it is ANY.
+            //e.g: void add(int a, int b); if (add(1,2)) { ... }
+            rettype = m_tm->getIntType(m_tm->getPointerBitSize(), true);
+        }
         IR * respr = m_rg->buildPR(rettype);
-        setLineNum(respr, lineno, m_rg);
+        xoc::setLineNum(respr, lineno, m_rg);
         CALL_prno(call) = PR_no(respr);
         IR_dt(call) = rettype;
         ret_exp = respr;
     }
-    setLineNum(ret_exp, lineno, m_rg);
+    if (ret_exp != nullptr) {
+        xoc::setLineNum(ret_exp, lineno, m_rg);
+    }
     return ret_exp;
+}
+
+
+IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
+{
+    //Generate return value type.
+    Type const* rettype = convertCallReturnType(t, m_tm);
+
+    //Generate callee.
+    bool is_direct = true;
+    IR * callee = convertCallee(t, &is_direct, cont);
+
+    //Handle return value buffer.
+    UINT return_val_size = 0;
+    Var * retval_buf = nullptr;
+    IR * arglist = convertCallReturnBuf(rettype, callee, &return_val_size,
+                                        &retval_buf);
+
+    IR * call = convertCallItself(t, arglist, callee, is_direct, lineno, cont);
+
+    //Generate return-exprssion.
+    return convertCallReturnVal(call, return_val_size, retval_buf,
+                                rettype, lineno);
 }
 
 
@@ -1193,8 +1261,8 @@ IR * CTree2IR::convertPostIncDec(IN Tree * t, INT lineno, IN T2IRCtx * cont)
         xincst = m_rg->buildStore(LD_idinfo(inc_exp), addsub);
     }
 
-    setLineNum(xstpr, lineno, m_rg);
-    setLineNum(xincst, lineno, m_rg);
+    xoc::setLineNum(xstpr, lineno, m_rg);
+    xoc::setLineNum(xincst, lineno, m_rg);
     xcom::add_next(CONT_toplirlist(cont), xstpr);
 
     if (CONT_is_record_epilog(cont)) {
@@ -1247,7 +1315,7 @@ IR * CTree2IR::convertSwitch(IN Tree * t, INT lineno, IN T2IRCtx *)
     m_case_list = m_case_list_stack.pop();
 
     IR * ir = m_rg->buildSwitch(vexp, casev_list, body, deflab);
-    setLineNum(ir, lineno, m_rg);
+    xoc::setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -1268,14 +1336,6 @@ IR * CTree2IR::convertDirectMemAccess(Tree const* t, INT lineno, T2IRCtx * cont)
 
     //Indicates whether if current convertion should return address.
     bool is_parent_require_addr = CONT_is_compute_addr(cont);
-
-    //hack
-    //if (is_field_ref_whole_array(t)) {
-    //    //In C language, if user writes code like 'a = s.array;', actually user
-    //    //expects taking address of array, rather than value.
-    //    CONT_is_compute_addr(&tc) = true;
-    //    is_parent_require_addr = true;
-    //}
 
     IR * ir = convert(TREE_base_region(t), &tc);
 
@@ -1306,7 +1366,7 @@ IR * CTree2IR::convertDirectMemAccess(Tree const* t, INT lineno, T2IRCtx * cont)
                                   m_tm->getSimplexTypeEx(
                                       m_tm->getPointerSizeDtype())));
         }
-        setLineNum(ir, lineno, m_rg);
+        xoc::setLineNum(ir, lineno, m_rg);
         return ir;
     }
 
@@ -1325,7 +1385,7 @@ IR * CTree2IR::convertDirectMemAccess(Tree const* t, INT lineno, T2IRCtx * cont)
         IR_dt(ir) = m_tm->getSimplexTypeEx(dt);
     }
     ir->setOffset(ir->getOffset() + field_ofst);
-    setLineNum(ir, lineno, m_rg);
+    xoc::setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -1386,7 +1446,7 @@ IR * CTree2IR::convertIndirectMemAccess(Tree const* t, INT lineno,
             ir = base;
         }
         ir->setPointerType(field_size, m_tm);
-        setLineNum(ir, lineno, m_rg);
+        xoc::setLineNum(ir, lineno, m_rg);
         return ir;
     }
 
@@ -1398,7 +1458,7 @@ IR * CTree2IR::convertIndirectMemAccess(Tree const* t, INT lineno,
         if (field_ofst != 0) {
             ir->setOffset(field_ofst);
         }
-        setLineNum(ir, lineno, m_rg);
+        xoc::setLineNum(ir, lineno, m_rg);
         return ir;
     }
 
@@ -1426,8 +1486,53 @@ IR * CTree2IR::convertIndirectMemAccess(Tree const* t, INT lineno,
     }
 
     ASSERT0(ir);
-    setLineNum(ir, lineno, m_rg);
+    xoc::setLineNum(ir, lineno, m_rg);
     return ir;
+}
+
+
+static Type const* determineIRType(Tree const* t, MOD TypeMgr * tm)
+{
+    if (t->getResultType()->regardAsPointer()) {
+        return tm->getPointerType(t->getResultType()->
+            get_pointer_base_size());
+    }
+
+    UINT s;
+    DATA_TYPE dt = get_decl_dtype(t->getResultType(), &s, tm);
+    if (dt == D_MC) {
+        return tm->getMCType(s);
+    }
+
+    ASSERT0(IS_SIMPLEX(dt));
+    return tm->getSimplexTypeEx(dt);
+}
+
+
+static IR * convertDerefPointToArray(IR * deref_addr, Tree * t, Tree * base,
+                                     MOD TypeMgr * tm, Region * rg, INT lineno)
+{
+    if (base->getCode() == TR_LDA) {
+        //CASE: char s[10]; ...=*s;
+        //  where *s will be translated into AST likes DEREF(LDA(ID))),
+        //  whereas LDA(ID) will acted as a Pointer which pointed to an array.
+        //  The ILD is needed for this case.
+        IR * ir = rg->buildILoad(deref_addr, determineIRType(t, tm));
+        xoc::setLineNum(ir, lineno, rg);
+        return ir;
+    }
+
+    //Here we are computing the base address of ARRAY accessing.
+    //In C spec, base of array should be address expression,
+    //e.g:
+    //  1. a[i] indicates a is symbol, the base address is LDA(a),
+    //  2. (*p)[i] indicates p is variable, the base address is LD(p), it
+    //     is different to a[i].
+    //For now, it is the second scenario. Because the convertion of DEREF's
+    //lchild is 'deref_addr' who has already convert 'p' to LD(p), here we
+    //just return the 'deref_addr' as result of DEREF(ID(p)) at all.
+    xoc::setLineNum(deref_addr, lineno, rg);
+    return deref_addr;
 }
 
 
@@ -1439,38 +1544,13 @@ IR * CTree2IR::convertDeref(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     IR * deref_addr = convert(base, cont);
     ASSERT0(deref_addr && deref_addr->is_ptr());
 
-    IR * ir = nullptr;
     if (base->getResultType()->isPointerPointToArray()) {
-        //Here we are computing the base address of ARRAY accessing.
-        //In C spec, base of array should be address expression,
-        //e.g:
-        //  1. a[i] indicates a is symbol, the base address is LDA(a),
-        //  2. (*p)[i] indicates p is variable, the base address is LD(p), it
-        //     different to a[i].
-        //For now, it is the second scenario. Because the convertion of DEREF's
-        //lchild is 'deref_addr' who has already convert 'p' to LD(p), here we
-        //just return the 'deref_addr' as result of DEREF(ID(p)) at all.
-        ir = deref_addr;
-        setLineNum(ir, lineno, m_rg);
-        return ir;
+        return convertDerefPointToArray(deref_addr, t, base, m_tm,
+                                        m_rg, lineno);
     }
 
-    Type const* type = nullptr;
-    if (t->getResultType()->regardAsPointer()) {
-        type = m_tm->getPointerType(t->getResultType()->
-            get_pointer_base_size());
-    } else {
-        UINT s;
-        DATA_TYPE dt = get_decl_dtype(t->getResultType(), &s, m_tm);
-        if (dt == D_MC) {
-            type = m_tm->getMCType(s);
-        } else {
-            ASSERT0(IS_SIMPLEX(dt));
-            type = m_tm->getSimplexTypeEx(dt);
-        }
-    }
-    ir = m_rg->buildILoad(deref_addr, type);
-    setLineNum(ir, lineno, m_rg);
+    IR * ir = m_rg->buildILoad(deref_addr, determineIRType(t, m_tm));
+    xoc::setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -1538,7 +1618,7 @@ IR * CTree2IR::convertSelect(Tree * t, INT lineno, T2IRCtx * cont)
         copyDbx(det, old, m_rg);
     }
     IR * ir = m_rg->buildSelect(det, texp, fexp, type);
-    setLineNum(ir, lineno, m_rg);
+    xoc::setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -1648,7 +1728,7 @@ IR * CTree2IR::convertReturn(Tree * t, INT lineno, T2IRCtx * cont)
             ir->setParent(cvt);
         }
     }
-    setLineNum(ir, lineno, m_rg);
+    xoc::setLineNum(ir, lineno, m_rg);
     ir = genReturnValBuf(ir);
     return ir;
 }
@@ -1670,14 +1750,14 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
         CONT_is_compute_addr(&tc) = false;
         base = convert(TREE_lchild(kid), &tc);
         base->setPointerType(kid->getResultType()->get_decl_size(), m_tm);
-        setLineNum(base, lineno, m_rg);
+        xoc::setLineNum(base, lineno, m_rg);
         return base;
     }
 
     if (kid->getCode() == TR_ID) {
         base = buildLda(kid);
         ASSERT0(base->is_lda());
-        setLineNum(base, lineno, m_rg);
+        xoc::setLineNum(base, lineno, m_rg);
         return base;
     }
 
@@ -1690,22 +1770,22 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
     base->setPointerType(t->getResultType()->get_pointer_base_size(), m_tm);
 
     if (base->is_ld()) {
-        setLineNum(base, lineno, m_rg);
+        xoc::setLineNum(base, lineno, m_rg);
         return base;
     }
 
     if (base->is_array()) {
-        setLineNum(base, lineno, m_rg);
+        xoc::setLineNum(base, lineno, m_rg);
         return base;
     }
 
     if (base->is_ild()) {
-        setLineNum(base, lineno, m_rg);
+        xoc::setLineNum(base, lineno, m_rg);
         return base;
     }
 
     if (base->is_lda()) {
-        setLineNum(base, lineno, m_rg);
+        xoc::setLineNum(base, lineno, m_rg);
         return base;
     }
 
@@ -1719,7 +1799,7 @@ IR * CTree2IR::convertLDA(Tree * t, INT lineno, T2IRCtx * cont)
         //    IMM(4)
         //It already be the address what we want, just
         //return the ADD as result.
-        setLineNum(base, lineno, m_rg);
+        xoc::setLineNum(base, lineno, m_rg);
         return base;
     }
 
@@ -1751,7 +1831,7 @@ IR * CTree2IR::convertCVT(Tree * t, INT lineno, T2IRCtx * cont)
         }
         ir = m_rg->buildCvt(convert(TREE_cvt_exp(t), cont), type);
     }
-    setLineNum(ir, lineno, m_rg);
+    xoc::setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -1763,24 +1843,12 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
     ASSERT0(idty);
     if (idty->is_array()) {
         //In C language, identifier of array is just a label.
-        //The reference of the label should be represented as LDA.
+        //The reference of the label should be represented as LDA of the label.
         //e.g: int * p; int a[10]; p = a;
-        //  will generate: ST(p) = LDA(a)
-        //if (TREE_parent(t)->getCode() == TR_ARRAY) {
-        //    ASSERT0(t == TREE_array_base(TREE_parent(t)));
-        //}
-        if (TREE_parent(t)->getCode() == TR_ARRAY) {
-            ASSERTN(0, ("should be handled in TreeCanon")); //hack
-        }
-
-        //ir = buildLda(t);
-        //ASSERT0(ir->is_lda());
-        //ASSERT0(VAR_is_array(LDA_idinfo(ir)));
-        //ASSERTN(!VAR_is_formal_param(LDA_idinfo(ir)),
-        //        ("array parameter should be transformed "
-        //         "to pointer type at FrontEnd's compound_stmt()"));
-        //setLineNum(ir, lineno, m_rg);
-        //return ir;
+        //  will generate: ST(p) = LDA(a). Thus the LDA will be inserted in
+        //  TreeCanon stage.
+        ASSERTN(TREE_parent(t)->getCode() != TR_ARRAY,
+                ("should be handled in TreeCanon"));
     }
 
     if (idty->is_fun_decl()) {
@@ -1799,9 +1867,9 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
             //    F f = hook;
             //}
             ir = buildLda(t);
-            ASSERT0(VAR_is_func_decl(LDA_idinfo(ir)));
+            ASSERT0(LDA_idinfo(ir)->is_func_decl());
         }
-        setLineNum(ir, lineno, m_rg);
+        xoc::setLineNum(ir, lineno, m_rg);
         return ir;
     }
 
@@ -1811,7 +1879,7 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
         ir = buildLda(t);
         ASSERT0(ir->is_lda());
         //ir = buildId(t);
-        setLineNum(ir, lineno, m_rg);
+        xoc::setLineNum(ir, lineno, m_rg);
         return ir;
     }
 
@@ -1828,7 +1896,7 @@ IR * CTree2IR::convertId(Tree * t, INT lineno, T2IRCtx * cont)
 
     //Normal load.
     ir = buildLoad(t);
-    setLineNum(ir, lineno, m_rg);
+    xoc::setLineNum(ir, lineno, m_rg);
     return ir;
 }
 
@@ -1890,7 +1958,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             DATA_TYPE dt = ::get_decl_dtype(t->getResultType(), &s, m_tm);
             //The maximum integer supported is 64bit.
             ir = m_rg->buildImmInt(TREE_imm_val(t), m_tm->getSimplexTypeEx(dt));
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
         case TR_IMML:
@@ -1901,7 +1969,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             //The maximum integer supported is 64bit.
             ir = m_rg->buildImmInt(TREE_imm_val(t),
                 m_tm->getSimplexTypeEx(dt));
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
         case TR_FP:
@@ -1924,7 +1992,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             if (mantissa_num > DEFAULT_MANTISSA_NUM) {
                 CONST_fp_mant(ir) = mantissa_num;
             }
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
         case TR_ENUM_CONST: {
@@ -1933,7 +2001,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             //of target machine
             ir = m_rg->buildImmInt(v, m_tm->getSimplexTypeEx(
                 m_tm->getDType(WORD_LENGTH_OF_TARGET_MACHINE, true)));
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
         case TR_STRING:
@@ -1943,19 +2011,19 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                     m_rg->getTopRegion() != nullptr &&
                     m_rg->getTopRegion()->is_program());
             m_rg->getTopRegion()->addToVarTab(LDA_idinfo(ir));
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         case TR_LOGIC_OR: //logical or        ||
             l = convert(TREE_lchild(t),cont);
             r = convert(TREE_rchild(t),cont);
             ir = m_rg->buildCmp(IR_LOR, l, r);
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         case TR_LOGIC_AND: //logical and      &&
             l = convert(TREE_lchild(t),cont);
             r = convert(TREE_rchild(t),cont);
             ir = m_rg->buildCmp(IR_LAND, l, r);
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         case TR_INCLUSIVE_OR: { //inclusive or  |
             l = convert(TREE_lchild(t), cont);
@@ -1974,7 +2042,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 }
             }
             ir = m_rg->buildBinaryOp(IR_BOR, type, l, r);
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
         case TR_INCLUSIVE_AND: { //inclusive and &
@@ -1994,7 +2062,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 }
             }
             ir = m_rg->buildBinaryOp(IR_BAND, type, l, r);
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
         case TR_XOR: { //exclusive or
@@ -2025,7 +2093,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             } else {
                 ir = m_rg->buildCmp(IR_NE, l, r);
             }
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         case TR_RELATION: // < > >= <=
             l = convert(TREE_lchild(t), cont);
@@ -2045,7 +2113,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 break;
             default: UNREACHABLE();
             }
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         case TR_SHIFT: {  // >> <<
             l = convert(TREE_lchild(t), cont);
@@ -2070,7 +2138,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             } else {
                 ir = m_rg->buildBinaryOp(IR_LSL, type, l, r);
             }
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
         case TR_ADDITIVE: { // '+' '-'
@@ -2096,7 +2164,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             } else {
                 ir = m_rg->buildBinaryOp(IR_SUB, type, l, r);
             }
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
         case TR_MULTI: {   // '*' '/' '%'
@@ -2122,7 +2190,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             } else {
                 ir = m_rg->buildBinaryOp(IR_REM, type, l, r);
             }
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
         case TR_SCOPE:
@@ -2144,7 +2212,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 copyDbx(det, old, m_rg);
             }
             ir = m_rg->buildIf(det, truebody, falsebody);
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
         case TR_DO: {
@@ -2183,7 +2251,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                 copyDbx(det, old, m_rg);
             }
             ir = m_rg->buildDoWhile(det, body);
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
         case TR_WHILE: {
@@ -2220,7 +2288,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             }
 
             ir = m_rg->buildWhileDo(det, body);
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
         case TR_FOR: {
@@ -2256,7 +2324,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             }
 
             IR * whiledo = m_rg->buildWhileDo(det, body);
-            setLineNum(whiledo, lineno, m_rg);
+            xoc::setLineNum(whiledo, lineno, m_rg);
             xcom::add_next(&ir, &last, whiledo);
             break;
         }
@@ -2265,11 +2333,11 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             break;
         case TR_BREAK:
             ir = m_rg->buildBreak();
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         case TR_CONTINUE:
             ir = m_rg->buildContinue();
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         case TR_RETURN:
             ir = convertReturn(t, lineno, cont);
@@ -2277,12 +2345,12 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         case TR_GOTO:
             ir = m_rg->buildGoto(getUniqueLabel(
                 const_cast<LabelInfo*>(TREE_lab_info(t))));
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         case TR_LABEL:
             ir = m_rg->buildLabel(getUniqueLabel(
                 const_cast<LabelInfo*>(TREE_lab_info(t))));
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         case TR_CASE: {
             ir = m_rg->buildIlabel();
@@ -2291,7 +2359,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             CASEV_constv(casev) = TREE_case_value(t);
             CASEV_is_default(casev) = false;
             m_case_list->append_tail(casev);
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
         case TR_DEFAULT: {
@@ -2301,7 +2369,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             CASEV_constv(casev) = 0;
             CASEV_is_default(casev) = true;
             m_case_list->append_head(casev);
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
         case TR_COND: //formulized log_OR_exp ? exp : cond_exp
@@ -2322,19 +2390,19 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         case TR_MINUS: { // -123
             IR * opnd = convert(TREE_lchild(t), cont);
             ir = m_rg->buildUnaryOp(IR_NEG, opnd->getType(), opnd);
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             ir->setParentPointer(false);
             break;
         }
         case TR_REV: { // Reverse
             IR * opnd = convert(TREE_lchild(t), cont);
             ir = m_rg->buildUnaryOp(IR_BNOT, opnd->getType(), opnd);
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
         case TR_NOT:  // get non-value
             ir = m_rg->buildLogicalNot(convert(TREE_lchild(t), cont));
-            setLineNum(ir, lineno, m_rg);
+            xoc::setLineNum(ir, lineno, m_rg);
             break;
         case TR_INC:   //++a
         case TR_DEC:   //--a
@@ -2368,7 +2436,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         t = TREE_nsib(t);
         if (ir != nullptr) {
             if (getLineNum(ir) == 0) {
-                setLineNum(ir, lineno, m_rg);
+                xoc::setLineNum(ir, lineno, m_rg);
             }
             xcom::add_next(&ir_list, ir);
         }

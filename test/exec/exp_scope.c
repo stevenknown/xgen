@@ -1,10 +1,8 @@
 int strcmp(char const* a, char const* b);
 int main (int argc, char **argv)
 {
-  //char * local[] = {"a", "b", "c", "d", "e"};
-  //char local1 = local[3];
-  
-  //char local2[10][20] = { {1,2}, {3,4,5} };
+  char * local[] = {"a", "b", "c", "d", "e"};
+  char local2[10][20] = { {1,2}, {3,4,5} };
   char local3[10][20][30] = { 
                               { //dim0
                                 { //dim1
@@ -19,19 +17,17 @@ int main (int argc, char **argv)
                                 {12,13,},
                               },
                             };
-  //  args[1][2] = 30;
-  argc = 300;
-  //if (strcmp(local[0], "a") != 0) { return 1; }
-  //if (strcmp(local[1], "b") != 0) { return 1; }
-  //if (strcmp(local[2], "c") != 0) { return 1; }
-  //if (strcmp(local[3], "d") != 0) { return 1; }
-  //if (strcmp(local[4], "e") != 0) { return 1; }
+  if (strcmp(local[0], "a") != 0) { return 1; }
+  if (strcmp(local[1], "b") != 0) { return 1; }
+  if (strcmp(local[2], "c") != 0) { return 1; }
+  if (strcmp(local[3], "d") != 0) { return 1; }
+  if (strcmp(local[4], "e") != 0) { return 1; }
 
-  //if (local2[0][0] != 1) { return 2; }
-  //if (local2[0][1] != 2) { return 2; }
-  //if (local2[1][0] != 3) { return 2; }
-  //if (local2[1][1] != 4) { return 2; }
-  //if (local2[1][2] != 5) { return 2; }
+  if (local2[0][0] != 1) { return 2; }
+  if (local2[0][1] != 2) { return 2; }
+  if (local2[1][0] != 3) { return 2; }
+  if (local2[1][1] != 4) { return 2; }
+  if (local2[1][2] != 5) { return 2; }
 
   if (local3[0][0][0] != 1) { return 3; }
   if (local3[0][0][1] != 2) { return 3; }
@@ -47,5 +43,5 @@ int main (int argc, char **argv)
   if (local3[1][2][0] != 12) { return 3; }
   if (local3[1][2][1] != 13) { return 3; }
 
-  //return 0;
+  return 0;
 }

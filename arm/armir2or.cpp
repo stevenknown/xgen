@@ -55,6 +55,7 @@ void ARMIR2OR::convertBinaryOp(IR const* ir, OUT RecycORList & ors,
         return;
     }
 
+    ASSERT0(!BIN_opnd0(ir)->is_any() && !BIN_opnd1(ir)->is_any());
     if (BIN_opnd0(ir)->getTypeSize(m_tm) > DWORD_LENGTH_OF_TARGET_MACHINE ||
         BIN_opnd1(ir)->getTypeSize(m_tm) > DWORD_LENGTH_OF_TARGET_MACHINE) {
         //ADD may be vector-add or simulated-add-call.
@@ -105,9 +106,10 @@ void ARMIR2OR::convertStoreVar(IR const* ir, OUT RecycORList & ors,
                                IN IOC * cont)
 {
     ASSERT0(ir != nullptr && ir->is_st());
-    UINT resbytesize = ir->getTypeSize(m_tm);
+    UINT resbytesize = ir->is_any() ? 0 : ir->getTypeSize(m_tm);
     if (resbytesize <= BYTESIZE_OF_DWORD) {
-        ASSERT0(ir->getRHS()->getTypeSize(m_tm) <= BYTESIZE_OF_DWORD);
+        ASSERT0(ir->getRHS()->is_any() ||
+                ir->getRHS()->getTypeSize(m_tm) <= BYTESIZE_OF_DWORD);
         IR2OR::convertStoreVar(ir, ors, cont);
         return;
     }
@@ -169,11 +171,14 @@ void ARMIR2OR::convertReturnValue(IR const* ir, OUT RecycORList & ors,
     }
     IOC tmp_cont;
     SR * retv = nullptr;
-    if (ir->getTypeSize(m_tm) <= BYTESIZE_OF_WORD) {
-        retv = getCG()->gen_r0();
+    if (ir->is_any() || ir->getTypeSize(m_tm) <= BYTESIZE_OF_WORD) {
+        //Note if the result-type of CALL is ANY type, regard it
+        //is as long as register.
+        retv = getCG()->genR0();
     } else if (ir->getTypeSize(m_tm) <= BYTESIZE_OF_DWORD) {
-        retv = getCG()->getSRVecMgr()->genSRVec(2, getCG()->gen_r0(),
-                                                getCG()->gen_r1());
+        retv = getCG()->getSRVecMgr()->genSRVec(2,
+            getCG()->genRegWithPhyReg(REG_R0, RF_R),
+            getCG()->genRegWithPhyReg(REG_R1, RF_R));
     } else {
         //Get the first formal parameter, it is the return buffer of the value.
         Var const* v = getCG()->get_param_vars().get(0);
@@ -888,10 +893,10 @@ void ARMIR2OR::convertRelationOpDWORD(IR const* ir, OUT RecycORList & ors,
                                       IN IOC * cont)
 {
     ASSERT0(ir && ir->is_relation());
-
     IR const* opnd0 = BIN_opnd0(ir);
     IR const* opnd1 = BIN_opnd1(ir);
 
+    ASSERT0(!opnd0->is_any() && !opnd1->is_any());
     ASSERT0(opnd0->getTypeSize(m_tm) == opnd1->getTypeSize(m_tm));
 
     //Integer, dould size of GENERAL_REGISTER_SIZE.
@@ -983,7 +988,8 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
         return;
     }
 
-    if (opnd0->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2) {
+    if (opnd0->is_any() ||
+        opnd0->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2) {
         convertRelationOpDWORD(ir, ors, cont);
         return;
     }
@@ -1394,23 +1400,18 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
 
     getCG()->buildCall(builtin, ir->getTypeSize(m_tm), tors.getList(), cont);
 
-    //Get return value of call.
-    //SR * retv = getCG()->genReg();
-    //getCG()->buildMove(retv, getCG()->gen_r0(), tors.getList(), cont);
-
     tors.copyDbx(ir);
     ors.move_tail(tors);
     tors.clean();
 
-    SR * r0 = getCG()->gen_r0();
+    SR * r0 = getCG()->genR0();
     SR * one = getCG()->genOne();
     SR * zero = getCG()->genZero();
     SR * truepd = nullptr;
     SR * falsepd = nullptr;
     bool needresval = !ir->getStmt()->isConditionalBr();
     if (needresval) {
-        getCG()->buildCompare(OR_cmp_i, true, getCG()->gen_r0(),
-                              getCG()->genZero(), tors.getList(), cont);
+        getCG()->buildCompare(OR_cmp_i, true, r0, zero, tors.getList(), cont);
         tors.copyDbx(ir);
         ors.move_tail(tors);
         tors.clean();
@@ -1605,7 +1606,7 @@ void ARMIR2OR::convertTruebr(IR const* ir, OUT RecycORList & ors, IOC * cont)
         return;
     }
 
-    if (opnd0->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE) {
+    if (opnd0->is_any() || opnd0->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE) {
         IR2OR::convertTruebr(ir, ors, cont);
         return;
     }
@@ -1744,6 +1745,50 @@ Var const* ARMIR2OR::fp2fp(IR const* tgt, IR const* src)
 }
 
 
+//CASE: integer and pointer convertion.
+void ARMIR2OR::convertCvtIntAndPtr(IR const* ir, OUT RecycORList & ors,
+                                   MOD IOC * cont)
+{
+    ASSERT0((ir->is_int() || ir->is_ptr()) &&
+            (CVT_exp(ir)->is_int() || CVT_exp(ir)->is_ptr()));
+    IR2OR::convertCvt(ir, ors, cont);
+}
+
+
+//CASE: Load constant-string address into register.
+void ARMIR2OR::convertCvtIntAndStr(IR const* ir, SR * opnd,
+                                   OUT RecycORList & ors,
+                                   MOD IOC * cont)
+{
+    ASSERT0((ir->is_int() || ir->is_ptr()) && CVT_exp(ir)->is_str());
+    ASSERTN(ir->getTypeSize(m_tm) >= GENERAL_REGISTER_SIZE,
+            ("Unsupported CVT string to small integer"));
+    ASSERT0(opnd->is_reg());
+    if (ir->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE) {
+        cont->set_reg(RESULT_REGISTER_INDEX, opnd);
+        return;
+    }
+    
+    ASSERT0(ir->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
+    if (opnd->is_vec()) {
+        SR * opnd2 = opnd->getVec()->get(1);        
+        ASSERT0(opnd2);
+        getCG()->buildMove(opnd2, getCG()->genIntImm((HOST_INT)0, false),
+                           ors.getList(), cont);
+        cont->clean_regvec();
+        cont->set_reg(RESULT_REGISTER_INDEX, opnd);
+        return;
+    }
+
+    SR * opnd2 = getCG()->genReg();
+    getCG()->getSRVecMgr()->genSRVec(2, opnd, opnd2);
+    getCG()->buildMove(opnd2, getCG()->genIntImm((HOST_INT)0, false),
+                       ors.getList(), cont);
+    cont->clean_regvec();
+    cont->set_reg(RESULT_REGISTER_INDEX, opnd);
+}
+
+
 void ARMIR2OR::convertCvt(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     ASSERT0(ir->is_cvt() && CVT_exp(ir));
@@ -1758,19 +1803,27 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 
     if ((newir->is_int() || newir->is_ptr()) &&
         (CVT_exp(newir)->is_int() || CVT_exp(newir)->is_ptr())) {
-        IR2OR::convertCvt(newir, ors, cont);
+        convertCvtIntAndPtr(newir, ors, cont);
         if (newir != ir) {
             m_rg->freeIRTree(newir);
         }
         return;
     }
-    ASSERTN(!newir->is_any(), ("Unsupported CVT to ANY"));
 
+    ASSERTN(!newir->is_any(), ("Unsupported CVT to ANY"));
     RecycORList tors(this);
     IOC tmp;
     convertGeneralLoad(CVT_exp(newir), tors, &tmp);
     SR * opnd = tmp.get_reg(0);
     ASSERT0(CVT_exp(newir)->getTypeSize(m_tm) <= opnd->getByteSize());
+
+    if ((newir->is_int() || newir->is_ptr()) && CVT_exp(newir)->is_str()) {
+        convertCvtIntAndStr(newir, opnd, ors, cont);
+        if (newir != ir) {
+            m_rg->freeIRTree(newir);
+        }
+        return;
+    }
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
@@ -1801,17 +1854,12 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     //Result register.
     ASSERT0(cont);
     if (newir->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE) {
-        cont->set_reg(RESULT_REGISTER_INDEX, getCG()->gen_r0());
+        cont->set_reg(RESULT_REGISTER_INDEX, getCG()->genR0());
     } else {
         ASSERT0(newir->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
-        //SR * res0 = getCG()->genReg();
-        //SR * res1 = getCG()->genReg();
-        //getCG()->buildMove(res0, getCG()->gen_r0(), tors.getList(), nullptr);
-        //getCG()->buildMove(res1, getCG()->gen_r1(), tors.getList(), nullptr);
-
-        SR * res0 = getCG()->gen_r0();
-        SR * res1 = getCG()->gen_r1();
-        getCG()->getSRVecMgr()->genSRVec(2, res0, res1);
+        SR * res0 = getCG()->getSRVecMgr()->genSRVec(2,
+            getCG()->genRegWithPhyReg(REG_R0, RF_R),
+            getCG()->genRegWithPhyReg(REG_R1, RF_R));
         cont->clean_regvec();
         cont->set_reg(RESULT_REGISTER_INDEX, res0);
         //cont->set_reg(1, res1); //Is it indispensable?
@@ -1842,8 +1890,9 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT RecycORList & ors,
     ASSERT0(IR_next(exp) == nullptr);
     IOC tmp;
     convert(exp, tors, &tmp);
-    SR * r0 = getCG()->gen_r0();
+    SR * r0 = getCG()->genR0();
 
+    ASSERT0(!exp->is_any());
     if (exp->getTypeSize(m_tm) >
         NUM_OF_RETURN_VAL_REGISTERS * GENERAL_REGISTER_SIZE) {
         SR * srcaddr = tmp.get_addr();
@@ -1879,7 +1928,7 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT RecycORList & ors,
             ASSERTN(retv->getVec() && SR_vec_idx(retv) == 0,
                     ("it should be the first SR in vector"));
             SR * retv_2 = retv->getVec()->get(1);
-            SR * r1 = getCG()->gen_r1();
+            SR * r1 = getCG()->genR1();
             getCG()->buildMove(r1, retv_2, tors.getList(), nullptr);
             o = getCG()->buildOR(OR_ret2, 0, 4,
                                  getCG()->getTruePred(),
@@ -1899,6 +1948,7 @@ IR * ARMIR2OR::insertCvt(IR const* ir)
     case IR_IST:
     case IR_STPR:
     case IR_STARRAY: {
+        if (ir->is_any() || ir->getRHS()->is_any()) { break; }
         UINT tgtsz = ir->getTypeSize(m_tm);
         UINT srcsz = ir->getRHS()->getTypeSize(m_tm);
         if (tgtsz > srcsz && srcsz >= BYTESIZE_OF_WORD) {
@@ -1922,6 +1972,20 @@ IR * ARMIR2OR::insertCvt(IR const* ir)
     default: break;
     }
     return const_cast<IR*>(ir);
+}
+
+
+void ARMIR2OR::convertSetElem(IR const* ir, OUT RecycORList & ors,
+                              MOD IOC * cont)
+{
+    ASSERT0(0); //TODO
+}
+
+
+void ARMIR2OR::convertGetElem(IR const* ir, OUT RecycORList & ors,
+                              MOD IOC * cont)
+{
+    ASSERT0(0); //TODO
 }
 
 

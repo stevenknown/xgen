@@ -332,7 +332,7 @@ void RaMgr::saveCalleeFPRegisterAtEntry(
 
         IOC tc;
         IOC_mem_byte_size(&tc) = sr->getByteSize();
-        m_cg->buildStore(sr, loc, 0, ors, &tc);
+        m_cg->buildStore(sr, loc, 0, false, ors, &tc);
         m_cg->setCluster(ors, clust);
         m_cg->fixCluster(ors, clust);
 
@@ -403,7 +403,7 @@ void RaMgr::saveCalleeFPRegisterAtExit(REGFILE regfile, ORBB * exit,
 
         IOC tc;
         IOC_mem_byte_size(&tc) = sr->getByteSize();
-        m_cg->buildLoad(sr, v, 0, ors, &tc);
+        m_cg->buildLoad(sr, v, 0, false, ors, &tc);
         SR_spill_var(sr) = v;
         m_cg->setCluster(ors, clust);
         m_cg->fixCluster(ors, clust);
@@ -478,7 +478,7 @@ void RaMgr::saveCalleeIntRegisterAtEntry(REGFILE regfile, ORBB * entry,
 
         IOC tc;
         IOC_mem_byte_size(&tc) = sr->getByteSize();
-        m_cg->buildStore(sr, loc, 0, ors, &tc);
+        m_cg->buildStore(sr, loc, 0, false, ors, &tc);
         m_cg->setCluster(ors, clust);
         m_cg->fixCluster(ors, clust);
 
@@ -596,7 +596,7 @@ void RaMgr::saveCalleeIntRegisterAtExit(REGFILE regfile, ORBB * exit,
 
         IOC tc;
         IOC_mem_byte_size(&tc) = sr->getByteSize();
-        m_cg->buildLoad(sr, v, 0, ors, &tc);
+        m_cg->buildLoad(sr, v, 0, false, ors, &tc);
 
         SR_spill_var(sr) = v;
         m_cg->setCluster(ors, clust);

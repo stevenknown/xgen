@@ -177,17 +177,17 @@ static ORTypeDesc g_or_type_desc [] = {
     //Symbol store
     {OR_stm,       "stm",        }, // (px)stm Rn, {Rx,Ry,...}
     {OR_str,       "str",        }, // (px)str Rt, label
-    {OR_strb,      "strb",       }, // (px)str Rt, label
-    {OR_strsb,     "strsb",      }, // (px)str Rt, label
-    {OR_strh,      "strh",       }, // (px)str Rt, label
-    {OR_strsh,     "strsh",      }, // (px)str Rt, label
+    {OR_strb,      "strb",       }, // (px)strb Rt, label
+    {OR_strsb,     "strsb",      }, // (px)strsb Rt, label
+    {OR_strh,      "strh",       }, // (px)strh Rt, label
+    {OR_strsh,     "strsh",      }, // (px)strsh Rt, label
     {OR_strd,      "strd",       }, // (px)strd Rt, Rt2, label
 
     //Indirect store via base-register + immdediate-offset.
     {OR_str_i12,   "str_i12",    }, // (px)str Rt, [Rn, Imm12]
-    {OR_strb_i12,  "strb_i12",   }, // (px)str Rt, [Rn, Imm12]
-    {OR_strh_i8,   "strh_i8",    }, // (px)str Rt, [Rn, Imm8]
-    {OR_strd_i8,   "strd_i8",    }, // (px)str Rt, Rt2, [Rn, Imm8]
+    {OR_strb_i12,  "strb_i12",   }, // (px)strb Rt, [Rn, Imm12]
+    {OR_strh_i8,   "strh_i8",    }, // (px)strh Rt, [Rn, Imm8]
+    {OR_strd_i8,   "strd_i8",    }, // (px)strd Rt, Rt2, [Rn, Imm8]
 
     //simulated operation.
     {OR_ret,       "ret",        }, // (px)ret Lr

@@ -8,7 +8,7 @@ int main(int b)
   while (n > 0) {
     i = 20; //should be hoisted.
     PLACE_HOLDER_LABEL: //used to split BB.
-    g = b; //should be hoisted.
+    g = b; //b should be hoisted.
   }
   return g + n;
 }

@@ -1,32 +1,151 @@
 
+
+==---- DUMP DUMgr: IR REFERENCE 'main' ----==
+
+==---- DUMP ALL MD ----==
+MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD4 -- base:Var67(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+MD5 -- base:Var58(noret):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'void  noret ()' -- ofst:unbound
+MD6 -- base:Var59(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int ,unsigned char  *  * ,)' -- ofst:unbound
+MD7 -- base:Var60(a):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  a ' -- ofst:0 -- size:4
+MD8 -- base:Var61(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  b ' -- ofst:0 -- size:4
+MD9 -- base:Var62(d):global,,addr_taken,align(4),i32,decl:'int  d ' -- ofst:0 -- size:4
+MD10 -- base:Var63(main):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  main (int  argc ,unsigned char  *  *  argv ,)' -- ofst:unbound
+MD11 -- base:Var68(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD12 -- base:Var69(pr3):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD13 -- base:Var64(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
+MD14 -- base:Var65(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  argv ' -- ofst:0 -- size:4
+MD15 -- base:Var66(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
+MD16 -- base:Var70(pr1):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD17 -- base:Var71(pr2):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+==----==
+RegionMayDef(OuterRegion):MD2,MD3
+MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+RegionMayUse(OuterRegion):MD2,MD3,MD8
+MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD8 -- base:Var61(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  b ' -- ofst:0 -- size:4
+--- BB45 ---
+--- BB1 ---
+    st:i32 'd' id:3 attachinfo:Dbx
+    EMD9 : MD2
+    $1:i32 = call 'foo'  id:8 attachinfo:Dbx
+    EMD16 : MD2,MD3 <-- MD2,MD3
+      ld:i32 'argc' id:6 attachinfo:Dbx
+      EMD13
+      ld:*<4> 'argv' id:7 attachinfo:Dbx
+      EMD14
+      ild:any id:98
+       : MD2,MD3
+--- BB2 ---
+    st:i32 'c' id:10 attachinfo:Dbx
+    EMD15
+      $1:i32 id:9 attachinfo:Dbx
+      EMD16
+--- BB3 ---
+    falsebr label _$L7 id:51 attachinfo:Dbx
+      ne:bool id:13 attachinfo:Dbx
+        $1:i32 id:1 attachinfo:Dbx
+        EMD16
+--- BB4 ---
+    stpr $3:i32 id:54 attachinfo:Dbx
+    EMD12
+      ld:i32 'c' id:19 attachinfo:Dbx
+      EMD15
+    truebr label _$L1 id:73
+      eq:bool id:71
+        $3:i32 id:70 attachinfo:Dbx
+        EMD12
+--- BB8 ---
+    truebr label _$L2 id:76
+      eq:bool id:67
+        $3:i32 id:66 attachinfo:Dbx
+        EMD12
+--- BB12 ---
+    truebr label _$L3 id:79
+      eq:bool id:63
+        $3:i32 id:62 attachinfo:Dbx
+        EMD12
+--- BB16 ---
+    truebr label _$L4 id:82
+      eq:bool id:59
+        $3:i32 id:58 attachinfo:Dbx
+        EMD12
+--- BB20 ---
+    falsebr label _$L8 id:85
+      eq:bool id:4
+        $3:i32 id:55 attachinfo:Dbx
+        EMD12
+--- BB21 ---
+    goto label _$L5 id:31
+--- BB33 ---
+    st:*<1> 'a' id:25 attachinfo:Dbx
+    EMD7 : MD2
+      ld:*<1> 'b' id:24 attachinfo:Dbx
+      EMD8 : MD2
+    goto label _$L8 id:93 attachinfo:Dbx
+--- BB35 ---
+    st:i32 'd' id:30 attachinfo:Dbx
+    EMD9 : MD2
+    goto label _$L8 id:94 attachinfo:Dbx
+--- BB37 ---
+    st:i32 'd' id:35 attachinfo:Dbx
+    EMD9 : MD2
+--- BB39 ---
+    $1:i32 = call 'foo'  id:14 attachinfo:Dbx
+    EMD16 : MD2,MD3 <-- MD2,MD3
+      ld:i32 'argc' id:15 attachinfo:Dbx
+      EMD13
+      ld:*<4> 'argv' id:16 attachinfo:Dbx
+      EMD14
+      ild:any id:99
+       : MD2,MD3
+--- BB40 ---
+    st:i32 'c' id:17 attachinfo:Dbx
+    EMD15
+      $1:i32 id:18 attachinfo:Dbx
+      EMD16
+    goto label _$L6 id:47
+--- BB42 ---
+    $2:i32 = call 'noret'  id:50 attachinfo:Dbx
+    EMD17 : MD2,MD3 <-- MD2,MD3
+      ild:any id:100
+       : MD2,MD3
+--- BB43 ---
+    return id:53 attachinfo:Dbx
 ==---- DUMP PRSSA Manager 'main' ----==
 ==---- DUMP PRSSAMgr:VPR 'main' ----==
 
 id1:$1v0$0: DEF:---	USE:
 id2:$3v0$0: DEF:---	USE:
 id3:$2v0$0: DEF:---	USE:
-id4:$1v1$4: DEF:call ($4,id:8)	USE:($4,id:9),($4,id:103)
+id4:$1v1$4: DEF:call ($4,id:8)	USE:($4,id:9),($4,id:106)
 id0:$0v0$0: DEF:---	USE:
 id6:$1v2$5: DEF:phi ($5,id:48)	USE:($5,id:1)
 id7:$3v2$7: DEF:stpr ($7,id:54)	USE:($7,id:55),($7,id:58),($7,id:62),($7,id:66),($7,id:70)
-id8:$1v3$6: DEF:call ($6,id:14)	USE:($6,id:18),($6,id:102)
+id8:$1v3$6: DEF:call ($6,id:14)	USE:($6,id:18),($6,id:105)
 id9:$2v1$8: DEF:call ($8,id:50)	USE:
 --- BB45 ---
 --- BB1 ---
     ------------------
 
     [11]  d = 1;
-
+    
     st:i32 'd' decl:int  d  id:3 attachinfo:Dbx        
         intconst:i32 1|0x1 id:2 attachinfo:Dbx
     VP:-- <= --
     ------------------
 
     [12]  while ((c = foo (argc, argv)) != -1)
-
-    $4:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:8 attachinfo:Dbx
+    
+    $4:i32 = call 'foo' decl:int  foo (int ,unsigned char  *  * ,) id:8 attachinfo:Dbx
         ld:i32 'argc' decl:int  argc  param0 id:6 attachinfo:Dbx
-        ld:*<4> 'argv' decl:char  *  *  argv  param1 id:7 attachinfo:Dbx
+        ld:*<4> 'argv' decl:unsigned char  *  *  argv  param1 id:7 attachinfo:Dbx
+        ild:any dummy0 id:98            
+            intconst:any 0|0x0 id:57
     VP:$1v1$4  <= --
 --- BB2 ---
     ------------------
@@ -36,11 +155,11 @@ id9:$2v1$8: DEF:call ($8,id:50)	USE:
 --- BB3 ---
     ------------------
     $5:i32 = phi id:48
-        $4:i32 id:103
-        $6:i32 id:102
+        $4:i32 id:106
+        $6:i32 id:105
     VP:$1v2$5  <= $1v1$4,$1v3$6
     ------------------
-    falsebr label _L7 id:51 attachinfo:Dbx        
+    falsebr label _$L7 id:51 attachinfo:Dbx        
         ne:bool id:13 attachinfo:Dbx            
             $5:i32 id:1 attachinfo:Dbx            
             intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
@@ -49,81 +168,81 @@ id9:$2v1$8: DEF:call ($8,id:50)	USE:
     ------------------
 
     [13]    switch (c) {
-
+    
     stpr $7:i32 id:54 attachinfo:Dbx        
         ld:i32 'c' decl:register int  c  id:19 attachinfo:Dbx
     VP:$3v2$7  <= --
     ------------------
-    truebr label _L1 id:73        
+    truebr label _$L1 id:73        
         eq:bool id:71            
             $7:i32 id:70 attachinfo:Dbx            
-            intconst:i64 115|0x73 id:38
+            intconst:i32 115|0x73 id:38
     VP:-- <= $3v2$7
 --- BB8 ---
     ------------------
-    truebr label _L2 id:76        
+    truebr label _$L2 id:76        
         eq:bool id:67            
             $7:i32 id:66 attachinfo:Dbx            
-            intconst:i64 99|0x63 id:40
+            intconst:i32 99|0x63 id:40
     VP:-- <= $3v2$7
 --- BB12 ---
     ------------------
-    truebr label _L3 id:79        
+    truebr label _$L3 id:79        
         eq:bool id:63            
             $7:i32 id:62 attachinfo:Dbx            
-            intconst:i64 102|0x66 id:42
+            intconst:i32 102|0x66 id:42
     VP:-- <= $3v2$7
 --- BB16 ---
     ------------------
-    truebr label _L4 id:82        
+    truebr label _$L4 id:82        
         eq:bool id:59            
             $7:i32 id:58 attachinfo:Dbx            
-            intconst:i64 118|0x76 id:44
+            intconst:i32 118|0x76 id:44
     VP:-- <= $3v2$7
 --- BB20 ---
     ------------------
-    falsebr label _L8 id:85        
+    falsebr label _$L8 id:85        
         eq:bool id:4            
             $7:i32 id:55 attachinfo:Dbx            
-            intconst:i64 86|0x56 id:46
+            intconst:i32 86|0x56 id:46
     VP:-- <= $3v2$7
 --- BB21 ---
     ------------------
-    goto label _L5 id:31
+    goto label _$L5 id:31
     VP:-- <= --
 --- BB33 ---
     ------------------
 
     [17]      a = b;
-
-    st:*<1> 'a' decl:char  *  a  id:25 attachinfo:Dbx        
-        ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx
+    
+    st:*<1> 'a' decl:unsigned char  *  a  id:25 attachinfo:Dbx        
+        ld:*<1> 'b' decl:unsigned char  *  b  id:24 attachinfo:Dbx
     VP:-- <= --
     ------------------
 
     [18]      break;
-
-    goto label _L8 id:93 attachinfo:Dbx
+    
+    goto label _$L8 id:93 attachinfo:Dbx
     VP:-- <= --
 --- BB35 ---
     ------------------
 
     [20]      d = 1;
-
+    
     st:i32 'd' decl:int  d  id:30 attachinfo:Dbx        
         intconst:i32 1|0x1 id:29 attachinfo:Dbx
     VP:-- <= --
     ------------------
 
     [21]      break;
-
-    goto label _L8 id:94 attachinfo:Dbx
+    
+    goto label _$L8 id:94 attachinfo:Dbx
     VP:-- <= --
 --- BB37 ---
     ------------------
 
     [23]      d = 0;
-
+    
     st:i32 'd' decl:int  d  id:35 attachinfo:Dbx        
         intconst:i32 0|0x0 id:34 attachinfo:Dbx
     VP:-- <= --
@@ -131,10 +250,12 @@ id9:$2v1$8: DEF:call ($8,id:50)	USE:
     ------------------
 
     [12]  while ((c = foo (argc, argv)) != -1)
-
-    $6:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:14 attachinfo:Dbx
+    
+    $6:i32 = call 'foo' decl:int  foo (int ,unsigned char  *  * ,) id:14 attachinfo:Dbx
         ld:i32 'argc' decl:int  argc  param0 id:15 attachinfo:Dbx
-        ld:*<4> 'argv' decl:char  *  *  argv  param1 id:16 attachinfo:Dbx
+        ld:*<4> 'argv' decl:unsigned char  *  *  argv  param1 id:16 attachinfo:Dbx
+        ild:any dummy0 id:99            
+            intconst:any 0|0x0 id:61
     VP:$1v3$6  <= --
 --- BB40 ---
     ------------------
@@ -142,58 +263,62 @@ id9:$2v1$8: DEF:call ($8,id:50)	USE:
         $6:i32 id:18 attachinfo:Dbx
     VP:-- <= $1v3$6
     ------------------
-    goto label _L6 id:47
+    goto label _$L6 id:47
     VP:-- <= --
 --- BB42 ---
     ------------------
 
     [26]  noret ();
-
-    $8:i8 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx
+    
+    $8:i32 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx
+        ild:any dummy0 id:100            
+            intconst:any 0|0x0 id:65
     VP:$2v1$8  <= --
 --- BB43 ---
     ------------------
 
     [27]  return 0;
-
+    
     return id:53 attachinfo:Dbx
         intconst:i32 0|0x0 id:52 attachinfo:Dbx
     VP:-- <= --
 ==---- DUMP Dominator Frontier Control Set ----==
 
-BB45 DF set:
 BB1 DF set:
 BB2 DF set:
 BB3 DF set:3,
 BB4 DF set:3,
-BB42 DF set:
 BB8 DF set:33,39,
 BB12 DF set:33,39,
 BB16 DF set:39,
-BB33 DF set:39,
 BB20 DF set:39,
-BB35 DF set:39,
 BB21 DF set:39,
+BB33 DF set:39,
+BB35 DF set:39,
 BB37 DF set:39,
 BB39 DF set:3,
 BB40 DF set:3,
+BB42 DF set:
 BB43 DF set:
+BB45 DF set:
+==---- DUMP MDSSA Manager 'main' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var13(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var4(noret):global,,addr_taken,func_decl,align(4),i8,decl:'void  noret ()' -- ofst:unbound
-MD6 -- base:Var5(foo):global,,addr_taken,func_decl,align(4),i32,decl:'int  foo (int ,char  *  * ,)' -- ofst:unbound
-MD7 -- base:Var6(a):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'char  *  a ' -- ofst:0 -- size:4
-MD8 -- base:Var7(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'char  *  b ' -- ofst:0 -- size:4
-MD9 -- base:Var8(d):global,,addr_taken,align(4),i32,decl:'int  d ' -- ofst:0 -- size:4
-MD10 -- base:Var9(main):global,,addr_taken,func_decl,align(4),i32,decl:'int  main (int  argc ,char  *  *  argv ,)' -- ofst:unbound
-MD11 -- base:Var14(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD13 -- base:Var10(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
-MD14 -- base:Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv ' -- ofst:0 -- size:4
-MD15 -- base:Var12(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
-==---- DUMP MDSSA Manager 'main' ----==
+MD4 -- base:Var67(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+MD5 -- base:Var58(noret):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'void  noret ()' -- ofst:unbound
+MD6 -- base:Var59(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int ,unsigned char  *  * ,)' -- ofst:unbound
+MD7 -- base:Var60(a):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  a ' -- ofst:0 -- size:4
+MD8 -- base:Var61(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  b ' -- ofst:0 -- size:4
+MD9 -- base:Var62(d):global,,addr_taken,align(4),i32,decl:'int  d ' -- ofst:0 -- size:4
+MD10 -- base:Var63(main):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  main (int  argc ,unsigned char  *  *  argv ,)' -- ofst:unbound
+MD11 -- base:Var68(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD13 -- base:Var64(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
+MD14 -- base:Var65(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  argv ' -- ofst:0 -- size:4
+MD15 -- base:Var66(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
+==-- DUMP MDSSAMgr VOpndRef 'main' --==
+
 --- BB45 ---
 --- BB1 ---
 
@@ -203,869 +328,636 @@ MD15 -- base:Var12(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- si
 st:i32 'd' decl:int  d  id:3 attachinfo:Dbx,MDSSA    
     intconst:i32 1|0x1 id:2 attachinfo:Dbx
   ----
-  st:i32 'd' decl:int  d  id:3 attachinfo:Dbx,MDSSA      
-      intconst:i32 1|0x1 id:2 attachinfo:Dbx
-  --DEFREF:(MD9V1,-,NextDEF:MD9V2,,NextDEF:MD9V3)|UsedBy:
-  --DEFREF:(MD2V1,-,NextDEF:MD2V2)|UsedBy:
+  st:i32 'd' id:3 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD9V1,-,NextDEF:MD9V2,,NextDEF:MD9V3)|USESET:
+  --DEFVMD:(MD2V1,-,NextDEF:MD2V2)|USESET:ild(id:98)
 
 
 [12]  while ((c = foo (argc, argv)) != -1)
 
-$4:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:8 attachinfo:Dbx,MDSSA
+$4:i32 = call 'foo' decl:int  foo (int ,unsigned char  *  * ,) id:8 attachinfo:Dbx,MDSSA
     ld:i32 'argc' decl:int  argc  param0 id:6 attachinfo:Dbx,MDSSA
-    ld:*<4> 'argv' decl:char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
+    ld:*<4> 'argv' decl:unsigned char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
+    ild:any dummy0 id:98 attachinfo:MDSSA        
+        intconst:any 0|0x0 id:57
   ----
-  $4:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:8 attachinfo:Dbx,MDSSA
-      ld:i32 'argc' decl:int  argc  param0 id:6 attachinfo:Dbx,MDSSA
-      ld:*<4> 'argv' decl:char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V2,PrevDEF:MD2V1)|UsedBy:id(id:107)
-  --DEFREF:(MD3V1,-,NextDEF:MD3V2,,NextDEF:MD3V3)|UsedBy:
-  ld:i32 'argc' decl:int  argc  id:6 attachinfo:Dbx,MDSSA
-  --USEREF:MD13V0
-  ld:*<4> 'argv' decl:char  *  *  argv  id:7 attachinfo:Dbx,MDSSA
-  --USEREF:MD14V0
+  $4:i32 = call 'foo'  id:8 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD2V2,PrevDEF:MD2V1)|USESET:id(id:110)
+  --DEFVMD:(MD3V1,-)|USESET:id(id:112)
+  ld:i32 'argc' id:6 attachinfo:Dbx,MDSSA
+  --USEVMD:MD13V0
+  ild:any id:98 attachinfo:MDSSA
+  --USEVMD:MD3V0,MD2V1
+  ld:*<4> 'argv' id:7 attachinfo:Dbx,MDSSA
+  --USEVMD:MD14V0
 --- BB2 ---
 
 st:i32 'c' decl:register int  c  id:10 attachinfo:Dbx,MDSSA    
     $4:i32 id:9 attachinfo:Dbx
   ----
-  st:i32 'c' decl:register int  c  id:10 attachinfo:Dbx,MDSSA      
+  st:i32 'c' id:10 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD15V1,-)|USESET:id(id:114)
+--- BB3 ---
+MDPhi4: MD15V2 <- (ID id:114 MD15V1 BB2), (ID id:115 MD15V3 BB40)|USESET:(ld id:19) 
+MDPhi3: MD3V2 <- (ID id:112 MD3V1 BB2), (ID id:113 MD3V3 BB40)|USESET:(ild id:99) (ild id:100) 
+MDPhi2: MD2V3 <- (ID id:110 MD2V2 BB2), (ID id:111 MD2V8 BB40)|USESET:(ild id:100) (id id:109) (ld id:24) 
+
+$5:i32 = phi id:48
+    $4:i32 id:106
+    $6:i32 id:105
+
+falsebr label _$L7 id:51 attachinfo:Dbx    
+    ne:bool id:13 attachinfo:Dbx        
+        $5:i32 id:1 attachinfo:Dbx        
+        intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
+--- BB4 ---
+
+
+[13]    switch (c) {
+
+stpr $7:i32 id:54 attachinfo:Dbx    
+    ld:i32 'c' decl:register int  c  id:19 attachinfo:Dbx,MDSSA
+  ----
+  ld:i32 'c' id:19 attachinfo:Dbx,MDSSA
+  --USEVMD:MD15V2
+
+truebr label _$L1 id:73    
+    eq:bool id:71        
+        $7:i32 id:70 attachinfo:Dbx        
+        intconst:i32 115|0x73 id:38
+--- BB8 ---
+
+truebr label _$L2 id:76    
+    eq:bool id:67        
+        $7:i32 id:66 attachinfo:Dbx        
+        intconst:i32 99|0x63 id:40
+--- BB12 ---
+
+truebr label _$L3 id:79    
+    eq:bool id:63        
+        $7:i32 id:62 attachinfo:Dbx        
+        intconst:i32 102|0x66 id:42
+--- BB16 ---
+
+truebr label _$L4 id:82    
+    eq:bool id:59        
+        $7:i32 id:58 attachinfo:Dbx        
+        intconst:i32 118|0x76 id:44
+--- BB20 ---
+
+falsebr label _$L8 id:85    
+    eq:bool id:4        
+        $7:i32 id:55 attachinfo:Dbx        
+        intconst:i32 86|0x56 id:46
+--- BB21 ---
+
+goto label _$L5 id:31
+--- BB33 ---
+
+
+[17]      a = b;
+
+st:*<1> 'a' decl:unsigned char  *  a  id:25 attachinfo:Dbx,MDSSA    
+    ld:*<1> 'b' decl:unsigned char  *  b  id:24 attachinfo:Dbx,MDSSA
+  ----
+  st:*<1> 'a' id:25 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD2V6,PrevDEF:MD2V3)|USESET:id(id:102)
+  --DEFVMD:(MD7V1,-)|USESET:
+  ld:*<1> 'b' id:24 attachinfo:Dbx,MDSSA
+  --USEVMD:MD8V0,MD2V3
+
+
+[18]      break;
+
+goto label _$L8 id:93 attachinfo:Dbx
+--- BB35 ---
+
+
+[20]      d = 1;
+
+st:i32 'd' decl:int  d  id:30 attachinfo:Dbx,MDSSA    
+    intconst:i32 1|0x1 id:29 attachinfo:Dbx
+  ----
+  st:i32 'd' id:30 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD9V3,PrevDEF:MD9V1)|USESET:
+  --DEFVMD:(MD2V5,PrevDEF:MD2V3)|USESET:id(id:107)
+
+
+[21]      break;
+
+goto label _$L8 id:94 attachinfo:Dbx
+--- BB37 ---
+
+
+[23]      d = 0;
+
+st:i32 'd' decl:int  d  id:35 attachinfo:Dbx,MDSSA    
+    intconst:i32 0|0x0 id:34 attachinfo:Dbx
+  ----
+  st:i32 'd' id:35 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD9V2,PrevDEF:MD9V1)|USESET:
+  --DEFVMD:(MD2V4,PrevDEF:MD2V3)|USESET:id(id:108)
+--- BB39 ---
+MDPhi1: MD2V7 <- (ID id:102 MD2V6 BB33), (ID id:107 MD2V5 BB35), (ID id:108 MD2V4 BB37), (ID id:109 MD2V3 BB20)|USESET:(ild id:99) 
+
+
+[12]  while ((c = foo (argc, argv)) != -1)
+
+$6:i32 = call 'foo' decl:int  foo (int ,unsigned char  *  * ,) id:14 attachinfo:Dbx,MDSSA
+    ld:i32 'argc' decl:int  argc  param0 id:15 attachinfo:Dbx,MDSSA
+    ld:*<4> 'argv' decl:unsigned char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
+    ild:any dummy0 id:99 attachinfo:MDSSA        
+        intconst:any 0|0x0 id:61
+  ----
+  $6:i32 = call 'foo'  id:14 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD2V8,PrevDEF:MD2V7)|USESET:id(id:111)
+  --DEFVMD:(MD3V3,PrevDEF:MD3V2)|USESET:id(id:113)
+  ld:i32 'argc' id:15 attachinfo:Dbx,MDSSA
+  --USEVMD:MD13V0
+  ild:any id:99 attachinfo:MDSSA
+  --USEVMD:MD3V2,MD2V7
+  ld:*<4> 'argv' id:16 attachinfo:Dbx,MDSSA
+  --USEVMD:MD14V0
+--- BB40 ---
+
+st:i32 'c' decl:register int  c  id:17 attachinfo:Dbx,MDSSA    
+    $6:i32 id:18 attachinfo:Dbx
+  ----
+  st:i32 'c' id:17 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD15V3,PrevDEF:MD15V2)|USESET:id(id:115)
+
+goto label _$L6 id:47
+--- BB42 ---
+
+
+[26]  noret ();
+
+$8:i32 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
+    ild:any dummy0 id:100 attachinfo:MDSSA        
+        intconst:any 0|0x0 id:65
+  ----
+  $8:i32 = call 'noret'  id:50 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD2V9,PrevDEF:MD2V3)|USESET:
+  --DEFVMD:(MD3V4,PrevDEF:MD3V2)|USESET:
+  ild:any id:100 attachinfo:MDSSA
+  --USEVMD:MD3V2,MD2V3
+--- BB43 ---
+
+
+[27]  return 0;
+
+return id:53 attachinfo:Dbx
+    intconst:i32 0|0x0 id:52 attachinfo:Dbx
+==-- DUMP MDSSAMgr DU CHAIN 'main' --==
+
+--- BB45 ---
+--- BB1 ---
+
+[11]  d = 1;
+
+st:i32 'd' decl:int  d  id:3 attachinfo:Dbx,MDSSA    
+    intconst:i32 1|0x1 id:2 attachinfo:Dbx
+----------------
+st(id:3) USESET:
+  MD9V1:
+  MD2V1:(ild id:98) 
+
+[12]  while ((c = foo (argc, argv)) != -1)
+
+$4:i32 = call 'foo' decl:int  foo (int ,unsigned char  *  * ,) id:8 attachinfo:Dbx,MDSSA
+    ld:i32 'argc' decl:int  argc  param0 id:6 attachinfo:Dbx,MDSSA
+    ld:*<4> 'argv' decl:unsigned char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
+    ild:any dummy0 id:98 attachinfo:MDSSA        
+        intconst:any 0|0x0 id:57
+----------------
+call(id:8) USESET:
+  MD2V2:(id id:110) 
+  MD3V1:(id id:112) 
+ld(id:6) DEFSET:
+  MD13V0:
+ild(id:98) DEFSET:
+  MD3V0:
+  MD2V1:(st id:3)
+ld(id:7) DEFSET:
+  MD14V0:
+--- BB2 ---
+st:i32 'c' decl:register int  c  id:10 attachinfo:Dbx,MDSSA    
+    $4:i32 id:9 attachinfo:Dbx
+----------------
+st(id:10) USESET:
+  MD15V1:(id id:114) 
+--- BB3 ---
+MDPhi4: MD15V2 <- (ID id:114 MD15V1 BB2), (ID id:115 MD15V3 BB40)|USESET:(ld id:19) 
+MDPhi3: MD3V2 <- (ID id:112 MD3V1 BB2), (ID id:113 MD3V3 BB40)|USESET:(ild id:99) (ild id:100) 
+MDPhi2: MD2V3 <- (ID id:110 MD2V2 BB2), (ID id:111 MD2V8 BB40)|USESET:(ild id:100) (id id:109) (ld id:24) 
+$5:i32 = phi id:48
+    $4:i32 id:106
+    $6:i32 id:105
+falsebr label _$L7 id:51 attachinfo:Dbx    
+    ne:bool id:13 attachinfo:Dbx        
+        $5:i32 id:1 attachinfo:Dbx        
+        intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
+--- BB4 ---
+
+[13]    switch (c) {
+
+stpr $7:i32 id:54 attachinfo:Dbx    
+    ld:i32 'c' decl:register int  c  id:19 attachinfo:Dbx,MDSSA
+----------------
+ld(id:19) DEFSET:
+  MD15V2:mdphi4 (st id:10) (st id:17)
+truebr label _$L1 id:73    
+    eq:bool id:71        
+        $7:i32 id:70 attachinfo:Dbx        
+        intconst:i32 115|0x73 id:38
+--- BB8 ---
+truebr label _$L2 id:76    
+    eq:bool id:67        
+        $7:i32 id:66 attachinfo:Dbx        
+        intconst:i32 99|0x63 id:40
+--- BB12 ---
+truebr label _$L3 id:79    
+    eq:bool id:63        
+        $7:i32 id:62 attachinfo:Dbx        
+        intconst:i32 102|0x66 id:42
+--- BB16 ---
+truebr label _$L4 id:82    
+    eq:bool id:59        
+        $7:i32 id:58 attachinfo:Dbx        
+        intconst:i32 118|0x76 id:44
+--- BB20 ---
+falsebr label _$L8 id:85    
+    eq:bool id:4        
+        $7:i32 id:55 attachinfo:Dbx        
+        intconst:i32 86|0x56 id:46
+--- BB21 ---
+goto label _$L5 id:31
+--- BB33 ---
+
+[17]      a = b;
+
+st:*<1> 'a' decl:unsigned char  *  a  id:25 attachinfo:Dbx,MDSSA    
+    ld:*<1> 'b' decl:unsigned char  *  b  id:24 attachinfo:Dbx,MDSSA
+----------------
+st(id:25) USESET:
+  MD2V6:(id id:102) 
+  MD7V1:
+ld(id:24) DEFSET:
+  MD8V0:
+  MD2V3:mdphi2 (call id:8) (call id:14) (st id:3) mdphi1 (st id:25) (st id:30) (st id:35)
+
+[18]      break;
+
+goto label _$L8 id:93 attachinfo:Dbx
+--- BB35 ---
+
+[20]      d = 1;
+
+st:i32 'd' decl:int  d  id:30 attachinfo:Dbx,MDSSA    
+    intconst:i32 1|0x1 id:29 attachinfo:Dbx
+----------------
+st(id:30) USESET:
+  MD9V3:
+  MD2V5:(id id:107) 
+
+[21]      break;
+
+goto label _$L8 id:94 attachinfo:Dbx
+--- BB37 ---
+
+[23]      d = 0;
+
+st:i32 'd' decl:int  d  id:35 attachinfo:Dbx,MDSSA    
+    intconst:i32 0|0x0 id:34 attachinfo:Dbx
+----------------
+st(id:35) USESET:
+  MD9V2:
+  MD2V4:(id id:108) 
+--- BB39 ---
+MDPhi1: MD2V7 <- (ID id:102 MD2V6 BB33), (ID id:107 MD2V5 BB35), (ID id:108 MD2V4 BB37), (ID id:109 MD2V3 BB20)|USESET:(ild id:99) 
+
+[12]  while ((c = foo (argc, argv)) != -1)
+
+$6:i32 = call 'foo' decl:int  foo (int ,unsigned char  *  * ,) id:14 attachinfo:Dbx,MDSSA
+    ld:i32 'argc' decl:int  argc  param0 id:15 attachinfo:Dbx,MDSSA
+    ld:*<4> 'argv' decl:unsigned char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
+    ild:any dummy0 id:99 attachinfo:MDSSA        
+        intconst:any 0|0x0 id:61
+----------------
+call(id:14) USESET:
+  MD2V8:(id id:111) 
+  MD3V3:(id id:113) 
+ld(id:15) DEFSET:
+  MD13V0:
+ild(id:99) DEFSET:
+  MD3V2:mdphi3 (call id:8) (call id:14)
+  MD2V7:mdphi1 (st id:25) (st id:30) (st id:35) mdphi2 mdphi2 mdphi2 mdphi2 (st id:3)
+ld(id:16) DEFSET:
+  MD14V0:
+--- BB40 ---
+st:i32 'c' decl:register int  c  id:17 attachinfo:Dbx,MDSSA    
+    $6:i32 id:18 attachinfo:Dbx
+----------------
+st(id:17) USESET:
+  MD15V3:(id id:115) 
+goto label _$L6 id:47
+--- BB42 ---
+
+[26]  noret ();
+
+$8:i32 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
+    ild:any dummy0 id:100 attachinfo:MDSSA        
+        intconst:any 0|0x0 id:65
+----------------
+call(id:50) USESET:
+  MD2V9:
+  MD3V4:
+ild(id:100) DEFSET:
+  MD3V2:mdphi3 (call id:8) (call id:14)
+  MD2V3:mdphi2 (st id:3) mdphi1 (st id:25) (st id:30) (st id:35)
+--- BB43 ---
+
+[27]  return 0;
+
+return id:53 attachinfo:Dbx
+    intconst:i32 0|0x0 id:52 attachinfo:Dbx
+
+==---- DUMP DUMgr: IR REFERENCE 'main' ----==
+
+==---- DUMP ALL MD ----==
+MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD4 -- base:Var67(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+MD5 -- base:Var58(noret):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'void  noret ()' -- ofst:unbound
+MD6 -- base:Var59(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int ,unsigned char  *  * ,)' -- ofst:unbound
+MD7 -- base:Var60(a):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  a ' -- ofst:0 -- size:4
+MD8 -- base:Var61(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  b ' -- ofst:0 -- size:4
+MD9 -- base:Var62(d):global,,addr_taken,align(4),i32,decl:'int  d ' -- ofst:0 -- size:4
+MD10 -- base:Var63(main):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  main (int  argc ,unsigned char  *  *  argv ,)' -- ofst:unbound
+MD11 -- base:Var68(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD12 -- base:Var69(pr3):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD13 -- base:Var64(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
+MD14 -- base:Var65(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  argv ' -- ofst:0 -- size:4
+MD15 -- base:Var66(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
+MD16 -- base:Var70(pr1):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD17 -- base:Var71(pr2):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD18 -- base:Var72(pr4):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD19 -- base:Var73(pr5):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD20 -- base:Var74(pr6):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD21 -- base:Var75(pr7):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD22 -- base:Var76(pr8):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+==----==
+RegionMayDef(OuterRegion):MD2,MD3
+MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+RegionMayUse(OuterRegion):MD2,MD3,MD8
+MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD8 -- base:Var61(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  b ' -- ofst:0 -- size:4
+--- BB45 ---
+--- BB1 ---
+    st:i32 'd' id:3 attachinfo:Dbx,MDSSA
+    EMD9 : MD2
+    $4:i32 = call 'foo'  id:8 attachinfo:Dbx,MDSSA
+    EMD18 : MD2,MD3 <-- MD2,MD3
+      ld:i32 'argc' id:6 attachinfo:Dbx,MDSSA
+      EMD13
+      ld:*<4> 'argv' id:7 attachinfo:Dbx,MDSSA
+      EMD14
+      ild:any id:98 attachinfo:MDSSA
+       : MD2,MD3
+--- BB2 ---
+    st:i32 'c' id:10 attachinfo:Dbx,MDSSA
+    EMD15
       $4:i32 id:9 attachinfo:Dbx
-  --DEFREF:(MD15V1,-)|UsedBy:id(id:109)
+      EMD18
 --- BB3 ---
-Phi: MD15V2 <- MD15V1(id:109)(BB2), MD15V3(id:110)(BB40)|UsedBy:ld(id:19)
-Phi: MD2V3 <- MD2V2(id:107)(BB2), MD2V8(id:108)(BB40)|UsedBy:ld(id:24),id(id:106)
-
-$5:i32 = phi id:48
-    $4:i32 id:103
-    $6:i32 id:102
-
-falsebr label _L7 id:51 attachinfo:Dbx    
-    ne:bool id:13 attachinfo:Dbx        
-        $5:i32 id:1 attachinfo:Dbx        
-        intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
+    $5:i32 = phi id:48
+    EMD19
+      $4:i32 id:106
+      EMD18
+      $6:i32 id:105
+      EMD20
+    falsebr label _$L7 id:51 attachinfo:Dbx
+      ne:bool id:13 attachinfo:Dbx
+        $5:i32 id:1 attachinfo:Dbx
+        EMD19
 --- BB4 ---
-
-
-[13]    switch (c) {
-
-stpr $7:i32 id:54 attachinfo:Dbx    
-    ld:i32 'c' decl:register int  c  id:19 attachinfo:Dbx,MDSSA
-  ----
-  ld:i32 'c' decl:register int  c  id:19 attachinfo:Dbx,MDSSA
-  --USEREF:MD15V2
-
-truebr label _L1 id:73    
-    eq:bool id:71        
-        $7:i32 id:70 attachinfo:Dbx        
-        intconst:i64 115|0x73 id:38
+    stpr $7:i32 id:54 attachinfo:Dbx
+    EMD21
+      ld:i32 'c' id:19 attachinfo:Dbx,MDSSA
+      EMD15
+    truebr label _$L1 id:73
+      eq:bool id:71
+        $7:i32 id:70 attachinfo:Dbx
+        EMD21
 --- BB8 ---
-
-truebr label _L2 id:76    
-    eq:bool id:67        
-        $7:i32 id:66 attachinfo:Dbx        
-        intconst:i64 99|0x63 id:40
+    truebr label _$L2 id:76
+      eq:bool id:67
+        $7:i32 id:66 attachinfo:Dbx
+        EMD21
 --- BB12 ---
-
-truebr label _L3 id:79    
-    eq:bool id:63        
-        $7:i32 id:62 attachinfo:Dbx        
-        intconst:i64 102|0x66 id:42
+    truebr label _$L3 id:79
+      eq:bool id:63
+        $7:i32 id:62 attachinfo:Dbx
+        EMD21
 --- BB16 ---
-
-truebr label _L4 id:82    
-    eq:bool id:59        
-        $7:i32 id:58 attachinfo:Dbx        
-        intconst:i64 118|0x76 id:44
+    truebr label _$L4 id:82
+      eq:bool id:59
+        $7:i32 id:58 attachinfo:Dbx
+        EMD21
 --- BB20 ---
-
-falsebr label _L8 id:85    
-    eq:bool id:4        
-        $7:i32 id:55 attachinfo:Dbx        
-        intconst:i64 86|0x56 id:46
+    falsebr label _$L8 id:85
+      eq:bool id:4
+        $7:i32 id:55 attachinfo:Dbx
+        EMD21
 --- BB21 ---
-
-goto label _L5 id:31
+    goto label _$L5 id:31
 --- BB33 ---
-
-
-[17]      a = b;
-
-st:*<1> 'a' decl:char  *  a  id:25 attachinfo:Dbx,MDSSA    
-    ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
-  ----
-  st:*<1> 'a' decl:char  *  a  id:25 attachinfo:Dbx,MDSSA      
-      ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V6,PrevDEF:MD2V3)|UsedBy:id(id:99)
-  --DEFREF:(MD7V1,-)|UsedBy:
-  ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
-  --USEREF:MD8V0,MD2V3
-
-
-[18]      break;
-
-goto label _L8 id:93 attachinfo:Dbx
+    st:*<1> 'a' id:25 attachinfo:Dbx,MDSSA
+    EMD7 : MD2
+      ld:*<1> 'b' id:24 attachinfo:Dbx,MDSSA
+      EMD8 : MD2
+    goto label _$L8 id:93 attachinfo:Dbx
 --- BB35 ---
-
-
-[20]      d = 1;
-
-st:i32 'd' decl:int  d  id:30 attachinfo:Dbx,MDSSA    
-    intconst:i32 1|0x1 id:29 attachinfo:Dbx
-  ----
-  st:i32 'd' decl:int  d  id:30 attachinfo:Dbx,MDSSA      
-      intconst:i32 1|0x1 id:29 attachinfo:Dbx
-  --DEFREF:(MD9V3,PrevDEF:MD9V1)|UsedBy:
-  --DEFREF:(MD2V5,PrevDEF:MD2V3)|UsedBy:id(id:104)
-
-
-[21]      break;
-
-goto label _L8 id:94 attachinfo:Dbx
+    st:i32 'd' id:30 attachinfo:Dbx,MDSSA
+    EMD9 : MD2
+    goto label _$L8 id:94 attachinfo:Dbx
 --- BB37 ---
-
-
-[23]      d = 0;
-
-st:i32 'd' decl:int  d  id:35 attachinfo:Dbx,MDSSA    
-    intconst:i32 0|0x0 id:34 attachinfo:Dbx
-  ----
-  st:i32 'd' decl:int  d  id:35 attachinfo:Dbx,MDSSA      
-      intconst:i32 0|0x0 id:34 attachinfo:Dbx
-  --DEFREF:(MD9V2,PrevDEF:MD9V1)|UsedBy:
-  --DEFREF:(MD2V4,PrevDEF:MD2V3)|UsedBy:id(id:105)
+    st:i32 'd' id:35 attachinfo:Dbx,MDSSA
+    EMD9 : MD2
 --- BB39 ---
-Phi: MD2V7 <- MD2V6(id:99)(BB33), MD2V5(id:104)(BB35), MD2V4(id:105)(BB37), MD2V3(id:106)(BB20)|UsedBy:
-
-
-[12]  while ((c = foo (argc, argv)) != -1)
-
-$6:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:14 attachinfo:Dbx,MDSSA
-    ld:i32 'argc' decl:int  argc  param0 id:15 attachinfo:Dbx,MDSSA
-    ld:*<4> 'argv' decl:char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
-  ----
-  $6:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:14 attachinfo:Dbx,MDSSA
-      ld:i32 'argc' decl:int  argc  param0 id:15 attachinfo:Dbx,MDSSA
-      ld:*<4> 'argv' decl:char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V8,PrevDEF:MD2V7)|UsedBy:id(id:108)
-  --DEFREF:(MD3V2,PrevDEF:MD3V1)|UsedBy:
-  ld:i32 'argc' decl:int  argc  id:15 attachinfo:Dbx,MDSSA
-  --USEREF:MD13V0
-  ld:*<4> 'argv' decl:char  *  *  argv  id:16 attachinfo:Dbx,MDSSA
-  --USEREF:MD14V0
+    $6:i32 = call 'foo'  id:14 attachinfo:Dbx,MDSSA
+    EMD20 : MD2,MD3 <-- MD2,MD3
+      ld:i32 'argc' id:15 attachinfo:Dbx,MDSSA
+      EMD13
+      ld:*<4> 'argv' id:16 attachinfo:Dbx,MDSSA
+      EMD14
+      ild:any id:99 attachinfo:MDSSA
+       : MD2,MD3
 --- BB40 ---
-
-st:i32 'c' decl:register int  c  id:17 attachinfo:Dbx,MDSSA    
-    $6:i32 id:18 attachinfo:Dbx
-  ----
-  st:i32 'c' decl:register int  c  id:17 attachinfo:Dbx,MDSSA      
+    st:i32 'c' id:17 attachinfo:Dbx,MDSSA
+    EMD15
       $6:i32 id:18 attachinfo:Dbx
-  --DEFREF:(MD15V3,PrevDEF:MD15V2)|UsedBy:id(id:110)
-
-goto label _L6 id:47
+      EMD20
+    goto label _$L6 id:47
 --- BB42 ---
-
-
-[26]  noret ();
-
-$8:i8 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
-  ----
-  $8:i8 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V9,PrevDEF:MD2V3)|UsedBy:
-  --DEFREF:(MD3V3,PrevDEF:MD3V1)|UsedBy:
+    $8:i32 = call 'noret'  id:50 attachinfo:Dbx,MDSSA
+    EMD22 : MD2,MD3 <-- MD2,MD3
+      ild:any id:100 attachinfo:MDSSA
+       : MD2,MD3
 --- BB43 ---
-
-
-[27]  return 0;
-
-return id:53 attachinfo:Dbx
-    intconst:i32 0|0x0 id:52 attachinfo:Dbx
-==---- DUMP MDSSAMgr DU CHAIN 'main' ----==
-
---- BB45 ---
---- BB1 ---
-
-[11]  d = 1;
-
-st:i32 'd' decl:int  d  id:3 attachinfo:Dbx,MDSSA    
-    intconst:i32 1|0x1 id:2 attachinfo:Dbx
-----------------
-st(id:3) --USE LIST:
-
-[12]  while ((c = foo (argc, argv)) != -1)
-
-$4:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:8 attachinfo:Dbx,MDSSA
-    ld:i32 'argc' decl:int  argc  param0 id:6 attachinfo:Dbx,MDSSA
-    ld:*<4> 'argv' decl:char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
-----------------
-call(id:8) --USE LIST:id(id:107(MD2V2))
-ld(id:6) --DEF LIST:MD13V0
-ld(id:7) --DEF LIST:MD14V0
---- BB2 ---
-st:i32 'c' decl:register int  c  id:10 attachinfo:Dbx,MDSSA    
-    $4:i32 id:9 attachinfo:Dbx
-----------------
-st(id:10) --USE LIST:id(id:109(MD15V1))
---- BB3 ---
-Phi: MD15V2 <- MD15V1(id:109)(BB2), MD15V3(id:110)(BB40)|UsedBy:ld(id:19)
-Phi: MD2V3 <- MD2V2(id:107)(BB2), MD2V8(id:108)(BB40)|UsedBy:ld(id:24),id(id:106)
-$5:i32 = phi id:48
-    $4:i32 id:103
-    $6:i32 id:102
-falsebr label _L7 id:51 attachinfo:Dbx    
-    ne:bool id:13 attachinfo:Dbx        
-        $5:i32 id:1 attachinfo:Dbx        
-        intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
---- BB4 ---
-
-[13]    switch (c) {
-
-stpr $7:i32 id:54 attachinfo:Dbx    
-    ld:i32 'c' decl:register int  c  id:19 attachinfo:Dbx,MDSSA
-----------------
-ld(id:19) --DEF LIST:MD15V2(phi,st(id:10),st(id:17))
-truebr label _L1 id:73    
-    eq:bool id:71        
-        $7:i32 id:70 attachinfo:Dbx        
-        intconst:i64 115|0x73 id:38
---- BB8 ---
-truebr label _L2 id:76    
-    eq:bool id:67        
-        $7:i32 id:66 attachinfo:Dbx        
-        intconst:i64 99|0x63 id:40
---- BB12 ---
-truebr label _L3 id:79    
-    eq:bool id:63        
-        $7:i32 id:62 attachinfo:Dbx        
-        intconst:i64 102|0x66 id:42
---- BB16 ---
-truebr label _L4 id:82    
-    eq:bool id:59        
-        $7:i32 id:58 attachinfo:Dbx        
-        intconst:i64 118|0x76 id:44
---- BB20 ---
-falsebr label _L8 id:85    
-    eq:bool id:4        
-        $7:i32 id:55 attachinfo:Dbx        
-        intconst:i64 86|0x56 id:46
---- BB21 ---
-goto label _L5 id:31
---- BB33 ---
-
-[17]      a = b;
-
-st:*<1> 'a' decl:char  *  a  id:25 attachinfo:Dbx,MDSSA    
-    ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
-----------------
-st(id:25) --USE LIST:id(id:99(MD2V6))
-ld(id:24) --DEF LIST:MD8V0,MD2V3(phi,call(id:8),call(id:14),st(id:3),phi,st(id:25),st(id:30),st(id:35))
-
-[18]      break;
-
-goto label _L8 id:93 attachinfo:Dbx
---- BB35 ---
-
-[20]      d = 1;
-
-st:i32 'd' decl:int  d  id:30 attachinfo:Dbx,MDSSA    
-    intconst:i32 1|0x1 id:29 attachinfo:Dbx
-----------------
-st(id:30) --USE LIST:id(id:104(MD2V5))
-
-[21]      break;
-
-goto label _L8 id:94 attachinfo:Dbx
---- BB37 ---
-
-[23]      d = 0;
-
-st:i32 'd' decl:int  d  id:35 attachinfo:Dbx,MDSSA    
-    intconst:i32 0|0x0 id:34 attachinfo:Dbx
-----------------
-st(id:35) --USE LIST:id(id:105(MD2V4))
---- BB39 ---
-Phi: MD2V7 <- MD2V6(id:99)(BB33), MD2V5(id:104)(BB35), MD2V4(id:105)(BB37), MD2V3(id:106)(BB20)|UsedBy:
-
-[12]  while ((c = foo (argc, argv)) != -1)
-
-$6:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:14 attachinfo:Dbx,MDSSA
-    ld:i32 'argc' decl:int  argc  param0 id:15 attachinfo:Dbx,MDSSA
-    ld:*<4> 'argv' decl:char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
-----------------
-call(id:14) --USE LIST:id(id:108(MD2V8))
-ld(id:15) --DEF LIST:MD13V0
-ld(id:16) --DEF LIST:MD14V0
---- BB40 ---
-st:i32 'c' decl:register int  c  id:17 attachinfo:Dbx,MDSSA    
-    $6:i32 id:18 attachinfo:Dbx
-----------------
-st(id:17) --USE LIST:id(id:110(MD15V3))
-goto label _L6 id:47
---- BB42 ---
-
-[26]  noret ();
-
-$8:i8 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
-----------------
-call(id:50) --USE LIST:
---- BB43 ---
-
-[27]  return 0;
-
-return id:53 attachinfo:Dbx
-    intconst:i32 0|0x0 id:52 attachinfo:Dbx
+    return id:53 attachinfo:Dbx
 ==---- DUMP LICM Analysis Result : LoopInfo2 : 'main' ----==
 
 
-==---- DUMP Dead Code Eliminiation 'main' ----==
-==-- Ineffect BB --==
---0- BB45		ineffect BB!
---0- BB1
---0- BB2
---0- BB3
---0- BB4
---0- BB8
---0- BB12
---0- BB16
---0- BB20
---0- BB21
---0- BB33
---0- BB35
---0- BB37
---0- BB39
---0- BB40
---0- BB42
---0- BB43
 
-==---- DUMP IRBBList 'main' ----==
------ BB45 --- rpo:0 -----
-ATTR:entry_bb fall_through 
-STMT NUM:0
+==---- DUMP DUMgr: IR REFERENCE 'main' ----==
 
------ BB1 --- rpo:5 -----
-ATTR:fall_through 
-STMT NUM:2
-
-   [11]  d = 1;
-
-   st:i32 'd' id:3 attachinfo:Dbx,MDSSA       
-       intconst:i32 1|0x1 id:2 attachinfo:Dbx
-
-   [12]  while ((c = foo (argc, argv)) != -1)
-
-   $4:i32 = call 'foo'  id:8 attachinfo:Dbx,MDSSA
-       ld:i32 'argc' param0 id:6 attachinfo:Dbx,MDSSA
-       ld:*<4> 'argv' param1 id:7 attachinfo:Dbx,MDSSA
-
------ BB2 --- rpo:10 -----
-ATTR:
-STMT NUM:1
-   st:i32 'c' id:10 attachinfo:Dbx,MDSSA       
-       $4:i32 id:9 attachinfo:Dbx
-
------ BB3 --- rpo:15 -----
-LABEL:_L6 
-ATTR:fall_through branch_target 
-STMT NUM:2
-   $5:i32 = phi id:48
-       $4:i32 id:103
-       $6:i32 id:102
-   falsebr label _L7 id:51 attachinfo:Dbx       
-       ne:bool id:13 attachinfo:Dbx           
-           $5:i32 id:1 attachinfo:Dbx           
-           intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
-
------ BB4 --- rpo:30 -----
-ATTR:fall_through 
-STMT NUM:2
-
-   [13]    switch (c) {
-
-   stpr $7:i32 id:54 attachinfo:Dbx       
-       ld:i32 'c' id:19 attachinfo:Dbx,MDSSA
-   truebr label _L1 id:73       
-       eq:bool id:71           
-           $7:i32 id:70 attachinfo:Dbx           
-           intconst:i64 115|0x73 id:38
-
------ BB8 --- rpo:35 -----
-LABEL:_L9 
-ATTR:fall_through branch_target 
-STMT NUM:1
-   truebr label _L2 id:76       
-       eq:bool id:67           
-           $7:i32 id:66 attachinfo:Dbx           
-           intconst:i64 99|0x63 id:40
-
------ BB12 --- rpo:40 -----
-LABEL:_L11 
-ATTR:fall_through branch_target 
-STMT NUM:1
-   truebr label _L3 id:79       
-       eq:bool id:63           
-           $7:i32 id:62 attachinfo:Dbx           
-           intconst:i64 102|0x66 id:42
-
------ BB16 --- rpo:45 -----
-LABEL:_L13 
-ATTR:fall_through branch_target 
-STMT NUM:1
-   truebr label _L4 id:82       
-       eq:bool id:59           
-           $7:i32 id:58 attachinfo:Dbx           
-           intconst:i64 118|0x76 id:44
-
------ BB20 --- rpo:50 -----
-LABEL:_L15 
-ATTR:fall_through branch_target 
-STMT NUM:1
-   falsebr label _L8 id:85       
-       eq:bool id:4           
-           $7:i32 id:55 attachinfo:Dbx           
-           intconst:i64 86|0x56 id:46
-
------ BB21 --- rpo:55 -----
-ATTR:
-STMT NUM:1
-   goto label _L5 id:31
-
------ BB33 --- rpo:70 -----
-LABEL:_L18 _L16 _L14 _L12 _L10 _L1 _L2 _L3 
-ATTR:branch_target 
-STMT NUM:2
-
-   [17]      a = b;
-
-   st:*<1> 'a' id:25 attachinfo:Dbx,MDSSA       
-       ld:*<1> 'b' id:24 attachinfo:Dbx,MDSSA
-
-   [18]      break;
-
-   goto label _L8 id:93 attachinfo:Dbx
-
------ BB35 --- rpo:65 -----
-LABEL:_L4 
-ATTR:branch_target 
-STMT NUM:2
-
-   [20]      d = 1;
-
-   st:i32 'd' id:30 attachinfo:Dbx,MDSSA       
-       intconst:i32 1|0x1 id:29 attachinfo:Dbx
-
-   [21]      break;
-
-   goto label _L8 id:94 attachinfo:Dbx
-
------ BB37 --- rpo:60 -----
-LABEL:_L5 
-ATTR:branch_target 
-STMT NUM:1
-
-   [23]      d = 0;
-
-   st:i32 'd' id:35 attachinfo:Dbx,MDSSA       
-       intconst:i32 0|0x0 id:34 attachinfo:Dbx
-
------ BB39 --- rpo:75 -----
-LABEL:_L8 
-ATTR:fall_through branch_target 
-STMT NUM:1
-
-   [12]  while ((c = foo (argc, argv)) != -1)
-
-   $6:i32 = call 'foo'  id:14 attachinfo:Dbx,MDSSA
-       ld:i32 'argc' param0 id:15 attachinfo:Dbx,MDSSA
-       ld:*<4> 'argv' param1 id:16 attachinfo:Dbx,MDSSA
-
------ BB40 --- rpo:80 -----
-ATTR:
-STMT NUM:2
-   st:i32 'c' id:17 attachinfo:Dbx,MDSSA       
-       $6:i32 id:18 attachinfo:Dbx
-   goto label _L6 id:47
-
------ BB42 --- rpo:20 -----
-LABEL:_L7 
-ATTR:fall_through branch_target 
-STMT NUM:1
-
-   [26]  noret ();
-
-   $8:i8 = call 'noret'  id:50 attachinfo:Dbx,MDSSA
-
------ BB43 --- rpo:25 -----
-ATTR:fall_through 
-STMT NUM:1
-
-   [27]  return 0;
-
-   return id:53 attachinfo:Dbx
-       intconst:i32 0|0x0 id:52 attachinfo:Dbx
-
-==---- DUMP PRSSA Manager 'main' ----==
-==---- DUMP PRSSAMgr:VPR 'main' ----==
-
-id1:$1v0$0: DEF:---	USE:
-id2:$3v0$0: DEF:---	USE:
-id3:$2v0$0: DEF:---	USE:
-id4:$1v1$4: DEF:call ($4,id:8)	USE:($4,id:9),($4,id:103)
-id0:$0v0$0: DEF:---	USE:
-id6:$1v2$5: DEF:phi ($5,id:48)	USE:($5,id:1)
-id7:$3v2$7: DEF:stpr ($7,id:54)	USE:($7,id:55),($7,id:58),($7,id:62),($7,id:66),($7,id:70)
-id8:$1v3$6: DEF:call ($6,id:14)	USE:($6,id:18),($6,id:102)
-id9:$2v1$8: DEF:call ($8,id:50)	USE:
+==---- DUMP ALL MD ----==
+MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD4 -- base:Var67(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+MD5 -- base:Var58(noret):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'void  noret ()' -- ofst:unbound
+MD6 -- base:Var59(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int ,unsigned char  *  * ,)' -- ofst:unbound
+MD7 -- base:Var60(a):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  a ' -- ofst:0 -- size:4
+MD8 -- base:Var61(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  b ' -- ofst:0 -- size:4
+MD9 -- base:Var62(d):global,,addr_taken,align(4),i32,decl:'int  d ' -- ofst:0 -- size:4
+MD10 -- base:Var63(main):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  main (int  argc ,unsigned char  *  *  argv ,)' -- ofst:unbound
+MD11 -- base:Var68(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD12 -- base:Var69(pr3):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD13 -- base:Var64(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
+MD14 -- base:Var65(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  argv ' -- ofst:0 -- size:4
+MD15 -- base:Var66(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
+MD16 -- base:Var70(pr1):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD17 -- base:Var71(pr2):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD18 -- base:Var72(pr4):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD19 -- base:Var73(pr5):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD20 -- base:Var74(pr6):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD21 -- base:Var75(pr7):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD22 -- base:Var76(pr8):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+==----==
+RegionMayDef(OuterRegion):MD2,MD3
+MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+RegionMayUse(OuterRegion):MD2,MD3,MD8
+MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD8 -- base:Var61(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  b ' -- ofst:0 -- size:4
 --- BB45 ---
 --- BB1 ---
-    ------------------
-
-    [11]  d = 1;
-
-    st:i32 'd' decl:int  d  id:3 attachinfo:Dbx,MDSSA        
-        intconst:i32 1|0x1 id:2 attachinfo:Dbx
-    VP:-- <= --
-    ------------------
-
-    [12]  while ((c = foo (argc, argv)) != -1)
-
-    $4:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:8 attachinfo:Dbx,MDSSA
-        ld:i32 'argc' decl:int  argc  param0 id:6 attachinfo:Dbx,MDSSA
-        ld:*<4> 'argv' decl:char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
-    VP:$1v1$4  <= --
+    st:i32 'd' id:3 attachinfo:Dbx,MDSSA
+    EMD9 : MD2
+    $4:i32 = call 'foo'  id:8 attachinfo:Dbx,MDSSA
+    EMD18 : MD2,MD3 <-- MD2,MD3
+      ld:i32 'argc' id:6 attachinfo:Dbx,MDSSA
+      EMD13
+      ld:*<4> 'argv' id:7 attachinfo:Dbx,MDSSA
+      EMD14
+      ild:any id:98 attachinfo:MDSSA
+       : MD2,MD3
 --- BB2 ---
-    ------------------
-    st:i32 'c' decl:register int  c  id:10 attachinfo:Dbx,MDSSA        
-        $4:i32 id:9 attachinfo:Dbx
-    VP:-- <= $1v1$4
---- BB3 ---
-    ------------------
-    $5:i32 = phi id:48
-        $4:i32 id:103
-        $6:i32 id:102
-    VP:$1v2$5  <= $1v1$4,$1v3$6
-    ------------------
-    falsebr label _L7 id:51 attachinfo:Dbx        
-        ne:bool id:13 attachinfo:Dbx            
-            $5:i32 id:1 attachinfo:Dbx            
-            intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
-    VP:-- <= $1v2$5
---- BB4 ---
-    ------------------
-
-    [13]    switch (c) {
-
-    stpr $7:i32 id:54 attachinfo:Dbx        
-        ld:i32 'c' decl:register int  c  id:19 attachinfo:Dbx,MDSSA
-    VP:$3v2$7  <= --
-    ------------------
-    truebr label _L1 id:73        
-        eq:bool id:71            
-            $7:i32 id:70 attachinfo:Dbx            
-            intconst:i64 115|0x73 id:38
-    VP:-- <= $3v2$7
---- BB8 ---
-    ------------------
-    truebr label _L2 id:76        
-        eq:bool id:67            
-            $7:i32 id:66 attachinfo:Dbx            
-            intconst:i64 99|0x63 id:40
-    VP:-- <= $3v2$7
---- BB12 ---
-    ------------------
-    truebr label _L3 id:79        
-        eq:bool id:63            
-            $7:i32 id:62 attachinfo:Dbx            
-            intconst:i64 102|0x66 id:42
-    VP:-- <= $3v2$7
---- BB16 ---
-    ------------------
-    truebr label _L4 id:82        
-        eq:bool id:59            
-            $7:i32 id:58 attachinfo:Dbx            
-            intconst:i64 118|0x76 id:44
-    VP:-- <= $3v2$7
---- BB20 ---
-    ------------------
-    falsebr label _L8 id:85        
-        eq:bool id:4            
-            $7:i32 id:55 attachinfo:Dbx            
-            intconst:i64 86|0x56 id:46
-    VP:-- <= $3v2$7
---- BB21 ---
-    ------------------
-    goto label _L5 id:31
-    VP:-- <= --
---- BB33 ---
-    ------------------
-
-    [17]      a = b;
-
-    st:*<1> 'a' decl:char  *  a  id:25 attachinfo:Dbx,MDSSA        
-        ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
-    VP:-- <= --
-    ------------------
-
-    [18]      break;
-
-    goto label _L8 id:93 attachinfo:Dbx
-    VP:-- <= --
---- BB35 ---
-    ------------------
-
-    [20]      d = 1;
-
-    st:i32 'd' decl:int  d  id:30 attachinfo:Dbx,MDSSA        
-        intconst:i32 1|0x1 id:29 attachinfo:Dbx
-    VP:-- <= --
-    ------------------
-
-    [21]      break;
-
-    goto label _L8 id:94 attachinfo:Dbx
-    VP:-- <= --
---- BB37 ---
-    ------------------
-
-    [23]      d = 0;
-
-    st:i32 'd' decl:int  d  id:35 attachinfo:Dbx,MDSSA        
-        intconst:i32 0|0x0 id:34 attachinfo:Dbx
-    VP:-- <= --
---- BB39 ---
-    ------------------
-
-    [12]  while ((c = foo (argc, argv)) != -1)
-
-    $6:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:14 attachinfo:Dbx,MDSSA
-        ld:i32 'argc' decl:int  argc  param0 id:15 attachinfo:Dbx,MDSSA
-        ld:*<4> 'argv' decl:char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
-    VP:$1v3$6  <= --
---- BB40 ---
-    ------------------
-    st:i32 'c' decl:register int  c  id:17 attachinfo:Dbx,MDSSA        
-        $6:i32 id:18 attachinfo:Dbx
-    VP:-- <= $1v3$6
-    ------------------
-    goto label _L6 id:47
-    VP:-- <= --
---- BB42 ---
-    ------------------
-
-    [26]  noret ();
-
-    $8:i8 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
-    VP:$2v1$8  <= --
---- BB43 ---
-    ------------------
-
-    [27]  return 0;
-
-    return id:53 attachinfo:Dbx
-        intconst:i32 0|0x0 id:52 attachinfo:Dbx
-    VP:-- <= --
-==---- DUMP MDSSA Manager 'main' ----==
---- BB45 ---
---- BB1 ---
-
-
-[11]  d = 1;
-
-st:i32 'd' decl:int  d  id:3 attachinfo:Dbx,MDSSA    
-    intconst:i32 1|0x1 id:2 attachinfo:Dbx
-  ----
-  st:i32 'd' decl:int  d  id:3 attachinfo:Dbx,MDSSA      
-      intconst:i32 1|0x1 id:2 attachinfo:Dbx
-  --DEFREF:(MD9V1,-,NextDEF:MD9V2,,NextDEF:MD9V3)|UsedBy:
-  --DEFREF:(MD2V1,-,NextDEF:MD2V2)|UsedBy:
-
-
-[12]  while ((c = foo (argc, argv)) != -1)
-
-$4:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:8 attachinfo:Dbx,MDSSA
-    ld:i32 'argc' decl:int  argc  param0 id:6 attachinfo:Dbx,MDSSA
-    ld:*<4> 'argv' decl:char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
-  ----
-  $4:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:8 attachinfo:Dbx,MDSSA
-      ld:i32 'argc' decl:int  argc  param0 id:6 attachinfo:Dbx,MDSSA
-      ld:*<4> 'argv' decl:char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V2,PrevDEF:MD2V1)|UsedBy:id(id:107)
-  --DEFREF:(MD3V1,-,NextDEF:MD3V2,,NextDEF:MD3V3)|UsedBy:
-  ld:i32 'argc' decl:int  argc  id:6 attachinfo:Dbx,MDSSA
-  --USEREF:MD13V0
-  ld:*<4> 'argv' decl:char  *  *  argv  id:7 attachinfo:Dbx,MDSSA
-  --USEREF:MD14V0
---- BB2 ---
-
-st:i32 'c' decl:register int  c  id:10 attachinfo:Dbx,MDSSA    
-    $4:i32 id:9 attachinfo:Dbx
-  ----
-  st:i32 'c' decl:register int  c  id:10 attachinfo:Dbx,MDSSA      
+    st:i32 'c' id:10 attachinfo:Dbx,MDSSA
+    EMD15
       $4:i32 id:9 attachinfo:Dbx
-  --DEFREF:(MD15V1,-)|UsedBy:id(id:109)
+      EMD18
 --- BB3 ---
-Phi: MD15V2 <- MD15V1(id:109)(BB2), MD15V3(id:110)(BB40)|UsedBy:ld(id:19)
-Phi: MD2V3 <- MD2V2(id:107)(BB2), MD2V8(id:108)(BB40)|UsedBy:ld(id:24),id(id:106)
-
-$5:i32 = phi id:48
-    $4:i32 id:103
-    $6:i32 id:102
-
-falsebr label _L7 id:51 attachinfo:Dbx    
-    ne:bool id:13 attachinfo:Dbx        
-        $5:i32 id:1 attachinfo:Dbx        
-        intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
+    $5:i32 = phi id:48
+    EMD19
+      $4:i32 id:106
+      EMD18
+      $6:i32 id:105
+      EMD20
+    truebr label _$L7 id:51 attachinfo:Dbx
+      eq:bool id:13 attachinfo:Dbx
+        $5:i32 id:1 attachinfo:Dbx
+        EMD19
 --- BB4 ---
-
-
-[13]    switch (c) {
-
-stpr $7:i32 id:54 attachinfo:Dbx    
-    ld:i32 'c' decl:register int  c  id:19 attachinfo:Dbx,MDSSA
-  ----
-  ld:i32 'c' decl:register int  c  id:19 attachinfo:Dbx,MDSSA
-  --USEREF:MD15V2
-
-truebr label _L1 id:73    
-    eq:bool id:71        
-        $7:i32 id:70 attachinfo:Dbx        
-        intconst:i64 115|0x73 id:38
+    stpr $7:i32 id:54 attachinfo:Dbx
+    EMD21
+      ld:i32 'c' id:19 attachinfo:Dbx,MDSSA
+      EMD15
+    truebr label _$L1 id:73
+      eq:bool id:71
+        $7:i32 id:70 attachinfo:Dbx
+        EMD21
 --- BB8 ---
-
-truebr label _L2 id:76    
-    eq:bool id:67        
-        $7:i32 id:66 attachinfo:Dbx        
-        intconst:i64 99|0x63 id:40
+    truebr label _$L2 id:76
+      eq:bool id:67
+        $7:i32 id:66 attachinfo:Dbx
+        EMD21
 --- BB12 ---
-
-truebr label _L3 id:79    
-    eq:bool id:63        
-        $7:i32 id:62 attachinfo:Dbx        
-        intconst:i64 102|0x66 id:42
+    truebr label _$L3 id:79
+      eq:bool id:63
+        $7:i32 id:62 attachinfo:Dbx
+        EMD21
 --- BB16 ---
-
-truebr label _L4 id:82    
-    eq:bool id:59        
-        $7:i32 id:58 attachinfo:Dbx        
-        intconst:i64 118|0x76 id:44
+    truebr label _$L4 id:82
+      eq:bool id:59
+        $7:i32 id:58 attachinfo:Dbx
+        EMD21
 --- BB20 ---
-
-falsebr label _L8 id:85    
-    eq:bool id:4        
-        $7:i32 id:55 attachinfo:Dbx        
-        intconst:i64 86|0x56 id:46
+    falsebr label _$L8 id:85
+      eq:bool id:4
+        $7:i32 id:55 attachinfo:Dbx
+        EMD21
 --- BB21 ---
-
-goto label _L5 id:31
+    goto label _$L5 id:31
 --- BB33 ---
-
-
-[17]      a = b;
-
-st:*<1> 'a' decl:char  *  a  id:25 attachinfo:Dbx,MDSSA    
-    ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
-  ----
-  st:*<1> 'a' decl:char  *  a  id:25 attachinfo:Dbx,MDSSA      
-      ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V6,PrevDEF:MD2V3)|UsedBy:id(id:99)
-  --DEFREF:(MD7V1,-)|UsedBy:
-  ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
-  --USEREF:MD8V0,MD2V3
-
-
-[18]      break;
-
-goto label _L8 id:93 attachinfo:Dbx
+    st:*<1> 'a' id:25 attachinfo:Dbx,MDSSA
+    EMD7 : MD2
+      ld:*<1> 'b' id:24 attachinfo:Dbx,MDSSA
+      EMD8 : MD2
+    goto label _$L8 id:93 attachinfo:Dbx
 --- BB35 ---
-
-
-[20]      d = 1;
-
-st:i32 'd' decl:int  d  id:30 attachinfo:Dbx,MDSSA    
-    intconst:i32 1|0x1 id:29 attachinfo:Dbx
-  ----
-  st:i32 'd' decl:int  d  id:30 attachinfo:Dbx,MDSSA      
-      intconst:i32 1|0x1 id:29 attachinfo:Dbx
-  --DEFREF:(MD9V3,PrevDEF:MD9V1)|UsedBy:
-  --DEFREF:(MD2V5,PrevDEF:MD2V3)|UsedBy:id(id:104)
-
-
-[21]      break;
-
-goto label _L8 id:94 attachinfo:Dbx
+    st:i32 'd' id:30 attachinfo:Dbx,MDSSA
+    EMD9 : MD2
+    goto label _$L8 id:94 attachinfo:Dbx
 --- BB37 ---
-
-
-[23]      d = 0;
-
-st:i32 'd' decl:int  d  id:35 attachinfo:Dbx,MDSSA    
-    intconst:i32 0|0x0 id:34 attachinfo:Dbx
-  ----
-  st:i32 'd' decl:int  d  id:35 attachinfo:Dbx,MDSSA      
-      intconst:i32 0|0x0 id:34 attachinfo:Dbx
-  --DEFREF:(MD9V2,PrevDEF:MD9V1)|UsedBy:
-  --DEFREF:(MD2V4,PrevDEF:MD2V3)|UsedBy:id(id:105)
+    st:i32 'd' id:35 attachinfo:Dbx,MDSSA
+    EMD9 : MD2
 --- BB39 ---
-Phi: MD2V7 <- MD2V6(id:99)(BB33), MD2V5(id:104)(BB35), MD2V4(id:105)(BB37), MD2V3(id:106)(BB20)|UsedBy:
-
-
-[12]  while ((c = foo (argc, argv)) != -1)
-
-$6:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:14 attachinfo:Dbx,MDSSA
-    ld:i32 'argc' decl:int  argc  param0 id:15 attachinfo:Dbx,MDSSA
-    ld:*<4> 'argv' decl:char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
-  ----
-  $6:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:14 attachinfo:Dbx,MDSSA
-      ld:i32 'argc' decl:int  argc  param0 id:15 attachinfo:Dbx,MDSSA
-      ld:*<4> 'argv' decl:char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V8,PrevDEF:MD2V7)|UsedBy:id(id:108)
-  --DEFREF:(MD3V2,PrevDEF:MD3V1)|UsedBy:
-  ld:i32 'argc' decl:int  argc  id:15 attachinfo:Dbx,MDSSA
-  --USEREF:MD13V0
-  ld:*<4> 'argv' decl:char  *  *  argv  id:16 attachinfo:Dbx,MDSSA
-  --USEREF:MD14V0
+    $6:i32 = call 'foo'  id:14 attachinfo:Dbx,MDSSA
+    EMD20 : MD2,MD3 <-- MD2,MD3
+      ld:i32 'argc' id:15 attachinfo:Dbx,MDSSA
+      EMD13
+      ld:*<4> 'argv' id:16 attachinfo:Dbx,MDSSA
+      EMD14
+      ild:any id:99 attachinfo:MDSSA
+       : MD2,MD3
 --- BB40 ---
-
-st:i32 'c' decl:register int  c  id:17 attachinfo:Dbx,MDSSA    
-    $6:i32 id:18 attachinfo:Dbx
-  ----
-  st:i32 'c' decl:register int  c  id:17 attachinfo:Dbx,MDSSA      
+    st:i32 'c' id:17 attachinfo:Dbx,MDSSA
+    EMD15
       $6:i32 id:18 attachinfo:Dbx
-  --DEFREF:(MD15V3,PrevDEF:MD15V2)|UsedBy:id(id:110)
-
-goto label _L6 id:47
+      EMD20
+    goto label _$L6 id:47
 --- BB42 ---
-
-
-[26]  noret ();
-
-$8:i8 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
-  ----
-  $8:i8 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V9,PrevDEF:MD2V3)|UsedBy:
-  --DEFREF:(MD3V3,PrevDEF:MD3V1)|UsedBy:
+    $8:i32 = call 'noret'  id:50 attachinfo:Dbx,MDSSA
+    EMD22 : MD2,MD3 <-- MD2,MD3
+      ild:any id:100 attachinfo:MDSSA
+       : MD2,MD3
 --- BB43 ---
-
-
-[27]  return 0;
-
-return id:53 attachinfo:Dbx
-    intconst:i32 0|0x0 id:52 attachinfo:Dbx
+    return id:53 attachinfo:Dbx
+==---- DUMP MDSSA Manager 'main' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var13(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var4(noret):global,,addr_taken,func_decl,align(4),i8,decl:'void  noret ()' -- ofst:unbound
-MD6 -- base:Var5(foo):global,,addr_taken,func_decl,align(4),i32,decl:'int  foo (int ,char  *  * ,)' -- ofst:unbound
-MD7 -- base:Var6(a):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'char  *  a ' -- ofst:0 -- size:4
-MD8 -- base:Var7(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'char  *  b ' -- ofst:0 -- size:4
-MD9 -- base:Var8(d):global,,addr_taken,align(4),i32,decl:'int  d ' -- ofst:0 -- size:4
-MD10 -- base:Var9(main):global,,addr_taken,func_decl,align(4),i32,decl:'int  main (int  argc ,char  *  *  argv ,)' -- ofst:unbound
-MD11 -- base:Var14(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD13 -- base:Var10(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
-MD14 -- base:Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv ' -- ofst:0 -- size:4
-MD15 -- base:Var12(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
-==---- DUMP MDSSA Manager 'main' ----==
+MD4 -- base:Var67(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+MD5 -- base:Var58(noret):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'void  noret ()' -- ofst:unbound
+MD6 -- base:Var59(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int ,unsigned char  *  * ,)' -- ofst:unbound
+MD7 -- base:Var60(a):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  a ' -- ofst:0 -- size:4
+MD8 -- base:Var61(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  b ' -- ofst:0 -- size:4
+MD9 -- base:Var62(d):global,,addr_taken,align(4),i32,decl:'int  d ' -- ofst:0 -- size:4
+MD10 -- base:Var63(main):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  main (int  argc ,unsigned char  *  *  argv ,)' -- ofst:unbound
+MD11 -- base:Var68(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD13 -- base:Var64(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
+MD14 -- base:Var65(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  argv ' -- ofst:0 -- size:4
+MD15 -- base:Var66(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
+==-- DUMP MDSSAMgr VOpndRef 'main' --==
+
 --- BB45 ---
 --- BB1 ---
 
@@ -1075,44 +967,45 @@ MD15 -- base:Var12(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- si
 st:i32 'd' decl:int  d  id:3 attachinfo:Dbx,MDSSA    
     intconst:i32 1|0x1 id:2 attachinfo:Dbx
   ----
-  st:i32 'd' decl:int  d  id:3 attachinfo:Dbx,MDSSA      
-      intconst:i32 1|0x1 id:2 attachinfo:Dbx
-  --DEFREF:(MD9V1,-,NextDEF:MD9V2,,NextDEF:MD9V3)|UsedBy:
-  --DEFREF:(MD2V1,-,NextDEF:MD2V2)|UsedBy:
+  st:i32 'd' id:3 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD9V1,-,NextDEF:MD9V2,,NextDEF:MD9V3)|USESET:
+  --DEFVMD:(MD2V1,-,NextDEF:MD2V2)|USESET:ild(id:98)
 
 
 [12]  while ((c = foo (argc, argv)) != -1)
 
-$4:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:8 attachinfo:Dbx,MDSSA
+$4:i32 = call 'foo' decl:int  foo (int ,unsigned char  *  * ,) id:8 attachinfo:Dbx,MDSSA
     ld:i32 'argc' decl:int  argc  param0 id:6 attachinfo:Dbx,MDSSA
-    ld:*<4> 'argv' decl:char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
+    ld:*<4> 'argv' decl:unsigned char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
+    ild:any dummy0 id:98 attachinfo:MDSSA        
+        intconst:any 0|0x0 id:57
   ----
-  $4:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:8 attachinfo:Dbx,MDSSA
-      ld:i32 'argc' decl:int  argc  param0 id:6 attachinfo:Dbx,MDSSA
-      ld:*<4> 'argv' decl:char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V2,PrevDEF:MD2V1)|UsedBy:id(id:108)
-  --DEFREF:(MD3V1,-,NextDEF:MD3V2,,NextDEF:MD3V3)|UsedBy:
-  ld:i32 'argc' decl:int  argc  id:6 attachinfo:Dbx,MDSSA
-  --USEREF:MD13V0
-  ld:*<4> 'argv' decl:char  *  *  argv  id:7 attachinfo:Dbx,MDSSA
-  --USEREF:MD14V0
+  $4:i32 = call 'foo'  id:8 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD2V2,PrevDEF:MD2V1)|USESET:id(id:111)
+  --DEFVMD:(MD3V1,-)|USESET:id(id:113)
+  ld:i32 'argc' id:6 attachinfo:Dbx,MDSSA
+  --USEVMD:MD13V0
+  ild:any id:98 attachinfo:MDSSA
+  --USEVMD:MD3V0,MD2V1
+  ld:*<4> 'argv' id:7 attachinfo:Dbx,MDSSA
+  --USEVMD:MD14V0
 --- BB2 ---
 
 st:i32 'c' decl:register int  c  id:10 attachinfo:Dbx,MDSSA    
     $4:i32 id:9 attachinfo:Dbx
   ----
-  st:i32 'c' decl:register int  c  id:10 attachinfo:Dbx,MDSSA      
-      $4:i32 id:9 attachinfo:Dbx
-  --DEFREF:(MD15V1,-)|UsedBy:id(id:110)
+  st:i32 'c' id:10 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD15V1,-)|USESET:id(id:115)
 --- BB3 ---
-Phi: MD15V2 <- MD15V1(id:110)(BB2), MD15V3(id:109)(BB40)|UsedBy:ld(id:19)
-Phi: MD2V3 <- MD2V2(id:108)(BB2), MD2V8(id:107)(BB40)|UsedBy:ld(id:24),id(id:99)
+MDPhi4: MD15V2 <- (ID id:115 MD15V1 BB2), (ID id:114 MD15V3 BB40)|USESET:(ld id:19) 
+MDPhi3: MD3V2 <- (ID id:113 MD3V1 BB2), (ID id:112 MD3V3 BB40)|USESET:(ild id:99) (ild id:100) 
+MDPhi2: MD2V3 <- (ID id:111 MD2V2 BB2), (ID id:110 MD2V8 BB40)|USESET:(ild id:100) (id id:102) (ld id:24) 
 
 $5:i32 = phi id:48
-    $4:i32 id:103
-    $6:i32 id:102
+    $4:i32 id:106
+    $6:i32 id:105
 
-truebr label _L7 id:51 attachinfo:Dbx    
+truebr label _$L7 id:51 attachinfo:Dbx    
     eq:bool id:13 attachinfo:Dbx        
         $5:i32 id:1 attachinfo:Dbx        
         intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
@@ -1124,59 +1017,58 @@ truebr label _L7 id:51 attachinfo:Dbx
 stpr $7:i32 id:54 attachinfo:Dbx    
     ld:i32 'c' decl:register int  c  id:19 attachinfo:Dbx,MDSSA
   ----
-  ld:i32 'c' decl:register int  c  id:19 attachinfo:Dbx,MDSSA
-  --USEREF:MD15V2
+  ld:i32 'c' id:19 attachinfo:Dbx,MDSSA
+  --USEVMD:MD15V2
 
-truebr label _L1 id:73    
+truebr label _$L1 id:73    
     eq:bool id:71        
         $7:i32 id:70 attachinfo:Dbx        
-        intconst:i64 115|0x73 id:38
+        intconst:i32 115|0x73 id:38
 --- BB8 ---
 
-truebr label _L2 id:76    
+truebr label _$L2 id:76    
     eq:bool id:67        
         $7:i32 id:66 attachinfo:Dbx        
-        intconst:i64 99|0x63 id:40
+        intconst:i32 99|0x63 id:40
 --- BB12 ---
 
-truebr label _L3 id:79    
+truebr label _$L3 id:79    
     eq:bool id:63        
         $7:i32 id:62 attachinfo:Dbx        
-        intconst:i64 102|0x66 id:42
+        intconst:i32 102|0x66 id:42
 --- BB16 ---
 
-truebr label _L4 id:82    
+truebr label _$L4 id:82    
     eq:bool id:59        
         $7:i32 id:58 attachinfo:Dbx        
-        intconst:i64 118|0x76 id:44
+        intconst:i32 118|0x76 id:44
 --- BB20 ---
 
-falsebr label _L8 id:85    
+falsebr label _$L8 id:85    
     eq:bool id:4        
         $7:i32 id:55 attachinfo:Dbx        
-        intconst:i64 86|0x56 id:46
+        intconst:i32 86|0x56 id:46
 --- BB21 ---
 
-goto label _L5 id:31
+goto label _$L5 id:31
 --- BB33 ---
 
 
 [17]      a = b;
 
-st:*<1> 'a' decl:char  *  a  id:25 attachinfo:Dbx,MDSSA    
-    ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
+st:*<1> 'a' decl:unsigned char  *  a  id:25 attachinfo:Dbx,MDSSA    
+    ld:*<1> 'b' decl:unsigned char  *  b  id:24 attachinfo:Dbx,MDSSA
   ----
-  st:*<1> 'a' decl:char  *  a  id:25 attachinfo:Dbx,MDSSA      
-      ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V6,PrevDEF:MD2V3)|UsedBy:id(id:106)
-  --DEFREF:(MD7V1,-)|UsedBy:
-  ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
-  --USEREF:MD8V0,MD2V3
+  st:*<1> 'a' id:25 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD2V6,PrevDEF:MD2V3)|USESET:id(id:109)
+  --DEFVMD:(MD7V1,-)|USESET:
+  ld:*<1> 'b' id:24 attachinfo:Dbx,MDSSA
+  --USEVMD:MD8V0,MD2V3
 
 
 [18]      break;
 
-goto label _L8 id:93 attachinfo:Dbx
+goto label _$L8 id:93 attachinfo:Dbx
 --- BB35 ---
 
 
@@ -1185,15 +1077,14 @@ goto label _L8 id:93 attachinfo:Dbx
 st:i32 'd' decl:int  d  id:30 attachinfo:Dbx,MDSSA    
     intconst:i32 1|0x1 id:29 attachinfo:Dbx
   ----
-  st:i32 'd' decl:int  d  id:30 attachinfo:Dbx,MDSSA      
-      intconst:i32 1|0x1 id:29 attachinfo:Dbx
-  --DEFREF:(MD9V3,PrevDEF:MD9V1)|UsedBy:
-  --DEFREF:(MD2V5,PrevDEF:MD2V3)|UsedBy:id(id:105)
+  st:i32 'd' id:30 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD9V3,PrevDEF:MD9V1)|USESET:
+  --DEFVMD:(MD2V5,PrevDEF:MD2V3)|USESET:id(id:108)
 
 
 [21]      break;
 
-goto label _L8 id:94 attachinfo:Dbx
+goto label _$L8 id:94 attachinfo:Dbx
 --- BB37 ---
 
 
@@ -1202,49 +1093,53 @@ goto label _L8 id:94 attachinfo:Dbx
 st:i32 'd' decl:int  d  id:35 attachinfo:Dbx,MDSSA    
     intconst:i32 0|0x0 id:34 attachinfo:Dbx
   ----
-  st:i32 'd' decl:int  d  id:35 attachinfo:Dbx,MDSSA      
-      intconst:i32 0|0x0 id:34 attachinfo:Dbx
-  --DEFREF:(MD9V2,PrevDEF:MD9V1)|UsedBy:
-  --DEFREF:(MD2V4,PrevDEF:MD2V3)|UsedBy:id(id:104)
+  st:i32 'd' id:35 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD9V2,PrevDEF:MD9V1)|USESET:
+  --DEFVMD:(MD2V4,PrevDEF:MD2V3)|USESET:id(id:107)
 --- BB39 ---
-Phi: MD2V7 <- MD2V6(id:106)(BB33), MD2V5(id:105)(BB35), MD2V4(id:104)(BB37), MD2V3(id:99)(BB20)|UsedBy:
+MDPhi1: MD2V7 <- (ID id:109 MD2V6 BB33), (ID id:108 MD2V5 BB35), (ID id:107 MD2V4 BB37), (ID id:102 MD2V3 BB20)|USESET:(ild id:99) 
 
 
 [12]  while ((c = foo (argc, argv)) != -1)
 
-$6:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:14 attachinfo:Dbx,MDSSA
+$6:i32 = call 'foo' decl:int  foo (int ,unsigned char  *  * ,) id:14 attachinfo:Dbx,MDSSA
     ld:i32 'argc' decl:int  argc  param0 id:15 attachinfo:Dbx,MDSSA
-    ld:*<4> 'argv' decl:char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
+    ld:*<4> 'argv' decl:unsigned char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
+    ild:any dummy0 id:99 attachinfo:MDSSA        
+        intconst:any 0|0x0 id:61
   ----
-  $6:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:14 attachinfo:Dbx,MDSSA
-      ld:i32 'argc' decl:int  argc  param0 id:15 attachinfo:Dbx,MDSSA
-      ld:*<4> 'argv' decl:char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V8,PrevDEF:MD2V7)|UsedBy:id(id:107)
-  --DEFREF:(MD3V2,PrevDEF:MD3V1)|UsedBy:
-  ld:i32 'argc' decl:int  argc  id:15 attachinfo:Dbx,MDSSA
-  --USEREF:MD13V0
-  ld:*<4> 'argv' decl:char  *  *  argv  id:16 attachinfo:Dbx,MDSSA
-  --USEREF:MD14V0
+  $6:i32 = call 'foo'  id:14 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD2V8,PrevDEF:MD2V7)|USESET:id(id:110)
+  --DEFVMD:(MD3V3,PrevDEF:MD3V2)|USESET:id(id:112)
+  ld:i32 'argc' id:15 attachinfo:Dbx,MDSSA
+  --USEVMD:MD13V0
+  ild:any id:99 attachinfo:MDSSA
+  --USEVMD:MD3V2,MD2V7
+  ld:*<4> 'argv' id:16 attachinfo:Dbx,MDSSA
+  --USEVMD:MD14V0
 --- BB40 ---
 
 st:i32 'c' decl:register int  c  id:17 attachinfo:Dbx,MDSSA    
     $6:i32 id:18 attachinfo:Dbx
   ----
-  st:i32 'c' decl:register int  c  id:17 attachinfo:Dbx,MDSSA      
-      $6:i32 id:18 attachinfo:Dbx
-  --DEFREF:(MD15V3,PrevDEF:MD15V2)|UsedBy:id(id:109)
+  st:i32 'c' id:17 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD15V3,PrevDEF:MD15V2)|USESET:id(id:114)
 
-goto label _L6 id:47
+goto label _$L6 id:47
 --- BB42 ---
 
 
 [26]  noret ();
 
-$8:i8 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
+$8:i32 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
+    ild:any dummy0 id:100 attachinfo:MDSSA        
+        intconst:any 0|0x0 id:65
   ----
-  $8:i8 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V9,PrevDEF:MD2V3)|UsedBy:
-  --DEFREF:(MD3V3,PrevDEF:MD3V1)|UsedBy:
+  $8:i32 = call 'noret'  id:50 attachinfo:Dbx,MDSSA
+  --DEFVMD:(MD2V9,PrevDEF:MD2V3)|USESET:
+  --DEFVMD:(MD3V4,PrevDEF:MD3V2)|USESET:
+  ild:any id:100 attachinfo:MDSSA
+  --USEVMD:MD3V2,MD2V3
 --- BB43 ---
 
 
@@ -1252,7 +1147,7 @@ $8:i8 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
 
 return id:53 attachinfo:Dbx
     intconst:i32 0|0x0 id:52 attachinfo:Dbx
-==---- DUMP MDSSAMgr DU CHAIN 'main' ----==
+==-- DUMP MDSSAMgr DU CHAIN 'main' --==
 
 --- BB45 ---
 --- BB1 ---
@@ -1262,29 +1157,42 @@ return id:53 attachinfo:Dbx
 st:i32 'd' decl:int  d  id:3 attachinfo:Dbx,MDSSA    
     intconst:i32 1|0x1 id:2 attachinfo:Dbx
 ----------------
-st(id:3) --USE LIST:
+st(id:3) USESET:
+  MD9V1:
+  MD2V1:(ild id:98) 
 
 [12]  while ((c = foo (argc, argv)) != -1)
 
-$4:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:8 attachinfo:Dbx,MDSSA
+$4:i32 = call 'foo' decl:int  foo (int ,unsigned char  *  * ,) id:8 attachinfo:Dbx,MDSSA
     ld:i32 'argc' decl:int  argc  param0 id:6 attachinfo:Dbx,MDSSA
-    ld:*<4> 'argv' decl:char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
+    ld:*<4> 'argv' decl:unsigned char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
+    ild:any dummy0 id:98 attachinfo:MDSSA        
+        intconst:any 0|0x0 id:57
 ----------------
-call(id:8) --USE LIST:id(id:108(MD2V2))
-ld(id:6) --DEF LIST:MD13V0
-ld(id:7) --DEF LIST:MD14V0
+call(id:8) USESET:
+  MD2V2:(id id:111) 
+  MD3V1:(id id:113) 
+ld(id:6) DEFSET:
+  MD13V0:
+ild(id:98) DEFSET:
+  MD3V0:
+  MD2V1:(st id:3)
+ld(id:7) DEFSET:
+  MD14V0:
 --- BB2 ---
 st:i32 'c' decl:register int  c  id:10 attachinfo:Dbx,MDSSA    
     $4:i32 id:9 attachinfo:Dbx
 ----------------
-st(id:10) --USE LIST:id(id:110(MD15V1))
+st(id:10) USESET:
+  MD15V1:(id id:115) 
 --- BB3 ---
-Phi: MD15V2 <- MD15V1(id:110)(BB2), MD15V3(id:109)(BB40)|UsedBy:ld(id:19)
-Phi: MD2V3 <- MD2V2(id:108)(BB2), MD2V8(id:107)(BB40)|UsedBy:ld(id:24),id(id:99)
+MDPhi4: MD15V2 <- (ID id:115 MD15V1 BB2), (ID id:114 MD15V3 BB40)|USESET:(ld id:19) 
+MDPhi3: MD3V2 <- (ID id:113 MD3V1 BB2), (ID id:112 MD3V3 BB40)|USESET:(ild id:99) (ild id:100) 
+MDPhi2: MD2V3 <- (ID id:111 MD2V2 BB2), (ID id:110 MD2V8 BB40)|USESET:(ild id:100) (id id:102) (ld id:24) 
 $5:i32 = phi id:48
-    $4:i32 id:103
-    $6:i32 id:102
-truebr label _L7 id:51 attachinfo:Dbx    
+    $4:i32 id:106
+    $6:i32 id:105
+truebr label _$L7 id:51 attachinfo:Dbx    
     eq:bool id:13 attachinfo:Dbx        
         $5:i32 id:1 attachinfo:Dbx        
         intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
@@ -1295,46 +1203,51 @@ truebr label _L7 id:51 attachinfo:Dbx
 stpr $7:i32 id:54 attachinfo:Dbx    
     ld:i32 'c' decl:register int  c  id:19 attachinfo:Dbx,MDSSA
 ----------------
-ld(id:19) --DEF LIST:MD15V2(phi,st(id:10),st(id:17))
-truebr label _L1 id:73    
+ld(id:19) DEFSET:
+  MD15V2:mdphi4 (st id:10) (st id:17)
+truebr label _$L1 id:73    
     eq:bool id:71        
         $7:i32 id:70 attachinfo:Dbx        
-        intconst:i64 115|0x73 id:38
+        intconst:i32 115|0x73 id:38
 --- BB8 ---
-truebr label _L2 id:76    
+truebr label _$L2 id:76    
     eq:bool id:67        
         $7:i32 id:66 attachinfo:Dbx        
-        intconst:i64 99|0x63 id:40
+        intconst:i32 99|0x63 id:40
 --- BB12 ---
-truebr label _L3 id:79    
+truebr label _$L3 id:79    
     eq:bool id:63        
         $7:i32 id:62 attachinfo:Dbx        
-        intconst:i64 102|0x66 id:42
+        intconst:i32 102|0x66 id:42
 --- BB16 ---
-truebr label _L4 id:82    
+truebr label _$L4 id:82    
     eq:bool id:59        
         $7:i32 id:58 attachinfo:Dbx        
-        intconst:i64 118|0x76 id:44
+        intconst:i32 118|0x76 id:44
 --- BB20 ---
-falsebr label _L8 id:85    
+falsebr label _$L8 id:85    
     eq:bool id:4        
         $7:i32 id:55 attachinfo:Dbx        
-        intconst:i64 86|0x56 id:46
+        intconst:i32 86|0x56 id:46
 --- BB21 ---
-goto label _L5 id:31
+goto label _$L5 id:31
 --- BB33 ---
 
 [17]      a = b;
 
-st:*<1> 'a' decl:char  *  a  id:25 attachinfo:Dbx,MDSSA    
-    ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
+st:*<1> 'a' decl:unsigned char  *  a  id:25 attachinfo:Dbx,MDSSA    
+    ld:*<1> 'b' decl:unsigned char  *  b  id:24 attachinfo:Dbx,MDSSA
 ----------------
-st(id:25) --USE LIST:id(id:106(MD2V6))
-ld(id:24) --DEF LIST:MD8V0,MD2V3(phi,call(id:8),call(id:14),st(id:3),phi,st(id:25),st(id:30),st(id:35))
+st(id:25) USESET:
+  MD2V6:(id id:109) 
+  MD7V1:
+ld(id:24) DEFSET:
+  MD8V0:
+  MD2V3:mdphi2 (call id:8) (call id:14) (st id:3) mdphi1 (st id:25) (st id:30) (st id:35)
 
 [18]      break;
 
-goto label _L8 id:93 attachinfo:Dbx
+goto label _$L8 id:93 attachinfo:Dbx
 --- BB35 ---
 
 [20]      d = 1;
@@ -1342,11 +1255,13 @@ goto label _L8 id:93 attachinfo:Dbx
 st:i32 'd' decl:int  d  id:30 attachinfo:Dbx,MDSSA    
     intconst:i32 1|0x1 id:29 attachinfo:Dbx
 ----------------
-st(id:30) --USE LIST:id(id:105(MD2V5))
+st(id:30) USESET:
+  MD9V3:
+  MD2V5:(id id:108) 
 
 [21]      break;
 
-goto label _L8 id:94 attachinfo:Dbx
+goto label _$L8 id:94 attachinfo:Dbx
 --- BB37 ---
 
 [23]      d = 0;
@@ -1354,574 +1269,92 @@ goto label _L8 id:94 attachinfo:Dbx
 st:i32 'd' decl:int  d  id:35 attachinfo:Dbx,MDSSA    
     intconst:i32 0|0x0 id:34 attachinfo:Dbx
 ----------------
-st(id:35) --USE LIST:id(id:104(MD2V4))
+st(id:35) USESET:
+  MD9V2:
+  MD2V4:(id id:107) 
 --- BB39 ---
-Phi: MD2V7 <- MD2V6(id:106)(BB33), MD2V5(id:105)(BB35), MD2V4(id:104)(BB37), MD2V3(id:99)(BB20)|UsedBy:
+MDPhi1: MD2V7 <- (ID id:109 MD2V6 BB33), (ID id:108 MD2V5 BB35), (ID id:107 MD2V4 BB37), (ID id:102 MD2V3 BB20)|USESET:(ild id:99) 
 
 [12]  while ((c = foo (argc, argv)) != -1)
 
-$6:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:14 attachinfo:Dbx,MDSSA
+$6:i32 = call 'foo' decl:int  foo (int ,unsigned char  *  * ,) id:14 attachinfo:Dbx,MDSSA
     ld:i32 'argc' decl:int  argc  param0 id:15 attachinfo:Dbx,MDSSA
-    ld:*<4> 'argv' decl:char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
+    ld:*<4> 'argv' decl:unsigned char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
+    ild:any dummy0 id:99 attachinfo:MDSSA        
+        intconst:any 0|0x0 id:61
 ----------------
-call(id:14) --USE LIST:id(id:107(MD2V8))
-ld(id:15) --DEF LIST:MD13V0
-ld(id:16) --DEF LIST:MD14V0
+call(id:14) USESET:
+  MD2V8:(id id:110) 
+  MD3V3:(id id:112) 
+ld(id:15) DEFSET:
+  MD13V0:
+ild(id:99) DEFSET:
+  MD3V2:mdphi3 (call id:8) (call id:14)
+  MD2V7:mdphi1 (st id:25) (st id:30) (st id:35) mdphi2 mdphi2 mdphi2 mdphi2 (st id:3)
+ld(id:16) DEFSET:
+  MD14V0:
 --- BB40 ---
 st:i32 'c' decl:register int  c  id:17 attachinfo:Dbx,MDSSA    
     $6:i32 id:18 attachinfo:Dbx
 ----------------
-st(id:17) --USE LIST:id(id:109(MD15V3))
-goto label _L6 id:47
+st(id:17) USESET:
+  MD15V3:(id id:114) 
+goto label _$L6 id:47
 --- BB42 ---
 
 [26]  noret ();
 
-$8:i8 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
+$8:i32 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
+    ild:any dummy0 id:100 attachinfo:MDSSA        
+        intconst:any 0|0x0 id:65
 ----------------
-call(id:50) --USE LIST:
+call(id:50) USESET:
+  MD2V9:
+  MD3V4:
+ild(id:100) DEFSET:
+  MD3V2:mdphi3 (call id:8) (call id:14)
+  MD2V3:mdphi2 (st id:3) mdphi1 (st id:25) (st id:30) (st id:35)
 --- BB43 ---
 
 [27]  return 0;
 
 return id:53 attachinfo:Dbx
     intconst:i32 0|0x0 id:52 attachinfo:Dbx
-==---- DUMP LICM Analysis Result : LoopInfo2 : 'main' ----==
 
+==---- DUMP DUMgr: IR REFERENCE '.program' ----==
 
-==---- DUMP Dead Code Eliminiation 'main' ----==
-==-- Ineffect BB --==
---0- BB45		ineffect BB!
---0- BB1
---0- BB2
---0- BB3
---0- BB4
---0- BB8
---0- BB12
---0- BB16
---0- BB20
---0- BB21
---0- BB33
---0- BB35
---0- BB37
---0- BB39
---0- BB40
---0- BB42
---0- BB43
-
-==---- DUMP IRBBList 'main' ----==
------ BB45 --- rpo:0 -----
-ATTR:entry_bb fall_through 
-STMT NUM:0
-
------ BB1 --- rpo:5 -----
-ATTR:fall_through 
-STMT NUM:2
-
-   [11]  d = 1;
-
-   st:i32 'd' id:3 attachinfo:Dbx,MDSSA       
-       intconst:i32 1|0x1 id:2 attachinfo:Dbx
-
-   [12]  while ((c = foo (argc, argv)) != -1)
-
-   $4:i32 = call 'foo'  id:8 attachinfo:Dbx,MDSSA
-       ld:i32 'argc' param0 id:6 attachinfo:Dbx,MDSSA
-       ld:*<4> 'argv' param1 id:7 attachinfo:Dbx,MDSSA
-
------ BB2 --- rpo:10 -----
-ATTR:
-STMT NUM:1
-   st:i32 'c' id:10 attachinfo:Dbx,MDSSA       
-       $4:i32 id:9 attachinfo:Dbx
-
------ BB3 --- rpo:15 -----
-LABEL:_L6 
-ATTR:fall_through branch_target 
-STMT NUM:2
-   $5:i32 = phi id:48
-       $4:i32 id:103
-       $6:i32 id:102
-   truebr label _L7 id:51 attachinfo:Dbx       
-       eq:bool id:13 attachinfo:Dbx           
-           $5:i32 id:1 attachinfo:Dbx           
-           intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
-
------ BB4 --- rpo:30 -----
-ATTR:fall_through 
-STMT NUM:2
-
-   [13]    switch (c) {
-
-   stpr $7:i32 id:54 attachinfo:Dbx       
-       ld:i32 'c' id:19 attachinfo:Dbx,MDSSA
-   truebr label _L1 id:73       
-       eq:bool id:71           
-           $7:i32 id:70 attachinfo:Dbx           
-           intconst:i64 115|0x73 id:38
-
------ BB8 --- rpo:35 -----
-LABEL:_L9 
-ATTR:fall_through branch_target 
-STMT NUM:1
-   truebr label _L2 id:76       
-       eq:bool id:67           
-           $7:i32 id:66 attachinfo:Dbx           
-           intconst:i64 99|0x63 id:40
-
------ BB12 --- rpo:40 -----
-LABEL:_L11 
-ATTR:fall_through branch_target 
-STMT NUM:1
-   truebr label _L3 id:79       
-       eq:bool id:63           
-           $7:i32 id:62 attachinfo:Dbx           
-           intconst:i64 102|0x66 id:42
-
------ BB16 --- rpo:45 -----
-LABEL:_L13 
-ATTR:fall_through branch_target 
-STMT NUM:1
-   truebr label _L4 id:82       
-       eq:bool id:59           
-           $7:i32 id:58 attachinfo:Dbx           
-           intconst:i64 118|0x76 id:44
-
------ BB20 --- rpo:50 -----
-LABEL:_L15 
-ATTR:fall_through branch_target 
-STMT NUM:1
-   falsebr label _L8 id:85       
-       eq:bool id:4           
-           $7:i32 id:55 attachinfo:Dbx           
-           intconst:i64 86|0x56 id:46
-
------ BB21 --- rpo:55 -----
-ATTR:
-STMT NUM:1
-   goto label _L5 id:31
-
------ BB33 --- rpo:70 -----
-LABEL:_L18 _L16 _L14 _L12 _L10 _L1 _L2 _L3 
-ATTR:branch_target 
-STMT NUM:2
-
-   [17]      a = b;
-
-   st:*<1> 'a' id:25 attachinfo:Dbx,MDSSA       
-       ld:*<1> 'b' id:24 attachinfo:Dbx,MDSSA
-
-   [18]      break;
-
-   goto label _L8 id:93 attachinfo:Dbx
-
------ BB35 --- rpo:65 -----
-LABEL:_L4 
-ATTR:branch_target 
-STMT NUM:2
-
-   [20]      d = 1;
-
-   st:i32 'd' id:30 attachinfo:Dbx,MDSSA       
-       intconst:i32 1|0x1 id:29 attachinfo:Dbx
-
-   [21]      break;
-
-   goto label _L8 id:94 attachinfo:Dbx
-
------ BB37 --- rpo:60 -----
-LABEL:_L5 
-ATTR:branch_target 
-STMT NUM:1
-
-   [23]      d = 0;
-
-   st:i32 'd' id:35 attachinfo:Dbx,MDSSA       
-       intconst:i32 0|0x0 id:34 attachinfo:Dbx
-
------ BB39 --- rpo:75 -----
-LABEL:_L8 
-ATTR:fall_through branch_target 
-STMT NUM:1
-
-   [12]  while ((c = foo (argc, argv)) != -1)
-
-   $6:i32 = call 'foo'  id:14 attachinfo:Dbx,MDSSA
-       ld:i32 'argc' param0 id:15 attachinfo:Dbx,MDSSA
-       ld:*<4> 'argv' param1 id:16 attachinfo:Dbx,MDSSA
-
------ BB40 --- rpo:80 -----
-ATTR:
-STMT NUM:2
-   st:i32 'c' id:17 attachinfo:Dbx,MDSSA       
-       $6:i32 id:18 attachinfo:Dbx
-   goto label _L6 id:47
-
------ BB42 --- rpo:20 -----
-LABEL:_L7 
-ATTR:fall_through branch_target 
-STMT NUM:1
-
-   [26]  noret ();
-
-   $8:i8 = call 'noret'  id:50 attachinfo:Dbx,MDSSA
-
------ BB43 --- rpo:25 -----
-ATTR:fall_through 
-STMT NUM:1
-
-   [27]  return 0;
-
-   return id:53 attachinfo:Dbx
-       intconst:i32 0|0x0 id:52 attachinfo:Dbx
-
-==---- DUMP PRSSA Manager 'main' ----==
-==---- DUMP PRSSAMgr:VPR 'main' ----==
-
-id1:$1v0$0: DEF:---	USE:
-id2:$3v0$0: DEF:---	USE:
-id3:$2v0$0: DEF:---	USE:
-id4:$1v1$4: DEF:call ($4,id:8)	USE:($4,id:9),($4,id:103)
-id0:$0v0$0: DEF:---	USE:
-id6:$1v2$5: DEF:phi ($5,id:48)	USE:($5,id:1)
-id7:$3v2$7: DEF:stpr ($7,id:54)	USE:($7,id:55),($7,id:58),($7,id:62),($7,id:66),($7,id:70)
-id8:$1v3$6: DEF:call ($6,id:14)	USE:($6,id:18),($6,id:102)
-id9:$2v1$8: DEF:call ($8,id:50)	USE:
---- BB45 ---
---- BB1 ---
-    ------------------
-
-    [11]  d = 1;
-
-    st:i32 'd' decl:int  d  id:3 attachinfo:Dbx,MDSSA        
-        intconst:i32 1|0x1 id:2 attachinfo:Dbx
-    VP:-- <= --
-    ------------------
-
-    [12]  while ((c = foo (argc, argv)) != -1)
-
-    $4:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:8 attachinfo:Dbx,MDSSA
-        ld:i32 'argc' decl:int  argc  param0 id:6 attachinfo:Dbx,MDSSA
-        ld:*<4> 'argv' decl:char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
-    VP:$1v1$4  <= --
---- BB2 ---
-    ------------------
-    st:i32 'c' decl:register int  c  id:10 attachinfo:Dbx,MDSSA        
-        $4:i32 id:9 attachinfo:Dbx
-    VP:-- <= $1v1$4
+==---- DUMP ALL MD ----==
+MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD4 -- base:Var67(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+MD5 -- base:Var58(noret):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'void  noret ()' -- ofst:unbound
+MD6 -- base:Var59(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int ,unsigned char  *  * ,)' -- ofst:unbound
+MD7 -- base:Var60(a):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  a ' -- ofst:0 -- size:4
+MD8 -- base:Var61(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  b ' -- ofst:0 -- size:4
+MD9 -- base:Var62(d):global,,addr_taken,align(4),i32,decl:'int  d ' -- ofst:0 -- size:4
+MD10 -- base:Var63(main):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  main (int  argc ,unsigned char  *  *  argv ,)' -- ofst:unbound
+MD11 -- base:Var68(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD12 -- base:Var69(pr3):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD13 -- base:Var64(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
+MD14 -- base:Var65(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  argv ' -- ofst:0 -- size:4
+MD15 -- base:Var66(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
+MD16 -- base:Var70(pr1):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD17 -- base:Var71(pr2):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD18 -- base:Var72(pr4):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD19 -- base:Var73(pr5):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD20 -- base:Var74(pr6):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD21 -- base:Var75(pr7):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD22 -- base:Var76(pr8):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD23 -- base:Var77(pr9):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+==----==
+RegionMayDef(OuterRegion):
+RegionMayUse(OuterRegion):MD2,MD3
+MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 --- BB3 ---
-    ------------------
-    $5:i32 = phi id:48
-        $4:i32 id:103
-        $6:i32 id:102
-    VP:$1v2$5  <= $1v1$4,$1v3$6
-    ------------------
-    truebr label _L7 id:51 attachinfo:Dbx        
-        eq:bool id:13 attachinfo:Dbx            
-            $5:i32 id:1 attachinfo:Dbx            
-            intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
-    VP:-- <= $1v2$5
---- BB4 ---
-    ------------------
-
-    [13]    switch (c) {
-
-    stpr $7:i32 id:54 attachinfo:Dbx        
-        ld:i32 'c' decl:register int  c  id:19 attachinfo:Dbx,MDSSA
-    VP:$3v2$7  <= --
-    ------------------
-    truebr label _L1 id:73        
-        eq:bool id:71            
-            $7:i32 id:70 attachinfo:Dbx            
-            intconst:i64 115|0x73 id:38
-    VP:-- <= $3v2$7
---- BB8 ---
-    ------------------
-    truebr label _L2 id:76        
-        eq:bool id:67            
-            $7:i32 id:66 attachinfo:Dbx            
-            intconst:i64 99|0x63 id:40
-    VP:-- <= $3v2$7
---- BB12 ---
-    ------------------
-    truebr label _L3 id:79        
-        eq:bool id:63            
-            $7:i32 id:62 attachinfo:Dbx            
-            intconst:i64 102|0x66 id:42
-    VP:-- <= $3v2$7
---- BB16 ---
-    ------------------
-    truebr label _L4 id:82        
-        eq:bool id:59            
-            $7:i32 id:58 attachinfo:Dbx            
-            intconst:i64 118|0x76 id:44
-    VP:-- <= $3v2$7
---- BB20 ---
-    ------------------
-    falsebr label _L8 id:85        
-        eq:bool id:4            
-            $7:i32 id:55 attachinfo:Dbx            
-            intconst:i64 86|0x56 id:46
-    VP:-- <= $3v2$7
---- BB21 ---
-    ------------------
-    goto label _L5 id:31
-    VP:-- <= --
---- BB33 ---
-    ------------------
-
-    [17]      a = b;
-
-    st:*<1> 'a' decl:char  *  a  id:25 attachinfo:Dbx,MDSSA        
-        ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
-    VP:-- <= --
-    ------------------
-
-    [18]      break;
-
-    goto label _L8 id:93 attachinfo:Dbx
-    VP:-- <= --
---- BB35 ---
-    ------------------
-
-    [20]      d = 1;
-
-    st:i32 'd' decl:int  d  id:30 attachinfo:Dbx,MDSSA        
-        intconst:i32 1|0x1 id:29 attachinfo:Dbx
-    VP:-- <= --
-    ------------------
-
-    [21]      break;
-
-    goto label _L8 id:94 attachinfo:Dbx
-    VP:-- <= --
---- BB37 ---
-    ------------------
-
-    [23]      d = 0;
-
-    st:i32 'd' decl:int  d  id:35 attachinfo:Dbx,MDSSA        
-        intconst:i32 0|0x0 id:34 attachinfo:Dbx
-    VP:-- <= --
---- BB39 ---
-    ------------------
-
-    [12]  while ((c = foo (argc, argv)) != -1)
-
-    $6:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:14 attachinfo:Dbx,MDSSA
-        ld:i32 'argc' decl:int  argc  param0 id:15 attachinfo:Dbx,MDSSA
-        ld:*<4> 'argv' decl:char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
-    VP:$1v3$6  <= --
---- BB40 ---
-    ------------------
-    st:i32 'c' decl:register int  c  id:17 attachinfo:Dbx,MDSSA        
-        $6:i32 id:18 attachinfo:Dbx
-    VP:-- <= $1v3$6
-    ------------------
-    goto label _L6 id:47
-    VP:-- <= --
---- BB42 ---
-    ------------------
-
-    [26]  noret ();
-
-    $8:i8 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
-    VP:$2v1$8  <= --
---- BB43 ---
-    ------------------
-
-    [27]  return 0;
-
-    return id:53 attachinfo:Dbx
-        intconst:i32 0|0x0 id:52 attachinfo:Dbx
-    VP:-- <= --
-==---- DUMP MDSSA Manager 'main' ----==
---- BB45 ---
 --- BB1 ---
-
-
-[11]  d = 1;
-
-st:i32 'd' decl:int  d  id:3 attachinfo:Dbx,MDSSA    
-    intconst:i32 1|0x1 id:2 attachinfo:Dbx
-  ----
-  st:i32 'd' decl:int  d  id:3 attachinfo:Dbx,MDSSA      
-      intconst:i32 1|0x1 id:2 attachinfo:Dbx
-  --DEFREF:(MD9V1,-,NextDEF:MD9V2,,NextDEF:MD9V3)|UsedBy:
-  --DEFREF:(MD2V1,-,NextDEF:MD2V2)|UsedBy:
-
-
-[12]  while ((c = foo (argc, argv)) != -1)
-
-$4:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:8 attachinfo:Dbx,MDSSA
-    ld:i32 'argc' decl:int  argc  param0 id:6 attachinfo:Dbx,MDSSA
-    ld:*<4> 'argv' decl:char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
-  ----
-  $4:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:8 attachinfo:Dbx,MDSSA
-      ld:i32 'argc' decl:int  argc  param0 id:6 attachinfo:Dbx,MDSSA
-      ld:*<4> 'argv' decl:char  *  *  argv  param1 id:7 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V2,PrevDEF:MD2V1)|UsedBy:id(id:108)
-  --DEFREF:(MD3V1,-,NextDEF:MD3V2,,NextDEF:MD3V3)|UsedBy:
-  ld:i32 'argc' decl:int  argc  id:6 attachinfo:Dbx,MDSSA
-  --USEREF:MD13V0
-  ld:*<4> 'argv' decl:char  *  *  argv  id:7 attachinfo:Dbx,MDSSA
-  --USEREF:MD14V0
---- BB2 ---
-
-st:i32 'c' decl:register int  c  id:10 attachinfo:Dbx,MDSSA    
-    $4:i32 id:9 attachinfo:Dbx
-  ----
-  st:i32 'c' decl:register int  c  id:10 attachinfo:Dbx,MDSSA      
-      $4:i32 id:9 attachinfo:Dbx
-  --DEFREF:(MD15V1,-)|UsedBy:id(id:110)
---- BB3 ---
-Phi: MD15V2 <- MD15V1(id:110)(BB2), MD15V3(id:109)(BB40)|UsedBy:ld(id:19)
-Phi: MD2V3 <- MD2V2(id:108)(BB2), MD2V8(id:107)(BB40)|UsedBy:ld(id:24),id(id:99)
-
-$5:i32 = phi id:48
-    $4:i32 id:103
-    $6:i32 id:102
-
-truebr label _L7 id:51 attachinfo:Dbx    
-    eq:bool id:13 attachinfo:Dbx        
-        $5:i32 id:1 attachinfo:Dbx        
-        intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
---- BB4 ---
-
-
-[13]    switch (c) {
-
-stpr $7:i32 id:54 attachinfo:Dbx    
-    ld:i32 'c' decl:register int  c  id:19 attachinfo:Dbx,MDSSA
-  ----
-  ld:i32 'c' decl:register int  c  id:19 attachinfo:Dbx,MDSSA
-  --USEREF:MD15V2
-
-truebr label _L1 id:73    
-    eq:bool id:71        
-        $7:i32 id:70 attachinfo:Dbx        
-        intconst:i64 115|0x73 id:38
---- BB8 ---
-
-truebr label _L2 id:76    
-    eq:bool id:67        
-        $7:i32 id:66 attachinfo:Dbx        
-        intconst:i64 99|0x63 id:40
---- BB12 ---
-
-truebr label _L3 id:79    
-    eq:bool id:63        
-        $7:i32 id:62 attachinfo:Dbx        
-        intconst:i64 102|0x66 id:42
---- BB16 ---
-
-truebr label _L4 id:82    
-    eq:bool id:59        
-        $7:i32 id:58 attachinfo:Dbx        
-        intconst:i64 118|0x76 id:44
---- BB20 ---
-
-falsebr label _L8 id:85    
-    eq:bool id:4        
-        $7:i32 id:55 attachinfo:Dbx        
-        intconst:i64 86|0x56 id:46
---- BB21 ---
-
-goto label _L5 id:31
---- BB33 ---
-
-
-[17]      a = b;
-
-st:*<1> 'a' decl:char  *  a  id:25 attachinfo:Dbx,MDSSA    
-    ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
-  ----
-  st:*<1> 'a' decl:char  *  a  id:25 attachinfo:Dbx,MDSSA      
-      ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V6,PrevDEF:MD2V3)|UsedBy:id(id:106)
-  --DEFREF:(MD7V1,-)|UsedBy:
-  ld:*<1> 'b' decl:char  *  b  id:24 attachinfo:Dbx,MDSSA
-  --USEREF:MD8V0,MD2V3
-
-
-[18]      break;
-
-goto label _L8 id:93 attachinfo:Dbx
---- BB35 ---
-
-
-[20]      d = 1;
-
-st:i32 'd' decl:int  d  id:30 attachinfo:Dbx,MDSSA    
-    intconst:i32 1|0x1 id:29 attachinfo:Dbx
-  ----
-  st:i32 'd' decl:int  d  id:30 attachinfo:Dbx,MDSSA      
-      intconst:i32 1|0x1 id:29 attachinfo:Dbx
-  --DEFREF:(MD9V3,PrevDEF:MD9V1)|UsedBy:
-  --DEFREF:(MD2V5,PrevDEF:MD2V3)|UsedBy:id(id:105)
-
-
-[21]      break;
-
-goto label _L8 id:94 attachinfo:Dbx
---- BB37 ---
-
-
-[23]      d = 0;
-
-st:i32 'd' decl:int  d  id:35 attachinfo:Dbx,MDSSA    
-    intconst:i32 0|0x0 id:34 attachinfo:Dbx
-  ----
-  st:i32 'd' decl:int  d  id:35 attachinfo:Dbx,MDSSA      
-      intconst:i32 0|0x0 id:34 attachinfo:Dbx
-  --DEFREF:(MD9V2,PrevDEF:MD9V1)|UsedBy:
-  --DEFREF:(MD2V4,PrevDEF:MD2V3)|UsedBy:id(id:104)
---- BB39 ---
-Phi: MD2V7 <- MD2V6(id:106)(BB33), MD2V5(id:105)(BB35), MD2V4(id:104)(BB37), MD2V3(id:99)(BB20)|UsedBy:
-
-
-[12]  while ((c = foo (argc, argv)) != -1)
-
-$6:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:14 attachinfo:Dbx,MDSSA
-    ld:i32 'argc' decl:int  argc  param0 id:15 attachinfo:Dbx,MDSSA
-    ld:*<4> 'argv' decl:char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
-  ----
-  $6:i32 = call 'foo' decl:int  foo (int ,char  *  * ,) id:14 attachinfo:Dbx,MDSSA
-      ld:i32 'argc' decl:int  argc  param0 id:15 attachinfo:Dbx,MDSSA
-      ld:*<4> 'argv' decl:char  *  *  argv  param1 id:16 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V8,PrevDEF:MD2V7)|UsedBy:id(id:107)
-  --DEFREF:(MD3V2,PrevDEF:MD3V1)|UsedBy:
-  ld:i32 'argc' decl:int  argc  id:15 attachinfo:Dbx,MDSSA
-  --USEREF:MD13V0
-  ld:*<4> 'argv' decl:char  *  *  argv  id:16 attachinfo:Dbx,MDSSA
-  --USEREF:MD14V0
---- BB40 ---
-
-st:i32 'c' decl:register int  c  id:17 attachinfo:Dbx,MDSSA    
-    $6:i32 id:18 attachinfo:Dbx
-  ----
-  st:i32 'c' decl:register int  c  id:17 attachinfo:Dbx,MDSSA      
-      $6:i32 id:18 attachinfo:Dbx
-  --DEFREF:(MD15V3,PrevDEF:MD15V2)|UsedBy:id(id:109)
-
-goto label _L6 id:47
---- BB42 ---
-
-
-[26]  noret ();
-
-$8:i8 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
-  ----
-  $8:i8 = call 'noret' decl:void  noret () id:50 attachinfo:Dbx,MDSSA
-  --DEFREF:(MD2V9,PrevDEF:MD2V3)|UsedBy:
-  --DEFREF:(MD3V3,PrevDEF:MD3V1)|UsedBy:
---- BB43 ---
-
-
-[27]  return 0;
-
-return id:53 attachinfo:Dbx
-    intconst:i32 0|0x0 id:52 attachinfo:Dbx
+    region 'main',id:2 id:1
 ==---- DUMP PRSSA Manager '.program' ----==
 ==---- DUMP PRSSAMgr:VPR '.program' ----==
 
@@ -1929,847 +1362,132 @@ return id:53 attachinfo:Dbx
 --- BB1 ---
     ------------------
     region 'main',id:2 id:1
-        region-info:
-        ==---- REGION(2):main:int  main (int  argc ,char  *  *  argv ,) ----==
-        FORMAL PARAMETERS:
-          -- param0
-          Var10(argc):local,formal_param,align(4),i32,decl:'int  argc ' param1            
-            MD13 -- base:Var10(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
-          Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv ' param2            
-            MD14 -- base:Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv ' -- ofst:0 -- size:4
-        VARIABLES:25
-          Var10(argc):local,formal_param,align(4),i32,decl:'int  argc '            
-            MD13 -- base:Var10(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
-          Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv '            
-            MD14 -- base:Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv ' -- ofst:0 -- size:4
-          Var12(c):local,align(4),i32,decl:'register int  c '            
-            MD15 -- base:Var12(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
-          Var21(pr3):local,unallocable,i32,decl:''            
-            MD12 -- base:Var21(pr3):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-          Var22(pr1):local,unallocable,i32,decl:''            
-            MD16 -- base:Var22(pr1):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-          Var23(pr2):local,unallocable,i8,decl:''            
-            MD17 -- base:Var23(pr2):local,unallocable,i8,decl:'' -- ofst:0 -- size:1
-          Var24(pr4):local,unallocable,i32,decl:''            
-            MD18 -- base:Var24(pr4):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-          Var25(pr5):local,unallocable,i32,decl:''            
-            MD19 -- base:Var25(pr5):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-          Var26(pr6):local,unallocable,i32,decl:''            
-            MD20 -- base:Var26(pr6):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-          Var27(pr7):local,unallocable,i32,decl:''            
-            MD21 -- base:Var27(pr7):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-          Var28(pr8):local,unallocable,i8,decl:''            
-            MD22 -- base:Var28(pr8):local,unallocable,i8,decl:'' -- ofst:0 -- size:1
-          Var29(pr9):local,unallocable,i32,decl:''            
-            MD23 -- base:Var29(pr9):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-          Var30(pr10):local,unallocable,i64,decl:''            
-            MD24 -- base:Var30(pr10):local,unallocable,i64,decl:'' -- ofst:0 -- size:8
-          Var31(pr11):local,unallocable,i64,decl:''            
-            MD25 -- base:Var31(pr11):local,unallocable,i64,decl:'' -- ofst:0 -- size:8
-          Var32(pr12):local,unallocable,i64,decl:''            
-            MD26 -- base:Var32(pr12):local,unallocable,i64,decl:'' -- ofst:0 -- size:8
-          Var33(pr13):local,unallocable,i64,decl:''            
-            MD27 -- base:Var33(pr13):local,unallocable,i64,decl:'' -- ofst:0 -- size:8
-          Var34(pr14):local,unallocable,i64,decl:''            
-            MD28 -- base:Var34(pr14):local,unallocable,i64,decl:'' -- ofst:0 -- size:8
-          Var95(func_level_var_0):local,spill_loc,align(4),u32,decl:''
-          Var96(func_level_var_1):local,spill_loc,align(4),u32,decl:''
-          Var97(func_level_var_2):local,spill_loc,align(4),u32,decl:''
-          Var98(func_level_var_3):local,spill_loc,align(4),u32,decl:''
-          Var99(func_level_var_4):local,spill_loc,align(4),u32,decl:''
-          Var100(func_level_var_5):local,spill_loc,align(4),u32,decl:''
-          Var101(func_level_var_6):local,spill_loc,align(4),u32,decl:''
-          Var102(func_level_var_7):local,spill_loc,align(4),u32,decl:''
-        RegionMayDef(OuterRegion):
-        RegionMayUse(OuterRegion):MD2,MD3,MD8
-        MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-        MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-        MD8 -- base:Var7(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'char  *  b ' -- ofst:0 -- size:4
-        'main' use 66KB memory
-        The number of IR Total:120, id:2(1.7)%, ld:6(5.0)%, st:6(5.0)%, lda:0(0.0)%,call:3(2.5)%, icall:0(0.0)%, pr:20(16.7)%, stpr:9(7.5)%, ist:0(0.0)%,bin:7(5.8)%, una:5(4.2)%
-        ==---- DUMP IRBBList 'main' ----==
-        ----- BB45 --- rpo:0 -----
-        ATTR:entry_bb fall_through 
-        STMT NUM:0
-        
-        ----- BB1 --- rpo:5 -----
-        ATTR:fall_through 
-        STMT NUM:2
-
-           [11]  d = 1;
-
-           st:i32 'd' id:3 attachinfo:Dbx               
-               intconst:i32 1|0x1 id:2 attachinfo:Dbx
-
-           [12]  while ((c = foo (argc, argv)) != -1)
-
-           $4:i32 = call 'foo'  id:8 attachinfo:Dbx
-               ld:i32 'argc' param0 id:6 attachinfo:Dbx
-               ld:*<4> 'argv' param1 id:7 attachinfo:Dbx
-        
-        ----- BB2 --- rpo:10 -----
-        ATTR:
-        STMT NUM:2
-           st:i32 'c' id:10 attachinfo:Dbx               
-               $4:i32 id:9 attachinfo:Dbx
-           stpr $9:i32 id:100               
-               $4:i32 id:112
-        
-        ----- BB3 --- rpo:15 -----
-        LABEL:_L6 
-        ATTR:fall_through branch_target 
-        STMT NUM:2
-           stpr $5:i32 id:115               
-               $9:i32 id:111
-           truebr label _L7 id:51 attachinfo:Dbx               
-               eq:bool id:13 attachinfo:Dbx                   
-                   $5:i32 id:1 attachinfo:Dbx                   
-                   intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
-        
-        ----- BB4 --- rpo:30 -----
-        ATTR:fall_through 
-        STMT NUM:3
-
-           [13]    switch (c) {
-
-           stpr $7:i32 id:54 attachinfo:Dbx               
-               ld:i32 'c' id:19 attachinfo:Dbx
-           stpr $10:i64 id:48 attachinfo:Dbx               
-               cvt:i64 id:57 attachinfo:Dbx                   
-                   $7:i32 id:70 attachinfo:Dbx
-           truebr label _L1 id:73               
-               eq:bool id:71                   
-                   $10:i64 id:99 attachinfo:Dbx                   
-                   intconst:i64 115|0x73 id:38
-        
-        ----- BB8 --- rpo:35 -----
-        LABEL:_L9 
-        ATTR:fall_through branch_target 
-        STMT NUM:2
-           stpr $11:i64 id:116 attachinfo:Dbx               
-               cvt:i64 id:61 attachinfo:Dbx                   
-                   $7:i32 id:66 attachinfo:Dbx
-           truebr label _L2 id:76               
-               eq:bool id:67                   
-                   $11:i64 id:104 attachinfo:Dbx                   
-                   intconst:i64 99|0x63 id:40
-        
-        ----- BB12 --- rpo:40 -----
-        LABEL:_L11 
-        ATTR:fall_through branch_target 
-        STMT NUM:2
-           stpr $12:i64 id:117 attachinfo:Dbx               
-               cvt:i64 id:65 attachinfo:Dbx                   
-                   $7:i32 id:62 attachinfo:Dbx
-           truebr label _L3 id:79               
-               eq:bool id:63                   
-                   $12:i64 id:105 attachinfo:Dbx                   
-                   intconst:i64 102|0x66 id:42
-        
-        ----- BB16 --- rpo:45 -----
-        LABEL:_L13 
-        ATTR:fall_through branch_target 
-        STMT NUM:2
-           stpr $13:i64 id:118 attachinfo:Dbx               
-               cvt:i64 id:69 attachinfo:Dbx                   
-                   $7:i32 id:58 attachinfo:Dbx
-           truebr label _L4 id:82               
-               eq:bool id:59                   
-                   $13:i64 id:106 attachinfo:Dbx                   
-                   intconst:i64 118|0x76 id:44
-        
-        ----- BB20 --- rpo:50 -----
-        LABEL:_L15 
-        ATTR:fall_through branch_target 
-        STMT NUM:2
-           stpr $14:i64 id:119 attachinfo:Dbx               
-               cvt:i64 id:95 attachinfo:Dbx                   
-                   $7:i32 id:55 attachinfo:Dbx
-           falsebr label _L8 id:85               
-               eq:bool id:4                   
-                   $14:i64 id:107 attachinfo:Dbx                   
-                   intconst:i64 86|0x56 id:46
-        
-        ----- BB21 --- rpo:55 -----
-        ATTR:
-        STMT NUM:1
-           goto label _L5 id:31
-        
-        ----- BB33 --- rpo:70 -----
-        LABEL:_L18 _L16 _L14 _L12 _L10 _L1 _L2 _L3 
-        ATTR:branch_target 
-        STMT NUM:2
-
-           [17]      a = b;
-
-           st:*<1> 'a' id:25 attachinfo:Dbx               
-               ld:*<1> 'b' id:24 attachinfo:Dbx
-
-           [18]      break;
-
-           goto label _L8 id:93 attachinfo:Dbx
-        
-        ----- BB35 --- rpo:65 -----
-        LABEL:_L4 
-        ATTR:branch_target 
-        STMT NUM:2
-
-           [20]      d = 1;
-
-           st:i32 'd' id:30 attachinfo:Dbx               
-               intconst:i32 1|0x1 id:29 attachinfo:Dbx
-
-           [21]      break;
-
-           goto label _L8 id:94 attachinfo:Dbx
-        
-        ----- BB37 --- rpo:60 -----
-        LABEL:_L5 
-        ATTR:branch_target 
-        STMT NUM:1
-
-           [23]      d = 0;
-
-           st:i32 'd' id:35 attachinfo:Dbx               
-               intconst:i32 0|0x0 id:34 attachinfo:Dbx
-        
-        ----- BB39 --- rpo:75 -----
-        LABEL:_L8 
-        ATTR:fall_through branch_target 
-        STMT NUM:1
-
-           [12]  while ((c = foo (argc, argv)) != -1)
-
-           $6:i32 = call 'foo'  id:14 attachinfo:Dbx
-               ld:i32 'argc' param0 id:15 attachinfo:Dbx
-               ld:*<4> 'argv' param1 id:16 attachinfo:Dbx
-        
-        ----- BB40 --- rpo:80 -----
-        ATTR:
-        STMT NUM:3
-           st:i32 'c' id:17 attachinfo:Dbx               
-               $6:i32 id:18 attachinfo:Dbx
-           stpr $9:i32 id:114               
-               $6:i32 id:113
-           goto label _L6 id:47
-        
-        ----- BB42 --- rpo:20 -----
-        LABEL:_L7 
-        ATTR:fall_through branch_target 
-        STMT NUM:1
-
-           [26]  noret ();
-
-           $8:i8 = call 'noret'  id:50 attachinfo:Dbx
-        
-        ----- BB43 --- rpo:25 -----
-        ATTR:fall_through 
-        STMT NUM:1
-
-           [27]  return 0;
-
-           return id:53 attachinfo:Dbx
-               intconst:i32 0|0x0 id:52 attachinfo:Dbx
-        
     VP:-- <= --
 ==---- DUMP Dominator Frontier Control Set ----==
 
-BB3 DF set:
 BB1 DF set:
+BB3 DF set:
+==---- DUMP MDSSA Manager '.program' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var13(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var4(noret):global,,addr_taken,func_decl,align(4),i8,decl:'void  noret ()' -- ofst:unbound
-MD6 -- base:Var5(foo):global,,addr_taken,func_decl,align(4),i32,decl:'int  foo (int ,char  *  * ,)' -- ofst:unbound
-MD7 -- base:Var6(a):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'char  *  a ' -- ofst:0 -- size:4
-MD8 -- base:Var7(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'char  *  b ' -- ofst:0 -- size:4
-MD9 -- base:Var8(d):global,,addr_taken,align(4),i32,decl:'int  d ' -- ofst:0 -- size:4
-MD10 -- base:Var9(main):global,,addr_taken,func_decl,align(4),i32,decl:'int  main (int  argc ,char  *  *  argv ,)' -- ofst:unbound
-MD11 -- base:Var14(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD13 -- base:Var10(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
-MD14 -- base:Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv ' -- ofst:0 -- size:4
-MD15 -- base:Var12(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
-==---- DUMP MDSSA Manager '.program' ----==
+MD4 -- base:Var67(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+MD5 -- base:Var58(noret):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'void  noret ()' -- ofst:unbound
+MD6 -- base:Var59(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int ,unsigned char  *  * ,)' -- ofst:unbound
+MD7 -- base:Var60(a):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  a ' -- ofst:0 -- size:4
+MD8 -- base:Var61(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  b ' -- ofst:0 -- size:4
+MD9 -- base:Var62(d):global,,addr_taken,align(4),i32,decl:'int  d ' -- ofst:0 -- size:4
+MD10 -- base:Var63(main):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  main (int  argc ,unsigned char  *  *  argv ,)' -- ofst:unbound
+MD11 -- base:Var68(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD13 -- base:Var64(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
+MD14 -- base:Var65(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  argv ' -- ofst:0 -- size:4
+MD15 -- base:Var66(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
+==-- DUMP MDSSAMgr VOpndRef '.program' --==
+
 --- BB3 ---
 --- BB1 ---
 
 region 'main',id:2 id:1
-    region-info:
-    ==---- REGION(2):main:int  main (int  argc ,char  *  *  argv ,) ----==
-    FORMAL PARAMETERS:
-      -- param0
-      Var10(argc):local,formal_param,align(4),i32,decl:'int  argc ' param1        
-        MD13 -- base:Var10(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
-      Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv ' param2        
-        MD14 -- base:Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv ' -- ofst:0 -- size:4
-    VARIABLES:25
-      Var10(argc):local,formal_param,align(4),i32,decl:'int  argc '        
-        MD13 -- base:Var10(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
-      Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv '        
-        MD14 -- base:Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv ' -- ofst:0 -- size:4
-      Var12(c):local,align(4),i32,decl:'register int  c '        
-        MD15 -- base:Var12(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
-      Var21(pr3):local,unallocable,i32,decl:''        
-        MD12 -- base:Var21(pr3):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-      Var22(pr1):local,unallocable,i32,decl:''        
-        MD16 -- base:Var22(pr1):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-      Var23(pr2):local,unallocable,i8,decl:''        
-        MD17 -- base:Var23(pr2):local,unallocable,i8,decl:'' -- ofst:0 -- size:1
-      Var24(pr4):local,unallocable,i32,decl:''        
-        MD18 -- base:Var24(pr4):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-      Var25(pr5):local,unallocable,i32,decl:''        
-        MD19 -- base:Var25(pr5):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-      Var26(pr6):local,unallocable,i32,decl:''        
-        MD20 -- base:Var26(pr6):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-      Var27(pr7):local,unallocable,i32,decl:''        
-        MD21 -- base:Var27(pr7):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-      Var28(pr8):local,unallocable,i8,decl:''        
-        MD22 -- base:Var28(pr8):local,unallocable,i8,decl:'' -- ofst:0 -- size:1
-      Var29(pr9):local,unallocable,i32,decl:''        
-        MD23 -- base:Var29(pr9):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-      Var30(pr10):local,unallocable,i64,decl:''        
-        MD24 -- base:Var30(pr10):local,unallocable,i64,decl:'' -- ofst:0 -- size:8
-      Var31(pr11):local,unallocable,i64,decl:''        
-        MD25 -- base:Var31(pr11):local,unallocable,i64,decl:'' -- ofst:0 -- size:8
-      Var32(pr12):local,unallocable,i64,decl:''        
-        MD26 -- base:Var32(pr12):local,unallocable,i64,decl:'' -- ofst:0 -- size:8
-      Var33(pr13):local,unallocable,i64,decl:''        
-        MD27 -- base:Var33(pr13):local,unallocable,i64,decl:'' -- ofst:0 -- size:8
-      Var34(pr14):local,unallocable,i64,decl:''        
-        MD28 -- base:Var34(pr14):local,unallocable,i64,decl:'' -- ofst:0 -- size:8
-      Var95(func_level_var_0):local,spill_loc,align(4),u32,decl:''
-      Var96(func_level_var_1):local,spill_loc,align(4),u32,decl:''
-      Var97(func_level_var_2):local,spill_loc,align(4),u32,decl:''
-      Var98(func_level_var_3):local,spill_loc,align(4),u32,decl:''
-      Var99(func_level_var_4):local,spill_loc,align(4),u32,decl:''
-      Var100(func_level_var_5):local,spill_loc,align(4),u32,decl:''
-      Var101(func_level_var_6):local,spill_loc,align(4),u32,decl:''
-      Var102(func_level_var_7):local,spill_loc,align(4),u32,decl:''
-    RegionMayDef(OuterRegion):
-    RegionMayUse(OuterRegion):MD2,MD3,MD8
-    MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-    MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-    MD8 -- base:Var7(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'char  *  b ' -- ofst:0 -- size:4
-    'main' use 66KB memory
-    The number of IR Total:120, id:2(1.7)%, ld:6(5.0)%, st:6(5.0)%, lda:0(0.0)%,call:3(2.5)%, icall:0(0.0)%, pr:20(16.7)%, stpr:9(7.5)%, ist:0(0.0)%,bin:7(5.8)%, una:5(4.2)%
-    ==---- DUMP IRBBList 'main' ----==
-    ----- BB45 --- rpo:0 -----
-    ATTR:entry_bb fall_through 
-    STMT NUM:0
-    
-    ----- BB1 --- rpo:5 -----
-    ATTR:fall_through 
-    STMT NUM:2
-
-       [11]  d = 1;
-
-       st:i32 'd' id:3 attachinfo:Dbx           
-           intconst:i32 1|0x1 id:2 attachinfo:Dbx
-
-       [12]  while ((c = foo (argc, argv)) != -1)
-
-       $4:i32 = call 'foo'  id:8 attachinfo:Dbx
-           ld:i32 'argc' param0 id:6 attachinfo:Dbx
-           ld:*<4> 'argv' param1 id:7 attachinfo:Dbx
-    
-    ----- BB2 --- rpo:10 -----
-    ATTR:
-    STMT NUM:2
-       st:i32 'c' id:10 attachinfo:Dbx           
-           $4:i32 id:9 attachinfo:Dbx
-       stpr $9:i32 id:100           
-           $4:i32 id:112
-    
-    ----- BB3 --- rpo:15 -----
-    LABEL:_L6 
-    ATTR:fall_through branch_target 
-    STMT NUM:2
-       stpr $5:i32 id:115           
-           $9:i32 id:111
-       truebr label _L7 id:51 attachinfo:Dbx           
-           eq:bool id:13 attachinfo:Dbx               
-               $5:i32 id:1 attachinfo:Dbx               
-               intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
-    
-    ----- BB4 --- rpo:30 -----
-    ATTR:fall_through 
-    STMT NUM:3
-
-       [13]    switch (c) {
-
-       stpr $7:i32 id:54 attachinfo:Dbx           
-           ld:i32 'c' id:19 attachinfo:Dbx
-       stpr $10:i64 id:48 attachinfo:Dbx           
-           cvt:i64 id:57 attachinfo:Dbx               
-               $7:i32 id:70 attachinfo:Dbx
-       truebr label _L1 id:73           
-           eq:bool id:71               
-               $10:i64 id:99 attachinfo:Dbx               
-               intconst:i64 115|0x73 id:38
-    
-    ----- BB8 --- rpo:35 -----
-    LABEL:_L9 
-    ATTR:fall_through branch_target 
-    STMT NUM:2
-       stpr $11:i64 id:116 attachinfo:Dbx           
-           cvt:i64 id:61 attachinfo:Dbx               
-               $7:i32 id:66 attachinfo:Dbx
-       truebr label _L2 id:76           
-           eq:bool id:67               
-               $11:i64 id:104 attachinfo:Dbx               
-               intconst:i64 99|0x63 id:40
-    
-    ----- BB12 --- rpo:40 -----
-    LABEL:_L11 
-    ATTR:fall_through branch_target 
-    STMT NUM:2
-       stpr $12:i64 id:117 attachinfo:Dbx           
-           cvt:i64 id:65 attachinfo:Dbx               
-               $7:i32 id:62 attachinfo:Dbx
-       truebr label _L3 id:79           
-           eq:bool id:63               
-               $12:i64 id:105 attachinfo:Dbx               
-               intconst:i64 102|0x66 id:42
-    
-    ----- BB16 --- rpo:45 -----
-    LABEL:_L13 
-    ATTR:fall_through branch_target 
-    STMT NUM:2
-       stpr $13:i64 id:118 attachinfo:Dbx           
-           cvt:i64 id:69 attachinfo:Dbx               
-               $7:i32 id:58 attachinfo:Dbx
-       truebr label _L4 id:82           
-           eq:bool id:59               
-               $13:i64 id:106 attachinfo:Dbx               
-               intconst:i64 118|0x76 id:44
-    
-    ----- BB20 --- rpo:50 -----
-    LABEL:_L15 
-    ATTR:fall_through branch_target 
-    STMT NUM:2
-       stpr $14:i64 id:119 attachinfo:Dbx           
-           cvt:i64 id:95 attachinfo:Dbx               
-               $7:i32 id:55 attachinfo:Dbx
-       falsebr label _L8 id:85           
-           eq:bool id:4               
-               $14:i64 id:107 attachinfo:Dbx               
-               intconst:i64 86|0x56 id:46
-    
-    ----- BB21 --- rpo:55 -----
-    ATTR:
-    STMT NUM:1
-       goto label _L5 id:31
-    
-    ----- BB33 --- rpo:70 -----
-    LABEL:_L18 _L16 _L14 _L12 _L10 _L1 _L2 _L3 
-    ATTR:branch_target 
-    STMT NUM:2
-
-       [17]      a = b;
-
-       st:*<1> 'a' id:25 attachinfo:Dbx           
-           ld:*<1> 'b' id:24 attachinfo:Dbx
-
-       [18]      break;
-
-       goto label _L8 id:93 attachinfo:Dbx
-    
-    ----- BB35 --- rpo:65 -----
-    LABEL:_L4 
-    ATTR:branch_target 
-    STMT NUM:2
-
-       [20]      d = 1;
-
-       st:i32 'd' id:30 attachinfo:Dbx           
-           intconst:i32 1|0x1 id:29 attachinfo:Dbx
-
-       [21]      break;
-
-       goto label _L8 id:94 attachinfo:Dbx
-    
-    ----- BB37 --- rpo:60 -----
-    LABEL:_L5 
-    ATTR:branch_target 
-    STMT NUM:1
-
-       [23]      d = 0;
-
-       st:i32 'd' id:35 attachinfo:Dbx           
-           intconst:i32 0|0x0 id:34 attachinfo:Dbx
-    
-    ----- BB39 --- rpo:75 -----
-    LABEL:_L8 
-    ATTR:fall_through branch_target 
-    STMT NUM:1
-
-       [12]  while ((c = foo (argc, argv)) != -1)
-
-       $6:i32 = call 'foo'  id:14 attachinfo:Dbx
-           ld:i32 'argc' param0 id:15 attachinfo:Dbx
-           ld:*<4> 'argv' param1 id:16 attachinfo:Dbx
-    
-    ----- BB40 --- rpo:80 -----
-    ATTR:
-    STMT NUM:3
-       st:i32 'c' id:17 attachinfo:Dbx           
-           $6:i32 id:18 attachinfo:Dbx
-       stpr $9:i32 id:114           
-           $6:i32 id:113
-       goto label _L6 id:47
-    
-    ----- BB42 --- rpo:20 -----
-    LABEL:_L7 
-    ATTR:fall_through branch_target 
-    STMT NUM:1
-
-       [26]  noret ();
-
-       $8:i8 = call 'noret'  id:50 attachinfo:Dbx
-    
-    ----- BB43 --- rpo:25 -----
-    ATTR:fall_through 
-    STMT NUM:1
-
-       [27]  return 0;
-
-       return id:53 attachinfo:Dbx
-           intconst:i32 0|0x0 id:52 attachinfo:Dbx
-    
-==---- DUMP MDSSAMgr DU CHAIN '.program' ----==
+==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB3 ---
 --- BB1 ---
 region 'main',id:2 id:1
-    region-info:
-    ==---- REGION(2):main:int  main (int  argc ,char  *  *  argv ,) ----==
-    FORMAL PARAMETERS:
-      -- param0
-      Var10(argc):local,formal_param,align(4),i32,decl:'int  argc ' param1        
-        MD13 -- base:Var10(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
-      Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv ' param2        
-        MD14 -- base:Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv ' -- ofst:0 -- size:4
-    VARIABLES:25
-      Var10(argc):local,formal_param,align(4),i32,decl:'int  argc '        
-        MD13 -- base:Var10(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
-      Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv '        
-        MD14 -- base:Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv ' -- ofst:0 -- size:4
-      Var12(c):local,align(4),i32,decl:'register int  c '        
-        MD15 -- base:Var12(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
-      Var21(pr3):local,unallocable,i32,decl:''        
-        MD12 -- base:Var21(pr3):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-      Var22(pr1):local,unallocable,i32,decl:''        
-        MD16 -- base:Var22(pr1):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-      Var23(pr2):local,unallocable,i8,decl:''        
-        MD17 -- base:Var23(pr2):local,unallocable,i8,decl:'' -- ofst:0 -- size:1
-      Var24(pr4):local,unallocable,i32,decl:''        
-        MD18 -- base:Var24(pr4):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-      Var25(pr5):local,unallocable,i32,decl:''        
-        MD19 -- base:Var25(pr5):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-      Var26(pr6):local,unallocable,i32,decl:''        
-        MD20 -- base:Var26(pr6):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-      Var27(pr7):local,unallocable,i32,decl:''        
-        MD21 -- base:Var27(pr7):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-      Var28(pr8):local,unallocable,i8,decl:''        
-        MD22 -- base:Var28(pr8):local,unallocable,i8,decl:'' -- ofst:0 -- size:1
-      Var29(pr9):local,unallocable,i32,decl:''        
-        MD23 -- base:Var29(pr9):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
-      Var30(pr10):local,unallocable,i64,decl:''        
-        MD24 -- base:Var30(pr10):local,unallocable,i64,decl:'' -- ofst:0 -- size:8
-      Var31(pr11):local,unallocable,i64,decl:''        
-        MD25 -- base:Var31(pr11):local,unallocable,i64,decl:'' -- ofst:0 -- size:8
-      Var32(pr12):local,unallocable,i64,decl:''        
-        MD26 -- base:Var32(pr12):local,unallocable,i64,decl:'' -- ofst:0 -- size:8
-      Var33(pr13):local,unallocable,i64,decl:''        
-        MD27 -- base:Var33(pr13):local,unallocable,i64,decl:'' -- ofst:0 -- size:8
-      Var34(pr14):local,unallocable,i64,decl:''        
-        MD28 -- base:Var34(pr14):local,unallocable,i64,decl:'' -- ofst:0 -- size:8
-      Var95(func_level_var_0):local,spill_loc,align(4),u32,decl:''
-      Var96(func_level_var_1):local,spill_loc,align(4),u32,decl:''
-      Var97(func_level_var_2):local,spill_loc,align(4),u32,decl:''
-      Var98(func_level_var_3):local,spill_loc,align(4),u32,decl:''
-      Var99(func_level_var_4):local,spill_loc,align(4),u32,decl:''
-      Var100(func_level_var_5):local,spill_loc,align(4),u32,decl:''
-      Var101(func_level_var_6):local,spill_loc,align(4),u32,decl:''
-      Var102(func_level_var_7):local,spill_loc,align(4),u32,decl:''
-    RegionMayDef(OuterRegion):
-    RegionMayUse(OuterRegion):MD2,MD3,MD8
-    MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-    MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-    MD8 -- base:Var7(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'char  *  b ' -- ofst:0 -- size:4
-    'main' use 66KB memory
-    The number of IR Total:120, id:2(1.7)%, ld:6(5.0)%, st:6(5.0)%, lda:0(0.0)%,call:3(2.5)%, icall:0(0.0)%, pr:20(16.7)%, stpr:9(7.5)%, ist:0(0.0)%,bin:7(5.8)%, una:5(4.2)%
-    ==---- DUMP IRBBList 'main' ----==
-    ----- BB45 --- rpo:0 -----
-    ATTR:entry_bb fall_through 
-    STMT NUM:0
-    
-    ----- BB1 --- rpo:5 -----
-    ATTR:fall_through 
-    STMT NUM:2
 
-       [11]  d = 1;
+==---- DUMP DUMgr: IR REFERENCE '.program' ----==
 
-       st:i32 'd' id:3 attachinfo:Dbx           
-           intconst:i32 1|0x1 id:2 attachinfo:Dbx
-
-       [12]  while ((c = foo (argc, argv)) != -1)
-
-       $4:i32 = call 'foo'  id:8 attachinfo:Dbx
-           ld:i32 'argc' param0 id:6 attachinfo:Dbx
-           ld:*<4> 'argv' param1 id:7 attachinfo:Dbx
-    
-    ----- BB2 --- rpo:10 -----
-    ATTR:
-    STMT NUM:2
-       st:i32 'c' id:10 attachinfo:Dbx           
-           $4:i32 id:9 attachinfo:Dbx
-       stpr $9:i32 id:100           
-           $4:i32 id:112
-    
-    ----- BB3 --- rpo:15 -----
-    LABEL:_L6 
-    ATTR:fall_through branch_target 
-    STMT NUM:2
-       stpr $5:i32 id:115           
-           $9:i32 id:111
-       truebr label _L7 id:51 attachinfo:Dbx           
-           eq:bool id:13 attachinfo:Dbx               
-               $5:i32 id:1 attachinfo:Dbx               
-               intconst:i32 -1|0xffffffffffffffff id:36 attachinfo:Dbx
-    
-    ----- BB4 --- rpo:30 -----
-    ATTR:fall_through 
-    STMT NUM:3
-
-       [13]    switch (c) {
-
-       stpr $7:i32 id:54 attachinfo:Dbx           
-           ld:i32 'c' id:19 attachinfo:Dbx
-       stpr $10:i64 id:48 attachinfo:Dbx           
-           cvt:i64 id:57 attachinfo:Dbx               
-               $7:i32 id:70 attachinfo:Dbx
-       truebr label _L1 id:73           
-           eq:bool id:71               
-               $10:i64 id:99 attachinfo:Dbx               
-               intconst:i64 115|0x73 id:38
-    
-    ----- BB8 --- rpo:35 -----
-    LABEL:_L9 
-    ATTR:fall_through branch_target 
-    STMT NUM:2
-       stpr $11:i64 id:116 attachinfo:Dbx           
-           cvt:i64 id:61 attachinfo:Dbx               
-               $7:i32 id:66 attachinfo:Dbx
-       truebr label _L2 id:76           
-           eq:bool id:67               
-               $11:i64 id:104 attachinfo:Dbx               
-               intconst:i64 99|0x63 id:40
-    
-    ----- BB12 --- rpo:40 -----
-    LABEL:_L11 
-    ATTR:fall_through branch_target 
-    STMT NUM:2
-       stpr $12:i64 id:117 attachinfo:Dbx           
-           cvt:i64 id:65 attachinfo:Dbx               
-               $7:i32 id:62 attachinfo:Dbx
-       truebr label _L3 id:79           
-           eq:bool id:63               
-               $12:i64 id:105 attachinfo:Dbx               
-               intconst:i64 102|0x66 id:42
-    
-    ----- BB16 --- rpo:45 -----
-    LABEL:_L13 
-    ATTR:fall_through branch_target 
-    STMT NUM:2
-       stpr $13:i64 id:118 attachinfo:Dbx           
-           cvt:i64 id:69 attachinfo:Dbx               
-               $7:i32 id:58 attachinfo:Dbx
-       truebr label _L4 id:82           
-           eq:bool id:59               
-               $13:i64 id:106 attachinfo:Dbx               
-               intconst:i64 118|0x76 id:44
-    
-    ----- BB20 --- rpo:50 -----
-    LABEL:_L15 
-    ATTR:fall_through branch_target 
-    STMT NUM:2
-       stpr $14:i64 id:119 attachinfo:Dbx           
-           cvt:i64 id:95 attachinfo:Dbx               
-               $7:i32 id:55 attachinfo:Dbx
-       falsebr label _L8 id:85           
-           eq:bool id:4               
-               $14:i64 id:107 attachinfo:Dbx               
-               intconst:i64 86|0x56 id:46
-    
-    ----- BB21 --- rpo:55 -----
-    ATTR:
-    STMT NUM:1
-       goto label _L5 id:31
-    
-    ----- BB33 --- rpo:70 -----
-    LABEL:_L18 _L16 _L14 _L12 _L10 _L1 _L2 _L3 
-    ATTR:branch_target 
-    STMT NUM:2
-
-       [17]      a = b;
-
-       st:*<1> 'a' id:25 attachinfo:Dbx           
-           ld:*<1> 'b' id:24 attachinfo:Dbx
-
-       [18]      break;
-
-       goto label _L8 id:93 attachinfo:Dbx
-    
-    ----- BB35 --- rpo:65 -----
-    LABEL:_L4 
-    ATTR:branch_target 
-    STMT NUM:2
-
-       [20]      d = 1;
-
-       st:i32 'd' id:30 attachinfo:Dbx           
-           intconst:i32 1|0x1 id:29 attachinfo:Dbx
-
-       [21]      break;
-
-       goto label _L8 id:94 attachinfo:Dbx
-    
-    ----- BB37 --- rpo:60 -----
-    LABEL:_L5 
-    ATTR:branch_target 
-    STMT NUM:1
-
-       [23]      d = 0;
-
-       st:i32 'd' id:35 attachinfo:Dbx           
-           intconst:i32 0|0x0 id:34 attachinfo:Dbx
-    
-    ----- BB39 --- rpo:75 -----
-    LABEL:_L8 
-    ATTR:fall_through branch_target 
-    STMT NUM:1
-
-       [12]  while ((c = foo (argc, argv)) != -1)
-
-       $6:i32 = call 'foo'  id:14 attachinfo:Dbx
-           ld:i32 'argc' param0 id:15 attachinfo:Dbx
-           ld:*<4> 'argv' param1 id:16 attachinfo:Dbx
-    
-    ----- BB40 --- rpo:80 -----
-    ATTR:
-    STMT NUM:3
-       st:i32 'c' id:17 attachinfo:Dbx           
-           $6:i32 id:18 attachinfo:Dbx
-       stpr $9:i32 id:114           
-           $6:i32 id:113
-       goto label _L6 id:47
-    
-    ----- BB42 --- rpo:20 -----
-    LABEL:_L7 
-    ATTR:fall_through branch_target 
-    STMT NUM:1
-
-       [26]  noret ();
-
-       $8:i8 = call 'noret'  id:50 attachinfo:Dbx
-    
-    ----- BB43 --- rpo:25 -----
-    ATTR:fall_through 
-    STMT NUM:1
-
-       [27]  return 0;
-
-       return id:53 attachinfo:Dbx
-           intconst:i32 0|0x0 id:52 attachinfo:Dbx
-    
-==---- DUMP Dead Code Eliminiation '.program' ----==
-==-- Ineffect BB --==
---0- BB3		ineffect BB!
---0- BB1		ineffect BB!
-
-==---- DUMP IRBBList '.program' ----==
------ BB3 --- rpo:0 -----
-ATTR:entry_bb fall_through 
-STMT NUM:0
-
------ BB1 --- rpo:5 -----
-ATTR:fall_through 
-STMT NUM:0
-
-==---- DUMP PRSSA Manager '.program' ----==
-==---- DUMP PRSSAMgr:VPR '.program' ----==
-
+==---- DUMP ALL MD ----==
+MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD4 -- base:Var67(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+MD5 -- base:Var58(noret):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'void  noret ()' -- ofst:unbound
+MD6 -- base:Var59(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int ,unsigned char  *  * ,)' -- ofst:unbound
+MD7 -- base:Var60(a):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  a ' -- ofst:0 -- size:4
+MD8 -- base:Var61(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  b ' -- ofst:0 -- size:4
+MD9 -- base:Var62(d):global,,addr_taken,align(4),i32,decl:'int  d ' -- ofst:0 -- size:4
+MD10 -- base:Var63(main):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  main (int  argc ,unsigned char  *  *  argv ,)' -- ofst:unbound
+MD11 -- base:Var68(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD12 -- base:Var69(pr3):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD13 -- base:Var64(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
+MD14 -- base:Var65(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  argv ' -- ofst:0 -- size:4
+MD15 -- base:Var66(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
+MD16 -- base:Var70(pr1):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD17 -- base:Var71(pr2):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD18 -- base:Var72(pr4):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD19 -- base:Var73(pr5):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD20 -- base:Var74(pr6):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD21 -- base:Var75(pr7):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD22 -- base:Var76(pr8):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD23 -- base:Var77(pr9):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+==----==
+RegionMayDef(OuterRegion):
+RegionMayUse(OuterRegion):MD2,MD3
+MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 --- BB3 ---
 --- BB1 ---
+    region 'main',id:2 id:1
+
+==---- DUMP DUMgr: IR REFERENCE '.program' ----==
+
+==---- DUMP ALL MD ----==
+MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD4 -- base:Var67(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+MD5 -- base:Var58(noret):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'void  noret ()' -- ofst:unbound
+MD6 -- base:Var59(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int ,unsigned char  *  * ,)' -- ofst:unbound
+MD7 -- base:Var60(a):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  a ' -- ofst:0 -- size:4
+MD8 -- base:Var61(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  b ' -- ofst:0 -- size:4
+MD9 -- base:Var62(d):global,,addr_taken,align(4),i32,decl:'int  d ' -- ofst:0 -- size:4
+MD10 -- base:Var63(main):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  main (int  argc ,unsigned char  *  *  argv ,)' -- ofst:unbound
+MD11 -- base:Var68(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD12 -- base:Var69(pr3):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD13 -- base:Var64(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
+MD14 -- base:Var65(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  argv ' -- ofst:0 -- size:4
+MD15 -- base:Var66(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
+MD16 -- base:Var70(pr1):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD17 -- base:Var71(pr2):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD18 -- base:Var72(pr4):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD19 -- base:Var73(pr5):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD20 -- base:Var74(pr6):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD21 -- base:Var75(pr7):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD22 -- base:Var76(pr8):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+MD23 -- base:Var77(pr9):local,unallocable,i32,decl:'' -- ofst:0 -- size:4
+==----==
+RegionMayDef(OuterRegion):
+RegionMayUse(OuterRegion):MD2,MD3
+MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+--- BB3 ---
+--- BB1 ---
+    region 'main',id:2 id:1
 ==---- DUMP MDSSA Manager '.program' ----==
---- BB3 ---
---- BB1 ---
-==---- DUMP Dead Code Eliminiation '.program' ----==
-==-- Ineffect BB --==
---0- BB3		ineffect BB!
---0- BB1		ineffect BB!
-
-==---- DUMP IRBBList '.program' ----==
------ BB3 --- rpo:0 -----
-ATTR:entry_bb fall_through 
-STMT NUM:0
-
------ BB1 --- rpo:5 -----
-ATTR:fall_through 
-STMT NUM:0
-
-==---- DUMP PRSSA Manager '.program' ----==
-==---- DUMP PRSSAMgr:VPR '.program' ----==
-
---- BB3 ---
---- BB1 ---
-==---- DUMP MDSSA Manager '.program' ----==
---- BB3 ---
---- BB1 ---
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var13(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var4(noret):global,,addr_taken,func_decl,align(4),i8,decl:'void  noret ()' -- ofst:unbound
-MD6 -- base:Var5(foo):global,,addr_taken,func_decl,align(4),i32,decl:'int  foo (int ,char  *  * ,)' -- ofst:unbound
-MD7 -- base:Var6(a):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'char  *  a ' -- ofst:0 -- size:4
-MD8 -- base:Var7(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'char  *  b ' -- ofst:0 -- size:4
-MD9 -- base:Var8(d):global,,addr_taken,align(4),i32,decl:'int  d ' -- ofst:0 -- size:4
-MD10 -- base:Var9(main):global,,addr_taken,func_decl,align(4),i32,decl:'int  main (int  argc ,char  *  *  argv ,)' -- ofst:unbound
-MD11 -- base:Var14(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD13 -- base:Var10(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
-MD14 -- base:Var11(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'char  *  *  argv ' -- ofst:0 -- size:4
-MD15 -- base:Var12(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
-==---- DUMP MDSSA Manager '.program' ----==
---- BB3 ---
---- BB1 ---
-==---- DUMP MDSSAMgr DU CHAIN '.program' ----==
+MD4 -- base:Var67(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+MD5 -- base:Var58(noret):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'void  noret ()' -- ofst:unbound
+MD6 -- base:Var59(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int ,unsigned char  *  * ,)' -- ofst:unbound
+MD7 -- base:Var60(a):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  a ' -- ofst:0 -- size:4
+MD8 -- base:Var61(b):global,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  b ' -- ofst:0 -- size:4
+MD9 -- base:Var62(d):global,,addr_taken,align(4),i32,decl:'int  d ' -- ofst:0 -- size:4
+MD10 -- base:Var63(main):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  main (int  argc ,unsigned char  *  *  argv ,)' -- ofst:unbound
+MD11 -- base:Var68(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+MD13 -- base:Var64(argc):local,formal_param,align(4),i32,decl:'int  argc ' -- ofst:0 -- size:4
+MD14 -- base:Var65(argv):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  argv ' -- ofst:0 -- size:4
+MD15 -- base:Var66(c):local,align(4),i32,decl:'register int  c ' -- ofst:0 -- size:4
+==-- DUMP MDSSAMgr VOpndRef '.program' --==
 
 --- BB3 ---
 --- BB1 ---
-==---- DUMP Dead Code Eliminiation '.program' ----==
-==-- Ineffect BB --==
---0- BB3		ineffect BB!
---0- BB1		ineffect BB!
 
-==---- DUMP IRBBList '.program' ----==
------ BB3 --- rpo:0 -----
-ATTR:entry_bb fall_through 
-STMT NUM:0
-
------ BB1 --- rpo:5 -----
-ATTR:fall_through 
-STMT NUM:0
-
-==---- DUMP PRSSA Manager '.program' ----==
-==---- DUMP PRSSAMgr:VPR '.program' ----==
+region 'main',id:2 id:1
+==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB3 ---
 --- BB1 ---
-==---- DUMP MDSSA Manager '.program' ----==
---- BB3 ---
---- BB1 ---
+region 'main',id:2 id:1

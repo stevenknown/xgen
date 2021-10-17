@@ -64,14 +64,6 @@ void ARMRegion::simplify(OptCtx & oc)
 
     SimpCtx simp;
     simp.setSimpCFS();
-    SIMP_if(&simp) = true;
-    SIMP_doloop(&simp) = true;
-    SIMP_dowhile(&simp) = true;
-    SIMP_whiledo(&simp) = true;
-    SIMP_switch(&simp) = true;
-    SIMP_break(&simp) = true;
-    SIMP_continue(&simp) = true;
-    simp.setSimpCFS();
     simp.setSimpArray();
     simp.setSimpSelect();
     simp.setSimpLandLor();
@@ -84,11 +76,8 @@ void ARMRegion::simplify(OptCtx & oc)
 
     bool cfg_is_valid = getCFG() != nullptr && oc.is_cfg_valid();
     simplifyBBlist(getBBList(), &simp);
-    if (g_do_cfg &&
-        g_cst_bb_list &&
-        SIMP_need_recon_bblist(&simp) &&
-        reconstructBBList(oc) &&
-        cfg_is_valid) {
+    if (g_do_cfg && g_cst_bb_list && SIMP_need_recon_bblist(&simp) &&
+        reconstructBBList(oc) && cfg_is_valid) {
 
         //Simplification may generate new memory operations.
         ASSERT0(verifyMDRef());
@@ -109,8 +98,9 @@ void ARMRegion::simplify(OptCtx & oc)
         ASSERT0(getCFG()->verify());
 
         getCFG()->performMiscOpt(oc);
-    } else if (g_do_md_du_analysis || g_do_md_ssa) {
+    } else if (g_do_md_du_analysis || g_do_md_ssa) {    
         ASSERT0(verifyMDRef());
+        ASSERT0(verifyIRandBB(getBBList(), this));
     }
 
     //Insert int32->int64, int32<->f32, int32<->f64, int64<->f32, int64<->f64
@@ -179,13 +169,6 @@ bool ARMRegion::ARMHighProcess(OptCtx & oc)
 
     //Simplify control-structure to build CFG.
     simp.setSimpCFS();
-    SIMP_if(&simp) = true;
-    SIMP_doloop(&simp) = true;
-    SIMP_dowhile(&simp) = true;
-    SIMP_whiledo(&simp) = true;
-    SIMP_switch(&simp) = true;
-    SIMP_break(&simp) = true;
-    SIMP_continue(&simp) = true;
     setIRList(simplifyStmtList(getIRList(), &simp));
     ASSERT0(verifySimp(getIRList(), simp));
     ASSERT0(verifyIRList(getIRList(), nullptr, this));
@@ -195,8 +178,6 @@ bool ARMRegion::ARMHighProcess(OptCtx & oc)
     if (g_cst_bb_list) {
         constructBBList();
         ASSERT0(verifyIRandBB(getBBList(), this));
-        ASSERT0(verifyBBlist(*getBBList()));
-        setIRList(nullptr); //All IRs have been moved to each IRBB.
     }
 
     initPassMgr();
@@ -234,7 +215,8 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         getCFG()->performMiscOpt(oc);
     }
 
-    //Make MD id more grouped together.
+    //Assign PR and NonPR Var and MD sperately to make MD id more
+    //grouped together.
     getMDMgr()->assignMD(false, true);
     getMDMgr()->assignMD(true, false);
 
@@ -450,7 +432,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         ASSERT0(verifyMDDUChain(this));
     }
 
-    PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->queryPass(PASS_PR_SSA_MGR);
+    PRSSAMgr * ssamgr = (PRSSAMgr*)getPRSSAMgr();
     if (ssamgr != nullptr && ssamgr->is_valid()) {
         //NOTE: ssa destruction might violate classic DU chain.
         ssamgr->destruction(&oc);

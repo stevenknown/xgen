@@ -9,4 +9,5 @@ int main() {
     d = f <= 0 ? c : '$';
     putchar(d);
     printf("\nfinish\n");
+    return 0;
 }

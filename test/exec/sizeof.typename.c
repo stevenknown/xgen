@@ -1603,5 +1603,8 @@ typedef unsigned long long int uintmax_t;
 // intptr_t should be the native integer type on most sane systems.
 typedef intptr_t intnative_t;
 int main(){
-    printf("\nn=%d\n",sizeof(intmax_t));
+    if (8 != sizeof(intmax_t)) {
+        return -1;
+    }
+    return 0;
 }

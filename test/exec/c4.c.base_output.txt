@@ -1,16 +1,15 @@
 
-
-argc:1, *argv:c4.input.c
+argc:1, *argv:c4.input
 
  stmt 
 
  stmt 
 1: int main() { printf("Hello ARM!\n"); return 0; }
-    ENT  0
-    IMM  -161357816
+    ENT  
+    IMM  
     PSH 
     PRTF
-    ADJ  1
-    IMM  0
+    ADJ  
+    IMM  
     LEV 
     LEV 

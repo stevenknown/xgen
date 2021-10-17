@@ -115,8 +115,21 @@ protected:
     Stack<List<CaseValue*>*> m_case_list_stack; //for switch/case used only
     SMemPool * m_pool;
     LabelTab m_labtab;
-
 protected:
+    IR * convertCallee(Tree const* t, bool * is_direct,
+                       T2IRCtx const* cont);
+    //Handle return value buffer.
+    IR * convertCallReturnBuf(Type const* rettype, IR const* callee,
+                              UINT * return_val_size, Var ** retval_buf);
+    IR * convertCallReturnVal(IR * call, UINT return_val_size,
+                              Var * retval_buf, Type const* rettype,
+                              INT lineno);
+    IR * convertCallItself(Tree * t, IR * arglist,
+                           IR * callee, bool is_direct, INT lineno,
+                           T2IRCtx * cont);
+
+    IR * only_left_last(IR * head);
+
     void * xmalloc(INT size)
     {
         ASSERTN(size > 0, ("xmalloc: size less zero!"));
@@ -126,8 +139,6 @@ protected:
         ::memset(p, 0, size);
         return p;
     }
-
-    IR * only_left_last(IR * head);
 public:
     CTree2IR(Region * rg, Decl const* retty)
     {
@@ -156,7 +167,7 @@ public:
     //Return function declared return-type.
     Decl const* getDeclaredReturnType() const
     { return m_declared_return_type; }
-    BYTE getMantissaNum(CHAR const* fpval);    
+    BYTE getMantissaNum(CHAR const* fpval);
 
     IR * buildId(IN Tree * t);
     IR * buildId(IN Decl * id);
@@ -179,11 +190,11 @@ public:
     IR * convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertPointerDeref(Tree * t, INT lineno, IN T2IRCtx * cont);
     //The function handles the array accessing for real array type declaration.
-    //e.g: int a[10][20]; 
+    //e.g: int a[10][20];
     //     ..= a[i][j], where a is real array.
     //     ..= ((int*)0x1234)[i], where 0x1234 is not real array.
     //  The array which is not real only could using 1-dimension array operator.
-    //  namely, ..= ((int*)0x1234)[i][j] is illegal. 
+    //  namely, ..= ((int*)0x1234)[i][j] is illegal.
     IR * convertArraySubExpForArray(Tree * t, Tree * base, UINT n,
                                     TMWORD * elem_nums, T2IRCtx * cont);
     //base: base Tree node of ARRAY.

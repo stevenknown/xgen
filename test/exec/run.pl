@@ -36,7 +36,7 @@ prolog();
 main();
 
 #############################################################
-sub main 
+sub main
 {
     # mkpath(["log"]);
     # clean();
@@ -55,7 +55,7 @@ sub createBaseResultOutputFile
     #Generate base-output log.
     foreach (@filelist) {
         chomp;
-        my $fullpath = $_; 
+        my $fullpath = $_;
         #The baseline result file.
         my $base_output = getBaseOutputFilePath($fullpath);
         if (!-e $base_output) {
@@ -127,26 +127,23 @@ sub compileLinkRunForFileList
     my $curdir = $_[0];
     my $is_test_gr = $_[1];
     
-    #Method1 to ref array argument: 
+    #Method1 to ref array argument:
     #my $filelist = $_[2];
     #my $firstfile = $filelist->[0];
     #foreach (@$filelist) {
     
-    #Method2 to ref array argument: 
+    #Method2 to ref array argument:
     my @filelist = @{$_[2]};
     my $firstfile = $filelist[0];
     foreach (@filelist) {
         chomp;
-        my $fullpath = $_; 
+        my $fullpath = $_;
         print "\n-------------------------------------------";
-        #Extract path prefix from 'fullpath'.
-        #e.g: $fullpath is /a/b/c.cpp, then $path is /a/b/
-        my $path = substr($fullpath, 0, rindex($fullpath, "/") + 1);
 
         my $org_cflags = $g_cflags;
         extractAndSetCflag($fullpath);
         runXOCC($fullpath, $g_is_invoke_assembler, $g_is_invoke_linker,
-                $g_is_input_gr); 
+                $g_is_input_gr);
         $g_cflags = $org_cflags;
 
         if ($is_test_gr == 1) {
@@ -154,7 +151,7 @@ sub compileLinkRunForFileList
         }
 
         if ($g_is_invoke_simulator) {
-            run($curdir, $fullpath); 
+            run($curdir, $fullpath);
         }
 
         if ($g_is_move_passed_case == 1) {
@@ -165,36 +162,34 @@ sub compileLinkRunForFileList
 
 sub tryCompileAsmLinkRunCompare
 {
-    #$is_test_gr is true to generate GR and compile GR to asm, then compare the
-    #latest output with the base result.
+    #Set $is_test_gr to true to generate GR and compile GR to asm, then compare
+    #the latest output with the base result.
     my $is_test_gr = $_[0];
-    #my @f = `find -maxdepth 1 -name "*.c"`;
     my $curdir = getcwd;
-    #my @f = findCurrent($curdir, 'c'); 
-    my @f; 
+    my @f;
     if ($g_single_testcase ne "") {
-        @f = $curdir."/".$g_single_testcase;
+        if ($g_is_recur) {
+            @f = findFileRecursively($curdir, $g_single_testcase);
+        } else {
+            @f = findFileCurrent($curdir, $g_single_testcase); 
+        }
     } elsif ($g_find_testcase ne "") {
         @f = findFileRecursively($curdir, $g_find_testcase);
     } elsif ($g_is_recur) {
         if ($g_is_input_gr) {
-            @f = findRecursively($curdir, 'gr'); 
+            @f = findRecursively($curdir, 'gr');
         } else {
-            @f = findRecursively($curdir, 'c'); 
+            @f = findRecursively($curdir, 'c');
         }
     } else {
         if ($g_is_input_gr) {
-            @f = findCurrent($curdir, 'gr'); 
+            @f = findCurrent($curdir, 'gr');
         } else {
-            @f = findCurrent($curdir, 'c'); 
+            @f = findCurrent($curdir, 'c');
         }
     }
-
-    #my @f = `find -name "*.c"`;
-
     if ($g_is_create_base_result == 1) {
         createBaseResultOutputFile($curdir, \@f);
     }
-
     compileLinkRunForFileList($curdir, $is_test_gr, \@f);
 }

@@ -58,14 +58,14 @@ int main()
     assert(fun5(0x1)==1.000000);
     assert(fun6(0.0001)==0.0001f);
 
-    //TODO:1 should be converted to double(1).
+    //1 should be converted to double(1).
     assert(fun6((double)1)==1.0f);
 
     printf("\n%f,%f\n", (double)0.0001f, 0.0001);
     assert(fun7(0.0001f)!=0.0001);
     assert(fun7(1.0f)==1);
 
-    //TODO:65535 should be converted to short(-1).
+    //65535 should be converted to short(-1).
     assert(fun8(65535)==-1);
     return 0;
 }

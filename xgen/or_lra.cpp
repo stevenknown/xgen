@@ -8192,14 +8192,14 @@ bool LRA::verifyRegSR()
             SR const* sr = o->get_result(i);
             if (!sr->is_reg() || sr->getPhyReg() == REG_UNDEF) { continue; }
             ASSERTN(SR_is_dedicated(sr) || sr->is_global(),
-                   ("local SR has been assigned register before LRA"));
+                    ("local SR has been assigned register before LRA"));
         }
 
         for (UINT j = 0; j < o->opnd_num(); j++) {
             SR const* sr = o->get_opnd(j);
             if (!sr->is_reg() || sr->getPhyReg() == REG_UNDEF) { continue; }
 
-            ASSERTN(SR_is_dedicated(sr) || sr->is_global(),
+            ASSERTN(sr->is_dedicated() || sr->is_global(),
                     ("local SR has been assigned register "
                      "before LRA, it should be localized."));
         }

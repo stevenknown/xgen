@@ -54,6 +54,9 @@ extern bool g_do_cg;
 //Enable scheduling delay-slot of branch/call operations.
 extern bool g_enable_schedule_delay_slot;
 
+//Enable generate OR for inner region.
+extern bool g_is_generate_code_for_inner_region;
+
 } //namespace xgen
 
 #endif

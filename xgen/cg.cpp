@@ -30,6 +30,8 @@ author: Su Zhenyu
 @*/
 #include "xgeninc.h"
 
+//#define USE_GLOBAL_VARIABLE_LDA_POLICY1
+
 namespace xgen {
 
 //
@@ -258,7 +260,7 @@ LabelInfoList * CG::buildLabelInfoList(IR const* caselst)
         ASSERT0(c->is_case() && CASE_lab(c));
         LabelInfoList * li = allocLabelInfoList();
         LILIST_label(li) = CASE_lab(c);
-        xcom::add_next(&head, &last, li); 
+        xcom::add_next(&head, &last, li);
     }
     return head;
 }
@@ -266,7 +268,7 @@ LabelInfoList * CG::buildLabelInfoList(IR const* caselst)
 
 //Generate ::memcpy.
 void CG::buildMemcpy(SR * tgt, SR * src, UINT bytesize, OUT ORList & ors,
-                     IN IOC * cont)
+                     MOD IOC * cont)
 {
     ASSERT0(tgt && src && cont);
     //Push parameter on stack.
@@ -292,11 +294,12 @@ void CG::buildMemcpy(SR * tgt, SR * src, UINT bytesize, OUT ORList & ors,
 
 
 void CG::buildStore(SR * store_val, xoc::Var const* base, HOST_INT ofst,
-                    OUT ORList & ors, IN IOC * cont)
+                    bool is_signed, OUT ORList & ors, MOD IOC * cont)
 {
     ASSERT0(store_val->is_reg());
     SR * mem_base_addr = genVAR(base);
-    buildStore(store_val, mem_base_addr, genIntImm(ofst, true), ors, cont);
+    buildStore(store_val, mem_base_addr, genIntImm(ofst, true),
+               is_signed, ors, cont);
 }
 
 
@@ -310,7 +313,8 @@ void CG::buildSpill(IN SR * store_val, IN xoc::Var * spill_var,
 
     IOC tc;
     IOC_mem_byte_size(&tc) = store_val->getByteSize();
-    buildStore(store_val, mem_base_addr, genZero(), ors, &tc);
+    //Spill location is the same length as register.
+    buildStore(store_val, mem_base_addr, genZero(), false, ors, &tc);
 
     for (OR * o = ors.get_head(); o != nullptr; o = ors.get_next()) {
         if (o->is_store()) {
@@ -328,7 +332,8 @@ void CG::buildReload(IN SR * result_val, IN xoc::Var * reload_var,
     ASSERT0(result_val->is_reg() && VAR_is_spill(reload_var));
     IOC tc;
     IOC_mem_byte_size(&tc) = result_val->getByteSize();
-    buildLoad(result_val, reload_var, 0, ors, &tc);
+    bool is_signed = false; //Spill location is the same length as register.
+    buildLoad(result_val, reload_var, 0, is_signed, ors, &tc);
     for (OR * o = ors.get_head(); o; o = ors.get_next()) {
         if (o->is_load()) {
             OR_is_reload(o) = true;
@@ -353,7 +358,7 @@ void CG::buildLabel(LabelInfo const* li, OUT ORList & ors, IN IOC *)
 //Implement the target dependent version if needed.
 //'sr_size': The number of integral multiple of byte-size of single SR.
 void CG::buildBinaryOR(IR_TYPE code, SR * opnd0, SR * opnd1, bool is_signed,
-                       OUT ORList & ors, IN IOC * cont)
+                       OUT ORList & ors, MOD IOC * cont)
 {
     //Result's type-size might be not same as opnd. e,g: a < b,
     //result type is BOOL, opnd type is INT.
@@ -369,7 +374,7 @@ void CG::buildBinaryOR(IR_TYPE code, SR * opnd0, SR * opnd1, bool is_signed,
         !isValidImmOpnd(orty, opnd0_idx, opnd0->getInt())) {
         //Bit width is not big enough to hold operand value, load it
         //into register instead.
-        buildGeneralLoad(opnd0, 0, ors, cont);
+        buildGeneralLoad(opnd0, 0, is_signed, ors, cont);
         opnd0 = cont->getResult();
         ASSERT0(opnd0);
 
@@ -382,7 +387,7 @@ void CG::buildBinaryOR(IR_TYPE code, SR * opnd0, SR * opnd1, bool is_signed,
         !isValidImmOpnd(orty, opnd1_idx, opnd1->getInt())) {
         //Bit width is not big enough to hold operand value, load it
         //into register instead.
-        buildGeneralLoad(opnd1, 0, ors, cont);
+        buildGeneralLoad(opnd1, 0, is_signed, ors, cont);
         opnd1 = cont->getResult();
         ASSERT0(opnd1);
 
@@ -416,7 +421,7 @@ void CG::buildBinaryOR(IR_TYPE code, SR * opnd0, SR * opnd1, bool is_signed,
 
 //'sr_size': The number of byte-size of SR.
 void CG::buildAdd(SR * src1, SR * src2, UINT sr_size, bool is_sign,
-                  OUT ORList & ors, IN IOC * cont)
+                  OUT ORList & ors, MOD IOC * cont)
 {
     if (src1->is_int_imm() && src2->is_int_imm()) {
         SR * result = genIntImm((HOST_INT)(src1->getInt() +
@@ -424,20 +429,23 @@ void CG::buildAdd(SR * src1, SR * src2, UINT sr_size, bool is_sign,
         ASSERT0(cont != nullptr);
         cont->set_reg(0, result);
         return;
-    } else if (src1->is_int_imm()) {
+    }
+    if (src1->is_int_imm()) {
         buildAdd(src2, src1, sr_size, is_sign, ors, cont);
         return;
-    } else if (src2->is_int_imm() || src2->is_var()) {
+    }
+    if (src1->is_reg() && (src2->is_int_imm() || src2->is_var())) {
         buildAddRegImm(src1, src2, sr_size, is_sign, ors, cont);
         return;
     }
+    ASSERT0(src1->is_reg() && src2->is_reg());
     buildAddRegReg(true, src1, src2, sr_size, is_sign, ors, cont);
 }
 
 
 //'sr_size': The number of integral multiple of byte-size of single SR.
 void CG::buildSub(SR * src1, SR * src2, UINT sr_size, bool is_sign,
-                  OUT ORList & ors, IN IOC * cont)
+                  OUT ORList & ors, MOD IOC * cont)
 {
     if (src1->is_int_imm() && src2->is_int_imm()) {
         SR * result = genIntImm((HOST_INT)(src1->getInt() -
@@ -445,7 +453,9 @@ void CG::buildSub(SR * src1, SR * src2, UINT sr_size, bool is_sign,
         ASSERT0(cont != nullptr);
         cont->set_reg(0, result);
         return;
-    } else if (src1->is_int_imm()) {
+    }
+
+    if (src1->is_int_imm()) {
         ASSERT0(sr_size <= 8);
         SR * newsrc1 = genReg();
         buildMove(newsrc1, src1, ors, cont);
@@ -466,6 +476,7 @@ void CG::buildSub(SR * src1, SR * src2, UINT sr_size, bool is_sign,
         //May be the Var is an offset that will be computed lazy.
         ASSERTN(!src2->is_var(), ("subtract Var is unsupport"));
     }
+    ASSERT0(src1->is_reg() && src2->is_reg());
     buildAddRegReg(false, src1, src2, sr_size, is_sign, ors, cont);
 }
 
@@ -520,7 +531,7 @@ void CG::buildMod(CLUST clust, SR ** result, SR * src1, SR * src2,
 
 
 //Generate sp adjust operation.
-void CG::buildSpadjust(OUT ORList & ors, IN IOC * cont)
+void CG::buildSpadjust(OUT ORList & ors, MOD IOC * cont)
 {
     OR * o = genOR(OR_spadjust_i);
     ASSERT0(o->is_fake());
@@ -537,7 +548,7 @@ void CG::buildSpadjust(OUT ORList & ors, IN IOC * cont)
 //The function builds stack-pointer adjustment operation.
 //Note XGEN supposed that the direction of stack-pointer is always decrement.
 //bytesize: bytesize that needed to adjust, it can be immediate or register.
-void CG::buildAlloca(OUT ORList & ors, SR * bytesize, IN IOC * cont)
+void CG::buildAlloca(OUT ORList & ors, SR * bytesize, MOD IOC * cont)
 {
     OR * o;
     if (bytesize->is_imm()) {
@@ -599,70 +610,168 @@ void CG::buildTypeCvt(xoc::IR const* tgt, xoc::IR const* src,
             ASSERT0(src_low->getVec()->get(1) != nullptr);
             ASSERT0(src_low->getByteSize() == 8);
         }
-    } else {
-        ASSERTN(0, ("TODO"));
+        return;
     }
+    ASSERTN(0, ("TODO"));    
+}
+
+
+static void buildLdaViaReg(Dbx const* dbx, SR * base, SR * ofst, CG * cg,
+                           OUT ORList & ors, MOD IOC * cont)
+{
+    //Base address of variable is recorded in register.
+    //Get variable's address by: reg = base-reg + offset.
+    ORList tors;
+    IOC tmp;
+    cg->buildAdd(base, ofst, GENERAL_REGISTER_SIZE, false, tors, &tmp);
+    ASSERT0(tors.get_elem_count() == 1);
+    OR * addu = tors.get_head();
+    OR_is_need_compute_var_ofst(addu) = true;
+    if (dbx != nullptr) {
+        OR_dbx(addu).copy(*dbx);
+    }
+    ors.append_tail(addu);
+    SR * res = tmp.get_reg(0);
+    ASSERT0(res && cont);
+    cont->set_reg(0, res);
+}
+
+
+//For global variable, there are two SR descriptions: global section +
+//byte offset in the section and global variable + byte offset in the
+//variable. Use 'base' will be the first policy, and 'variable' the second
+//policy.
+static void buildLdaForGlobalVarPolicy1(SR * base, SR * ofst, CG * cg,
+                                        OUT ORList & ors, MOD IOC * cont)
+{
+    //Add the constant byte offset into the base address.
+    ASSERT0(ofst->is_int_imm());
+    if (base->is_var()) {
+        IOC tmp;
+        SR * addr = cg->genReg();
+        cg->buildMove(addr, base, ors, &tmp);
+        base = addr;
+        cont->set_reg(0, base);
+    }
+    if (ofst->is_int_imm() && ofst->getInt() == 0) {
+        ; //Add 0, omitted.
+    } else {
+        cg->buildAdd(base, ofst, GENERAL_REGISTER_SIZE, false, ors, cont);
+    }
+    ASSERT0(cont->get_reg(0) && cont->get_reg(0)->is_reg());
+}
+
+
+//For global variable, there are two SR descriptions: global section +
+//byte offset in the section and global variable + byte offset in the
+//variable. Use 'base' will be the first policy, and 'variable' the second
+//policy.
+static void buildLdaForGlobalVarPolicy2(xoc::Var const* var,
+                                        HOST_INT lda_ofst, CG * cg,
+                                        OUT ORList & ors,
+                                        MOD IOC * cont)
+{
+    IOC tmp;
+    SR * addr = cg->genReg();
+    cg->buildMove(addr, cg->genVAR(var), ors, &tmp);
+
+    //Add the constant byte offset into the base address.
+    ASSERTN(lda_ofst >= 0, ("byte offset should be positive"));
+    if (lda_ofst > 0) {
+        IOC tmp;
+        cg->buildAdd(addr, cg->genIntImm((HOST_INT)lda_ofst, false),
+                     GENERAL_REGISTER_SIZE, false, ors, &tmp);
+        addr = tmp.get_reg(0);
+        ASSERT0(addr);
+    }
+
+    //Set the return SR.
+    cont->set_reg(0, addr);
+}
+
+
+static void buildLdaForGlobalVar(Dbx const* dbx, xoc::Var const* var,
+                                 HOST_INT lda_ofst, SR * base, SR * ofst,
+                                 CG * cg, OUT ORList & ors, MOD IOC * cont)
+{
+    ASSERT0(var->is_global());
+    //Get variable's address: reg = _variable_symbol_address_.
+    ASSERT0(base->is_var());
+    ORList tors;
+    //For the sake of clear dumpping, we tend to the second policy.
+    #ifdef USE_GLOBAL_VARIABLE_LDA_POLICY1
+    buildLdaForGlobalVarPolicy1(base, ofst, cg, tors, cont);
+    #else
+    buildLdaForGlobalVarPolicy2(var, lda_ofst, cg, tors, cont);
+    #endif
+
+    //Transfer the debug information.
+    if (dbx != nullptr) {
+        tors.copyDbx(dbx);
+    }
+    ors.move_tail(tors);
+    ASSERT0(cont);
+    ASSERT0(cont->get_reg(0) && cont->get_reg(0)->is_reg());
+}
+
+
+static void buildLdaForLocalVar(Dbx const* dbx, SR * base, SR * ofst, CG * cg,
+                                OUT ORList & ors, MOD IOC * cont)
+{
+    //Get variable's address: reg = _variable_symbol_address_.
+    ASSERT0(base->is_var());
+    ORList tors;
+    SR * addr = cg->genReg();
+    //The address should have been processed and stored in 'base'.
+    cg->buildMove(addr, base, tors, cont);
+
+    //Add the constant byte offset into the address.
+    ASSERT0(ofst->is_int_imm());
+    if (ofst->getInt() > 0) {
+        IOC tmp;
+        cg->buildAdd(addr, ofst, GENERAL_REGISTER_SIZE, false, tors, &tmp);
+        addr = tmp.get_reg(0);
+        ASSERT0(addr);
+    }
+
+    //Transfer the debug information.
+    if (dbx != nullptr) {
+        tors.copyDbx(dbx);
+    }
+    ors.move_tail(tors);
+    ASSERT0(cont);
+
+    //Set the return SR.
+    cont->set_reg(0, addr);
 }
 
 
 //Generate operations: reg = &var + lda_ofst
 //lda_ofst: the offset based to var.
 void CG::buildLda(xoc::Var const* var, HOST_INT lda_ofst, Dbx const* dbx,
-                  OUT ORList & ors, IN IOC * cont)
+                  OUT ORList & ors, MOD IOC * cont)
 {
-    SR * base, * ofst;
+    SR * base;
+    SR * ofst;
     computeVarBaseAndOffset(var, lda_ofst, &base, &ofst);
-
     if (base->is_reg()) {
-        //Get variable's address: reg = base reg + offset.
-        ORList tors;
-        IOC tmp;
-        buildAdd(base, ofst, GENERAL_REGISTER_SIZE, false, tors, &tmp);
-        ASSERT0(tors.get_elem_count() == 1);
-        OR * addu = tors.get_head();
-        OR_is_need_compute_var_ofst(addu) = true;
-        if (dbx != nullptr) {
-            OR_dbx(addu).copy(*dbx);
-        }
-        ors.append_tail(addu);
-        SR * res = tmp.get_reg(0);
-        ASSERT0(res && cont);
-        cont->set_reg(0, res);
+        buildLdaViaReg(dbx, base, ofst, this, ors, cont);
         return;
     }
 
-    //Get variable's address: reg = _variable_symbol_address_.
-    ASSERT0(base->is_var());
-    ORList tors;
-    SR * addr = genReg();
-    if (VAR_is_global(var)) {
-        SR * v = genVAR(var);
-        if (lda_ofst != 0) {
-            SR_var_ofst(v) = (UINT)lda_ofst;
-        }
-        buildMove(addr, v, tors, cont);
-    } else {
-        buildMove(addr, base, tors, cont);
-        ASSERT0(ofst->is_int_imm());
-        if (ofst->getInt() > 0) {
-            IOC tmp;
-            buildAdd(addr, ofst, GENERAL_REGISTER_SIZE, false, tors, &tmp);
-            addr = tmp.get_reg(0);
-            ASSERT0(addr);
-        }
+    if (var->is_global()) {
+        //Load address from global symbol.
+        buildLdaForGlobalVar(dbx, var, lda_ofst, base, ofst, this, ors, cont);
+        return;
     }
 
-    if (dbx != nullptr) {
-        tors.copyDbx(dbx);
-    }
-    ors.move_tail(tors);
-    ASSERT0(cont);
-    cont->set_reg(0, addr);
+    //Load address from local symbol.
+    buildLdaForLocalVar(dbx, base, ofst, this, ors, cont);
 }
 
 
-void CG::buildGeneralLoad(IN SR * val, HOST_INT ofst, OUT ORList & ors,
-                          IN IOC * cont)
+void CG::buildGeneralLoad(IN SR * val, HOST_INT ofst, bool is_signed,
+                          OUT ORList & ors, MOD IOC * cont)
 {
     if (val->is_int_imm()) {
         SR * res = genReg();
@@ -699,7 +808,7 @@ void CG::buildGeneralLoad(IN SR * val, HOST_INT ofst, OUT ORList & ors,
         load_val = getSRVecMgr()->genSRVec(2, load_val, genReg());
     } else { UNREACHABLE(); }
     ASSERT0(load_val);
-    buildLoad(load_val, val, genIntImm(ofst, true), ors, cont);
+    buildLoad(load_val, val, genIntImm(ofst, true), is_signed, ors, cont);
     ASSERT0(cont);
     cont->set_reg(0, load_val);
 }
@@ -729,7 +838,7 @@ void CG::buildStoreAndAssignRegister(SR * reg, UINT offset, ORList & ors,
                                      IOC * cont)
 {
     SR * sr_offset = genIntImm((HOST_INT)offset, false);
-    buildStore(reg, getSP(), sr_offset, ors, cont);
+    buildStore(reg, getSP(), sr_offset, false, ors, cont);
 }
 
 
@@ -793,22 +902,20 @@ void CG::assembleSRVec(SRVec * srvec, SR * sr1, SR * sr2)
 
 //Calc total memory space for parameters,
 //with considering the memory alignment.
-UINT CG::computeTotalParameterStackSize(xoc::IR * ir)
+UINT CG::computeTotalParameterStackSize(IR const* ir) const
 {
     ASSERT0(ir->isCallStmt());
-    xoc::IR * param = CALL_param_list(ir);
     UINT size = 0;
-    while (param != nullptr) {
+    for (IR * p = CALL_param_list(ir); p != nullptr; p = p->get_next()) {
         size = (UINT)ceil_align(size, STACK_ALIGNMENT);
-        size += param->getTypeSize(m_tm);
-        param = param->get_next();
+        ASSERT0(!p->is_any());
+        size += p->getTypeSize(m_tm);
     }
     return size;
 }
 
 
-//Calculate the section and corresponding byte offset in section for given
-//'var'.
+//Calculate the section and related byte offset in section for given 'var'.
 void CG::computeAndUpdateGlobalVarLayout(xoc::Var const* var, OUT SR ** base,
                                          OUT SR ** base_ofst)
 {
@@ -841,7 +948,6 @@ void CG::computeAndUpdateGlobalVarLayout(xoc::Var const* var, OUT SR ** base,
     if (base != nullptr) {
         *base = genVAR(SECT_var(section));
     }
-
     if (base_ofst != nullptr) {
         *base_ofst = genIntImm((HOST_INT)vd->getOfst(), false);
     }
@@ -863,11 +969,10 @@ UnitSet const* CG::computeORUnit(OR const* o, OUT UnitSet * us)
 
 
 //Allocate 'var' on stack.
-//base: may be stack pointer(SP) or frame pointer(FP).
-//base_ofst: the byte offset corresponds to 'base'.
+//base: can be one of stack pointer(SP) or frame pointer(FP).
+//base_ofst: the byte offset related to 'base'.
 void CG::computeAndUpdateStackVarLayout(xoc::Var const* var,
-                                        OUT SR ** base, //stack pointer
-                                        OUT SR ** base_ofst)
+                                        OUT SR ** base, OUT SR ** base_ofst)
 {
     ASSERT0(var && base && base_ofst);
     ASSERT0(var->is_local());
@@ -897,6 +1002,7 @@ void CG::computeAndUpdateStackVarLayout(xoc::Var const* var,
 
         //Compute the byte size of variable and padding stack with alignment.
         //Prepare the start address for next variable.
+        ASSERT0(!var->is_any());
         SECT_size(section) += xcom::ceil_align(var->getByteSize(m_tm),
                                                STACK_ALIGNMENT);
         section->getVar2Desc()->set(var, vd);
@@ -906,28 +1012,29 @@ void CG::computeAndUpdateStackVarLayout(xoc::Var const* var,
     }
 
     if (isUseFP()) {
+        //Using frame pointer.
         if (base != nullptr) {
             *base = getFP();
         }
-
         if (base_ofst != nullptr) {
-            if (m_is_compute_sect_offset) {
+            if (isComputeStackOffset()) {
                 *base_ofst = genIntImm((HOST_INT)-(LONG)vd->getOfst(), true);
             } else {
                 *base_ofst = genVAR(var);
             }
         }
-    } else {
-        if (base != nullptr) {
-            *base = getSP();
-        }
+        return;
+    }
 
-        if (base_ofst != nullptr) {
-            if (m_is_compute_sect_offset) {
-                *base_ofst = genIntImm((HOST_INT)vd->getOfst(), false);
-            } else {
-                *base_ofst = genVAR(var);
-            }
+    //Using stack pointer.
+    if (base != nullptr) {
+        *base = getSP();
+    }
+    if (base_ofst != nullptr) {
+        if (isComputeStackOffset()) {
+            *base_ofst = genIntImm((HOST_INT)vd->getOfst(), false);
+        } else {
+            *base_ofst = genVAR(var);
         }
     }
 }
@@ -955,6 +1062,7 @@ void CG::computeParamLayout(xoc::Var const* var, OUT SR ** base, OUT SR ** ofst)
         //Align parameter always in STACK default value.
         UINT align = STACK_ALIGNMENT;
 
+        ASSERT0(!var->is_any());
         SECT_size(section) += xcom::ceil_align(var->getByteSize(m_tm), align);
         section->getVar2Desc()->set(var, vd);
         section->getVarList()->append_tail(var);
@@ -973,7 +1081,7 @@ void CG::computeParamLayout(xoc::Var const* var, OUT SR ** base, OUT SR ** ofst)
     }
 
     if (ofst != nullptr) {
-        if (m_is_compute_sect_offset) {
+        if (isComputeStackOffset()) {
             *ofst = genIntImm((HOST_INT)vd->getOfst(), false);
         } else {
             *ofst = genVAR(var);
@@ -1092,11 +1200,11 @@ void CG::computeVarBaseAndOffset(xoc::Var const* var, ULONGLONG var_ofst,
 {
     ASSERT0(var && base && ofst);
     *base = *ofst = nullptr;
-
     if (var->is_local()) {
         computeAndUpdateStackVarLayout(var, base, ofst);
-        if (m_is_compute_sect_offset) {
-            ASSERTN(SR_is_int_imm(*ofst), ("offset must be imm"));
+        //Add constant byte offset into 'ofst'.
+        if (isComputeStackOffset()) {
+            ASSERTN((*ofst)->is_int_imm(), ("offset must be imm"));
             SR_int_imm(*ofst) += (HOST_INT)var_ofst;
         } else {
             ASSERTN((*ofst)->is_var(), ("offset must be var"));
@@ -1105,12 +1213,17 @@ void CG::computeVarBaseAndOffset(xoc::Var const* var, ULONGLONG var_ofst,
         return;
     }
 
-    if (VAR_is_global(var)) {
-        computeAndUpdateGlobalVarLayout(var, base, ofst);
-        return;
-    }
+    ASSERT0(var->is_global());
+    computeAndUpdateGlobalVarLayout(var, base, ofst);
 
-    ASSERTN(0, ("Unsupported"));
+    //Add constant byte offset into 'ofst'.
+    //ofst can only be one of IMM and VAR.
+    if ((*ofst)->is_int_imm()) {
+        SR_int_imm(*ofst) += (HOST_INT)var_ofst;
+    } else {
+        ASSERTN((*ofst)->is_var(), ("offset must be var"));
+        SR_var_ofst(*ofst) += (UINT)var_ofst;
+    }
 }
 
 
@@ -1619,7 +1732,7 @@ bool CG::isValidRegFile(OR * o, SR const* opnd, REGFILE regfile,
             }
         }
         //TODO: Should check if regfile is consistent with other operand.
-    }   
+    }
     return is_valid;
 }
 
@@ -2175,8 +2288,9 @@ bool CG::passArgInMemory(SR * argaddr, UINT * argsz,
         }
         tmp_cont.clean();
         IOC_mem_byte_size(&tmp_cont) = transfer_size;
+        bool is_signed = false; //transfer size is the same length as register.
         buildLoad(argreg, argaddr, genIntImm(i * transfer_size, false),
-                  ors, &tmp_cont);
+                  is_signed, ors, &tmp_cont);
         (*argsz) -= transfer_size;
         argdescmgr->updatePassedArgInRegister(transfer_size);
     }
@@ -2234,7 +2348,7 @@ bool CG::passArgInRegister(SR * argval, UINT * sz, ArgDescMgr * argdescmgr,
         if (*sz >= transfer_size) {
             *sz -= transfer_size;
         } else {
-            //*sz is not divisble by 'transfer_size'.    
+            //*sz is not divisble by 'transfer_size'.
             *sz = 0;
         }
     }
@@ -2309,7 +2423,7 @@ void CG::passArgVariant(ArgDescMgr * argdescmgr, OUT ORList & ors, UINT num,
 //'ir': the first parameter of CALL.
 void CG::passArg(SR * argval, SR * argaddr, UINT argsz,
                  OUT ArgDescMgr * argdescmgr, OUT ORList & ors,
-                 IN IOC * cont)
+                 MOD IOC * cont)
 {
     ASSERT0((argval != nullptr) ^ (argaddr != nullptr));
     if (tmGetRegSetOfArgument() != nullptr &&
@@ -2415,7 +2529,7 @@ void CG::storeArgToStack(ArgDescMgr * argdescmgr, OUT ORList & ors, IN IOC *)
             IOC_mem_byte_size(&tc) = desc->arg_size;
             buildStore(desc->src_value, getSP(),
                        genIntImm((HOST_INT)desc->tgt_ofst, false),
-                       tors, &tc);
+                       false, tors, &tc);
         }
 
         if (desc->arg_dbx != nullptr) {
@@ -2452,7 +2566,7 @@ void CG::expandFakeOR(OR * o, OUT IssuePackageList * ipl)
     ASSERT0(o->is_fake());
     switch (o->getCode()) {
     case OR_spadjust_i:
-    case OR_spadjust_r:    
+    case OR_spadjust_r:
         expandSpadjust(o, ipl);
         break;
     default: ASSERTN(0, ("Target Dependent Code"));
@@ -2632,8 +2746,35 @@ SR * CG::genReg(UINT bytes_size)
     SR_sregid(first) = ++m_reg_count;
     setMapSymbolReg2SR(SR_sregid(first), first);
     SR_phy_reg(first) = REG_UNDEF;
-    SR_regfile(first) = RF_UNDEF;    
+    SR_regfile(first) = RF_UNDEF;
     return first;
+}
+
+
+//Assign physical register manually.
+//During some passes, e.g IR2OR, user expects to assign physical register
+//to SR which is NOT dedicated register.
+void CG::assignPhyRegister(SR * sr, REG reg, REGFILE rf)
+{
+    ASSERT0(sr->is_reg() && reg != REG_UNDEF && rf != RF_UNDEF);
+    SR_phy_reg(sr) = reg;
+    SR_regfile(sr) = rf;
+
+    //LRA will check if the local SR has been assigned physical register.
+    //If it is, LRA will demand that user have to change the local SR to
+    //global SR. Because LRA will reallocate register resource as much as
+    //possible.
+    SR_is_global(sr) = true;
+}
+
+
+//Generate a global SR that bytes_size is not more than
+//GENERAL_REGISTER_SIZE.
+SR * CG::genRegWithPhyReg(REG reg, REGFILE rf)
+{
+    SR * sr = genReg();
+    assignPhyRegister(sr, reg, rf);
+    return sr;
 }
 
 
@@ -3221,7 +3362,7 @@ void CG::generateFuncUnitDedicatedCode()
 
             IOC cont1;
             IOC_mem_byte_size(&cont1) = GENERAL_REGISTER_SIZE;
-            buildStore(sr, loc, 0, ors, &cont1);
+            buildStore(sr, loc, 0, false, ors, &cont1);
             if (dbx != nullptr) {
                 ors.copyDbx(dbx);
             }
@@ -3257,7 +3398,7 @@ void CG::generateFuncUnitDedicatedCode()
 
             IOC cont2;
             IOC_mem_byte_size(&cont2) = GENERAL_REGISTER_SIZE;
-            buildLoad(sr, loc, 0, ors, &cont2);
+            buildLoad(sr, loc, 0, false, ors, &cont2);
             if (dbx != nullptr) {
                 ors.copyDbx(dbx);
             }
@@ -3749,7 +3890,7 @@ void CG::constructORBBList(IN ORList & or_list)
             continue;
         }
 
-        ORBB_orlist(cur_bb)->append_tail(o);        
+        ORBB_orlist(cur_bb)->append_tail(o);
     }
     ASSERT0(cur_bb);
 
@@ -3867,31 +4008,46 @@ RaMgr * CG::allocRaMgr(List<ORBB*> * bblist, bool is_func)
 }
 
 
+void CG::evaluateCallArgSize(IR const* ir)
+{
+    ASSERT0(ir->isCallStmt());
+    updateMaxCalleeArgSize(computeTotalParameterStackSize(ir));
+    if (m_cgmgr->isIntrinsic(ir, INTRIN_ALLOCA)) {
+        m_is_use_fp = true;
+    }
+}
+
+
 //Estimate and reserve stack memory space for real parameters.
 //The function also collecting the information to determine whether enable
 //the using of FP register.
 void CG::computeMaxRealParamSpace()
 {
     START_TIMER(t, "Compute Max Real Parameter Space");
-
-    BBList * ir_bb_list = m_rg->getBBList();
-    for (IRBB * bb = ir_bb_list->get_head();
-         bb != nullptr; bb = ir_bb_list->get_next()) {
-        IRListIter ct;
-        for (xoc::IR * ir = BB_irlist(bb).get_head(&ct); ir != nullptr;
-             ir = BB_irlist(bb).get_next(&ct)) {
-            if (!ir->isCallStmt()) { continue; }
-            updateMaxCalleeArgSize(computeTotalParameterStackSize(ir));
-            if (m_cgmgr->isIntrinsic(ir, INTRIN_ALLOCA)) {
-                m_is_use_fp = true;
+    if (m_rg->getIRList() != nullptr) {
+        IRIter it;
+        for (IR const* ir = iterInit(m_rg->getIRList(), it);
+             ir != nullptr; ir = iterNext(it)) {
+            if (ir->isCallStmt()) {
+                evaluateCallArgSize(ir);
+            }
+        }
+    } else {
+        BBList * ir_bb_list = m_rg->getBBList();
+        for (IRBB * bb = ir_bb_list->get_head();
+             bb != nullptr; bb = ir_bb_list->get_next()) {
+            IRListIter ct;
+            for (xoc::IR const* ir = BB_irlist(bb).get_head(&ct);
+                 ir != nullptr; ir = BB_irlist(bb).get_next(&ct)) {
+                if (ir->isCallStmt()) {
+                    evaluateCallArgSize(ir);
+                }
             }
         }
     }
-
     if (getMaxArgSectionSize() > 0) {
         SECT_size(m_cgmgr->getStackSection()) += getMaxArgSectionSize();
     }
-
     END_TIMER(t, "Compute Max Real Parameter Space");
 }
 
@@ -4025,7 +4181,7 @@ void CG::localizeBB(SR * sr, ORBB * bb)
         //Handle upward exposed use.
         toc.clean_bottomup();
         SR * newsr = genReg();
-        buildLoad(newsr, SR_spill_var(sr), 0, ors, &toc);
+        buildLoad(newsr, SR_spill_var(sr), 0, false, ors, &toc);
         ASSERT0(first_usestmt_ct != ORBB_orlist(bb)->end());
         ORBB_orlist(bb)->insert_before(ors, first_usestmt_ct);
 
@@ -4058,7 +4214,7 @@ void CG::localizeBB(SR * sr, ORBB * bb)
         ors.clean();
 
         SR * newsr = genReg();
-        buildStore(newsr, SR_spill_var(sr), 0, ors, &toc);
+        buildStore(newsr, SR_spill_var(sr), 0, false, ors, &toc);
         if (HAS_PREDICATE_REGISTER) {
             SR * pd = last_defstmt_ct->val()->get_pred();
             if (pd != nullptr) {
@@ -4238,7 +4394,7 @@ static void convertORBBList(CG * cg)
     //Record OR list after converting xoc::IR to OR.
     {
         RecycORList or_list(ir2or);
-        ir2or->convertIRBBListToORList(or_list);
+        ir2or->convertToORList(or_list);
 
         //Split OR list into ORBB.
         cg->constructORBBList(or_list.getList());
@@ -4296,11 +4452,28 @@ static void performCFGOptimization(CG * cg, OptCtx & oc)
 }
 
 
+//Guarantee IR_RETURN at the end of function.
+void CG::addReturnForEmptyRegion()
+{
+    IR * ret = m_rg->buildReturn(nullptr);
+    IRBB * bb = m_rg->getBBList()->get_head();
+    if (bb != nullptr) {
+        ASSERTN(m_rg->getIRList() == nullptr,
+                ("IR list should have been split into BB list"));
+        ASSERT0(bb->getNumOfIR() == 0);
+        bb->getIRList()->append_tail(ret);
+        return;
+    }
+    m_rg->addToIRList(ret);
+}
+
+
 //This function generate target dependent information.
 bool CG::perform()
 {
     ASSERTN(xcom::isPowerOf2(STACK_ALIGNMENT),
             ("Stack alignment should be power of 2"));
+
     if ((g_is_dump_after_pass || g_is_dump_before_pass) &&
         g_dump_opt.isDumpCG()) {
         xoc::note(getRegion(),
@@ -4309,9 +4482,8 @@ bool CG::perform()
         m_rg->dump(false);
     }
 
-    if (m_rg->getIRList() == nullptr &&
-        m_rg->getBBList()->get_elem_count() == 0) {
-        return true;
+    if (m_rg->getBBList()->get_elem_count() == 0) {
+        addReturnForEmptyRegion();
     }
 
     START_TIMER_FMT(tcg, ("Code Generation Perform '%s'",

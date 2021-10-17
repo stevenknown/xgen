@@ -10,7 +10,7 @@ region program @"program" () {
         default _L1,
         (case 1,_LC1), 
         case "H",_LC2, 
-        (case 3.45:f128,_LC4), 
+        (case 3.45:f64,_LC4), 
         (case 0xffDc:u64,_LC4),
         (case 0:bool,_LC3), {
           label _LC3; break;

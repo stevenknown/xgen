@@ -347,7 +347,7 @@ UINT FrontEnd(RegionMgr * rm)
         END_TIMER(t, "CFE");
         return s;
     }
-    
+
     s = TypeTransform();
     if (s != ST_SUCC) {
         END_TIMER(t, "CFE");
@@ -586,9 +586,7 @@ static void initCompile(CLRegionMgr ** rm, FILE ** asmh, CGMgr ** cgmgr,
 }
 
 
-static void finiCompile(CLRegionMgr * rm,
-                        FILE * asmh,
-                        CGMgr * cgmgr,
+static void finiCompile(CLRegionMgr * rm, FILE * asmh, CGMgr * cgmgr,
                         TargInfo * ti)
 {
     if (cgmgr != nullptr) {
@@ -637,8 +635,7 @@ bool compileGRFile(CHAR const* gr_file_name)
         Region * r = rm->getRegion(i);
         if (r == nullptr || r->is_blackbox()) { continue; }
         if (r->getPassMgr() != nullptr) {
-            xoc::PRSSAMgr * ssamgr = (PRSSAMgr*)r->
-                getPassMgr()->queryPass(PASS_PR_SSA_MGR);
+            xoc::PRSSAMgr * ssamgr = r->getPRSSAMgr();
             if (ssamgr != nullptr && ssamgr->is_valid()) {
                 OptCtx * oc = rm->getAndGenOptCtx(r->id());
                 ssamgr->destruction(oc);

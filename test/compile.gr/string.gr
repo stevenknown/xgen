@@ -1,4 +1,8 @@
 region program @".program" () {
-    var a:str:(align(4));
-    st a = "hello world";
+    var ga:str:(string("this is memory placeholder"),align(4));
+    var gc:str:(fake,align(4));
+    st ga = "hello world";
+    region func main() {
+        st ga = "again"; //should not exceed the length of ga
+    }
 }

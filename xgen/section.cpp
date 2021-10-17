@@ -186,8 +186,7 @@ void SectionMgr::assignSectVar(Section * sect, CHAR const* sect_name,
 {
     UINT id = getSectNum();
     xoc::Type const* type = m_tm->getMCType(4);
-    SECT_var(sect) = m_vm->registerVar(sect_name, type, 1,
-                                       VAR_GLOBAL|VAR_FAKE);
+    SECT_var(sect) = m_vm->registerVar(sect_name, type, 1, VAR_GLOBAL|VAR_FAKE);
     VAR_is_unallocable(SECT_var(sect)) = !allocable;
     SECT_size(sect) = size;
     SECT_id(sect) = id;

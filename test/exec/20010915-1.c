@@ -30,6 +30,7 @@ int main (int argc, char **argv)
   args[2] = "c";
   args[3] = "d";
   args[4] = "e";
+
   if (x (5, args) != 0 || check != 2 || o != 5)
     abort ();
   exit (0);

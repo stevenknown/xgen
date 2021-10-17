@@ -273,6 +273,17 @@ bool SR::is_equal(SR const* sr)
            SR_spill_var(this) == SR_spill_var(sr) &&
            SR_vec(this) == SR_vec(sr);
 }
+
+
+//Present the bytesize that is equal to the accumulation of the
+//bytesize of each register-element in 'm_sr_vec'.
+UINT SR::getByteSize() const
+{
+    if (is_vec()) {
+        return SR_vec(this)->get_elem_count() * GENERAL_REGISTER_SIZE;
+    }
+    return GENERAL_REGISTER_SIZE;
+}
 //END SR
 
 
@@ -395,16 +406,6 @@ SR * SRVecMgr::genSRVec(List<SR*> & lst)
     }
     return first;
 }
-
-
-//Present the bytesize that is equal to the accumulation of the
-//bytesize of each register-element in 'm_sr_vec'.
-UINT SR::getByteSize() const
-{
-    if (is_vec()) {
-        return SR_vec(this)->get_elem_count() * GENERAL_REGISTER_SIZE;
-    }
-    return GENERAL_REGISTER_SIZE;
-}
+//END SRVecMgr
 
 } //namespace xgen

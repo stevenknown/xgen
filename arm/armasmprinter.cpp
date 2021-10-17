@@ -117,6 +117,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
         return buf.buf;
     case OR_ldrb:
     case OR_ldrb_i12:
+    case OR_ldrsb:
     case OR_ldrsb_i8:
     case OR_ldrh:
     case OR_ldrsh:
@@ -275,7 +276,7 @@ void ARMAsmPrinter::printBss(FILE * asmh, Section & sect)
         CHAR const* p = SYM_name(v->get_name());
         buf.clean();
         fprintf(asmh, "\n#%s", v->dump(buf, m_tm));
-        fprintf(asmh, "\n.common %s, %d, %d",
+        fprintf(asmh, "\n.common %s, %u, %u",
                 p, v->getByteSize(m_tm), VAR_align(v));
     }
 

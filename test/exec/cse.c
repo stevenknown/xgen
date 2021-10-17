@@ -3,7 +3,7 @@ extern void abort();
 void printf(char const*,...);
 int main()
 {
-    int a,b,c,d;
+    int a=1,b=2,c=3,d=4;
     if (b > d) {
         b = a + 2;
         c = 4 * b;
@@ -20,5 +20,5 @@ int main()
             }
         }
     }
-    return d;
+    return d == 5 ? 0 : -1;
 }

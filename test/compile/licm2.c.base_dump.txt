@@ -3,4 +3,61 @@
 
 
 ==---- DUMP LICM Analysis Result : LoopInfo2 : 'test' ----==
+-- Invariant Expression (num=1) -- :
+   intconst:i32 0|0x0 id:11 attachinfo:Dbx
+
+==---- DUMP Register Promotion 'test' ----==
+==-- DUMP LoopInfo --==
+LOOP2 HEAD:BB2, BODY:2,3,4,5,7,
+==-- DUMP ExactAccessTab --==
+  DELEGATE:
+    MD8 -- base:Var64(src):local,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned int const *  src ' -- ofst:0 -- size:4
+    st:*<4> 'src' id:8 attachinfo:Dbx,MDSSA
+    
+    OCCLIST:
+      st:*<4> 'src' id:8 attachinfo:Dbx,MDSSA
+      ld:*<4> 'src' id:34 attachinfo:Dbx,MDSSA
+  
+  DELEGATE:
+    MD9 -- base:Var65(i):local,align(4),u32,decl:'unsigned int  i ' -- ofst:0 -- size:4
+    st:u32 'i' id:12 attachinfo:Dbx,MDSSA
+    
+    OCCLIST:
+      st:u32 'i' id:12 attachinfo:Dbx,MDSSA
+      ld:u32 'i' id:10 attachinfo:Dbx,MDSSA
+      ld:u32 'i' id:35 attachinfo:Dbx,MDSSA
+      st:u32 'i' id:42 attachinfo:Dbx,MDSSA
+      ld:u32 'i' id:18 attachinfo:Dbx,MDSSA
+  
+  DELEGATE:
+    MD7 -- base:Var62(section):local,formal_param,restrict,align(4),pointer,pt_base_sz:12,*,mem_size:4,decl:'struct (id:1) restrict *  section ' -- ofst:0 -- size:4
+    ld:*<12> 'section' id:1 attachinfo:Dbx,MDSSA
+    
+    OCCLIST:
+      ld:*<12> 'section' id:1 attachinfo:Dbx,MDSSA
+      ld:*<12> 'section' id:6 attachinfo:Dbx,MDSSA
+      ld:*<12> 'section' id:14 attachinfo:Dbx,MDSSA
+      st:*<12> 'section' id:47 attachinfo:Dbx,MDSSA
+      ld:*<12> 'section' id:44 attachinfo:Dbx,MDSSA
+  
+  
+==-- DUMP InexactAccessTab --==
+  
+==-- DUMP LoopInfo --==
+LOOP1 HEAD:BB4, BODY:4,5,
+==-- DUMP ExactAccessTab --==
+  
+==-- DUMP InexactAccessTab --==
+  ild:u32 id:39 attachinfo:Dbx,MDSSA      
+      add:*<4> id:38          
+          $1:*<4> id:64 attachinfo:Dbx          
+          mul:u32 id:36              
+              $2:u32 id:67 attachinfo:Dbx              
+              intconst:u32 4|0x4 id:37
+  
+  
+==---- DUMP LICM Analysis Result : LoopInfo1 : 'test' ----==
+
+
+==---- DUMP LICM Analysis Result : LoopInfo2 : 'test' ----==
 

@@ -46,6 +46,13 @@ protected:
     void convertTruebrFp(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertStoreVar(IR const* ir, OUT RecycORList & ors,
                                  IN IOC * cont);
+    //CASE: integer and pointer convertion.
+    void convertCvtIntAndPtr(IR const* ir, OUT RecycORList & ors,
+                             MOD IOC * cont);
+    //CASE: Load constant-string address into register.
+    void convertCvtIntAndStr(IR const* ir, SR * opnd,
+                             OUT RecycORList & ors,
+                             MOD IOC * cont);
     void convertCvt(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
 
     //Convert Bitwise NOT into OR list. bnot is unary operation.
@@ -167,6 +174,10 @@ public:
                                IN IOC * cont);
     virtual void convertTruebr(IR const* ir, OUT RecycORList & ors,
                                IN IOC * cont);
+    virtual void convertSetElem(IR const* ir, OUT RecycORList & ors,
+                                MOD IOC * cont);
+    virtual void convertGetElem(IR const* ir, OUT RecycORList & ors,
+                                MOD IOC * cont);
     virtual void convert(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
 
     void recordRelationOpResult(IR const* ir,

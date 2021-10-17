@@ -1,186 +1,90 @@
 
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'main' ----==
--- Invariant Expression (num=5) -- :
-   ild:i32 id:12 attachinfo:Dbx       
-       $2:*<4> id:48 attachinfo:Dbx
-   add:*<4> id:77       
-       lda:*<40> 'x' decl:int  x [10] id:24 attachinfo:Dbx       
-       $3:u32 id:2
-   add:*<4> id:7 attachinfo:Dbx       
-       ld:*<4> 'gp' decl:int  *  gp  id:3 attachinfo:Dbx       
-       intconst:u32 120|0x78 id:9 attachinfo:Dbx
-   lsl:u32 id:79       
-       ld:i32 'i' decl:int  i  id:25 attachinfo:Dbx       
-       intconst:u32 2|0x2 id:74
-   intconst:i32 20|0x14 id:27 attachinfo:Dbx
--- Invariant Statement (num=3) -- :
+-- Invariant Expression (num=1) -- :
+   ild:i32:offset(120) id:12 attachinfo:Dbx,MDSSA       
+       ld:*<4> 'gp' id:3 attachinfo:Dbx,MDSSA
+-- Invariant Statement (num=1) -- :
 
-   [10]        m = (gp + 10)[20]; //should be hoisted outside loop.
-
-   stpr $2:*<4> id:88 attachinfo:Dbx       
-       add:*<4> id:7 attachinfo:Dbx           
-           ld:*<4> 'gp' decl:int  *  gp  id:3 attachinfo:Dbx           
-           intconst:u32 120|0x78 id:9 attachinfo:Dbx
-   stpr $3:u32 id:89       
-       lsl:u32 id:79           
-           ld:i32 'i' decl:int  i  id:25 attachinfo:Dbx           
-           intconst:u32 2|0x2 id:74
-   st:i32 'm' decl:int  m  id:13 attachinfo:Dbx       
-       ild:i32 id:12 attachinfo:Dbx           
-           $2:*<4> id:48 attachinfo:Dbx
+   [9]        m = (gp + 10)[20]; //should be hoisted outside loop.
+   
+   st:i32 'm' decl:int  m  id:13 attachinfo:Dbx,MDSSA       
+       ild:i32:offset(120) id:12 attachinfo:Dbx,MDSSA           
+           ld:*<4> 'gp' decl:int  *  gp  id:3 attachinfo:Dbx,MDSSA
 ==---- DUMP LICM Analysis Result : LoopInfo2 : 'main' ----==
--- Invariant Expression (num=2) -- :
-   add:*<4> id:39 attachinfo:Dbx       
-       ld:*<4> 'gp' decl:int  *  gp  id:35 attachinfo:Dbx       
-       intconst:u32 120|0x78 id:41 attachinfo:Dbx
-   ild:i32 id:44 attachinfo:Dbx       
-       $4:*<4> id:16 attachinfo:Dbx
--- Invariant Statement (num=2) -- :
+-- Invariant Expression (num=1) -- :
+   ild:i32:offset(120) id:43 attachinfo:Dbx,MDSSA       
+       ld:*<4> 'gp' id:34 attachinfo:Dbx,MDSSA
+-- Invariant Statement (num=1) -- :
 
-   [14]        m = (gp + 10)[20]; //can NOT be hoisted
+   [13]        m = (gp + 10)[20]; //can NOT be hoisted
+   
+   st:i32 'm' decl:int  m  id:44 attachinfo:Dbx,MDSSA       
+       ild:i32:offset(120) id:43 attachinfo:Dbx,MDSSA           
+           ld:*<4> 'gp' decl:int  *  gp  id:34 attachinfo:Dbx,MDSSA
+==---- DUMP Register Promotion 'main' ----==
+==-- DUMP LoopInfo --==
+LOOP1 HEAD:BB2, BODY:2,3,
+==-- DUMP ExactAccessTab --==
+  DELEGATE:
+    MD10 -- base:Var62(i):local,align(4),i32,decl:'int  i ' -- ofst:0 -- size:4
+    ld:i32 'i' id:1 attachinfo:Dbx,MDSSA
+    
+    OCCLIST:
+      ld:i32 'i' id:1 attachinfo:Dbx,MDSSA
+  
+  DELEGATE:
+    MD11 -- base:Var63(m):local,align(4),i32,decl:'int  m ' -- ofst:0 -- size:4
+    st:i32 'm' id:13 attachinfo:Dbx,MDSSA
+    
+    OCCLIST:
+      st:i32 'm' id:13 attachinfo:Dbx,MDSSA
+  
+  
+==-- DUMP InexactAccessTab --==
 
-   stpr $4:*<4> id:91 attachinfo:Dbx       
-       add:*<4> id:39 attachinfo:Dbx           
-           ld:*<4> 'gp' decl:int  *  gp  id:35 attachinfo:Dbx           
-           intconst:u32 120|0x78 id:41 attachinfo:Dbx
-   st:i32 'm' decl:int  m  id:45 attachinfo:Dbx       
-       ild:i32 id:44 attachinfo:Dbx           
-           $4:*<4> id:16 attachinfo:Dbx
-==---- DUMP Loop Invariant Code Motion 'main' ----==
-==---- DUMP IRBBList 'main' ----==
------ BB11 --- rpo:0 -----
-ATTR:entry_bb fall_through 
-STMT NUM:0
+  [10]        x[i] = 20; //should be hoisted outside loop.
+  
+  starray (i32, ety:i32) id:27 attachinfo:Dbx,MDSSA
+      elem_num[10]
+      ld:i32 'i' decl:int  i  dim0 id:24 attachinfo:Dbx,MDSSA      
+      lda:*<40> 'x' decl:int  x [10] array_base id:23 attachinfo:Dbx      
+      intconst:i32 20|0x14 rhs id:26 attachinfo:Dbx
+  
+  
+==-- DUMP LoopInfo --==
+LOOP2 HEAD:BB6, BODY:6,7,
+==-- DUMP ExactAccessTab --==
+  DELEGATE:
+    MD10 -- base:Var62(i):local,align(4),i32,decl:'int  i ' -- ofst:0 -- size:4
+    ld:i32 'i' id:32 attachinfo:Dbx,MDSSA
+    
+    OCCLIST:
+      ld:i32 'i' id:32 attachinfo:Dbx,MDSSA
+      ld:i32 'i' id:62 attachinfo:MDSSA
+      st:i32 'i' id:64 attachinfo:Dbx,MDSSA
+      ld:i32 'i' id:59 attachinfo:Dbx,MDSSA
+  
+  DELEGATE:
+    MD11 -- base:Var63(m):local,align(4),i32,decl:'int  m ' -- ofst:0 -- size:4
+    st:i32 'm' id:44 attachinfo:Dbx,MDSSA
+    
+    OCCLIST:
+      st:i32 'm' id:44 attachinfo:Dbx,MDSSA
+  
+  
+==-- DUMP InexactAccessTab --==
+  
+==---- DUMP LICM Analysis Result : LoopInfo1 : 'main' ----==
+-- Invariant Expression (num=1) -- :
+   intconst:i32 20|0x14 id:26 attachinfo:Dbx
+-- Invariant Statement (num=1) -- :
+   stpr $15:i32 id:102 attachinfo:Dbx       
+       intconst:i32 20|0x14 id:26 attachinfo:Dbx
+==---- DUMP LICM Analysis Result : LoopInfo2 : 'main' ----==
 
------ BB13 --- rpo:5 -----
-ATTR:fall_through 
-STMT NUM:1
-   falsebr label _L1 id:100       
-       ne:bool id:37 attachinfo:Dbx           
-           ld:i32 'i' decl:int  i  id:99 attachinfo:Dbx           
-           intconst:i32 0|0x0 id:42
 
------ BB12 --- rpo:10 -----
-ATTR:
-STMT NUM:4
+==---- DUMP LICM Analysis Result : LoopInfo1 : 'main' ----==
 
-   [10]        m = (gp + 10)[20]; //should be hoisted outside loop.
 
-   stpr $2:*<4> id:88 attachinfo:Dbx       
-       add:*<4> id:7 attachinfo:Dbx           
-           ld:*<4> 'gp' decl:int  *  gp  id:3 attachinfo:Dbx           
-           intconst:u32 120|0x78 id:9 attachinfo:Dbx
-   st:i32 'm' decl:int  m  id:13 attachinfo:Dbx       
-       ild:i32 id:12 attachinfo:Dbx           
-           $2:*<4> id:48 attachinfo:Dbx
-   stpr $3:u32 id:89       
-       lsl:u32 id:79           
-           ld:i32 'i' decl:int  i  id:25 attachinfo:Dbx           
-           intconst:u32 2|0x2 id:74
-   stpr $8:*<4> id:102       
-       add:*<4> id:77           
-           lda:*<40> 'x' decl:int  x [10] id:24 attachinfo:Dbx           
-           $3:u32 id:2
+==---- DUMP LICM Analysis Result : LoopInfo2 : 'main' ----==
 
------ BB2 --- rpo:15 -----
-LABEL:_L1 
-ATTR:fall_through branch_target 
-STMT NUM:1
-
-   [9]    while (i) {
-
-   truebr label _L5 id:67 attachinfo:Dbx       
-       eq:bool id:31 attachinfo:Dbx           
-           ld:i32 'i' decl:int  i  id:1 attachinfo:Dbx           
-           intconst:i32 0|0x0 id:30
-
------ BB3 --- rpo:40 -----
-ATTR:
-STMT NUM:2
-
-   [11]        x[i] = 20; //should be hoisted outside loop.
-
-   ist:i32 id:90 attachinfo:Dbx       
-       $8:*<4> base id:101       
-       intconst:i32 20|0x14 id:27 attachinfo:Dbx
-   goto label _L1 id:60
-
------ BB15 --- rpo:19 -----
-LABEL:_L5 _L2 
-ATTR:fall_through 
-STMT NUM:1
-   falsebr label _L3 id:104       
-       ne:bool id:40 attachinfo:Dbx           
-           ld:i32 'i' decl:int  i  id:103 attachinfo:Dbx           
-           intconst:i32 0|0x0 id:38
-
------ BB14 --- rpo:20 -----
-ATTR:
-STMT NUM:2
-
-   [14]        m = (gp + 10)[20]; //can NOT be hoisted
-
-   stpr $4:*<4> id:91 attachinfo:Dbx       
-       add:*<4> id:39 attachinfo:Dbx           
-           ld:*<4> 'gp' decl:int  *  gp  id:35 attachinfo:Dbx           
-           intconst:u32 120|0x78 id:41 attachinfo:Dbx
-   st:i32 'm' decl:int  m  id:45 attachinfo:Dbx       
-       ild:i32 id:44 attachinfo:Dbx           
-           $4:*<4> id:16 attachinfo:Dbx
-
------ BB6 --- rpo:25 -----
-LABEL:_L3 
-ATTR:fall_through branch_target 
-STMT NUM:1
-
-   [13]    while (i) {
-
-   truebr label _L4 id:34 attachinfo:Dbx       
-       eq:bool id:69 attachinfo:Dbx           
-           ld:i32 'i' decl:int  i  id:33 attachinfo:Dbx           
-           intconst:i32 0|0x0 id:68
-
------ BB7 --- rpo:35 -----
-ATTR:
-STMT NUM:5
-   stpr $5:u32 id:93       
-       lsl:u32 id:73           
-           ld:i32 'i' decl:int  i  id:57 attachinfo:Dbx           
-           intconst:u32 2|0x2 id:75
-
-   [15]        x[i] = 20; //can NOT be hoisted
-
-   ist:i32 id:94 attachinfo:Dbx       
-       add:*<4> base id:43           
-           lda:*<40> 'x' decl:int  x [10] id:56 attachinfo:Dbx           
-           $5:u32 id:92       
-       intconst:i32 20|0x14 id:58 attachinfo:Dbx
-
-   [16]        i++;
-
-   stpr $1:i32 id:65 attachinfo:Dbx       
-       ld:i32 'i' decl:int  i  id:64
-   st:i32 'i' decl:int  i  id:66 attachinfo:Dbx       
-       add:i32 id:63           
-           ld:i32 'i' decl:int  i  id:61 attachinfo:Dbx           
-           intconst:i32 1|0x1 id:62
-   goto label _L3 id:80
-
------ BB9 --- rpo:30 -----
-LABEL:_L4 
-ATTR:fall_through branch_target 
-STMT NUM:3
-
-   [18]    return m + (gp + 10)[20];
-
-   stpr $6:*<4> id:96 attachinfo:Dbx       
-       add:*<4> id:76 attachinfo:Dbx           
-           ld:*<4> 'gp' decl:int  *  gp  id:72 attachinfo:Dbx           
-           intconst:u32 120|0x78 id:78 attachinfo:Dbx
-   stpr $7:i32 id:98 attachinfo:Dbx       
-       ild:i32 id:81 attachinfo:Dbx           
-           $6:*<4> id:95 attachinfo:Dbx
-   return id:83 attachinfo:Dbx
-       add:i32 id:82 attachinfo:Dbx           
-           ld:i32 'm' decl:int  m  id:71 attachinfo:Dbx           
-           $7:i32 id:97 attachinfo:Dbx

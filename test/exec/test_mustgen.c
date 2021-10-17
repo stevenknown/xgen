@@ -8,5 +8,8 @@ int main() {
   } else {
     p1 = 3;
   }
-  return p1;
+  if (p1 != 2&&p1!=3) {
+    return -1;
+  }
+  return 0;
 }

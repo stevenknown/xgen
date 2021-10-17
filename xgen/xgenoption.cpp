@@ -61,4 +61,9 @@ bool g_do_cg = true;
 //Enable scheduling delay-slot of branch/call operations.
 bool g_enable_schedule_delay_slot = false;
 
+//Enable generate OR for inner region.
+//The option is false in default, because user intends to generate code by
+//iterating RegionTab, instead of generating code for inner region recursively.
+bool g_is_generate_code_for_inner_region = false;
+
 } //namespace xgen

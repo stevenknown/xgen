@@ -167,16 +167,20 @@ public:
         } s2;
     } u2;
 
+    //The union repesents attributes when current SR plays different roles.
     union {
+        //Attributes if current SR represents a symbol register.
         struct {
             UINT symbol_regid; //symbol register id, start at 1.
             REGFILE regfile; //physical register file.
             REG phy_regid; //physical register id, start at 1.
             xoc::Var * spill_var; //xoc::Var to hold spilled register.
-        } u2; //SR is register
+        } u2;
 
-        xoc::Sym const* str; //present a const string
+        //Attributes if current SR represents a const string.
+        xoc::Sym const* str; //records a const string
 
+        //Attributes if current SR represents an integer or a float.
         struct {
             union {
                 //Integer.
@@ -188,6 +192,7 @@ public:
             UINT size; //byte size of imm.
         } u3;
 
+        //Attributes if current SR represents a variable.
         struct {
             xoc::Var const* var; //represent memory.
             UINT ofst; //offset base on var.
@@ -197,7 +202,10 @@ public:
             xoc::IR const* ir;
         } u4;
 
-        xoc::LabelInfo const* label; //present Internal-Label or Custom-Label
+        //Attributes if current SR represents a label.
+        xoc::LabelInfo const* label; //records Internal-Label or Custom-Label
+
+        //Attributes if current SR represents a label-list.
         LabelInfoList const* label_list; //the list of LabelInfo.
     } u1;
 

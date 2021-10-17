@@ -15,9 +15,10 @@ long long foo1(char const* h, int s, int b, unsigned long long c, int w) {
           ,600);
 }
 
-void main()
+int main()
 {
     g_l = 0xff;
     g_l = g_l << 32;
     foo1("\nPTR %d,%d,0x%llx,%d,%d,%d\n", 100, 200, g_l, 300);
+    return 0;
 }

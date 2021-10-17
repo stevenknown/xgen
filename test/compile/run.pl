@@ -33,7 +33,7 @@ require "../util.pl";
 prolog();
 main();
 #############################################################
-sub main 
+sub main
 {
     # mkpath(["log"]);
     # clean();
@@ -46,7 +46,7 @@ sub main
 
 sub compileFile
 {
-    my $fullpath = $_; 
+    my $fullpath = $_;
 
     #Save original flags.
     my $org_cflags = $g_cflags;
@@ -120,15 +120,17 @@ sub compileFileList
 
 sub tryCompile
 {
-    #$is_test_gr is true to generate GR and compile GR to asm, then compare the
-    #latest output with the base result.
+    #Set $is_test_gr to true to generate GR and compile GR to asm, then compare
+    #the latest output with the base result.
     my $is_test_gr = $_[0];
-    #my @f = `find -maxdepth 1 -name "*.c"`;
     my $curdir = getcwd;
-    #my @f = findCurrent($curdir, 'c');
     my @f;
     if ($g_single_testcase ne "") {
-        @f = findFileRecursively($curdir, $g_single_testcase);
+        if ($g_is_recur) {
+            @f = findFileRecursively($curdir, $g_single_testcase);
+        } else {
+            @f = findFileCurrent($curdir, $g_single_testcase); 
+        }
     } elsif ($g_single_directory ne "") {
     	if ($g_is_recur) {
         	@f = findRecursively($g_single_directory, 'c');
@@ -140,7 +142,5 @@ sub tryCompile
     } else {
         @f = findCurrent($curdir, 'c');
     }
-    #my @f = `find -name "*.c"`;
-
     compileFileList(@f);
 }

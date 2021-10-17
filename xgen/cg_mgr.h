@@ -72,8 +72,15 @@ protected:
     {
         ASSERT0(m_rm);
         xoc::Sym const* s = m_rm->addToSymbolTab(buildin_name);
-        return m_rm->getVarMgr()->registerStringVar(buildin_name,
-                                                    s, MEMORY_ALIGNMENT);
+        //Set builtin variables to be LOCAL to avoid RegionMgr regarded them
+        //as global variables. Because too many builtin variables will disrupt
+        //the dump and analysis. Moreover it does not matter for builtin call
+        //code generation whichever it is LOCAL or GLOBAL variable.
+        return m_rm->getVarMgr()->registerVar(buildin_name,
+                                              m_rm->getTypeMgr()->getAny(),
+                                              MEMORY_ALIGNMENT,
+                                              VAR_FAKE|VAR_LOCAL|
+                                              VAR_IS_UNALLOCABLE);
     }
 
     AsmPrinterMgr * getAsmPrtMgr() { return &m_asmprtmgr; }

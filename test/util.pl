@@ -3,12 +3,12 @@ use strict;
 
 # These functions are exported.
 our @EXPORT_OK = qw(
-    abort 
-    abortex 
+    abort
+    abortex
     computeDirFromFilePath
     computeExeName
     computeSourceFileNameByExeName
-    compileGR 
+    compileGR
     computeRelatedPathToXocRootDir
     computeAbsolutePathToXocRootDir
     compareDumpFile
@@ -17,14 +17,17 @@ our @EXPORT_OK = qw(
     getBaseResultDumpFilePath
     getOutputFilePath
     getBaseOutputFilePath
-    generateGR 
-    findCurrent 
-    findRecursively 
+    generateGR
+    findCurrent
+    findFfileCurrent
+    findRecursively
     findFileRecursively
     is_exist
     moveToPassed
     invokeSimulator
-    runSimulator 
+    peelPostfixName
+    peelFileName
+    runSimulator
     runHostExe
     runBaseccToolChainToComputeBaseResult
     runBaseCC
@@ -38,7 +41,7 @@ our $g_basecc = "";
 our $g_basecc_cflags = "";
 our $g_xocc = "";
 our $g_cpp = "cpp";
-our $g_cflags = "-O0"; 
+our $g_cflags = "-O0";
 our $g_simulator = "";
 our $g_as = "";
 our $g_ld = "";
@@ -66,6 +69,8 @@ our $g_is_nocg = 0;
 our $g_is_basedumpfile_must_exist = 0;
 our $g_is_baseresultfile_must_exist = 0;
 our $g_error_count = 0;
+our $g_fail = -1;
+our $g_succ = 0;
 
 #Local variables that are used in current file scope.
 my $g_override_simulator = "";
@@ -77,7 +82,28 @@ my $g_override_basecc_flag = "";
 # These functions are imported.
 ## selectTargetFromConfigFile
 
+#Find file in current directory.
+sub findFileCurrent {
+    my $dir = $_[0];
+    my $filename = $_[1];
+    my @filelist = ();
+    # create a list of all files in
+    # the current directory
+    opendir(DIR, $dir);
+    #@srclist = grep(/\.c$/, readdir(DIR));
+    while (my $file = readdir(DIR)) {
+        if ($file =~ m/$filename$/) {} #compare the filename.
+        else { next; }
+        push(@filelist, $file);
+    }
+    closedir(DIR);
+    #print @filelist;
+    return @filelist;
+}
+
+#Find file with given suffix in current directory.
 sub findCurrent {
+    #my @filelist = `find -maxdepth 1 -name "*.c"`; #ONLY AVAILABLE ON LINUX
     my $dir = $_[0];
     my $suffix = $_[1];
     my @filelist = ();
@@ -109,6 +135,7 @@ sub findCore {
     push(@g_filelist, $File::Find::name) if ($_ =~ m/\.$suffix$/);
 }
 
+#Find file in current directory and sub-directory.
 my $g_testcase; #used inside this file scope.
 sub findFileRecursively {
     my $dir = $_[0];
@@ -134,6 +161,10 @@ sub removeLine
     $cmdline = "$removeline_script_path $inputfile $num_of_line";
     print("\nCMD>>", $cmdline, "\n");
     $retval = systemx($cmdline);
+    if ($retval != 0) {
+        return $g_fail;
+    }
+    return $g_succ;
 }
 
 #Use basecc to compile, assembly and link, and running.
@@ -160,27 +191,12 @@ sub runBaseccToolChainToComputeBaseResult
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $g_ld FAILED!! RES:$retval\n";
         abortex($retval);
+        return $g_fail; #No need execute the following code.
     }
 
     #The new result file.
     my $rundir = computeDirFromFilePath($file);
-    invokeSimulator($file, $curdir, $base_outputfile, $rundir);
-    return;
-
-    #Run generated binary.
-    #$cmdline = "qemu-arm -L /usr/arm-linux-gnueabihf/ $exefile";
-    #print("\nCMD>>", $cmdline, " >& ", $base_outputfile, "\n");
-
-    #open (my $OLDVALUE, '>&', STDOUT); #save stdout to oldvalue
-    #open (STDOUT, '>>', $base_outputfile); #redirect stdout to file
-    #$retval = systemx($cmdline);
-    #open (STDOUT, '>&', $OLDVALUE); #reload stdout from oldvalue
-
-    #if ($retval != 0) {
-    #    print("\nCMD>>", $cmdline, "\n");
-    #    print "\nEXECUTE $cmdline FAILED!! RES:$retval\n";
-    #    #die($retval);
-    #}
+    return invokeSimulator($file, $curdir, $base_outputfile, $rundir);
 }
 
 sub runArmExe
@@ -201,7 +217,10 @@ sub runArmExe
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $cmdline FAILED!! RES:$retval\n";
         #die($retval);
+        return $g_fail;
     }
+
+    return $g_succ;
 }
 
 sub runHostExe
@@ -222,7 +241,10 @@ sub runHostExe
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $cmdline FAILED!! RES:$retval\n";
         #die($retval);
+        return $g_fail;
     }
+
+    return $g_succ;
 }
 
 sub runSimulator
@@ -232,10 +254,11 @@ sub runSimulator
     my $cmdline;
     my $retval;
 
-    if (!-e $exefile) { 
+    if (!-e $exefile) {
         #Not equal
         print "\n$exefile DOES NOT EXIST!\n";
         abortex();
+        return $g_fail;
     }
 
     $cmdline = "$g_simulator $exefile";
@@ -249,7 +272,10 @@ sub runSimulator
         #Base compiler might also failed, thus we just compare
         #the result of base compiler even if it is failed.
         abortex("\nEXECUTE $cmdline FAILED!! RES:$retval\n"); #die($retval);
+        return $g_fail;
     }
+
+    return $g_succ;
 }
 
 #Generate GR from C file.
@@ -257,12 +283,12 @@ sub generateGR
 {
     my $cmdline;
     my $retval;
-    my $fullpath = $_; 
-    my $fname = substr($fullpath, rindex($fullpath, "/") + 1);
+    my $fullpath = $_;
+    my $fname = peelFileName($fullpath);
     my $grname = $fullpath.".gr";
     my $asmname = $grname.".asm";
 
-    #generate GR 
+    #generate GR
     unlink($grname);
     $cmdline = "$g_xocc $g_cflags $fullpath -dumpgr";
     print("\nCMD>>", $cmdline, "\n");
@@ -271,14 +297,17 @@ sub generateGR
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE XOCC FAILED!! RES:$retval\n";
         abortex($retval);
+        return $g_fail;
     }
 
-    if (!-e $grname) { 
+    if (!-e $grname) {
         #Not equal
         print "\n$grname DOES NOT EXIST!\n";
         abortex();
+        return $g_fail;
     }
-    return;
+
+    return $g_succ;
 }
 
 #compile GR to asm
@@ -286,14 +315,15 @@ sub compileGR
 {
     my $cmdline;
     my $retval;
-    my $fullpath = $_; 
-    my $fname = substr($fullpath, rindex($fullpath, "/") + 1);
+    my $fullpath = $_;
+    my $fname = peelFileName($fullpath);
     my $grname = $fullpath.".gr";
     my $asmname = $grname.".asm";
-    if (!-e $grname) { 
+    if (!-e $grname) {
         #Not equal
         print "\n$grname DOES NOT EXIST!\n";
         abortex();
+        return $g_fail;
     }
 
     #compile GR to asm
@@ -304,7 +334,9 @@ sub compileGR
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE XOCC FAILED!! RES:$retval\n";
         abortex($retval);
+        return $g_fail;
     }
+    return $g_succ;
 }
 
 sub runAssembler
@@ -318,7 +350,9 @@ sub runAssembler
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $g_as FAILED!! RES:$retval\n";
         abortex($retval);
+        return $g_fail;
     }
+    return $g_succ;
 }
 
 sub runLinker
@@ -333,7 +367,9 @@ sub runLinker
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $g_ld FAILED!! RES:$retval\n";
         abortex($retval);
+        return $g_fail;
     }
+    return $g_succ;
 }
 
 #Use base-cc to compile, assembly and link.
@@ -348,7 +384,9 @@ sub runBaseCC
         print("\nCMD>>", $cmdline, "\n");
         print "\nEXECUTE $g_ld FAILED!! RES:$retval\n";
         abortex($retval);
+        return $g_fail;
     }
+    return $g_succ;
 }
 
 #Use cpp to preprocess C file.
@@ -356,8 +394,8 @@ sub runBaseCC
 sub runCPP
 {
     my $cmdline;
-    my $src_fullpath = $_[0]; 
-    my $input_file_name = substr($src_fullpath, rindex($src_fullpath, "/") + 1);
+    my $src_fullpath = $_[0];
+    my $input_file_name = peelFileName($src_fullpath);
     my $preprocessed_name = $src_fullpath.".i";
     my $exename = computeExeName($src_fullpath);
     my $objname = $src_fullpath.".o";
@@ -371,26 +409,29 @@ sub runCPP
         print("\nCMD>>", $cmdline, "\n");
         print "\nFAILED! -- EXECUTE CPP FAILED!! RES:$retval\n";
         abortex($retval);
+        return "";
     }
-    return $preprocessed_name; 
+    return $preprocessed_name;
 }
 
 #Use xocc to compile, assembly and link.
 sub runXOCC
 {
     my $cmdline;
-    my $src_fullpath = $_[0]; 
-    my $input_file_name = substr($src_fullpath, rindex($src_fullpath, "/") + 1);
-    my $is_invoke_assembler = $_[1]; 
-    my $is_invoke_linker = $_[2]; 
+    my $src_fullpath = $_[0];
+    my $input_file_name = peelFileName($src_fullpath);
+    my $is_invoke_assembler = $_[1];
+    my $is_invoke_linker = $_[2];
     my $asmname = $src_fullpath.".asm";
     my $exename = computeExeName($src_fullpath);
     my $objname = $src_fullpath.".o";
     if (!is_exist($g_xocc)) {
         abortex(1);
+        return $g_fail; #No need execute the following code.
     }
     if (!is_exist($src_fullpath)) {
         abortex(1);
+        return $g_fail; #No need execute the following code.
     }
 
     #compile
@@ -403,20 +444,24 @@ sub runXOCC
         print("\nCMD>>", $cmdline, "\n");
         print "\nFAILED! -- EXECUTE XOCC FAILED!! RES:$retval\n";
         abortex($retval);
+        return $g_fail; #No need execute the following code.
     }
     if ($is_invoke_assembler) {
-        runAssembler($asmname, $objname);
+        if (runAssembler($asmname, $objname) == $g_fail) {
+            return $g_fail; #No need execute the following code.
+        }
     }
     if ($is_invoke_linker) {
-        runLinker($exename, $objname); 
+        return runLinker($exename, $objname);
     }
+    return $g_succ;
 }
 
 sub abortex
 {
     $g_error_count += 1;
     my $msg = $_[0];
-    if ($msg) { 
+    if ($msg) {
         print "\n$msg\n";
     }
     if (!$g_is_quit_early) {
@@ -428,7 +473,7 @@ sub abortex
 sub abort
 {
     my $msg = $_[0];
-    if ($msg) { 
+    if ($msg) {
         print "\n$msg\n";
     }
     exit(1);
@@ -452,7 +497,45 @@ sub computeSourceFileNameByExeName
     #Drop the last seg off.
     $n--;
     my $path = "";
-    my $i = 0; 
+    my $i = 0;
+    while (defined($seg = $segs[$i])) {
+        if ($i == 0) {
+            $path = $seg;
+        } else {
+            $path = "$path.$seg";
+        }
+        $i++;
+        if ($i >= $n) {
+          last;
+        }
+    }
+    return $path;
+}
+
+#Extract path prefix from 'fullpath'.
+#e.g: $fullpath is /a/b/c.cpp, then $path is /a/b/
+#Note if $fullpath is c.cpp, return empty.
+sub peelFileName
+{
+    my $fullpath = $_[0];
+    my $path = substr($fullpath, 0, rindex($fullpath, "/") + 1);
+    return $path; 
+}
+
+#Given file path, drop the last postfix name.
+#e.g: given a/b.out, return a/b
+sub peelPostfixName
+{
+    my $filepath = $_[0];
+    my @segs = split(/\./, $filepath);
+    my $seg;
+    my $n = 0; #the number of seg
+    while (defined($seg = $segs[$n])) { $n++; }
+
+    #Drop the last seg off.
+    $n--;
+    my $path = "";
+    my $i = 0;
     while (defined($seg = $segs[$i])) {
         if ($i == 0) {
             $path = $seg;
@@ -481,7 +564,7 @@ sub computeDirFromFilePath
     #Drop the last seg off.
     $n--;
     $dir = "";
-    my $i = 0; 
+    my $i = 0;
     while (defined($seg = $segs[$i])) {
         $dir = "$dir/$seg";
         $i++;
@@ -549,7 +632,7 @@ sub checkExistence
         push(@filelist, $g_simulator);
     }
     foreach (@filelist) {
-       if (!-e $_) { 
+       if (!-e $_) {
            print "\n$_ DOES NOT EXIST!\n";
            if ($g_is_quit_early) {
                abort();
@@ -561,7 +644,7 @@ sub checkExistence
 sub is_exist
 {
     my $filepath = $_[0];
-    if (!-e $filepath) { 
+    if (!-e $filepath) {
         print "\n$filepath DOES NOT EXIST!!\n";
         return 0;
     }
@@ -624,24 +707,24 @@ sub parseCmdLine
             }
             $g_single_directory = $ARGV[$i];
         } elsif ($ARGV[$i] eq "NoCG") {
-            $g_is_invoke_assembler = 0; 
-            $g_is_invoke_linker = 0; 
+            $g_is_invoke_assembler = 0;
+            $g_is_invoke_linker = 0;
             $g_is_invoke_simulator = 0;
             $g_is_nocg = 1;
         } elsif ($ARGV[$i] eq "NoAsm") {
-            $g_is_invoke_assembler = 0; 
-            $g_is_invoke_linker = 0; 
+            $g_is_invoke_assembler = 0;
+            $g_is_invoke_linker = 0;
             $g_is_invoke_simulator = 0;
         } elsif ($ARGV[$i] eq "NoLink") {
-            $g_is_invoke_linker = 0; 
+            $g_is_invoke_linker = 0;
             $g_is_invoke_simulator = 0;
         } elsif ($ARGV[$i] eq "NoRun") {
             $g_is_invoke_simulator = 0;
         } elsif ($ARGV[$i] eq "CompareDump") {
-            $g_is_compare_dump = 1; 
+            $g_is_compare_dump = 1;
             $g_is_basedumpfile_must_exist = 1;
         } elsif ($ARGV[$i] eq "CompareDumpIfExist") {
-            $g_is_compare_dump = 1; 
+            $g_is_compare_dump = 1;
             $g_is_basedumpfile_must_exist = 0;
         } elsif ($ARGV[$i] eq "CompareResultIfExist") {
             $g_is_compare_result = 1;
@@ -715,12 +798,16 @@ sub parseCmdLine
                 abort();
             }
             $i++;
-            if (!$ARGV[$i]) {
-                #Note ""(empty string) and undef are both in the case.
+            if ($ARGV[$i] eq "") {
+                #Nothing to do.
+            } elsif (!$ARGV[$i]) {
+                #Note ""(empty string) and UNDEF are both in the case.
                 usage();
                 abortex();
             }
-            $g_override_xocc_flag = $ARGV[$i];
+
+            #Add a blank to make sure there is a separator at least.
+            $g_override_xocc_flag = $ARGV[$i]." ";
         } elsif ($ARGV[$i] eq "LinkerFlag") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
@@ -929,7 +1016,8 @@ sub computeRelatedPathToXocRootDir
     }
 }
 
-#The function encapsulates runSimulator and do some preparatory works for running.
+#The function encapsulates runSimulator and do some preparatory works
+#for running.
 sub invokeSimulator
 {
     my $fullpath = $_[0]; #fullpath of source file, NOT the executable file.
@@ -940,7 +1028,7 @@ sub invokeSimulator
     #file that generated by compiler. The redirected
     #file is used to record the OUTPUT of compiler
     #that print to console.
-    my $redirected_output = $_[2]; 
+    my $redirected_output = $_[2];
 
     my $rundir = $_[3]; #the directory where simulator should be run.
 
@@ -955,12 +1043,12 @@ sub invokeSimulator
     if ($rundir ne $curdir) {
         chdir $rundir;
     }
-    runSimulator($exefile, $redirected_output);
+    return runSimulator($exefile, $redirected_output);
 }
 
 sub generateGRandCompile
 {
-    my $fullpath = $_; 
+    my $fullpath = $_;
     my $grname = $fullpath.".gr";
     my $asmname = $grname.".asm";
 
@@ -971,7 +1059,7 @@ sub generateGRandCompile
     }
     if ($g_is_invoke_linker) {
         my $exefile = computeExeName($fullpath);
-        runLinker($exefile); 
+        runLinker($exefile);
     }
 }
 
@@ -980,7 +1068,7 @@ sub extractAndSetCflag
 {
     #Record the configure file.
     my $configure_file_path = $_[0].".conf";
-    if (!-e $configure_file_path) { 
+    if (!-e $configure_file_path) {
         return;
     }
     my $pattern = qr/^#/;
@@ -1044,9 +1132,10 @@ sub compareDumpFile
         if ($is_basedumpfile_must_exist) {
             #Baseline dump file does not exist.
             abortex("Base dump file '$base_dump_file' not exist.");
+            return $g_fail; #No need execute the following code.
         } else {
-            print "\nPASS! NOTE:base dump file '$base_dump_file' not exist.\n";
-            return;
+            print "\nPASS! NOTE:BASE DUMP FILE '$base_dump_file' NOT EXIST.\n";
+            return $g_succ; #No need execute the following code.
         }
     }
 
@@ -1060,24 +1149,30 @@ sub compareDumpFile
         #New result is incorrect!
         print "\nFAILED! -- COMPARE DUMP OF $fullpath FAILED! NOT EQUAL TO BASE DUMP!\n";
         abortex();
+        return $g_fail; #No need execute the following code.
     }
+    return $g_succ;
 }
 
 sub tryCreateDir
 {
     my $path = $_[0]; #path to directory.
     if (-e $path) { return; }
-    mkdir($path) or abortex("Can not create directory '$path'");
+    mkdir($path) or abortex("CAN NOT CREATE DIRECTORY '$path'");
+    return $g_succ;
 }
 
 sub moveToPassed
 {
     my $fullpath = $_[0]; #path to src file.
-    my $path = substr($fullpath, 0, rindex($fullpath, "/") + 1);
+    my $path = peelFileName($fullpath);
     my $passedpath = "$path\/passed\/";
 
     #Create passed directory.
-    tryCreateDir($passedpath);
+    if (tryCreateDir($passedpath) != $g_succ) {
+        return $g_fail;
+    }
+
     #my $cmdline;
     #$cmdline = "mkdir -p $passedpath";
     #my $retval = systemx($cmdline);
@@ -1103,6 +1198,13 @@ sub systemx
     my $cmdline = $_[0];
     my $retval = system($cmdline)/256;
     return $retval;
+}
+
+sub perlSyntax
+{
+    my $param0 = $_[0]; #pass scalar arg
+    my @param1 = @{$_[1]}; #pass array arg
+    perlSyntax($param0, \@param1);
 }
 
 1;
