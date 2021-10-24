@@ -1,5 +1,5 @@
 //====---- Dump region '.program' ----====
-region program @".program" () {
+region program ".program" () {
 
     var in1:mc<256>:(align(64));
     var in0:mc<256>:(align(64));

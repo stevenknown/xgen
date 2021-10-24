@@ -1,4 +1,4 @@
-region program @"program" () {
+region program "program" () {
     region func main () {
         var a:i32:(readonly, align(4));
         var b:i32:(readonly, align(4));
@@ -14,7 +14,7 @@ region program @"program" () {
         setelem $4 = ld p, 20, 20;
         setelem $1000 = ld q, 24, 8;
     	setelem $77:vec<8*f128> = $7:f128, $4:u8, 8;
-        getelem $77:mc<20> = $77, 0;
+        getelem $77:mc<16> = $77, 0;
     	getelem $7:i32 = $77, 20;
     	getelem $3:*<33> = $77, 24;
     	stpr $77:u32:(throw()) = add:i32 $7, $3;

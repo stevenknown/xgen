@@ -8,12 +8,12 @@ VARIABLES:3
 '.program' use 4KB memory
 The number of IR Total:4, id:0(0.0)%, ld:0(0.0)%, st:1(25.0)%, lda:0(0.0)%,call:0(0.0)%, icall:0(0.0)%, pr:0(0.0)%, stpr:0(0.0)%, ist:0(0.0)%,bin:0(0.0)%, una:0(0.0)%, starray:0(0.0)%, array:0(0.0)%, cvt:0(0.0)%, condbr:0(0.0)%, uncondbr:0(0.0)%, 
 ==---- IR List ----==
-st:str 'ga' id:2 attachinfo:Dbx    
-    strconst:str \"hello world\" id:1
-region 'main',id:2 id:3 attachinfo:Dbx
+st:str 'ga' attachinfo:Dbx    
+    strconst:str \"hello world\"
+region 'main',id:2 attachinfo:Dbx
 ==---- REGION(2):main: ----==
 'main' use 4KB memory
 The number of IR Total:3, id:0(0.0)%, ld:0(0.0)%, st:1(33.3)%, lda:0(0.0)%,call:0(0.0)%, icall:0(0.0)%, pr:0(0.0)%, stpr:0(0.0)%, ist:0(0.0)%,bin:0(0.0)%, una:0(0.0)%, starray:0(0.0)%, array:0(0.0)%, cvt:0(0.0)%, condbr:0(0.0)%, uncondbr:0(0.0)%, 
 ==---- IR List ----==
-st:str 'ga' id:2 attachinfo:Dbx    
-    strconst:str \"again\" id:1
+st:str 'ga' attachinfo:Dbx    
+    strconst:str \"again\"

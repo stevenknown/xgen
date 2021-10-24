@@ -1,4 +1,4 @@
-region program @"program" () {
+region program "program" () {
     region func main () {
         var b1:mc<16>:(array,align(4));
         var b0:mc<16>:(array,align(4));

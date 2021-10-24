@@ -1,4 +1,4 @@
-region program @"myprogram" () {
+region program "myprogram" () {
     var g:i32:(align(4));
 
     region func main () {
@@ -10,7 +10,7 @@ region program @"myprogram" () {
 
         stpr $11:*<1> = lda a;
         stpr $11:*<1> = lda a;
-        stpr $7 = ld:i8 j;
+        stpr $7:i8 = ld:i8 j;
         stpr $14:i32:(throw()) = array:i32:0:(dim[30]) $11:*<16>, ($13:u32);
             
         starray:i8:3:(elemtype:i64, dim[4,5]) = lda b, (ld i, ld j), $14:i16;

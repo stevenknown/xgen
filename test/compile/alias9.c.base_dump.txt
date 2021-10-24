@@ -65,18 +65,18 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 
   [4]    p->a = 20; //S1
   
-  ist:i32 id:5 attachinfo:Dbx      
-      ld:*<8> 'p' base id:3 attachinfo:Dbx      
-      intconst:i32 20|0x14 id:4 attachinfo:Dbx
+  ist:i32 attachinfo:Dbx      
+      ld:*<8> 'p' base attachinfo:Dbx      
+      intconst:i32 20|0x14 attachinfo:Dbx
   LHS:
-  ist:i32 id:5 attachinfo:Dbx
+  ist:i32 attachinfo:Dbx
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
     MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
   RHS:
   >> MDSet DETAIL:
-  ld:*<8> 'p' id:3 attachinfo:Dbx
+  ld:*<8> 'p' attachinfo:Dbx
     MD5 -- base:Var58(p):global,,addr_taken,align(4),pointer,pt_base_sz:8,*,mem_size:4,decl:'struct S (id:1)  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -86,22 +86,22 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 
   [6]    return p->b; //S2
   
-  return id:7 attachinfo:Dbx
-      ild:i32:offset(4) id:1 attachinfo:Dbx          
-          ld:*<8> 'p' id:2 attachinfo:Dbx
+  return attachinfo:Dbx
+      ild:i32:offset(4) attachinfo:Dbx          
+          ld:*<8> 'p' attachinfo:Dbx
   
-  ild:i32:offset(4) id:1 attachinfo:Dbx
+  ild:i32:offset(4) attachinfo:Dbx
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
     MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
   >> MDSet DETAIL:
-  ild:i32:offset(4) id:1 attachinfo:Dbx
+  ild:i32:offset(4) attachinfo:Dbx
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
     MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
-    ld:*<8> 'p' id:2 attachinfo:Dbx
+    ld:*<8> 'p' attachinfo:Dbx
       MD5 -- base:Var58(p):global,,addr_taken,align(4),pointer,pt_base_sz:8,*,mem_size:4,decl:'struct S (id:1)  *  p ' -- ofst:0 -- size:4
         POINT TO:
           MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -128,14 +128,14 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 MD5 -- base:Var58(p):global,,addr_taken,align(4),pointer,pt_base_sz:8,*,mem_size:4,decl:'struct S (id:1)  *  p ' -- ofst:0 -- size:4
 --- BB3 ---
 --- BB1 ---
-    ist:i32 id:5 attachinfo:Dbx
+    ist:i32 attachinfo:Dbx
      : MD2,MD3
-      ld:*<8> 'p' id:3 attachinfo:Dbx
+      ld:*<8> 'p' attachinfo:Dbx
       EMD5 : MD2
-    return id:7 attachinfo:Dbx
-      ild:i32:offset(4) id:1 attachinfo:Dbx
+    return attachinfo:Dbx
+      ild:i32:offset(4) attachinfo:Dbx
        : MD2,MD3
-        ld:*<8> 'p' id:2 attachinfo:Dbx
+        ld:*<8> 'p' attachinfo:Dbx
         EMD5 : MD2
 
 ==---- DUMP DUMgr: IR REFERENCE 'foo' ----==
@@ -158,14 +158,14 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 MD5 -- base:Var58(p):global,,addr_taken,align(4),pointer,pt_base_sz:8,*,mem_size:4,decl:'struct S (id:1)  *  p ' -- ofst:0 -- size:4
 --- BB3 ---
 --- BB1 ---
-    ist:i32 id:5 attachinfo:Dbx,MDSSA
+    ist:i32 attachinfo:Dbx,MDSSA
      : MD2,MD3
-      ld:*<8> 'p' id:3 attachinfo:Dbx,MDSSA
+      ld:*<8> 'p' attachinfo:Dbx,MDSSA
       EMD5 : MD2
-    return id:7 attachinfo:Dbx
-      ild:i32:offset(4) id:1 attachinfo:Dbx,MDSSA
+    return attachinfo:Dbx
+      ild:i32:offset(4) attachinfo:Dbx,MDSSA
        : MD2,MD3
-        ld:*<8> 'p' id:2 attachinfo:Dbx,MDSSA
+        ld:*<8> 'p' attachinfo:Dbx,MDSSA
         EMD5 : MD2
 ==---- DUMP Alias Analysis 'foo' ----==
 ==---- DUMP ALL MD ----==
@@ -224,11 +224,11 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 
   [4]    p->a = 20; //S1
   
-  ist:i32 id:5 attachinfo:Dbx,MDSSA      
-      ld:*<8> 'p' base id:3 attachinfo:Dbx,MDSSA      
-      intconst:i32 20|0x14 id:4 attachinfo:Dbx
+  ist:i32 attachinfo:Dbx,MDSSA      
+      ld:*<8> 'p' base attachinfo:Dbx,MDSSA      
+      intconst:i32 20|0x14 attachinfo:Dbx
   LHS:
-  ist:i32 id:5 attachinfo:Dbx,MDSSA
+  ist:i32 attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -241,7 +241,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
         
   RHS:
   >> MDSet DETAIL:
-  ld:*<8> 'p' id:3 attachinfo:Dbx,MDSSA
+  ld:*<8> 'p' attachinfo:Dbx,MDSSA
     MD5 -- base:Var58(p):global,,addr_taken,align(4),pointer,pt_base_sz:8,*,mem_size:4,decl:'struct S (id:1)  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -251,11 +251,11 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 
   [6]    return p->b; //S2
   
-  return id:7 attachinfo:Dbx
-      ild:i32:offset(4) id:1 attachinfo:Dbx,MDSSA          
-          ld:*<8> 'p' id:2 attachinfo:Dbx,MDSSA
+  return attachinfo:Dbx
+      ild:i32:offset(4) attachinfo:Dbx,MDSSA          
+          ld:*<8> 'p' attachinfo:Dbx,MDSSA
   
-  ild:i32:offset(4) id:1 attachinfo:Dbx,MDSSA
+  ild:i32:offset(4) attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -267,7 +267,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
         MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
         
   >> MDSet DETAIL:
-  ild:i32:offset(4) id:1 attachinfo:Dbx,MDSSA
+  ild:i32:offset(4) attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -278,7 +278,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
         MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
         
-    ld:*<8> 'p' id:2 attachinfo:Dbx,MDSSA
+    ld:*<8> 'p' attachinfo:Dbx,MDSSA
       MD5 -- base:Var58(p):global,,addr_taken,align(4),pointer,pt_base_sz:8,*,mem_size:4,decl:'struct S (id:1)  *  p ' -- ofst:0 -- size:4
         POINT TO:
           MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -350,18 +350,18 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 
   [4]    p->a = 20; //S1
   
-  ist:i32 id:5 attachinfo:Dbx,MDSSA      
-      ld:*<8> 'p' base id:3 attachinfo:Dbx,MDSSA      
-      intconst:i32 20|0x14 id:4 attachinfo:Dbx
+  ist:i32 attachinfo:Dbx,MDSSA      
+      ld:*<8> 'p' base attachinfo:Dbx,MDSSA      
+      intconst:i32 20|0x14 attachinfo:Dbx
   LHS:
-  ist:i32 id:5 attachinfo:Dbx,MDSSA
+  ist:i32 attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
     MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
   RHS:
   >> MDSet DETAIL:
-  ld:*<8> 'p' id:3 attachinfo:Dbx,MDSSA
+  ld:*<8> 'p' attachinfo:Dbx,MDSSA
     MD5 -- base:Var58(p):global,,addr_taken,align(4),pointer,pt_base_sz:8,*,mem_size:4,decl:'struct S (id:1)  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -371,22 +371,22 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 
   [6]    return p->b; //S2
   
-  return id:7 attachinfo:Dbx
-      ild:i32:offset(4) id:1 attachinfo:Dbx,MDSSA          
-          ld:*<8> 'p' id:2 attachinfo:Dbx,MDSSA
+  return attachinfo:Dbx
+      ild:i32:offset(4) attachinfo:Dbx,MDSSA          
+          ld:*<8> 'p' attachinfo:Dbx,MDSSA
   
-  ild:i32:offset(4) id:1 attachinfo:Dbx,MDSSA
+  ild:i32:offset(4) attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
     MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
   >> MDSet DETAIL:
-  ild:i32:offset(4) id:1 attachinfo:Dbx,MDSSA
+  ild:i32:offset(4) attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
     MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
-    ld:*<8> 'p' id:2 attachinfo:Dbx,MDSSA
+    ld:*<8> 'p' attachinfo:Dbx,MDSSA
       MD5 -- base:Var58(p):global,,addr_taken,align(4),pointer,pt_base_sz:8,*,mem_size:4,decl:'struct S (id:1)  *  p ' -- ofst:0 -- size:4
         POINT TO:
           MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -413,14 +413,14 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 MD5 -- base:Var58(p):global,,addr_taken,align(4),pointer,pt_base_sz:8,*,mem_size:4,decl:'struct S (id:1)  *  p ' -- ofst:0 -- size:4
 --- BB3 ---
 --- BB1 ---
-    ist:i32 id:5 attachinfo:Dbx,MDSSA
+    ist:i32 attachinfo:Dbx,MDSSA
      : MD2,MD3
-      ld:*<8> 'p' id:3 attachinfo:Dbx,MDSSA
+      ld:*<8> 'p' attachinfo:Dbx,MDSSA
       EMD5 : MD2
-    return id:7 attachinfo:Dbx
-      ild:i32:offset(4) id:1 attachinfo:Dbx,MDSSA
+    return attachinfo:Dbx
+      ild:i32:offset(4) attachinfo:Dbx,MDSSA
        : MD2,MD3
-        ld:*<8> 'p' id:2 attachinfo:Dbx,MDSSA
+        ld:*<8> 'p' attachinfo:Dbx,MDSSA
         EMD5 : MD2
 ==---- DUMP Alias Analysis '.program' ----==
 ==---- DUMP ALL MD ----==
@@ -485,7 +485,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 
   -- IR POINT-TO: --
   ---------------------------------  
-  region 'foo',id:2 id:1
+  region 'foo',id:2
   
 
 ==---- DUMP DUMgr: IR REFERENCE '.program' ----==
@@ -505,7 +505,7 @@ MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 --- BB3 ---
 --- BB1 ---
-    region 'foo',id:2 id:1
+    region 'foo',id:2
 
 ==---- DUMP DUMgr: IR REFERENCE '.program' ----==
 
@@ -524,7 +524,7 @@ MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 --- BB3 ---
 --- BB1 ---
-    region 'foo',id:2 id:1
+    region 'foo',id:2
 ==---- DUMP Alias Analysis '.program' ----==
 ==---- DUMP ALL MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -579,7 +579,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 
   -- IR POINT-TO: --
   ---------------------------------  
-  region 'foo',id:2 id:1
+  region 'foo',id:2
   
 ==---- DUMP Alias Analysis '.program' ----==
 ==---- DUMP ALL MD ----==
@@ -644,7 +644,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 
   -- IR POINT-TO: --
   ---------------------------------  
-  region 'foo',id:2 id:1
+  region 'foo',id:2
   
 
 ==---- DUMP DUMgr: IR REFERENCE '.program' ----==
@@ -664,4 +664,4 @@ MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 --- BB3 ---
 --- BB1 ---
-    region 'foo',id:2 id:1
+    region 'foo',id:2

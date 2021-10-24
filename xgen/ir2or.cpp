@@ -1030,7 +1030,7 @@ void IR2OR::convertFalsebr(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     ASSERT0(br_det->is_lt() || br_det->is_le() || br_det->is_gt() ||
             br_det->is_ge() || br_det->is_eq() || br_det->is_ne());
 
-    IR_code(br_det) = invertIRType(br_det->getCode());
+    IR_code(br_det) = IR::invertIRType(br_det->getCode());
     IR_code(newir) = IR_TRUEBR;
     convertTruebr(newir, ors, cont);
     m_rg->freeIRTree(newir);
@@ -1085,7 +1085,7 @@ void IR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
     bool is_truebr = true;
     if (t == OR_UNDEF) {
         //Query the converse or-type.
-        IR_TYPE rev_t = invertIRType(ir->getCode());
+        IR_TYPE rev_t = IR::invertIRType(ir->getCode());
         t = m_cg->mapIRType2ORType(rev_t, maxbytesize, sr0, sr1, is_signed);
         ASSERTN(t != OR_UNDEF, ("miss comparsion or-type for branch"));
         is_truebr = false;

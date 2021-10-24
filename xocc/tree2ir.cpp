@@ -166,7 +166,7 @@ IR * CTree2IR::convertAssign(IN Tree * t, INT lineno, IN T2IRCtx * cont)
             get_pointer_base_size());
     } else {
         UINT s;
-        DATA_TYPE dt = ::get_decl_dtype(t->getResultType(), &s, m_tm);
+        DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(), &s, m_tm);
         if (IS_SIMPLEX(dt)) {
             rtype = m_tm->getSimplexTypeEx(dt);
         } else {
@@ -640,7 +640,7 @@ IR * CTree2IR::convertPointerDeref(Tree * t, INT lineno, IN T2IRCtx * cont)
             get_pointer_base_size());
     } else {
         UINT s;
-        DATA_TYPE dt = ::get_decl_dtype(t->getResultType(), &s, m_tm);
+        DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(), &s, m_tm);
         if (dt == D_MC) {
             type = m_tm->getMCType(s);
         } else {
@@ -665,7 +665,7 @@ static Type const* computeArrayElementType(Tree const* t, TypeMgr * tm)
 {
     ASSERT0(t->getCode() == TR_ARRAY);
     UINT size;
-    DATA_TYPE dt = ::get_decl_dtype(t->getResultType(), &size, tm);
+    DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(), &size, tm);
     if (dt == D_PTR) {
         return tm->getPointerType(t->getResultType()->
             get_pointer_base_size());
@@ -971,7 +971,7 @@ static Type const* convertCallReturnType(Tree const* t, xoc::TypeMgr * tm)
         return tm->getAny();
     }
     UINT size = 0;
-    DATA_TYPE dt = get_decl_dtype(t->getResultType(), &size, tm);
+    DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(), &size, tm);
     Type const* rettype = nullptr;
     if (dt == D_MC) {
         rettype = tm->getMCType(size);
@@ -1156,6 +1156,145 @@ IR * CTree2IR::convertCall(IN Tree * t, INT lineno, IN T2IRCtx * cont)
     //Generate return-exprssion.
     return convertCallReturnVal(call, return_val_size, retval_buf,
                                 rettype, lineno);
+}
+
+
+IR * CTree2IR::convertLogicalAND(IN Tree * t, INT lineno, IN T2IRCtx * cont)
+{
+    ASSERT0(t->getCode() == TR_LOGIC_AND);
+    ASSERT0(cont);
+    T2IRCtx tcont(*cont);
+    IR * stmt_in_rchild = nullptr;
+    CONT_toplirlist(&tcont) = &stmt_in_rchild;
+    IR * op0 = convert(TREE_lchild(t), cont);
+    IR * op1 = convert(TREE_rchild(t), &tcont);
+    if (tcont.getTopIRList() == nullptr) {
+        IR * ir = m_rg->buildCmp(IR_LAND, op0, op1);
+        xoc::setLineNum(ir, lineno, m_rg);
+        return ir;
+    }
+
+    //if (!cond1)
+    //  res=false
+    //else
+    //  stmt-list
+    //  if (cond2)
+    //    res=true
+    //  else
+    //    res=false
+    //  endif
+    //endif
+    UINT res_prno = m_rg->buildPrno(m_tm->getBool());
+    if (!op0->is_judge()) {
+        op0 = m_rg->buildJudge(op0);
+    }
+    op0 = IR::invertIRType(op0, m_rg);
+    if (!op0->is_judge()) {
+        //op0 pointer changed.
+        op0 = m_rg->buildJudge(op0);
+    }
+    IR * ifir1 = m_rg->buildIf(op0, nullptr, nullptr);
+    IF_truebody(ifir1) = m_rg->buildStorePR(res_prno, m_tm->getBool(),
+        m_rg->buildImmInt(false, m_tm->getBool()));
+    IF_falsebody(ifir1) = tcont.getTopIRList();
+
+    if (!op1->is_judge()) {
+        op1 = m_rg->buildJudge(op1);
+    }
+    IR * ifir2 = m_rg->buildIf(op1, nullptr, nullptr);
+    IF_truebody(ifir2) = m_rg->buildStorePR(res_prno, m_tm->getBool(),
+        m_rg->buildImmInt(true, m_tm->getBool()));
+    IF_falsebody(ifir2) = m_rg->buildStorePR(res_prno, m_tm->getBool(),
+        m_rg->buildImmInt(false, m_tm->getBool()));
+    xoc::setLineNum(ifir2, lineno, m_rg);
+
+    xcom::add_next(&IF_falsebody(ifir1), ifir2);
+
+    ifir1->setParentPointer(true);
+
+    xoc::setLineNum(ifir1, lineno, m_rg);
+
+    xcom::add_next(CONT_toplirlist(cont), ifir1);
+    return m_rg->buildPRdedicated(res_prno, m_tm->getBool());
+}
+
+
+IR * CTree2IR::convertLogicalOR(IN Tree * t, INT lineno, IN T2IRCtx * cont)
+{
+    ASSERT0(t->getCode() == TR_LOGIC_OR);
+    ASSERT0(cont);
+    T2IRCtx tcont(*cont);
+    IR * stmt_in_rchild = nullptr;
+    CONT_toplirlist(&tcont) = &stmt_in_rchild;
+    IR * op0 = convert(TREE_lchild(t), cont);
+    IR * op1 = convert(TREE_rchild(t), &tcont);
+    if (tcont.getTopIRList() == nullptr) {
+        IR * ir = m_rg->buildCmp(IR_LOR, op0, op1);
+        xoc::setLineNum(ir, lineno, m_rg);
+        return ir;
+    }
+
+    //if (cond1)
+    //  res=true
+    //else
+    //  stmt-list
+    //  if (cond2)
+    //    res=true
+    //  else
+    //    res=false
+    //  endif
+    //endif
+    UINT res_prno = m_rg->buildPrno(m_tm->getBool());
+    if (!op0->is_judge()) {
+        op0 = m_rg->buildJudge(op0);
+    }
+    IR * ifir1 = m_rg->buildIf(op0, nullptr, nullptr);
+    IF_truebody(ifir1) = m_rg->buildStorePR(res_prno, m_tm->getBool(),
+        m_rg->buildImmInt(true, m_tm->getBool()));
+    IF_falsebody(ifir1) = tcont.getTopIRList();
+
+    if (!op1->is_judge()) {
+        op1 = m_rg->buildJudge(op1);
+    }
+    IR * ifir2 = m_rg->buildIf(op1, nullptr, nullptr);
+    IF_truebody(ifir2) = m_rg->buildStorePR(res_prno, m_tm->getBool(),
+        m_rg->buildImmInt(true, m_tm->getBool()));
+    IF_falsebody(ifir2) = m_rg->buildStorePR(res_prno, m_tm->getBool(),
+        m_rg->buildImmInt(false, m_tm->getBool()));
+    xoc::setLineNum(ifir2, lineno, m_rg);
+
+    xcom::add_next(&IF_falsebody(ifir1), ifir2);
+
+    ifir1->setParentPointer(true);
+
+    xoc::setLineNum(ifir1, lineno, m_rg);
+
+    xcom::add_next(CONT_toplirlist(cont), ifir1);
+    return m_rg->buildPRdedicated(res_prno, m_tm->getBool());
+}
+
+
+IR * CTree2IR::convertFP(IN Tree * t, INT lineno, IN T2IRCtx * cont)
+{
+    //An unsuffixed floating constant has type double. If suffixed
+    //by the letter f or F, it has type float.
+    //If suffixed by the letter l or L, it has type long double.
+
+    //Convert string to hex value , that is in order to generate
+    //single load instruction to load float point value during
+    //Code Generator.
+    Sym const* fp = TREE_fp_str_val(t);
+
+    //Default float point type is 64bit.
+    IR * ir = m_rg->buildImmFp(::atof(SYM_name(fp)),
+                               m_tm->getSimplexTypeEx(
+                                   t->getCode() == TR_FPF ? D_F32 : D_F64));
+    BYTE mantissa_num = getMantissaNum(SYM_name(fp));
+    if (mantissa_num > DEFAULT_MANTISSA_NUM) {
+        CONST_fp_mant(ir) = mantissa_num;
+    }
+    xoc::setLineNum(ir, lineno, m_rg);
+    return ir;
 }
 
 
@@ -1350,7 +1489,7 @@ IR * CTree2IR::convertDirectMemAccess(Tree const* t, INT lineno, T2IRCtx * cont)
     }
 
     UINT field_size = 0;
-    DATA_TYPE dt = ::get_decl_dtype(field_decl, &field_size, m_tm);
+    DATA_TYPE dt = CTree2IR::get_decl_dtype(field_decl, &field_size, m_tm);
     if (is_parent_require_addr) {
         //Parent tree node requires address.
         //The returned ir should be pointer.
@@ -1423,7 +1562,7 @@ IR * CTree2IR::convertIndirectMemAccess(Tree const* t, INT lineno,
             ("base of indirect memory access must be pointer."));
 
     UINT field_size = 0;
-    DATA_TYPE dt = ::get_decl_dtype(field_decl, &field_size, m_tm);
+    DATA_TYPE dt = CTree2IR::get_decl_dtype(field_decl, &field_size, m_tm);
     if (CONT_is_compute_addr(cont) || field_decl->is_array()) {
         //Parent node requires address.
         //Compute the address of field.
@@ -1499,7 +1638,7 @@ static Type const* determineIRType(Tree const* t, MOD TypeMgr * tm)
     }
 
     UINT s;
-    DATA_TYPE dt = get_decl_dtype(t->getResultType(), &s, tm);
+    DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(), &s, tm);
     if (dt == D_MC) {
         return tm->getMCType(s);
     }
@@ -1674,8 +1813,8 @@ xoc::Type const* CTree2IR::checkAndGenCVTType(Decl const* tgt, Decl const* src)
 {
     ASSERT0(tgt && src);
     UINT tgt_dt_sz, src_dt_sz;
-    DATA_TYPE tgt_dt = get_decl_dtype(tgt, &tgt_dt_sz, m_tm);
-    DATA_TYPE src_dt = get_decl_dtype(src, &src_dt_sz, m_tm);
+    DATA_TYPE tgt_dt = CTree2IR::get_decl_dtype(tgt, &tgt_dt_sz, m_tm);
+    DATA_TYPE src_dt = CTree2IR::get_decl_dtype(src, &src_dt_sz, m_tm);
 
     bool need_cvt = false;
     if (IS_FP(src_dt)) {
@@ -1818,7 +1957,7 @@ IR * CTree2IR::convertCVT(Tree * t, INT lineno, T2IRCtx * cont)
             m_tm->getPointerType(cvtype->get_pointer_base_size()));
     } else {
         UINT size = 0;
-        DATA_TYPE dt = get_decl_dtype(cvtype, &size, m_tm);
+        DATA_TYPE dt = CTree2IR::get_decl_dtype(cvtype, &size, m_tm);
         Type const* type = nullptr;
         if (IS_SIMPLEX(dt)) {
             type = m_tm->getSimplexTypeEx(dt);
@@ -1913,6 +2052,7 @@ IR * CTree2IR::only_left_last(IR * head)
 }
 
 
+//Return the number of mantissa.
 BYTE CTree2IR::getMantissaNum(CHAR const* fpval)
 {
     ASSERT0(fpval);
@@ -1955,7 +2095,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         case TR_IMM:
         case TR_IMMU: {
             UINT s = 0;
-            DATA_TYPE dt = ::get_decl_dtype(t->getResultType(), &s, m_tm);
+            DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(), &s,
+                                                    m_tm);
             //The maximum integer supported is 64bit.
             ir = m_rg->buildImmInt(TREE_imm_val(t), m_tm->getSimplexTypeEx(dt));
             xoc::setLineNum(ir, lineno, m_rg);
@@ -1964,7 +2105,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         case TR_IMML:
         case TR_IMMUL: {
             UINT s = 0;
-            DATA_TYPE dt = ::get_decl_dtype(t->getResultType(), &s, m_tm);
+            DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(), &s,
+                                                    m_tm);
             ASSERT0(dt == D_I64 || dt == D_U64);
             //The maximum integer supported is 64bit.
             ir = m_rg->buildImmInt(TREE_imm_val(t),
@@ -1974,27 +2116,9 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
         }
         case TR_FP:
         case TR_FPF:
-        case TR_FPLD: {
-            //An unsuffixed floating constant has type double. If suffixed
-            //by the letter f or F, it has type float.
-            //If suffixed by the letter l or L, it has type long double.
-
-            //Convert string to hex value , that is in order to generate
-            //single load instruction to load float point value during
-            //Code Generator.
-            Sym const* fp = TREE_fp_str_val(t);
-
-            //Default float point type is 64bit.
-            ir = m_rg->buildImmFp(::atof(SYM_name(fp)),
-                m_tm->getSimplexTypeEx(
-                    t->getCode() == TR_FPF ? D_F32 : D_F64));
-            BYTE mantissa_num = getMantissaNum(SYM_name(fp));
-            if (mantissa_num > DEFAULT_MANTISSA_NUM) {
-                CONST_fp_mant(ir) = mantissa_num;
-            }
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_FPLD:
+            ir = convertFP(t, lineno, cont);
             break;
-        }
         case TR_ENUM_CONST: {
             INT v = get_enum_const_val(TREE_enum(t),TREE_enum_val_idx(t));
             //Default const type of enumerator is 'unsigned int'
@@ -2013,19 +2137,13 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             m_rg->getTopRegion()->addToVarTab(LDA_idinfo(ir));
             xoc::setLineNum(ir, lineno, m_rg);
             break;
-        case TR_LOGIC_OR: //logical or        ||
-            l = convert(TREE_lchild(t),cont);
-            r = convert(TREE_rchild(t),cont);
-            ir = m_rg->buildCmp(IR_LOR, l, r);
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_LOGIC_OR: //logical OR ||
+            ir = convertLogicalOR(t, lineno, cont);
             break;
-        case TR_LOGIC_AND: //logical and      &&
-            l = convert(TREE_lchild(t),cont);
-            r = convert(TREE_rchild(t),cont);
-            ir = m_rg->buildCmp(IR_LAND, l, r);
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_LOGIC_AND: //logical AND &&
+            ir = convertLogicalAND(t, lineno, cont);
             break;
-        case TR_INCLUSIVE_OR: { //inclusive or  |
+        case TR_INCLUSIVE_OR: { //inclusive OR |
             l = convert(TREE_lchild(t), cont);
             r = convert(TREE_rchild(t), cont);
             Type const* type = nullptr;
@@ -2034,7 +2152,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                     get_pointer_base_size());
             } else {
                 UINT s = 0;
-                DATA_TYPE dt = ::get_decl_dtype(t->getResultType(), &s, m_tm);
+                DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(), &s,
+                                                        m_tm);
                 if (dt == D_MC) {
                     type = m_tm->getMCType(s);
                 } else {
@@ -2045,7 +2164,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
             xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
-        case TR_INCLUSIVE_AND: { //inclusive and &
+        case TR_INCLUSIVE_AND: { //inclusive AND &
             l = convert(TREE_lchild(t), cont);
             r = convert(TREE_rchild(t), cont);
             Type const* type = nullptr;
@@ -2054,7 +2173,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                     get_pointer_base_size());
             } else {
                 UINT s = 0;
-                DATA_TYPE dt = ::get_decl_dtype(t->getResultType(), &s, m_tm);
+                DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(), &s,
+                                                        m_tm);
                 if (dt == D_MC) {
                     type = m_tm->getMCType(s);
                 } else {
@@ -2074,8 +2194,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                     get_pointer_base_size());
             } else {
                 UINT s = 0;
-                DATA_TYPE dt = ::get_decl_dtype(
-                    t->getResultType(), &s, m_tm);
+                DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(), &s,
+                                                        m_tm);
                 if (dt == D_MC) {
                     type = m_tm->getMCType(s);
                 } else {
@@ -2124,8 +2244,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                     get_pointer_base_size());
             } else {
                 UINT s = 0;
-                DATA_TYPE dt =
-                    ::get_decl_dtype(t->getResultType(), &s, m_tm);
+                DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(), &s,
+                                                        m_tm);
                 if (dt == D_MC) {
                     type = m_tm->getMCType(s);
                 } else {
@@ -2150,7 +2270,7 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                     get_pointer_base_size());
             } else {
                 UINT s = 0;
-                DATA_TYPE dt = ::get_decl_dtype(
+                DATA_TYPE dt = CTree2IR::get_decl_dtype(
                     t->getResultType(), &s, m_tm);
                 if (dt == D_MC) {
                     type = m_tm->getMCType(s);
@@ -2176,7 +2296,8 @@ IR * CTree2IR::convert(IN Tree * t, IN T2IRCtx * cont)
                     get_pointer_base_size());
             } else {
                 UINT s = 0;
-                DATA_TYPE dt = ::get_decl_dtype(t->getResultType(), &s, m_tm);
+                DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(), &s,
+                                                        m_tm);
                 if (dt == D_MC) {
                     type = m_tm->getMCType(s);
                 } else {
@@ -2506,11 +2627,13 @@ static IR * addReturn(IR * irs, Region * rg)
 }
 
 
+//Return XOC data type according to given CFE declaration.
 //If 'decl' presents a simply type, convert type-spec to DATA_TYPE descriptor.
 //If 'decl' presents a pointer type, convert pointer-type to D_PTR.
 //If 'decl' presents an array, convert type to D_M descriptor.
 //size: return byte size of decl.
-xoc::DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, xoc::TypeMgr * tm)
+xoc::DATA_TYPE CTree2IR::get_decl_dtype(Decl const* decl, UINT * size,
+                                        xoc::TypeMgr * tm)
 {
     ASSERT0(decl && tm);
     xoc::DATA_TYPE dtype = xoc::D_UNDEF;
@@ -2576,7 +2699,7 @@ static bool convertTreeStmtList(Tree * stmts, Region * rg, Decl const* retty)
 
     //Convertion is successful.
     RegionMgr * rm = rg->getRegionMgr();
-    if (xoc::g_dump_opt.isDumpALL()) {
+    if (xoc::g_dump_opt.isDumpAll()) {
         xoc::note(rm, "\n==---- AFTER TREE2IR CONVERT '%s' -----==",
                   rg->getRegionName());
         xoc::dumpIRListH(irs, rg);
@@ -2588,19 +2711,19 @@ static bool convertTreeStmtList(Tree * stmts, Region * rg, Decl const* retty)
         irs = addReturn(irs, rg);
     }
 
-    //Reshape IR tree to well formed outlook.
-    if (xoc::g_dump_opt.isDumpALL()) {
-        xoc::note(rm, "\n==---- AFTER RESHAPE IR -----==",
-                  rg->getRegionName());
-        xoc::dumpIRListH(irs, rg);
-    }
-
     //In order to sanitize and optimize IRs, we have to canonicalize IR tree
     //into well-formed layout that conform to the guidelines of XOC IR pass
     //preferred.
     Canon ic(rg);
     bool change = false;
     irs = ic.handle_stmt_list(irs, change);
+
+    //Reshape IR tree to well formed outlook.
+    if (xoc::g_dump_opt.isDumpAll()) {
+        xoc::note(rm, "\n==---- AFTER CANONICALE IR -----==",
+                  rg->getRegionName());
+        xoc::dumpIRListH(irs, rg);
+    }
 
     //Refine and perform peephole optimizations.
     xoc::RefineCtx rc;
@@ -2610,11 +2733,10 @@ static bool convertTreeStmtList(Tree * stmts, Region * rg, Decl const* retty)
     RC_refine_mul_const(rc) = false;
     RC_update_mdref(rc) = false;
 
-    change = false;
-    rg->initPassMgr(); //Optimizations in XOC needs PassMgr.
+    rg->initPassMgr(); //Optimizations needs PassMgr.
     Refine * rf = (Refine*)rg->getPassMgr()->registerPass(PASS_REFINE);
-    irs = rf->refineIRlist(irs, change, rc);
-
+    bool change2 = false;
+    irs = rf->refineIRlist(irs, change2, rc);
     ASSERT0(xoc::verifyIRList(irs, nullptr, rg));
     ASSERT0(irs);
     rg->setIRList(irs);
@@ -2669,7 +2791,7 @@ static bool generateFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
     //all local-variable into VarTab of current region.
     scanDeclList(DECL_fun_body(dcl), r, false);
 
-    if (xoc::g_dump_opt.isDumpALL()) {
+    if (xoc::g_dump_opt.isDumpAll()) {
         DECL_fun_body(dcl)->dump();
     }
 
@@ -2678,7 +2800,7 @@ static bool generateFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
         return false;
     }
 
-    if (xoc::g_dump_opt.isDumpALL()) {
+    if (xoc::g_dump_opt.isDumpAll()) {
         xoc::note(rm, "\n==---- AFTER REFINE IR -----==",
                   dcl->get_decl_name());
         xoc::dumpIRListH(r->getIRList(), r);
@@ -2731,7 +2853,7 @@ static bool scanProgramDeclList(Scope * s, OUT xoc::Region * rg)
 
 
 //Construct Region and convert C-Language-Ast to XOC IR.
-bool generateRegion(RegionMgr * rm)
+bool CTree2IR::generateRegion(RegionMgr * rm)
 {
     START_TIMER(t, "Tree2IR");
     Scope * s = get_global_scope();

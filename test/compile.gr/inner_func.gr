@@ -1,4 +1,4 @@
-region program @"program" () {
+region program "program" () {
     region func main () {
         region func inner_region() {
             var i:i32:(readonly, align(4));
@@ -10,7 +10,7 @@ region program @"program" () {
                 st w = 10:i64;
                 label L1;
             } else {
-                stpr $3 = ld:i32 w;
+                stpr $3:i32 = ld:i32 w;
                 label L2;
             }
             return;

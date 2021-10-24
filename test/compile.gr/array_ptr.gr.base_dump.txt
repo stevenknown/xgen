@@ -18,105 +18,105 @@ MD12 -- base:Var62(a):local,,addr_taken,array,align(4),mc,mem_size:40,decl:'' --
 --- BB3 ---
 --- BB1 ---
 
-st:*<4> 'p' id:2 attachinfo:Dbx,MDSSA    
-    lda:*<40> 'a' id:1
+st:*<4> 'p' attachinfo:Dbx,MDSSA    
+    lda:*<40> 'a'
   ----
-  st:*<4> 'p' id:2 attachinfo:Dbx,MDSSA
+  st:*<4> 'p' attachinfo:Dbx,MDSSA
   --DEFVMD:(MD5V1,-)|USESET:ld(id:3),ld(id:14)
   --DEFVMD:(MD2V1,-,NextDEF:MD2V2)|USESET:ld(id:3)
 
-ist:i32:offset(4) id:7 attachinfo:Dbx,MDSSA    
-    ld:*<4> 'p' base id:3 attachinfo:MDSSA    
-    intconst:i32 20|0x14 id:6
+ist:i32:offset(4) attachinfo:Dbx,MDSSA    
+    ld:*<4> 'p' base attachinfo:MDSSA    
+    intconst:i32 20|0x14
   ----
-  ist:i32:offset(4) id:7 attachinfo:Dbx,MDSSA
+  ist:i32:offset(4) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD10V1,-)|USESET:ild(id:15)
   --DEFVMD:(MD9V1,-,NextDEF:MD9V2)|USESET:
   --DEFVMD:(MD11V1,-,NextDEF:MD11V2)|USESET:
-  ld:*<4> 'p' id:3 attachinfo:MDSSA
+  ld:*<4> 'p' attachinfo:MDSSA
   --USEVMD:MD5V1,MD2V1
 
-st:*<40> 'q' id:9 attachinfo:Dbx,MDSSA    
-    lda:*<40> 'a' id:8
+st:*<40> 'q' attachinfo:Dbx,MDSSA    
+    lda:*<40> 'a'
   ----
-  st:*<40> 'q' id:9 attachinfo:Dbx,MDSSA
+  st:*<40> 'q' attachinfo:Dbx,MDSSA
   --DEFVMD:(MD2V2,PrevDEF:MD2V1)|USESET:ld(id:14),ld(id:16),ld(id:10)
   --DEFVMD:(MD6V1,-)|USESET:ld(id:10),ld(id:16)
 
-starray (i32, ety:i32) id:13 attachinfo:Dbx,MDSSA
+starray (i32, ety:i32) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 2|0x2 dim0 id:11    
-    ld:*<40> 'q' array_base id:10 attachinfo:MDSSA    
-    intconst:i32 40|0x28 rhs id:12
+    intconst:i32 2|0x2 dim0    
+    ld:*<40> 'q' array_base attachinfo:MDSSA    
+    intconst:i32 40|0x28 rhs
   ----
-  starray (i32, ety:i32) id:13 attachinfo:Dbx,MDSSA
+  starray (i32, ety:i32) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD9V2,PrevDEF:MD9V1)|USESET:ild(id:15),array(id:18)
   --DEFVMD:(MD11V2,PrevDEF:MD11V1)|USESET:ild(id:15),array(id:18)
   --DEFVMD:(MD12V1,-)|USESET:array(id:18)
-  ld:*<40> 'q' id:10 attachinfo:MDSSA
+  ld:*<40> 'q' attachinfo:MDSSA
   --USEVMD:MD2V2,MD6V1
 
-return id:20 attachinfo:Dbx
-    add:i32 id:19        
-        ild:i32:offset(4) id:15 attachinfo:MDSSA            
-            ld:*<4> 'p' id:14 attachinfo:MDSSA        
-        array (i32, ety:i32) id:18 attachinfo:MDSSA
+return attachinfo:Dbx
+    add:i32        
+        ild:i32:offset(4) attachinfo:MDSSA            
+            ld:*<4> 'p' attachinfo:MDSSA        
+        array (i32, ety:i32) attachinfo:MDSSA
             elemnum[10]
-            intconst:i32 2|0x2 dim0 id:17            
-            ld:*<40> 'q' array_base id:16 attachinfo:MDSSA
+            intconst:i32 2|0x2 dim0            
+            ld:*<40> 'q' array_base attachinfo:MDSSA
   ----
-  ild:i32:offset(4) id:15 attachinfo:MDSSA
+  ild:i32:offset(4) attachinfo:MDSSA
   --USEVMD:MD10V1,MD9V2,MD11V2
-  array (i32, ety:i32) id:18 attachinfo:MDSSA
+  array (i32, ety:i32) attachinfo:MDSSA
   --USEVMD:MD9V2,MD11V2,MD12V1
-  ld:*<4> 'p' id:14 attachinfo:MDSSA
+  ld:*<4> 'p' attachinfo:MDSSA
   --USEVMD:MD5V1,MD2V2
-  ld:*<40> 'q' id:16 attachinfo:MDSSA
+  ld:*<40> 'q' attachinfo:MDSSA
   --USEVMD:MD2V2,MD6V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo' --==
 
 --- BB3 ---
 --- BB1 ---
-st:*<4> 'p' id:2 attachinfo:Dbx,MDSSA    
-    lda:*<40> 'a' id:1
+st:*<4> 'p' attachinfo:Dbx,MDSSA    
+    lda:*<40> 'a'
 ----------------
 st(id:2) USESET:
   MD5V1:(ld id:3) (ld id:14) 
   MD2V1:(ld id:3) 
-ist:i32:offset(4) id:7 attachinfo:Dbx,MDSSA    
-    ld:*<4> 'p' base id:3 attachinfo:MDSSA    
-    intconst:i32 20|0x14 id:6
+ist:i32:offset(4) attachinfo:Dbx,MDSSA    
+    ld:*<4> 'p' base attachinfo:MDSSA    
+    intconst:i32 20|0x14
 ----------------
 ist(id:7) USESET:
   MD10V1:(ild id:15) 
   MD9V1:
   MD11V1:
 ld(id:3) KDEF:st(id:2)
-st:*<40> 'q' id:9 attachinfo:Dbx,MDSSA    
-    lda:*<40> 'a' id:8
+st:*<40> 'q' attachinfo:Dbx,MDSSA    
+    lda:*<40> 'a'
 ----------------
 st(id:9) USESET:
   MD2V2:(ld id:14) (ld id:16) (ld id:10) 
   MD6V1:(ld id:10) (ld id:16) 
-starray (i32, ety:i32) id:13 attachinfo:Dbx,MDSSA
+starray (i32, ety:i32) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 2|0x2 dim0 id:11    
-    ld:*<40> 'q' array_base id:10 attachinfo:MDSSA    
-    intconst:i32 40|0x28 rhs id:12
+    intconst:i32 2|0x2 dim0    
+    ld:*<40> 'q' array_base attachinfo:MDSSA    
+    intconst:i32 40|0x28 rhs
 ----------------
 starray(id:13) USESET:
   MD9V2:(ild id:15) (array id:18) 
   MD11V2:(ild id:15) (array id:18) 
   MD12V1:(array id:18) 
 ld(id:10) KDEF:st(id:9)
-return id:20 attachinfo:Dbx
-    add:i32 id:19        
-        ild:i32:offset(4) id:15 attachinfo:MDSSA            
-            ld:*<4> 'p' id:14 attachinfo:MDSSA        
-        array (i32, ety:i32) id:18 attachinfo:MDSSA
+return attachinfo:Dbx
+    add:i32        
+        ild:i32:offset(4) attachinfo:MDSSA            
+            ld:*<4> 'p' attachinfo:MDSSA        
+        array (i32, ety:i32) attachinfo:MDSSA
             elemnum[10]
-            intconst:i32 2|0x2 dim0 id:17            
-            ld:*<40> 'q' array_base id:16 attachinfo:MDSSA
+            intconst:i32 2|0x2 dim0            
+            ld:*<40> 'q' array_base attachinfo:MDSSA
 ----------------
 ild(id:15) KDEF:ist(id:7)
 array(id:18) KDEF:starray(id:13)
@@ -127,46 +127,46 @@ ld(id:16) KDEF:st(id:9)
 
 --- BB3 ---
 --- BB1 ---
-st:*<4> 'p' id:2 attachinfo:Dbx,MDSSA    
-    lda:*<40> 'a' id:1
+st:*<4> 'p' attachinfo:Dbx,MDSSA    
+    lda:*<40> 'a'
 ----------------
 st(id:2) USESET:
   MD5V1:(ld id:3) (ld id:14) 
   MD2V1:(ld id:3) 
-ist:i32:offset(4) id:7 attachinfo:Dbx,MDSSA    
-    ld:*<4> 'p' base id:3 attachinfo:MDSSA    
-    intconst:i32 20|0x14 id:6
+ist:i32:offset(4) attachinfo:Dbx,MDSSA    
+    ld:*<4> 'p' base attachinfo:MDSSA    
+    intconst:i32 20|0x14
 ----------------
 ist(id:7) USESET:
   MD10V1:(ild id:15) 
   MD9V1:
   MD11V1:
 ld(id:3) KDEF:st(id:2)
-st:*<40> 'q' id:9 attachinfo:Dbx,MDSSA    
-    lda:*<40> 'a' id:8
+st:*<40> 'q' attachinfo:Dbx,MDSSA    
+    lda:*<40> 'a'
 ----------------
 st(id:9) USESET:
   MD2V2:(ld id:14) (ld id:16) (ld id:10) 
   MD6V1:(ld id:10) (ld id:16) 
-starray (i32, ety:i32) id:13 attachinfo:Dbx,MDSSA
+starray (i32, ety:i32) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 2|0x2 dim0 id:11    
-    ld:*<40> 'q' array_base id:10 attachinfo:MDSSA    
-    intconst:i32 40|0x28 rhs id:12
+    intconst:i32 2|0x2 dim0    
+    ld:*<40> 'q' array_base attachinfo:MDSSA    
+    intconst:i32 40|0x28 rhs
 ----------------
 starray(id:13) USESET:
   MD9V2:(ild id:15) (array id:18) 
   MD11V2:(ild id:15) (array id:18) 
   MD12V1:(array id:18) 
 ld(id:10) KDEF:st(id:9)
-return id:20 attachinfo:Dbx
-    add:i32 id:19        
-        ild:i32:offset(4) id:15 attachinfo:MDSSA            
-            ld:*<4> 'p' id:14 attachinfo:MDSSA        
-        array (i32, ety:i32) id:18 attachinfo:MDSSA
+return attachinfo:Dbx
+    add:i32        
+        ild:i32:offset(4) attachinfo:MDSSA            
+            ld:*<4> 'p' attachinfo:MDSSA        
+        array (i32, ety:i32) attachinfo:MDSSA
             elemnum[10]
-            intconst:i32 2|0x2 dim0 id:17            
-            ld:*<40> 'q' array_base id:16 attachinfo:MDSSA
+            intconst:i32 2|0x2 dim0            
+            ld:*<40> 'q' array_base attachinfo:MDSSA
 ----------------
 ild(id:15) KDEF:ist(id:7)
 array(id:18) KDEF:starray(id:13)
@@ -177,46 +177,46 @@ ld(id:16) KDEF:st(id:9)
 
 --- BB3 ---
 --- BB1 ---
-st:*<4> 'p' id:2 attachinfo:Dbx,MDSSA    
-    lda:*<40> 'a' id:1
+st:*<4> 'p' attachinfo:Dbx,MDSSA    
+    lda:*<40> 'a'
 ----------------
 st(id:2) USESET:
   MD5V1:(ld id:3) (ld id:14) 
   MD2V1:(ld id:3) 
-ist:i32:offset(4) id:7 attachinfo:Dbx,MDSSA    
-    ld:*<4> 'p' base id:3 attachinfo:MDSSA    
-    intconst:i32 20|0x14 id:6
+ist:i32:offset(4) attachinfo:Dbx,MDSSA    
+    ld:*<4> 'p' base attachinfo:MDSSA    
+    intconst:i32 20|0x14
 ----------------
 ist(id:7) USESET:
   MD10V1:(ild id:15) 
   MD9V1:
   MD11V1:
 ld(id:3) KDEF:st(id:2)
-st:*<40> 'q' id:9 attachinfo:Dbx,MDSSA    
-    lda:*<40> 'a' id:8
+st:*<40> 'q' attachinfo:Dbx,MDSSA    
+    lda:*<40> 'a'
 ----------------
 st(id:9) USESET:
   MD2V2:(ld id:14) (ld id:16) (ld id:10) 
   MD6V1:(ld id:10) (ld id:16) 
-starray (i32, ety:i32) id:13 attachinfo:Dbx,MDSSA
+starray (i32, ety:i32) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 2|0x2 dim0 id:11    
-    ld:*<40> 'q' array_base id:10 attachinfo:MDSSA    
-    intconst:i32 40|0x28 rhs id:12
+    intconst:i32 2|0x2 dim0    
+    ld:*<40> 'q' array_base attachinfo:MDSSA    
+    intconst:i32 40|0x28 rhs
 ----------------
 starray(id:13) USESET:
   MD9V2:(ild id:15) (array id:18) 
   MD11V2:(ild id:15) (array id:18) 
   MD12V1:(array id:18) 
 ld(id:10) KDEF:st(id:9)
-return id:20 attachinfo:Dbx
-    add:i32 id:19        
-        ild:i32:offset(4) id:15 attachinfo:MDSSA            
-            ld:*<4> 'p' id:14 attachinfo:MDSSA        
-        array (i32, ety:i32) id:18 attachinfo:MDSSA
+return attachinfo:Dbx
+    add:i32        
+        ild:i32:offset(4) attachinfo:MDSSA            
+            ld:*<4> 'p' attachinfo:MDSSA        
+        array (i32, ety:i32) attachinfo:MDSSA
             elemnum[10]
-            intconst:i32 2|0x2 dim0 id:17            
-            ld:*<40> 'q' array_base id:16 attachinfo:MDSSA
+            intconst:i32 2|0x2 dim0            
+            ld:*<40> 'q' array_base attachinfo:MDSSA
 ----------------
 ild(id:15) KDEF:ist(id:7)
 array(id:18) KDEF:starray(id:13)
@@ -241,66 +241,66 @@ MD12 -- base:Var62(a):local,,addr_taken,array,align(4),mc,mem_size:40,decl:'' --
 --- BB3 ---
 --- BB1 ---
 
-st:*<4> 'p' id:2 attachinfo:Dbx,MDSSA    
-    lda:*<40> 'a' id:1
+st:*<4> 'p' attachinfo:Dbx,MDSSA    
+    lda:*<40> 'a'
   ----
-  st:*<4> 'p' id:2 attachinfo:Dbx,MDSSA
+  st:*<4> 'p' attachinfo:Dbx,MDSSA
   --DEFVMD:(MD5V1,-)|USESET:ld(id:14)
   --DEFVMD:(MD2V1,-,NextDEF:MD2V2)|USESET:
 
-st:i32:offset(4) 'a' id:21 attachinfo:Dbx,MDSSA    
-    intconst:i32 20|0x14 id:6
+st:i32:offset(4) 'a' attachinfo:Dbx,MDSSA    
+    intconst:i32 20|0x14
   ----
-  st:i32:offset(4) 'a' id:21 attachinfo:Dbx,MDSSA
+  st:i32:offset(4) 'a' attachinfo:Dbx,MDSSA
   --DEFVMD:(MD10V1,-)|USESET:ild(id:15)
   --DEFVMD:(MD9V1,-)|USESET:ild(id:15)
   --DEFVMD:(MD11V1,-)|USESET:ild(id:15)
 
-st:*<40> 'q' id:9 attachinfo:Dbx,MDSSA    
-    lda:*<40> 'a' id:8
+st:*<40> 'q' attachinfo:Dbx,MDSSA    
+    lda:*<40> 'a'
   ----
-  st:*<40> 'q' id:9 attachinfo:Dbx,MDSSA
+  st:*<40> 'q' attachinfo:Dbx,MDSSA
   --DEFVMD:(MD2V2,PrevDEF:MD2V1)|USESET:ld(id:14)
   --DEFVMD:(MD6V1,-)|USESET:
 
-return id:20 attachinfo:Dbx
-    add:i32 id:19        
-        ild:i32:offset(4) id:15 attachinfo:MDSSA            
-            ld:*<4> 'p' id:14 attachinfo:MDSSA        
-        intconst:i32 40|0x28 id:23
+return attachinfo:Dbx
+    add:i32        
+        ild:i32:offset(4) attachinfo:MDSSA            
+            ld:*<4> 'p' attachinfo:MDSSA        
+        intconst:i32 40|0x28
   ----
-  ild:i32:offset(4) id:15 attachinfo:MDSSA
+  ild:i32:offset(4) attachinfo:MDSSA
   --USEVMD:MD10V1,MD9V1,MD11V1
-  ld:*<4> 'p' id:14 attachinfo:MDSSA
+  ld:*<4> 'p' attachinfo:MDSSA
   --USEVMD:MD5V1,MD2V2
 ==-- DUMP MDSSAMgr DU CHAIN 'foo' --==
 
 --- BB3 ---
 --- BB1 ---
-st:*<4> 'p' id:2 attachinfo:Dbx,MDSSA    
-    lda:*<40> 'a' id:1
+st:*<4> 'p' attachinfo:Dbx,MDSSA    
+    lda:*<40> 'a'
 ----------------
 st(id:2) USESET:
   MD5V1:(ld id:14) 
   MD2V1:
-st:i32:offset(4) 'a' id:21 attachinfo:Dbx,MDSSA    
-    intconst:i32 20|0x14 id:6
+st:i32:offset(4) 'a' attachinfo:Dbx,MDSSA    
+    intconst:i32 20|0x14
 ----------------
 st(id:21) USESET:
   MD10V1:(ild id:15) 
   MD9V1:(ild id:15) 
   MD11V1:(ild id:15) 
-st:*<40> 'q' id:9 attachinfo:Dbx,MDSSA    
-    lda:*<40> 'a' id:8
+st:*<40> 'q' attachinfo:Dbx,MDSSA    
+    lda:*<40> 'a'
 ----------------
 st(id:9) USESET:
   MD2V2:(ld id:14) 
   MD6V1:
-return id:20 attachinfo:Dbx
-    add:i32 id:19        
-        ild:i32:offset(4) id:15 attachinfo:MDSSA            
-            ld:*<4> 'p' id:14 attachinfo:MDSSA        
-        intconst:i32 40|0x28 id:23
+return attachinfo:Dbx
+    add:i32        
+        ild:i32:offset(4) attachinfo:MDSSA            
+            ld:*<4> 'p' attachinfo:MDSSA        
+        intconst:i32 40|0x28
 ----------------
 ild(id:15) KDEF:st(id:21)
 ld(id:14) KDEF:st(id:2)
@@ -323,24 +323,24 @@ MD12 -- base:Var62(a):local,,addr_taken,array,align(4),mc,mem_size:40,decl:'' --
 --- BB3 ---
 --- BB1 ---
 
-region 'foo',id:2 id:1 attachinfo:Dbx
+region 'foo',id:2 attachinfo:Dbx
 ==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB3 ---
 --- BB1 ---
-region 'foo',id:2 id:1 attachinfo:Dbx
+region 'foo',id:2 attachinfo:Dbx
 ==---- DUMP Refine DefUse Chain '.program' ----==
 ==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB3 ---
 --- BB1 ---
-region 'foo',id:2 id:1 attachinfo:Dbx
+region 'foo',id:2 attachinfo:Dbx
 ==---- DUMP Refine DefUse Chain '.program' ----==
 ==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB3 ---
 --- BB1 ---
-region 'foo',id:2 id:1 attachinfo:Dbx
+region 'foo',id:2 attachinfo:Dbx
 ==---- DUMP MDSSA Manager '.program' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -360,9 +360,9 @@ MD12 -- base:Var62(a):local,,addr_taken,array,align(4),mc,mem_size:40,decl:'' --
 --- BB3 ---
 --- BB1 ---
 
-region 'foo',id:2 id:1 attachinfo:Dbx
+region 'foo',id:2 attachinfo:Dbx
 ==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB3 ---
 --- BB1 ---
-region 'foo',id:2 id:1 attachinfo:Dbx
+region 'foo',id:2 attachinfo:Dbx

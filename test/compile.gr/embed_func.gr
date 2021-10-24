@@ -1,6 +1,5 @@
-region program @"myprogram" () {
+region program "myprogram" () {
     var g:i32:(align(4));
-
     region func main () {
         var p1:i32:(align(4));
         var i:i32:(align(4));

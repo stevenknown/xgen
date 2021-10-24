@@ -1,12 +1,12 @@
 //====---- Dump region '.program' ----====
-region program @".program" () {
+region program ".program" () {
     var printf:i32:(func_decl,readonly,align(4));
     var x:mc<8>:(align(4));
     var y:mc<8>:(align(4));
     var p:*<8>:(align(4));
     var foobar:i32:(func_decl,align(4));
     var main:i32:(func_decl,align(4));
-    var @"#DedicatedStringVar":str:(unallocable,align(4),string("DedicatedVarBeRegardedAsString"));
+    var "#DedicatedStringVar":str:(unallocable,align(4),string("DedicatedVarBeRegardedAsString"));
     var _const_string_1:str:(align(4),string("
 success
 "));

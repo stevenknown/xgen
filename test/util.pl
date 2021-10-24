@@ -13,6 +13,7 @@ our @EXPORT_OK = qw(
     computeAbsolutePathToXocRootDir
     compareDumpFile
     clean
+    getCurDir
     getDumpFilePath
     getBaseResultDumpFilePath
     getOutputFilePath
@@ -27,6 +28,7 @@ our @EXPORT_OK = qw(
     invokeSimulator
     peelPostfixName
     peelFileName
+    pauseAndInput
     runSimulator
     runHostExe
     runBaseccToolChainToComputeBaseResult
@@ -512,6 +514,15 @@ sub computeSourceFileNameByExeName
     return $path;
 }
 
+#The function will pause the Perl interpreter to wait user input, and return
+#the online input.
+sub pauseAndInput
+{
+    print "ENTER ANY KEY TO CONTINUE:";
+    my $anykey = <STDIN>;
+    return $anykey;
+}
+
 #Extract path prefix from 'fullpath'.
 #e.g: $fullpath is /a/b/c.cpp, then $path is /a/b/
 #Note if $fullpath is c.cpp, return empty.
@@ -519,7 +530,7 @@ sub peelFileName
 {
     my $fullpath = $_[0];
     my $path = substr($fullpath, 0, rindex($fullpath, "/") + 1);
-    return $path; 
+    return $path;
 }
 
 #Given file path, drop the last postfix name.
@@ -1102,6 +1113,13 @@ sub getBaseOutputFilePath
     return $path;
 }
 
+#Return current directory.
+sub getCurDir
+{
+    my $curdir = getcwd;
+    return $curdir;
+}
+
 #This function compose and return new file path to dump file.
 sub getDumpFilePath
 {
@@ -1157,8 +1175,12 @@ sub compareDumpFile
 sub tryCreateDir
 {
     my $path = $_[0]; #path to directory.
-    if (-e $path) { return; }
-    mkdir($path) or abortex("CAN NOT CREATE DIRECTORY '$path'");
+    if (-e $path) { return $g_succ; }
+    if (mkdir($path) != 1) {
+        #mkdir return 0 on failure and 1 on success.
+        abortex("CAN NOT CREATE DIRECTORY '$path'");
+        return $g_fail;
+    }
     return $g_succ;
 }
 
@@ -1173,21 +1195,11 @@ sub moveToPassed
         return $g_fail;
     }
 
-    #my $cmdline;
-    #$cmdline = "mkdir -p $passedpath";
-    #my $retval = systemx($cmdline);
-    #if ($retval != 0) {
-    #    print("\nCMD>>", $cmdline, "\n");
-    #    print "\nEXECUTE $cmdline FAILED!! RES:$retval\n";
-    #    if ($g_is_quit_early) {
-    #        abortex();
-    #    }
-    #}
-
     #Move passed C/GR file to directory $fullpath/passed.
     #NOTE: Do NOT delete testcase file in 'passed' directory.
     print("\nCMD>>move $fullpath, $passedpath\n");
     move($fullpath, $passedpath) or abortex();
+    return $g_succ;
 }
 
 sub systemx

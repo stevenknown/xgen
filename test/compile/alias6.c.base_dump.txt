@@ -113,10 +113,10 @@ MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst
 
   [6]    p = &x;
   
-  st:*<1> 'p' id:3 attachinfo:Dbx      
-      lda:*<8> 'x' id:2 attachinfo:Dbx
+  st:*<1> 'p' attachinfo:Dbx      
+      lda:*<8> 'x' attachinfo:Dbx
   LHS:
-  st:*<1> 'p' id:3 attachinfo:Dbx
+  st:*<1> 'p' attachinfo:Dbx
     MD8 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
@@ -127,10 +127,10 @@ MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst
 
   [9]    p2 = &p;
   
-  st:*<4> 'p2' id:6 attachinfo:Dbx      
-      lda:*<4> 'p' id:5 attachinfo:Dbx
+  st:*<4> 'p2' attachinfo:Dbx      
+      lda:*<4> 'p' attachinfo:Dbx
   LHS:
-  st:*<4> 'p2' id:6 attachinfo:Dbx
+  st:*<4> 'p2' attachinfo:Dbx
     MD9 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:0 -- size:4
       POINT TO:
         MD8 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  p ' -- ofst:0 -- size:4
@@ -141,10 +141,10 @@ MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst
 
   [12]    p3 = &p2;
   
-  st:*<4> 'p3' id:9 attachinfo:Dbx      
-      lda:*<4> 'p2' id:8 attachinfo:Dbx
+  st:*<4> 'p3' attachinfo:Dbx      
+      lda:*<4> 'p2' attachinfo:Dbx
   LHS:
-  st:*<4> 'p3' id:9 attachinfo:Dbx
+  st:*<4> 'p3' attachinfo:Dbx
     MD10 -- base:Var62(p3):local,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  *  p3 ' -- ofst:0 -- size:4
       POINT TO:
         MD9 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:0 -- size:4
@@ -155,38 +155,38 @@ MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst
 
   [14]    ***p3 = p; //equal to: x = p;
   
-  ist:u8 id:18 attachinfo:Dbx      
-      ild:*<1> base id:14 attachinfo:Dbx          
-          ild:*<4> id:15 attachinfo:Dbx              
-              ld:*<4> 'p3' id:16 attachinfo:Dbx      
-      ld:*<1> 'p' id:17 attachinfo:Dbx
+  ist:u8 attachinfo:Dbx      
+      ild:*<1> base attachinfo:Dbx          
+          ild:*<4> attachinfo:Dbx              
+              ld:*<4> 'p3' attachinfo:Dbx      
+      ld:*<1> 'p' attachinfo:Dbx
   LHS:
-  ist:u8 id:18 attachinfo:Dbx
+  ist:u8 attachinfo:Dbx
     MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
       POINT TO:--
   RHS:
-  ld:*<1> 'p' id:17 attachinfo:Dbx
+  ld:*<1> 'p' attachinfo:Dbx
     MD8 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
         
   >> MDSet DETAIL:
-  ild:*<1> id:14 attachinfo:Dbx
+  ild:*<1> attachinfo:Dbx
     MD8 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
         
-    ild:*<4> id:15 attachinfo:Dbx
+    ild:*<4> attachinfo:Dbx
       MD9 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:0 -- size:4
         POINT TO:
           MD8 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  p ' -- ofst:0 -- size:4
           
-      ld:*<4> 'p3' id:16 attachinfo:Dbx
+      ld:*<4> 'p3' attachinfo:Dbx
         MD10 -- base:Var62(p3):local,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  *  p3 ' -- ofst:0 -- size:4
           POINT TO:
             MD9 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:0 -- size:4
             
-  ld:*<1> 'p' id:17 attachinfo:Dbx
+  ld:*<1> 'p' attachinfo:Dbx
     MD8 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
@@ -195,30 +195,30 @@ MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst
 
   [15]    return ***p3; //equal to: return x;
   
-  return id:20 attachinfo:Dbx
-      ild:u8 id:19 attachinfo:Dbx          
-          ild:*<1> id:1 attachinfo:Dbx              
-              ild:*<4> id:11 attachinfo:Dbx                  
-                  ld:*<4> 'p3' id:12 attachinfo:Dbx
+  return attachinfo:Dbx
+      ild:u8 attachinfo:Dbx          
+          ild:*<1> attachinfo:Dbx              
+              ild:*<4> attachinfo:Dbx                  
+                  ld:*<4> 'p3' attachinfo:Dbx
   
-  ild:u8 id:19 attachinfo:Dbx
+  ild:u8 attachinfo:Dbx
     MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
       POINT TO:--
   >> MDSet DETAIL:
-  ild:u8 id:19 attachinfo:Dbx
+  ild:u8 attachinfo:Dbx
     MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
       POINT TO:--
-    ild:*<1> id:1 attachinfo:Dbx
+    ild:*<1> attachinfo:Dbx
       MD8 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  p ' -- ofst:0 -- size:4
         POINT TO:
           MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
           
-      ild:*<4> id:11 attachinfo:Dbx
+      ild:*<4> attachinfo:Dbx
         MD9 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:0 -- size:4
           POINT TO:
             MD8 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size:4,decl:'unsigned char  *  p ' -- ofst:0 -- size:4
             
-        ld:*<4> 'p3' id:12 attachinfo:Dbx
+        ld:*<4> 'p3' attachinfo:Dbx
           MD10 -- base:Var62(p3):local,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  *  p3 ' -- ofst:0 -- size:4
             POINT TO:
               MD9 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:0 -- size:4
@@ -246,33 +246,33 @@ RegionMayDef(OuterRegion):
 RegionMayUse(OuterRegion):
 --- BB3 ---
 --- BB1 ---
-    st:*<1> 'p' id:3 attachinfo:Dbx
+    st:*<1> 'p' attachinfo:Dbx
     EMD8 : MD11
-      lda:*<8> 'x' id:2 attachinfo:Dbx
-    st:*<4> 'p2' id:6 attachinfo:Dbx
+      lda:*<8> 'x' attachinfo:Dbx
+    st:*<4> 'p2' attachinfo:Dbx
     EMD9 : MD12
-      lda:*<4> 'p' id:5 attachinfo:Dbx
-    st:*<4> 'p3' id:9 attachinfo:Dbx
+      lda:*<4> 'p' attachinfo:Dbx
+    st:*<4> 'p3' attachinfo:Dbx
     EMD10
-      lda:*<4> 'p2' id:8 attachinfo:Dbx
-    ist:u8 id:18 attachinfo:Dbx
+      lda:*<4> 'p2' attachinfo:Dbx
+    ist:u8 attachinfo:Dbx
     EMD14 : MD7,MD13,MD14
-      ild:*<1> id:14 attachinfo:Dbx
+      ild:*<1> attachinfo:Dbx
       EMD8 : MD11
-        ild:*<4> id:15 attachinfo:Dbx
+        ild:*<4> attachinfo:Dbx
         EMD9 : MD12
-          ld:*<4> 'p3' id:16 attachinfo:Dbx
+          ld:*<4> 'p3' attachinfo:Dbx
           EMD10
-      ld:*<1> 'p' id:17 attachinfo:Dbx
+      ld:*<1> 'p' attachinfo:Dbx
       EMD8 : MD11
-    return id:20 attachinfo:Dbx
-      ild:u8 id:19 attachinfo:Dbx
+    return attachinfo:Dbx
+      ild:u8 attachinfo:Dbx
       EMD14 : MD7,MD13,MD14
-        ild:*<1> id:1 attachinfo:Dbx
+        ild:*<1> attachinfo:Dbx
         EMD8 : MD11
-          ild:*<4> id:11 attachinfo:Dbx
+          ild:*<4> attachinfo:Dbx
           EMD9 : MD12
-            ld:*<4> 'p3' id:12 attachinfo:Dbx
+            ld:*<4> 'p3' attachinfo:Dbx
             EMD10
 
 ==---- DUMP DUMgr: IR REFERENCE 'foo' ----==
@@ -297,33 +297,33 @@ RegionMayDef(OuterRegion):
 RegionMayUse(OuterRegion):
 --- BB3 ---
 --- BB1 ---
-    st:*<1> 'p' id:3 attachinfo:Dbx,MDSSA
+    st:*<1> 'p' attachinfo:Dbx,MDSSA
     EMD8 : MD11
-      lda:*<8> 'x' id:2 attachinfo:Dbx
-    st:*<4> 'p2' id:6 attachinfo:Dbx,MDSSA
+      lda:*<8> 'x' attachinfo:Dbx
+    st:*<4> 'p2' attachinfo:Dbx,MDSSA
     EMD9 : MD12
-      lda:*<4> 'p' id:5 attachinfo:Dbx
-    st:*<4> 'p3' id:9 attachinfo:Dbx,MDSSA
+      lda:*<4> 'p' attachinfo:Dbx
+    st:*<4> 'p3' attachinfo:Dbx,MDSSA
     EMD10
-      lda:*<4> 'p2' id:8 attachinfo:Dbx
-    ist:u8 id:18 attachinfo:Dbx,MDSSA
+      lda:*<4> 'p2' attachinfo:Dbx
+    ist:u8 attachinfo:Dbx,MDSSA
     EMD14 : MD7,MD13,MD14
-      ild:*<1> id:14 attachinfo:Dbx,MDSSA
+      ild:*<1> attachinfo:Dbx,MDSSA
       EMD8 : MD11
-        ild:*<4> id:15 attachinfo:Dbx,MDSSA
+        ild:*<4> attachinfo:Dbx,MDSSA
         EMD9 : MD12
-          ld:*<4> 'p3' id:16 attachinfo:Dbx,MDSSA
+          ld:*<4> 'p3' attachinfo:Dbx,MDSSA
           EMD10
-      ld:*<1> 'p' id:17 attachinfo:Dbx,MDSSA
+      ld:*<1> 'p' attachinfo:Dbx,MDSSA
       EMD8 : MD11
-    return id:20 attachinfo:Dbx
-      ild:u8 id:19 attachinfo:Dbx,MDSSA
+    return attachinfo:Dbx
+      ild:u8 attachinfo:Dbx,MDSSA
       EMD14 : MD7,MD13,MD14
-        ild:*<1> id:1 attachinfo:Dbx,MDSSA
+        ild:*<1> attachinfo:Dbx,MDSSA
         EMD8 : MD11
-          ild:*<4> id:11 attachinfo:Dbx,MDSSA
+          ild:*<4> attachinfo:Dbx,MDSSA
           EMD9 : MD12
-            ld:*<4> 'p3' id:12 attachinfo:Dbx,MDSSA
+            ld:*<4> 'p3' attachinfo:Dbx,MDSSA
             EMD10
 ==---- DUMP Alias Analysis 'foo' ----==
 ==---- DUMP ALL MD ----==
@@ -424,10 +424,10 @@ MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst
 
   [14]    ***p3 = p; //equal to: x = p;
   
-  st:u8 'x' id:21 attachinfo:Dbx,MDSSA      
-      lda:*<8> 'x' id:7 attachinfo:Dbx
+  st:u8 'x' attachinfo:Dbx,MDSSA      
+      lda:*<8> 'x' attachinfo:Dbx
   LHS:
-  st:u8 'x' id:21 attachinfo:Dbx,MDSSA
+  st:u8 'x' attachinfo:Dbx,MDSSA
     MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
       POINT TO:
         MD7 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:4
@@ -438,16 +438,16 @@ MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst
 
   [15]    return ***p3; //equal to: return x;
   
-  return id:20 attachinfo:Dbx
-      ld:u8 'x' id:1 attachinfo:Dbx,MDSSA
+  return attachinfo:Dbx
+      ld:u8 'x' attachinfo:Dbx,MDSSA
   
-  ld:u8 'x' id:1 attachinfo:Dbx,MDSSA
+  ld:u8 'x' attachinfo:Dbx,MDSSA
     MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
       POINT TO:
         MD7 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:4
         
   >> MDSet DETAIL:
-  ld:u8 'x' id:1 attachinfo:Dbx,MDSSA
+  ld:u8 'x' attachinfo:Dbx,MDSSA
     MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
       POINT TO:
         MD7 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:4
@@ -567,10 +567,10 @@ MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst
 
   [14]    ***p3 = p; //equal to: x = p;
   
-  st:u8 'x' id:21 attachinfo:Dbx,MDSSA      
-      lda:*<8> 'x' id:7 attachinfo:Dbx
+  st:u8 'x' attachinfo:Dbx,MDSSA      
+      lda:*<8> 'x' attachinfo:Dbx
   LHS:
-  st:u8 'x' id:21 attachinfo:Dbx,MDSSA
+  st:u8 'x' attachinfo:Dbx,MDSSA
     MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
       POINT TO:
         MD7 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:4
@@ -581,16 +581,16 @@ MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst
 
   [15]    return ***p3; //equal to: return x;
   
-  return id:20 attachinfo:Dbx
-      ld:u8 'x' id:1 attachinfo:Dbx,MDSSA
+  return attachinfo:Dbx
+      ld:u8 'x' attachinfo:Dbx,MDSSA
   
-  ld:u8 'x' id:1 attachinfo:Dbx,MDSSA
+  ld:u8 'x' attachinfo:Dbx,MDSSA
     MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
       POINT TO:
         MD7 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:4
         
   >> MDSet DETAIL:
-  ld:u8 'x' id:1 attachinfo:Dbx,MDSSA
+  ld:u8 'x' attachinfo:Dbx,MDSSA
     MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
       POINT TO:
         MD7 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:4
@@ -618,11 +618,11 @@ RegionMayDef(OuterRegion):
 RegionMayUse(OuterRegion):
 --- BB3 ---
 --- BB1 ---
-    st:u8 'x' id:21 attachinfo:Dbx,MDSSA
+    st:u8 'x' attachinfo:Dbx,MDSSA
     EMD14 : MD7,MD13,MD14
-      lda:*<8> 'x' id:7 attachinfo:Dbx
-    return id:20 attachinfo:Dbx
-      ld:u8 'x' id:1 attachinfo:Dbx,MDSSA
+      lda:*<8> 'x' attachinfo:Dbx
+    return attachinfo:Dbx
+      ld:u8 'x' attachinfo:Dbx,MDSSA
       EMD14 : MD7,MD13,MD14
 ==---- DUMP Alias Analysis '.program' ----==
 ==---- DUMP ALL MD ----==
@@ -729,7 +729,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 
   -- IR POINT-TO: --
   ---------------------------------  
-  region 'foo',id:2 id:1
+  region 'foo',id:2
   
 
 ==---- DUMP DUMgr: IR REFERENCE '.program' ----==
@@ -754,7 +754,7 @@ RegionMayDef(OuterRegion):
 RegionMayUse(OuterRegion):
 --- BB3 ---
 --- BB1 ---
-    region 'foo',id:2 id:1
+    region 'foo',id:2
 
 ==---- DUMP DUMgr: IR REFERENCE '.program' ----==
 
@@ -778,7 +778,7 @@ RegionMayDef(OuterRegion):
 RegionMayUse(OuterRegion):
 --- BB3 ---
 --- BB1 ---
-    region 'foo',id:2 id:1
+    region 'foo',id:2
 ==---- DUMP Alias Analysis '.program' ----==
 ==---- DUMP ALL MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -868,7 +868,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 
   -- IR POINT-TO: --
   ---------------------------------  
-  region 'foo',id:2 id:1
+  region 'foo',id:2
   
 ==---- DUMP Alias Analysis '.program' ----==
 ==---- DUMP ALL MD ----==
@@ -975,7 +975,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 
   -- IR POINT-TO: --
   ---------------------------------  
-  region 'foo',id:2 id:1
+  region 'foo',id:2
   
 
 ==---- DUMP DUMgr: IR REFERENCE '.program' ----==
@@ -1000,4 +1000,4 @@ RegionMayDef(OuterRegion):
 RegionMayUse(OuterRegion):
 --- BB3 ---
 --- BB1 ---
-    region 'foo',id:2 id:1
+    region 'foo',id:2

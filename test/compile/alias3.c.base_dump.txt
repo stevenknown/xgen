@@ -174,11 +174,11 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [6]    *p = 20;
   
-  ist:i32 id:5 attachinfo:Dbx      
-      ld:*<4> 'p' base id:3 attachinfo:Dbx      
-      intconst:i32 20|0x14 id:4 attachinfo:Dbx
+  ist:i32 attachinfo:Dbx      
+      ld:*<4> 'p' base attachinfo:Dbx      
+      intconst:i32 20|0x14 attachinfo:Dbx
   LHS:
-  ist:i32 id:5 attachinfo:Dbx
+  ist:i32 attachinfo:Dbx
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
     MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -193,7 +193,7 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
       POINT TO:--
   RHS:
   >> MDSet DETAIL:
-  ld:*<4> 'p' id:3 attachinfo:Dbx
+  ld:*<4> 'p' attachinfo:Dbx
     MD10 -- base:Var59(p):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -207,16 +207,16 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [7]    if (i > j) {
   
-  falsebr label _$L1 id:34 attachinfo:Dbx      
-      gt:bool id:7 attachinfo:Dbx          
-          ld:i32 'i' id:2 attachinfo:Dbx          
-          ld:i32 'j' id:1 attachinfo:Dbx
+  falsebr label _$L1 attachinfo:Dbx      
+      gt:bool attachinfo:Dbx          
+          ld:i32 'i' attachinfo:Dbx          
+          ld:i32 'j' attachinfo:Dbx
   DET:
   >> MDSet DETAIL:
-    ld:i32 'i' id:2 attachinfo:Dbx
+    ld:i32 'i' attachinfo:Dbx
       MD11 -- base:Var61(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -- size:4
         POINT TO:--
-    ld:i32 'j' id:1 attachinfo:Dbx
+    ld:i32 'j' attachinfo:Dbx
       MD12 -- base:Var62(j):local,formal_param,align(4),i32,decl:'int  j ' -- ofst:0 -- size:4
         POINT TO:--
 
@@ -244,10 +244,10 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [8]        p = &a;
   
-  st:*<4> 'p' id:10 attachinfo:Dbx      
-      lda:*<4> 'a' id:9 attachinfo:Dbx
+  st:*<4> 'p' attachinfo:Dbx      
+      lda:*<4> 'a' attachinfo:Dbx
   LHS:
-  st:*<4> 'p' id:10 attachinfo:Dbx
+  st:*<4> 'p' attachinfo:Dbx
     MD10 -- base:Var59(p):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD7 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:0 -- size:4
@@ -258,7 +258,7 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [7]    if (i > j) {
   
-  goto label _$L2 id:22 attachinfo:Dbx
+  goto label _$L2 attachinfo:Dbx
   
 
  -- BB4 --
@@ -285,10 +285,10 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [10]        p = &b;
   
-  st:*<4> 'p' id:13 attachinfo:Dbx      
-      lda:*<4> 'b' id:12 attachinfo:Dbx
+  st:*<4> 'p' attachinfo:Dbx      
+      lda:*<4> 'b' attachinfo:Dbx
   LHS:
-  st:*<4> 'p' id:13 attachinfo:Dbx
+  st:*<4> 'p' attachinfo:Dbx
     MD10 -- base:Var59(p):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD8 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:0 -- size:4
@@ -320,38 +320,38 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [12]    b = x[10];
   
-  st:i32 'b' id:19 attachinfo:Dbx      
-      array (i32, ety:i32) id:18 attachinfo:Dbx
+  st:i32 'b' attachinfo:Dbx      
+      array (i32, ety:i32) attachinfo:Dbx
           elemnum[200]
-          intconst:i32 10|0xa dim0 id:17 attachinfo:Dbx          
-          lda:*<800> 'x' array_base id:16 attachinfo:Dbx
+          intconst:i32 10|0xa dim0 attachinfo:Dbx          
+          lda:*<800> 'x' array_base attachinfo:Dbx
   LHS:
-  st:i32 'b' id:19 attachinfo:Dbx
+  st:i32 'b' attachinfo:Dbx
     MD8 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:0 -- size:4
       POINT TO:--
   RHS:
-  array (i32, ety:i32) id:18 attachinfo:Dbx
+  array (i32, ety:i32) attachinfo:Dbx
     MD16 -- base:Var65(x):local,array,align(4),mc,mem_size:800,decl:'int  x [200]' -- ofst:40 -- size:4
       POINT TO:--
   >> MDSet DETAIL:
-  array (i32, ety:i32) id:18 attachinfo:Dbx
+  array (i32, ety:i32) attachinfo:Dbx
     MD16 -- base:Var65(x):local,array,align(4),mc,mem_size:800,decl:'int  x [200]' -- ofst:40 -- size:4
       POINT TO:--
   ---------------------------------  
 
   [13]    b = a[i];
   
-  st:i32 'b' id:26 attachinfo:Dbx      
-      array (i32, ety:i32) id:25 attachinfo:Dbx
+  st:i32 'b' attachinfo:Dbx      
+      array (i32, ety:i32) attachinfo:Dbx
           elemnum[10]
-          ld:i32 'i' dim0 id:24 attachinfo:Dbx          
-          ld:*<40> 'a' array_base id:23 attachinfo:Dbx
+          ld:i32 'i' dim0 attachinfo:Dbx          
+          ld:*<40> 'a' array_base attachinfo:Dbx
   LHS:
-  st:i32 'b' id:26 attachinfo:Dbx
+  st:i32 'b' attachinfo:Dbx
     MD8 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:0 -- size:4
       POINT TO:--
   RHS:
-  array (i32, ety:i32) id:25 attachinfo:Dbx
+  array (i32, ety:i32) attachinfo:Dbx
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
     MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -361,7 +361,7 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
     MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbound
       POINT TO:--
   >> MDSet DETAIL:
-  array (i32, ety:i32) id:25 attachinfo:Dbx
+  array (i32, ety:i32) attachinfo:Dbx
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
     MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -370,23 +370,23 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
       POINT TO:--
     MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbound
       POINT TO:--
-    ld:*<40> 'a' id:23 attachinfo:Dbx
+    ld:*<40> 'a' attachinfo:Dbx
       MD7 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:0 -- size:4
         POINT TO:--
-    ld:i32 'i' id:24 attachinfo:Dbx
+    ld:i32 'i' attachinfo:Dbx
       MD11 -- base:Var61(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -- size:4
         POINT TO:--
   ---------------------------------  
 
   [14]    a[j] = c;
   
-  starray (i32, ety:i32) id:33 attachinfo:Dbx
+  starray (i32, ety:i32) attachinfo:Dbx
       elem_num[10]
-      ld:i32 'j' dim0 id:30 attachinfo:Dbx      
-      ld:*<40> 'a' array_base id:29 attachinfo:Dbx      
-      ld:i32 'c' rhs id:32 attachinfo:Dbx
+      ld:i32 'j' dim0 attachinfo:Dbx      
+      ld:*<40> 'a' array_base attachinfo:Dbx      
+      ld:i32 'c' rhs attachinfo:Dbx
   LHS:
-  starray (i32, ety:i32) id:33 attachinfo:Dbx
+  starray (i32, ety:i32) attachinfo:Dbx
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
     MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -396,39 +396,39 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
     MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbound
       POINT TO:--
   RHS:
-  ld:i32 'c' id:32 attachinfo:Dbx
+  ld:i32 'c' attachinfo:Dbx
     MD13 -- base:Var64(c):local,align(4),i32,decl:'int  c ' -- ofst:0 -- size:4
       POINT TO:--
   >> MDSet DETAIL:
-  ld:*<40> 'a' id:29 attachinfo:Dbx
+  ld:*<40> 'a' attachinfo:Dbx
     MD7 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:0 -- size:4
       POINT TO:--
-  ld:i32 'c' id:32 attachinfo:Dbx
+  ld:i32 'c' attachinfo:Dbx
     MD13 -- base:Var64(c):local,align(4),i32,decl:'int  c ' -- ofst:0 -- size:4
       POINT TO:--
-  ld:i32 'j' id:30 attachinfo:Dbx
+  ld:i32 'j' attachinfo:Dbx
     MD12 -- base:Var62(j):local,formal_param,align(4),i32,decl:'int  j ' -- ofst:0 -- size:4
       POINT TO:--
   ---------------------------------  
 
   [15]    return *p;
   
-  return id:37 attachinfo:Dbx
-      ild:i32 id:36 attachinfo:Dbx          
-          ld:*<4> 'p' id:35 attachinfo:Dbx
+  return attachinfo:Dbx
+      ild:i32 attachinfo:Dbx          
+          ld:*<4> 'p' attachinfo:Dbx
   
-  ild:i32 id:36 attachinfo:Dbx
+  ild:i32 attachinfo:Dbx
     MD7 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:0 -- size:4
       POINT TO:--
     MD8 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:0 -- size:4
       POINT TO:--
   >> MDSet DETAIL:
-  ild:i32 id:36 attachinfo:Dbx
+  ild:i32 attachinfo:Dbx
     MD7 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:0 -- size:4
       POINT TO:--
     MD8 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:0 -- size:4
       POINT TO:--
-    ld:*<4> 'p' id:35 attachinfo:Dbx
+    ld:*<4> 'p' attachinfo:Dbx
       MD10 -- base:Var59(p):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  *  p ' -- ofst:0 -- size:4
         POINT TO:
           MD7 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:0 -- size:4
@@ -463,51 +463,51 @@ MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 --- BB7 ---
 --- BB1 ---
-    ist:i32 id:5 attachinfo:Dbx
+    ist:i32 attachinfo:Dbx
      : MD2,MD3,MD7,MD8,MD14,MD15
-      ld:*<4> 'p' id:3 attachinfo:Dbx
+      ld:*<4> 'p' attachinfo:Dbx
       EMD10
-    falsebr label _$L1 id:34 attachinfo:Dbx
-      gt:bool id:7 attachinfo:Dbx
-        ld:i32 'i' id:2 attachinfo:Dbx
+    falsebr label _$L1 attachinfo:Dbx
+      gt:bool attachinfo:Dbx
+        ld:i32 'i' attachinfo:Dbx
         EMD11
-        ld:i32 'j' id:1 attachinfo:Dbx
+        ld:i32 'j' attachinfo:Dbx
         EMD12
 --- BB2 ---
-    st:*<4> 'p' id:10 attachinfo:Dbx
+    st:*<4> 'p' attachinfo:Dbx
     EMD10
-      lda:*<4> 'a' id:9 attachinfo:Dbx
-    goto label _$L2 id:22 attachinfo:Dbx
+      lda:*<4> 'a' attachinfo:Dbx
+    goto label _$L2 attachinfo:Dbx
 --- BB4 ---
-    st:*<4> 'p' id:13 attachinfo:Dbx
+    st:*<4> 'p' attachinfo:Dbx
     EMD10
-      lda:*<4> 'b' id:12 attachinfo:Dbx
+      lda:*<4> 'b' attachinfo:Dbx
 --- BB5 ---
-    st:i32 'b' id:19 attachinfo:Dbx
+    st:i32 'b' attachinfo:Dbx
     EMD8 : MD15
-      array (i32, ety:i32) id:18 attachinfo:Dbx
+      array (i32, ety:i32) attachinfo:Dbx
       EMD16
-        lda:*<800> 'x' id:16 attachinfo:Dbx
-    st:i32 'b' id:26 attachinfo:Dbx
+        lda:*<800> 'x' attachinfo:Dbx
+    st:i32 'b' attachinfo:Dbx
     EMD8 : MD15
-      array (i32, ety:i32) id:25 attachinfo:Dbx
+      array (i32, ety:i32) attachinfo:Dbx
        : MD2,MD3,MD7,MD8,MD14,MD15
-        ld:*<40> 'a' id:23 attachinfo:Dbx
+        ld:*<40> 'a' attachinfo:Dbx
         EMD7 : MD14
-        ld:i32 'i' id:24 attachinfo:Dbx
+        ld:i32 'i' attachinfo:Dbx
         EMD11
-    starray (i32, ety:i32) id:33 attachinfo:Dbx
+    starray (i32, ety:i32) attachinfo:Dbx
      : MD2,MD3,MD7,MD8,MD14,MD15
-      ld:*<40> 'a' id:29 attachinfo:Dbx
+      ld:*<40> 'a' attachinfo:Dbx
       EMD7 : MD14
-      ld:i32 'j' id:30 attachinfo:Dbx
+      ld:i32 'j' attachinfo:Dbx
       EMD12
-      ld:i32 'c' id:32 attachinfo:Dbx
+      ld:i32 'c' attachinfo:Dbx
       EMD13
-    return id:37 attachinfo:Dbx
-      ild:i32 id:36 attachinfo:Dbx
+    return attachinfo:Dbx
+      ild:i32 attachinfo:Dbx
        : MD7,MD8,MD14,MD15
-        ld:*<4> 'p' id:35 attachinfo:Dbx
+        ld:*<4> 'p' attachinfo:Dbx
         EMD10
 
 ==---- DUMP DUMgr: IR REFERENCE 'alias3' ----==
@@ -538,51 +538,51 @@ MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 --- BB7 ---
 --- BB1 ---
-    ist:i32 id:5 attachinfo:Dbx,MDSSA
+    ist:i32 attachinfo:Dbx,MDSSA
      : MD2,MD3,MD7,MD8,MD14,MD15
-      ld:*<4> 'p' id:3 attachinfo:Dbx,MDSSA
+      ld:*<4> 'p' attachinfo:Dbx,MDSSA
       EMD10
-    falsebr label _$L1 id:34 attachinfo:Dbx
-      gt:bool id:7 attachinfo:Dbx
-        ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+    falsebr label _$L1 attachinfo:Dbx
+      gt:bool attachinfo:Dbx
+        ld:i32 'i' attachinfo:Dbx,MDSSA
         EMD11
-        ld:i32 'j' id:1 attachinfo:Dbx,MDSSA
+        ld:i32 'j' attachinfo:Dbx,MDSSA
         EMD12
 --- BB2 ---
-    st:*<4> 'p' id:10 attachinfo:Dbx,MDSSA
+    st:*<4> 'p' attachinfo:Dbx,MDSSA
     EMD10
-      lda:*<4> 'a' id:9 attachinfo:Dbx
-    goto label _$L2 id:22 attachinfo:Dbx
+      lda:*<4> 'a' attachinfo:Dbx
+    goto label _$L2 attachinfo:Dbx
 --- BB4 ---
-    st:*<4> 'p' id:13 attachinfo:Dbx,MDSSA
+    st:*<4> 'p' attachinfo:Dbx,MDSSA
     EMD10
-      lda:*<4> 'b' id:12 attachinfo:Dbx
+      lda:*<4> 'b' attachinfo:Dbx
 --- BB5 ---
-    st:i32 'b' id:19 attachinfo:Dbx,MDSSA
+    st:i32 'b' attachinfo:Dbx,MDSSA
     EMD8 : MD15
-      array (i32, ety:i32) id:18 attachinfo:Dbx,MDSSA
+      array (i32, ety:i32) attachinfo:Dbx,MDSSA
       EMD16
-        lda:*<800> 'x' id:16 attachinfo:Dbx
-    st:i32 'b' id:26 attachinfo:Dbx,MDSSA
+        lda:*<800> 'x' attachinfo:Dbx
+    st:i32 'b' attachinfo:Dbx,MDSSA
     EMD8 : MD15
-      array (i32, ety:i32) id:25 attachinfo:Dbx,MDSSA
+      array (i32, ety:i32) attachinfo:Dbx,MDSSA
        : MD2,MD3,MD7,MD8,MD14,MD15
-        ld:*<40> 'a' id:23 attachinfo:Dbx,MDSSA
+        ld:*<40> 'a' attachinfo:Dbx,MDSSA
         EMD7 : MD14
-        ld:i32 'i' id:24 attachinfo:Dbx,MDSSA
+        ld:i32 'i' attachinfo:Dbx,MDSSA
         EMD11
-    starray (i32, ety:i32) id:33 attachinfo:Dbx,MDSSA
+    starray (i32, ety:i32) attachinfo:Dbx,MDSSA
      : MD2,MD3,MD7,MD8,MD14,MD15
-      ld:*<40> 'a' id:29 attachinfo:Dbx,MDSSA
+      ld:*<40> 'a' attachinfo:Dbx,MDSSA
       EMD7 : MD14
-      ld:i32 'j' id:30 attachinfo:Dbx,MDSSA
+      ld:i32 'j' attachinfo:Dbx,MDSSA
       EMD12
-      ld:i32 'c' id:32 attachinfo:Dbx,MDSSA
+      ld:i32 'c' attachinfo:Dbx,MDSSA
       EMD13
-    return id:37 attachinfo:Dbx
-      ild:i32 id:36 attachinfo:Dbx,MDSSA
+    return attachinfo:Dbx
+      ild:i32 attachinfo:Dbx,MDSSA
        : MD7,MD8,MD14,MD15
-        ld:*<4> 'p' id:35 attachinfo:Dbx,MDSSA
+        ld:*<4> 'p' attachinfo:Dbx,MDSSA
         EMD10
 ==---- DUMP Alias Analysis 'alias3' ----==
 ==---- DUMP ALL MD ----==
@@ -690,11 +690,11 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [6]    *p = 20;
   
-  ist:i32 id:5 attachinfo:Dbx,MDSSA      
-      ld:*<4> 'p' base id:3 attachinfo:Dbx,MDSSA      
-      intconst:i32 20|0x14 id:4 attachinfo:Dbx
+  ist:i32 attachinfo:Dbx,MDSSA      
+      ld:*<4> 'p' base attachinfo:Dbx,MDSSA      
+      intconst:i32 20|0x14 attachinfo:Dbx
   LHS:
-  ist:i32 id:5 attachinfo:Dbx,MDSSA
+  ist:i32 attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -729,7 +729,7 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
       POINT TO:--
   RHS:
   >> MDSet DETAIL:
-  ld:*<4> 'p' id:3 attachinfo:Dbx,MDSSA
+  ld:*<4> 'p' attachinfo:Dbx,MDSSA
     MD10 -- base:Var59(p):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -743,16 +743,16 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [7]    if (i > j) {
   
-  falsebr label _$L1 id:34 attachinfo:Dbx      
-      gt:bool id:7 attachinfo:Dbx          
-          ld:i32 'i' id:2 attachinfo:Dbx,MDSSA          
-          ld:i32 'j' id:1 attachinfo:Dbx,MDSSA
+  falsebr label _$L1 attachinfo:Dbx      
+      gt:bool attachinfo:Dbx          
+          ld:i32 'i' attachinfo:Dbx,MDSSA          
+          ld:i32 'j' attachinfo:Dbx,MDSSA
   DET:
   >> MDSet DETAIL:
-    ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+    ld:i32 'i' attachinfo:Dbx,MDSSA
       MD11 -- base:Var61(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -- size:4
         POINT TO:--
-    ld:i32 'j' id:1 attachinfo:Dbx,MDSSA
+    ld:i32 'j' attachinfo:Dbx,MDSSA
       MD12 -- base:Var62(j):local,formal_param,align(4),i32,decl:'int  j ' -- ofst:0 -- size:4
         POINT TO:--
 
@@ -780,10 +780,10 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [8]        p = &a;
   
-  st:*<4> 'p' id:10 attachinfo:Dbx,MDSSA      
-      lda:*<4> 'a' id:9 attachinfo:Dbx
+  st:*<4> 'p' attachinfo:Dbx,MDSSA      
+      lda:*<4> 'a' attachinfo:Dbx
   LHS:
-  st:*<4> 'p' id:10 attachinfo:Dbx,MDSSA
+  st:*<4> 'p' attachinfo:Dbx,MDSSA
     MD10 -- base:Var59(p):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -799,7 +799,7 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [7]    if (i > j) {
   
-  goto label _$L2 id:22 attachinfo:Dbx
+  goto label _$L2 attachinfo:Dbx
   
 
  -- BB4 --
@@ -826,10 +826,10 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [10]        p = &b;
   
-  st:*<4> 'p' id:13 attachinfo:Dbx,MDSSA      
-      lda:*<4> 'b' id:12 attachinfo:Dbx
+  st:*<4> 'p' attachinfo:Dbx,MDSSA      
+      lda:*<4> 'b' attachinfo:Dbx
   LHS:
-  st:*<4> 'p' id:13 attachinfo:Dbx,MDSSA
+  st:*<4> 'p' attachinfo:Dbx,MDSSA
     MD10 -- base:Var59(p):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -866,38 +866,38 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [12]    b = x[10];
   
-  st:i32 'b' id:19 attachinfo:Dbx,MDSSA      
-      array (i32, ety:i32) id:18 attachinfo:Dbx,MDSSA
+  st:i32 'b' attachinfo:Dbx,MDSSA      
+      array (i32, ety:i32) attachinfo:Dbx,MDSSA
           elemnum[200]
-          intconst:i32 10|0xa dim0 id:17 attachinfo:Dbx          
-          lda:*<800> 'x' array_base id:16 attachinfo:Dbx
+          intconst:i32 10|0xa dim0 attachinfo:Dbx          
+          lda:*<800> 'x' array_base attachinfo:Dbx
   LHS:
-  st:i32 'b' id:19 attachinfo:Dbx,MDSSA
+  st:i32 'b' attachinfo:Dbx,MDSSA
     MD8 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:0 -- size:4
       POINT TO:--
   RHS:
-  array (i32, ety:i32) id:18 attachinfo:Dbx,MDSSA
+  array (i32, ety:i32) attachinfo:Dbx,MDSSA
     MD16 -- base:Var65(x):local,array,align(4),mc,mem_size:800,decl:'int  x [200]' -- ofst:40 -- size:4
       POINT TO:--
   >> MDSet DETAIL:
-  array (i32, ety:i32) id:18 attachinfo:Dbx,MDSSA
+  array (i32, ety:i32) attachinfo:Dbx,MDSSA
     MD16 -- base:Var65(x):local,array,align(4),mc,mem_size:800,decl:'int  x [200]' -- ofst:40 -- size:4
       POINT TO:--
   ---------------------------------  
 
   [13]    b = a[i];
   
-  st:i32 'b' id:26 attachinfo:Dbx,MDSSA      
-      array (i32, ety:i32) id:25 attachinfo:Dbx,MDSSA
+  st:i32 'b' attachinfo:Dbx,MDSSA      
+      array (i32, ety:i32) attachinfo:Dbx,MDSSA
           elemnum[10]
-          ld:i32 'i' dim0 id:24 attachinfo:Dbx,MDSSA          
-          ld:*<40> 'a' array_base id:23 attachinfo:Dbx,MDSSA
+          ld:i32 'i' dim0 attachinfo:Dbx,MDSSA          
+          ld:*<40> 'a' array_base attachinfo:Dbx,MDSSA
   LHS:
-  st:i32 'b' id:26 attachinfo:Dbx,MDSSA
+  st:i32 'b' attachinfo:Dbx,MDSSA
     MD8 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:0 -- size:4
       POINT TO:--
   RHS:
-  array (i32, ety:i32) id:25 attachinfo:Dbx,MDSSA
+  array (i32, ety:i32) attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -920,7 +920,7 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
     MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbound
       POINT TO:--
   >> MDSet DETAIL:
-  array (i32, ety:i32) id:25 attachinfo:Dbx,MDSSA
+  array (i32, ety:i32) attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -942,7 +942,7 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
         
     MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbound
       POINT TO:--
-    ld:*<40> 'a' id:23 attachinfo:Dbx,MDSSA
+    ld:*<40> 'a' attachinfo:Dbx,MDSSA
       MD7 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:0 -- size:4
         POINT TO:
           MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -952,20 +952,20 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
           MD14 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:unbound
           MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbound
           
-    ld:i32 'i' id:24 attachinfo:Dbx,MDSSA
+    ld:i32 'i' attachinfo:Dbx,MDSSA
       MD11 -- base:Var61(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -- size:4
         POINT TO:--
   ---------------------------------  
 
   [14]    a[j] = c;
   
-  starray (i32, ety:i32) id:33 attachinfo:Dbx,MDSSA
+  starray (i32, ety:i32) attachinfo:Dbx,MDSSA
       elem_num[10]
-      ld:i32 'j' dim0 id:30 attachinfo:Dbx,MDSSA      
-      ld:*<40> 'a' array_base id:29 attachinfo:Dbx,MDSSA      
-      ld:i32 'c' rhs id:32 attachinfo:Dbx,MDSSA
+      ld:i32 'j' dim0 attachinfo:Dbx,MDSSA      
+      ld:*<40> 'a' array_base attachinfo:Dbx,MDSSA      
+      ld:i32 'c' rhs attachinfo:Dbx,MDSSA
   LHS:
-  starray (i32, ety:i32) id:33 attachinfo:Dbx,MDSSA
+  starray (i32, ety:i32) attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -988,11 +988,11 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
     MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbound
       POINT TO:--
   RHS:
-  ld:i32 'c' id:32 attachinfo:Dbx,MDSSA
+  ld:i32 'c' attachinfo:Dbx,MDSSA
     MD13 -- base:Var64(c):local,align(4),i32,decl:'int  c ' -- ofst:0 -- size:4
       POINT TO:--
   >> MDSet DETAIL:
-  ld:*<40> 'a' id:29 attachinfo:Dbx,MDSSA
+  ld:*<40> 'a' attachinfo:Dbx,MDSSA
     MD7 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:0 -- size:4
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -1002,21 +1002,21 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
         MD14 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:unbound
         MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbound
         
-  ld:i32 'c' id:32 attachinfo:Dbx,MDSSA
+  ld:i32 'c' attachinfo:Dbx,MDSSA
     MD13 -- base:Var64(c):local,align(4),i32,decl:'int  c ' -- ofst:0 -- size:4
       POINT TO:--
-  ld:i32 'j' id:30 attachinfo:Dbx,MDSSA
+  ld:i32 'j' attachinfo:Dbx,MDSSA
     MD12 -- base:Var62(j):local,formal_param,align(4),i32,decl:'int  j ' -- ofst:0 -- size:4
       POINT TO:--
   ---------------------------------  
 
   [15]    return *p;
   
-  return id:37 attachinfo:Dbx
-      ild:i32 id:36 attachinfo:Dbx,MDSSA          
-          ld:*<4> 'p' id:35 attachinfo:Dbx,MDSSA
+  return attachinfo:Dbx
+      ild:i32 attachinfo:Dbx,MDSSA          
+          ld:*<4> 'p' attachinfo:Dbx,MDSSA
   
-  ild:i32 id:36 attachinfo:Dbx,MDSSA
+  ild:i32 attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -1050,7 +1050,7 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
     MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbound
       POINT TO:--
   >> MDSet DETAIL:
-  ild:i32 id:36 attachinfo:Dbx,MDSSA
+  ild:i32 attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -1083,7 +1083,7 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
         
     MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbound
       POINT TO:--
-    ld:*<4> 'p' id:35 attachinfo:Dbx,MDSSA
+    ld:*<4> 'p' attachinfo:Dbx,MDSSA
       MD10 -- base:Var59(p):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  *  p ' -- ofst:0 -- size:4
         POINT TO:
           MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -1268,11 +1268,11 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [6]    *p = 20;
   
-  ist:i32 id:5 attachinfo:Dbx,MDSSA      
-      ld:*<4> 'p' base id:3 attachinfo:Dbx,MDSSA      
-      intconst:i32 20|0x14 id:4 attachinfo:Dbx
+  ist:i32 attachinfo:Dbx,MDSSA      
+      ld:*<4> 'p' base attachinfo:Dbx,MDSSA      
+      intconst:i32 20|0x14 attachinfo:Dbx
   LHS:
-  ist:i32 id:5 attachinfo:Dbx,MDSSA
+  ist:i32 attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
     MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -1287,7 +1287,7 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
       POINT TO:--
   RHS:
   >> MDSet DETAIL:
-  ld:*<4> 'p' id:3 attachinfo:Dbx,MDSSA
+  ld:*<4> 'p' attachinfo:Dbx,MDSSA
     MD10 -- base:Var59(p):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -1301,16 +1301,16 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [7]    if (i > j) {
   
-  falsebr label _$L1 id:34 attachinfo:Dbx      
-      gt:bool id:7 attachinfo:Dbx          
-          ld:i32 'i' id:2 attachinfo:Dbx,MDSSA          
-          ld:i32 'j' id:1 attachinfo:Dbx,MDSSA
+  falsebr label _$L1 attachinfo:Dbx      
+      gt:bool attachinfo:Dbx          
+          ld:i32 'i' attachinfo:Dbx,MDSSA          
+          ld:i32 'j' attachinfo:Dbx,MDSSA
   DET:
   >> MDSet DETAIL:
-    ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+    ld:i32 'i' attachinfo:Dbx,MDSSA
       MD11 -- base:Var61(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -- size:4
         POINT TO:--
-    ld:i32 'j' id:1 attachinfo:Dbx,MDSSA
+    ld:i32 'j' attachinfo:Dbx,MDSSA
       MD12 -- base:Var62(j):local,formal_param,align(4),i32,decl:'int  j ' -- ofst:0 -- size:4
         POINT TO:--
 
@@ -1338,10 +1338,10 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [8]        p = &a;
   
-  st:*<4> 'p' id:10 attachinfo:Dbx,MDSSA      
-      lda:*<4> 'a' id:9 attachinfo:Dbx
+  st:*<4> 'p' attachinfo:Dbx,MDSSA      
+      lda:*<4> 'a' attachinfo:Dbx
   LHS:
-  st:*<4> 'p' id:10 attachinfo:Dbx,MDSSA
+  st:*<4> 'p' attachinfo:Dbx,MDSSA
     MD10 -- base:Var59(p):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD7 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:0 -- size:4
@@ -1352,7 +1352,7 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [7]    if (i > j) {
   
-  goto label _$L2 id:22 attachinfo:Dbx
+  goto label _$L2 attachinfo:Dbx
   
 
  -- BB4 --
@@ -1379,10 +1379,10 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [10]        p = &b;
   
-  st:*<4> 'p' id:13 attachinfo:Dbx,MDSSA      
-      lda:*<4> 'b' id:12 attachinfo:Dbx
+  st:*<4> 'p' attachinfo:Dbx,MDSSA      
+      lda:*<4> 'b' attachinfo:Dbx
   LHS:
-  st:*<4> 'p' id:13 attachinfo:Dbx,MDSSA
+  st:*<4> 'p' attachinfo:Dbx,MDSSA
     MD10 -- base:Var59(p):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  *  p ' -- ofst:0 -- size:4
       POINT TO:
         MD8 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:0 -- size:4
@@ -1414,38 +1414,38 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
 
   [12]    b = x[10];
   
-  st:i32 'b' id:19 attachinfo:Dbx,MDSSA      
-      array (i32, ety:i32) id:18 attachinfo:Dbx,MDSSA
+  st:i32 'b' attachinfo:Dbx,MDSSA      
+      array (i32, ety:i32) attachinfo:Dbx,MDSSA
           elemnum[200]
-          intconst:i32 10|0xa dim0 id:17 attachinfo:Dbx          
-          lda:*<800> 'x' array_base id:16 attachinfo:Dbx
+          intconst:i32 10|0xa dim0 attachinfo:Dbx          
+          lda:*<800> 'x' array_base attachinfo:Dbx
   LHS:
-  st:i32 'b' id:19 attachinfo:Dbx,MDSSA
+  st:i32 'b' attachinfo:Dbx,MDSSA
     MD8 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:0 -- size:4
       POINT TO:--
   RHS:
-  array (i32, ety:i32) id:18 attachinfo:Dbx,MDSSA
+  array (i32, ety:i32) attachinfo:Dbx,MDSSA
     MD16 -- base:Var65(x):local,array,align(4),mc,mem_size:800,decl:'int  x [200]' -- ofst:40 -- size:4
       POINT TO:--
   >> MDSet DETAIL:
-  array (i32, ety:i32) id:18 attachinfo:Dbx,MDSSA
+  array (i32, ety:i32) attachinfo:Dbx,MDSSA
     MD16 -- base:Var65(x):local,array,align(4),mc,mem_size:800,decl:'int  x [200]' -- ofst:40 -- size:4
       POINT TO:--
   ---------------------------------  
 
   [13]    b = a[i];
   
-  st:i32 'b' id:26 attachinfo:Dbx,MDSSA      
-      array (i32, ety:i32) id:25 attachinfo:Dbx,MDSSA
+  st:i32 'b' attachinfo:Dbx,MDSSA      
+      array (i32, ety:i32) attachinfo:Dbx,MDSSA
           elemnum[10]
-          ld:i32 'i' dim0 id:24 attachinfo:Dbx,MDSSA          
-          ld:*<40> 'a' array_base id:23 attachinfo:Dbx,MDSSA
+          ld:i32 'i' dim0 attachinfo:Dbx,MDSSA          
+          ld:*<40> 'a' array_base attachinfo:Dbx,MDSSA
   LHS:
-  st:i32 'b' id:26 attachinfo:Dbx,MDSSA
+  st:i32 'b' attachinfo:Dbx,MDSSA
     MD8 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:0 -- size:4
       POINT TO:--
   RHS:
-  array (i32, ety:i32) id:25 attachinfo:Dbx,MDSSA
+  array (i32, ety:i32) attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
     MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -1455,7 +1455,7 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
     MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbound
       POINT TO:--
   >> MDSet DETAIL:
-  array (i32, ety:i32) id:25 attachinfo:Dbx,MDSSA
+  array (i32, ety:i32) attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
     MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -1464,23 +1464,23 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
       POINT TO:--
     MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbound
       POINT TO:--
-    ld:*<40> 'a' id:23 attachinfo:Dbx,MDSSA
+    ld:*<40> 'a' attachinfo:Dbx,MDSSA
       MD7 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:0 -- size:4
         POINT TO:--
-    ld:i32 'i' id:24 attachinfo:Dbx,MDSSA
+    ld:i32 'i' attachinfo:Dbx,MDSSA
       MD11 -- base:Var61(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -- size:4
         POINT TO:--
   ---------------------------------  
 
   [14]    a[j] = c;
   
-  starray (i32, ety:i32) id:33 attachinfo:Dbx,MDSSA
+  starray (i32, ety:i32) attachinfo:Dbx,MDSSA
       elem_num[10]
-      ld:i32 'j' dim0 id:30 attachinfo:Dbx,MDSSA      
-      ld:*<40> 'a' array_base id:29 attachinfo:Dbx,MDSSA      
-      ld:i32 'c' rhs id:32 attachinfo:Dbx,MDSSA
+      ld:i32 'j' dim0 attachinfo:Dbx,MDSSA      
+      ld:*<40> 'a' array_base attachinfo:Dbx,MDSSA      
+      ld:i32 'c' rhs attachinfo:Dbx,MDSSA
   LHS:
-  starray (i32, ety:i32) id:33 attachinfo:Dbx,MDSSA
+  starray (i32, ety:i32) attachinfo:Dbx,MDSSA
     MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
       POINT TO:--
     MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -1490,39 +1490,39 @@ MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbo
     MD15 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:unbound
       POINT TO:--
   RHS:
-  ld:i32 'c' id:32 attachinfo:Dbx,MDSSA
+  ld:i32 'c' attachinfo:Dbx,MDSSA
     MD13 -- base:Var64(c):local,align(4),i32,decl:'int  c ' -- ofst:0 -- size:4
       POINT TO:--
   >> MDSet DETAIL:
-  ld:*<40> 'a' id:29 attachinfo:Dbx,MDSSA
+  ld:*<40> 'a' attachinfo:Dbx,MDSSA
     MD7 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:0 -- size:4
       POINT TO:--
-  ld:i32 'c' id:32 attachinfo:Dbx,MDSSA
+  ld:i32 'c' attachinfo:Dbx,MDSSA
     MD13 -- base:Var64(c):local,align(4),i32,decl:'int  c ' -- ofst:0 -- size:4
       POINT TO:--
-  ld:i32 'j' id:30 attachinfo:Dbx,MDSSA
+  ld:i32 'j' attachinfo:Dbx,MDSSA
     MD12 -- base:Var62(j):local,formal_param,align(4),i32,decl:'int  j ' -- ofst:0 -- size:4
       POINT TO:--
   ---------------------------------  
 
   [15]    return *p;
   
-  return id:37 attachinfo:Dbx
-      ild:i32 id:36 attachinfo:Dbx,MDSSA          
-          ld:*<4> 'p' id:35 attachinfo:Dbx,MDSSA
+  return attachinfo:Dbx
+      ild:i32 attachinfo:Dbx,MDSSA          
+          ld:*<4> 'p' attachinfo:Dbx,MDSSA
   
-  ild:i32 id:36 attachinfo:Dbx,MDSSA
+  ild:i32 attachinfo:Dbx,MDSSA
     MD7 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:0 -- size:4
       POINT TO:--
     MD8 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:0 -- size:4
       POINT TO:--
   >> MDSet DETAIL:
-  ild:i32 id:36 attachinfo:Dbx,MDSSA
+  ild:i32 attachinfo:Dbx,MDSSA
     MD7 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:0 -- size:4
       POINT TO:--
     MD8 -- base:Var63(b):local,,addr_taken,align(4),i32,decl:'int  b ' -- ofst:0 -- size:4
       POINT TO:--
-    ld:*<4> 'p' id:35 attachinfo:Dbx,MDSSA
+    ld:*<4> 'p' attachinfo:Dbx,MDSSA
       MD10 -- base:Var59(p):local,formal_param,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  *  p ' -- ofst:0 -- size:4
         POINT TO:
           MD7 -- base:Var60(a):local,,addr_taken,formal_param,align(4),pointer,pt_base_sz:40,*,mem_size:4,decl:'int ( *  a )[10]' -- ofst:0 -- size:4
@@ -1557,51 +1557,51 @@ MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 --- BB7 ---
 --- BB1 ---
-    ist:i32 id:5 attachinfo:Dbx,MDSSA
+    ist:i32 attachinfo:Dbx,MDSSA
      : MD2,MD3,MD7,MD8,MD14,MD15
-      ld:*<4> 'p' id:3 attachinfo:Dbx,MDSSA
+      ld:*<4> 'p' attachinfo:Dbx,MDSSA
       EMD10
-    falsebr label _$L1 id:34 attachinfo:Dbx
-      gt:bool id:7 attachinfo:Dbx
-        ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+    falsebr label _$L1 attachinfo:Dbx
+      gt:bool attachinfo:Dbx
+        ld:i32 'i' attachinfo:Dbx,MDSSA
         EMD11
-        ld:i32 'j' id:1 attachinfo:Dbx,MDSSA
+        ld:i32 'j' attachinfo:Dbx,MDSSA
         EMD12
 --- BB2 ---
-    st:*<4> 'p' id:10 attachinfo:Dbx,MDSSA
+    st:*<4> 'p' attachinfo:Dbx,MDSSA
     EMD10
-      lda:*<4> 'a' id:9 attachinfo:Dbx
-    goto label _$L2 id:22 attachinfo:Dbx
+      lda:*<4> 'a' attachinfo:Dbx
+    goto label _$L2 attachinfo:Dbx
 --- BB4 ---
-    st:*<4> 'p' id:13 attachinfo:Dbx,MDSSA
+    st:*<4> 'p' attachinfo:Dbx,MDSSA
     EMD10
-      lda:*<4> 'b' id:12 attachinfo:Dbx
+      lda:*<4> 'b' attachinfo:Dbx
 --- BB5 ---
-    st:i32 'b' id:19 attachinfo:Dbx,MDSSA
+    st:i32 'b' attachinfo:Dbx,MDSSA
     EMD8 : MD15
-      array (i32, ety:i32) id:18 attachinfo:Dbx,MDSSA
+      array (i32, ety:i32) attachinfo:Dbx,MDSSA
       EMD16
-        lda:*<800> 'x' id:16 attachinfo:Dbx
-    st:i32 'b' id:26 attachinfo:Dbx,MDSSA
+        lda:*<800> 'x' attachinfo:Dbx
+    st:i32 'b' attachinfo:Dbx,MDSSA
     EMD8 : MD15
-      array (i32, ety:i32) id:25 attachinfo:Dbx,MDSSA
+      array (i32, ety:i32) attachinfo:Dbx,MDSSA
        : MD2,MD3,MD7,MD8,MD14,MD15
-        ld:*<40> 'a' id:23 attachinfo:Dbx,MDSSA
+        ld:*<40> 'a' attachinfo:Dbx,MDSSA
         EMD7 : MD14
-        ld:i32 'i' id:24 attachinfo:Dbx,MDSSA
+        ld:i32 'i' attachinfo:Dbx,MDSSA
         EMD11
-    starray (i32, ety:i32) id:33 attachinfo:Dbx,MDSSA
+    starray (i32, ety:i32) attachinfo:Dbx,MDSSA
      : MD2,MD3,MD7,MD8,MD14,MD15
-      ld:*<40> 'a' id:29 attachinfo:Dbx,MDSSA
+      ld:*<40> 'a' attachinfo:Dbx,MDSSA
       EMD7 : MD14
-      ld:i32 'j' id:30 attachinfo:Dbx,MDSSA
+      ld:i32 'j' attachinfo:Dbx,MDSSA
       EMD12
-      ld:i32 'c' id:32 attachinfo:Dbx,MDSSA
+      ld:i32 'c' attachinfo:Dbx,MDSSA
       EMD13
-    return id:37 attachinfo:Dbx
-      ild:i32 id:36 attachinfo:Dbx,MDSSA
+    return attachinfo:Dbx
+      ild:i32 attachinfo:Dbx,MDSSA
        : MD7,MD8,MD14,MD15
-        ld:*<4> 'p' id:35 attachinfo:Dbx,MDSSA
+        ld:*<4> 'p' attachinfo:Dbx,MDSSA
         EMD10
 ==---- DUMP Alias Analysis '.program' ----==
 ==---- DUMP ALL MD ----==
@@ -1762,7 +1762,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 
   -- IR POINT-TO: --
   ---------------------------------  
-  region 'alias3',id:2 id:1
+  region 'alias3',id:2
   
 
 ==---- DUMP DUMgr: IR REFERENCE '.program' ----==
@@ -1798,7 +1798,7 @@ MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 --- BB3 ---
 --- BB1 ---
-    region 'alias3',id:2 id:1
+    region 'alias3',id:2
 
 ==---- DUMP DUMgr: IR REFERENCE '.program' ----==
 
@@ -1833,7 +1833,7 @@ MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 --- BB3 ---
 --- BB1 ---
-    region 'alias3',id:2 id:1
+    region 'alias3',id:2
 ==---- DUMP Alias Analysis '.program' ----==
 ==---- DUMP ALL MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -1968,7 +1968,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 
   -- IR POINT-TO: --
   ---------------------------------  
-  region 'alias3',id:2 id:1
+  region 'alias3',id:2
   
 ==---- DUMP Alias Analysis '.program' ----==
 ==---- DUMP ALL MD ----==
@@ -2129,7 +2129,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 
   -- IR POINT-TO: --
   ---------------------------------  
-  region 'alias3',id:2 id:1
+  region 'alias3',id:2
   
 
 ==---- DUMP DUMgr: IR REFERENCE '.program' ----==
@@ -2165,4 +2165,4 @@ MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
 MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 --- BB3 ---
 --- BB1 ---
-    region 'alias3',id:2 id:1
+    region 'alias3',id:2

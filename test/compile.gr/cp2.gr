@@ -1,4 +1,4 @@
-region program @"myprogram" () {
+region program "myprogram" () {
     var g:i32:(align(4));
     region func main () {
         var a:mc<128>:(align(4));

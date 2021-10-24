@@ -42,6 +42,7 @@ CHAR const* g_gr_file_name = nullptr;
 CHAR const* g_dump_file_name = nullptr;
 bool g_is_dumpgr = false;
 static bool g_cfg_opt = true;
+static bool g_ask_for_help = false;
 
 static bool is_c_source_file(CHAR const* fn)
 {
@@ -258,7 +259,7 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "enable redundant-code-elimination optimization", },
     { "dce", &xoc::g_do_dce,
       "enable dead-code-elimination optimization", },
-    { "infertype", &xoc::g_infer_type,
+    { "infer_type", &xoc::g_infer_type,
       "enable type inference", },
     { "dce_aggr", &xoc::g_do_dce_aggressive,
       "enable aggressive-dead-code-elimination optimization", },
@@ -312,6 +313,8 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump dead-code-elimination", },
     { "infertype", &xoc::g_dump_opt.is_dump_infertype,
       "dump infer-type", },
+    { "invert_brtgt", &xoc::g_dump_opt.is_dump_invert_brtgt,
+      "dump invert-branch-target", },
     { "lftr", &xoc::g_dump_opt.is_dump_lftr,
       "dump linear-function-test-replacement optimization", },
     { "ivr", &xoc::g_dump_opt.is_dump_ivr,
@@ -338,7 +341,7 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump control-dependent-graph", },
     { "simplification", &xoc::g_dump_opt.is_dump_simplification,
       "dump IR simplification", },
-    { "refine-duchain", &xoc::g_dump_opt.is_dump_refine_duchain,
+    { "refine_duchain", &xoc::g_dump_opt.is_dump_refine_duchain,
       "dump refine-duchain optimization", },
     { "refine", &xoc::g_dump_opt.is_dump_refine,
       "dump refine-duchain optimization", },
@@ -352,6 +355,8 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "disable dump", },
     { "gr", &g_is_dumpgr,
       "output GR language according region information", },
+    { "irid", &xoc::g_dump_opt.is_dump_ir_id,
+      "dump IR's id", },
 };
 
 
@@ -455,15 +460,21 @@ static bool dispatchByPrefix(CHAR const* cmdstr, INT argc, CHAR const* argv[],
     switch (cmdstr[0]) {
     case 'O': return process_optimize(argc, argv, i);
     case 'o': return process_output_file(argc, argv, i);
-    default:
-        if (!strcmp(cmdstr, "dump")) {
-            CHAR const* n = process_dump(argc, argv, i);
-            if (n == nullptr) {
-                return false;
-            }
-            g_dump_file_name = n;
-            return true;
+    default:;
+    }
+
+    if (::strcmp(cmdstr, "help") == 0 || ::strcmp(cmdstr, "h") == 0) {
+        g_ask_for_help = true;
+        return true;
+    }
+
+    if (::strcmp(cmdstr, "dump") == 0) {
+        CHAR const* n = process_dump(argc, argv, i);
+        if (n == nullptr) {
+            return false;
         }
+        g_dump_file_name = n;
+        return true;
     }
 
     ASSERT0(boption);
@@ -520,6 +531,8 @@ static void usage()
     "\nXOCC Version %s"
     "\nUsage: xocc [options] file"
     "\noptions: "
+    "\n -h,            show command line usage"
+    "\n -help,         show command line usage"
     "\n -O0,           compile without any optimization"
     "\n -O1,-O2,-O3    compile with optimizations"
     "\n -dump <file>   create dump file"
@@ -535,7 +548,7 @@ static void usage()
 }
 
 
-static void setOptionO0()
+static void inferOption()
 {
     if (xoc::g_opt_level == OPT_LEVEL0) {
         xoc::g_do_cfg_dom = false;
@@ -543,7 +556,7 @@ static void setOptionO0()
         xoc::g_do_loop_ana = false;
         xoc::g_do_cdg = false;
         xoc::g_do_cfg_remove_redundant_branch = false;
-        xoc::g_do_cfg_invert_condition_and_remove_trampolin_bb = false;
+        xoc::g_invert_brtgt = false;
         xoc::g_do_aa = false;
         xoc::g_do_md_du_analysis = false;
         xoc::g_is_support_dynamic_type = false;
@@ -563,9 +576,28 @@ static void setOptionO0()
         g_do_cfg_remove_empty_bb = false;
         g_do_cfg_remove_unreach_bb = false;
         g_do_cfg_remove_trampolin_bb = false;
-        g_do_cfg_invert_condition_and_remove_trampolin_bb = false;
+        g_invert_brtgt = false;
         g_do_cfg_remove_redundant_branch = false;
+        g_do_cfg_remove_trampolin_branch = false;
     }
+
+    if (xoc::g_dump_opt.isDumpAll()) {
+        ;
+    } else {
+        //IR's id may changed in different compilation.
+        xoc::g_dump_opt.is_dump_ir_id = false;
+    }
+}
+
+
+//The position of unknown option in 'argv'.
+static void report_unknown_option(UINT pos, CHAR const* argv[])
+{
+    fprintf(stdout, "\n");
+    for (UINT i = 0; i <= pos; i++) {
+        fprintf(stdout, "%s ", argv[i]);
+    }
+    fprintf(stdout, "\nunknown option:%s\n", argv[pos]);
 }
 
 
@@ -579,7 +611,10 @@ bool processCmdLine(INT argc, CHAR const* argv[])
         if (argv[i][0] == '-') {
             bool * boption = nullptr;
             if (!dispatchByPrefix(&argv[i][1], argc, argv, i, &boption)) {
-                fprintf(stdout, "\nunknown option:%s\n", argv[i]);
+                report_unknown_option(i, argv);
+                return false;
+            }
+            if (g_ask_for_help) {
                 usage();
                 return false;
             }
@@ -598,8 +633,7 @@ bool processCmdLine(INT argc, CHAR const* argv[])
             continue;
         }
 
-        //Unknown option.
-        usage();
+        report_unknown_option(i, argv);
         return false;
     }
 
@@ -620,6 +654,6 @@ bool processCmdLine(INT argc, CHAR const* argv[])
         UNLINK(g_output_file_name);
     }
 
-    setOptionO0();
+    inferOption();
     return true;
 }

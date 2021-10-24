@@ -1,6 +1,6 @@
 
 //====---- Dump region '.program' ----====
-region program @".program" () {
+region program ".program" () {
 
     //entry:
     //  %g = alloca float, align 4

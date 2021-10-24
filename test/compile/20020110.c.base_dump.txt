@@ -5,7 +5,7 @@
 --- BB3 ---
 --- BB1 ---
     ------------------
-    return id:1
+    return
     VP:-- <= --
 ==---- DUMP Dominator Frontier Control Set ----==
 
@@ -25,12 +25,12 @@ MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 --- BB3 ---
 --- BB1 ---
 
-return id:1
+return
 ==-- DUMP MDSSAMgr DU CHAIN 'foo' --==
 
 --- BB3 ---
 --- BB1 ---
-return id:1
+return
 ==---- DUMP MDSSA Manager 'foo' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -45,19 +45,19 @@ MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 --- BB3 ---
 --- BB1 ---
 
-return id:1
+return
 ==-- DUMP MDSSAMgr DU CHAIN 'foo' --==
 
 --- BB3 ---
 --- BB1 ---
-return id:1
+return
 ==---- DUMP PRSSA Manager '.program' ----==
 ==---- DUMP PRSSAMgr:VPR '.program' ----==
 
 --- BB3 ---
 --- BB1 ---
     ------------------
-    region 'foo',id:2 id:1
+    region 'foo',id:2
     VP:-- <= --
 ==---- DUMP Dominator Frontier Control Set ----==
 
@@ -77,12 +77,12 @@ MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 --- BB3 ---
 --- BB1 ---
 
-region 'foo',id:2 id:1
+region 'foo',id:2
 ==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB3 ---
 --- BB1 ---
-region 'foo',id:2 id:1
+region 'foo',id:2
 ==---- DUMP MDSSA Manager '.program' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -97,9 +97,9 @@ MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
 --- BB3 ---
 --- BB1 ---
 
-region 'foo',id:2 id:1
+region 'foo',id:2
 ==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB3 ---
 --- BB1 ---
-region 'foo',id:2 id:1
+region 'foo',id:2

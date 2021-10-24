@@ -1,0 +1,166 @@
+
+==---- DUMP CFG 'main' ----==
+/******************************
+==---- DUMP IRBBList 'main' ----==
+----- BB31 --- rpo:-1 -----
+ATTR:entry_bb fall_through 
+STMT NUM:0
+
+----- BB1 --- rpo:-1 -----
+ATTR:fall_through 
+STMT NUM:2
+   st:i32 'd' attachinfo:Dbx       
+       intconst:i32 1|0x1
+   $4:i32 = call 'foo'  attachinfo:Dbx
+       ld:i32 'argc' param0
+       ld:*<4> 'argv' param1
+       ild:any dummy0           
+           intconst:any 0|0x0
+
+----- BB3 --- rpo:-1 -----
+LABEL:_$L19 
+ATTR:fall_through branch_target 
+STMT NUM:1
+   st:i32 'c' attachinfo:Dbx       
+       $4:any
+
+----- BB4 --- rpo:-1 -----
+LABEL:_$L6 
+ATTR:fall_through branch_target 
+STMT NUM:2
+   $5:i32 = phi attachinfo:Dbx
+       $4:any
+       $6:any
+   falsebr label _$L7 attachinfo:Dbx       
+       ne:bool           
+           $5:any           
+           intconst:i32 -1|0xffffffffffffffff
+
+----- BB5 --- rpo:-1 -----
+ATTR:fall_through 
+STMT NUM:2
+   stpr $7:i32 attachinfo:Dbx       
+       ld:i32 'c'
+   truebr label _$L1 attachinfo:Dbx       
+       eq:bool           
+           $7:any           
+           intconst:i32 115|0x73
+
+----- BB8 --- rpo:-1 -----
+LABEL:_$L9 
+ATTR:fall_through branch_target 
+STMT NUM:1
+   truebr label _$L2 attachinfo:Dbx       
+       eq:bool           
+           $7:any           
+           intconst:i32 99|0x63
+
+----- BB11 --- rpo:-1 -----
+LABEL:_$L11 
+ATTR:fall_through branch_target 
+STMT NUM:1
+   truebr label _$L3 attachinfo:Dbx       
+       eq:bool           
+           $7:any           
+           intconst:i32 102|0x66
+
+----- BB14 --- rpo:-1 -----
+LABEL:_$L13 
+ATTR:fall_through branch_target 
+STMT NUM:1
+   falsebr label _$L8 attachinfo:Dbx       
+       eq:bool           
+           $7:any           
+           intconst:i32 86|0x56
+
+----- BB15 --- rpo:-1 -----
+ATTR:
+STMT NUM:1
+   goto label _$L5 attachinfo:Dbx
+
+----- BB19 --- rpo:-1 -----
+LABEL:_$L1 _$L2 _$L3 
+ATTR:branch_target 
+STMT NUM:2
+   st:*<1> 'a' attachinfo:Dbx       
+       ld:*<1> 'b'
+   goto label _$L8 attachinfo:Dbx
+
+----- BB23 --- rpo:-1 -----
+LABEL:_$L5 
+ATTR:fall_through branch_target 
+STMT NUM:1
+   st:i32 'd' attachinfo:Dbx       
+       intconst:i32 0|0x0
+
+----- BB24 --- rpo:-1 -----
+LABEL:_$L8 
+ATTR:fall_through branch_target 
+STMT NUM:1
+   $6:i32 = call 'foo'  attachinfo:Dbx
+       ld:i32 'argc' param0
+       ld:*<4> 'argv' param1
+       ild:any dummy0           
+           intconst:any 0|0x0
+
+----- BB26 --- rpo:-1 -----
+LABEL:_$L20 
+ATTR:branch_target 
+STMT NUM:2
+   st:i32 'c' attachinfo:Dbx       
+       $6:any
+   goto label _$L6 attachinfo:Dbx
+
+----- BB28 --- rpo:-1 -----
+LABEL:_$L7 
+ATTR:fall_through branch_target 
+STMT NUM:1
+   $8:i32 = call 'bar'  attachinfo:Dbx
+       ild:any dummy0           
+           intconst:any 0|0x0
+
+----- BB29 --- rpo:-1 -----
+ATTR:fall_through 
+STMT NUM:1
+   return attachinfo:Dbx
+       intconst:i32 0|0x0
+
+******************************/
+digraph G {
+
+startnode [fontsize=24,style=filled, color=gold,shape=none,label="RegionName:main"];
+node1 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB1  rpo:-1 \l\lst:i32 'd' attachinfo:Dbx    \l    intconst:i32 1|0x1\l\l$4:i32 = call 'foo'  attachinfo:Dbx\l    ld:i32 'argc' param0\l    ld:*<4> 'argv' param1\l    ild:any dummy0        \l        intconst:any 0|0x0\l"];
+node3 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB3 _$L19  rpo:-1 \l\lst:i32 'c' attachinfo:Dbx    \l    $4:any\l"];
+node4 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB4 _$L6  rpo:-1 \l\l$5:i32 = phi attachinfo:Dbx\l    $4:any\l    $6:any\l\lfalsebr label _$L7 attachinfo:Dbx    \l    ne:bool        \l        $5:any        \l        intconst:i32 -1|0xffffffffffffffff\l"];
+node5 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB5  rpo:-1 \l\lstpr $7:i32 attachinfo:Dbx    \l    ld:i32 'c'\l\ltruebr label _$L1 attachinfo:Dbx    \l    eq:bool        \l        $7:any        \l        intconst:i32 115|0x73\l"];
+node8 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB8 _$L9  rpo:-1 \l\ltruebr label _$L2 attachinfo:Dbx    \l    eq:bool        \l        $7:any        \l        intconst:i32 99|0x63\l"];
+node11 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB11 _$L11  rpo:-1 \l\ltruebr label _$L3 attachinfo:Dbx    \l    eq:bool        \l        $7:any        \l        intconst:i32 102|0x66\l"];
+node14 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB14 _$L13  rpo:-1 \l\lfalsebr label _$L8 attachinfo:Dbx    \l    eq:bool        \l        $7:any        \l        intconst:i32 86|0x56\l"];
+node15 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB15  rpo:-1 \l\lgoto label _$L5 attachinfo:Dbx\l"];
+node19 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB19 _$L1 _$L2 _$L3  rpo:-1 \l\lst:*<1> 'a' attachinfo:Dbx    \l    ld:*<1> 'b'\l\lgoto label _$L8 attachinfo:Dbx\l"];
+node23 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB23 _$L5  rpo:-1 \l\lst:i32 'd' attachinfo:Dbx    \l    intconst:i32 0|0x0\l"];
+node24 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB24 _$L8  rpo:-1 \l\l$6:i32 = call 'foo'  attachinfo:Dbx\l    ld:i32 'argc' param0\l    ld:*<4> 'argv' param1\l    ild:any dummy0        \l        intconst:any 0|0x0\l"];
+node26 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB26 _$L20  rpo:-1 \l\lst:i32 'c' attachinfo:Dbx    \l    $6:any\l\lgoto label _$L6 attachinfo:Dbx\l"];
+node28 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB28 _$L7  rpo:-1 \l\l$8:i32 = call 'bar'  attachinfo:Dbx\l    ild:any dummy0        \l        intconst:any 0|0x0\l"];
+node29 [font="Times Bold",fontsize=18,color=cyan,shape=box,style=filled,label="BB29  rpo:-1 \l\lreturn attachinfo:Dbx\l    intconst:i32 0|0x0\l"];
+node31 [font="Times Bold",fontsize=18,color=cyan,shape=box,style=filled,label="BB31  rpo:-1 \l"];
+node31->node1[style=bold, color=maroon, label="p0 "]
+node1->node3[style=bold, color=maroon, label="p0 "]
+node3->node4[style=bold, color=maroon, label="p0 "]
+node26->node4[style=bold, color=maroon, label="p1 "]
+node4->node5[style=bold, color=maroon, label="p0 "]
+node5->node8[style=bold, color=maroon, label="p0 "]
+node8->node11[style=bold, color=maroon, label="p0 "]
+node11->node14[style=bold, color=maroon, label="p0 "]
+node14->node15[style=bold, color=maroon, label="p0 "]
+node5->node19[style=bold, color=maroon, label="p0 "]
+node8->node19[style=bold, color=maroon, label="p1 "]
+node11->node19[style=bold, color=maroon, label="p2 "]
+node15->node23[style=bold, color=maroon, label="p0 "]
+node14->node24[style=bold, color=maroon, label="p0 "]
+node19->node24[style=bold, color=maroon, label="p1 "]
+node23->node24[style=bold, color=maroon, label="p2 "]
+node24->node26[style=bold, color=maroon, label="p0 "]
+node4->node28[style=bold, color=maroon, label="p0 "]
+node28->node29[style=bold, color=maroon, label="p0 "]
+}

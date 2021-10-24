@@ -1,4 +1,4 @@
-region program @"program" () {
+region program "program" () {
     region func main () {
         truebr (eq $1, $2), L2;
         goto L1;  //goto is actually fallthrough to label L1.

@@ -1,4 +1,4 @@
-region program @"program" () {
+region program "program" () {
     region func main () {
         var x:u8:(align(4));
         var y:u8:(align(4));

@@ -1,14 +1,5 @@
-#Run single case.
-perl ./run.pl arm XoccPath = ~/xgen/arm/xocc.exe Case = hello.c XoccFlag = "-O3"
+debug_xocc_path="/home/zhenyu/x/src/arm/xocc.exe"
+release_xocc_path="/home/zhenyu/x/src/arm/xocc.exe"
 
-#Run all testcases, only compile.
-perl ./run.pl arm XoccPath = ~/xgen/arm/xocc.exe XoccFlag = "-O3" NoAsm
-
-#Run all testcases, only compile, assembly.
-perl ./run.pl arm XoccPath = ~/xgen/arm/xocc.exe XoccFlag = "-O3" NoLink
-
-#Run all testcases, only compile, assembly, linking.
-perl ./run.pl arm XoccPath = ~/xgen/arm/xocc.exe XoccFlag = "-O3" NoRun
-
-#Run all testcases, compile, assembly, linking, and run on simulator.
-perl ./run.pl arm XoccPath = ~/xgen/arm/xocc.exe XoccFlag = "-O3" NotQuitEarly
+perl ./run.pl armhf Case = pi2.c XoccPath = $debug_xocc_path XoccFlag = "-O0" CompareResultIfExist
+#NotQuitEarly

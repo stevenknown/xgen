@@ -1,19 +1,19 @@
 
 ==---- DUMP LICM Analysis Result : LoopInfo2 : 'main' ----==
 -- Invariant Expression (num=2) -- :
-   intconst:i32 20|0x14 id:29 attachinfo:Dbx
-   ld:i32 'b' id:33 attachinfo:Dbx,MDSSA
+   intconst:i32 20|0x14 attachinfo:Dbx
+   ld:i32 'b' attachinfo:Dbx,MDSSA
 -- Invariant Statement (num=2) -- :
 
    [16]    i = 20; //should be hoisted.
    
-   st:i32 'i' decl:int  i  id:30 attachinfo:Dbx,MDSSA       
-       intconst:i32 20|0x14 id:29 attachinfo:Dbx
+   st:i32 'i' decl:int  i  attachinfo:Dbx,MDSSA       
+       intconst:i32 20|0x14 attachinfo:Dbx
 
    [18]    g = b; //should be hoisted.
    
-   st:i32 'g' decl:int  g  id:34 attachinfo:Dbx,MDSSA       
-       ld:i32 'b' decl:int  b  id:33 attachinfo:Dbx,MDSSA
+   st:i32 'g' decl:int  g  attachinfo:Dbx,MDSSA       
+       ld:i32 'b' decl:int  b  attachinfo:Dbx,MDSSA
 ==---- DUMP Register Promotion 'main' ----==
 ==---- DUMP LICM Analysis Result : LoopInfo3 : 'main' ----==
 

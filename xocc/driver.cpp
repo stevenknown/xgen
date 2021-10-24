@@ -210,7 +210,7 @@ static Var * addDecl(IN Decl * decl, MOD VarMgr * var_mgr, TypeMgr * dm)
 
     ASSERT0(dm);
 
-    DATA_TYPE data_type = get_decl_dtype(decl, &data_size, dm);
+    DATA_TYPE data_type = CTree2IR::get_decl_dtype(decl, &data_size, dm);
     Type const* type = nullptr;
     if (IS_PTR(data_type)) {
         ASSERT0(decl->regardAsPointer());
@@ -304,7 +304,7 @@ static void scanAndInitVar(Scope * s, VarMgr * vm, TypeMgr * tm)
                 }
 
                 //Function/variable declaration, can not
-                //override real function define.                
+                //override real function define.
                 continue;
             }
 
@@ -520,7 +520,7 @@ static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr)
     bool s = rm->processProgramRegion(program, oc);
     ASSERT0(s);
     DUMMYUSE(s);
-    if (g_dump_opt.isDumpALL()) {
+    if (g_dump_opt.isDumpAll()) {
         dumpPoolUsage(rm);
     }
 }
@@ -683,11 +683,11 @@ bool compileCFile()
     }
 
     //In the file scope, generate function region.
-    if (g_dump_opt.isDumpALL()) {
+    if (g_dump_opt.isDumpAll()) {
         get_global_scope()->dump();
     }
     scanAndInitVar(get_global_scope(), rm->getVarMgr(), rm->getTypeMgr());
-    if (generateRegion(rm)) {
+    if (CTree2IR::generateRegion(rm)) {
         compileRegionSet(rm, cgmgr);
     }
     if (g_is_dumpgr) {

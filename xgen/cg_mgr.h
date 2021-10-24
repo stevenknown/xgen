@@ -70,8 +70,7 @@ protected:
     virtual SectionMgr * allocSectionMgr() { return new SectionMgr(this); }
     inline xoc::Var * addBuiltinVar(CHAR const* buildin_name)
     {
-        ASSERT0(m_rm);
-        xoc::Sym const* s = m_rm->addToSymbolTab(buildin_name);
+        ASSERT0(m_rm);        
         //Set builtin variables to be LOCAL to avoid RegionMgr regarded them
         //as global variables. Because too many builtin variables will disrupt
         //the dump and analysis. Moreover it does not matter for builtin call

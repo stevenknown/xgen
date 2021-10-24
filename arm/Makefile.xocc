@@ -8,6 +8,7 @@
 
 TARG=FOR_ARM
 TARG_DIR=arm
+SRC = ..
 
 ifeq ($(WIN), true)
   $(info "On Windows")

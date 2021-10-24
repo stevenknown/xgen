@@ -38,13 +38,13 @@ MD29 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [5]    p[0].b = 1; //S1
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 1|0x1 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 1|0x1 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -52,13 +52,13 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [6]    return p[0].a; //S2
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD28V0,MD2V1,MD5V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo' --==
 
@@ -67,11 +67,11 @@ return id:9 attachinfo:Dbx
 
 [5]    p[0].b = 1; //S1
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 1|0x1 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 1|0x1 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD29V1:
@@ -80,11 +80,11 @@ starray(id:5) USESET:
 
 [6]    return p[0].a; //S2
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD28V0:
@@ -129,13 +129,13 @@ MD29 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [5]    p[0].b = 1; //S1
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 1|0x1 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 1|0x1 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -143,13 +143,13 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [6]    return p[0].a; //S2
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD28V0,MD2V1,MD5V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo' --==
 
@@ -158,11 +158,11 @@ return id:9 attachinfo:Dbx
 
 [5]    p[0].b = 1; //S1
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 1|0x1 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 1|0x1 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD29V1:
@@ -171,11 +171,11 @@ starray(id:5) USESET:
 
 [6]    return p[0].a; //S2
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD28V0:
@@ -220,13 +220,13 @@ MD29 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [10]    p[0].b = 1; //S1
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 1|0x1 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 1|0x1 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -234,13 +234,13 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [11]    return p[0].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD29V1,MD2V1,MD5V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo1' --==
 
@@ -249,11 +249,11 @@ return id:9 attachinfo:Dbx
 
 [10]    p[0].b = 1; //S1
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 1|0x1 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 1|0x1 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD29V1:(array id:3) 
@@ -262,11 +262,11 @@ starray(id:5) USESET:
 
 [11]    return p[0].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) KDEF:starray(id:5)
 ==---- DUMP MDSSA Manager 'foo1' ----==
@@ -308,13 +308,13 @@ MD29 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [10]    p[0].b = 1; //S1
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 1|0x1 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 1|0x1 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:
   --DEFVMD:(MD2V1,-)|USESET:
   --DEFVMD:(MD5V1,-)|USESET:
@@ -322,8 +322,8 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [11]    return p[0].b;
 
-return id:9 attachinfo:Dbx
-    intconst:i32 1|0x1 id:6 attachinfo:Dbx
+return attachinfo:Dbx
+    intconst:i32 1|0x1 attachinfo:Dbx
 ==-- DUMP MDSSAMgr DU CHAIN 'foo1' --==
 
 --- BB3 ---
@@ -331,11 +331,11 @@ return id:9 attachinfo:Dbx
 
 [10]    p[0].b = 1; //S1
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 1|0x1 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 1|0x1 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD29V1:
@@ -344,8 +344,8 @@ starray(id:5) USESET:
 
 [11]    return p[0].b;
 
-return id:9 attachinfo:Dbx
-    intconst:i32 1|0x1 id:6 attachinfo:Dbx
+return attachinfo:Dbx
+    intconst:i32 1|0x1 attachinfo:Dbx
 ==---- DUMP MDSSA Manager 'foo2' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -387,13 +387,13 @@ MD38 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [15]    p[1].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 1|0x1 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 1|0x1 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD38V1,-)|USESET:
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -401,13 +401,13 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [16]    return p[0].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD28V0,MD2V1,MD5V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo2' --==
 
@@ -416,11 +416,11 @@ return id:9 attachinfo:Dbx
 
 [15]    p[1].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 1|0x1 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 1|0x1 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD38V1:
@@ -429,11 +429,11 @@ starray(id:5) USESET:
 
 [16]    return p[0].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD28V0:
@@ -480,13 +480,13 @@ MD38 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [15]    p[1].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 1|0x1 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 1|0x1 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD38V1,-)|USESET:
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -494,13 +494,13 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [16]    return p[0].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD28V0,MD2V1,MD5V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo2' --==
 
@@ -509,11 +509,11 @@ return id:9 attachinfo:Dbx
 
 [15]    p[1].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 1|0x1 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 1|0x1 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD38V1:
@@ -522,11 +522,11 @@ starray(id:5) USESET:
 
 [16]    return p[0].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD28V0:
@@ -573,13 +573,13 @@ MD38 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [20]    p[1].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 1|0x1 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 1|0x1 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD38V1,-)|USESET:
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -587,13 +587,13 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [21]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD37V0,MD2V1,MD5V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo3' --==
 
@@ -602,11 +602,11 @@ return id:9 attachinfo:Dbx
 
 [20]    p[1].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 1|0x1 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 1|0x1 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD38V1:
@@ -615,11 +615,11 @@ starray(id:5) USESET:
 
 [21]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD37V0:
@@ -666,13 +666,13 @@ MD38 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [20]    p[1].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 1|0x1 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 1|0x1 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD38V1,-)|USESET:
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -680,13 +680,13 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [21]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD37V0,MD2V1,MD5V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo3' --==
 
@@ -695,11 +695,11 @@ return id:9 attachinfo:Dbx
 
 [20]    p[1].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 1|0x1 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 1|0x1 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD38V1:
@@ -708,11 +708,11 @@ starray(id:5) USESET:
 
 [21]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD37V0:
@@ -759,13 +759,13 @@ MD38 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [25]    p[0].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -773,13 +773,13 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [26]    return p[1].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD38V0,MD2V1,MD5V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo4' --==
 
@@ -788,11 +788,11 @@ return id:9 attachinfo:Dbx
 
 [25]    p[0].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD29V1:
@@ -801,11 +801,11 @@ starray(id:5) USESET:
 
 [26]    return p[1].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD38V0:
@@ -852,13 +852,13 @@ MD38 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [25]    p[0].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -866,13 +866,13 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [26]    return p[1].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD38V0,MD2V1,MD5V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo4' --==
 
@@ -881,11 +881,11 @@ return id:9 attachinfo:Dbx
 
 [25]    p[0].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD29V1:
@@ -894,11 +894,11 @@ starray(id:5) USESET:
 
 [26]    return p[1].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD38V0:
@@ -945,13 +945,13 @@ MD38 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [30]    p[0].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -959,13 +959,13 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [31]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD37V0,MD2V1,MD5V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo5' --==
 
@@ -974,11 +974,11 @@ return id:9 attachinfo:Dbx
 
 [30]    p[0].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD29V1:
@@ -987,11 +987,11 @@ starray(id:5) USESET:
 
 [31]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD37V0:
@@ -1038,13 +1038,13 @@ MD38 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [30]    p[0].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -1052,13 +1052,13 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [31]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD37V0,MD2V1,MD5V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo5' --==
 
@@ -1067,11 +1067,11 @@ return id:9 attachinfo:Dbx
 
 [30]    p[0].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD29V1:
@@ -1080,11 +1080,11 @@ starray(id:5) USESET:
 
 [31]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD37V0:
@@ -1131,13 +1131,13 @@ MD38 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [35]    p[0].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD28V1,-)|USESET:
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -1145,13 +1145,13 @@ starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [36]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD37V0,MD2V1,MD5V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo6' --==
 
@@ -1160,11 +1160,11 @@ return id:9 attachinfo:Dbx
 
 [35]    p[0].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD28V1:
@@ -1173,11 +1173,11 @@ starray(id:5) USESET:
 
 [36]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD37V0:
@@ -1224,13 +1224,13 @@ MD38 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [35]    p[0].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD28V1,-)|USESET:
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -1238,13 +1238,13 @@ starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [36]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD37V0,MD2V1,MD5V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo6' --==
 
@@ -1253,11 +1253,11 @@ return id:9 attachinfo:Dbx
 
 [35]    p[0].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD28V1:
@@ -1266,11 +1266,11 @@ starray(id:5) USESET:
 
 [36]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD37V0:
@@ -1317,13 +1317,13 @@ MD38 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [40]    p[0].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD28V1,-)|USESET:
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -1331,13 +1331,13 @@ starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [41]    return p[1].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD38V0,MD2V1,MD5V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo7' --==
 
@@ -1346,11 +1346,11 @@ return id:9 attachinfo:Dbx
 
 [40]    p[0].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD28V1:
@@ -1359,11 +1359,11 @@ starray(id:5) USESET:
 
 [41]    return p[1].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD38V0:
@@ -1410,13 +1410,13 @@ MD38 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [40]    p[0].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD28V1,-)|USESET:
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -1424,13 +1424,13 @@ starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
 
 [41]    return p[1].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD38V0,MD2V1,MD5V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo7' --==
 
@@ -1439,11 +1439,11 @@ return id:9 attachinfo:Dbx
 
 [40]    p[0].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    intconst:i32 0|0x0 dim0 id:2 attachinfo:Dbx    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    intconst:i32 0|0x0 dim0 attachinfo:Dbx    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD28V1:
@@ -1452,11 +1452,11 @@ starray(id:5) USESET:
 
 [41]    return p[1].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD38V0:
@@ -1505,13 +1505,13 @@ MD70 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [45]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -1519,19 +1519,19 @@ starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:
   --DEFVMD:(MD37V1,-)|USESET:
   --DEFVMD:(MD38V1,-)|USESET:
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD69V0
 
 
 [46]    return p[0].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo8' --==
 
@@ -1540,11 +1540,11 @@ return id:9 attachinfo:Dbx
 
 [45]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -1559,11 +1559,11 @@ ld(id:2) DEFSET:
 
 [46]    return p[0].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -1613,13 +1613,13 @@ MD70 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S 
 
 [45]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -1627,19 +1627,19 @@ starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:
   --DEFVMD:(MD37V1,-)|USESET:
   --DEFVMD:(MD38V1,-)|USESET:
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD69V0
 
 
 [46]    return p[0].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo8' --==
 
@@ -1648,11 +1648,11 @@ return id:9 attachinfo:Dbx
 
 [45]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -1667,11 +1667,11 @@ ld(id:2) DEFSET:
 
 [46]    return p[0].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -1722,13 +1722,13 @@ MD75 -- base:Var93(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -
 
 [50]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -1736,19 +1736,19 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:
   --DEFVMD:(MD37V1,-)|USESET:
   --DEFVMD:(MD38V1,-)|USESET:
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD75V0
 
 
 [51]    return p[0].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo9' --==
 
@@ -1757,11 +1757,11 @@ return id:9 attachinfo:Dbx
 
 [50]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -1776,11 +1776,11 @@ ld(id:2) DEFSET:
 
 [51]    return p[0].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -1831,13 +1831,13 @@ MD75 -- base:Var93(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -
 
 [50]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -1845,19 +1845,19 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:
   --DEFVMD:(MD37V1,-)|USESET:
   --DEFVMD:(MD38V1,-)|USESET:
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD75V0
 
 
 [51]    return p[0].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo9' --==
 
@@ -1866,11 +1866,11 @@ return id:9 attachinfo:Dbx
 
 [50]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -1885,11 +1885,11 @@ ld(id:2) DEFSET:
 
 [51]    return p[0].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 0|0x0 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 0|0x0 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -1941,13 +1941,13 @@ MD81 -- base:Var94(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -
 
 [55]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -1955,19 +1955,19 @@ starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD81V0
 
 
 [56]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD37V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo10' --==
 
@@ -1976,11 +1976,11 @@ return id:9 attachinfo:Dbx
 
 [55]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -1995,11 +1995,11 @@ ld(id:2) DEFSET:
 
 [56]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -2051,13 +2051,13 @@ MD81 -- base:Var94(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -
 
 [55]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -2065,19 +2065,19 @@ starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD81V0
 
 
 [56]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD37V1
 ==-- DUMP MDSSAMgr DU CHAIN 'foo10' --==
 
@@ -2086,11 +2086,11 @@ return id:9 attachinfo:Dbx
 
 [55]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -2105,11 +2105,11 @@ ld(id:2) DEFSET:
 
 [56]    return p[1].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        intconst:i32 1|0x1 dim0 id:8 attachinfo:Dbx        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        intconst:i32 1|0x1 dim0 attachinfo:Dbx        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -2162,13 +2162,13 @@ MD86 -- base:Var95(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -
 
 [60]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -2176,21 +2176,21 @@ starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:array(id:3)
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD86V0
 
 
 [61]    return p[i].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD86V0
 ==-- DUMP MDSSAMgr DU CHAIN 'foo11' --==
 
@@ -2199,11 +2199,11 @@ return id:9 attachinfo:Dbx
 
 [60]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -2218,11 +2218,11 @@ ld(id:2) DEFSET:
 
 [61]    return p[i].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -2280,13 +2280,13 @@ MD86 -- base:Var95(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -
 
 [60]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -2294,21 +2294,21 @@ starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:array(id:3)
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD86V0
 
 
 [61]    return p[i].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD86V0
 ==-- DUMP MDSSAMgr DU CHAIN 'foo11' --==
 
@@ -2317,11 +2317,11 @@ return id:9 attachinfo:Dbx
 
 [60]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -2336,11 +2336,11 @@ ld(id:2) DEFSET:
 
 [61]    return p[i].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -2399,13 +2399,13 @@ MD91 -- base:Var96(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -
 
 [65]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -2413,21 +2413,21 @@ starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:array(id:3)
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD91V0
 
 
 [66]    return p[i].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD91V0
 ==-- DUMP MDSSAMgr DU CHAIN 'foo12' --==
 
@@ -2436,11 +2436,11 @@ return id:9 attachinfo:Dbx
 
 [65]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -2455,11 +2455,11 @@ ld(id:2) DEFSET:
 
 [66]    return p[i].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -2518,13 +2518,13 @@ MD91 -- base:Var96(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -
 
 [65]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -2532,21 +2532,21 @@ starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:array(id:3)
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD91V0
 
 
 [66]    return p[i].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD91V0
 ==-- DUMP MDSSAMgr DU CHAIN 'foo12' --==
 
@@ -2555,11 +2555,11 @@ return id:9 attachinfo:Dbx
 
 [65]    p[i].a = 20; //S4
 
-starray (i32, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -2574,11 +2574,11 @@ ld(id:2) DEFSET:
 
 [66]    return p[i].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -2638,13 +2638,13 @@ MD97 -- base:Var97(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -
 
 [70]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -2652,21 +2652,21 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:array(id:3)
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD97V0
 
 
 [71]    return p[i].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD97V0
 ==-- DUMP MDSSAMgr DU CHAIN 'foo13' --==
 
@@ -2675,11 +2675,11 @@ return id:9 attachinfo:Dbx
 
 [70]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -2694,11 +2694,11 @@ ld(id:2) DEFSET:
 
 [71]    return p[i].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -2758,13 +2758,13 @@ MD97 -- base:Var97(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 -
 
 [70]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -2772,21 +2772,21 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:array(id:3)
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD97V0
 
 
 [71]    return p[i].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD97V0
 ==-- DUMP MDSSAMgr DU CHAIN 'foo13' --==
 
@@ -2795,11 +2795,11 @@ return id:9 attachinfo:Dbx
 
 [70]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -2814,11 +2814,11 @@ ld(id:2) DEFSET:
 
 [71]    return p[i].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -2879,13 +2879,13 @@ MD103 -- base:Var98(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 
 
 [75]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -2893,21 +2893,21 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:array(id:3)
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD103V0
 
 
 [76]    return p[i].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD103V0
 ==-- DUMP MDSSAMgr DU CHAIN 'foo14' --==
 
@@ -2916,11 +2916,11 @@ return id:9 attachinfo:Dbx
 
 [75]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -2935,11 +2935,11 @@ ld(id:2) DEFSET:
 
 [76]    return p[i].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -3000,13 +3000,13 @@ MD103 -- base:Var98(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0 
 
 [75]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -3014,21 +3014,21 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD29V1,-)|USESET:array(id:3)
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD103V0
 
 
 [76]    return p[i].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD103V0
 ==-- DUMP MDSSAMgr DU CHAIN 'foo14' --==
 
@@ -3037,11 +3037,11 @@ return id:9 attachinfo:Dbx
 
 [75]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -3056,11 +3056,11 @@ ld(id:2) DEFSET:
 
 [76]    return p[i].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -3124,13 +3124,13 @@ MD112 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S
 
 [80]    p[i].c = 20; //S4
 
-starray (i32:offset(8), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(8), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(8), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(8), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-,NextDEF:MD2V2)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -3139,30 +3139,30 @@ starray (i32:offset(8), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
   --DEFVMD:(MD112V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD110V0
 
 
 [81]    return p[i];
 
-ist:mc<16> id:11 attachinfo:Dbx,MDSSA    
-    ld:*<16> '#retval_buf_of_foo15' base id:10 attachinfo:MDSSA    
-    array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+ist:mc<16> attachinfo:Dbx,MDSSA    
+    ld:*<16> '#retval_buf_of_foo15' base attachinfo:MDSSA    
+    array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  ist:mc<16> id:11 attachinfo:Dbx,MDSSA
+  ist:mc<16> attachinfo:Dbx,MDSSA
   --DEFVMD:(MD2V2,PrevDEF:MD2V1)|USESET:
   --DEFVMD:(MD3V1,-)|USESET:
-  ld:*<16> '#retval_buf_of_foo15' id:10 attachinfo:MDSSA
+  ld:*<16> '#retval_buf_of_foo15' attachinfo:MDSSA
   --USEVMD:MD111V0
-  array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1,MD112V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD110V0
 
-return id:9 attachinfo:Dbx
+return attachinfo:Dbx
 ==-- DUMP MDSSAMgr DU CHAIN 'foo15' --==
 
 --- BB3 ---
@@ -3170,11 +3170,11 @@ return id:9 attachinfo:Dbx
 
 [80]    p[i].c = 20; //S4
 
-starray (i32:offset(8), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(8), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -3190,12 +3190,12 @@ ld(id:2) DEFSET:
 
 [81]    return p[i];
 
-ist:mc<16> id:11 attachinfo:Dbx,MDSSA    
-    ld:*<16> '#retval_buf_of_foo15' base id:10 attachinfo:MDSSA    
-    array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+ist:mc<16> attachinfo:Dbx,MDSSA    
+    ld:*<16> '#retval_buf_of_foo15' base attachinfo:MDSSA    
+    array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 ist(id:11) USESET:
   MD2V2:
@@ -3213,7 +3213,7 @@ array(id:3) DEFSET:
   MD112V1:
 ld(id:8) DEFSET:
   MD110V0:
-return id:9 attachinfo:Dbx
+return attachinfo:Dbx
 ==---- DUMP MDSSA Manager 'foo15' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -3266,13 +3266,13 @@ MD112 -- base:Var58(p):global,,addr_taken,array,align(4),mc,mem_size:160,decl:'S
 
 [80]    p[i].c = 20; //S4
 
-starray (i32:offset(8), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(8), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(8), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(8), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-,NextDEF:MD2V2)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -3281,30 +3281,30 @@ starray (i32:offset(8), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
   --DEFVMD:(MD112V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD110V0
 
 
 [81]    return p[i];
 
-ist:mc<16> id:11 attachinfo:Dbx,MDSSA    
-    ld:*<16> '#retval_buf_of_foo15' base id:10 attachinfo:MDSSA    
-    array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+ist:mc<16> attachinfo:Dbx,MDSSA    
+    ld:*<16> '#retval_buf_of_foo15' base attachinfo:MDSSA    
+    array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  ist:mc<16> id:11 attachinfo:Dbx,MDSSA
+  ist:mc<16> attachinfo:Dbx,MDSSA
   --DEFVMD:(MD2V2,PrevDEF:MD2V1)|USESET:
   --DEFVMD:(MD3V1,-)|USESET:
-  ld:*<16> '#retval_buf_of_foo15' id:10 attachinfo:MDSSA
+  ld:*<16> '#retval_buf_of_foo15' attachinfo:MDSSA
   --USEVMD:MD111V0
-  array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1,MD112V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD110V0
 
-return id:9 attachinfo:Dbx
+return attachinfo:Dbx
 ==-- DUMP MDSSAMgr DU CHAIN 'foo15' --==
 
 --- BB3 ---
@@ -3312,11 +3312,11 @@ return id:9 attachinfo:Dbx
 
 [80]    p[i].c = 20; //S4
 
-starray (i32:offset(8), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(8), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -3332,12 +3332,12 @@ ld(id:2) DEFSET:
 
 [81]    return p[i];
 
-ist:mc<16> id:11 attachinfo:Dbx,MDSSA    
-    ld:*<16> '#retval_buf_of_foo15' base id:10 attachinfo:MDSSA    
-    array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+ist:mc<16> attachinfo:Dbx,MDSSA    
+    ld:*<16> '#retval_buf_of_foo15' base attachinfo:MDSSA    
+    array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 ist(id:11) USESET:
   MD2V2:
@@ -3355,7 +3355,7 @@ array(id:3) DEFSET:
   MD112V1:
 ld(id:8) DEFSET:
   MD110V0:
-return id:9 attachinfo:Dbx
+return attachinfo:Dbx
 ==---- DUMP MDSSA Manager 'foo16' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -3410,13 +3410,13 @@ MD119 -- base:Var107(#retval_buf_of_foo16):local,formal_param,align(4),pointer,p
 
 [85]    p[i] = s; //S4
 
-starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs id:4 attachinfo:Dbx,MDSSA
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs attachinfo:Dbx,MDSSA
   ----
-  starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-,NextDEF:MD2V2)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -3425,32 +3425,32 @@ starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
   --DEFVMD:(MD112V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD118V0
-  ld:mc<16> 's' id:4 attachinfo:Dbx,MDSSA
+  ld:mc<16> 's' attachinfo:Dbx,MDSSA
   --USEVMD:MD2V0,MD6V0
 
 
 [86]    return p[i];
 
-ist:mc<16> id:11 attachinfo:Dbx,MDSSA    
-    ld:*<16> '#retval_buf_of_foo16' base id:10 attachinfo:MDSSA    
-    array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+ist:mc<16> attachinfo:Dbx,MDSSA    
+    ld:*<16> '#retval_buf_of_foo16' base attachinfo:MDSSA    
+    array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  ist:mc<16> id:11 attachinfo:Dbx,MDSSA
+  ist:mc<16> attachinfo:Dbx,MDSSA
   --DEFVMD:(MD2V2,PrevDEF:MD2V1)|USESET:
   --DEFVMD:(MD3V1,-)|USESET:
-  ld:*<16> '#retval_buf_of_foo16' id:10 attachinfo:MDSSA
+  ld:*<16> '#retval_buf_of_foo16' attachinfo:MDSSA
   --USEVMD:MD119V0
-  array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1,MD112V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD118V0
 
-return id:9 attachinfo:Dbx
+return attachinfo:Dbx
 ==-- DUMP MDSSAMgr DU CHAIN 'foo16' --==
 
 --- BB3 ---
@@ -3458,11 +3458,11 @@ return id:9 attachinfo:Dbx
 
 [85]    p[i] = s; //S4
 
-starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs id:4 attachinfo:Dbx,MDSSA
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs attachinfo:Dbx,MDSSA
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -3481,12 +3481,12 @@ ld(id:4) DEFSET:
 
 [86]    return p[i];
 
-ist:mc<16> id:11 attachinfo:Dbx,MDSSA    
-    ld:*<16> '#retval_buf_of_foo16' base id:10 attachinfo:MDSSA    
-    array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+ist:mc<16> attachinfo:Dbx,MDSSA    
+    ld:*<16> '#retval_buf_of_foo16' base attachinfo:MDSSA    
+    array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 ist(id:11) USESET:
   MD2V2:
@@ -3504,7 +3504,7 @@ array(id:3) DEFSET:
   MD112V1:
 ld(id:8) DEFSET:
   MD118V0:
-return id:9 attachinfo:Dbx
+return attachinfo:Dbx
 ==---- DUMP MDSSA Manager 'foo16' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -3559,13 +3559,13 @@ MD119 -- base:Var107(#retval_buf_of_foo16):local,formal_param,align(4),pointer,p
 
 [85]    p[i] = s; //S4
 
-starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs id:4 attachinfo:Dbx,MDSSA
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs attachinfo:Dbx,MDSSA
   ----
-  starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-,NextDEF:MD2V2)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -3574,32 +3574,32 @@ starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
   --DEFVMD:(MD112V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD118V0
-  ld:mc<16> 's' id:4 attachinfo:Dbx,MDSSA
+  ld:mc<16> 's' attachinfo:Dbx,MDSSA
   --USEVMD:MD2V0,MD6V0
 
 
 [86]    return p[i];
 
-ist:mc<16> id:11 attachinfo:Dbx,MDSSA    
-    ld:*<16> '#retval_buf_of_foo16' base id:10 attachinfo:MDSSA    
-    array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+ist:mc<16> attachinfo:Dbx,MDSSA    
+    ld:*<16> '#retval_buf_of_foo16' base attachinfo:MDSSA    
+    array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  ist:mc<16> id:11 attachinfo:Dbx,MDSSA
+  ist:mc<16> attachinfo:Dbx,MDSSA
   --DEFVMD:(MD2V2,PrevDEF:MD2V1)|USESET:
   --DEFVMD:(MD3V1,-)|USESET:
-  ld:*<16> '#retval_buf_of_foo16' id:10 attachinfo:MDSSA
+  ld:*<16> '#retval_buf_of_foo16' attachinfo:MDSSA
   --USEVMD:MD119V0
-  array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1,MD112V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD118V0
 
-return id:9 attachinfo:Dbx
+return attachinfo:Dbx
 ==-- DUMP MDSSAMgr DU CHAIN 'foo16' --==
 
 --- BB3 ---
@@ -3607,11 +3607,11 @@ return id:9 attachinfo:Dbx
 
 [85]    p[i] = s; //S4
 
-starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs id:4 attachinfo:Dbx,MDSSA
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs attachinfo:Dbx,MDSSA
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -3630,12 +3630,12 @@ ld(id:4) DEFSET:
 
 [86]    return p[i];
 
-ist:mc<16> id:11 attachinfo:Dbx,MDSSA    
-    ld:*<16> '#retval_buf_of_foo16' base id:10 attachinfo:MDSSA    
-    array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+ist:mc<16> attachinfo:Dbx,MDSSA    
+    ld:*<16> '#retval_buf_of_foo16' base attachinfo:MDSSA    
+    array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 ist(id:11) USESET:
   MD2V2:
@@ -3653,7 +3653,7 @@ array(id:3) DEFSET:
   MD112V1:
 ld(id:8) DEFSET:
   MD118V0:
-return id:9 attachinfo:Dbx
+return attachinfo:Dbx
 ==---- DUMP MDSSA Manager 'foo17' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -3710,13 +3710,13 @@ MD125 -- base:Var108(#retval_buf_of_foo17):local,formal_param,align(4),pointer,p
 
 [90]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-,NextDEF:MD2V2)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -3725,30 +3725,30 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
   --DEFVMD:(MD112V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD124V0
 
 
 [91]    return p[i];
 
-ist:mc<16> id:11 attachinfo:Dbx,MDSSA    
-    ld:*<16> '#retval_buf_of_foo17' base id:10 attachinfo:MDSSA    
-    array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+ist:mc<16> attachinfo:Dbx,MDSSA    
+    ld:*<16> '#retval_buf_of_foo17' base attachinfo:MDSSA    
+    array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  ist:mc<16> id:11 attachinfo:Dbx,MDSSA
+  ist:mc<16> attachinfo:Dbx,MDSSA
   --DEFVMD:(MD2V2,PrevDEF:MD2V1)|USESET:
   --DEFVMD:(MD3V1,-)|USESET:
-  ld:*<16> '#retval_buf_of_foo17' id:10 attachinfo:MDSSA
+  ld:*<16> '#retval_buf_of_foo17' attachinfo:MDSSA
   --USEVMD:MD125V0
-  array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1,MD112V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD124V0
 
-return id:9 attachinfo:Dbx
+return attachinfo:Dbx
 ==-- DUMP MDSSAMgr DU CHAIN 'foo17' --==
 
 --- BB3 ---
@@ -3756,11 +3756,11 @@ return id:9 attachinfo:Dbx
 
 [90]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -3776,12 +3776,12 @@ ld(id:2) DEFSET:
 
 [91]    return p[i];
 
-ist:mc<16> id:11 attachinfo:Dbx,MDSSA    
-    ld:*<16> '#retval_buf_of_foo17' base id:10 attachinfo:MDSSA    
-    array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+ist:mc<16> attachinfo:Dbx,MDSSA    
+    ld:*<16> '#retval_buf_of_foo17' base attachinfo:MDSSA    
+    array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 ist(id:11) USESET:
   MD2V2:
@@ -3799,7 +3799,7 @@ array(id:3) DEFSET:
   MD112V1:
 ld(id:8) DEFSET:
   MD124V0:
-return id:9 attachinfo:Dbx
+return attachinfo:Dbx
 ==---- DUMP MDSSA Manager 'foo17' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -3856,13 +3856,13 @@ MD125 -- base:Var108(#retval_buf_of_foo17):local,formal_param,align(4),pointer,p
 
 [90]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
-  starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-,NextDEF:MD2V2)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -3871,30 +3871,30 @@ starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
   --DEFVMD:(MD112V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD124V0
 
 
 [91]    return p[i];
 
-ist:mc<16> id:11 attachinfo:Dbx,MDSSA    
-    ld:*<16> '#retval_buf_of_foo17' base id:10 attachinfo:MDSSA    
-    array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+ist:mc<16> attachinfo:Dbx,MDSSA    
+    ld:*<16> '#retval_buf_of_foo17' base attachinfo:MDSSA    
+    array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  ist:mc<16> id:11 attachinfo:Dbx,MDSSA
+  ist:mc<16> attachinfo:Dbx,MDSSA
   --DEFVMD:(MD2V2,PrevDEF:MD2V1)|USESET:
   --DEFVMD:(MD3V1,-)|USESET:
-  ld:*<16> '#retval_buf_of_foo17' id:10 attachinfo:MDSSA
+  ld:*<16> '#retval_buf_of_foo17' attachinfo:MDSSA
   --USEVMD:MD125V0
-  array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1,MD112V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD124V0
 
-return id:9 attachinfo:Dbx
+return attachinfo:Dbx
 ==-- DUMP MDSSAMgr DU CHAIN 'foo17' --==
 
 --- BB3 ---
@@ -3902,11 +3902,11 @@ return id:9 attachinfo:Dbx
 
 [90]    p[i].b = 20; //S4
 
-starray (i32:offset(4), ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    intconst:i32 20|0x14 rhs id:4 attachinfo:Dbx
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    intconst:i32 20|0x14 rhs attachinfo:Dbx
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -3922,12 +3922,12 @@ ld(id:2) DEFSET:
 
 [91]    return p[i];
 
-ist:mc<16> id:11 attachinfo:Dbx,MDSSA    
-    ld:*<16> '#retval_buf_of_foo17' base id:10 attachinfo:MDSSA    
-    array (mc<16>, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+ist:mc<16> attachinfo:Dbx,MDSSA    
+    ld:*<16> '#retval_buf_of_foo17' base attachinfo:MDSSA    
+    array (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 ist(id:11) USESET:
   MD2V2:
@@ -3945,7 +3945,7 @@ array(id:3) DEFSET:
   MD112V1:
 ld(id:8) DEFSET:
   MD124V0:
-return id:9 attachinfo:Dbx
+return attachinfo:Dbx
 ==---- DUMP MDSSA Manager 'foo18' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -4003,13 +4003,13 @@ MD131 -- base:Var102(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0
 
 [95]    p[i] = s; //S4
 
-starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs id:4 attachinfo:Dbx,MDSSA
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs attachinfo:Dbx,MDSSA
   ----
-  starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -4018,23 +4018,23 @@ starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
   --DEFVMD:(MD112V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD131V0
-  ld:mc<16> 's' id:4 attachinfo:Dbx,MDSSA
+  ld:mc<16> 's' attachinfo:Dbx,MDSSA
   --USEVMD:MD2V0,MD6V0
 
 
 [96]    return p[i].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1,MD112V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD131V0
 ==-- DUMP MDSSAMgr DU CHAIN 'foo18' --==
 
@@ -4043,11 +4043,11 @@ return id:9 attachinfo:Dbx
 
 [95]    p[i] = s; //S4
 
-starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs id:4 attachinfo:Dbx,MDSSA
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs attachinfo:Dbx,MDSSA
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -4066,11 +4066,11 @@ ld(id:4) DEFSET:
 
 [96]    return p[i].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -4140,13 +4140,13 @@ MD131 -- base:Var102(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0
 
 [95]    p[i] = s; //S4
 
-starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs id:4 attachinfo:Dbx,MDSSA
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs attachinfo:Dbx,MDSSA
   ----
-  starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -4155,23 +4155,23 @@ starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
   --DEFVMD:(MD112V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD131V0
-  ld:mc<16> 's' id:4 attachinfo:Dbx,MDSSA
+  ld:mc<16> 's' attachinfo:Dbx,MDSSA
   --USEVMD:MD2V0,MD6V0
 
 
 [96]    return p[i].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1,MD112V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD131V0
 ==-- DUMP MDSSAMgr DU CHAIN 'foo18' --==
 
@@ -4180,11 +4180,11 @@ return id:9 attachinfo:Dbx
 
 [95]    p[i] = s; //S4
 
-starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs id:4 attachinfo:Dbx,MDSSA
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs attachinfo:Dbx,MDSSA
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -4203,11 +4203,11 @@ ld(id:4) DEFSET:
 
 [96]    return p[i].a;
 
-return id:9 attachinfo:Dbx
-    array (i32, ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -4278,13 +4278,13 @@ MD136 -- base:Var103(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0
 
 [100]    p[i] = s; //S4
 
-starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs id:4 attachinfo:Dbx,MDSSA
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs attachinfo:Dbx,MDSSA
   ----
-  starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -4293,23 +4293,23 @@ starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
   --DEFVMD:(MD112V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD136V0
-  ld:mc<16> 's' id:4 attachinfo:Dbx,MDSSA
+  ld:mc<16> 's' attachinfo:Dbx,MDSSA
   --USEVMD:MD2V0,MD6V0
 
 
 [101]    return p[i].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1,MD112V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD136V0
 ==-- DUMP MDSSAMgr DU CHAIN 'foo19' --==
 
@@ -4318,11 +4318,11 @@ return id:9 attachinfo:Dbx
 
 [100]    p[i] = s; //S4
 
-starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs id:4 attachinfo:Dbx,MDSSA
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs attachinfo:Dbx,MDSSA
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -4341,11 +4341,11 @@ ld(id:4) DEFSET:
 
 [101]    return p[i].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -4416,13 +4416,13 @@ MD136 -- base:Var103(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0
 
 [100]    p[i] = s; //S4
 
-starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs id:4 attachinfo:Dbx,MDSSA
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs attachinfo:Dbx,MDSSA
   ----
-  starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+  starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
   --DEFVMD:(MD70V1,-)|USESET:array(id:3)
   --DEFVMD:(MD2V1,-)|USESET:array(id:3)
   --DEFVMD:(MD5V1,-)|USESET:array(id:3)
@@ -4431,23 +4431,23 @@ starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
   --DEFVMD:(MD37V1,-)|USESET:array(id:3)
   --DEFVMD:(MD38V1,-)|USESET:array(id:3)
   --DEFVMD:(MD112V1,-)|USESET:array(id:3)
-  ld:i32 'i' id:2 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD136V0
-  ld:mc<16> 's' id:4 attachinfo:Dbx,MDSSA
+  ld:mc<16> 's' attachinfo:Dbx,MDSSA
   --USEVMD:MD2V0,MD6V0
 
 
 [101]    return p[i].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
-  array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+  array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
   --USEVMD:MD70V1,MD2V1,MD5V1,MD28V1,MD29V1,MD37V1,MD38V1,MD112V1
-  ld:i32 'i' id:8 attachinfo:Dbx,MDSSA
+  ld:i32 'i' attachinfo:Dbx,MDSSA
   --USEVMD:MD136V0
 ==-- DUMP MDSSAMgr DU CHAIN 'foo19' --==
 
@@ -4456,11 +4456,11 @@ return id:9 attachinfo:Dbx
 
 [100]    p[i] = s; //S4
 
-starray (mc<16>, ety:mc<16>) id:5 attachinfo:Dbx,MDSSA
+starray (mc<16>, ety:mc<16>) attachinfo:Dbx,MDSSA
     elem_num[10]
-    ld:i32 'i' decl:int  i  dim0 id:2 attachinfo:Dbx,MDSSA    
-    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:1 attachinfo:Dbx    
-    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs id:4 attachinfo:Dbx,MDSSA
+    ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
+    lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
+    ld:mc<16> 's' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } s  rhs attachinfo:Dbx,MDSSA
 ----------------
 starray(id:5) USESET:
   MD70V1:(array id:3) 
@@ -4479,11 +4479,11 @@ ld(id:4) DEFSET:
 
 [101]    return p[i].b;
 
-return id:9 attachinfo:Dbx
-    array (i32:offset(4), ety:mc<16>) id:3 attachinfo:Dbx,MDSSA
+return attachinfo:Dbx
+    array (i32:offset(4), ety:mc<16>) attachinfo:Dbx,MDSSA
         elemnum[10]
-        ld:i32 'i' decl:int  i  dim0 id:8 attachinfo:Dbx,MDSSA        
-        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base id:7 attachinfo:Dbx
+        ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
+        lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
 ----------------
 array(id:3) DEFSET:
   MD70V1:(starray id:5)
@@ -4551,107 +4551,107 @@ MD136 -- base:Var103(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0
 --- BB22 ---
 --- BB1 ---
 
-region 'foo',id:2 id:1
+region 'foo',id:2
 --- BB2 ---
 
-region 'foo1',id:3 id:2
+region 'foo1',id:3
 --- BB3 ---
 
-region 'foo2',id:4 id:3
+region 'foo2',id:4
 --- BB4 ---
 
-region 'foo3',id:5 id:4
+region 'foo3',id:5
 --- BB5 ---
 
-region 'foo4',id:6 id:5
+region 'foo4',id:6
 --- BB6 ---
 
-region 'foo5',id:7 id:6
+region 'foo5',id:7
 --- BB7 ---
 
-region 'foo6',id:8 id:7
+region 'foo6',id:8
 --- BB8 ---
 
-region 'foo7',id:9 id:8
+region 'foo7',id:9
 --- BB9 ---
 
-region 'foo8',id:10 id:9
+region 'foo8',id:10
 --- BB10 ---
 
-region 'foo9',id:11 id:10
+region 'foo9',id:11
 --- BB11 ---
 
-region 'foo10',id:12 id:11
+region 'foo10',id:12
 --- BB12 ---
 
-region 'foo11',id:13 id:12
+region 'foo11',id:13
 --- BB13 ---
 
-region 'foo12',id:14 id:13
+region 'foo12',id:14
 --- BB14 ---
 
-region 'foo13',id:15 id:14
+region 'foo13',id:15
 --- BB15 ---
 
-region 'foo14',id:16 id:15
+region 'foo14',id:16
 --- BB16 ---
 
-region 'foo15',id:17 id:16
+region 'foo15',id:17
 --- BB17 ---
 
-region 'foo16',id:18 id:17
+region 'foo16',id:18
 --- BB18 ---
 
-region 'foo17',id:19 id:18
+region 'foo17',id:19
 --- BB19 ---
 
-region 'foo18',id:20 id:19
+region 'foo18',id:20
 --- BB20 ---
 
-region 'foo19',id:21 id:20
+region 'foo19',id:21
 ==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB22 ---
 --- BB1 ---
-region 'foo',id:2 id:1
+region 'foo',id:2
 --- BB2 ---
-region 'foo1',id:3 id:2
+region 'foo1',id:3
 --- BB3 ---
-region 'foo2',id:4 id:3
+region 'foo2',id:4
 --- BB4 ---
-region 'foo3',id:5 id:4
+region 'foo3',id:5
 --- BB5 ---
-region 'foo4',id:6 id:5
+region 'foo4',id:6
 --- BB6 ---
-region 'foo5',id:7 id:6
+region 'foo5',id:7
 --- BB7 ---
-region 'foo6',id:8 id:7
+region 'foo6',id:8
 --- BB8 ---
-region 'foo7',id:9 id:8
+region 'foo7',id:9
 --- BB9 ---
-region 'foo8',id:10 id:9
+region 'foo8',id:10
 --- BB10 ---
-region 'foo9',id:11 id:10
+region 'foo9',id:11
 --- BB11 ---
-region 'foo10',id:12 id:11
+region 'foo10',id:12
 --- BB12 ---
-region 'foo11',id:13 id:12
+region 'foo11',id:13
 --- BB13 ---
-region 'foo12',id:14 id:13
+region 'foo12',id:14
 --- BB14 ---
-region 'foo13',id:15 id:14
+region 'foo13',id:15
 --- BB15 ---
-region 'foo14',id:16 id:15
+region 'foo14',id:16
 --- BB16 ---
-region 'foo15',id:17 id:16
+region 'foo15',id:17
 --- BB17 ---
-region 'foo16',id:18 id:17
+region 'foo16',id:18
 --- BB18 ---
-region 'foo17',id:19 id:18
+region 'foo17',id:19
 --- BB19 ---
-region 'foo18',id:20 id:19
+region 'foo18',id:20
 --- BB20 ---
-region 'foo19',id:21 id:20
+region 'foo19',id:21
 ==---- DUMP MDSSA Manager '.program' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -4707,104 +4707,104 @@ MD136 -- base:Var103(i):local,formal_param,align(4),i32,decl:'int  i ' -- ofst:0
 --- BB22 ---
 --- BB1 ---
 
-region 'foo',id:2 id:1
+region 'foo',id:2
 --- BB2 ---
 
-region 'foo1',id:3 id:2
+region 'foo1',id:3
 --- BB3 ---
 
-region 'foo2',id:4 id:3
+region 'foo2',id:4
 --- BB4 ---
 
-region 'foo3',id:5 id:4
+region 'foo3',id:5
 --- BB5 ---
 
-region 'foo4',id:6 id:5
+region 'foo4',id:6
 --- BB6 ---
 
-region 'foo5',id:7 id:6
+region 'foo5',id:7
 --- BB7 ---
 
-region 'foo6',id:8 id:7
+region 'foo6',id:8
 --- BB8 ---
 
-region 'foo7',id:9 id:8
+region 'foo7',id:9
 --- BB9 ---
 
-region 'foo8',id:10 id:9
+region 'foo8',id:10
 --- BB10 ---
 
-region 'foo9',id:11 id:10
+region 'foo9',id:11
 --- BB11 ---
 
-region 'foo10',id:12 id:11
+region 'foo10',id:12
 --- BB12 ---
 
-region 'foo11',id:13 id:12
+region 'foo11',id:13
 --- BB13 ---
 
-region 'foo12',id:14 id:13
+region 'foo12',id:14
 --- BB14 ---
 
-region 'foo13',id:15 id:14
+region 'foo13',id:15
 --- BB15 ---
 
-region 'foo14',id:16 id:15
+region 'foo14',id:16
 --- BB16 ---
 
-region 'foo15',id:17 id:16
+region 'foo15',id:17
 --- BB17 ---
 
-region 'foo16',id:18 id:17
+region 'foo16',id:18
 --- BB18 ---
 
-region 'foo17',id:19 id:18
+region 'foo17',id:19
 --- BB19 ---
 
-region 'foo18',id:20 id:19
+region 'foo18',id:20
 --- BB20 ---
 
-region 'foo19',id:21 id:20
+region 'foo19',id:21
 ==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB22 ---
 --- BB1 ---
-region 'foo',id:2 id:1
+region 'foo',id:2
 --- BB2 ---
-region 'foo1',id:3 id:2
+region 'foo1',id:3
 --- BB3 ---
-region 'foo2',id:4 id:3
+region 'foo2',id:4
 --- BB4 ---
-region 'foo3',id:5 id:4
+region 'foo3',id:5
 --- BB5 ---
-region 'foo4',id:6 id:5
+region 'foo4',id:6
 --- BB6 ---
-region 'foo5',id:7 id:6
+region 'foo5',id:7
 --- BB7 ---
-region 'foo6',id:8 id:7
+region 'foo6',id:8
 --- BB8 ---
-region 'foo7',id:9 id:8
+region 'foo7',id:9
 --- BB9 ---
-region 'foo8',id:10 id:9
+region 'foo8',id:10
 --- BB10 ---
-region 'foo9',id:11 id:10
+region 'foo9',id:11
 --- BB11 ---
-region 'foo10',id:12 id:11
+region 'foo10',id:12
 --- BB12 ---
-region 'foo11',id:13 id:12
+region 'foo11',id:13
 --- BB13 ---
-region 'foo12',id:14 id:13
+region 'foo12',id:14
 --- BB14 ---
-region 'foo13',id:15 id:14
+region 'foo13',id:15
 --- BB15 ---
-region 'foo14',id:16 id:15
+region 'foo14',id:16
 --- BB16 ---
-region 'foo15',id:17 id:16
+region 'foo15',id:17
 --- BB17 ---
-region 'foo16',id:18 id:17
+region 'foo16',id:18
 --- BB18 ---
-region 'foo17',id:19 id:18
+region 'foo17',id:19
 --- BB19 ---
-region 'foo18',id:20 id:19
+region 'foo18',id:20
 --- BB20 ---
-region 'foo19',id:21 id:20
+region 'foo19',id:21

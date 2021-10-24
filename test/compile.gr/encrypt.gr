@@ -1,6 +1,5 @@
 ///====---- Dump region '.program' ----====
-region program @".program" () {
-
+region program ".program" () {
 var byte:u8:(align(4));
 var word:u32:(align(4));
 var aes_ret:i16:(align(4));
@@ -20,7 +19,7 @@ var im_tab:mc<4096>:(array,align(4));
 var encrypt:i16:(func_decl,align(4));
 var set_key:i16:(func_decl,align(4));
 var decrypt:i16:(func_decl,align(4));
-var @"#DedicatedStringVar":str:(unallocable,align(4),string("DedicatedVarBeRegardedAsString"));
+var "#DedicatedStringVar":str:(unallocable,align(4),string("DedicatedVarBeRegardedAsString"));
 
  //====---- Dump region 'encrypt' ----====
 region func encrypt (undefined,var in_blk:*<1>:(align(4)),var out_blk:*<1>:(align(4)),var cx:*<524>:(align(4))) {

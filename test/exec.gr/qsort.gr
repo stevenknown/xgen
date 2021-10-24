@@ -1,5 +1,5 @@
 //This file demostrate qsort.
-region program @".program" () {
+region program ".program" () {
     var strcmp:i32:(func_decl,align(4));
     var printf:i8:(func_decl,align(4));
     var hook_cmp:i32:(func_decl,align(4));
@@ -14,7 +14,7 @@ region program @".program" () {
     var swap:i8:(func_decl,align(4));
     var hook_cmp:i32:(func_decl,align(4));
     var hook_cmp2:i32:(func_decl,align(4));
-    var @"#DedicatedStringVar":str:(unallocable,align(4),string("DedicatedVarBeRegardedAsString"));
+    var "#DedicatedStringVar":str:(unallocable,align(4),string("DedicatedVarBeRegardedAsString"));
     var _const_string_1:str:(align(4),string("%d "));
     var _const_string_2:str:(align(4),string("
 After qsort 1
@@ -209,8 +209,8 @@ Main returned
                            var b:*<1>:(align(4))) {
         var pa:mc<8>:(align(4));
         var pb:mc<8>:(align(4));
-        st:mc<8> pa =  ild:mc<8> (cvt:*<8> ld:*<1> a);
-        st:mc<8> pb =  ild:mc<8> (cvt:*<8> ld:*<1> b);
+        st:mc<8> pa = ild:mc<8> (cvt:*<8> ld:*<1> a);
+        st:mc<8> pb = ild:mc<8> (cvt:*<8> ld:*<1> b);
         call $1:i32 = strcmp(ld:*<1> pa, ld:*<1> pb);
         return $1:i32;
     };

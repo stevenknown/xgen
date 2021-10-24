@@ -1002,7 +1002,8 @@ void CG::computeAndUpdateStackVarLayout(xoc::Var const* var,
 
         //Compute the byte size of variable and padding stack with alignment.
         //Prepare the start address for next variable.
-        ASSERT0(!var->is_any());
+        ASSERTN(!var->is_any(), ("variable '%s' is ANY type",
+                                 var->get_name()->getStr()));
         SECT_size(section) += xcom::ceil_align(var->getByteSize(m_tm),
                                                STACK_ALIGNMENT);
         section->getVar2Desc()->set(var, vd);

@@ -98,14 +98,18 @@ public:
     //    t = ld(q)
     //    x = ild(t, ofst(b))
     bool is_compute_addr;
-
+public:
     T2IRCtx() { ::memset(this, 0, sizeof(T2IRCtx)); }
     T2IRCtx(T2IRCtx const& src) { *this = src; }
+
+    IR * getTopIRList() const { return *CONT_toplirlist(this); }
+    IR * getEpilogIRList() const { return *CONT_epilogirlist(this); }
 };
 
 
 //Transform from C AST to IR.
 class CTree2IR {
+    COPY_CONSTRUCTOR(CTree2IR);
 protected:
     Decl const* m_declared_return_type;
     Region * m_rg;
@@ -116,6 +120,9 @@ protected:
     SMemPool * m_pool;
     LabelTab m_labtab;
 protected:
+    IR * convertFP(IN Tree * t, INT lineno, IN T2IRCtx * cont);
+    IR * convertLogicalAND(IN Tree * t, INT lineno, IN T2IRCtx * cont);
+    IR * convertLogicalOR(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertCallee(Tree const* t, bool * is_direct,
                        T2IRCtx const* cont);
     //Handle return value buffer.
@@ -151,9 +158,9 @@ public:
         m_retval_buf = nullptr;
         m_pool = smpoolCreate(16, MEM_COMM);
     }
-    COPY_CONSTRUCTOR(CTree2IR);
     ~CTree2IR() { smpoolDelete(m_pool); }
 
+    //The function construct an unique LabelInfo by given 'lab'.
     LabelInfo * getUniqueLabel(LabelInfo * lab)
     { return m_labtab.append_and_retrieve(lab); }
 
@@ -164,10 +171,24 @@ public:
     //to generate an implcitly Var to indicate the stack buffer which used
     //to hold the return value.
     IR * genReturnValBuf(IR * ir);
+
     //Return function declared return-type.
-    Decl const* getDeclaredReturnType() const
-    { return m_declared_return_type; }
+    Decl const* getDeclaredReturnType() const { return m_declared_return_type; }
+
+    //Return the number of mantissa.
     BYTE getMantissaNum(CHAR const* fpval);
+
+    //Return XOC data type according to given CFE declaration.
+    //If 'decl' presents a simply type, convert type-spec to DATA_TYPE
+    //descriptor.
+    //If 'decl' presents a pointer type, convert pointer-type to D_PTR.
+    //If 'decl' presents an array, convert type to D_M descriptor.
+    //size: return byte size of decl.
+    static DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size,
+                                    TypeMgr * tm);
+
+    //Construct XOC Region and convert C-Language-Ast to XOC IR.
+    static bool generateRegion(RegionMgr * rm);
 
     IR * buildId(IN Tree * t);
     IR * buildId(IN Decl * id);
@@ -209,8 +230,4 @@ public:
     IR * convert(IN Tree * t, IN T2IRCtx * cont);
 };
 
-DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size, TypeMgr * tm);
-
-//Construct Region and convert C-Language-Ast to XOC IR.
-bool generateRegion(RegionMgr * rm);
 #endif

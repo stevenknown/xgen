@@ -1,42 +1,42 @@
 
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'case1' ----==
 -- Invariant Expression (num=6) -- :
-   add:*<1> id:11       
-       $5:any id:9       
-       intconst:i32 10|0xa id:10
-   mul:u32 id:29       
-       $6:u64 id:12       
-       intconst:u32 6|0x6 id:28
-   ld:mc<191> 'm' id:4 attachinfo:MDSSA
-   add:u32 id:31       
-       $7:u32 id:35       
-       intconst:u32 2|0x2 id:30
-   add:any id:15       
-       $2:any id:13       
-       ld:i32 'm' id:14 attachinfo:MDSSA
-   add:*<4> id:34       
-       $6:*<1> id:32 attachinfo:Dbx       
-       $8:u32 id:37
+   add:*<1>       
+       $5:any       
+       intconst:i32 10|0xa
+   mul:u32       
+       $6:u64       
+       intconst:u32 6|0x6
+   ld:mc<191> 'm' attachinfo:MDSSA
+   add:u32       
+       $7:u32       
+       intconst:u32 2|0x2
+   add:any       
+       $2:any       
+       ld:i32 'm' attachinfo:MDSSA
+   add:*<4>       
+       $6:*<1> attachinfo:Dbx       
+       $8:u32
 -- Invariant Statement (num=4) -- :
-   $2:any = call 'foo'  id:5 readonly attachinfo:Dbx,MDSSA
-       ld:mc<191> 'm' param0 id:4 attachinfo:MDSSA
-   stpr $6:*<1> id:33       
-       add:*<1> id:11           
-           $5:any id:9           
-           intconst:i32 10|0xa id:10
-   stpr $7:u32 id:36       
-       mul:u32 id:29           
-           $6:u64 id:12           
-           intconst:u32 6|0x6 id:28
-   stpr $8:u32 id:38       
-       add:u32 id:31           
-           $7:u32 id:35           
-           intconst:u32 2|0x2 id:30
+   $2:any = call 'foo'  readonly attachinfo:Dbx,MDSSA
+       ld:mc<191> 'm' param0 attachinfo:MDSSA
+   stpr $6:*<1>       
+       add:*<1>           
+           $5:any           
+           intconst:i32 10|0xa
+   stpr $7:u32       
+       mul:u32           
+           $6:u64           
+           intconst:u32 6|0x6
+   stpr $8:u32       
+       add:u32           
+           $7:u32           
+           intconst:u32 2|0x2
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'case2' ----==
 -- Invariant Expression (num=1) -- :
-   ld:mc<191> 'm' id:4 attachinfo:MDSSA
+   ld:mc<191> 'm' attachinfo:MDSSA
 
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'case3' ----==
 
 -- Invariant Statement (num=1) -- :
-   $2:any = call 'foo'  id:4 readonly attachinfo:Dbx,MDSSA
+   $2:any = call 'foo'  readonly attachinfo:Dbx,MDSSA

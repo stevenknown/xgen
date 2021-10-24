@@ -1,4 +1,4 @@
-region program @"program" () {
+region program "program" () {
     region func main () {
         while:(sideeffect) lt $1, $2 {}
         do:(nomove) {} while (lt $1, $2);
