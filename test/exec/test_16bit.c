@@ -143,7 +143,6 @@ int test_16bit_lsr ()
         results[125] = (x[i] >> (125));
         results[126] = (x[i] >> (126));
         results[127] = (x[i] >> (127));
-
         for (j = 0; j < sizeof(results)/sizeof(results[0]); j++) {
             if (results[j] != (x[i] >> (j))) {
                 errors++;

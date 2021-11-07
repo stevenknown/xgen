@@ -33,6 +33,38 @@ author: Su Zhenyu
 
 namespace xgen {
 
+class DumpOpt {
+public:
+    //Dump all information.
+    //Note is_dump_all and is_dump_nothing can not all be true.
+    bool is_dump_all;
+    //Do not dump anything.
+    //Note is_dump_all and is_dump_nothing can not all be true.
+    bool is_dump_nothing;
+    bool is_dump_cg; //Dump CodeGeneration.
+    bool is_dump_ra; //Dump Register Allocation.
+    bool is_dump_lis; //Dump LIS.
+    bool is_dump_ir2or; //Dump IR2OR convertion.
+    bool is_dump_revise_spadjust; //Dump spadjust relocation.
+    bool is_dump_relocate_stack; //Dump stack variable relocation.
+    bool is_dump_package; //Dump instruction packaging.
+    bool is_dump_localize; //Dump localization.
+public:
+    DumpOpt();
+    DumpOpt const& operator = (DumpOpt const&); //Disable operator =.
+
+    bool isDumpAll() const;
+    bool isDumpNothing() const;
+    bool isDumpCG() const;
+    bool isDumpRA() const;
+    bool isDumpLIS() const;
+    bool isDumpIR2OR() const;
+    bool isDumpReviseSpadjust() const;
+    bool isDumpRelocateStack() const;
+    bool isDumpPackage() const;
+    bool isDumpLocalize() const;
+};
+
 //Externed Variables
 extern bool g_gen_code_for_big_return_value;
 
@@ -56,6 +88,9 @@ extern bool g_enable_schedule_delay_slot;
 
 //Enable generate OR for inner region.
 extern bool g_is_generate_code_for_inner_region;
+
+//Record dump options for each Pass in XGen.
+extern DumpOpt g_xgen_dump_opt;
 
 } //namespace xgen
 

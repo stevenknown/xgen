@@ -37,3 +37,11 @@ LOOP2 HEAD:BB3, BODY:3,4,
   
 ==---- DUMP LICM Analysis Result : LoopInfo2 : 'main' ----==
 
+
+==---- DUMP Register Promotion 'main' ----==
+==-- DUMP LoopInfo --==
+LOOP2 HEAD:BB3, BODY:3,4,
+==-- DUMP ExactAccessTab --==
+  
+==-- DUMP InexactAccessTab --==
+  

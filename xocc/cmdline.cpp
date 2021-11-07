@@ -305,8 +305,6 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump control-flow-graph", },
     { "cfgopt", &xoc::g_dump_opt.is_dump_cfgopt,
       "dump control-flow-graph optimizations", },
-    { "lis", &xoc::g_dump_opt.is_dump_lis,
-      "dump instruction-scheduling", },
     { "aa", &xoc::g_dump_opt.is_dump_aa,
       "dump alias-analysis", },
     { "dce", &xoc::g_dump_opt.is_dump_dce,
@@ -333,9 +331,13 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump redundant-code-elimination", },
     { "cp", &xoc::g_dump_opt.is_dump_cp,
       "dump copy-propagation", },
-    { "ra", &xoc::g_dump_opt.is_dump_ra,
+    { "ir2or", &xgen::g_xgen_dump_opt.is_dump_ir2or,
+      "dump IR2OR convertion", },
+    { "ra", &xgen::g_xgen_dump_opt.is_dump_ra,
       "dump register allocation", },
-    { "cg", &xoc::g_dump_opt.is_dump_cg,
+    { "lis", &xgen::g_xgen_dump_opt.is_dump_lis,
+      "dump instruction-scheduling", },
+    { "cg", &xgen::g_xgen_dump_opt.is_dump_cg,
       "dump target code generation", },
     { "cdg", &xoc::g_dump_opt.is_dump_cdg,
       "dump control-dependent-graph", },
@@ -581,8 +583,12 @@ static void inferOption()
         g_do_cfg_remove_trampolin_branch = false;
     }
 
+    //CG option is conform to XOCC's option.
+    xgen::g_xgen_dump_opt.is_dump_all = xoc::g_dump_opt.isDumpAll();
+    xgen::g_xgen_dump_opt.is_dump_nothing = xoc::g_dump_opt.isDumpNothing();
+
     if (xoc::g_dump_opt.isDumpAll()) {
-        ;
+        xoc::g_dump_opt.is_dump_before_pass = true;
     } else {
         //IR's id may changed in different compilation.
         xoc::g_dump_opt.is_dump_ir_id = false;

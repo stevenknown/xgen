@@ -612,7 +612,7 @@ void CG::buildTypeCvt(xoc::IR const* tgt, xoc::IR const* src,
         }
         return;
     }
-    ASSERTN(0, ("TODO"));    
+    ASSERTN(0, ("TODO"));
 }
 
 
@@ -1184,7 +1184,7 @@ void CG::relocateStackVarOffset()
     }
     END_TIMER(t0, "Relocate Stack Variable Offset");
 
-    if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
+    if (g_dump_opt.isDumpAfterPass() && g_xgen_dump_opt.isDumpRelocateStack()) {
         xoc::note(getRegion(),
                   "\n==---- DUMP AFTER RELOCATE STACK OFFSET ----==");
         m_cgmgr->getParamSection()->dump(this);
@@ -2617,7 +2617,7 @@ void CG::package(Vector<BBSimulator*> & simvec)
     }
     END_TIMER(t0, "Perform Packaging");
 
-    if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
+    if (g_dump_opt.isDumpAfterPass() && g_xgen_dump_opt.isDumpPackage()) {
         /////////////////////////////////////
         //DO NOT DUMP BB LIST AFTER PACKAGE//
         /////////////////////////////////////
@@ -3682,7 +3682,7 @@ void CG::insertCodeToUseFP(List<ORBB*> & entry_lst, List<ORBB*> & exit_lst)
         ORBB_orlist(bb)->insert_before(ors, spadj);
     }
 
-    if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
+    if (g_dump_opt.isDumpAfterPass() && g_xgen_dump_opt.isDumpCG()) {
         xoc::note(getRegion(),
                   "\n==---- DUMP AFTER INSERT CODE TO USER FP ----==");
         dumpORBBList();
@@ -3771,7 +3771,7 @@ void CG::reviseFormalParameterAndSpadjust(List<ORBB*> & entry_lst,
         setSpadjustOffset(spadj, framesize);
     }
 
-    if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
+    if (g_dump_opt.isDumpAfterPass() && g_xgen_dump_opt.isDumpReviseSpadjust()) {
         xoc::note(getRegion(), "\n==---- DUMP AFTER REVISE SPADJUST ----==");
         dumpORBBList();
     }
@@ -3915,7 +3915,7 @@ void CG::constructORBBList(IN ORList & or_list)
     }
     #endif
 
-    if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
+    if (g_dump_opt.isDumpAfterPass() && g_xgen_dump_opt.isDumpIR2OR()) {
         xoc::note(getRegion(), "\n==---- DUMP AFTER IR2OR CONVERT %s ----==",
                   m_rg->getRegionName());
         dumpORBBList();
@@ -3926,7 +3926,7 @@ void CG::constructORBBList(IN ORList & or_list)
 //Perform global and local register allocation.
 RaMgr * CG::performRA()
 {
-    if (g_is_dump_before_pass && g_dump_opt.isDumpRA()) {
+    if (xoc::g_dump_opt.isDumpBeforePass() && g_xgen_dump_opt.isDumpRA()) {
         xoc::note(getRegion(),
                   "\n==---- DUMP BEFORE REGISTER ALLOCATION of '%s' ----==",
                   m_rg->getRegionName());
@@ -3950,7 +3950,7 @@ RaMgr * CG::performRA()
     rm->performLRA();
     END_TIMER(t, "Register Allocation");
 
-    if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
+    if (g_dump_opt.isDumpAfterPass() && g_xgen_dump_opt.isDumpRA()) {
         xoc::note(getRegion(),
                   "\n==---- DUMP AFTER REGISTER ALLOCATION %s ----==",
                   m_rg->getRegionName());
@@ -4316,7 +4316,7 @@ void CG::localize()
     }
     END_TIMER(t0, "CG Localization");
 
-    if (g_is_dump_after_pass && g_dump_opt.isDumpCG()) {
+    if (g_dump_opt.isDumpAfterPass() && g_xgen_dump_opt.isDumpLocalize()) {
         note(getRegion(), "\n==---- DUMP AFTER LOCALIZE ----==");
         dumpORBBList();
     }
@@ -4475,8 +4475,9 @@ bool CG::perform()
     ASSERTN(xcom::isPowerOf2(STACK_ALIGNMENT),
             ("Stack alignment should be power of 2"));
 
-    if ((g_is_dump_after_pass || g_is_dump_before_pass) &&
-        g_dump_opt.isDumpCG()) {
+    if ((xoc::g_dump_opt.isDumpAfterPass() ||
+         xoc::g_dump_opt.isDumpBeforePass()) &&
+        g_xgen_dump_opt.isDumpCG()) {
         xoc::note(getRegion(),
                   "\n==---- DUMP START CODE GENERATION (%d)'%s' ----==\n",
                   m_rg->id(), m_rg->getRegionName());

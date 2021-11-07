@@ -341,6 +341,7 @@ MD11 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size
 MD12 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:unbound
 MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:unbound
 MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
+MD15 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:8
 ==---- DUMP POINT-TO OUT-SET (FLOW-INSENSITIVE) 'foo' ----==
 MD1 -- PT_SET: MD1,
 MD2 -- PT_SET: MD2,MD3,
@@ -356,6 +357,7 @@ MD11 -- NO PT
 MD12 -- NO PT
 MD13 -- NO PT
 MD14 -- PT_SET: MD7,
+MD15 -- NO PT
 ==---- DUMP AliasAnalysis 'foo' ----==
 ==---- DUMP ALL MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -372,6 +374,7 @@ MD11 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size
 MD12 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:unbound
 MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:unbound
 MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
+MD15 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:8
 -- DUMP MAY-POINT-TO SET --
 MD2,MD3,MD7,MD8,MD9,MD11,MD12,MD13,MD14
 MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -401,6 +404,7 @@ MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst
   MD12 -- NO PT
   MD13 -- NO PT
   MD14 -- PT_SET: MD7,
+  MD15 -- NO PT
 
  -- BB1 --
   -- MD2MDSet: --
@@ -418,6 +422,7 @@ MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst
   MD12 -- NO PT
   MD13 -- NO PT
   MD14 -- PT_SET: MD7,
+  MD15 -- NO PT
 
   -- IR POINT-TO: --
   ---------------------------------  
@@ -468,6 +473,7 @@ MD11 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size
 MD12 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:unbound
 MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:unbound
 MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
+MD15 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:8
 ==---- DUMP POINT-TO OUT-SET (FLOW SENSITIVE) 'foo' ----==
 --- BB3 ---
 MD1 -- PT_SET: MD1,
@@ -484,6 +490,7 @@ MD11 -- NO PT
 MD12 -- NO PT
 MD13 -- NO PT
 MD14 -- NO PT
+MD15 -- NO PT
 --- BB1 ---
 MD1 -- PT_SET: MD1,
 MD2 -- PT_SET: MD2,MD3,
@@ -499,6 +506,7 @@ MD11 -- NO PT
 MD12 -- NO PT
 MD13 -- NO PT
 MD14 -- PT_SET: MD7,
+MD15 -- NO PT
 ==---- DUMP AliasAnalysis 'foo' ----==
 ==---- DUMP ALL MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -515,6 +523,7 @@ MD11 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size
 MD12 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:unbound
 MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:unbound
 MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
+MD15 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:8
 -- DUMP MAY-POINT-TO SET --
 MD2,MD3,MD7,MD8,MD9,MD11,MD12,MD13,MD14
 MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -544,6 +553,7 @@ MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst
   MD12 -- NO PT
   MD13 -- NO PT
   MD14 -- NO PT
+  MD15 -- NO PT
 
  -- BB1 --
   -- MD2MDSet: --
@@ -561,6 +571,7 @@ MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst
   MD12 -- NO PT
   MD13 -- NO PT
   MD14 -- PT_SET: MD7,
+  MD15 -- NO PT
 
   -- IR POINT-TO: --
   ---------------------------------  
@@ -613,17 +624,18 @@ MD11 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size
 MD12 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:unbound
 MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:unbound
 MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
+MD15 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:8
 ==----==
 RegionMayDef(OuterRegion):
 RegionMayUse(OuterRegion):
 --- BB3 ---
 --- BB1 ---
     st:u8 'x' attachinfo:Dbx,MDSSA
-    EMD14 : MD7,MD13,MD14
+    EMD14 : MD7,MD13,MD14,MD15
       lda:*<8> 'x' attachinfo:Dbx
     return attachinfo:Dbx
       ld:u8 'x' attachinfo:Dbx,MDSSA
-      EMD14 : MD7,MD13,MD14
+      EMD14 : MD7,MD13,MD14,MD15
 ==---- DUMP Alias Analysis '.program' ----==
 ==---- DUMP ALL MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -640,6 +652,7 @@ MD11 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size
 MD12 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:unbound
 MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:unbound
 MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
+MD15 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:8
 ==---- DUMP POINT-TO OUT-SET (FLOW SENSITIVE) '.program' ----==
 --- BB3 ---
 MD1 -- PT_SET: MD1,
@@ -656,6 +669,7 @@ MD11 -- NO PT
 MD12 -- NO PT
 MD13 -- NO PT
 MD14 -- NO PT
+MD15 -- NO PT
 --- BB1 ---
 MD1 -- PT_SET: MD1,
 MD2 -- PT_SET: MD2,MD3,
@@ -671,6 +685,7 @@ MD11 -- NO PT
 MD12 -- NO PT
 MD13 -- NO PT
 MD14 -- NO PT
+MD15 -- NO PT
 ==---- DUMP AliasAnalysis '.program' ----==
 ==---- DUMP ALL MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -687,6 +702,7 @@ MD11 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size
 MD12 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:unbound
 MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:unbound
 MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
+MD15 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:8
 -- DUMP MAY-POINT-TO SET --
 MD2,MD3
 MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -709,6 +725,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
   MD12 -- NO PT
   MD13 -- NO PT
   MD14 -- NO PT
+  MD15 -- NO PT
 
  -- BB1 --
   -- MD2MDSet: --
@@ -726,6 +743,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
   MD12 -- NO PT
   MD13 -- NO PT
   MD14 -- NO PT
+  MD15 -- NO PT
 
   -- IR POINT-TO: --
   ---------------------------------  
@@ -749,6 +767,7 @@ MD11 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size
 MD12 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:unbound
 MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:unbound
 MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
+MD15 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:8
 ==----==
 RegionMayDef(OuterRegion):
 RegionMayUse(OuterRegion):
@@ -773,6 +792,7 @@ MD11 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size
 MD12 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:unbound
 MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:unbound
 MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
+MD15 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:8
 ==----==
 RegionMayDef(OuterRegion):
 RegionMayUse(OuterRegion):
@@ -795,6 +815,7 @@ MD11 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size
 MD12 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:unbound
 MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:unbound
 MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
+MD15 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:8
 ==---- DUMP POINT-TO OUT-SET (FLOW-INSENSITIVE) '.program' ----==
 MD1 -- PT_SET: MD1,
 MD2 -- PT_SET: MD2,MD3,
@@ -810,6 +831,7 @@ MD11 -- NO PT
 MD12 -- NO PT
 MD13 -- NO PT
 MD14 -- NO PT
+MD15 -- NO PT
 ==---- DUMP AliasAnalysis '.program' ----==
 ==---- DUMP ALL MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -826,6 +848,7 @@ MD11 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size
 MD12 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:unbound
 MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:unbound
 MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
+MD15 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:8
 -- DUMP MAY-POINT-TO SET --
 MD2,MD3
 MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -848,6 +871,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
   MD12 -- NO PT
   MD13 -- NO PT
   MD14 -- NO PT
+  MD15 -- NO PT
 
  -- BB1 --
   -- MD2MDSet: --
@@ -865,6 +889,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
   MD12 -- NO PT
   MD13 -- NO PT
   MD14 -- NO PT
+  MD15 -- NO PT
 
   -- IR POINT-TO: --
   ---------------------------------  
@@ -886,6 +911,7 @@ MD11 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size
 MD12 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:unbound
 MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:unbound
 MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
+MD15 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:8
 ==---- DUMP POINT-TO OUT-SET (FLOW SENSITIVE) '.program' ----==
 --- BB3 ---
 MD1 -- PT_SET: MD1,
@@ -902,6 +928,7 @@ MD11 -- NO PT
 MD12 -- NO PT
 MD13 -- NO PT
 MD14 -- NO PT
+MD15 -- NO PT
 --- BB1 ---
 MD1 -- PT_SET: MD1,
 MD2 -- PT_SET: MD2,MD3,
@@ -917,6 +944,7 @@ MD11 -- NO PT
 MD12 -- NO PT
 MD13 -- NO PT
 MD14 -- NO PT
+MD15 -- NO PT
 ==---- DUMP AliasAnalysis '.program' ----==
 ==---- DUMP ALL MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -933,6 +961,7 @@ MD11 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size
 MD12 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:unbound
 MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:unbound
 MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
+MD15 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:8
 -- DUMP MAY-POINT-TO SET --
 MD2,MD3
 MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -955,6 +984,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
   MD12 -- NO PT
   MD13 -- NO PT
   MD14 -- NO PT
+  MD15 -- NO PT
 
  -- BB1 --
   -- MD2MDSet: --
@@ -972,6 +1002,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
   MD12 -- NO PT
   MD13 -- NO PT
   MD14 -- NO PT
+  MD15 -- NO PT
 
   -- IR POINT-TO: --
   ---------------------------------  
@@ -995,6 +1026,7 @@ MD11 -- base:Var60(p):local,,addr_taken,align(4),pointer,pt_base_sz:1,*,mem_size
 MD12 -- base:Var61(p2):local,,addr_taken,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned char  *  *  p2 ' -- ofst:unbound
 MD13 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:unbound
 MD14 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:1
+MD15 -- base:Var59(x):local,,addr_taken,align(4),i64,decl:'longlong  x ' -- ofst:0 -- size:8
 ==----==
 RegionMayDef(OuterRegion):
 RegionMayUse(OuterRegion):

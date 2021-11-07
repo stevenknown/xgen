@@ -3,48 +3,42 @@ use Cwd;
 use File::Find;
 use File::Copy;
 use File::Path;
-use Data::Dump qw(dump);
-###########################################
-my $curdir = getcwd;
-removeDesignatedFile();
-removeDirectory();
-exit();
-###########################################
-
-## Remove designated file.
-my @srclist = ();
-sub removeDesignatedFile
+use File::Compare;
+use strict;
+#############################################################
+our $g_is_quit_early; #finish test if error occurred.
+our $g_fail;
+our $g_succ;
+require "./util.pl";
+main();
+#############################################################
+sub main
 {
-    my $project_dir = $curdir;
-    sub wanted
-    {
-        push(@srclist, $File::Find::name) if ($_ =~ m/.*\.(xocc_output.txt|xocc_dump.txt|o|i|map|vcg|js|d.ts|swp|swo|asm|out)$/);
-    }
-    &find(\&wanted, $project_dir);
-    foreach (@srclist){
-        chomp;
-        print "=========\nFile: ", $_, "\n";
-        unlink $_;
-    }
+    $g_is_quit_early = 0;
+    my @subdirlist = (
+        'compile', 
+        'compile.gr', 
+        'exec', 
+        'exec.gr'
+    ); 
+    foreach my $subdir (@subdirlist) {
+        print "\nENTER DIRECTORY>>$subdir\n";
+        chdir $subdir;
+        execPerl();
+        chdir ".."; #back to parent directory
+	}
+    return 0;
 }
 
-## Remove directory.
-sub removeDirectory
+sub execPerl
 {
-    my @f2 = (
-    	"$curdir\\ipch",
-    	"$curdir\\Debug",
-    	"$curdir\\Release",
-    	"$curdir\\*.suo",
-    	"$curdir\\.vs",
-    	"$curdir\\tmp",
-    );
-    foreach (@f2) {
-    	chomp;
-    	print "\nrmtree:$_";
-    	my $retval = rmtree($_);
-        if ($retval != 0) {
-            print("\nFailed:retval=$retval");
-    	}
+    my $cmdline = "perl clean.pl";
+    my $retval = systemx($cmdline);
+    if ($retval != 0) {
+        print("\nCMD>>", $cmdline, "\n");
+        print "\nFAILED! -- EXECUTE CMD FAILED!! RES:$retval\n";
+        abortex($retval);
+        return $g_fail;
     }
+    return $g_succ;
 }

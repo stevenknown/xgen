@@ -60,6 +60,7 @@ LOOP2 HEAD:BB6, BODY:6,7,
     
     OCCLIST:
       ld:i32 'i' attachinfo:Dbx,MDSSA
+      ld:i32 'i' attachinfo:Dbx,MDSSA
       ld:i32 'i' attachinfo:MDSSA
       st:i32 'i' attachinfo:Dbx,MDSSA
       ld:i32 'i' attachinfo:Dbx,MDSSA
@@ -83,8 +84,35 @@ LOOP2 HEAD:BB6, BODY:6,7,
 ==---- DUMP LICM Analysis Result : LoopInfo2 : 'main' ----==
 
 
+==---- DUMP Register Promotion 'main' ----==
+==-- DUMP LoopInfo --==
+LOOP1 HEAD:BB2, BODY:2,3,
+==-- DUMP ExactAccessTab --==
+  
+==-- DUMP InexactAccessTab --==
+  
+==-- DUMP LoopInfo --==
+LOOP2 HEAD:BB6, BODY:6,7,
+==-- DUMP ExactAccessTab --==
+  
+==-- DUMP InexactAccessTab --==
+  
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'main' ----==
 
 
 ==---- DUMP LICM Analysis Result : LoopInfo2 : 'main' ----==
 
+
+==---- DUMP Register Promotion 'main' ----==
+==-- DUMP LoopInfo --==
+LOOP1 HEAD:BB2, BODY:2,3,
+==-- DUMP ExactAccessTab --==
+  
+==-- DUMP InexactAccessTab --==
+  
+==-- DUMP LoopInfo --==
+LOOP2 HEAD:BB6, BODY:6,7,
+==-- DUMP ExactAccessTab --==
+  
+==-- DUMP InexactAccessTab --==
+  

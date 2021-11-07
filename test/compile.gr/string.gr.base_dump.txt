@@ -1,6 +1,8 @@
 
 ==---- DUMP IRParser ----==
-==---- REGION(1):.program: ----==
+==---- DUMP REGION(1):.program: ----==
+REGION VAR:
+  Var58(.program):global,func_decl,any,mem_size:ANY,decl:''
 VARIABLES:3
   Var59(ga):global,has_init_val,align(4),string("this is memory placeholder"),str,str,mem_size:27,decl:''
   Var60(gc):global,fake,align(4),str,str,mem_size:1,decl:''
@@ -11,7 +13,9 @@ The number of IR Total:4, id:0(0.0)%, ld:0(0.0)%, st:1(25.0)%, lda:0(0.0)%,call:
 st:str 'ga' attachinfo:Dbx    
     strconst:str \"hello world\"
 region 'main',id:2 attachinfo:Dbx
-==---- REGION(2):main: ----==
+==---- DUMP REGION(2):main: ----==
+REGION VAR:
+  Var61(main):local,func_decl,any,mem_size:ANY,decl:''
 'main' use 4KB memory
 The number of IR Total:3, id:0(0.0)%, ld:0(0.0)%, st:1(33.3)%, lda:0(0.0)%,call:0(0.0)%, icall:0(0.0)%, pr:0(0.0)%, stpr:0(0.0)%, ist:0(0.0)%,bin:0(0.0)%, una:0(0.0)%, starray:0(0.0)%, array:0(0.0)%, cvt:0(0.0)%, condbr:0(0.0)%, uncondbr:0(0.0)%, 
 ==---- IR List ----==

@@ -46,6 +46,13 @@ LOOP1 HEAD:BB2, BODY:2,3,4,6,7,
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'licm_t4' ----==
 
 
+==---- DUMP Register Promotion 'licm_t4' ----==
+==-- DUMP LoopInfo --==
+LOOP1 HEAD:BB2, BODY:2,3,4,6,7,
+==-- DUMP ExactAccessTab --==
+  
+==-- DUMP InexactAccessTab --==
+  
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'licm_t3' ----==
 -- Invariant Expression (num=1) -- :
    asr:i32 attachinfo:Dbx       
@@ -82,6 +89,13 @@ LOOP1 HEAD:BB2, BODY:2,3,4,6,7,
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'licm_t3' ----==
 
 
+==---- DUMP Register Promotion 'licm_t3' ----==
+==-- DUMP LoopInfo --==
+LOOP1 HEAD:BB2, BODY:2,3,4,6,7,
+==-- DUMP ExactAccessTab --==
+  
+==-- DUMP InexactAccessTab --==
+  
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'licm_t2' ----==
 
 
@@ -116,6 +130,7 @@ LOOP2 HEAD:BB2, BODY:2,3,4,5,7,
       ld:i32 'i' attachinfo:Dbx,MDSSA
       ld:i32 'i' attachinfo:Dbx,MDSSA
       ld:i32 'i' attachinfo:Dbx,MDSSA
+      ld:i32 'i' attachinfo:Dbx,MDSSA
       ld:i32 'i' attachinfo:MDSSA
       st:i32 'i' attachinfo:Dbx,MDSSA
       ld:i32 'i' attachinfo:Dbx,MDSSA
@@ -126,6 +141,7 @@ LOOP2 HEAD:BB2, BODY:2,3,4,5,7,
     
     OCCLIST:
       st:i32 'j' attachinfo:Dbx,MDSSA
+      ld:i32 'j' attachinfo:Dbx,MDSSA
       ld:i32 'j' attachinfo:Dbx,MDSSA
       ld:i32 'j' attachinfo:Dbx,MDSSA
       ld:i32 'j' attachinfo:MDSSA
@@ -145,8 +161,8 @@ LOOP1 HEAD:BB4, BODY:4,5,
   
   starray (i32, ety:i32) attachinfo:Dbx,MDSSA
       elem_num[100,100]
-      ld:i32 'j' decl:int  j  dim0 attachinfo:Dbx,MDSSA
-      ld:i32 'i' decl:int  i  dim1 attachinfo:Dbx,MDSSA      
+      $10:i32 dim0 attachinfo:Dbx
+      $9:i32 dim1 attachinfo:Dbx      
       lda:*<40000> 'a' decl:int  a [100][100] array_base attachinfo:Dbx      
       add:i32 rhs attachinfo:Dbx          
           add:i32 attachinfo:Dbx              
@@ -165,6 +181,19 @@ LOOP1 HEAD:BB4, BODY:4,5,
 ==---- DUMP LICM Analysis Result : LoopInfo2 : 'licm_t2' ----==
 
 
+==---- DUMP Register Promotion 'licm_t2' ----==
+==-- DUMP LoopInfo --==
+LOOP2 HEAD:BB2, BODY:2,3,4,5,7,
+==-- DUMP ExactAccessTab --==
+  
+==-- DUMP InexactAccessTab --==
+  
+==-- DUMP LoopInfo --==
+LOOP1 HEAD:BB4, BODY:4,5,
+==-- DUMP ExactAccessTab --==
+  
+==-- DUMP InexactAccessTab --==
+  
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'licm_t1' ----==
 
 
@@ -202,3 +231,11 @@ LOOP1 HEAD:BB2, BODY:2,3,
   
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'licm_t1' ----==
 
+
+==---- DUMP Register Promotion 'licm_t1' ----==
+==-- DUMP LoopInfo --==
+LOOP1 HEAD:BB2, BODY:2,3,
+==-- DUMP ExactAccessTab --==
+  
+==-- DUMP InexactAccessTab --==
+  

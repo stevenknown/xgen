@@ -40,6 +40,19 @@ LOOP1 HEAD:BB2, BODY:2,3,4,6,7,
       ld:i32 'i' attachinfo:Dbx,MDSSA
       ld:i32 'i' attachinfo:Dbx,MDSSA
       ld:i32 'i' attachinfo:Dbx,MDSSA
+      ld:i32 'i' attachinfo:Dbx,MDSSA
+      ld:i32 'i' attachinfo:Dbx,MDSSA
+      ld:i32 'i' attachinfo:Dbx,MDSSA
+      ld:i32 'i' attachinfo:Dbx,MDSSA
+      ld:i32 'i' attachinfo:Dbx,MDSSA
+      ld:i32 'i' attachinfo:Dbx,MDSSA
+      ld:i32 'i' attachinfo:Dbx,MDSSA
+      ld:i32 'i' attachinfo:Dbx,MDSSA
+      ld:i32 'i' attachinfo:Dbx,MDSSA
+      ld:i32 'i' attachinfo:Dbx,MDSSA
+      ld:i32 'i' attachinfo:Dbx,MDSSA
+      ld:i32 'i' attachinfo:Dbx,MDSSA
+      ld:i32 'i' attachinfo:Dbx,MDSSA
       ld:i32 'i' attachinfo:MDSSA
       st:i32 'i' attachinfo:Dbx,MDSSA
       ld:i32 'i' attachinfo:Dbx,MDSSA
@@ -49,3 +62,11 @@ LOOP1 HEAD:BB2, BODY:2,3,4,6,7,
   
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'foo' ----==
 
+
+==---- DUMP Register Promotion 'foo' ----==
+==-- DUMP LoopInfo --==
+LOOP1 HEAD:BB2, BODY:2,3,4,6,7,
+==-- DUMP ExactAccessTab --==
+  
+==-- DUMP InexactAccessTab --==
+  

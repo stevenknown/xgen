@@ -882,21 +882,21 @@ sub selectTarget
 
     if ($g_osname eq 'MSWin32') {
         if ($g_target eq "arm") {
-           $g_xocc = "$g_xoc_root_path/src/xocc.arm.prj/x64/build/xocc.exe";
+           $g_xocc = "$g_xoc_root_path/src/arm/xocc.exe";
            $g_basecc = "arm-linux-gnueabi-gcc";
            $g_as = "arm-linux-gnueabi-as";
            $g_ld = "arm-linux-gnueabi-gcc";
            $g_basecc_cflags = "-std=c99 -O0";
            $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
         } elsif ($g_target eq "armhf") {
-           $g_xocc = "$g_xoc_root_path/src/xocc.arm.prj/x64/build/xocc.exe";
+           $g_xocc = "$g_xoc_root_path/src/arm/xocc.exe";
            $g_basecc = "arm-linux-gnueabihf-gcc";
            $g_as = "arm-linux-gnueabihf-as";
            $g_ld = "arm-linux-gnueabihf-gcc";
            $g_basecc_cflags = "-std=c99 -O0";
            $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
         } elsif ($g_target eq "x86") {
-           $g_xocc = "$g_xoc_root_path/src/xocc.x64.prj/debug/xocc.exe";
+           $g_xocc = "$g_xoc_root_path/src/x86/xocc.exe";
         } elsif ($g_config_file_path ne "" &&
                  selectTargetFromConfigFile() == 1) {
             ; ## Has already selected target info from config file.

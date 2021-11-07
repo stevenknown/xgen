@@ -11,7 +11,7 @@
    add:u32       
        $7:u32       
        intconst:u32 2|0x2
-   add:any       
+   add:i32       
        $2:any       
        ld:i32 'm' attachinfo:MDSSA
    add:*<4>       
@@ -32,6 +32,9 @@
        add:u32           
            $7:u32           
            intconst:u32 2|0x2
+==---- DUMP LICM Analysis Result : LoopInfo1 : 'case1' ----==
+
+
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'case2' ----==
 -- Invariant Expression (num=1) -- :
    ld:mc<191> 'm' attachinfo:MDSSA

@@ -520,7 +520,7 @@ void LIS::serialize()
     }
 
     //END_TIMER_FMT(t, ("LIS: Serialize: BB%d", getBB()->id()));
-    if (g_is_dump_after_pass && g_dump_opt.isDumpLIS()) {
+    if (g_dump_opt.isDumpAfterPass() && g_xgen_dump_opt.isDumpLIS()) {
         dump(true);
     }
 }
@@ -608,7 +608,7 @@ RESCH:
     delete stepddg;
     //END_TIMER_FMT(t, ("LIS: Schedule: BB%d", getBB()->id()));
 
-    if (g_is_dump_after_pass && g_dump_opt.isDumpLIS()) {
+    if (g_dump_opt.isDumpAfterPass() && g_xgen_dump_opt.isDumpLIS()) {
         dump(true);
     }
     return m_or_changed;

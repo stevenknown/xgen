@@ -102,7 +102,6 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     if (g_do_loop_convert) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_LOOP_CVT));
     }
-
     if (g_do_lftr) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_LFTR));
     }

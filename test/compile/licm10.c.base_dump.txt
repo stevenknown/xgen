@@ -1,5 +1,5 @@
 
-==---- DUMP LICM Analysis Result : LoopInfo2 : 'main' ----==
+==---- DUMP LICM Analysis Result : LoopInfo1 : 'main' ----==
 -- Invariant Expression (num=2) -- :
    intconst:i32 20|0x14 attachinfo:Dbx
    ld:i32 'b' attachinfo:Dbx,MDSSA
@@ -14,5 +14,5 @@
    
    st:i32 'g' decl:int  g  attachinfo:Dbx,MDSSA       
        ld:i32 'b' decl:int  b  attachinfo:Dbx,MDSSA
-==---- DUMP LICM Analysis Result : LoopInfo3 : 'main' ----==
+==---- DUMP LICM Analysis Result : LoopInfo2 : 'main' ----==
 

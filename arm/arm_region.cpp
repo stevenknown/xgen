@@ -201,6 +201,14 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         getCFG()->computeExitList();
         ASSERT0(getCFG()->verify());
 
+        bool org = g_do_cfg_remove_unreach_bb;
+        //Unreachable BB have to removed before RPO computation.
+        g_do_cfg_remove_unreach_bb = true;
+
+        getCFG()->performMiscOpt(oc);
+
+        g_do_cfg_remove_unreach_bb = org;
+
         if (g_do_cfg_dom) {
             //Infer pointer arith requires loopinfo.
             getPassMgr()->checkValidAndRecompute(&oc, PASS_DOM, PASS_UNDEF);
@@ -211,8 +219,11 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
             getPassMgr()->checkValidAndRecompute(&oc, PASS_LOOP_INFO,
                                                  PASS_UNDEF);
         }
+    }
 
-        getCFG()->performMiscOpt(oc);
+    if (g_infer_type) {
+        //Infer type for more precision type.
+        getPassMgr()->registerPass(PASS_INFER_TYPE)->perform(oc);
     }
 
     //Assign PR and NonPR Var and MD sperately to make MD id more

@@ -33,6 +33,87 @@ author: Su Zhenyu
 
 namespace xgen {
 
+//
+//START DumpOpt
+//
+DumpOpt::DumpOpt()
+{
+    is_dump_all = false;
+    is_dump_nothing = false;
+    is_dump_cg = false;
+    is_dump_ra = false;
+    is_dump_lis = false;
+    is_dump_ir2or = false;
+}
+
+
+bool DumpOpt::isDumpAll() const
+{
+    //is_dump_all and is_dump_nothing can not all be true.
+    ASSERT0(!(is_dump_nothing & is_dump_all));
+    return is_dump_all;
+}
+
+
+bool DumpOpt::isDumpNothing() const
+{
+    //is_dump_all and is_dump_nothing can not all be true.
+    ASSERT0(!(is_dump_nothing & is_dump_all));
+    return is_dump_nothing;
+}
+
+
+bool DumpOpt::isDumpCG() const
+{
+    return is_dump_all || is_dump_cg || (!is_dump_nothing && is_dump_cg);
+}
+
+
+bool DumpOpt::isDumpRA() const
+{
+    return is_dump_all || is_dump_cg || (!is_dump_nothing && is_dump_ra);
+}
+
+
+bool DumpOpt::isDumpLIS() const
+{
+    return is_dump_all || is_dump_cg || (!is_dump_nothing && is_dump_lis);
+}
+
+
+bool DumpOpt::isDumpIR2OR() const
+{
+    return is_dump_all || is_dump_cg || (!is_dump_nothing && is_dump_ir2or);
+}
+
+
+bool DumpOpt::isDumpReviseSpadjust() const
+{
+    return is_dump_all || is_dump_cg ||
+           (!is_dump_nothing && is_dump_revise_spadjust);
+}
+
+
+bool DumpOpt::isDumpRelocateStack() const
+{
+    return is_dump_all || is_dump_cg ||
+           (!is_dump_nothing && is_dump_relocate_stack);
+}
+
+
+bool DumpOpt::isDumpPackage() const
+{
+    return is_dump_all || is_dump_cg || (!is_dump_nothing && is_dump_package);
+}
+
+
+bool DumpOpt::isDumpLocalize() const
+{
+    return is_dump_all || is_dump_cg || (!is_dump_nothing && is_dump_localize);
+}
+//END DumpOpt
+
+
 //Generate code for big return value that can not be accommdated in
 //return-value registers.
 //e.g:
@@ -65,5 +146,8 @@ bool g_enable_schedule_delay_slot = false;
 //The option is false in default, because user intends to generate code by
 //iterating RegionTab, instead of generating code for inner region recursively.
 bool g_is_generate_code_for_inner_region = false;
+
+//Record dump options for each Pass in XGen.
+DumpOpt g_xgen_dump_opt;
 
 } //namespace xgen

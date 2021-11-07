@@ -2613,7 +2613,7 @@ LRA::LRA(ORBB * bb, RaMgr * ra_mgr)
 //Display phase name
 void LRA::show_phase(CHAR const* phase_name)
 {
-    if (!g_dump_opt.isDumpRA() || !getRegion()->isLogMgrInit()) { return; }
+    if (!g_xgen_dump_opt.isDumpRA() || !getRegion()->isLogMgrInit()) { return; }
     note(getRegion(), "\nREGION(%d)%s, ORBB(%d)Len(%d), PHASE:%s",
          m_rg->id(),
          m_rg->getRegionName() != nullptr ? m_rg->getRegionName() : "",

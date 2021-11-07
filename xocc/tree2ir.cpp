@@ -2804,7 +2804,6 @@ static bool generateFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
         xoc::note(rm, "\n==---- AFTER REFINE IR -----==",
                   dcl->get_decl_name());
         xoc::dumpIRListH(r->getIRList(), r);
-        //rg->dumpVARInRegion();
     }
 
     END_TIMER_FMT(t, ("GenerateFuncRegion '%s'",

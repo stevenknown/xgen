@@ -26,6 +26,7 @@ LOOP2 HEAD:BB2, BODY:2,3,4,5,7,
       st:u32 'i' attachinfo:Dbx,MDSSA
       ld:u32 'i' attachinfo:Dbx,MDSSA
       ld:u32 'i' attachinfo:Dbx,MDSSA
+      ld:u32 'i' attachinfo:Dbx,MDSSA
       st:u32 'i' attachinfo:Dbx,MDSSA
       ld:u32 'i' attachinfo:Dbx,MDSSA
   
@@ -37,8 +38,16 @@ LOOP2 HEAD:BB2, BODY:2,3,4,5,7,
       ld:*<12> 'section' attachinfo:Dbx,MDSSA
       ld:*<12> 'section' attachinfo:Dbx,MDSSA
       ld:*<12> 'section' attachinfo:Dbx,MDSSA
+      ld:*<12> 'section' attachinfo:Dbx,MDSSA
       st:*<12> 'section' attachinfo:Dbx,MDSSA
       ld:*<12> 'section' attachinfo:Dbx,MDSSA
+  
+  DELEGATE:
+    MD10 -- base:Var63(dst):local,formal_param,restrict,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned int restrict *  dst ' -- ofst:0 -- size:4
+    ld:*<4> 'dst' attachinfo:Dbx,MDSSA
+    
+    OCCLIST:
+      ld:*<4> 'dst' attachinfo:Dbx,MDSSA
   
   
 ==-- DUMP InexactAccessTab --==
@@ -48,6 +57,9 @@ LOOP1 HEAD:BB4, BODY:4,5,
 ==-- DUMP ExactAccessTab --==
   
 ==-- DUMP InexactAccessTab --==
+  ild:u32:offset(4) attachinfo:Dbx,MDSSA      
+      $3:*<12> attachinfo:Dbx
+  
   ild:u32 attachinfo:Dbx,MDSSA      
       add:*<4>          
           $1:*<4> attachinfo:Dbx          
@@ -61,3 +73,17 @@ LOOP1 HEAD:BB4, BODY:4,5,
 
 ==---- DUMP LICM Analysis Result : LoopInfo2 : 'test' ----==
 
+
+==---- DUMP Register Promotion 'test' ----==
+==-- DUMP LoopInfo --==
+LOOP2 HEAD:BB2, BODY:2,3,4,5,7,
+==-- DUMP ExactAccessTab --==
+  
+==-- DUMP InexactAccessTab --==
+  
+==-- DUMP LoopInfo --==
+LOOP1 HEAD:BB4, BODY:4,5,
+==-- DUMP ExactAccessTab --==
+  
+==-- DUMP InexactAccessTab --==
+  
