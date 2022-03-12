@@ -27,12 +27,12 @@ starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
   starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
-  --DEFVMD:(MD11V1,-)|USESET:array(id:3)
-  --DEFVMD:(MD2V1,-)|USESET:array(id:3)
-  --DEFVMD:(MD5V1,-)|USESET:array(id:3)
-  --DEFVMD:(MD9V1,-)|USESET:array(id:3)
+  --DEF:MD11V1,-|USESET:array(id:3)
+  --DEF:MD2V1,-|USESET:array(id:3)
+  --DEF:MD5V1,-|USESET:array(id:3)
+  --DEF:MD9V1,-|USESET:array(id:3)
   ld:i32 'i' attachinfo:Dbx,MDSSA
-  --USEVMD:MD10V0
+  --USE:MD10V0
 
 
 [61]    return p[i].a;
@@ -44,13 +44,15 @@ return attachinfo:Dbx
         lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
   ----
   array (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
-  --USEVMD:MD11V1,MD2V1,MD5V1,MD9V1
+  --USE:MD11V1,MD2V1,MD5V1,MD9V1
   ld:i32 'i' attachinfo:Dbx,MDSSA
-  --USEVMD:MD10V0
+  --USE:MD10V0
 ==-- DUMP MDSSAMgr DU CHAIN 'foo11' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 
 [60]    p[i].a = 20; //S4
 
@@ -59,14 +61,16 @@ starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
     lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
     intconst:i32 20|0x14 rhs attachinfo:Dbx
-----------------
-starray(id:5) USESET:
-  MD11V1:(array id:3) 
-  MD2V1:(array id:3) 
-  MD5V1:(array id:3) 
-  MD9V1:(array id:3) 
-ld(id:2) DEFSET:
-  MD10V0:
+  ----------------
+  starray(id:5) USESET:
+    MD11V1:(array id:3) 
+    MD2V1:(array id:3) 
+    MD5V1:(array id:3) 
+    MD9V1:(array id:3) 
+  ld(id:2) DEFSET:
+    MD10V0:
+  ----------------
+  
 
 [61]    return p[i].a;
 
@@ -75,14 +79,16 @@ return attachinfo:Dbx
         elemnum[10]
         ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA        
         lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx
-----------------
-array(id:3) DEFSET:
-  MD11V1:(starray id:5)
-  MD2V1:
-  MD5V1:
-  MD9V1:
-ld(id:8) DEFSET:
-  MD10V0:
+  ----------------
+  array(id:3) DEFSET:
+    MD11V1:(starray id:5)
+    MD2V1:
+    MD5V1:
+    MD9V1:
+  ld(id:8) DEFSET:
+    MD10V0:
+  ----------------
+  
 ==---- DUMP MDSSA Manager 'foo11' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -111,12 +117,12 @@ starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     intconst:i32 20|0x14 rhs attachinfo:Dbx
   ----
   starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
-  --DEFVMD:(MD11V1,-)|USESET:
-  --DEFVMD:(MD2V1,-)|USESET:
-  --DEFVMD:(MD5V1,-)|USESET:
-  --DEFVMD:(MD9V1,-)|USESET:
+  --DEF:MD11V1,-|USESET:
+  --DEF:MD2V1,-|USESET:
+  --DEF:MD5V1,-|USESET:
+  --DEF:MD9V1,-|USESET:
   ld:i32 'i' attachinfo:Dbx,MDSSA
-  --USEVMD:MD10V0
+  --USE:MD10V0
 
 
 [61]    return p[i].a;
@@ -126,7 +132,9 @@ return attachinfo:Dbx
 ==-- DUMP MDSSAMgr DU CHAIN 'foo11' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 
 [60]    p[i].a = 20; //S4
 
@@ -135,14 +143,16 @@ starray (i32, ety:mc<16>) attachinfo:Dbx,MDSSA
     ld:i32 'i' decl:int  i  dim0 attachinfo:Dbx,MDSSA    
     lda:*<160> 'p' decl:S (id:1) {int  a ; int  b ; int  c ; int  d ; } p [10] array_base attachinfo:Dbx    
     intconst:i32 20|0x14 rhs attachinfo:Dbx
-----------------
-starray(id:5) USESET:
-  MD11V1:
-  MD2V1:
-  MD5V1:
-  MD9V1:
-ld(id:2) DEFSET:
-  MD10V0:
+  ----------------
+  starray(id:5) USESET:
+    MD11V1:
+    MD2V1:
+    MD5V1:
+    MD9V1:
+  ld(id:2) DEFSET:
+    MD10V0:
+  ----------------
+  
 
 [61]    return p[i].a;
 
@@ -170,7 +180,9 @@ region 'foo11',id:2
 ==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 region 'foo11',id:2
 ==---- DUMP MDSSA Manager '.program' ----==
 ==---- DUMP NON-PR MD ----==
@@ -194,5 +206,7 @@ region 'foo11',id:2
 ==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 region 'foo11',id:2

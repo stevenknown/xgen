@@ -1,45 +1,87 @@
 
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'case1' ----==
--- Invariant Expression (num=6) -- :
-   add:*<1>       
-       $5:any       
-       intconst:i32 10|0xa
+
+==---- DUMP Natural Loop Info ----==
+LOOP1 HEAD:BB2, BODY:2,3,4,5,
+-- Invariant Expression (num=12) -- :
+   $4:any
+   $6:u64
+   ld:mc<191> 'm' attachinfo:MDSSA
+   ld:i32 'm' attachinfo:MDSSA
+   $5:any
+   $3:any
+   eq:bool       
+       intconst:i32 1|0x1       
+       intconst:i32 1|0x1
    mul:u32       
        $6:u64       
        intconst:u32 6|0x6
-   ld:mc<191> 'm' attachinfo:MDSSA
-   add:u32       
-       $7:u32       
-       intconst:u32 2|0x2
+   $2:any
+   add:*<1>       
+       $5:any       
+       intconst:i32 10|0xa
+   eq:bool       
+       $3:any       
+       $4:any
    add:i32       
        $2:any       
        ld:i32 'm' attachinfo:MDSSA
-   add:*<4>       
-       $6:*<1> attachinfo:Dbx       
-       $8:u32
--- Invariant Statement (num=4) -- :
-   $2:any = call 'foo'  readonly attachinfo:Dbx,MDSSA
-       ld:mc<191> 'm' param0 attachinfo:MDSSA
-   stpr $6:*<1>       
-       add:*<1>           
-           $5:any           
-           intconst:i32 10|0xa
-   stpr $7:u32       
-       mul:u32           
-           $6:u64           
-           intconst:u32 6|0x6
-   stpr $8:u32       
-       add:u32           
-           $7:u32           
-           intconst:u32 2|0x2
-==---- DUMP LICM Analysis Result : LoopInfo1 : 'case1' ----==
-
-
-==---- DUMP LICM Analysis Result : LoopInfo1 : 'case2' ----==
--- Invariant Expression (num=1) -- :
-   ld:mc<191> 'm' attachinfo:MDSSA
-
-==---- DUMP LICM Analysis Result : LoopInfo1 : 'case3' ----==
-
 -- Invariant Statement (num=1) -- :
    $2:any = call 'foo'  readonly attachinfo:Dbx,MDSSA
+       ld:mc<191> 'm' param0 attachinfo:MDSSA-- Hoist Cand Expression (num=5) -- :
+   add:*<1>       
+       $5:any       
+       intconst:i32 10|0xa
+   add:i32       
+       $2:any       
+       ld:i32 'm' attachinfo:MDSSA
+   ld:mc<191> 'm' attachinfo:MDSSA
+   mul:u32       
+       $6:u64       
+       intconst:u32 6|0x6
+   ld:i32 'm' attachinfo:MDSSA
+==---- DUMP LICM Analysis Result : LoopInfo1 : 'case1' ----==
+
+==---- DUMP Natural Loop Info ----==
+LOOP1 HEAD:BB2, BODY:2,3,4,5,
+-- Invariant Expression (num=9) -- :
+   eq:bool       
+       $3:any       
+       $4:any
+   $12:u32
+   $3:any
+   $11:mc<191>
+   add:u32       
+       $12:u32       
+       intconst:u32 2|0x2
+   $4:any
+   eq:bool       
+       intconst:i32 1|0x1       
+       intconst:i32 1|0x1
+   $9:*<1>
+   $10:i32
+-- Hoist Cand Expression (num=1) -- :
+   add:u32       
+       $12:u32       
+       intconst:u32 2|0x2
+==---- DUMP LICM Analysis Result : LoopInfo1 : 'case2' ----==
+
+==---- DUMP Natural Loop Info ----==
+LOOP1 HEAD:BB2, BODY:2,3,4,
+-- Invariant Expression (num=3) -- :
+   ld:mc<191> 'm' attachinfo:MDSSA
+   ld:i64 'm' attachinfo:MDSSA
+   eq:bool       
+       intconst:i32 1|0x1       
+       intconst:i32 1|0x1
+-- Hoist Cand Expression (num=2) -- :
+   ld:mc<191> 'm' attachinfo:MDSSA
+   ld:i64 'm' attachinfo:MDSSA
+==---- DUMP LICM Analysis Result : LoopInfo1 : 'case3' ----==
+
+==---- DUMP Natural Loop Info ----==
+LOOP1 HEAD:BB2, BODY:2,3,4,
+-- Invariant Expression (num=1) -- :
+   eq:bool       
+       intconst:i32 1|0x1       
+       intconst:i32 1|0x1

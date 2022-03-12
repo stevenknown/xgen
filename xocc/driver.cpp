@@ -45,6 +45,14 @@ UINT const g_formal_parameter_start = 1;
 //Print assembly in horizontal manner.
 bool g_prt_asm_horizontal = true;
 
+CHAR const* g_output_file_name = nullptr; //record the ASM file name.
+CHAR const* g_xocc_version = "1.2.3"; //recod the xocc.exe version.
+CHAR const* g_dump_file_name = nullptr;
+bool g_is_dumpgr = false;
+
+xcom::List<CHAR const*> g_cfile_list;
+xcom::List<CHAR const*> g_grfile_list;
+
 static TMap<Decl*, Var*> g_decl2var_map;
 static TMap<Var*, Decl*> g_var2decl_map;
 
@@ -99,13 +107,13 @@ void CLDbxMgr::printSrcLine(Dbx const* dbx, PrtCtx * ctx)
     }
 
     if (g_hsrc != nullptr) {
-        UINT srcline = mapRealLineToSrcLine(m_cur_lineno);
+        UINT srcline = CParser::mapRealLineToSrcLine(m_cur_lineno);
         if (srcline == 0) {
             srcline = m_cur_lineno;
         }
         ASSERTN(srcline < OFST_TAB_LINE_SIZE, ("unexpected src line"));
-        fseek(g_hsrc, g_ofst_tab[srcline], SEEK_SET);
-        if (fgets(g_cur_line, g_cur_line_len, g_hsrc) != nullptr) {
+        ::fseek(g_hsrc, g_ofst_tab[srcline], SEEK_SET);
+        if (::fgets(g_cur_line, g_cur_line_len, g_hsrc) != nullptr) {
             if (ctx != nullptr && ctx->prefix != nullptr) {
                 note(ctx->logmgr, "\n\n%s[%u]%s",
                      ctx->prefix, m_cur_lineno, g_cur_line);
@@ -137,13 +145,13 @@ void CLDbxMgr::printSrcLine(xcom::StrBuf & output, Dbx const* dbx, PrtCtx * ctx)
     }
 
     if (g_hsrc != nullptr) {
-        UINT srcline = mapRealLineToSrcLine(m_cur_lineno);
+        UINT srcline = CParser::mapRealLineToSrcLine(m_cur_lineno);
         if (srcline == 0) {
             srcline = m_cur_lineno;
         }
         ASSERTN(srcline < OFST_TAB_LINE_SIZE, ("unexpected src line"));
-        fseek(g_hsrc, g_ofst_tab[srcline], SEEK_SET);
-        if (fgets(g_cur_line, g_cur_line_len, g_hsrc) != nullptr) {
+        ::fseek(g_hsrc, g_ofst_tab[srcline], SEEK_SET);
+        if (::fgets(g_cur_line, g_cur_line_len, g_hsrc) != nullptr) {
             if (ctx != nullptr && ctx->prefix != nullptr) {
                 output.strcat("\n\n%s[%u]%s", ctx->prefix,
                               m_cur_lineno, g_cur_line);
@@ -325,18 +333,17 @@ static void scanAndInitVar(Scope * s, VarMgr * vm, TypeMgr * tm)
 }
 
 
-UINT FrontEnd(RegionMgr * rm)
+UINT FrontEnd(RegionMgr * rm, CParser & parser)
 {
     START_TIMER(t, "CFE");
-    setLogMgr(rm->getLogMgr());
     initTypeTran();
 
-    INT s = ST_SUCC;
+    STATUS s = ST_SUCC;
 #ifdef LR0_FE
     init_rule_info();
     reduce();
 #else
-    s = Parser();
+    s = parser.perform();
     if (s != ST_SUCC) {
         END_TIMER(t, "CFE");
         return s;
@@ -368,15 +375,16 @@ UINT FrontEnd(RegionMgr * rm)
 
     END_TIMER(t, "CFE");
     return ST_SUCC;
-
 }
 
 
-static FILE * createAsmFileHandler()
+static FILE * createAsmFileHandler(CHAR const* fn)
 {
     FILE * asmh = nullptr;
     if (g_output_file_name != nullptr) {
-        asmh = fopen(g_output_file_name, "a+");
+        //Use customized output file name.
+        UNLINK(g_output_file_name);
+        asmh = ::fopen(g_output_file_name, "a+");
         if (asmh == nullptr) {
             xoc::prt2C("Can not create assembly file %s", g_output_file_name);
         }
@@ -384,10 +392,10 @@ static FILE * createAsmFileHandler()
     }
 
     StrBuf buf(128);
-    ASSERT0(g_c_file_name || g_gr_file_name);
-    buf.sprint("%s.asm", g_c_file_name != nullptr ?
-                         g_c_file_name : g_gr_file_name);
-    asmh = fopen(buf.buf, "a+");
+    ASSERT0(fn);
+    buf.sprint("%s.asm", fn);
+    UNLINK(buf.buf);
+    asmh = ::fopen(buf.buf, "a+");
     if (asmh == nullptr) {
         xoc::prt2C("Can not create assembly file %s", buf.buf);
     }
@@ -455,21 +463,22 @@ static void test_ru(RegionMgr * rm, CGMgr * cgmgr)
 #endif
 
 
-static void compileProgramRegion(Region * rg, CGMgr * cgmgr)
+static void compileProgramRegion(CHAR const* fn, Region * rg, CGMgr * cgmgr)
 {
     cgmgr->genAndPrtGlobalVariable(rg);
     if (!g_is_dumpgr) { return; }
 
-    ASSERT0(g_c_file_name || g_gr_file_name);
+    ASSERT0(fn);
     xcom::StrBuf b(64);
-    b.strcat(g_c_file_name != nullptr ? g_c_file_name : g_gr_file_name);
+    b.strcat(fn);
     b.strcat(".hir.gr");
     UNLINK(b.buf);
 
     FILE * gr = ::fopen(b.buf, "a");
     ASSERT0(gr);
     rg->getLogMgr()->push(gr, "");
-    rg->dumpGR(true);
+    GRDump gd(rg);
+    gd.dumpRegion(true);
     rg->getLogMgr()->pop();
     ::fclose(gr);
 }
@@ -490,9 +499,9 @@ static void compileFuncRegion(Region * rg, CLRegionMgr * rm, CGMgr * cgmgr)
 //2. Generate IR of Region.
 //3. Perform IR optimizaions
 //4. Generate assembly code.
-static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr)
+static void compileRegionSet(CHAR const* fn, CLRegionMgr * rm, CGMgr * cgmgr)
 {
-    ASSERT0(rm && cgmgr);
+    ASSERT0(fn && rm && cgmgr);
     //Test mem leak.
     //test_ru(rm, cgmgr);
     rm->registerGlobalMD();
@@ -502,7 +511,7 @@ static void compileRegionSet(CLRegionMgr * rm, CGMgr * cgmgr)
         if (rg == nullptr) { continue; }
         if (rg->is_program()) {
             program = rg;
-            compileProgramRegion(rg, cgmgr);
+            compileProgramRegion(fn, rg, cgmgr);
             continue;
         }
         if (rg->is_blackbox()) {
@@ -563,10 +572,11 @@ static void dumpRegionMgrGR(RegionMgr * rm, CHAR const* srcname)
             b.strcat(srcname);
             b.strcat(".gr");
             UNLINK(b.buf);
-            FILE * gr = fopen(b.buf, "a");
+            FILE * gr = ::fopen(b.buf, "a");
             ASSERT0(gr);
             rg->getLogMgr()->push(gr, b.buf);
-            rg->dumpGR(true);
+            GRDump gd(rg);
+            gd.dumpRegion(true);
             rg->getLogMgr()->pop();
             ::fclose(gr);
         }
@@ -574,12 +584,12 @@ static void dumpRegionMgrGR(RegionMgr * rm, CHAR const* srcname)
 }
 
 
-static void initCompile(CLRegionMgr ** rm, FILE ** asmh, CGMgr ** cgmgr,
-                        TargInfo ** ti)
+static void initCompile(CHAR const* fn, OUT CLRegionMgr ** rm, OUT FILE ** asmh,
+                        OUT CGMgr ** cgmgr, OUT TargInfo ** ti)
 {
     *rm = initRegionMgr();
     *cgmgr = xgen::allocCGMgr(*rm);
-    *asmh = createAsmFileHandler();
+    *asmh = createAsmFileHandler(fn);
     *ti = (*rm)->getTargInfo();
     (*cgmgr)->setAsmFileHandler(*asmh);
     ASSERT0(*asmh);
@@ -604,33 +614,32 @@ static void finiCompile(CLRegionMgr * rm, FILE * asmh, CGMgr * cgmgr,
 }
 
 
-bool compileGRFile(CHAR const* gr_file_name)
+bool compileGRFile(CHAR const* fn)
 {
+    ASSERT0(fn);
     bool res = true;
-    ASSERT0(gr_file_name);
-    TargInfo * ti = nullptr;
-    CLRegionMgr * rm = nullptr;
-    CGMgr * cgmgr = nullptr;
+    xoc::TargInfo * ti = nullptr;
+    xgen::CLRegionMgr * rm = nullptr;
+    xgen::CGMgr * cgmgr = nullptr;
     FILE * asmh = nullptr;
-
-    START_TIMER_FMT(t, ("Compile GR File"));
-    initCompile(&rm, &asmh, &cgmgr, &ti);
+    START_TIMER_FMT(t, ("Compile GR File '%s'", fn));
+    initCompile(fn, &rm, &asmh, &cgmgr, &ti);
     if (g_dump_file_name != nullptr) {
         rm->getLogMgr()->init(g_dump_file_name, true);
     }
-    bool succ = xoc::readGRAndConstructRegion(rm, gr_file_name);
+    bool succ = xoc::readGRAndConstructRegion(rm, fn);
     if (!succ) {
-        prt2C("\nFail read and parse '%s'", gr_file_name);
+        xoc::prt2C("\nFail read and parse '%s'", fn);
         res = false;
         goto FIN;
     }
 
     if (g_is_dumpgr) {
-        dumpRegionMgrGR(rm, gr_file_name);
+        dumpRegionMgrGR(rm, fn);
     }
 
-    //Dump and clean
-    compileRegionSet(rm, cgmgr);
+    //Dump and clean.
+    compileRegionSet(fn, rm, cgmgr);
     for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
         Region * r = rm->getRegion(i);
         if (r == nullptr || r->is_blackbox()) { continue; }
@@ -643,25 +652,34 @@ bool compileGRFile(CHAR const* gr_file_name)
         }
     }
 FIN:
-    END_TIMER_FMT(t, ("Total Time To Compile '%s'", gr_file_name));
+    END_TIMER_FMT(t, ("Total Time To Compile '%s'", fn));
     finiCompile(rm, asmh, cgmgr, ti);
+    show_err();
+    show_warn();
+    fprintf(stdout, "\n%s - (%d) error(s), (%d) warnging(s)\n",
+            fn, g_err_msg_list.get_elem_count(),
+            g_warn_msg_list.get_elem_count());    
+    g_err_msg_list.clean();
+    g_warn_msg_list.clean();
     return res;
 }
 
 
-bool compileCFile()
+bool compileCFile(CHAR const* fn)
 {
-    bool res = true;
-    TargInfo * ti = nullptr;
-    CLRegionMgr * rm = nullptr;
-    CGMgr * cgmgr = nullptr;
+    START_TIMER_FMT(t, ("Compile C File '%s'", fn));
+    bool succ = true;
+    xoc::TargInfo * ti = nullptr;
+    xgen::CLRegionMgr * rm = nullptr;
+    xgen::CGMgr * cgmgr = nullptr;
     FILE * asmh = nullptr;
+    initCompile(fn, &rm, &asmh, &cgmgr, &ti);
 
-    START_TIMER(t2, "Init Parser");
-    initParser();
-    END_TIMER(t2, "Init Parser");
-
-    initCompile(&rm, &asmh, &cgmgr, &ti);
+    CParser parser(rm->getLogMgr(), fn);
+    if (g_err_msg_list.get_elem_count() > 0) {
+        succ = false;
+        goto FIN;
+    }
 
     if (g_dump_file_name != nullptr) {
         rm->getLogMgr()->init(g_dump_file_name, true);
@@ -672,12 +690,11 @@ bool compileCFile()
         ASSERT0(g_unique_dumpfile);
     }
 
-    START_TIMER(t, "Compile C File");
     g_fe_sym_tab = rm->getSymTab();
     g_dbx_mgr = new CLDbxMgr();
 
-    if (FrontEnd(rm) != ST_SUCC) {
-        res = false;
+    if (FrontEnd(rm, parser) != ST_SUCC) {
+        succ = false;
         ASSERTN(g_err_msg_list.has_msg(), ("miss error msg"));
         goto FIN;
     }
@@ -688,10 +705,10 @@ bool compileCFile()
     }
     scanAndInitVar(get_global_scope(), rm->getVarMgr(), rm->getTypeMgr());
     if (CTree2IR::generateRegion(rm)) {
-        compileRegionSet(rm, cgmgr);
+        compileRegionSet(fn, rm, cgmgr);
     }
     if (g_is_dumpgr) {
-        dumpRegionMgrGR(rm, g_c_file_name);
+        dumpRegionMgrGR(rm, fn);
     }
 FIN:
     if (g_dbx_mgr != nullptr) {
@@ -700,19 +717,40 @@ FIN:
     }
     g_decl2var_map.clean();
     g_var2decl_map.clean();
-    destroy_scope_list();
 
     //Timer use prt2C.
-    END_TIMER_FMT(t, ("Total Time To Compile '%s'", g_c_file_name));
-
+    END_TIMER_FMT(t, ("Total Time To Compile '%s'", fn));
     finiCompile(rm, asmh, cgmgr, ti);
-
     show_err();
     show_warn();
     fprintf(stdout, "\n%s - (%d) error(s), (%d) warnging(s)\n",
-            g_c_file_name, g_err_msg_list.get_elem_count(),
-            g_warn_msg_list.get_elem_count());
+            fn, g_err_msg_list.get_elem_count(),
+            g_warn_msg_list.get_elem_count());    
+    g_err_msg_list.clean();
+    g_warn_msg_list.clean();
+    return succ;
+}
 
-    finiParser();
-    return res;
+
+bool compileCFileList()
+{
+    for (CHAR const* fn = g_cfile_list.get_head(); fn != nullptr;
+         fn = g_cfile_list.get_next()) {
+        if (!compileCFile(fn)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+bool compileGRFileList()
+{
+    for (CHAR const* fn = g_grfile_list.get_head(); fn != nullptr;
+         fn = g_grfile_list.get_next()) {
+        if (!compileGRFile(fn)) {
+            return false;
+        }
+    }
+    return true;
 }

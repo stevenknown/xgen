@@ -1162,14 +1162,6 @@ void place_phi_press_test_m(bool r, bool y)
         a = 7;
     }
 
-
-
-
-
-
-
-
-
     l = y && r;
     l = (y || r) && (a || b);
 

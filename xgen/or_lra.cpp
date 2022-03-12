@@ -4275,11 +4275,11 @@ bool LRA::mergeRedundantStoreLoad(OR * o,
     ddg.unifyEdge(succ_preds, new_cp);
 
     if (or_can_be_removed) {
-        ddg.chainPredAndSucc(o);
+        ddg.fullyConnectPredAndSucc(o);
         ORBB_orlist(m_bb)->remove(o);
         ddg.removeOR(o);
     }
-    ddg.chainPredAndSucc(succ);
+    ddg.fullyConnectPredAndSucc(succ);
     ORBB_orlist(m_bb)->remove(succ);
     ddg.removeOR(succ);
     return true;
@@ -4319,7 +4319,7 @@ bool LRA::removeRedundantStoreLoadAfterLoad(OR * o,
 
                 SR * succ_use = succ->get_first_store_val();
                 if (m_cg->isSREqual(op_ld_res, succ_use)) {
-                    ddg.chainPredAndSucc(succ);
+                    ddg.fullyConnectPredAndSucc(succ);
                     ORBB_orlist(m_bb)->remove(succ);
                     ddg.removeOR(succ);
                     is_resch = true;
@@ -4349,7 +4349,7 @@ bool LRA::removeRedundantStoreLoadAfterLoad(OR * o,
             SR * succ_res = succ->get_result(0);
             ASSERTN(succ_res && succ_res->is_reg(), ("Illegal o"));
             if (m_cg->isSREqual(op_ld_res, succ_res)) {
-                ddg.chainPredAndSucc(succ);
+                ddg.fullyConnectPredAndSucc(succ);
                 ORBB_orlist(m_bb)->remove(succ);
                 ddg.removeOR(succ);
                 is_resch = true;
@@ -4479,7 +4479,7 @@ bool LRA::elimRedundantStoreLoad(DataDepGraph & ddg)
                         }
                     }
                     if (remove) {
-                        ddg.chainPredAndSucc(o);
+                        ddg.fullyConnectPredAndSucc(o);
                         ORBB_orlist(m_bb)->remove(orct);
                         ddg.removeOR(o);
                         ORBB_orlist(m_bb)->get_head(&next_orct);
@@ -4623,7 +4623,7 @@ bool LRA::elimRedundantStoreLoad(DataDepGraph & ddg)
                             //            ("stoveval has not any preds"));
 
                             if (!op_has_pred) {
-                                ddg.chainPredAndSucc(o);
+                                ddg.fullyConnectPredAndSucc(o);
                                 ORBB_orlist(m_bb)->remove(orct);
                                 ddg.removeOR(o);
 
@@ -4631,7 +4631,7 @@ bool LRA::elimRedundantStoreLoad(DataDepGraph & ddg)
                                 ORBB_orlist(m_bb)->get_head(&next_orct);
                                 is_resch = true;
                             } else if (!succ_has_pred) {
-                                ddg.chainPredAndSucc(succ);
+                                ddg.fullyConnectPredAndSucc(succ);
                                 ORBB_orlist(m_bb)->remove(succct);
                                 ddg.removeOR(succ);
 
@@ -6328,7 +6328,7 @@ bool LRA::elimRedundantUse(DataDepGraph & ddg)
                     }
                 }
                 if (remove) {
-                    ddg.chainPredAndSucc(o);
+                    ddg.fullyConnectPredAndSucc(o);
                     ORBB_orlist(m_bb)->remove(orct);
                     ddg.removeOR(o);
                     is_resch = true;
@@ -6471,7 +6471,7 @@ FIN:
 
             if (doit) {
                 //Cleanup live-info
-                ddg.chainPredAndSucc(o);
+                ddg.fullyConnectPredAndSucc(o);
                 ORBB_orlist(m_bb)->remove(orct);
                 ddg.removeOR(o);
                 ORBB_orlist(m_bb)->get_head(&next_orct);
@@ -6493,7 +6493,7 @@ FIN:
             //'o' is redundant even if return-address
             //register is result register, since it was
             //used just as a local-sr.
-            ddg.chainPredAndSucc(o);
+            ddg.fullyConnectPredAndSucc(o);
             ORBB_orlist(m_bb)->remove(orct);
             ddg.removeOR(o);
             ORBB_orlist(m_bb)->get_head(&next_orct);
@@ -7668,7 +7668,7 @@ bool LRA::hoistSpillLocForStore(IN OR * o, IN InterfGraph & ig,
         if (spill_can_be_removed) { //'o' should be removed at previously.
             ORCt * prev_orct = orct;
             ORBB_orlist(m_bb)->get_prev(&prev_orct);
-            ddg.chainPredAndSucc(o);
+            ddg.fullyConnectPredAndSucc(o);
             ORBB_orlist(m_bb)->remove(orct);
             ddg.removeOR(o);
             if (prev_orct != nullptr) {
@@ -7726,7 +7726,7 @@ bool LRA::hoistSpillLocForStore(IN OR * o, IN InterfGraph & ig,
     if (spill_can_be_removed) {
         ORCt * prev_orct = orct;
         bb_or_lst->get_prev(&prev_orct);
-        ddg.chainPredAndSucc(o);
+        ddg.fullyConnectPredAndSucc(o);
         bb_or_lst->remove(orct);
         ddg.removeOR(o);
         if (prev_orct != nullptr) {
@@ -7768,7 +7768,7 @@ bool LRA::hoistSpillLocForStore(IN OR * o, IN InterfGraph & ig,
     //Chain up predecessors and successors for each reload.
     for (OR * r = followed_lds.get_head();
          r != nullptr; r = followed_lds.get_next()) {
-        ddg.chainPredAndSucc(r);
+        ddg.fullyConnectPredAndSucc(r);
         bb_or_lst->remove(r);
         ddg.removeOR(r);
         is_resch = true;

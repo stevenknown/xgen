@@ -44,27 +44,11 @@ protected:
     Vector<ORBB*> m_bb_vec;
     Lab2ORBB m_lab2bb;
     CG * m_cg;
-
 protected:
     void dump_node(FILE * h, bool detail);
     void dump_edge(FILE * h);
     //Print graph structure description.
     void dump_head(FILE * h);
-
-    void remove_bb_impl(ORBB * bb)
-    {
-        ASSERT0(bb);
-        m_bb_vec.set(bb->id(), nullptr);
-
-        //C<LabelInfo const*> * ct;
-        //for (lablst.get_head(&ct);
-        //     ct != lablst.end(); ct = lablst.get_next(ct)) {
-        //    m_lab2bb.remove(ct->val());
-        //}
-
-        removeVertex(bb->id());
-    }
-
 public:
     ORCFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg);
     virtual ~ORCFG() {}
@@ -88,27 +72,40 @@ public:
     OR * get_last_xr(ORBB * bb);
     CG * getCG() const { return m_cg; }
 
-    virtual bool isRegionEntry(ORBB * bb) { return ORBB_is_entry(bb); }
-    virtual bool isRegionExit(ORBB * bb) { return ORBB_is_exit(bb); }
+    virtual bool isRegionEntry(ORBB * bb) const { return ORBB_is_entry(bb); }
+    virtual bool isRegionExit(ORBB * bb) const { return ORBB_is_exit(bb); }
 
     //Remove 'bb' from CFG, vector and bb-list.
-    virtual void removeBB(C<ORBB*> * bbct)
+    virtual void removeBB(C<ORBB*> * bbct, CfgOptCtx const& ctx)
     {
-        ASSERT0(bbct);
-        ASSERT0(m_bb_list->in_list(bbct));
-        remove_bb_impl(bbct->val());
+        ASSERT0(bbct && m_bb_list->in_list(bbct));
+        ORBB * bb = bbct->val();
+        m_bb_vec.set(bb->id(), nullptr);
+    
+        //Note labels should have been moved to other BB.
+        //C<LabelInfo const*> * ct;
+        //for (lablst.get_head(&ct);
+        //     ct != lablst.end(); ct = lablst.get_next(ct)) {
+        //    m_lab2bb.remove(ct->val());
+        //}
+
+        removeVertex(bb->id());
         m_bb_list->remove(bbct);
     }
 
     //Remove 'bb' from CFG, vector and bb-list.
-    virtual void removeBB(ORBB * bb)
+    virtual void removeBB(ORBB * bb, CfgOptCtx const& ctx)
     {
-        ASSERT0(bb);
-        remove_bb_impl(bb);
-        m_bb_list->remove(bb);
+        C<ORBB*> * bbct;
+        m_bb_list->find(bb, &bbct);
     }
     virtual void remove_xr(ORBB * bb, OR * o);
     virtual void resetMapBetweenLabelAndBB(ORBB * bb);
+    
+    //Remove related PHI operand from successor BB.
+    //Before removing current BB or change BB's successor,
+    //you need remove the related PHI operand if BB successor has PHI.
+    virtual void removeSuccPhiOpnd(ORBB const* bb) {}
 
     virtual void setRPO(ORBB * bb, INT order) { ORBB_rpo(bb) = order; }
     virtual void moveLabels(ORBB * src, ORBB * tgt);

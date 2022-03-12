@@ -30,15 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _CMDLINE_H_
 #define _CMDLINE_H_
 
-//Exported Variables, only used in FE.
-//If one requires to export variables, or types to other
-//module, please put them in fexp.h.
-extern CHAR const* g_output_file_name;
-extern CHAR const* g_xocc_version;
-extern CHAR const* g_c_file_name;
-extern CHAR const* g_gr_file_name;
-extern CHAR const* g_dump_file_name;
-extern bool g_is_dumpgr;
-
 bool processCmdLine(INT argc, CHAR const* argv[]);
+
 #endif

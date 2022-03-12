@@ -29,7 +29,9 @@ return
 ==-- DUMP MDSSAMgr DU CHAIN 'foo' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 return
 ==---- DUMP MDSSA Manager 'foo' ----==
 ==---- DUMP NON-PR MD ----==
@@ -49,7 +51,9 @@ return
 ==-- DUMP MDSSAMgr DU CHAIN 'foo' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 return
 ==---- DUMP PRSSA Manager '.program' ----==
 ==---- DUMP PRSSAMgr:VPR '.program' ----==
@@ -81,7 +85,9 @@ region 'foo',id:2
 ==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 region 'foo',id:2
 ==---- DUMP MDSSA Manager '.program' ----==
 ==---- DUMP NON-PR MD ----==
@@ -101,5 +107,7 @@ region 'foo',id:2
 ==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 region 'foo',id:2

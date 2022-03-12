@@ -34,9 +34,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //If one requires to export variables, or types to other
 //module, please put them in fexp.h.
 extern UINT const g_formal_parameter_start;
+extern xcom::List<CHAR const*> g_cfile_list; //record list of C source files.
+extern xcom::List<CHAR const*> g_grfile_list; //record list of GR source files.
 
-bool compileCFile();
-bool compileGRFile(CHAR const* gr_file_name);
-Var * mapDecl2VAR(Decl * decl);
-Decl * mapVAR2Decl(Var * var);
+//If one requires to export variables, or types to other
+//module, please put them in fexp.h.
+extern CHAR const* g_output_file_name; //record the ASM file name.
+extern CHAR const* g_xocc_version; //recod the xocc.exe version.
+extern CHAR const* g_dump_file_name;
+extern bool g_is_dumpgr;
+
+bool compileCFile(CHAR const* fn);
+bool compileGRFile(CHAR const* fn);
+bool compileGRFileList();
+bool compileCFileList();
+xoc::Var * mapDecl2VAR(Decl * decl);
+Decl * mapVAR2Decl(xoc::Var * var);
 #endif

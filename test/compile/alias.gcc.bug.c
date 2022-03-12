@@ -3,7 +3,7 @@ typedef struct {
     unsigned cdr;
 } cons;
 
-void nconc (unsigned x, unsigned y)
+void nconc(unsigned x, unsigned y)
 {
     unsigned * ptr = &x;
     ptr = &x;

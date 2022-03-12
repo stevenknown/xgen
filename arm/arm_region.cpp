@@ -57,6 +57,7 @@ PassMgr * ARMRegion::allocPassMgr()
 //To simply IR_SELECT etc, and Insert CVT if needed.
 void ARMRegion::simplify(OptCtx & oc)
 {
+    initPassMgr();
     //Note PRSSA and MDSSA are unavailable.
     if (getBBList() == nullptr || getBBList()->get_elem_count() == 0) {
         return;
@@ -73,9 +74,8 @@ void ARMRegion::simplify(OptCtx & oc)
     if (g_is_lower_to_pr_mode) {
         simp.setSimpToPRmode();
     }
-
     bool cfg_is_valid = getCFG() != nullptr && oc.is_cfg_valid();
-    simplifyBBlist(getBBList(), &simp);
+    getIRSimp()->simplifyBBlist(getBBList(), &simp);
     if (g_do_cfg && g_cst_bb_list && SIMP_need_recon_bblist(&simp) &&
         reconstructBBList(oc) && cfg_is_valid) {
 
@@ -83,7 +83,8 @@ void ARMRegion::simplify(OptCtx & oc)
         ASSERT0(verifyMDRef());
 
         //Before CFG building.
-        getCFG()->removeEmptyBB(oc);
+        CfgOptCtx ctx;
+        getCFG()->removeEmptyBB(oc, ctx);
 
         getCFG()->rebuild(oc);
 
@@ -91,7 +92,7 @@ void ARMRegion::simplify(OptCtx & oc)
         //Remove empty bb when cfg rebuilted because
         //rebuilding cfg may generate redundant empty bb.
         //It disturbs the computation of entry and exit.
-        getCFG()->removeEmptyBB(oc);
+        getCFG()->removeEmptyBB(oc, ctx);
 
         //Compute exit bb while cfg rebuilt.
         getCFG()->computeExitList();
@@ -108,9 +109,6 @@ void ARMRegion::simplify(OptCtx & oc)
     ASSERTN(g_do_refine, ("inserting CVT is expected"));
     RefineCtx rf;
     RC_insert_cvt(rf) = g_do_refine_auto_insert_cvt;
-    if (getPassMgr() == nullptr) {
-        initPassMgr();
-    }
     Refine * refine = (Refine*)getPassMgr()->registerPass(PASS_REFINE);
     refine->refineBBlist(getBBList(), rf, oc);
 }
@@ -136,7 +134,7 @@ bool ARMRegion::simplifyToPRmode(OptCtx & oc)
     simp.setSimpToLowestHeight();
     ASSERT0(verifyIRandBB(getBBList(), this));
     ASSERT0(verifyMDDUChain(this));
-    simplifyBBlist(bbl, &simp);
+    getIRSimp()->simplifyBBlist(bbl, &simp);
     if (SIMP_need_recon_bblist(&simp) && g_cst_bb_list &&
         reconstructBBList(oc)) {
         ASSERTN(g_do_cfg, ("construct BB list requires CFG"));
@@ -147,7 +145,8 @@ bool ARMRegion::simplifyToPRmode(OptCtx & oc)
         //Remove empty bb when cfg rebuilt because
         //rebuilding cfg may generate redundant empty bb.
         //It disturbs the computation of entry and exit.
-        cfg->removeEmptyBB(oc);
+        CfgOptCtx ctx;
+        cfg->removeEmptyBB(oc, ctx);
 
         //Compute entry bb, exit bb while cfg rebuilt.
         cfg->computeExitList();
@@ -169,7 +168,7 @@ bool ARMRegion::ARMHighProcess(OptCtx & oc)
 
     //Simplify control-structure to build CFG.
     simp.setSimpCFS();
-    setIRList(simplifyStmtList(getIRList(), &simp));
+    setIRList(getIRSimp()->simplifyStmtList(getIRList(), &simp));
     ASSERT0(verifySimp(getIRList(), simp));
     ASSERT0(verifyIRList(getIRList(), nullptr, this));
     //partitionRegion(); //Split region.
@@ -195,7 +194,8 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         //Remove empty bb when cfg rebuilted because
         //rebuilding cfg may generate redundant empty bb.
         //It disturbs the computation of entry and exit.
-        getCFG()->removeEmptyBB(oc);
+        CfgOptCtx ctx;
+        getCFG()->removeEmptyBB(oc, ctx);
 
         //Compute exit bb while cfg rebuilt.
         getCFG()->computeExitList();
@@ -263,7 +263,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
             if (getDUMgr() != nullptr && !oc.is_du_chain_valid()) {
                 //PRSSAMgr will destruct classic DU-chain.
                 getDUMgr()->cleanDUSet();
-                oc.setInvalidDUChain();
+                oc.setInvalidClassicDUChain();
             }
         }
         if (g_do_md_ssa) {
@@ -341,7 +341,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
                     if (getDUMgr() != nullptr && !oc.is_du_chain_valid()) {
                         //PRSSAMgr will destruct classic DU-chain.
                         getDUMgr()->cleanDUSet();
-                        oc.setInvalidDUChain();
+                        oc.setInvalidClassicDUChain();
                     }
                 }
             } else if (getDUMgr() != nullptr) {
@@ -403,10 +403,10 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         }
     }
 
-    if (g_do_cfg_dom && !OC_is_dom_valid(oc)) {
+    if (g_do_cfg_dom && !oc.is_dom_valid()) {
         getCFG()->computeDomAndIdom(oc);
     }
-    if (g_do_cfg_pdom && !OC_is_pdom_valid(oc)) {
+    if (g_do_cfg_pdom && !oc.is_pdom_valid()) {
         getCFG()->computePdomAndIpdom(oc);
     }
 

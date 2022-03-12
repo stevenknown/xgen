@@ -363,7 +363,7 @@ public:
     UINT opnd_num() const { return tmGetOpndNum(OR_code(this)); }
     UINT result_num() const { return tmGetResultNum(OR_code(this)); }
 
-    bool hasSideEffect() const { return OR_is_side_effect(this); }
+    bool hasSideEffect(bool) const { return OR_is_side_effect(this); }
 
     UINT id() const { return OR_id(this); }
     void init()

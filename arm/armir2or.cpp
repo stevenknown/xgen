@@ -1900,8 +1900,7 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT RecycORList & ors,
 
         //Copy return-value to buffer.
         Var const* retbuf = m_rg->findFormalParam(0);
-        ASSERT0(retbuf &&
-            retbuf->getByteSize(m_tm) == exp->getTypeSize(m_tm));
+        ASSERT0(retbuf && retbuf->getByteSize(m_tm) == exp->getTypeSize(m_tm));
         tmp.clean_bottomup();
         getCG()->buildLda(retbuf, 0, nullptr, tors.getList(), &tmp);
         SR * retbufaddr = tmp.get_reg(0);

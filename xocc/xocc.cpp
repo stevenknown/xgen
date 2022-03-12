@@ -35,23 +35,19 @@ INT main(INT argc, CHAR const* argv[])
         return 1;
     }
 
-    bool compile_failed = false;
-    if (g_gr_file_name != nullptr) {
-        if (!compileGRFile(g_gr_file_name)) {
-            compile_failed = true;
-        }
-    }
-
-    if (g_c_file_name != nullptr) {
-        if (!compileCFile()) {
-            compile_failed = true;
-        }
-    }
-
-    if (g_gr_file_name == nullptr && g_c_file_name == nullptr) {
+    if (g_cfile_list.get_elem_count() == 0 &&
+        g_grfile_list.get_elem_count() == 0) {
         fprintf(stdout, "xocc.exe: no input files\n");
         fflush(stdout);
         return 4;
+    }
+
+    bool compile_failed = false;
+    if (!compileGRFileList()) {
+        compile_failed = true;
+    }
+    if (!compileCFileList()) {
+        compile_failed = true;
     }
     return compile_failed ? 3 : 0;
 }

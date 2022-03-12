@@ -42,19 +42,23 @@ return attachinfo:Dbx
             intconst:i32 1|0x1 attachinfo:Dbx
   ----
   ld:u32 'x' attachinfo:Dbx,MDSSA
-  --USEVMD:MD10V0
+  --USE:MD10V0
 ==-- DUMP MDSSAMgr DU CHAIN 'andop' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 return attachinfo:Dbx
     cvt:f64        
         band:u32 attachinfo:Dbx            
             ld:u32 'x' decl:unsigned int  x  attachinfo:Dbx,MDSSA            
             intconst:i32 1|0x1 attachinfo:Dbx
-----------------
-ld(id:1) DEFSET:
-  MD10V0:
+  ----------------
+  ld(id:1) DEFSET:
+    MD10V0:
+  ----------------
+  
 ==---- DUMP MDSSA Manager 'andop' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -79,19 +83,23 @@ return attachinfo:Dbx
             intconst:i32 1|0x1 attachinfo:Dbx
   ----
   ld:u32 'x' attachinfo:Dbx,MDSSA
-  --USEVMD:MD10V0
+  --USE:MD10V0
 ==-- DUMP MDSSAMgr DU CHAIN 'andop' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 return attachinfo:Dbx
     cvt:f64        
         band:u32 attachinfo:Dbx            
             ld:u32 'x' decl:unsigned int  x  attachinfo:Dbx,MDSSA            
             intconst:i32 1|0x1 attachinfo:Dbx
-----------------
-ld(id:1) DEFSET:
-  MD10V0:
+  ----------------
+  ld(id:1) DEFSET:
+    MD10V0:
+  ----------------
+  
 ==---- DUMP PRSSA Manager 'orop' ----==
 ==---- DUMP PRSSAMgr:VPR 'orop' ----==
 
@@ -136,19 +144,23 @@ return attachinfo:Dbx
             intconst:i32 1|0x1 attachinfo:Dbx
   ----
   ld:u32 'x' attachinfo:Dbx,MDSSA
-  --USEVMD:MD12V0
+  --USE:MD12V0
 ==-- DUMP MDSSAMgr DU CHAIN 'orop' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 return attachinfo:Dbx
     cvt:f64        
         bor:u32 attachinfo:Dbx            
             ld:u32 'x' decl:unsigned int  x  attachinfo:Dbx,MDSSA            
             intconst:i32 1|0x1 attachinfo:Dbx
-----------------
-ld(id:1) DEFSET:
-  MD12V0:
+  ----------------
+  ld(id:1) DEFSET:
+    MD12V0:
+  ----------------
+  
 ==---- DUMP MDSSA Manager 'orop' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -174,19 +186,23 @@ return attachinfo:Dbx
             intconst:i32 1|0x1 attachinfo:Dbx
   ----
   ld:u32 'x' attachinfo:Dbx,MDSSA
-  --USEVMD:MD12V0
+  --USE:MD12V0
 ==-- DUMP MDSSAMgr DU CHAIN 'orop' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 return attachinfo:Dbx
     cvt:f64        
         bor:u32 attachinfo:Dbx            
             ld:u32 'x' decl:unsigned int  x  attachinfo:Dbx,MDSSA            
             intconst:i32 1|0x1 attachinfo:Dbx
-----------------
-ld(id:1) DEFSET:
-  MD12V0:
+  ----------------
+  ld(id:1) DEFSET:
+    MD12V0:
+  ----------------
+  
 ==---- DUMP PRSSA Manager 'notop' ----==
 ==---- DUMP PRSSAMgr:VPR 'notop' ----==
 
@@ -230,18 +246,22 @@ return attachinfo:Dbx
             ld:u32 'x' decl:unsigned int  x  attachinfo:Dbx,MDSSA
   ----
   ld:u32 'x' attachinfo:Dbx,MDSSA
-  --USEVMD:MD14V0
+  --USE:MD14V0
 ==-- DUMP MDSSAMgr DU CHAIN 'notop' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 return attachinfo:Dbx
     cvt:f64        
         bnot:u32 attachinfo:Dbx            
             ld:u32 'x' decl:unsigned int  x  attachinfo:Dbx,MDSSA
-----------------
-ld(id:1) DEFSET:
-  MD14V0:
+  ----------------
+  ld(id:1) DEFSET:
+    MD14V0:
+  ----------------
+  
 ==---- DUMP MDSSA Manager 'notop' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -267,18 +287,22 @@ return attachinfo:Dbx
             ld:u32 'x' decl:unsigned int  x  attachinfo:Dbx,MDSSA
   ----
   ld:u32 'x' attachinfo:Dbx,MDSSA
-  --USEVMD:MD14V0
+  --USE:MD14V0
 ==-- DUMP MDSSAMgr DU CHAIN 'notop' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 return attachinfo:Dbx
     cvt:f64        
         bnot:u32 attachinfo:Dbx            
             ld:u32 'x' decl:unsigned int  x  attachinfo:Dbx,MDSSA
-----------------
-ld(id:1) DEFSET:
-  MD14V0:
+  ----------------
+  ld(id:1) DEFSET:
+    MD14V0:
+  ----------------
+  
 ==---- DUMP PRSSA Manager 'notop2' ----==
 ==---- DUMP PRSSAMgr:VPR 'notop2' ----==
 
@@ -323,18 +347,22 @@ return attachinfo:Dbx
             ld:u64 'x' decl:unsigned longlong  x  attachinfo:Dbx,MDSSA
   ----
   ld:u64 'x' attachinfo:Dbx,MDSSA
-  --USEVMD:MD16V0
+  --USE:MD16V0
 ==-- DUMP MDSSAMgr DU CHAIN 'notop2' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 return attachinfo:Dbx
     cvt:f64        
         bnot:u64 attachinfo:Dbx            
             ld:u64 'x' decl:unsigned longlong  x  attachinfo:Dbx,MDSSA
-----------------
-ld(id:1) DEFSET:
-  MD16V0:
+  ----------------
+  ld(id:1) DEFSET:
+    MD16V0:
+  ----------------
+  
 ==---- DUMP MDSSA Manager 'notop2' ----==
 ==---- DUMP NON-PR MD ----==
 MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
@@ -361,18 +389,22 @@ return attachinfo:Dbx
             ld:u64 'x' decl:unsigned longlong  x  attachinfo:Dbx,MDSSA
   ----
   ld:u64 'x' attachinfo:Dbx,MDSSA
-  --USEVMD:MD16V0
+  --USE:MD16V0
 ==-- DUMP MDSSAMgr DU CHAIN 'notop2' --==
 
 --- BB3 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 return attachinfo:Dbx
     cvt:f64        
         bnot:u64 attachinfo:Dbx            
             ld:u64 'x' decl:unsigned longlong  x  attachinfo:Dbx,MDSSA
-----------------
-ld(id:1) DEFSET:
-  MD16V0:
+  ----------------
+  ld(id:1) DEFSET:
+    MD16V0:
+  ----------------
+  
 ==---- DUMP PRSSA Manager '.program' ----==
 ==---- DUMP PRSSAMgr:VPR '.program' ----==
 
@@ -433,13 +465,18 @@ region 'notop2',id:5
 ==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB6 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 region 'andop',id:2
 --- BB2 ---
+ATTR:fall_through 
 region 'orop',id:3
 --- BB3 ---
+ATTR:fall_through 
 region 'notop',id:4
 --- BB4 ---
+ATTR:fall_through 
 region 'notop2',id:5
 ==---- DUMP MDSSA Manager '.program' ----==
 ==---- DUMP NON-PR MD ----==
@@ -474,11 +511,16 @@ region 'notop2',id:5
 ==-- DUMP MDSSAMgr DU CHAIN '.program' --==
 
 --- BB6 ---
+ATTR:entry_bb fall_through 
 --- BB1 ---
+ATTR:fall_through 
 region 'andop',id:2
 --- BB2 ---
+ATTR:fall_through 
 region 'orop',id:3
 --- BB3 ---
+ATTR:fall_through 
 region 'notop',id:4
 --- BB4 ---
+ATTR:fall_through 
 region 'notop2',id:5

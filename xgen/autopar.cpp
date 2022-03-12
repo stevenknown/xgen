@@ -798,16 +798,16 @@ static bool LoopPeeling(IN ORBB * bb,
     unchainPredAndSucc(orig_pred, bb);
     unchainPredAndSucc(bb, orig_succ);
 
-    chainPredAndSucc(orig_pred, bb1); //fall through
-    chainPredAndSucc(bb1, bb2); //fall through
-    chainPredAndSucc(bb2, bb3); //fall through
-    chainPredAndSucc(bb3, bb); //fall through
-    chainPredAndSucc(bb, bb5); //fall through
-    chainPredAndSucc(bb5, orig_succ); //fall through
+    fullyConnectPredAndSucc(orig_pred, bb1); //fall through
+    fullyConnectPredAndSucc(bb1, bb2); //fall through
+    fullyConnectPredAndSucc(bb2, bb3); //fall through
+    fullyConnectPredAndSucc(bb3, bb); //fall through
+    fullyConnectPredAndSucc(bb, bb5); //fall through
+    fullyConnectPredAndSucc(bb5, orig_succ); //fall through
 
-    chainPredAndSucc(bb1, bb3); //false branch
-    chainPredAndSucc(bb2, bb2); //loop back, remainder loop
-    chainPredAndSucc(bb3, bb5); //false branch
+    fullyConnectPredAndSucc(bb1, bb3); //false branch
+    fullyConnectPredAndSucc(bb2, bb2); //loop back, remainder loop
+    fullyConnectPredAndSucc(bb3, bb5); //false branch
 
     //Add BBs into region
     insertBB(bb1, orig_pred);

@@ -685,7 +685,7 @@ static IR * computeArrayAddr(Tree * t, IR * ir, Region * rg, T2IRCtx * cont)
     ASSERT0(ir->isArrayOp() && t->getCode() == TR_ARRAY);
     SimpCtx tc;
     SIMP_array(&tc) = true;
-    IR * newir = rg->simplifyArrayAddrExp(ir, &tc);
+    IR * newir = rg->getIRSimp()->simplifyArrayAddrExp(ir, &tc);
     rg->freeIRTree(ir);
     ir = newir;
     ASSERT0(ir->is_ptr());
@@ -857,7 +857,7 @@ IR * CTree2IR::convertArray(Tree * t, INT lineno, IN T2IRCtx * cont)
         SimpCtx cont2;
         SIMP_ret_array_val(&cont2) = false;
         SIMP_array(&cont2) = true;
-        base = m_rg->simplifyExpression(base, &cont2);
+        base = m_rg->getIRSimp()->simplifyExpression(base, &cont2);
         ASSERT0(SIMP_stmtlist(&cont2) == nullptr);
     }
     ASSERT0(base->is_ptr());
@@ -2702,7 +2702,9 @@ static bool convertTreeStmtList(Tree * stmts, Region * rg, Decl const* retty)
     if (xoc::g_dump_opt.isDumpAll()) {
         xoc::note(rm, "\n==---- AFTER TREE2IR CONVERT '%s' -----==",
                   rg->getRegionName());
+        rg->getLogMgr()->incIndent(2);
         xoc::dumpIRListH(irs, rg);
+        rg->getLogMgr()->decIndent(2);
     }
 
     if (rg->is_function()) {
@@ -2722,7 +2724,9 @@ static bool convertTreeStmtList(Tree * stmts, Region * rg, Decl const* retty)
     if (xoc::g_dump_opt.isDumpAll()) {
         xoc::note(rm, "\n==---- AFTER CANONICALE IR -----==",
                   rg->getRegionName());
+        rg->getLogMgr()->incIndent(2);
         xoc::dumpIRListH(irs, rg);
+        rg->getLogMgr()->decIndent(2);
     }
 
     //Refine and perform peephole optimizations.
@@ -2768,6 +2772,7 @@ static bool generateFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
     xoc::Region * r = rm->newRegion(xoc::REGION_FUNC);
     r->setRegionVar(rvar);
     r->initAttachInfoMgr();
+    r->initPassMgr();
     REGION_is_expect_inline(r) = dcl->is_inline();
 
     //To faciliate RegionMgr to manage the resource of each Region, you have to
@@ -2803,7 +2808,9 @@ static bool generateFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
     if (xoc::g_dump_opt.isDumpAll()) {
         xoc::note(rm, "\n==---- AFTER REFINE IR -----==",
                   dcl->get_decl_name());
+        r->getLogMgr()->incIndent(2);
         xoc::dumpIRListH(r->getIRList(), r);
+        r->getLogMgr()->decIndent(2);
     }
 
     END_TIMER_FMT(t, ("GenerateFuncRegion '%s'",
@@ -2861,6 +2868,7 @@ bool CTree2IR::generateRegion(RegionMgr * rm)
     Region * program = rm->newRegion(REGION_PROGRAM);
     program->registerGlobalVAR();
     program->initAttachInfoMgr();
+    program->initPassMgr();
     rm->addToRegionTab(program);
 
     //Record the program region in RegionMgr.

@@ -175,6 +175,8 @@ public:
     OR * getPrevOR() const { return ORBB_prev_or(this); }
     OR * getLastOR() const { return ORBB_last_or(this); }
 
+    bool hasMDPhi(CFG<ORBB, OR> const* cfg) const { return false; }
+
     UINT id() const { return ORBB_id(this); }
     bool isLowerBoundary(OR * o);
     bool is_bb_exit() const { return ORBB_is_exit(this); }
@@ -220,10 +222,6 @@ public:
     void setLiveIn(SR * sr);
 
     INT rpo() const { return ORBB_rpo(this); }
-
-    //Before removing bb, revising phi opnd if there are phis
-    //in one of bb's successors.
-    void removeAllSuccessorsPhiOpnd(CFG<ORBB, OR> * cfg) { DUMMYUSE(cfg); }
 };
 //END ORBB
 

@@ -147,7 +147,7 @@ void DataDepGraph::unifyEdge(List<OR*> & orlist, OR * tgt)
 }
 
 
-void DataDepGraph::chainPredAndSucc(OR * o)
+void DataDepGraph::fullyConnectPredAndSucc(OR * o)
 {
     xcom::Vertex * v = getVertex(o->id());
     ASSERT0(v);
@@ -254,12 +254,7 @@ UINT DataDepGraph::computeCriticalPathLen(BBSimulator const& sim) const
 bool DataDepGraph::is_dependent(OR const* o1, OR const* o2) const
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
-    #define METHOD1
-    #ifdef METHOD1
     if (getEdge(o1->id(), o2->id())) {
-    #else //METHOD2
-    if (is_reachable(o1->id(), o2->id())) { //reachable may be slowly
-    #endif
         return true;
     }
     return false;
@@ -1397,12 +1392,12 @@ UINT DataDepGraph::computeEstartAndLstart(BBSimulator const& sim,
     INT c;
     for (xcom::Vertex * v = get_first_vertex(c);
          v != nullptr; v = get_next_vertex(c)) {
-        if (getInDegree(v) == 0) {
+        if (v->getInDegree() == 0) {
             worklst.append_tail(v);
             m_estart.setAlways(v->id(), 0);
         }
         //Top down scans the graph.
-        in_degree.setAlways(v->id(), getInDegree(v));;
+        in_degree.setAlways(v->id(), v->getInDegree());;
     }
 
     while (worklst.get_elem_count() > 0) {
@@ -1459,11 +1454,11 @@ UINT DataDepGraph::computeEstartAndLstart(BBSimulator const& sim,
     //Find anti-root nodes.
     for (xcom::Vertex * v = get_first_vertex(c);
          v != nullptr; v = get_next_vertex(c)) {
-        if (getOutDegree(v) == 0) {
+        if (v->getOutDegree() == 0) {
             worklst.append_tail(v);
         }
         //Bottom up scans the graph.
-        out_degree.setAlways(v->id(), getOutDegree(v));
+        out_degree.setAlways(v->id(), v->getOutDegree());
     }
 
     while (worklst.get_elem_count() > 0) {

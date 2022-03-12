@@ -1,8 +1,14 @@
 
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'main' ----==
--- Invariant Expression (num=2) -- :
-   intconst:i32 20|0x14 attachinfo:Dbx
+
+==---- DUMP Natural Loop Info ----==
+LOOP1 HEAD:BB25, BODY:25,26,27,
+-- Invariant Expression (num=3) -- :
+   gt:bool attachinfo:Dbx       
+       ld:i32 'z' attachinfo:Dbx,MDSSA       
+       intconst:i32 20|0x14 attachinfo:Dbx
    ld:i32 'b' attachinfo:Dbx,MDSSA
+   ld:i32 'z' attachinfo:Dbx,MDSSA
 -- Invariant Statement (num=2) -- :
 
    [18]    i = 20; //should be hoisted.
@@ -14,5 +20,20 @@
    
    st:i32 'g' decl:int  g  attachinfo:Dbx,MDSSA       
        ld:i32 'b' decl:int  b  attachinfo:Dbx,MDSSA
-==---- DUMP LICM Analysis Result : LoopInfo2 : 'main' ----==
+-- Hoist Cand Expression (num=2) -- :
+   ld:i32 'b' attachinfo:Dbx,MDSSA
+   gt:bool attachinfo:Dbx       
+       ld:i32 'z' attachinfo:Dbx,MDSSA       
+       intconst:i32 20|0x14 attachinfo:Dbx
+==---- DUMP Loop Invariant Code Motion 'main' ----==
+==---- DUMP LICM Analysis Result : LoopInfo1 : 'main' ----==
+
+==---- DUMP Natural Loop Info ----==
+LOOP1 HEAD:BB25, BODY:25,26,27,
+-- Invariant Expression (num=3) -- :
+   $3:i32
+   $4:bool
+   ne:bool       
+       $4:bool       
+       boolconst:bool 0
 

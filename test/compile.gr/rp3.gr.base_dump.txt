@@ -1,0 +1,148 @@
+
+==---- DUMP CFG 's81' ----==
+  /******************************
+  ==---- DUMP IRBBList 's81' ----==
+  ----- BB13 --- rpo:-1 -----
+  ATTR:entry_bb fall_through 
+  STMT NUM:0
+  
+  ----- BB2 --- rpo:-1 -----
+  ATTR:fall_through branch_target 
+  STMT NUM:1
+     falsebr label _$L1 attachinfo:Dbx         
+         lt:bool             
+             ld:i32 'j'             
+             intconst:i32 50|0x32
+  
+  ----- BB4 --- rpo:-1 -----
+  ATTR:fall_through branch_target 
+  STMT NUM:3
+     st:i32 'k' attachinfo:Dbx         
+         intconst:i32 1|0x1
+     st:i32 'j' attachinfo:Dbx         
+         intconst:i32 0|0x0
+     st:i32 'nrint' attachinfo:Dbx         
+         ld:i32 'k'
+  
+  ----- BB5 --- rpo:-1 -----
+  LABEL:_$L1 
+  ATTR:fall_through branch_target 
+  STMT NUM:2
+     $2:i32 = phi attachinfo:Dbx
+         $1:i32
+         $3:i32
+         $1:i32
+     falsebr label _$L2 attachinfo:Dbx         
+         lt:bool             
+             ld:i32 'j'             
+             intconst:i32 50|0x32
+  
+  ----- BB7 --- rpo:-1 -----
+  ATTR:branch_target 
+  STMT NUM:3
+     stpr $3:i32 attachinfo:Dbx         
+         ld:i32 'j'
+     st:i32 'j' attachinfo:Dbx         
+         add:any             
+             ld:i32 'j'             
+             intconst:i32 1|0x1
+     goto label _$L1 attachinfo:Dbx
+  
+  ----- BB9 --- rpo:-1 -----
+  LABEL:_$L2 
+  ATTR:fall_through branch_target 
+  STMT NUM:1
+     truebr label _$L3 attachinfo:Dbx         
+         eq:bool             
+             ld:i32 'crc'             
+             intconst:i32 0|0x0
+  
+  ----- BB10 --- rpo:-1 -----
+  ATTR:fall_through 
+  STMT NUM:1
+     st:i32 'rc' attachinfo:Dbx         
+         add:any             
+             ld:i32 'rc'             
+             intconst:i32 1|0x1
+  
+  ----- BB11 --- rpo:-1 -----
+  LABEL:_$L3 
+  ATTR:fall_through branch_target 
+  STMT NUM:1
+     return attachinfo:Dbx
+         ld:i32 'rc'
+  
+  ******************************/
+    digraph G {
+  
+  startnode [fontsize=24,style=filled, color=gold,shape=none,label="RegionName:s81"];
+node2 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB2  rpo:-1 \l\l  falsebr label _$L1 attachinfo:Dbx      \l      lt:bool          \l          ld:i32 'j'          \l          intconst:i32 50|0x32\l"];
+node4 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB4  rpo:-1 \l\l  st:i32 'k' attachinfo:Dbx      \l      intconst:i32 1|0x1\l\l  st:i32 'j' attachinfo:Dbx      \l      intconst:i32 0|0x0\l\l  st:i32 'nrint' attachinfo:Dbx      \l      ld:i32 'k'\l"];
+node5 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB5 _$L1  rpo:-1 \l\l  $2:i32 = phi attachinfo:Dbx\l      $1:i32\l      $3:i32\l      $1:i32\l\l  falsebr label _$L2 attachinfo:Dbx      \l      lt:bool          \l          ld:i32 'j'          \l          intconst:i32 50|0x32\l"];
+node7 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB7  rpo:-1 \l\l  stpr $3:i32 attachinfo:Dbx      \l      ld:i32 'j'\l\l  st:i32 'j' attachinfo:Dbx      \l      add:any          \l          ld:i32 'j'          \l          intconst:i32 1|0x1\l\l  goto label _$L1 attachinfo:Dbx\l"];
+node9 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB9 _$L2  rpo:-1 \l\l  truebr label _$L3 attachinfo:Dbx      \l      eq:bool          \l          ld:i32 'crc'          \l          intconst:i32 0|0x0\l"];
+node10 [font="courB",fontsize=12,color=black,shape=box,style=bold,label="BB10  rpo:-1 \l\l  st:i32 'rc' attachinfo:Dbx      \l      add:any          \l          ld:i32 'rc'          \l          intconst:i32 1|0x1\l"];
+node11 [font="Times Bold",fontsize=18,color=cyan,shape=box,style=filled,label="BB11 _$L3  rpo:-1 \l\l  return attachinfo:Dbx\l      ld:i32 'rc'\l"];
+node13 [font="Times Bold",fontsize=18,color=cyan,shape=box,style=filled,label="BB13  rpo:-1 \l"];
+node13->node2[style=bold, color=maroon, label="p0 "]
+node2->node4[style=bold, color=maroon, label="p0 "]
+node4->node5[style=bold, color=maroon, label="p0 "]
+node7->node5[style=bold, color=maroon, label="p1 "]
+node2->node5[style=bold, color=maroon, label="p2 "]
+node5->node7[style=bold, color=maroon, label="p0 "]
+node5->node9[style=bold, color=maroon, label="p0 "]
+node9->node10[style=bold, color=maroon, label="p0 "]
+node9->node11[style=bold, color=maroon, label="p0 "]
+node10->node11[style=bold, color=maroon, label="p1 "]
+}
+
+==---- DUMP Register Promotion 's81' ----==
+==-- DUMP LoopInfo --==
+LOOP1 HEAD:BB5, BODY:5,7,
+==-- DUMP ExactAccessTab --==
+  DELEGATE:
+    MD5 -- base:Var62(j):local,align(4),i32,decl:'' -- ofst:0 -- size:4
+    ld:i32 'j' attachinfo:MDSSA
+    
+    OCCLIST:
+      ld:i32 'j' attachinfo:MDSSA
+      ld:i32 'j' attachinfo:MDSSA
+      st:i32 'j' attachinfo:Dbx,MDSSA
+      ld:i32 'j' attachinfo:MDSSA
+  
+  
+==-- DUMP InexactAccessTab --==
+  
+==---- DUMP InsertPhiHelper 's81' ----==
+  ==-- InsertPhiHelper:PredOrder --==
+  4 2 
+  ==-- InsertPhiHelper:PredPos --==
+  0 2 
+  $4:i32 = phi
+      $1:i32
+      $1:i32
+  MDPhi8: MD5V4 <- (ID id:62 MD5V1 BB4), (ID id:63 MD5V0 BB2)  |USESET:(id id:42) 
+==---- DUMP DelegateMgr 's81' ----==
+  ==-- Dele2PR --==
+  
+  DELE:  ld:i32 'j' attachinfo:MDSSA
+  PR:  $5:i32
+
+  ==-- Dele2InitSTPR --==
+
+  ==-- Dele2RestoreStmt --==
+
+  ==-- Dele2OutsideDefSet --==
+  
+  DELE:  ld:i32 'j' attachinfo:MDSSA
+  OutsideDefSet:    st:i32 'j' attachinfo:Dbx,MDSSA
+
+  ==-- Dele2OutsideUseSet --==
+  
+  ==---- DUMP Delegate Table ----==
+  
+
+==-- Dele2RestoreStmt --==
+==---- DUMP Register Promotion 's81' ----==
+  ==-- DUMP Dont Promotion Table --==
+  

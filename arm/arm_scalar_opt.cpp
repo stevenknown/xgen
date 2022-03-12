@@ -63,6 +63,12 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     ASSERT0(oc.is_cfg_valid());
     ASSERT0(m_rg && m_rg->getCFG()->verify());
     List<Pass*> passlist; //A list of Optimization.
+    if (g_do_gvn) {
+        m_pass_mgr->registerPass(PASS_GVN);
+    }
+    if (g_do_vrp) {
+        passlist.append_tail(m_pass_mgr->registerPass(PASS_VRP));
+    }
     if (g_do_ivr) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_IVR));
     }
@@ -109,7 +115,6 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     bool res = false;
     bool change;
     UINT count = 0;
-    ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg));
     UINT cp_count = 0;
     UINT licm_count = 0;
     do {
@@ -130,27 +135,15 @@ bool ARMScalarOpt::perform(OptCtx & oc)
                 change = true;
                 updateCounter(pass, cp_count, licm_count);
             }
-
             res |= doit;
             ASSERT0(m_rg->verifyMDRef());
-            if (oc.is_pr_du_chain_valid() ||
-                oc.is_nonpr_du_chain_valid()) {
-                //DU reference and du chain has maintained.
-                UINT flag = 0;
-                if (oc.is_pr_du_chain_valid()) {
-                    SET_FLAG(flag, DUOPT_COMPUTE_PR_DU);
-                }
-                if (oc.is_nonpr_du_chain_valid()) {
-                    SET_FLAG(flag, DUOPT_COMPUTE_NONPR_DU);
-                }
-                ASSERT0(verifyMDDUChain(m_rg, flag));
-            }
-
+            ASSERT0(xoc::verifyMDDUChain(m_rg, oc));
             ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
             ASSERT0(m_rg->getCFG()->verify());
             ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg));
             ASSERT0(MDSSAMgr::verifyMDSSAInfo(m_rg));
             ASSERT0(m_cfg->verifyRPO(oc));
+            ASSERT0(m_cfg->verifyDomAndPdom(oc));
         }
         count++;
     } while (change && count < 20);

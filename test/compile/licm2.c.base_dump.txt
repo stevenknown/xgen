@@ -1,11 +1,37 @@
 
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'test' ----==
 
+==---- DUMP Natural Loop Info ----==
+LOOP2 HEAD:BB2, BODY:2,3,4,5,7,
+  LOOP1 HEAD:BB4, BODY:4,5,
+-- Invariant Expression (num=6) -- :
+   ild:u32 attachinfo:Dbx,MDSSA       
+       ld:*<12> 'section' attachinfo:Dbx,MDSSA
+   ld:*<12> 'section' attachinfo:Dbx,MDSSA
+   ld:*<12> 'section' attachinfo:Dbx,MDSSA
+   ld:*<4> 'src' attachinfo:Dbx,MDSSA
+   ld:*<4> 'dst' attachinfo:Dbx,MDSSA
+   ild:u32:offset(4) attachinfo:Dbx,MDSSA       
+       ld:*<12> 'section' attachinfo:Dbx,MDSSA
 
+-- Hoist Cand Expression (num=4) -- :
+   ild:u32:offset(4) attachinfo:Dbx,MDSSA       
+       ld:*<12> 'section' attachinfo:Dbx,MDSSA
+   ld:*<4> 'src' attachinfo:Dbx,MDSSA
+   ild:u32 attachinfo:Dbx,MDSSA       
+       ld:*<12> 'section' attachinfo:Dbx,MDSSA
+   ld:*<4> 'dst' attachinfo:Dbx,MDSSA
 ==---- DUMP LICM Analysis Result : LoopInfo2 : 'test' ----==
--- Invariant Expression (num=1) -- :
-   intconst:i32 0|0x0 attachinfo:Dbx
 
+==---- DUMP Natural Loop Info ----==
+LOOP2 HEAD:BB2, BODY:2,3,4,5,7,
+  LOOP1 HEAD:BB4, BODY:4,5,
+-- Invariant Expression (num=1) -- :
+   ld:*<4> 'dst' attachinfo:Dbx,MDSSA
+
+-- Hoist Cand Expression (num=1) -- :
+   ld:*<4> 'dst' attachinfo:Dbx,MDSSA
+==---- DUMP Loop Invariant Code Motion 'test' ----==
 ==---- DUMP Register Promotion 'test' ----==
 ==-- DUMP LoopInfo --==
 LOOP2 HEAD:BB2, BODY:2,3,4,5,7,
@@ -42,36 +68,62 @@ LOOP2 HEAD:BB2, BODY:2,3,4,5,7,
       st:*<12> 'section' attachinfo:Dbx,MDSSA
       ld:*<12> 'section' attachinfo:Dbx,MDSSA
   
-  DELEGATE:
-    MD10 -- base:Var63(dst):local,formal_param,restrict,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'unsigned int restrict *  dst ' -- ofst:0 -- size:4
-    ld:*<4> 'dst' attachinfo:Dbx,MDSSA
-    
-    OCCLIST:
-      ld:*<4> 'dst' attachinfo:Dbx,MDSSA
-  
   
 ==-- DUMP InexactAccessTab --==
+  
+==---- DUMP DelegateMgr 'test' ----==
+  ==-- Dele2PR --==
+  
+  DELE:  st:*<4> 'src' attachinfo:Dbx,MDSSA
+  PR:  $6:*<4>
+  
+  DELE:  st:u32 'i' attachinfo:Dbx,MDSSA
+  PR:  $7:u32
+  
+  DELE:  ld:*<12> 'section' attachinfo:Dbx,MDSSA
+  PR:  $8:*<12>
+
+  ==-- Dele2InitSTPR --==
+
+  ==-- Dele2RestoreStmt --==
+
+  ==-- Dele2OutsideDefSet --==
+
+  ==-- Dele2OutsideUseSet --==
+  
+  ==---- DUMP Delegate Table ----==
   
 ==-- DUMP LoopInfo --==
 LOOP1 HEAD:BB4, BODY:4,5,
 ==-- DUMP ExactAccessTab --==
   
 ==-- DUMP InexactAccessTab --==
-  ild:u32:offset(4) attachinfo:Dbx,MDSSA      
-      $3:*<12> attachinfo:Dbx
   
-  ild:u32 attachinfo:Dbx,MDSSA      
-      add:*<4>          
-          $1:*<4> attachinfo:Dbx          
-          mul:u32              
-              $2:u32 attachinfo:Dbx              
-              intconst:u32 4|0x4
+==---- DUMP Register Promotion 'test' ----==
+  ==-- DUMP Dont Promotion Table --==
   
-  
+  ist:u32 attachinfo:Dbx,MDSSA
+  ild:u32 attachinfo:Dbx,MDSSA
+
 ==---- DUMP LICM Analysis Result : LoopInfo1 : 'test' ----==
+
+==---- DUMP Natural Loop Info ----==
+LOOP2 HEAD:BB2, BODY:2,3,4,5,7,
+  LOOP1 HEAD:BB4, BODY:4,5,
+-- Invariant Expression (num=4) -- :
+   $4:*<4>
+   $3:u32
+   $2:*<4>
+   $1:u32
 
 
 ==---- DUMP LICM Analysis Result : LoopInfo2 : 'test' ----==
+
+==---- DUMP Natural Loop Info ----==
+LOOP2 HEAD:BB2, BODY:2,3,4,5,7,
+  LOOP1 HEAD:BB4, BODY:4,5,
+-- Invariant Expression (num=1) -- :
+   $5:*<4>
 
 
 ==---- DUMP Register Promotion 'test' ----==

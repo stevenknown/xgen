@@ -615,6 +615,7 @@ public:
     SR * genZero() { return genIntImm((HOST_INT)0, false); }
     SR * genOne() { return genIntImm((HOST_INT)1, false); }
 
+    Region * getRegion() const { return m_rg; }
     //Generate dedicated register by specified physical register.
     SR * genDedicatedReg(REG phy_reg);
     //Get dedicated register by specified physical register.
@@ -636,7 +637,6 @@ public:
     virtual SR * genTruePred(); //Generate TRUE predicate register.
     //Generate function return-address register.
     virtual SR * genReturnAddr() = 0;
-    xoc::Region * getRegion() const { return m_rg; }
     CGMgr * getCGMgr() const { return m_cgmgr; }
     xcom::BitSetMgr * getBitSetMgr() { return &m_bs_mgr; }
     //Generate spill location that same like 'sr'.

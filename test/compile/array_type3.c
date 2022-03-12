@@ -13,10 +13,14 @@ int main()
     ga.arr[33] = ga.arr[27];
 
     int * parr = ga.arr;
-    if (parr[33] != 100) { return 1; }
+    if (parr[33] != 100) { //the branch should be optimized to GOTO by RCE.
+        return 1;
+    }
 
     struct A * gaptr = &ga;
     int * parr2 = gaptr->arr;
-    if (parr2[27] != 100) { return 2; }
+    if (parr2[27] != 100) { //the branch should be optimized to GOTO by RCE.
+        return 2;
+    }
     return 0;
 }

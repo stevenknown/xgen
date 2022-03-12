@@ -27,4 +27,3 @@ int main()
     printf("\n%d+%d=%d\n", x[2], x[0], x[2]+x[0]);
     return 0;
 }
-

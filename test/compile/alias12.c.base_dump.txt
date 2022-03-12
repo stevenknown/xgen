@@ -1,47 +1,15 @@
 
 ==---- DUMP Alias Analysis 'foo' ----==
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-==---- DUMP POINT-TO OUT-SET (FLOW SENSITIVE) 'foo' ----==
---- BB3 ---
-MD1 -- PT_SET: MD1,
-MD2 -- PT_SET: MD2,MD3,
-MD3 -- PT_SET: MD2,MD3,
-MD4 -- NO PT
-MD5 -- NO PT
-MD6 -- NO PT
-MD7 -- NO PT
---- BB1 ---
-MD1 -- PT_SET: MD1,
-MD2 -- PT_SET: MD2,MD3,
-MD3 -- PT_SET: MD2,MD3,
-MD4 -- NO PT
-MD5 -- NO PT
-MD6 -- NO PT
-MD7 -- NO PT
-==---- DUMP AliasAnalysis 'foo' ----==
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
--- DUMP MAY-POINT-TO SET --
-MD2,MD3
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
--- DUMP IR POINT-TO: --
-
- -- BB3 --
-  -- MD2MDSet: --
+  ==---- DUMP ALL MD ----==
+  MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+  MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+  MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
+  MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  ==---- DUMP POINT-TO OUT-SET (FLOW SENSITIVE) 'foo' ----==
+  --- BB3 ---
   MD1 -- PT_SET: MD1,
   MD2 -- PT_SET: MD2,MD3,
   MD3 -- PT_SET: MD2,MD3,
@@ -49,9 +17,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
   MD5 -- NO PT
   MD6 -- NO PT
   MD7 -- NO PT
-
- -- BB1 --
-  -- MD2MDSet: --
+  --- BB1 ---
   MD1 -- PT_SET: MD1,
   MD2 -- PT_SET: MD2,MD3,
   MD3 -- PT_SET: MD2,MD3,
@@ -59,173 +25,225 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
   MD5 -- NO PT
   MD6 -- NO PT
   MD7 -- NO PT
+  -- DUMP WORSTCASE POINT-TO --
+  MD2,MD3
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  -- DUMP IR POINT-TO FOR BB --
 
-  -- IR POINT-TO: --
-  ---------------------------------  
+   -- BB3 --
+    -- MD2MDSet: --
+    MD1 -- PT_SET: MD1,
+    MD2 -- PT_SET: MD2,MD3,
+    MD3 -- PT_SET: MD2,MD3,
+    MD4 -- NO PT
+    MD5 -- NO PT
+    MD6 -- NO PT
+    MD7 -- NO PT
 
-  [4]    *(float*)&x = 2.3f;
-  
-  st:f32 'x' attachinfo:Dbx      
-      fpconst:f32 2.300000 attachinfo:Dbx
-  LHS:
-  st:f32 'x' attachinfo:Dbx
-    MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-      POINT TO:--
-  RHS:
-  >> MDSet DETAIL:
-  ---------------------------------  
+   -- BB1 --
+    -- MD2MDSet: --
+    MD1 -- PT_SET: MD1,
+    MD2 -- PT_SET: MD2,MD3,
+    MD3 -- PT_SET: MD2,MD3,
+    MD4 -- NO PT
+    MD5 -- NO PT
+    MD6 -- NO PT
+    MD7 -- NO PT
 
-  [5]    x = 4;
-  
-  st:i32 'x' attachinfo:Dbx      
-      intconst:i32 4|0x4 attachinfo:Dbx
-  LHS:
-  st:i32 'x' attachinfo:Dbx
-    MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-      POINT TO:--
-  RHS:
-  >> MDSet DETAIL:
-  ---------------------------------  
+    -- IR POINT-TO: --
+    ---------------------------------    
 
-  [6]    return x;
-  
-  return attachinfo:Dbx
-      ld:i32 'x' attachinfo:Dbx
-  
-  ld:i32 'x' attachinfo:Dbx
-    MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-      POINT TO:--
-  >> MDSet DETAIL:
-  ld:i32 'x' attachinfo:Dbx
-    MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-      POINT TO:--
-
-==---- DUMP DUMgr: IR REFERENCE 'foo' ----==
-
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-==----==
-RegionMayDef(OuterRegion):
-RegionMayUse(OuterRegion):
---- BB3 ---
---- BB1 ---
+    [4]    *(float*)&x = 2.3f;
+    
+    st:f32 'x' attachinfo:Dbx        
+        fpconst:f32 2.300000 attachinfo:Dbx
+    LHS:
     st:f32 'x' attachinfo:Dbx
-    EMD5
+      MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+        POINT TO:--
+    RHS:
+    >> MDSet DETAIL:
+    ---------------------------------    
+
+    [5]    x = 4;
+    
+    st:i32 'x' attachinfo:Dbx        
+        intconst:i32 4|0x4 attachinfo:Dbx
+    LHS:
     st:i32 'x' attachinfo:Dbx
-    EMD5
-    return attachinfo:Dbx
-      ld:i32 'x' attachinfo:Dbx
-      EMD5
+      MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+        POINT TO:--
+    RHS:
+    >> MDSet DETAIL:
+    ---------------------------------    
 
-==---- DUMP DUMgr: IR REFERENCE 'foo' ----==
-
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-==----==
-RegionMayDef(OuterRegion):
-RegionMayUse(OuterRegion):
---- BB3 ---
---- BB1 ---
-    st:f32 'x' attachinfo:Dbx,MDSSA
-    EMD5
-    st:i32 'x' attachinfo:Dbx,MDSSA
-    EMD5
+    [6]    return x;
+    
     return attachinfo:Dbx
-      ld:i32 'x' attachinfo:Dbx,MDSSA
+        ld:i32 'x' attachinfo:Dbx
+    
+    ld:i32 'x' attachinfo:Dbx
+      MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+        POINT TO:--
+    >> MDSet DETAIL:
+    ld:i32 'x' attachinfo:Dbx
+      MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+        POINT TO:--
+==---- DUMP DU Manager 'foo' ----==
+
+  ==---- DUMP DUMgr: IR REFERENCE 'foo' ----==
+  
+  ==---- DUMP ALL MD ----==
+  MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+  MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+  MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
+  MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  ==----==
+  RegionMayDef(OuterRegion):
+  RegionMayUse(OuterRegion):
+  --- BB3 ---
+  --- BB1 ---
+      st:f32 'x' attachinfo:Dbx
       EMD5
+      st:i32 'x' attachinfo:Dbx
+      EMD5
+      return attachinfo:Dbx
+        ld:i32 'x' attachinfo:Dbx
+        EMD5
+==---- DUMP DU Manager 'foo' ----==
+
+  ==---- DUMP DUMgr: IR REFERENCE 'foo' ----==
+  
+  ==---- DUMP ALL MD ----==
+  MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+  MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+  MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
+  MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  ==----==
+  RegionMayDef(OuterRegion):
+  RegionMayUse(OuterRegion):
+  --- BB3 ---
+  --- BB1 ---
+      st:f32 'x' attachinfo:Dbx,MDSSA
+      EMD5
+      st:i32 'x' attachinfo:Dbx,MDSSA
+      EMD5
+      return attachinfo:Dbx
+        ld:i32 'x' attachinfo:Dbx,MDSSA
+        EMD5
 ==---- DUMP Dead Code Eliminiation 'foo' ----==
 ==-- Ineffect BB --==
 --0- BB3		ineffect BB!
---0- BB1
+--0- BB1		ineffect BB!
 
-==---- DUMP IRBBList 'foo' ----==
------ BB3 --- rpo:0 -----
-ATTR:entry_bb fall_through 
-STMT NUM:0
+  ==---- DUMP IRBBList 'foo' ----==
+  ----- BB3 --- rpo:0 -----
+  ATTR:entry_bb fall_through 
+  STMT NUM:0
+  
+  ----- BB1 --- rpo:5 -----
+  ATTR:fall_through 
+  STMT NUM:1
+     return attachinfo:Dbx
+         intconst:i32 4|0x4 attachinfo:Dbx
+  
+  ==---- DUMP PRSSA Manager 'foo' ----==
+  ==---- DUMP PRSSAMgr:VPR 'foo' ----==
+  
+  --- BB3 ---
+  --- BB1 ---
+  -- <= --
+  ==---- DUMP MDSSA Manager 'foo' ----==
+  ==---- DUMP NON-PR MD ----==
+  MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+  MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+  MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
+  MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  ==-- DUMP MDSSAMgr VOpndRef 'foo' --==
+  
+  --- BB3 ---
+  --- BB1 ---
+  
+  return attachinfo:Dbx
+      intconst:i32 4|0x4 attachinfo:Dbx
+  ==-- DUMP MDSSAMgr DU CHAIN 'foo' --==
+  
+  --- BB3 ---
+  ATTR:entry_bb fall_through 
+  --- BB1 ---
+  ATTR:fall_through 
+  return attachinfo:Dbx
+      intconst:i32 4|0x4 attachinfo:Dbx
+==---- DUMP Alias Analysis 'foo' ----==
+  ==---- DUMP ALL MD ----==
+  MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+  MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+  MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
+  MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  ==---- DUMP POINT-TO OUT-SET (FLOW-INSENSITIVE) 'foo' ----==
+  MD1 -- PT_SET: MD1,
+  MD2 -- PT_SET: MD2,MD3,
+  MD3 -- PT_SET: MD2,MD3,
+  MD4 -- NO PT
+  MD5 -- NO PT
+  MD6 -- NO PT
+  MD7 -- NO PT
+  -- DUMP WORSTCASE POINT-TO --
+  MD2,MD3
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  -- DUMP IR POINT-TO FOR BB --
 
------ BB1 --- rpo:5 -----
-ATTR:fall_through 
-STMT NUM:1
-   return attachinfo:Dbx
-       intconst:i32 4|0x4 attachinfo:Dbx
+   -- BB3 --
+    -- MD2MDSet: --
+    MD1 -- PT_SET: MD1,
+    MD2 -- PT_SET: MD2,MD3,
+    MD3 -- PT_SET: MD2,MD3,
+    MD4 -- NO PT
+    MD5 -- NO PT
+    MD6 -- NO PT
+    MD7 -- NO PT
 
-==---- DUMP PRSSA Manager 'foo' ----==
-==---- DUMP PRSSAMgr:VPR 'foo' ----==
+   -- BB1 --
+    -- MD2MDSet: --
+    MD1 -- PT_SET: MD1,
+    MD2 -- PT_SET: MD2,MD3,
+    MD3 -- PT_SET: MD2,MD3,
+    MD4 -- NO PT
+    MD5 -- NO PT
+    MD6 -- NO PT
+    MD7 -- NO PT
 
---- BB3 ---
---- BB1 ---
-    ------------------
+    -- IR POINT-TO: --
+    ---------------------------------    
     return attachinfo:Dbx
         intconst:i32 4|0x4 attachinfo:Dbx
-    VP:-- <= --
-==---- DUMP MDSSA Manager 'foo' ----==
-==---- DUMP NON-PR MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-==-- DUMP MDSSAMgr VOpndRef 'foo' --==
-
---- BB3 ---
---- BB1 ---
-
-return attachinfo:Dbx
-    intconst:i32 4|0x4 attachinfo:Dbx
-==-- DUMP MDSSAMgr DU CHAIN 'foo' --==
-
---- BB3 ---
---- BB1 ---
-return attachinfo:Dbx
-    intconst:i32 4|0x4 attachinfo:Dbx
+    
+    >> MDSet DETAIL:
 ==---- DUMP Alias Analysis 'foo' ----==
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-==---- DUMP POINT-TO OUT-SET (FLOW-INSENSITIVE) 'foo' ----==
-MD1 -- PT_SET: MD1,
-MD2 -- PT_SET: MD2,MD3,
-MD3 -- PT_SET: MD2,MD3,
-MD4 -- NO PT
-MD5 -- NO PT
-MD6 -- NO PT
-MD7 -- NO PT
-==---- DUMP AliasAnalysis 'foo' ----==
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
--- DUMP MAY-POINT-TO SET --
-MD2,MD3
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
--- DUMP IR POINT-TO: --
-
- -- BB3 --
-  -- MD2MDSet: --
+  ==---- DUMP ALL MD ----==
+  MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+  MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+  MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
+  MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  ==---- DUMP POINT-TO OUT-SET (FLOW SENSITIVE) 'foo' ----==
+  --- BB3 ---
   MD1 -- PT_SET: MD1,
   MD2 -- PT_SET: MD2,MD3,
   MD3 -- PT_SET: MD2,MD3,
@@ -233,9 +251,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
   MD5 -- NO PT
   MD6 -- NO PT
   MD7 -- NO PT
-
- -- BB1 --
-  -- MD2MDSet: --
+  --- BB1 ---
   MD1 -- PT_SET: MD1,
   MD2 -- PT_SET: MD2,MD3,
   MD3 -- PT_SET: MD2,MD3,
@@ -243,230 +259,67 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
   MD5 -- NO PT
   MD6 -- NO PT
   MD7 -- NO PT
+  -- DUMP WORSTCASE POINT-TO --
+  MD2,MD3
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  -- DUMP IR POINT-TO FOR BB --
 
-  -- IR POINT-TO: --
-  ---------------------------------  
-  return attachinfo:Dbx
-      intconst:i32 4|0x4 attachinfo:Dbx
-  
-  >> MDSet DETAIL:
-==---- DUMP Alias Analysis 'foo' ----==
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-==---- DUMP POINT-TO OUT-SET (FLOW SENSITIVE) 'foo' ----==
---- BB3 ---
-MD1 -- PT_SET: MD1,
-MD2 -- PT_SET: MD2,MD3,
-MD3 -- PT_SET: MD2,MD3,
-MD4 -- NO PT
-MD5 -- NO PT
-MD6 -- NO PT
-MD7 -- NO PT
---- BB1 ---
-MD1 -- PT_SET: MD1,
-MD2 -- PT_SET: MD2,MD3,
-MD3 -- PT_SET: MD2,MD3,
-MD4 -- NO PT
-MD5 -- NO PT
-MD6 -- NO PT
-MD7 -- NO PT
-==---- DUMP AliasAnalysis 'foo' ----==
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
--- DUMP MAY-POINT-TO SET --
-MD2,MD3
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
--- DUMP IR POINT-TO: --
+   -- BB3 --
+    -- MD2MDSet: --
+    MD1 -- PT_SET: MD1,
+    MD2 -- PT_SET: MD2,MD3,
+    MD3 -- PT_SET: MD2,MD3,
+    MD4 -- NO PT
+    MD5 -- NO PT
+    MD6 -- NO PT
+    MD7 -- NO PT
 
- -- BB3 --
-  -- MD2MDSet: --
-  MD1 -- PT_SET: MD1,
-  MD2 -- PT_SET: MD2,MD3,
-  MD3 -- PT_SET: MD2,MD3,
-  MD4 -- NO PT
-  MD5 -- NO PT
-  MD6 -- NO PT
-  MD7 -- NO PT
+   -- BB1 --
+    -- MD2MDSet: --
+    MD1 -- PT_SET: MD1,
+    MD2 -- PT_SET: MD2,MD3,
+    MD3 -- PT_SET: MD2,MD3,
+    MD4 -- NO PT
+    MD5 -- NO PT
+    MD6 -- NO PT
+    MD7 -- NO PT
 
- -- BB1 --
-  -- MD2MDSet: --
-  MD1 -- PT_SET: MD1,
-  MD2 -- PT_SET: MD2,MD3,
-  MD3 -- PT_SET: MD2,MD3,
-  MD4 -- NO PT
-  MD5 -- NO PT
-  MD6 -- NO PT
-  MD7 -- NO PT
-
-  -- IR POINT-TO: --
-  ---------------------------------  
-  return attachinfo:Dbx
-      intconst:i32 4|0x4 attachinfo:Dbx
-  
-  >> MDSet DETAIL:
-
-==---- DUMP DUMgr: IR REFERENCE 'foo' ----==
-
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-==----==
-RegionMayDef(OuterRegion):
-RegionMayUse(OuterRegion):
---- BB3 ---
---- BB1 ---
+    -- IR POINT-TO: --
+    ---------------------------------    
     return attachinfo:Dbx
-==---- DUMP Alias Analysis '.program' ----==
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-==---- DUMP POINT-TO OUT-SET (FLOW SENSITIVE) '.program' ----==
---- BB3 ---
-MD1 -- PT_SET: MD1,
-MD2 -- PT_SET: MD2,MD3,
-MD3 -- PT_SET: MD2,MD3,
-MD4 -- NO PT
-MD5 -- NO PT
-MD6 -- PT_SET: MD2,MD3,
-MD7 -- NO PT
---- BB1 ---
-MD1 -- PT_SET: MD1,
-MD2 -- PT_SET: MD2,MD3,
-MD3 -- PT_SET: MD2,MD3,
-MD4 -- NO PT
-MD5 -- NO PT
-MD6 -- PT_SET: MD2,MD3,
-MD7 -- NO PT
-==---- DUMP AliasAnalysis '.program' ----==
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
--- DUMP MAY-POINT-TO SET --
-MD2,MD3
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
--- DUMP IR POINT-TO: --
+        intconst:i32 4|0x4 attachinfo:Dbx
+    
+    >> MDSet DETAIL:
+==---- DUMP DU Manager 'foo' ----==
 
- -- BB3 --
-  -- MD2MDSet: --
-  MD1 -- PT_SET: MD1,
-  MD2 -- PT_SET: MD2,MD3,
-  MD3 -- PT_SET: MD2,MD3,
-  MD4 -- NO PT
-  MD5 -- NO PT
-  MD6 -- PT_SET: MD2,MD3,
-  MD7 -- NO PT
-
- -- BB1 --
-  -- MD2MDSet: --
-  MD1 -- PT_SET: MD1,
-  MD2 -- PT_SET: MD2,MD3,
-  MD3 -- PT_SET: MD2,MD3,
-  MD4 -- NO PT
-  MD5 -- NO PT
-  MD6 -- PT_SET: MD2,MD3,
-  MD7 -- NO PT
-
-  -- IR POINT-TO: --
-  ---------------------------------  
-  region 'foo',id:2
+  ==---- DUMP DUMgr: IR REFERENCE 'foo' ----==
   
-
-==---- DUMP DUMgr: IR REFERENCE '.program' ----==
-
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-==----==
-RegionMayDef(OuterRegion):
-RegionMayUse(OuterRegion):
---- BB3 ---
---- BB1 ---
-    region 'foo',id:2
-
-==---- DUMP DUMgr: IR REFERENCE '.program' ----==
-
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-==----==
-RegionMayDef(OuterRegion):
-RegionMayUse(OuterRegion):
---- BB3 ---
---- BB1 ---
-    region 'foo',id:2
+  ==---- DUMP ALL MD ----==
+  MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+  MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+  MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
+  MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  ==----==
+  RegionMayDef(OuterRegion):
+  RegionMayUse(OuterRegion):
+  --- BB3 ---
+  --- BB1 ---
+      return attachinfo:Dbx
 ==---- DUMP Alias Analysis '.program' ----==
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-==---- DUMP POINT-TO OUT-SET (FLOW-INSENSITIVE) '.program' ----==
-MD1 -- PT_SET: MD1,
-MD2 -- PT_SET: MD2,MD3,
-MD3 -- PT_SET: MD2,MD3,
-MD4 -- NO PT
-MD5 -- NO PT
-MD6 -- PT_SET: MD2,MD3,
-MD7 -- NO PT
-==---- DUMP AliasAnalysis '.program' ----==
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
--- DUMP MAY-POINT-TO SET --
-MD2,MD3
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
--- DUMP IR POINT-TO: --
-
- -- BB3 --
-  -- MD2MDSet: --
+  ==---- DUMP ALL MD ----==
+  MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+  MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+  MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
+  MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  ==---- DUMP POINT-TO OUT-SET (FLOW SENSITIVE) '.program' ----==
+  --- BB3 ---
   MD1 -- PT_SET: MD1,
   MD2 -- PT_SET: MD2,MD3,
   MD3 -- PT_SET: MD2,MD3,
@@ -474,9 +327,7 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
   MD5 -- NO PT
   MD6 -- PT_SET: MD2,MD3,
   MD7 -- NO PT
-
- -- BB1 --
-  -- MD2MDSet: --
+  --- BB1 ---
   MD1 -- PT_SET: MD1,
   MD2 -- PT_SET: MD2,MD3,
   MD3 -- PT_SET: MD2,MD3,
@@ -484,90 +335,190 @@ MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- o
   MD5 -- NO PT
   MD6 -- PT_SET: MD2,MD3,
   MD7 -- NO PT
+  -- DUMP WORSTCASE POINT-TO --
+  MD2,MD3
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  -- DUMP IR POINT-TO FOR BB --
 
-  -- IR POINT-TO: --
-  ---------------------------------  
-  region 'foo',id:2
-  
-==---- DUMP Alias Analysis '.program' ----==
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-==---- DUMP POINT-TO OUT-SET (FLOW SENSITIVE) '.program' ----==
---- BB3 ---
-MD1 -- PT_SET: MD1,
-MD2 -- PT_SET: MD2,MD3,
-MD3 -- PT_SET: MD2,MD3,
-MD4 -- NO PT
-MD5 -- NO PT
-MD6 -- PT_SET: MD2,MD3,
-MD7 -- NO PT
---- BB1 ---
-MD1 -- PT_SET: MD1,
-MD2 -- PT_SET: MD2,MD3,
-MD3 -- PT_SET: MD2,MD3,
-MD4 -- NO PT
-MD5 -- NO PT
-MD6 -- PT_SET: MD2,MD3,
-MD7 -- NO PT
-==---- DUMP AliasAnalysis '.program' ----==
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
--- DUMP MAY-POINT-TO SET --
-MD2,MD3
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
--- DUMP IR POINT-TO: --
+   -- BB3 --
+    -- MD2MDSet: --
+    MD1 -- PT_SET: MD1,
+    MD2 -- PT_SET: MD2,MD3,
+    MD3 -- PT_SET: MD2,MD3,
+    MD4 -- NO PT
+    MD5 -- NO PT
+    MD6 -- PT_SET: MD2,MD3,
+    MD7 -- NO PT
 
- -- BB3 --
-  -- MD2MDSet: --
-  MD1 -- PT_SET: MD1,
-  MD2 -- PT_SET: MD2,MD3,
-  MD3 -- PT_SET: MD2,MD3,
-  MD4 -- NO PT
-  MD5 -- NO PT
-  MD6 -- PT_SET: MD2,MD3,
-  MD7 -- NO PT
+   -- BB1 --
+    -- MD2MDSet: --
+    MD1 -- PT_SET: MD1,
+    MD2 -- PT_SET: MD2,MD3,
+    MD3 -- PT_SET: MD2,MD3,
+    MD4 -- NO PT
+    MD5 -- NO PT
+    MD6 -- PT_SET: MD2,MD3,
+    MD7 -- NO PT
 
- -- BB1 --
-  -- MD2MDSet: --
-  MD1 -- PT_SET: MD1,
-  MD2 -- PT_SET: MD2,MD3,
-  MD3 -- PT_SET: MD2,MD3,
-  MD4 -- NO PT
-  MD5 -- NO PT
-  MD6 -- PT_SET: MD2,MD3,
-  MD7 -- NO PT
-
-  -- IR POINT-TO: --
-  ---------------------------------  
-  region 'foo',id:2
-  
-
-==---- DUMP DUMgr: IR REFERENCE '.program' ----==
-
-==---- DUMP ALL MD ----==
-MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
-MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
-MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
-MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
-==----==
-RegionMayDef(OuterRegion):
-RegionMayUse(OuterRegion):
---- BB3 ---
---- BB1 ---
+    -- IR POINT-TO: --
+    ---------------------------------    
     region 'foo',id:2
+    
+==---- DUMP DU Manager '.program' ----==
+
+  ==---- DUMP DUMgr: IR REFERENCE '.program' ----==
+  
+  ==---- DUMP ALL MD ----==
+  MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+  MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+  MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
+  MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  ==----==
+  RegionMayDef(OuterRegion):
+  RegionMayUse(OuterRegion):
+  --- BB3 ---
+  --- BB1 ---
+      region 'foo',id:2
+==---- DUMP DU Manager '.program' ----==
+
+  ==---- DUMP DUMgr: IR REFERENCE '.program' ----==
+  
+  ==---- DUMP ALL MD ----==
+  MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+  MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+  MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
+  MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  ==----==
+  RegionMayDef(OuterRegion):
+  RegionMayUse(OuterRegion):
+  --- BB3 ---
+  --- BB1 ---
+      region 'foo',id:2
+==---- DUMP Alias Analysis '.program' ----==
+  ==---- DUMP ALL MD ----==
+  MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+  MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+  MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
+  MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  ==---- DUMP POINT-TO OUT-SET (FLOW-INSENSITIVE) '.program' ----==
+  MD1 -- PT_SET: MD1,
+  MD2 -- PT_SET: MD2,MD3,
+  MD3 -- PT_SET: MD2,MD3,
+  MD4 -- NO PT
+  MD5 -- NO PT
+  MD6 -- PT_SET: MD2,MD3,
+  MD7 -- NO PT
+  -- DUMP WORSTCASE POINT-TO --
+  MD2,MD3
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  -- DUMP IR POINT-TO FOR BB --
+
+   -- BB3 --
+    -- MD2MDSet: --
+    MD1 -- PT_SET: MD1,
+    MD2 -- PT_SET: MD2,MD3,
+    MD3 -- PT_SET: MD2,MD3,
+    MD4 -- NO PT
+    MD5 -- NO PT
+    MD6 -- PT_SET: MD2,MD3,
+    MD7 -- NO PT
+
+   -- BB1 --
+    -- MD2MDSet: --
+    MD1 -- PT_SET: MD1,
+    MD2 -- PT_SET: MD2,MD3,
+    MD3 -- PT_SET: MD2,MD3,
+    MD4 -- NO PT
+    MD5 -- NO PT
+    MD6 -- PT_SET: MD2,MD3,
+    MD7 -- NO PT
+
+    -- IR POINT-TO: --
+    ---------------------------------    
+    region 'foo',id:2
+    
+==---- DUMP Alias Analysis '.program' ----==
+  ==---- DUMP ALL MD ----==
+  MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+  MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+  MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
+  MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  ==---- DUMP POINT-TO OUT-SET (FLOW SENSITIVE) '.program' ----==
+  --- BB3 ---
+  MD1 -- PT_SET: MD1,
+  MD2 -- PT_SET: MD2,MD3,
+  MD3 -- PT_SET: MD2,MD3,
+  MD4 -- NO PT
+  MD5 -- NO PT
+  MD6 -- PT_SET: MD2,MD3,
+  MD7 -- NO PT
+  --- BB1 ---
+  MD1 -- PT_SET: MD1,
+  MD2 -- PT_SET: MD2,MD3,
+  MD3 -- PT_SET: MD2,MD3,
+  MD4 -- NO PT
+  MD5 -- NO PT
+  MD6 -- PT_SET: MD2,MD3,
+  MD7 -- NO PT
+  -- DUMP WORSTCASE POINT-TO --
+  MD2,MD3
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  -- DUMP IR POINT-TO FOR BB --
+
+   -- BB3 --
+    -- MD2MDSet: --
+    MD1 -- PT_SET: MD1,
+    MD2 -- PT_SET: MD2,MD3,
+    MD3 -- PT_SET: MD2,MD3,
+    MD4 -- NO PT
+    MD5 -- NO PT
+    MD6 -- PT_SET: MD2,MD3,
+    MD7 -- NO PT
+
+   -- BB1 --
+    -- MD2MDSet: --
+    MD1 -- PT_SET: MD1,
+    MD2 -- PT_SET: MD2,MD3,
+    MD3 -- PT_SET: MD2,MD3,
+    MD4 -- NO PT
+    MD5 -- NO PT
+    MD6 -- PT_SET: MD2,MD3,
+    MD7 -- NO PT
+
+    -- IR POINT-TO: --
+    ---------------------------------    
+    region 'foo',id:2
+    
+==---- DUMP DU Manager '.program' ----==
+
+  ==---- DUMP DUMgr: IR REFERENCE '.program' ----==
+  
+  ==---- DUMP ALL MD ----==
+  MD1 -- base:Var1(.all_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD2 -- base:Var2(.global_mem):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD3 -- base:Var3(.import_var):global,unallocable,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  MD4 -- base:Var61(#DedicatedStringVar):global,,addr_taken,unallocable,align(4),string("DedicatedVarBeRegardedAsString"),str,str,mem_size:31,decl:'' -- ofst:unbound
+  MD5 -- base:Var60(x):local,align(4),i32,decl:'int  x ' -- ofst:0 -- size:4
+  MD6 -- base:Var58(foo):global,,addr_taken,func_decl,align(4),pointer,pt_base_sz:4,*,mem_size:4,decl:'int  foo (int  i ,)' -- ofst:unbound
+  MD7 -- base:Var62(.program):global,fake,mc,mem_size:0,decl:'' -- ofst:unbound
+  ==----==
+  RegionMayDef(OuterRegion):
+  RegionMayUse(OuterRegion):
+  --- BB3 ---
+  --- BB1 ---
+      region 'foo',id:2

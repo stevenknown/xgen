@@ -62,12 +62,12 @@ ORCFG::ORCFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
     case C_SESE: {  //single entry, single exit
         //The first bb in list is the entry node
         m_entry = m_bb_list->get_head();
-        ASSERT0(getInDegree(getVertex(ORBB_id(m_entry))) == 0);
+        ASSERT0(getVertex(ORBB_id(m_entry))->getInDegree() == 0);
         ORBB_is_entry(m_entry) = true;
 
         //create exit bb
         ORBB * exitbb = m_cg->allocBB();
-        ASSERT0(getOutDegree(getVertex(ORBB_id(exitbb))) == 0);
+        ASSERT0(getVertex(ORBB_id(exitbb))->getOutDegree() == 0);
         ORBB_is_exit(exitbb) = true;
         addBB(exitbb);
         m_bb_list->append_tail(exitbb);
@@ -77,7 +77,7 @@ ORCFG::ORCFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
     case C_SEME: { //single entry, multi exit
         //The first bb in list is the entry node
         m_entry = m_bb_list->get_head();
-        ASSERT0(getInDegree(getVertex(ORBB_id(m_entry))) == 0);
+        ASSERT0(getVertex(ORBB_id(m_entry))->getInDegree() == 0);
         ORBB_is_entry(m_entry) = 1;
 
         //Collect exit BB.

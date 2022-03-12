@@ -73,7 +73,7 @@ sub compileFile
     
     #Running CPP.
     my $fullpathaftercpp = runCPP($fullpath);
-    
+
     #Running XOCC.
     runXOCC($fullpathaftercpp, 0, 0, 0);
 
@@ -111,7 +111,8 @@ sub compileFileList
                             $g_is_basedumpfile_must_exist);
         }
 
-        if ($g_is_move_passed_case == 1) {
+        if ($g_single_testcase eq "" && $g_is_move_passed_case == 1) {
+            #Do NOT move to passed if there is just a singlecase.
             moveToPassed($fullpath);
         }
     }
@@ -129,7 +130,7 @@ sub tryCompile
         if ($g_is_recur) {
             @f = findFileRecursively($curdir, $g_single_testcase);
         } else {
-            @f = findFileCurrent($curdir, $g_single_testcase); 
+            @f = findFileCurrent($curdir, $g_single_testcase);
         }
     } elsif ($g_single_directory ne "") {
     	if ($g_is_recur) {

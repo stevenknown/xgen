@@ -438,7 +438,7 @@ sub runXOCC
 
     #compile
     unlink($asmname);
-    $cmdline = "$g_xocc $g_cflags $src_fullpath -o $asmname $g_override_xocc_flag";
+    $cmdline = "$g_xocc $g_cflags -o $asmname $g_override_xocc_flag";
     $cmdline = "$cmdline $src_fullpath";
     print("\nCMD>>$cmdline");
     my $retval = systemx($cmdline);
@@ -1188,6 +1188,10 @@ sub moveToPassed
 {
     my $fullpath = $_[0]; #path to src file.
     my $path = peelFileName($fullpath);
+    if (!$path) {
+        abortex("\nMOVE FAILED! PICK FILE PATH OF $fullpath FAILED! NEED COMPLETE PATH\n");
+        return $g_fail;
+    }
     my $passedpath = "$path\/passed\/";
 
     #Create passed directory.

@@ -35,12 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../reader/grreader.h"
 #include "../opt/comopt.h"
 
-CHAR const* g_output_file_name = nullptr;
-CHAR const* g_xocc_version = "1.2.3";
-CHAR const* g_c_file_name = nullptr;
-CHAR const* g_gr_file_name = nullptr;
-CHAR const* g_dump_file_name = nullptr;
-bool g_is_dumpgr = false;
 static bool g_cfg_opt = true;
 static bool g_ask_for_help = false;
 
@@ -68,7 +62,42 @@ static bool is_gr_source_file(CHAR const* fn)
 }
 
 
-static bool process_optimize(INT argc, CHAR const* argv[], INT & i)
+static void disable_opt(INT opt_level)
+{
+    switch (opt_level) {
+    case OPT_LEVEL0:
+        break;
+    case OPT_LEVEL1:
+        break;
+    case OPT_LEVEL2:
+        xoc::g_do_cp = false;
+        xoc::g_do_dce = false;
+        xoc::g_do_licm = false;
+        xoc::g_do_rp = false;
+        g_cfg_opt = false;
+        break;
+    case OPT_LEVEL3:
+        xoc::g_do_cp = false;
+        xoc::g_do_cp_aggressive = false;
+        xoc::g_do_dce = false;
+        xoc::g_do_dce_aggressive = false;
+        xoc::g_do_licm = false;
+        xoc::g_do_rp = false;
+        xoc::g_do_lftr = false;
+        g_cfg_opt = false;
+        break;
+    case SIZE_OPT:
+        xoc::g_do_dce = false;
+        xoc::g_do_licm = false;
+        xoc::g_do_rp = false;
+        g_cfg_opt = false;
+        break;
+    default: UNREACHABLE();
+    }
+}
+
+
+static bool process_opt(INT argc, CHAR const* argv[], INT & i)
 {
     DUMMYUSE(argc);
     CHAR const* cmdstr = &argv[i][1];
@@ -91,6 +120,7 @@ static bool process_optimize(INT argc, CHAR const* argv[], INT & i)
         xoc::g_do_rp = true;
         xoc::g_do_pr_ssa = true;
         xoc::g_do_md_ssa = true;
+        g_cfg_opt = true;
         break;
     case '3':
         xoc::g_opt_level = OPT_LEVEL3;
@@ -103,6 +133,7 @@ static bool process_optimize(INT argc, CHAR const* argv[], INT & i)
         xoc::g_do_lftr = true;
         xoc::g_do_pr_ssa = true;
         xoc::g_do_md_ssa = true;
+        g_cfg_opt = true;
         break;
     case 's':
     case 'S':
@@ -112,6 +143,7 @@ static bool process_optimize(INT argc, CHAR const* argv[], INT & i)
         xoc::g_do_rp = true;
         xoc::g_do_pr_ssa = true;
         xoc::g_do_md_ssa = true;
+        g_cfg_opt = true;
         break;
     default:
         xoc::g_opt_level = OPT_LEVEL1;
@@ -160,6 +192,7 @@ protected:
 public:
     static CHAR const* dump_option_prefix;
     static CHAR const* disable_option_prefix;
+    static CHAR const* only_option_prefix;
 
 public:
     static UINT getNumOfOption();
@@ -243,6 +276,7 @@ public:
 
 CHAR const* BoolOption::dump_option_prefix = "dump-";
 CHAR const* BoolOption::disable_option_prefix = "no-";
+CHAR const* BoolOption::only_option_prefix = "only-";
 
 BoolOption::Desc const BoolOption::option_desc[] = {
     { "time", &xoc::g_show_time,
@@ -261,6 +295,8 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "enable dead-code-elimination optimization", },
     { "infer_type", &xoc::g_infer_type,
       "enable type inference", },
+    { "vrp", &xoc::g_do_vrp,
+      "enable value range propagation", },
     { "dce_aggr", &xoc::g_do_dce_aggressive,
       "enable aggressive-dead-code-elimination optimization", },
     { "lftr", &xoc::g_do_lftr,
@@ -309,8 +345,10 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump alias-analysis", },
     { "dce", &xoc::g_dump_opt.is_dump_dce,
       "dump dead-code-elimination", },
-    { "infertype", &xoc::g_dump_opt.is_dump_infertype,
+    { "infer_type", &xoc::g_dump_opt.is_dump_infertype,
       "dump infer-type", },
+    { "vrp", &xoc::g_dump_opt.is_dump_vrp,
+      "dump value-range-propagation", },
     { "invert_brtgt", &xoc::g_dump_opt.is_dump_invert_brtgt,
       "dump invert-branch-target", },
     { "lftr", &xoc::g_dump_opt.is_dump_lftr,
@@ -456,17 +494,78 @@ static bool dispatchByPrefixDump(CHAR const* cmdstr, INT argc,
 }
 
 
-static bool dispatchByPrefix(CHAR const* cmdstr, INT argc, CHAR const* argv[],
-                             INT & i, bool ** boption)
+static bool dispatchByPrefixOnly(CHAR const* cmdstr, INT argc,
+                                 CHAR const* argv[],
+                                 INT & i, bool ** boption)
+{
+    if (BoolOption::is_option(cmdstr, boption)) {
+        disable_opt(xoc::g_opt_level);
+        ASSERT0(boption);
+        **boption = true;
+        i++;
+        return true;
+    }
+    return false;
+}
+
+
+static bool recog_option(CHAR const* cmdstr, INT argc, CHAR const* argv[],
+                         INT & i, bool ** boption)
+{
+    if (BoolOption::is_option(cmdstr, boption)) {
+        ASSERT0(*boption);
+        **boption = true;
+        i++;
+        return true;
+    }
+
+    INT * int_option = nullptr;
+    if (IntOption::is_option(cmdstr, &int_option)) {
+        ASSERT0(int_option);
+        CHAR const* n = nullptr;
+        if (i + 1 < argc && argv[i + 1] != nullptr) {
+            n = argv[i + 1];
+        }
+        if (n == nullptr) { return false; }
+        *int_option = (INT)xcom::xatoll(n, false);
+        i += 2;
+        return true;
+    }
+
+    return false;
+}
+
+
+static bool tryDispatchO_o(CHAR const* cmdstr, INT argc, CHAR const* argv[],
+                           INT & i)
 {
     switch (cmdstr[0]) {
-    case 'O': return process_optimize(argc, argv, i);
-    case 'o': return process_output_file(argc, argv, i);
+    case 'O':
+        if (xcom::xisdigit(cmdstr[1])) {
+            return process_opt(argc, argv, i);
+        }
+        break;
+    case 'o':
+        if (cmdstr[1] == 0) {
+            return process_output_file(argc, argv, i);
+        }
+        break;
     default:;
     }
 
+    return false;
+}
+
+
+static bool dispatchByPrefix(CHAR const* cmdstr, INT argc, CHAR const* argv[],
+                             INT & i, bool ** boption)
+{
     if (::strcmp(cmdstr, "help") == 0 || ::strcmp(cmdstr, "h") == 0) {
         g_ask_for_help = true;
+        return true;
+    }
+
+    if (tryDispatchO_o(cmdstr, argc, argv, i)) {
         return true;
     }
 
@@ -496,27 +595,14 @@ static bool dispatchByPrefix(CHAR const* cmdstr, INT argc, CHAR const* argv[],
         return dispatchByPrefixDump(cmdstr + strlen(prefix), argc, argv, i);
     }
 
-    if (BoolOption::is_option(cmdstr, boption)) {
-        ASSERT0(*boption);
-        **boption = true;
-        i++;
-        return true;
+    prefix = BoolOption::only_option_prefix;
+    if (xcom::xstrcmp(cmdstr, prefix, (INT)strlen(prefix))) {
+        return dispatchByPrefixOnly(cmdstr + strlen(prefix), argc, argv, i,
+                                    boption);
     }
 
-    INT * int_option = nullptr;
-    if (IntOption::is_option(cmdstr, &int_option)) {
-        ASSERT0(int_option);
-        CHAR const* n = nullptr;
-        if (i + 1 < argc && argv[i + 1] != nullptr) {
-            n = argv[i + 1];
-        }
-        if (n == nullptr) { return false; }
-        *int_option = (INT)xcom::xatoll(n, false);
-        i += 2;
-        return true;
-    }
-
-    return false;
+    //No prefix.    
+    return recog_option(cmdstr, argc, argv, i, boption);
 }
 
 
@@ -570,10 +656,12 @@ static void inferOption()
         xoc::g_do_refine_auto_insert_cvt = true;
         xoc::g_do_call_graph = false;
         xoc::g_do_ipa = false;
-        g_cfg_opt = false;
         xgen::g_do_lis = false;
+        g_cfg_opt = false;
     }
-
+    if (xoc::g_opt_level == OPT_LEVEL1) {
+        g_cfg_opt = false;
+    }
     if (!g_cfg_opt) {
         g_do_cfg_remove_empty_bb = false;
         g_do_cfg_remove_unreach_bb = false;
@@ -589,9 +677,9 @@ static void inferOption()
 
     if (xoc::g_dump_opt.isDumpAll()) {
         xoc::g_dump_opt.is_dump_before_pass = true;
-    } else {
+
         //IR's id may changed in different compilation.
-        xoc::g_dump_opt.is_dump_ir_id = false;
+        xoc::g_dump_opt.is_dump_ir_id = true;
     }
 }
 
@@ -610,9 +698,6 @@ static void report_unknown_option(UINT pos, CHAR const* argv[])
 bool processCmdLine(INT argc, CHAR const* argv[])
 {
     if (argc <= 1) { usage(); return false; }
-
-    xcom::List<CHAR const*> cfilelist;
-    xcom::List<CHAR const*> grfilelist;
     for (INT i = 1; i < argc;) {
         if (argv[i][0] == '-') {
             bool * boption = nullptr;
@@ -628,13 +713,13 @@ bool processCmdLine(INT argc, CHAR const* argv[])
         }
 
         if (is_c_source_file(argv[i])) {
-            cfilelist.append_tail(argv[i]);
+            g_cfile_list.append_tail(argv[i]);
             i++;
             continue;
         }
 
         if (is_gr_source_file(argv[i])) {
-            grfilelist.append_tail(argv[i]);
+            g_grfile_list.append_tail(argv[i]);
             i++;
             continue;
         }
@@ -642,24 +727,6 @@ bool processCmdLine(INT argc, CHAR const* argv[])
         report_unknown_option(i, argv);
         return false;
     }
-
-    //TDOO: compile all files in list at once.
-    g_c_file_name = cfilelist.get_tail();
-    g_gr_file_name = grfilelist.get_tail();
-
-    if (g_c_file_name != nullptr) {
-        g_hsrc = fopen(g_c_file_name, "rb");
-        if (g_hsrc == nullptr) {
-            fprintf(stdout, "xocc: cannot open %s, error information is %s\n",
-                    g_c_file_name, strerror(errno));
-            return false;
-        }
-    }
-
-    if (g_output_file_name != nullptr) {
-        UNLINK(g_output_file_name);
-    }
-
     inferOption();
     return true;
 }

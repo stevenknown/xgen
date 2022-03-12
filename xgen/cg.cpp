@@ -3314,11 +3314,11 @@ void CG::computeEntryAndExit(IN ORCFG & cfg,
          v != nullptr; v = cfg.get_next_vertex(c)) {
         ORBB * bb = cfg.getBB(v->id());
         ASSERT0(bb);
-        if (cfg.getInDegree(v) == 0) {
+        if (v->getInDegree() == 0) {
             ORBB_is_entry(bb) = true;
             entry_lst.append_tail(bb);
         }
-        if (cfg.getOutDegree(v) == 0) {
+        if (v->getOutDegree() == 0) {
             ORBB_is_exit(bb) = true;
             exit_lst.append_tail(bb);
         }
@@ -4027,8 +4027,8 @@ void CG::computeMaxRealParamSpace()
     START_TIMER(t, "Compute Max Real Parameter Space");
     if (m_rg->getIRList() != nullptr) {
         IRIter it;
-        for (IR const* ir = iterInit(m_rg->getIRList(), it);
-             ir != nullptr; ir = iterNext(it)) {
+        for (IR const* ir = xoc::iterInit(m_rg->getIRList(), it);
+             ir != nullptr; ir = xoc::iterNext(it)) {
             if (ir->isCallStmt()) {
                 evaluateCallArgSize(ir);
             }
@@ -4417,11 +4417,12 @@ void CG::createORCFG(OptCtx & oc)
 
     //Build CFG.
     START_TIMER(t0, "OR Control Flow Optimizations");
-    m_or_cfg->removeEmptyBB(oc);
+    xoc::CfgOptCtx ctx;
+    m_or_cfg->removeEmptyBB(oc, ctx);
     m_or_cfg->build(oc);
-    m_or_cfg->removeEmptyBB(oc);
+    m_or_cfg->removeEmptyBB(oc, ctx);
     m_or_cfg->computeExitList();
-    if (m_or_cfg->removeUnreachBB()) {
+    if (m_or_cfg->removeUnreachBB(ctx)) {
         m_or_cfg->computeExitList();
     }
     END_TIMER(t0, "OR Control Flow Optimizations");
@@ -4434,13 +4435,14 @@ static void performCFGOptimization(CG * cg, OptCtx & oc)
     START_TIMER(t1, "OR Control Flow Optimizations");
     bool change;
     ORCFG * cfg = cg->getORCFG();
+    xoc::CfgOptCtx ctx;
     do {
         change = false;
-        if (cfg->removeEmptyBB(oc)) {
+        if (cfg->removeEmptyBB(oc, ctx)) {
             cfg->computeExitList();
             change = true;
         }
-        if (cfg->removeUnreachBB()) {
+        if (cfg->removeUnreachBB(ctx)) {
             cfg->computeExitList();
             change = true;
         }
@@ -4462,7 +4464,7 @@ void CG::addReturnForEmptyRegion()
         ASSERTN(m_rg->getIRList() == nullptr,
                 ("IR list should have been split into BB list"));
         ASSERT0(bb->getNumOfIR() == 0);
-        bb->getIRList()->append_tail(ret);
+        bb->getIRList().append_tail(ret);
         return;
     }
     m_rg->addToIRList(ret);

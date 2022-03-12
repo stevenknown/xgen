@@ -169,7 +169,7 @@ public:
     UINT computeEstartAndLstart(BBSimulator const& sim, OUT OR ** fin_or);
     UINT computeCriticalPathLen(BBSimulator const& sim) const;
     virtual void clone(DataDepGraph & ddg);
-    void chainPredAndSucc(OR * o);
+    void fullyConnectPredAndSucc(OR * o);
     //Count memory usage for current object.
     size_t count_mem() const
     {
