@@ -83,8 +83,8 @@ void ARMRegion::simplify(OptCtx & oc)
         ASSERT0(verifyMDRef());
 
         //Before CFG building.
-        CfgOptCtx ctx;
-        getCFG()->removeEmptyBB(oc, ctx);
+        CfgOptCtx ctx(oc);
+        getCFG()->removeEmptyBB(ctx);
 
         getCFG()->rebuild(oc);
 
@@ -92,7 +92,7 @@ void ARMRegion::simplify(OptCtx & oc)
         //Remove empty bb when cfg rebuilted because
         //rebuilding cfg may generate redundant empty bb.
         //It disturbs the computation of entry and exit.
-        getCFG()->removeEmptyBB(oc, ctx);
+        getCFG()->removeEmptyBB(ctx);
 
         //Compute exit bb while cfg rebuilt.
         getCFG()->computeExitList();
@@ -145,8 +145,8 @@ bool ARMRegion::simplifyToPRmode(OptCtx & oc)
         //Remove empty bb when cfg rebuilt because
         //rebuilding cfg may generate redundant empty bb.
         //It disturbs the computation of entry and exit.
-        CfgOptCtx ctx;
-        cfg->removeEmptyBB(oc, ctx);
+        CfgOptCtx ctx(oc);
+        cfg->removeEmptyBB(ctx);
 
         //Compute entry bb, exit bb while cfg rebuilt.
         cfg->computeExitList();
@@ -194,8 +194,8 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         //Remove empty bb when cfg rebuilted because
         //rebuilding cfg may generate redundant empty bb.
         //It disturbs the computation of entry and exit.
-        CfgOptCtx ctx;
-        getCFG()->removeEmptyBB(oc, ctx);
+        CfgOptCtx ctx(oc);
+        getCFG()->removeEmptyBB(ctx);
 
         //Compute exit bb while cfg rebuilt.
         getCFG()->computeExitList();

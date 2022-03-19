@@ -75,6 +75,13 @@ public:
     virtual bool isRegionEntry(ORBB * bb) const { return ORBB_is_entry(bb); }
     virtual bool isRegionExit(ORBB * bb) const { return ORBB_is_exit(bb); }
 
+    virtual void removeDomInfo(C<ORBB*> * bbct, CfgOptCtx const& ctx)
+    {
+        if (ctx.need_update_dominfo()) {
+            DGraph::removeDomInfo(bbct->val()->id());
+        }
+    }
+
     //Remove 'bb' from CFG, vector and bb-list.
     virtual void removeBB(C<ORBB*> * bbct, CfgOptCtx const& ctx)
     {

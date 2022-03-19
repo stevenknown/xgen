@@ -341,6 +341,8 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump control-flow-graph", },
     { "cfgopt", &xoc::g_dump_opt.is_dump_cfgopt,
       "dump control-flow-graph optimizations", },
+    { "dom", &xoc::g_dump_opt.is_dump_dom,
+      "dump dominator information", },
     { "aa", &xoc::g_dump_opt.is_dump_aa,
       "dump alias-analysis", },
     { "dce", &xoc::g_dump_opt.is_dump_dce,
