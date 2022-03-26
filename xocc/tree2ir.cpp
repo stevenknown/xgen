@@ -2743,7 +2743,7 @@ static bool convertTreeStmtList(Tree * stmts, Region * rg, Decl const* retty)
     irs = rf->refineIRlist(irs, change2, rc);
     ASSERT0(xoc::verifyIRList(irs, nullptr, rg));
     ASSERT0(irs);
-    rg->setIRList(irs);
+    rg->addToIRList(irs);
 
     return true;
 }
@@ -2788,9 +2788,7 @@ static bool generateFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
 
     //Build current function region to be a
     //Region IR of program region.
-    xoc::IR * lst = rm->get_program()->getIRList();
-    xcom::add_next(&lst, rm->get_program()->buildRegion(r));
-    rm->get_program()->setIRList(lst);
+    rm->get_program()->addToIRList(rm->get_program()->buildRegion(r));
 
     //Itertive scanning scope to collect and append
     //all local-variable into VarTab of current region.
