@@ -44,15 +44,15 @@ void ARMLifeTimeMgr::considerSpecialConstraints(IN OR * o, SR const* sr,
         ASSERT0(low && high);
         if (sr == low) {
              for (REG tmpr = usable_regs.get_first();
-                 ((INT)tmpr) != -1;
-                 tmpr = usable_regs.get_next(tmpr)) {
+                  ((BSIdx)tmpr) != BS_UNDEF;
+                  tmpr = usable_regs.get_next(tmpr)) {
                 if (!armcg->isEvenReg(tmpr)) {
                     usable_regs.diff(tmpr);
                 }
             }
         } else if (sr == high) {
             for (REG tmpr = usable_regs.get_first();
-                 ((INT)tmpr) != -1; tmpr = usable_regs.get_next(tmpr)) {
+                 ((BSIdx)tmpr) != BS_UNDEF; tmpr = usable_regs.get_next(tmpr)) {
                 if (armcg->isEvenReg(tmpr)) {
                     usable_regs.diff(tmpr);
                 }
@@ -67,7 +67,7 @@ void ARMLifeTimeMgr::considerSpecialConstraints(IN OR * o, SR const* sr,
         SR * high = o->get_result(PAIR_HIGH_RES_IDX);
         if (sr == low) {
              for (REG tmpr = usable_regs.get_first();
-                 ((INT)tmpr) != -1;
+                 ((BSIdx)tmpr) != BS_UNDEF;
                  tmpr = usable_regs.get_next(tmpr)) {
                 if (!armcg->isEvenReg(tmpr)) {
                     usable_regs.diff(tmpr);
@@ -75,7 +75,7 @@ void ARMLifeTimeMgr::considerSpecialConstraints(IN OR * o, SR const* sr,
             }
         } else if (sr == high) {
             for (REG tmpr = usable_regs.get_first();
-                 ((INT)tmpr) != -1; tmpr = usable_regs.get_next(tmpr)) {
+                 ((BSIdx)tmpr) != BS_UNDEF; tmpr = usable_regs.get_next(tmpr)) {
                 if (armcg->isEvenReg(tmpr)) {
                     usable_regs.diff(tmpr);
                 }

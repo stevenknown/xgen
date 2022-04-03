@@ -1223,4 +1223,14 @@ sub perlSyntax
     perlSyntax($param0, \@param1);
 }
 
+sub copyDir
+{
+    my $old = $_[0]; #old directory
+    my $new = $_[1]; #new directory
+    my($num_of_files_and_dirs, $num_of_dirs, $depth_traversed) =
+        dircopy($org, $new)
+        or abortex();
+    return ($num_of_files_and_dirs, $num_of_dirs, $depth_traversed);
+}
+
 1;

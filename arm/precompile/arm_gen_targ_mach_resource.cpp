@@ -762,7 +762,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     SRDesc * sr_r = newSRDesc();
     SRD_valid_regfile_set(sr_r) = r;
     t = newRegSet();
-    for (INT rf = r->get_first(); rf != -1; rf = r->get_next(rf)) {
+    for (BSIdx rf = r->get_first(); rf != BS_UNDEF; rf = r->get_next(rf)) {
         t->bunion(regfile2regset[rf]);
     }
     SRD_valid_reg_set(sr_r) = t;
@@ -771,7 +771,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     SRDesc * sr_p = newSRDesc();
     SRD_valid_regfile_set(sr_p) = p;
     t = newRegSet();
-    for (INT rf = p->get_first(); rf != -1; rf = p->get_next(rf)) {
+    for (BSIdx rf = p->get_first(); rf != BS_UNDEF; rf = p->get_next(rf)) {
         t->bunion(regfile2regset[rf]);
     }
     SRD_valid_reg_set(sr_p) = t;
@@ -780,7 +780,8 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
     SRDesc * sr_cpsr = newSRDesc();
     SRD_valid_regfile_set(sr_cpsr) = cpsr;
     t = newRegSet();
-    for (INT rf = cpsr->get_first(); rf != -1; rf = cpsr->get_next(rf)) {
+    for (BSIdx rf = cpsr->get_first(); rf != BS_UNDEF;
+         rf = cpsr->get_next(rf)) {
         t->bunion(regfile2regset[rf]);
     }
     SRD_valid_reg_set(sr_cpsr) = t;

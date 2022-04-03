@@ -39,8 +39,8 @@ namespace xgen {
 //
 SR * ArgDescMgr::allocArgRegister(CG * cg)
 {
-    INT phyreg = m_argregs.get_first();
-    if (phyreg == -1) {
+    BSIdx phyreg = m_argregs.get_first();
+    if (phyreg == BS_UNDEF) {
         return nullptr;
     }
     m_argregs.diff(phyreg);
@@ -52,8 +52,8 @@ SR * ArgDescMgr::allocArgRegister(CG * cg)
 //The allocation will start at the next register.
 void ArgDescMgr::dropArgRegister()
 {
-    INT phyreg = m_argregs.get_first();
-    if (phyreg != -1) {
+    BSIdx phyreg = m_argregs.get_first();
+    if (phyreg != BS_UNDEF) {
         m_argregs.diff(phyreg);
     }
 }
@@ -1474,7 +1474,8 @@ xoc::Var const* CG::mapOR2Var(OR const* o) const
 //Compute regfile set that 'regs' indicated.
 bool CG::mapRegSet2RegFile(MOD Vector<INT> & regfilev, RegSet const* regs)
 {
-    for (INT reg = regs->get_first(); reg != -1; reg = regs->get_next(reg)) {
+    for (BSIdx reg = regs->get_first(); reg != BS_UNDEF;
+         reg = regs->get_next(reg)) {
         ASSERTN(reg > 0, ("First register number starts from zero at least."));
         REGFILE regfile = tmMapReg2RegFile(reg);
         INT count = regfilev.get(regfile);
@@ -2247,7 +2248,7 @@ bool CG::skipArgRegister(UINT sz, OUT ArgDescMgr * argdescmgr)
         ASSERT0(sz == 2 * GENERAL_REGISTER_SIZE);
         RegSet const* rs = argdescmgr->getArgRegSet();
         REG first_reg = rs->get_first();
-        if (first_reg == (REG)-1) {
+        if (first_reg == (REG)BS_UNDEF) {
             return false;
         }
         if (!isEvenReg(first_reg) || //bypass odd register
@@ -3603,8 +3604,8 @@ void CG::storeRegisterParameterBackToStack(List<ORBB*> * entry_lst,
 
         //Record bytesize of total parameters that has been passed.
         UINT passed_total_paramsz = 0;
-        for (INT phyreg = phyregset->get_first();
-             phyreg >= 0 && param != nullptr;
+        for (BSIdx phyreg = phyregset->get_first();
+             phyreg != BS_UNDEF && param != nullptr;
              phyreg = phyregset->get_next(phyreg)) {
             if (passed_paramsz == 0 && //only check if whole
                                        //value can be passed via reg

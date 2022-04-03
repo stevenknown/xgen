@@ -181,7 +181,7 @@ CHAR const* SR::get_name(StrBuf & buf, CG const* cg) const
         buf.strcat("'%s'", name);
 
         if (SR_var_ir(this) != nullptr) {
-            UINT ofst = SR_var_ir(this)->getOffset();
+            TMWORD ofst = SR_var_ir(this)->getOffset();
             if (ofst != 0) {
                 buf.strcat("+%u", ofst);
             }

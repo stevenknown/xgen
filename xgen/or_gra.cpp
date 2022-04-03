@@ -70,10 +70,11 @@ void OR_DF_MGR::dump()
         xcom::BitSet * live_out = &ORBB_liveout(bb);
         xcom::BitSet * def = get_def_var(bb);
         xcom::BitSet * use = get_use_var(bb);
-        INT i;
+        BSIdx i;
 
         note(getRegion(), "\nLIVE-IN SR: ");
-        for (i = live_in->get_first(); i != -1; i = live_in->get_next(i)) {
+        for (i = live_in->get_first(); i != BS_UNDEF;
+             i = live_in->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr);
 
@@ -82,7 +83,8 @@ void OR_DF_MGR::dump()
         }
 
         note(getRegion(), "\nLIVE-OUT SR: ");
-        for (i = live_out->get_first(); i != -1; i = live_out->get_next(i)) {
+        for (i = live_out->get_first(); i != BS_UNDEF;
+             i = live_out->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr != nullptr);
 
@@ -91,7 +93,7 @@ void OR_DF_MGR::dump()
         }
 
         note(getRegion(), "\nDEF SR: ");
-        for (i = def->get_first(); i != -1; i = def->get_next(i)) {
+        for (i = def->get_first(); i != BS_UNDEF; i = def->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr != nullptr);
 
@@ -100,7 +102,7 @@ void OR_DF_MGR::dump()
         }
 
         note(getRegion(), "\nUSE SR: ");
-        for (i = use->get_first(); i != -1; i = use->get_next(i)) {
+        for (i = use->get_first(); i != BS_UNDEF; i = use->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr != nullptr);
 
@@ -261,7 +263,7 @@ void GLT_MGR::dump()
 
     note(getRegion(), "\n==---- DUMP Global LIFE TIME ----==\n");
     prt(getRegion(), "---- SR lived BB\n");
-    for (INT i = srbs.get_first(); i >= 0; i = srbs.get_next(i)) {
+    for (BSIdx i = srbs.get_first(); i != BS_UNDEF; i = srbs.get_next(i)) {
         SR * sr = m_cg->mapSymbolReg2SR(i);
         ASSERT0(sr != nullptr);
         xcom::BitSet * livebbs = map_sr2livebbs(sr);
@@ -277,8 +279,9 @@ void GLT_MGR::dump()
         //Print live BB.
         if (livebbs == nullptr || livebbs->is_empty()) { continue; }
         INT start = 0;
-        for (INT u = livebbs->get_first(); u >= 0; u = livebbs->get_next(u)) {
-            for (INT j = start; j < u; j++) {
+        for (BSIdx u = livebbs->get_first(); u != BS_UNDEF;
+             u = livebbs->get_next(u)) {
+            for (BSIdx j = start; j < u; j++) {
                 buf.sprint("%d,", j);
                 for (UINT k = 0; k < buf.strlen(); k++) {
                     prt(getRegion(), " ");
@@ -350,7 +353,8 @@ void GLT_MGR::build(IN OR_DF_MGR & df_mgr)
                 continue;
         }
         //The sr which has occurred at more than two BBs will be gsr.
-        for (INT i = livein->get_first(); i >= 0; i = livein->get_next(i)) {
+        for (BSIdx i = livein->get_first(); i != BS_UNDEF;
+             i = livein->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr != nullptr);
             xcom::BitSet * livebbs = map_sr2livebbs(sr);
@@ -360,7 +364,8 @@ void GLT_MGR::build(IN OR_DF_MGR & df_mgr)
                 GLT_livebbs(glt) = livebbs;
             }
         }
-        for (INT i = liveout->get_first(); i >= 0; i = liveout->get_next(i)) {
+        for (BSIdx i = liveout->get_first(); i != BS_UNDEF;
+             i = liveout->get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERT0(sr != nullptr);
             xcom::BitSet * livebbs = map_sr2livebbs(sr);
@@ -480,7 +485,7 @@ bool GInterfGraph::isInterferred(IN G_LIFE_TIME * glt1,
     ORCFG * cfg = m_cg->getORCFG();
     xcom::BitSet inte;
     bs_intersect(*GLT_livebbs(glt1), *GLT_livebbs(glt2), inte);
-    for (INT i = inte.get_first(); i >= 0; i = inte.get_next(i)) {
+    for (BSIdx i = inte.get_first(); i != BS_UNDEF; i = inte.get_next(i)) {
         ORBB * bb = cfg->getBB(i);
         ASSERT0(bb != nullptr);
         LifeTimeMgr * ltmgr = m_glt_mgr->map_bb2ltmgr(bb);

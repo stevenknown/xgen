@@ -476,7 +476,7 @@ public:
     UINT getLiftTimeCount() const;
     LifeTime * getNextLifeTime(LifeTimeVecIter & cur);
     LifeTime * getFirstLifeTime(LifeTimeVecIter & cur);
-    void getOccInRange(INT start, INT end, IN LifeTime * lt,
+    void getOccInRange(BSIdx start, BSIdx end, IN LifeTime * lt,
                        MOD List<INT> & occs);
     INT getBackwardOcc(INT pos, IN LifeTime * lt, MOD bool * is_def);
     INT getForwardOcc(INT pos, IN LifeTime * lt, MOD bool * is_def);

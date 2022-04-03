@@ -452,8 +452,8 @@ void DataDepGraph::handleResultsPhyRegOut(OR const* o, SR const* sr,
 
     m_tmp_alias_regset.clean();
     collectAliasRegSet(reg, m_tmp_alias_regset);
-    for (INT i = m_tmp_alias_regset.get_first();
-         i >= 0; i = m_tmp_alias_regset.get_next(i)) {
+    for (BSIdx i = m_tmp_alias_regset.get_first();
+         i != BS_UNDEF; i = m_tmp_alias_regset.get_next(i)) {
         handleResultsPhyRegOut(o, (REG)i, map_reg2defors, map_reg2useors);
     }
 }
@@ -578,8 +578,8 @@ void DataDepGraph::handleOpndsPhyRegFlow(OR const* o, SR const* sr,
 
     m_tmp_alias_regset.clean();
     collectAliasRegSet(reg, m_tmp_alias_regset);
-    for (INT i = m_tmp_alias_regset.get_first();
-         i >= 0; i = m_tmp_alias_regset.get_next(i)) {
+    for (BSIdx i = m_tmp_alias_regset.get_first();
+         i != BS_UNDEF; i = m_tmp_alias_regset.get_next(i)) {
         handleOpndsPhyRegFlow(o, (REG)i, map_reg2defors, map_reg2useors);
     }
 }
@@ -1547,8 +1547,8 @@ void DataDepGraph::simplifyGraph()
         xcom::BitSet * bs = edge_indicator.get(i);
         if (bs && bs->get_elem_count() >= 2) {
             //Do not remove the first edge.
-            for (INT pos_i = bs->get_first();
-                 pos_i >= 0; pos_i = bs->get_next(pos_i)) {
+            for (BSIdx pos_i = bs->get_first();
+                 pos_i != BS_UNDEF; pos_i = bs->get_next(pos_i)) {
                 INT kid_from_vid = vex_vec.get(pos_i)->id();
                 INT kid_from_pos = vid2pos_in_bitset_map.get(kid_from_vid);
 

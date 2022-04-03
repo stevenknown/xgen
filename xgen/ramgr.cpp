@@ -313,8 +313,8 @@ void RaMgr::saveCalleeFPRegisterAtEntry(
 
     ORList ors;
     bool modified = false;
-    for (INT reg = used_regs->get_first();
-         reg != -1; reg = used_regs->get_next(reg)) {
+    for (BSIdx reg = used_regs->get_first();
+         reg != BS_UNDEF; reg = used_regs->get_next(reg)) {
         ors.clean();
 
         SR * sr = m_cg->getDedicatedSRForPhyReg(reg);
@@ -383,8 +383,8 @@ void RaMgr::saveCalleeFPRegisterAtExit(REGFILE regfile, ORBB * exit,
 
     ORList ors;
     bool modified = false;
-    for (INT reg = used_regs->get_first();
-         reg != -1; reg = used_regs->get_next(reg)) {
+    for (BSIdx reg = used_regs->get_first();
+         reg != BS_UNDEF; reg = used_regs->get_next(reg)) {
         ors.clean();
 
         SR * sr = m_cg->getDedicatedSRForPhyReg(reg);
@@ -459,8 +459,8 @@ void RaMgr::saveCalleeIntRegisterAtEntry(REGFILE regfile, ORBB * entry,
 
     ORList ors;
     bool modified = false;
-    for (INT reg = used_regs->get_first();
-         reg != -1; reg = used_regs->get_next(reg)) {
+    for (BSIdx reg = used_regs->get_first();
+         reg != BS_UNDEF; reg = used_regs->get_next(reg)) {
         ors.clean();
 
         SR * sr = m_cg->getDedicatedSRForPhyReg(reg);
@@ -577,8 +577,8 @@ void RaMgr::saveCalleeIntRegisterAtExit(REGFILE regfile, ORBB * exit,
 
     ORList ors;
     bool modified = false;
-    for (INT reg = used_regs->get_first();
-         reg != -1; reg = used_regs->get_next(reg)) {
+    for (BSIdx reg = used_regs->get_first();
+         reg != BS_UNDEF; reg = used_regs->get_next(reg)) {
         ors.clean();
 
         SR * sr = m_cg->getDedicatedSRForPhyReg(reg);

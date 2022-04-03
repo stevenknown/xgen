@@ -66,17 +66,10 @@ static void disable_opt(INT opt_level)
 {
     switch (opt_level) {
     case OPT_LEVEL0:
-        break;
     case OPT_LEVEL1:
-        break;
     case OPT_LEVEL2:
-        xoc::g_do_cp = false;
-        xoc::g_do_dce = false;
-        xoc::g_do_licm = false;
-        xoc::g_do_rp = false;
-        g_cfg_opt = false;
-        break;
     case OPT_LEVEL3:
+    case SIZE_OPT:
         xoc::g_do_cp = false;
         xoc::g_do_cp_aggressive = false;
         xoc::g_do_dce = false;
@@ -84,12 +77,8 @@ static void disable_opt(INT opt_level)
         xoc::g_do_licm = false;
         xoc::g_do_rp = false;
         xoc::g_do_lftr = false;
-        g_cfg_opt = false;
-        break;
-    case SIZE_OPT:
-        xoc::g_do_dce = false;
-        xoc::g_do_licm = false;
-        xoc::g_do_rp = false;
+        xoc::g_infer_type = false;
+        xoc::g_do_rce = false;
         g_cfg_opt = false;
         break;
     default: UNREACHABLE();
@@ -496,6 +485,7 @@ static bool dispatchByPrefixDump(CHAR const* cmdstr, INT argc,
 }
 
 
+//Note ONLY will not disable analysis passes, such as AA, DU.
 static bool dispatchByPrefixOnly(CHAR const* cmdstr, INT argc,
                                  CHAR const* argv[],
                                  INT & i, bool ** boption)
@@ -665,12 +655,13 @@ static void inferOption()
         g_cfg_opt = false;
     }
     if (!g_cfg_opt) {
-        g_do_cfg_remove_empty_bb = false;
-        g_do_cfg_remove_unreach_bb = false;
-        g_do_cfg_remove_trampolin_bb = false;
-        g_invert_brtgt = false;
-        g_do_cfg_remove_redundant_branch = false;
-        g_do_cfg_remove_trampolin_branch = false;
+        xoc::g_do_cfg_remove_empty_bb = false;
+        xoc::g_do_cfg_remove_unreach_bb = false;
+        xoc::g_do_cfg_remove_trampolin_bb = false;
+        xoc::g_invert_brtgt = false;
+        xoc::g_do_cfg_remove_redundant_branch = false;
+        xoc::g_do_cfg_remove_trampolin_branch = false;
+        xoc::g_do_cfg_remove_redundant_label = false;
     }
 
     //CG option is conform to XOCC's option.

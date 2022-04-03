@@ -202,7 +202,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         ASSERT0(getCFG()->verify());
 
         bool org = g_do_cfg_remove_unreach_bb;
-        //Unreachable BB have to removed before RPO computation.
+        //Unreachable BB have to be removed before RPO computation.
         g_do_cfg_remove_unreach_bb = true;
 
         getCFG()->performMiscOpt(oc);

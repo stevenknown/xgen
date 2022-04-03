@@ -156,7 +156,7 @@ bool LIS::isIssueCand(OR const* o) const
 bool LIS::isFuncUnitOccupied(UnitSet const& us, CLUST clst,
                              OR const* const issue_ors [SLOT_NUM]) const
 {
-    for (INT i = us.get_first(); i != -1; i = us.get_next(i)) {
+    for (BSIdx i = us.get_first(); i != BS_UNDEF; i = us.get_next(i)) {
         SLOT s = m_cg->mapUnit2Slot((UNIT)i, clst);
         if (issue_ors[s] != nullptr) {
             //This slot has issued other operation.
