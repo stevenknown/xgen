@@ -176,6 +176,9 @@ public:
     OR * getLastOR() const { return ORBB_last_or(this); }
 
     bool hasMDPhi(CFG<ORBB, OR> const* cfg) const { return false; }
+    bool hasLabel(LabelInfo const* o) const;
+    bool hasLabel() const
+    { return const_cast<ORBB*>(this)->getLabelList().get_elem_count() != 0; }
 
     UINT id() const { return ORBB_id(this); }
     bool isLowerBoundary(OR * o);
@@ -183,7 +186,6 @@ public:
     bool is_entry() const { return ORBB_is_entry(this); }
     bool is_exit() const { return ORBB_is_exit(this); }
     bool is_target() const { return ORBB_is_target(this); }
-    bool hasLabel(LabelInfo const* o);
     bool isBoundary(OR * o)
     { return (isUpperBoundary(o) || isLowerBoundary(o)); }
     bool isUpperBoundary(OR * o) { return o->is_label_or(); }

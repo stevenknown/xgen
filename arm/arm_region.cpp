@@ -133,7 +133,7 @@ bool ARMRegion::simplifyToPRmode(OptCtx & oc)
     simp.setSimpILdISt();
     simp.setSimpToLowestHeight();
     ASSERT0(verifyIRandBB(getBBList(), this));
-    ASSERT0(verifyMDDUChain(this));
+    ASSERT0(verifyMDDUChain(this, oc));
     getIRSimp()->simplifyBBlist(bbl, &simp);
     if (SIMP_need_recon_bblist(&simp) && g_cst_bb_list &&
         reconstructBBList(oc)) {
@@ -439,9 +439,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
 
     ASSERT0((!g_do_md_du_analysis && !g_do_md_ssa) || verifyMDRef());
     ASSERT0(verifyIRandBB(getBBList(), this));
-    if (oc.is_pr_du_chain_valid() || oc.is_nonpr_du_chain_valid()) {
-        ASSERT0(verifyMDDUChain(this));
-    }
+    ASSERT0(verifyMDDUChain(this, oc));
 
     PRSSAMgr * ssamgr = (PRSSAMgr*)getPRSSAMgr();
     if (ssamgr != nullptr && ssamgr->is_valid()) {
@@ -458,10 +456,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         OC_is_pr_du_chain_valid(oc) = false;
         OC_is_nonpr_du_chain_valid(oc) = false;
     }
-
-    UINT duflag = oc.is_pr_du_chain_valid() ? DUOPT_COMPUTE_PR_DU : 0;
-    duflag |= oc.is_nonpr_du_chain_valid() ? DUOPT_COMPUTE_NONPR_DU : 0;
-    ASSERT0(verifyMDDUChain(this, duflag));
+    ASSERT0(verifyMDDUChain(this, oc));
 
     ///////////////////////////////////////////////////
     //DO NOT DO OPTIMIZATION ANY MORE AFTER THIS LINE//

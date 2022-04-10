@@ -197,7 +197,7 @@ void IR2OR::convertLoadConstBool(IR const* ir, OUT RecycORList & ors,
     //Immediate can be pointer, e.g: int * p = 0;
     ASSERT0(ir->is_int() || ir->is_ptr());
     SR * load_val = m_cg->genReg();
-    SR * load_val2 = nullptr;
+    //SR * load_val2 = nullptr;
     RecycORList tors(this);
     m_cg->buildMove(load_val, m_cg->genIntImm(CONST_int_val(ir), false),
                     tors.getList(), cont);

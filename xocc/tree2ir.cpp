@@ -33,28 +33,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define RETVAL_BUFFER_NAME "retval_buf_of_non_name_func_pointer"
 
-//Check if t is formed in following:
-//e.g:s.bg[3] = ...
-//  ARRAY
-//   |---3
-//   |----DMEM/INDMEM
-//             |----s
-//             |----bg
-static bool is_field_ref_whole_array(Tree const* t)
-{
-    if (t->getCode() != TR_DMEM && t->getCode() != TR_INDMEM) { return false; }
-
-    Tree * parent = TREE_parent(t);
-    if (parent == nullptr) { return false; }
-
-    Decl const* field_decl = TREE_result_type(TREE_field(t));
-    if (field_decl->is_array() && parent->getCode() != TR_ARRAY) {
-        return true;
-    }
-    return false;
-}
-
-
 static bool isAncestorsIncludeLDA(Tree const* t)
 {
     while (t != nullptr && t->getCode() != TR_LDA) {

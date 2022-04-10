@@ -33,8 +33,6 @@ author: Su Zhenyu
 
 namespace xgen {
 
-#define MAX_ST 5
-#define MAX_INPUT 10
 #define MIN_IOR_NUM 0.85 //Defined minimal factor of percent to assign regfile
 
 //Defined base factor that must be added to estimation in cyc-estimate

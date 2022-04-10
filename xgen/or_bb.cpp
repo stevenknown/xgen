@@ -469,10 +469,12 @@ bool ORBB::hasCall()
 
 
 //Is bb containing such label carried by 'lir'.
-bool ORBB::hasLabel(LabelInfo const* lab)
+bool ORBB::hasLabel(LabelInfo const* lab) const
 {
-    for (LabelInfo const* li = getLabelList().get_head();
-         li != nullptr; li = getLabelList().get_next()) {
+    for (LabelInfo const* li = const_cast<ORBB*>(this)->getLabelList().
+            get_head();
+         li != nullptr;
+         li = const_cast<ORBB*>(this)->getLabelList().get_next()) {
         if (isSameLabel(li, lab)) {
             return true;
         }

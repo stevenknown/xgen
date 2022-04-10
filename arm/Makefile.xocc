@@ -41,6 +41,8 @@ else
 endif
 $(info "HOST_CC=$(HOST_CC),TARGET=$(TARGET),CFLAGS=$(CFLAGS),WIN=$(WIN),WSL=$(WSL)")
 
+CFLAGS += -Wall
+
 include ../$(TARG_DIR)/Makefile.inc
 include ../xocc/Makefile.inc
 include ../reader/Makefile.inc
@@ -67,20 +69,21 @@ CFLAGS +=\
    -Wpointer-arith \
    -Wno-multichar \
    -Winit-self \
+   -Wconversion \
    -Wswitch \
-   -D_SUPPORT_C11_ \
-   -Wall #-DDEBUG_XOC -fprofile-arcs -ftest-coverage # # 
-
-#CFLAGS+=\
-   -Werror=pointer-to-int-cast \
-   -Wmaybe-uninitialized \
-   -Wuninitialized \
-   -Wstrict-overflow \
-   -Wtype-limits \
-   -Werror=reorder
+   -D_SUPPORT_C11_
+   #-DDEBUG_XOC
+   #-fprofile-arcs
+   #-ftest-coverage
+   #-Werror=pointer-to-int-cast
+   #-Wmaybe-uninitialized
+   #-Wuninitialized
+   #-Wstrict-overflow
+   #-Wtype-limits
+   #-Werror=reorder
 
 ifneq (,$(filter $(HOST_CC),g++ gcc))
-  CFLAGS += -Wstrict-aliasing=3 -finline-limit=10000000
+  CFLAGS += -Wno-strict-aliasing -finline-limit=10000000
 endif
 
 xocc.exe: targ_gen xocc_objs opt_objs arm_objs com_objs cfe_objs reader_objs xgen_objs

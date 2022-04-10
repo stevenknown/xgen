@@ -701,8 +701,10 @@ static void buildLdaForGlobalVar(Dbx const* dbx, xoc::Var const* var,
     //For the sake of clear dumpping, we tend to the second policy.
     #ifdef USE_GLOBAL_VARIABLE_LDA_POLICY1
     buildLdaForGlobalVarPolicy1(base, ofst, cg, tors, cont);
+    DUMMYUSE(buildLdaForGlobalVarPolicy2);
     #else
     buildLdaForGlobalVarPolicy2(var, lda_ofst, cg, tors, cont);
+    DUMMYUSE(buildLdaForGlobalVarPolicy1);
     #endif
 
     //Transfer the debug information.
