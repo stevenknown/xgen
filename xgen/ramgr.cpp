@@ -322,6 +322,7 @@ void RaMgr::saveCalleeFPRegisterAtEntry(
             //Dedicated SR has assigned reg already.
             sr = m_cg->genReg((UINT)GENERAL_REGISTER_SIZE);
             SR_regfile(sr) = tmMapReg2RegFile(reg);
+            ASSERT0(xgen::isLegalReg(reg));
             SR_phy_reg(sr) = reg;
             SR_is_global(sr) = true; //alloc function level var.
         }
@@ -392,6 +393,7 @@ void RaMgr::saveCalleeFPRegisterAtExit(REGFILE regfile, ORBB * exit,
             //Dedicated SR has assigned reg already.
             sr = m_cg->genReg((UINT)GENERAL_REGISTER_SIZE);
             SR_regfile(sr) = tmMapReg2RegFile(reg);
+            ASSERT0(xgen::isLegalReg(reg));
             SR_phy_reg(sr) = reg;
             SR_is_global(sr) = true; //alloc function level var.
         }
@@ -468,6 +470,7 @@ void RaMgr::saveCalleeIntRegisterAtEntry(REGFILE regfile, ORBB * entry,
             //Dedicated SR has assigned reg already.
             sr = m_cg->genReg((UINT)GENERAL_REGISTER_SIZE);
             SR_regfile(sr) = tmMapReg2RegFile(reg);
+            ASSERT0(xgen::isLegalReg(reg));
             SR_phy_reg(sr) = reg;
             SR_is_global(sr) = true; //alloc function level var.
         }
@@ -586,6 +589,7 @@ void RaMgr::saveCalleeIntRegisterAtExit(REGFILE regfile, ORBB * exit,
             //Dedicated SR has assigned reg already.
             sr = m_cg->genReg((UINT)GENERAL_REGISTER_SIZE);
             SR_regfile(sr) = tmMapReg2RegFile(reg);
+            ASSERT0(xgen::isLegalReg(reg));
             SR_phy_reg(sr) = reg;
             SR_is_global(sr) = true; //alloc function level var.
         }

@@ -43,16 +43,15 @@ void ARMLifeTimeMgr::considerSpecialConstraints(IN OR * o, SR const* sr,
         SR * high = o->get_store_val(1);
         ASSERT0(low && high);
         if (sr == low) {
-             for (REG tmpr = usable_regs.get_first();
-                  ((BSIdx)tmpr) != BS_UNDEF;
-                  tmpr = usable_regs.get_next(tmpr)) {
+             for (BSIdx tmpr = usable_regs.get_first();
+                  tmpr != BS_UNDEF; tmpr = usable_regs.get_next(tmpr)) {
                 if (!armcg->isEvenReg(tmpr)) {
                     usable_regs.diff(tmpr);
                 }
             }
         } else if (sr == high) {
-            for (REG tmpr = usable_regs.get_first();
-                 ((BSIdx)tmpr) != BS_UNDEF; tmpr = usable_regs.get_next(tmpr)) {
+            for (BSIdx tmpr = usable_regs.get_first();
+                 tmpr != BS_UNDEF; tmpr = usable_regs.get_next(tmpr)) {
                 if (armcg->isEvenReg(tmpr)) {
                     usable_regs.diff(tmpr);
                 }
@@ -66,16 +65,15 @@ void ARMLifeTimeMgr::considerSpecialConstraints(IN OR * o, SR const* sr,
         SR * low = o->get_result(PAIR_LOW_RES_IDX);
         SR * high = o->get_result(PAIR_HIGH_RES_IDX);
         if (sr == low) {
-             for (REG tmpr = usable_regs.get_first();
-                 ((BSIdx)tmpr) != BS_UNDEF;
-                 tmpr = usable_regs.get_next(tmpr)) {
+             for (BSIdx tmpr = usable_regs.get_first();
+                 tmpr != BS_UNDEF; tmpr = usable_regs.get_next(tmpr)) {
                 if (!armcg->isEvenReg(tmpr)) {
                     usable_regs.diff(tmpr);
                 }
             }
         } else if (sr == high) {
-            for (REG tmpr = usable_regs.get_first();
-                 ((BSIdx)tmpr) != BS_UNDEF; tmpr = usable_regs.get_next(tmpr)) {
+            for (BSIdx tmpr = usable_regs.get_first();
+                 tmpr != BS_UNDEF; tmpr = usable_regs.get_next(tmpr)) {
                 if (armcg->isEvenReg(tmpr)) {
                     usable_regs.diff(tmpr);
                 }
@@ -85,7 +83,6 @@ void ARMLifeTimeMgr::considerSpecialConstraints(IN OR * o, SR const* sr,
     }
     default:;
     }
-
 }
 
 
@@ -131,6 +128,7 @@ void ARMLifeTimeMgr::handlePreferredReg(OR const* o)
                 ("Global sr should be assigned register during GRA."));
         ASSERT0(m_cg->isValidRegInSRVec(const_cast<OR*>(o),
                                         high, 1, is_result));
+        ASSERT0(high->getPhyReg() > REG_UNDEF);
         LT_preferred_reg(lowlt) = SR_phy_reg(high) - 1;
     }
 }

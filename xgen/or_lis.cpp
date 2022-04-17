@@ -91,7 +91,7 @@ void LIS::computeReadyList(MOD DataDepGraph & ddg,
     bool redo = false;
 
 COMP_REDO:
-    INT c;
+    VertexIter c;
     for (xcom::Vertex * v = ddg.get_first_vertex(c);
          v != nullptr; v = ddg.get_next_vertex(c)) {
         xcom::EdgeC * ck_lst;

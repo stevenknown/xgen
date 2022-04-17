@@ -42,7 +42,7 @@ void RegSet::dump(FILE * h) const
     for (BSIdx i = get_first(); i != BS_UNDEF;) {
         fprintf(h, "%s", tmGetRegName((REG)i));
         i = get_next(i);
-        if (i >= 0) {
+        if (i != BS_UNDEF) {
             fprintf(h, ",");
         }
     }

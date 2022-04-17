@@ -149,7 +149,7 @@ SectionMgr::SectionMgr(CGMgr * cgmgr)
 SectionMgr::~SectionMgr()
 {
     ConstMDIter mdit;
-    for (INT i = 0; i <= m_sect_vec.get_last_idx(); i++) {
+    for (VecIdx i = 0; i <= m_sect_vec.get_last_idx(); i++) {
         Section * sect = m_sect_vec[i];
         ASSERT0(sect);
 

@@ -51,7 +51,7 @@ VarMap::VarMap(ORBB * bb)
 UINT VarMap::map_or_cyc2varidx(UINT or_idx, UINT cyc)
 {
     ASSERT0(m_oridx2vecidx.get(or_idx) >= 0);
-    INT vecidx = m_oridx2vecidx.get(or_idx);
+    VecIdx vecidx = m_oridx2vecidx.get(or_idx);
     ASSERT0(vecidx <= m_vecidx2or.get_last_idx());
     return cyc * m_num_or + vecidx;
 }
@@ -370,7 +370,7 @@ void RegFileAffinityGraph::dump()
     fprintf(h, "\n/*\n");
 
     StrBuf tmp(64);
-    for (INT i = 0; i <= m_id2lt.get_last_idx(); i++) {
+    for (VecIdx i = 0; i <= m_id2lt.get_last_idx(); i++) {
         LifeTime * lt = m_id2lt[i];
         if (lt == nullptr) { continue; }
 
@@ -417,7 +417,7 @@ void RegFileAffinityGraph::dump()
           "edge.color: darkgreen\n");
 
     //Print nodes
-    INT c;
+    VertexIter c;
     for(xcom::Vertex * v = get_first_vertex(c);
         v != nullptr; v = get_next_vertex(c)){
         fprintf(h,
@@ -617,9 +617,7 @@ void InterfGraph::getLifeTimeList(List<LifeTime*> & lt_group, REGFILE regfile)
 
 
 void InterfGraph::getLifeTimeList(List<LifeTime*> & lt_group,
-                                  REGFILE regfile,
-                                  INT start,
-                                  INT end)
+                                  REGFILE regfile, BSIdx start, BSIdx end)
 {
     DUMMYUSE(start);
     DUMMYUSE(end);
@@ -926,24 +924,24 @@ LifeTimeMgr::LifeTimeMgr(CG * cg)
 }
 
 
-OR * LifeTimeMgr::getOR(UINT pos)
+OR * LifeTimeMgr::getOR(BSIdx pos)
 {
-    ASSERTN(((INT)pos) >= 0 && ((INT)pos) <= m_pos2or_map.get_last_idx(),
+    ASSERTN(pos != BS_UNDEF &&
+            ((VecIdx)pos) <= m_pos2or_map.get_last_idx(),
             ("position overrange"));
     return m_pos2or_map.get(pos);
 }
 
 
-INT LifeTimeMgr::getPos(OR * o, bool is_result)
+BSIdx LifeTimeMgr::getPos(OR * o, bool is_result)
 {
     ASSERTN(o != nullptr && m_or2pos_map.get(o->id()) > 0, ("o is illegal"));
     if (is_result) {
         ASSERTN(m_or2pos_map.get(o->id()) > 1, ("o is illegal"));
         return m_or2pos_map.get(o->id());
-    } else {
-        ASSERTN(m_or2pos_map.get(o->id()) > 0, ("o is illegal"));
-        return m_or2pos_map.get(o->id()) - 1;
     }
+    ASSERTN(m_or2pos_map.get(o->id()) > 0, ("o is illegal"));
+    return m_or2pos_map.get(o->id()) - 1;
 }
 
 
@@ -1133,7 +1131,7 @@ void LifeTimeMgr::freeLifeTime(LifeTime * lt)
 void LifeTimeMgr::freeAllLifeTime()
 {
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
-    for (INT i = LTID_UNDEF + 1; i <= m_lt_tab.get_last_idx(); i++) {
+    for (VecIdx i = LTID_UNDEF + 1; i <= m_lt_tab.get_last_idx(); i++) {
         LifeTime * lt = m_lt_tab.get(i);
         if (lt != nullptr) {
             //Some lifetime may be removed during LRA.
@@ -1146,7 +1144,7 @@ void LifeTimeMgr::freeAllLifeTime()
 UINT LifeTimeMgr::getLiftTimeCount() const
 {
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
-    return m_lt_tab.get_last_idx() + 1;
+    return m_lt_tab.get_elem_count();
 }
 
 
@@ -1178,7 +1176,7 @@ LifeTime * LifeTimeMgr::getLifeTime(SR * sr)
 LifeTime * LifeTimeMgr::getNextLifeTime(LifeTimeVecIter & cur)
 {
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
-    INT i = cur + 1;
+    VecIdx i = cur + 1;
     for (; i <= m_lt_tab.get_last_idx(); i++) {
         LifeTime * lt = m_lt_tab.get(i);
         if (lt != nullptr) {
@@ -1194,7 +1192,7 @@ LifeTime * LifeTimeMgr::getNextLifeTime(LifeTimeVecIter & cur)
 LifeTime * LifeTimeMgr::getFirstLifeTime(LifeTimeVecIter & cur)
 {
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
-    INT i = 0;
+    VecIdx i = 0;
     for (; i <= m_lt_tab.get_last_idx(); i++) {
         LifeTime * lt = m_lt_tab.get(i);
         if (lt != nullptr) {
@@ -1336,14 +1334,15 @@ RegSet * LifeTimeMgr::getGRAUsedReg()
 void LifeTimeMgr::getOccInRange(BSIdx start, BSIdx end, IN LifeTime * lt,
                                 MOD List<INT> &occs)
 {
-    ASSERTN(start <= end && start >= 0 && end >= 0, ("out of range"));
-    ASSERTN(start >= LT_FIRST_POS && end <= (INT)(getMaxLifeTimeLen() - 1),
+    ASSERTN(start <= end && start != BS_UNDEF && end != BS_UNDEF,
+            ("out of range"));
+    ASSERTN(start >= LT_FIRST_POS && end <= (BSIdx)(getMaxLifeTimeLen() - 1),
             ("out of range"));
     start = MAX(start, LT_pos(lt)->get_first());
     end = MIN(end, LT_pos(lt)->get_last());
     PosInfo * pi;
-    for (INT i = start; i <= end; i++) {
-        if (i == LT_FIRST_POS || i == (INT)(getMaxLifeTimeLen() - 1)) {
+    for (BSIdx i = start; i <= end; i++) {
+        if (i == LT_FIRST_POS || i == (BSIdx)(getMaxLifeTimeLen() - 1)) {
             occs.append_tail(i);
         } else if ((pi = LT_desc(lt).get(i)) != nullptr) {
             occs.append_tail(i);
@@ -1354,18 +1353,19 @@ void LifeTimeMgr::getOccInRange(BSIdx start, BSIdx end, IN LifeTime * lt,
 
 //Get backward occurrences of 'pos'
 //e.g:Lowest_Pos...Backward_Occ....Pos.....Highest_Pos
-INT LifeTimeMgr::getBackwardOcc(INT pos, IN LifeTime * lt, MOD bool * is_def)
+BSIdx LifeTimeMgr::getBackwardOcc(BSIdx pos, IN LifeTime * lt,
+                                  MOD bool * is_def)
 {
-    INT backwpos = -1;
     if (pos <= LT_FIRST_POS) {
-        return -1;
+        return BS_UNDEF;
     }
     //Find the DEF of pos1.
-    ASSERTN(pos >= LT_FIRST_POS && pos <= (INT)(getMaxLifeTimeLen() - 1),
+    ASSERTN(pos >= LT_FIRST_POS && pos <= (BSIdx)(getMaxLifeTimeLen() - 1),
             ("Illegal position"));
     BSIdx i;
     //Get first pos of current life time.
     BSIdx firstpos = LT_pos(lt)->get_first();
+    BSIdx backwpos = BS_UNDEF;
     for (i = pos - 1; i >= firstpos; i--) {
         PosInfo * pi = LT_desc(lt).get(i);
         if (pi != nullptr) {
@@ -1378,7 +1378,7 @@ INT LifeTimeMgr::getBackwardOcc(INT pos, IN LifeTime * lt, MOD bool * is_def)
             break;
         }
     }
-    if (backwpos == -1) { //Not find any occ.
+    if (backwpos == BS_UNDEF) { //Not find any occ.
         if (firstpos == LT_FIRST_POS) {
             backwpos = LT_FIRST_POS;
             *is_def = true;
@@ -1390,16 +1390,16 @@ INT LifeTimeMgr::getBackwardOcc(INT pos, IN LifeTime * lt, MOD bool * is_def)
 
 //Get forward occurrences of 'pos'
 //e.g:Lowest_Pos....Pos...Forward_Occ...Highest_Pos
-INT LifeTimeMgr::getForwardOcc(INT pos, IN LifeTime * lt, MOD bool * is_def)
+BSIdx LifeTimeMgr::getForwardOcc(BSIdx pos, IN LifeTime * lt, MOD bool * is_def)
 {
-    INT forwpos = -1;
-    ASSERTN(pos >= LT_FIRST_POS && pos <= (INT)(getMaxLifeTimeLen() - 1),
+    BSIdx forwpos = BS_UNDEF;
+    ASSERTN(pos >= LT_FIRST_POS && pos <= (BSIdx)(getMaxLifeTimeLen() - 1),
             ("Illegal position"));
-    if (pos >= (INT)(getMaxLifeTimeLen() - 1)) {
-        return -1;
+    if (pos >= (BSIdx)(getMaxLifeTimeLen() - 1)) {
+        return BS_UNDEF;
     }
-    INT lastpos = LT_pos(lt)->get_last(); //Get last pos of current life time.
-    for (INT i = pos + 1; i <= lastpos; i++) {
+    BSIdx lastpos = LT_pos(lt)->get_last(); //Get last pos of current life time.
+    for (BSIdx i = pos + 1; i <= lastpos; i++) {
         PosInfo * pi = LT_desc(lt).get(i);
         if (pi != nullptr) {
             forwpos = i;
@@ -1411,8 +1411,8 @@ INT LifeTimeMgr::getForwardOcc(INT pos, IN LifeTime * lt, MOD bool * is_def)
             break;
         }
     }
-    if (forwpos == -1) { //Not find any occ.
-        if (lastpos == (INT)(getMaxLifeTimeLen() - 1)) {
+    if (forwpos == BS_UNDEF) { //Not find any occ.
+        if (lastpos == (BSIdx)(getMaxLifeTimeLen() - 1)) {
             forwpos = (getMaxLifeTimeLen() - 1);
             *is_def = false;
         }
@@ -1421,7 +1421,7 @@ INT LifeTimeMgr::getForwardOcc(INT pos, IN LifeTime * lt, MOD bool * is_def)
 }
 
 
-INT LifeTimeMgr::get_backward_use_occ(INT pos, IN LifeTime * lt)
+BSIdx LifeTimeMgr::get_backward_use_occ(BSIdx pos, IN LifeTime * lt)
 {
     bool is_def = false;
     do {
@@ -1429,12 +1429,12 @@ INT LifeTimeMgr::get_backward_use_occ(INT pos, IN LifeTime * lt)
         if (!is_def) {
             break;
         }
-    } while(pos != -1);
+    } while (pos != BS_UNDEF);
     return pos;
 }
 
 
-INT LifeTimeMgr::getForwardOccForUSE(INT pos, IN LifeTime * lt)
+BSIdx LifeTimeMgr::getForwardOccForUSE(BSIdx pos, IN LifeTime * lt)
 {
     bool is_def = false;
     do {
@@ -1442,12 +1442,12 @@ INT LifeTimeMgr::getForwardOccForUSE(INT pos, IN LifeTime * lt)
         if (!is_def) {
             break;
         }
-    } while(pos != -1);
+    } while (pos != BS_UNDEF);
     return pos;
 }
 
 
-INT LifeTimeMgr::getBackwardOccForDEF(INT pos, IN LifeTime * lt)
+BSIdx LifeTimeMgr::getBackwardOccForDEF(BSIdx pos, IN LifeTime * lt)
 {
     bool is_def = false;
     do {
@@ -1455,12 +1455,12 @@ INT LifeTimeMgr::getBackwardOccForDEF(INT pos, IN LifeTime * lt)
         if (is_def) {
             break;
         }
-    } while(pos != -1);
+    } while (pos != BS_UNDEF);
     return pos;
 }
 
 
-INT LifeTimeMgr::getForwardOccForDEF(INT pos, IN LifeTime * lt)
+BSIdx LifeTimeMgr::getForwardOccForDEF(BSIdx pos, IN LifeTime * lt)
 {
     bool is_def = false;
     do {
@@ -1468,7 +1468,7 @@ INT LifeTimeMgr::getForwardOccForDEF(INT pos, IN LifeTime * lt)
         if (is_def) {
             break;
         }
-    } while(pos != -1);
+    } while (pos != BS_UNDEF);
     return pos;
 }
 
@@ -1476,7 +1476,7 @@ INT LifeTimeMgr::getForwardOccForDEF(INT pos, IN LifeTime * lt)
 void LifeTimeMgr::reviseLTCase1(LifeTime * lt)
 {
     bool is_def = false;
-    INT first_occ = getForwardOcc(LT_pos(lt)->get_first(), lt, &is_def);
+    BSIdx first_occ = getForwardOcc(LT_pos(lt)->get_first(), lt, &is_def);
     ASSERTN(first_occ > LT_FIRST_POS, ("empty life tiem, have no any occ!"));
 
     #ifdef _DEBUG_
@@ -1593,7 +1593,7 @@ void LifeTimeMgr::pickOutUnusableRegs(LifeTime const*, RegSet & rs)
 
 //Process the function/region returning ORBB.
 void LifeTimeMgr::processFuncExitBB(MOD List<LifeTime*> & liveout_exitbb_lts,
-                                    MOD LifeTimeTab & live_lt_list, INT pos)
+                                    MOD LifeTimeTab & live_lt_list, BSIdx pos)
 {
     RegSet const* regs = tmGetRegSetOfReturnValue();
     for (BSIdx reg = regs->get_first(); reg != BS_UNDEF;
@@ -1616,7 +1616,7 @@ void LifeTimeMgr::processFuncExitBB(MOD List<LifeTime*> & liveout_exitbb_lts,
 
 
 //Process the live out sr.
-void LifeTimeMgr::processLiveOutSR(OUT LifeTimeTab & live_lt_list, INT pos)
+void LifeTimeMgr::processLiveOutSR(OUT LifeTimeTab & live_lt_list, BSIdx pos)
 {
      for (BSIdx id = ORBB_liveout(m_bb).get_first();
           id != BS_UNDEF; id = ORBB_liveout(m_bb).get_next(id)) {
@@ -1662,7 +1662,7 @@ void LifeTimeMgr::processLiveInSR(MOD LifeTimeTab & live_lt_list)
 }
 
 
-void LifeTimeMgr::appendPosition(MOD LifeTimeTab & live_lt_list, INT pos)
+void LifeTimeMgr::appendPosition(MOD LifeTimeTab & live_lt_list, BSIdx pos)
 {
     //Keep the track of live-point for the remainder live srs.
     LifeTimeTabIter c;
@@ -1677,7 +1677,7 @@ void LifeTimeMgr::appendPosition(MOD LifeTimeTab & live_lt_list, INT pos)
 //record the current occurrence.
 void LifeTimeMgr::recordPhysicalRegOcc(IN SR * sr,
                                        IN LifeTimeTab & live_lt_list,
-                                       INT pos,
+                                       BSIdx pos,
                                        IN PosInfo * pi)
 {
     if (sr->getPhyReg() == REG_UNDEF) { return; }
@@ -1862,7 +1862,7 @@ INT LifeTimeMgr::create()
             //time should be able to represent that register.
             //ASSERTN(LT_pos(lt)->get_first() > LT_FIRST_POS,
             //        ("Local life time has not live in point"));
-            ASSERTN(LT_pos(lt)->get_first() < (INT)(getMaxLifeTimeLen() - 1),
+            ASSERTN(LT_pos(lt)->get_first() < (BSIdx)(getMaxLifeTimeLen() - 1),
                     ("Local life time has not live in point"));
         }
     }
@@ -2091,7 +2091,7 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
             UINT opndidx = m_cg->computeCopyOpndIdx(o);
             SR * copy_src = o->get_opnd(opndidx);
             ASSERT0(copy_src);
-            if (copy_src->is_reg() && 
+            if (copy_src->is_reg() &&
                 SR_regfile(copy_src) == sr->getRegFile() &&
                 sr->getRegFile() != RF_UNDEF) {
                 ASSERTN(copy_src->is_reg(),
@@ -2116,7 +2116,7 @@ void LifeTimeMgr::recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs)
         //OR is copy.
         //Reserve anticipated register for allocation.
         SR * copy_tgt = o->get_copy_to();
-        if (copy_tgt->is_reg() && 
+        if (copy_tgt->is_reg() &&
             SR_regfile(copy_tgt) == sr->getRegFile() &&
             sr->getRegFile() != RF_UNDEF) {
             ASSERTN(copy_tgt->is_reg(),
@@ -2191,7 +2191,7 @@ void LifeTimeMgr::dump(UINT flag)
     LifeTime * lt1;
     DefMiscBitSetMgr sm;
     DefSBitSet visited(sm.getSegMgr());
-    INT maxlen = getMaxLifeTimeLen();
+    UINT maxlen = getMaxLifeTimeLen();
     UnitSet us;
     //fprintf(h, "\nList of all local lifetimes:");
     LifeTimeVecIter c;
@@ -2226,7 +2226,7 @@ void LifeTimeMgr::dump(UINT flag)
                 if (pos_marker[elt] == 0) {
                     fprintf(h, "   ,");
                 } else {
-                    fprintf(h, "%3d,", elt);
+                    fprintf(h, "%3u,", elt);
                 }
             }
             free(pos_marker);
@@ -2243,13 +2243,13 @@ void LifeTimeMgr::dump(UINT flag)
             fprintf(h, "\n    LT(%3d):", lt1->id());
             //Collects position info
 
-            INT last_idx = LT_desc(lt1).get_last_idx();
+            VecIdx last_idx = LT_desc(lt1).get_last_idx();
             DUMMYUSE(last_idx);
 
-            ASSERTN(last_idx == -1 || last_idx < maxlen,
-                ("Depiction of life time long than the finial position"));
+            ASSERTN(last_idx == VEC_UNDEF || last_idx < (VecIdx)maxlen,
+                    ("Depiction of life time long than the finial position"));
 
-            for (INT i2 = LT_FIRST_POS; i2 < maxlen; i2++) {
+            for (UINT i2 = LT_FIRST_POS; i2 < maxlen; i2++) {
                 PosInfo * pi;
                 if ((pi = LT_desc(lt1).get(i2)) != nullptr) {
                     if (pi->is_def()) {
@@ -2348,7 +2348,7 @@ void LifeTimeMgr::dump(UINT flag)
             if (pos_marker[elt] == 0) {
                 fprintf(h, "   ,");
             } else {
-                fprintf(h, "%3d,", elt);
+                fprintf(h, "%3u,", elt);
             }
         }
         free(pos_marker);
@@ -2360,10 +2360,10 @@ void LifeTimeMgr::dump(UINT flag)
         fprintf(h, "\n    LT(%3d):", lt1->id());
         //Collects position info
         PosInfo * pi;
-        ASSERTN(LT_desc(lt1).get_last_idx() == -1 ||
-                LT_desc(lt1).get_last_idx() < maxlen,
+        ASSERTN(LT_desc(lt1).get_last_idx() == VEC_UNDEF ||
+                LT_desc(lt1).get_last_idx() < (VecIdx)maxlen,
                 ("Depiction of life time long than the finial position"));
-        for (INT i2 = LT_FIRST_POS; i2 < maxlen; i2++) {
+        for (UINT i2 = LT_FIRST_POS; i2 < maxlen; i2++) {
             if ((pi = LT_desc(lt1).get(i2)) != nullptr) {
                 if (pi->is_def()) {
                     fprintf(h, "DEF,");
@@ -2464,7 +2464,7 @@ void GroupMgr::init(ORBB * bb, CG * cg)
 void GroupMgr::destroy()
 {
     if (!m_is_init) return;
-    for (INT i = 0; i <= m_groupidx2ors_map.get_last_idx(); i++) {
+    for (VecIdx i = 0; i <= m_groupidx2ors_map.get_last_idx(); i++) {
         List<OR*> * orlist = m_groupidx2ors_map.get(i);
         if (orlist == nullptr) {
             continue;
@@ -2478,11 +2478,11 @@ void GroupMgr::destroy()
 }
 
 
-INT GroupMgr::get_groups() const
+UINT GroupMgr::get_groups() const
 {
     ASSERTN(m_is_init, ("not yet initialized."));
-    INT count = 0;
-    for (INT i = 0; i <= m_groupidx2ors_map.get_last_idx(); i++) {
+    UINT count = 0;
+    for (VecIdx i = 0; i <= m_groupidx2ors_map.get_last_idx(); i++) {
         if (m_groupidx2ors_map.get(i) != nullptr) {
             count++;
         }
@@ -2491,7 +2491,7 @@ INT GroupMgr::get_groups() const
 }
 
 
-List<OR*> * GroupMgr::get_orlist_in_group(INT i)
+List<OR*> * GroupMgr::get_orlist_in_group(VecIdx i)
 {
     ASSERTN(i >= 0, ("idx must be positive."));
     ASSERTN(m_is_init, ("not yet initialized."));
@@ -2570,7 +2570,7 @@ void GroupMgr::dump()
             m_cg->getRegion()->getRegionName(), m_bb->id());
 
     StrBuf buf(64);
-    for (INT i = 0; i <= m_groupidx2ors_map.get_last_idx(); i++) {
+    for (VecIdx i = 0; i <= m_groupidx2ors_map.get_last_idx(); i++) {
         fprintf(h, "\n\tGroup(%d):\n", i);
         List<OR*> * orlist = m_groupidx2ors_map.get(i);
         if (orlist == nullptr) { continue; }
@@ -2633,10 +2633,8 @@ void LRA::show_phase(CHAR const* phase_name)
 //policy that the selecting should obviate choose identical
 //register with those registers which are other ors at same
 //layer with the first occurrence o of 'lt'.
-REG LRA::chooseByRegFileGroup(RegSet & regs,
-                              LifeTime * lt,
-                              LifeTimeMgr & mgr,
-                              RegFileGroup * rfg)
+REG LRA::chooseByRegFileGroup(RegSet & regs, LifeTime * lt,
+                              LifeTimeMgr & mgr, RegFileGroup * rfg)
 {
     if (rfg == nullptr) {
         return REG_UNDEF;
@@ -2645,9 +2643,9 @@ REG LRA::chooseByRegFileGroup(RegSet & regs,
         return REG_UNDEF;
     }
     ASSERTN(!LT_has_allocated(lt) &&
-           !SR_is_dedicated(LT_sr(lt)) &&
-           !SR_is_global(LT_sr(lt)),
-           ("Assign register for dedicated"));
+            !SR_is_dedicated(LT_sr(lt)) &&
+            !SR_is_global(LT_sr(lt)),
+            ("Assign register for dedicated"));
 
     //TODO: Split life time. Here we only process the first OR of 'lt'.
     OR * o = nullptr;
@@ -2701,23 +2699,19 @@ REG LRA::chooseByRegFileGroup(RegSet & regs,
         }
     }
 FIN:
-    return regs.get_first();
+    return RegSet::toReg(regs.get_first());
 }
 
 
 //Return true if allocation success, otherwise return false
 //When register assigned to 'lt', it must be deducted from
 //the usable_register_set of all its neighbors.
-bool LRA::assignRegister(LifeTime * lt,
-                         InterfGraph & ig,
-                         LifeTimeMgr & mgr,
+bool LRA::assignRegister(LifeTime * lt, InterfGraph & ig, LifeTimeMgr & mgr,
                          RegFileGroup * rfg)
 {
     SR * sr = LT_sr(lt);
-
     REGFILE regfile = sr->getRegFile();
     ASSERTN(regfile != RF_UNDEF, ("Regfile undefined."));
-    REG reg = REG_UNDEF;
     RegSet * usable = mgr.getUsableRegSet(lt);
     RegSet * antici = mgr.getAnticiRegs(lt);
 
@@ -2746,6 +2740,7 @@ bool LRA::assignRegister(LifeTime * lt,
     }
 
     //First select preference register.
+    REG reg = REG_UNDEF;
     REG pref_reg = LT_preferred_reg(lt);
     if (pref_reg != REG_UNDEF) {
         if (usable->is_contain(pref_reg)) {
@@ -2788,7 +2783,8 @@ bool LRA::assignRegister(LifeTime * lt,
         //Try to allocate register 'lt' anticipated primarily.
         RegSet tmp(*antici);
         tmp.intersect(*usable);
-        reg = tmp.get_first();
+        reg = RegSet::toReg(tmp.get_first());
+        ASSERT0(reg != REG_UNDEF);
     } else {
         //Try to allocate caller-saved registers
         RegSet try_caller_regs(*usable);
@@ -2798,8 +2794,8 @@ bool LRA::assignRegister(LifeTime * lt,
             goto FIN;
         }
 
-        reg = try_caller_regs.get_first();
-        if ((INT)reg != -1 && reg != REG_UNDEF) {
+        reg = RegSet::toReg(try_caller_regs.get_first());
+        if (reg != REG_UNDEF) {
             goto FIN;
         }
 
@@ -2808,7 +2804,7 @@ bool LRA::assignRegister(LifeTime * lt,
             goto FIN;
         }
 
-        reg = usable->get_first(); //Gotta use callee-saved.
+        reg = RegSet::toReg(usable->get_first()); //Gotta use callee-saved.
     }
 
 FIN:
@@ -2822,7 +2818,7 @@ FIN:
         //Current assignment will incur lt's sibling allcation always fail.
         return false;
     }
-
+    ASSERT0(xgen::isLegalReg(reg));
     SR_phy_reg(sr) = reg;
     if (m_ramgr != nullptr) {
         m_ramgr->updateCallee(sr->getRegFile(), sr->getPhyReg());
@@ -2841,8 +2837,7 @@ FIN:
 
 
 //Return true if registers of all sibling of lt are continuous and valid.
-bool LRA::checkAndAssignNextSiblingLT(REG treg,
-                                      LifeTime const* lt,
+bool LRA::checkAndAssignNextSiblingLT(REG treg, LifeTime const* lt,
                                       LifeTimeMgr * mgr,
                                       RegSet const* usable_rs)
 {
@@ -2864,8 +2859,7 @@ bool LRA::checkAndAssignNextSiblingLT(REG treg,
             return false;
         }
         if (LT_has_allocated(sib)) {
-            ASSERTN(treg == SR_phy_reg(LT_sr(sib)),
-                ("Unmatch register"));
+            ASSERTN(treg == SR_phy_reg(LT_sr(sib)), ("Unmatch register"));
             continue;
         }
         LT_preferred_reg(sib) = treg;
@@ -2875,8 +2869,7 @@ bool LRA::checkAndAssignNextSiblingLT(REG treg,
 
 
 //Return true if registers of all sibling of lt are continuous and valid.
-bool LRA::checkAndAssignPrevSiblingLT(REG treg,
-                                      LifeTime const* lt,
+bool LRA::checkAndAssignPrevSiblingLT(REG treg, LifeTime const* lt,
                                       LifeTimeMgr * mgr,
                                       RegSet const* usable_rs)
 {
@@ -2921,13 +2914,9 @@ bool LRA::checkAndAssignPrevSiblingLT(REG treg,
 //NOTICE:
 //    Each of spilling code generated are executed unconditionally.
 //    Allow to spill unallocated 'lt'.
-void LRA::genSpill(LifeTime * lt,
-                   SR * oldsr,
-                   INT pos,
-                   xoc::Var * spill_var,
-                   LifeTimeMgr & mgr,
-                   bool is_rename,
-                   ORList * sors)
+void LRA::genSpill(LifeTime * lt, SR * oldsr, BSIdx pos,
+                   xoc::Var * spill_var, LifeTimeMgr & mgr,
+                   bool is_rename, ORList * sors)
 {
     ASSERT0(spill_var && VAR_is_spill(spill_var));
     ORList spill_ors;
@@ -2964,7 +2953,7 @@ void LRA::genSpill(LifeTime * lt,
     } else if (is_rename) {
         OR * o = mgr.getOR(pos);
         ASSERTN(o, ("OR is nullptr"));
-        ASSERTN(pos > (INT)LT_FIRST_POS && pos < (INT)LT_LAST_POS,
+        ASSERTN(pos > LT_FIRST_POS && pos < LT_LAST_POS,
                 ("pos is out of boundary"));
         SR * newsr = nullptr;
         INT opndnum, resnum;
@@ -2986,7 +2975,7 @@ void LRA::genSpill(LifeTime * lt,
     } else {
         OR * o = mgr.getOR(pos);
         ASSERTN(o, ("OR is nullptr"));
-        ASSERTN(pos > (INT)LT_FIRST_POS && pos < (INT)LT_LAST_POS,
+        ASSERTN(pos > LT_FIRST_POS && pos < LT_LAST_POS,
                 ("pos is out of boundary"));
         if (!oldsr->is_global() &&  !SR_is_dedicated(oldsr)) {
             //Expect to choose a new register.
@@ -3032,12 +3021,9 @@ SR * LRA::genNewReloadSR(SR * oldsr, xoc::Var * spill_var)
 //
 //NOTICE:
 //    Each of reloading code generated are executed unconditionally.
-SR * LRA::genReload(IN LifeTime * lt,
-                    IN SR * oldsr,
-                    INT pos,
-                    IN xoc::Var * spill_var,
-                    IN LifeTimeMgr & mgr,
-                    OUT ORList * ors)
+SR * LRA::genReload(IN LifeTime * lt, IN SR * oldsr,
+                    BSIdx pos, IN xoc::Var * spill_var,
+                    IN LifeTimeMgr & mgr, OUT ORList * ors)
 {
     ASSERT0(spill_var && VAR_is_spill(spill_var));
     SR * newsr = nullptr;
@@ -3066,7 +3052,7 @@ SR * LRA::genReload(IN LifeTime * lt,
     //Just generate reload code here and skip the assert.
     //ASSERT0(oldsr == LT_sr(lt));
 
-    if (pos == (INT)LT_LAST_POS) {
+    if (pos == LT_LAST_POS) {
         //Append a reload to bottom of bb.
         m_cg->buildReload(oldsr, spill_var, m_bb,    *ors);
         OR * ld_op = nullptr;
@@ -3163,8 +3149,8 @@ void LRA::spillGSR(LifeTime * lt, LifeTimeMgr & mgr)
 
     //for case of the o that has same result with operand.
     SR * same_with_result_sr = nullptr;
-    for (INT i = first_pos == LT_FIRST_POS ? LT_FIRST_POS + 1 : first_pos;
-         i >= 0; i = LT_desc(lt).get_next(i)) {
+    for (BSIdx i = first_pos == LT_FIRST_POS ? LT_FIRST_POS + 1 : first_pos;
+         i != BS_UNDEF; i = LT_desc(lt).get_next(i)) {
         PosInfo * pi;
 
         //CASE: livein gsr
@@ -3266,7 +3252,7 @@ void LRA::spillLSR(LifeTime * lt, LifeTimeMgr & mgr)
         //    5.Insert spill code after S1.
         //    6.Build new-sr like gsr.
         //    7.Rename orig-sr into new-gsr in between S1 and S2.
-        if ((pi=LT_desc(lt).get(i)) != nullptr) {
+        if ((pi = LT_desc(lt).get(i)) != nullptr) {
             ORList ors;
             if (first_occ) {
                 first_occ = false;
@@ -3418,20 +3404,20 @@ bool LRA::canBeSpilled(LifeTime * lt, LifeTimeMgr & mgr)
     }
 
     if (c == 2) {
-        INT pos1 = -1, pos2 = -1;
+        BSIdx pos1 = BS_UNDEF, pos2 = BS_UNDEF;
         for (BSIdx i = LT_pos(lt)->get_first();
             i != BS_UNDEF; i = LT_desc(lt).get_next(i)) {
             if (LT_desc(lt).get(i)) {
-                if (pos1 == -1) {
+                if (pos1 == BS_UNDEF) {
                     pos1 = i;
-                } else if (pos2 == -1) {
+                } else if (pos2 == BS_UNDEF) {
                     pos2 = i;
                 } else {
                     ASSERTN(0, ("More than 2"));
                 }
             }
         }
-        ASSERTN(pos1 != -1 && pos2 != -1, ("???"));
+        ASSERTN(pos1 != BS_UNDEF && pos2 != BS_UNDEF, ("???"));
         if (pos2 == pos1 + 1) { //We canot benefit from spilling this lifetime.
             return false;
         }
@@ -3487,11 +3473,11 @@ void LRA::reassignRegFileForNewSR(MOD ClustRegInfo cri[CLUST_NUM],
 
 //Rename SR and the match of physical register is neglected.
 //Rename the operand and result SR till the end position of LifeTime.
-void LRA::renameOpndsFollowedLT(SR * oldsr, SR * newsr, INT start,
+void LRA::renameOpndsFollowedLT(SR * oldsr, SR * newsr, BSIdx start,
                                 LifeTime * lt, LifeTimeMgr & mgr)
 {
     PosInfo * pi = nullptr;
-    for (INT i = start; i >= 0; i = LT_desc(lt).get_next(i)) {
+    for (BSIdx i = start; i != BS_UNDEF; i = LT_desc(lt).get_next(i)) {
         if ((pi = LT_desc(lt).get(i)) != nullptr) {
             OR * o = mgr.getOR(i);
             m_cg->renameOpnd(o, oldsr, newsr, false);
@@ -3502,18 +3488,15 @@ void LRA::renameOpndsFollowedLT(SR * oldsr, SR * newsr, INT start,
 
 
 //Rename opnds in between 'start' and 'end' occurrencens within life time.
-void LRA::renameOpndInRange(SR * oldsr,
-                            SR * newsr,
-                            INT start,
-                            INT end,
-                            LifeTime * lt,
-                            LifeTimeMgr & mgr)
+void LRA::renameOpndInRange(SR * oldsr, SR * newsr, BSIdx start, BSIdx end,
+                            LifeTime * lt, LifeTimeMgr & mgr)
 {
     ASSERTN(start <= end, ("Ivalid range"));
     PosInfo * pi = nullptr;
-    end = MIN(end, LT_desc(lt).get_last_idx());
-    for (INT i = start; i <= end; i = LT_desc(lt).get_next(i)) {
-        ASSERTN(i >= 0, ("out of boundary"));
+    ASSERT0(LT_desc(lt).get_last_idx() != VEC_UNDEF);
+    end = MIN(end, (BSIdx)LT_desc(lt).get_last_idx());
+    for (BSIdx i = start; i <= end; i = LT_desc(lt).get_next(i)) {
+        ASSERTN(i != BS_UNDEF, ("out of boundary"));
         if ((pi = LT_desc(lt).get(i)) != nullptr) {
             OR * o = mgr.getOR(i);
             if (pi->is_def()) {
@@ -3624,17 +3607,11 @@ void LRA::spill(LifeTime * lt, List<LifeTime*> & prio_list,
 }
 
 
-//Generate spilling and reloading code at position 'start' and 'end' of life time
-//'lt' respectively.
-//
-//NOTICE:
-//    Neglact 'start' if it equals -1, and similar for 'end'.
-void LRA::splitLTAt(INT start,
-                    INT end,
-                    bool is_start_spill,
-                    bool is_end_spill,
-                    LifeTime * lt,
-                    LifeTimeMgr & mgr)
+//Generate spilling and reloading code at position 'start' and 'end' of
+//life time 'lt' respectively.
+//NOTICE: Neglact 'start' if it equals -1, and similar for 'end'.
+void LRA::splitLTAt(BSIdx start, BSIdx end, bool is_start_spill,
+                    bool is_end_spill, LifeTime * lt, LifeTimeMgr & mgr)
 {
     ASSERTN(lt, ("lt is nullptr"));
     SR * sr = LT_sr(lt);
@@ -3642,7 +3619,7 @@ void LRA::splitLTAt(INT start,
     if (!sr->is_global() && !SR_is_dedicated(sr)) {
         ASSERTN(start != LT_FIRST_POS || LT_desc(lt).get(start) != nullptr,
                 ("Miss pos-info"));
-        ASSERTN(end != (INT)LT_LAST_POS || LT_desc(lt).get(end) != nullptr,
+        ASSERTN(end != LT_LAST_POS || LT_desc(lt).get(end) != nullptr,
                 ("Miss pos-info"));
         ASSERTN(mgr.getOccCount(lt),
                 ("Empty life time."));
@@ -3653,7 +3630,7 @@ void LRA::splitLTAt(INT start,
     //spill var is gra_spill_var if sr is global reg.
     xoc::Var * spill_var = m_cg->genSpillVar(sr);
     ASSERTN(spill_var, ("Not any spill loc."));
-    if (start != -1) {
+    if (start != BS_UNDEF) {
         if (start == LT_FIRST_POS) {
             genSpill(lt, sr, start, spill_var, mgr, false, nullptr);
         } else {
@@ -3668,8 +3645,8 @@ void LRA::splitLTAt(INT start,
         }
     }
 
-    if (end != -1) {
-        if (end == (INT)LT_LAST_POS) {
+    if (end != BS_UNDEF) {
+        if (end == LT_LAST_POS) {
             SR * newsr = genReload(lt, sr, end, spill_var, mgr, nullptr);
             DUMMYUSE(newsr);
             ASSERTN(newsr == sr,
@@ -3686,10 +3663,10 @@ void LRA::splitLTAt(INT start,
                 SR * newsr = genReload(lt, sr, end, spill_var, mgr, nullptr);
                 if (newsr != sr) {
                     //Do renaming.
-                    INT forward_def = mgr.getForwardOccForDEF(end, lt);
+                    BSIdx forward_def = mgr.getForwardOccForDEF(end, lt);
 
                     //May be same result as operand.
-                    if (forward_def != -1 && forward_def == (end+1)) {
+                    if (forward_def != BS_UNDEF && forward_def == (end + 1)) {
                         OR * occ_or = mgr.getOR(end);
                         ASSERTN(mgr.getOR(forward_def) == occ_or,
                                 ("o should be same result and operand."));
@@ -3700,11 +3677,11 @@ void LRA::splitLTAt(INT start,
                         }
 
                         //Rename all follows REFs.
-                        forward_def = -1;
+                        forward_def = BS_UNDEF;
                     }
-                    if (forward_def != -1) {
+                    if (forward_def != BS_UNDEF) {
                         renameOpndInRange(sr, newsr, end,
-                                          forward_def-1, lt, mgr);
+                                          forward_def - 1, lt, mgr);
                     } else {
                         renameOpndsFollowedLT(sr, newsr, end, lt, mgr);
                     }
@@ -3715,12 +3692,9 @@ void LRA::splitLTAt(INT start,
 }
 
 
-void LRA::splitOneLT(LifeTime * lt,
-                     List<LifeTime*> & prio_list,
-                     List<LifeTime*> & uncolored_list,
-                     LifeTimeMgr & mgr,
-                     InterfGraph & ig,
-                     REG spill_location,
+void LRA::splitOneLT(LifeTime * lt, List<LifeTime*> & prio_list,
+                     List<LifeTime*> & uncolored_list, LifeTimeMgr & mgr,
+                     InterfGraph & ig, REG spill_location,
                      Action & action)
 {
     DUMMYUSE(prio_list);
@@ -3735,8 +3709,7 @@ void LRA::splitOneLT(LifeTime * lt,
 
 //CASE:lt1: D............U
 //     lt2:    D......U
-bool LRA::splitTwoLTContained(LifeTime * lt1, LifeTime * lt2,
-                              LifeTimeMgr & mgr)
+bool LRA::splitTwoLTContained(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
 {
     //Reload of lt1
     List<INT> occs;
@@ -3745,15 +3718,15 @@ bool LRA::splitTwoLTContained(LifeTime * lt1, LifeTime * lt2,
 
     //Get intersectant part.
     mgr.getOccInRange(hole_start, hole_end, lt1, occs);
-    INT pos;
+    BSIdx pos;
     bool is_def;
     SR * sr = LT_sr(lt1); //original sr
     pos = occs.get_head();
     for (UINT i = 0; i < occs.get_elem_count(); pos = occs.get_next(), i++) {
-        if (pos == (INT)LT_FIRST_POS) {
+        if (pos == LT_FIRST_POS) {
             ASSERTN(sr->is_global(), ("Only global reg permit"));
             is_def = true;
-        } else if (pos == (INT)LT_LAST_POS) {
+        } else if (pos == LT_LAST_POS) {
             ASSERTN(sr->is_global(), ("Only global reg permit"));
             is_def = false;
         } else {
@@ -3797,7 +3770,7 @@ bool LRA::splitTwoLTContained(LifeTime * lt1, LifeTime * lt2,
     //        is_def = false;
     //    }
     //}
-    if (pos != -1 && !is_def) {
+    if (pos != BS_UNDEF && !is_def) {
         //This may generate redundant reload-code when 'occ' is a DEF.
         //It can removing them under followed-phase(Dead Ld/St Elimi).
         SR * newsr = genReload(lt1, sr, pos, SR_spill_var(sr), mgr, nullptr);
@@ -3833,7 +3806,7 @@ bool LRA::splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
     for (UINT i = 0, pos = occs.get_head();
          i < occs.get_elem_count();
          pos = occs.get_next(), i++) {
-        if (pos == (INT)LT_FIRST_POS) {
+        if (pos == (UINT)LT_FIRST_POS) {
             ASSERTN(sr->is_global(), ("Only global reg permit"));
             is_def = true;
         } else if (pos == (UINT)LT_LAST_POS) {
@@ -3912,7 +3885,7 @@ bool LRA::splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
     }
 
     //Processing remainder occs of lt2
-    INT pos = mgr.getForwardOcc(hole_end, lt2, &is_def);
+    BSIdx pos = mgr.getForwardOcc(hole_end, lt2, &is_def);
     //if (pos != -1 && is_def) {
     //    CASE: If o under pos is cond-exec, we need to reload
     //    register value correctly.
@@ -3922,7 +3895,7 @@ bool LRA::splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
     //        is_def = false;
     //    }
     //}
-    if (pos != -1 && !is_def) {
+    if (pos != BS_UNDEF && !is_def) {
         SR * newsr = genReload(lt2, sr, pos, SR_spill_var(sr), mgr, nullptr);
         if (newsr != LT_sr(lt2)) {
             //renaming.
@@ -3942,13 +3915,13 @@ bool LRA::spillFirstDef(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
         defpos = mgr.getForwardOccForDEF(defpos, lt1);
 
         //Find the nearest DEF of first-pos of lt2.
-        if (!(defpos != -1 && defpos <= LT_pos(lt2)->get_first())) {
+        if (!(defpos != BS_UNDEF && defpos <= LT_pos(lt2)->get_first())) {
             //Need inserts spilling at first pos of life time.
             defpos = LT_pos(lt1)->get_first();
             break;
         }
     } while (defpos > LT_pos(lt2)->get_first());
-    ASSERTN(defpos >= (INT)LT_FIRST_POS && defpos < (INT)LT_LAST_POS,
+    ASSERTN(defpos >= LT_FIRST_POS && defpos < LT_LAST_POS,
         ("Illegal start position"));
 
     //Op on 'pos' must be DEF of 'sr'
@@ -4025,7 +3998,7 @@ bool LRA::splitTwoLT(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
 //    the best USE between 'pos1' and 'pos2' to insert reload code.
 //    While both positions are useless, we do not insert any code in
 //    those positions, and set 'pos1' and 'pos2' to -1.
-void LRA::selectReasonableSplitPos(MOD INT * pos1, MOD INT * pos2,
+void LRA::selectReasonableSplitPos(MOD BSIdx * pos1, MOD BSIdx * pos2,
                                    MOD bool * is_pos1_spill,
                                    MOD bool * is_pos2_spill,
                                    LifeTime * lt, LifeTimeMgr & mgr)
@@ -4035,16 +4008,16 @@ void LRA::selectReasonableSplitPos(MOD INT * pos1, MOD INT * pos2,
     SR * sr = LT_sr(lt);
     CHECK0_DUMMYUSE(sr);
 
-    INT p1 = *pos1, p2 = *pos2;
+    BSIdx p1 = *pos1, p2 = *pos2;
     bool is_p1_def = false, is_p2_def = false;
 
     #ifdef _DEBUG_
     if (!sr->is_global() && !SR_is_dedicated(sr)) {
         ASSERTN(mgr.getOccCount(lt), ("Empty life time."));
-        ASSERTN(p1 != (INT)LT_FIRST_POS ||
-               LT_desc(lt).get(p1) != nullptr, ("Miss pos-info"));
-        ASSERTN(p2 != (INT)LT_LAST_POS ||
-               LT_desc(lt).get(p2) != nullptr, ("Miss pos-info"));
+        ASSERTN(p1 != LT_FIRST_POS ||
+                LT_desc(lt).get(p1) != nullptr, ("Miss pos-info"));
+        ASSERTN(p2 != LT_LAST_POS ||
+                LT_desc(lt).get(p2) != nullptr, ("Miss pos-info"));
     }
     #endif
     //Compute the status the pos shows.
@@ -4091,7 +4064,7 @@ void LRA::selectReasonableSplitPos(MOD INT * pos1, MOD INT * pos2,
 
     proc = true;
     while (proc) {
-        if (p2 == (INT)LT_LAST_POS) {
+        if (p2 == LT_LAST_POS) {
             is_p2_def = false;
             break;
         } else {
@@ -4145,19 +4118,19 @@ void LRA::selectReasonableSplitPos(MOD INT * pos1, MOD INT * pos2,
         *is_pos2_spill = false;
         return;
     } else if (is_p1_def && is_p2_def) { //def ... def
-        *pos1 = *pos2 = -1;
+        *pos1 = *pos2 = BS_UNDEF;
         return;
     } else if (!is_p1_def) {
         if (is_p2_def) { //use ... def
             //pos2 do not need any reloading.
-            *pos2 = -1;
+            *pos2 = BS_UNDEF;
         } else { //use ... use
             *is_pos2_spill = false; //reload before pos2
         }
 
         //Find the DEF of pos1.
         *pos1 = mgr.getBackwardOccForDEF(p1, lt);
-        if (*pos1 != -1) {
+        if (*pos1 != BS_UNDEF) {
             *is_pos1_spill = true;
         } else if (SR_is_dedicated(LT_sr(lt)) ||
                    SR_is_global(LT_sr(lt))) { //Might be live-in lifetime
@@ -4177,15 +4150,11 @@ void LRA::selectReasonableSplitPos(MOD INT * pos1, MOD INT * pos2,
 //    t2 = [x]
 //=>
 //    t2 = t1
-bool LRA::mergeRedundantStoreLoad(OR * o,
-                                  OR * succ,
-                                  ORList & remainder_succs,
-                                  ORBB * bb,
-                                  xoc::Var const* spill_var,
+bool LRA::mergeRedundantStoreLoad(OR * o, OR * succ, ORList & remainder_succs,
+                                  ORBB * bb, xoc::Var const* spill_var,
                                   DataDepGraph & ddg)
 {
-    ASSERTN(o->is_store() &&
-            OR_is_load(succ) &&
+    ASSERTN(o->is_store() && OR_is_load(succ) &&
             m_cg->computeSpillVar(o) == m_cg->computeSpillVar(succ),
             ("Illegal pattern"));
 
@@ -4672,7 +4641,7 @@ bool LRA::split(LifeTime * lt, List<LifeTime*> & prio_list,
     bool has_hole = false;
     LifeTime * cand = computeBestSpillCand(lt, ig, mgr, true, &has_hole);
 
-    INT hole_startpos, hole_endpos;
+    BSIdx hole_startpos, hole_endpos;
     bool split_hole = false;
     if (has_hole && cand != lt) {
         split_hole = getResideinHole(&hole_startpos,
@@ -4712,14 +4681,14 @@ bool LRA::split(LifeTime * lt, List<LifeTime*> & prio_list,
 
 //Return true if there is hole in lifetime of 'owner' that
 //'inner' can be lived in, and 'startpos','endpos' represented the hole.
-bool LRA::getResideinHole(MOD INT * startpos, MOD INT * endpos,
+bool LRA::getResideinHole(MOD BSIdx * startpos, MOD BSIdx * endpos,
                           IN LifeTime * owner, IN LifeTime * inner,
                           IN LifeTimeMgr & mgr)
 {
-    INT start = 0;
+    BSIdx start = 0;
     *startpos = 0;
     *endpos = 0;
-    BSIdx i = -1, next_i = -1;
+    BSIdx i = BS_UNDEF, next_i = BS_UNDEF;
     for (i = LT_pos(owner)->get_first(), start = i;
          i != BS_UNDEF && i <= LT_pos(owner)->get_last();
          i = next_i) {
@@ -4731,9 +4700,9 @@ bool LRA::getResideinHole(MOD INT * startpos, MOD INT * endpos,
             start = next_i;
             continue;
         }
-        if ((i == (INT)LT_FIRST_POS &&
+        if ((i == LT_FIRST_POS &&
              LT_pos(owner)->is_contain(LT_FIRST_POS)) || //life time live in.
-            ((i == (INT)LT_LAST_POS) &&
+            ((i == LT_LAST_POS) &&
              LT_pos(owner)->is_contain(LT_LAST_POS)) || //life time live out.
             LT_desc(owner).get(i) != nullptr) {
 
@@ -4753,14 +4722,14 @@ bool LRA::getResideinHole(MOD INT * startpos, MOD INT * endpos,
 
 //Return true if there is hole in lifetime of 'lt',
 //and 'startpos','endpos' represented the hole.
-bool LRA::getMaxHole(MOD INT * startpos, MOD INT * endpos, IN LifeTime * lt,
+bool LRA::getMaxHole(MOD BSIdx * startpos, MOD BSIdx * endpos, IN LifeTime * lt,
                      InterfGraph & ig, IN LifeTimeMgr & mgr, INT info_type)
 {
-    INT maxlen = 0;
-    INT start = 0;
+    UINT maxlen = 0;
+    BSIdx start = 0;
     *startpos = 0;
     *endpos = 0;
-    BSIdx i = -1, next_i = -1;
+    BSIdx i = BS_UNDEF, next_i = BS_UNDEF;
     bool is_first = true;
     List<LifeTime*> lt_group;
     for (i = LT_pos(lt)->get_first(), start = i;
@@ -4772,9 +4741,9 @@ bool LRA::getMaxHole(MOD INT * startpos, MOD INT * endpos, IN LifeTime * lt,
             start = next_i;
             continue;
         }
-        if ((i == (INT)LT_FIRST_POS &&
+        if ((i == LT_FIRST_POS &&
              LT_pos(lt)->is_contain(LT_FIRST_POS)) || //life time live in.
-            ((i == (INT)LT_LAST_POS) &&
+            ((i == LT_LAST_POS) &&
              LT_pos(lt)->is_contain(LT_LAST_POS)) || //life time live out.
             LT_desc(lt).get(i) != nullptr) {
 
@@ -4788,7 +4757,7 @@ bool LRA::getMaxHole(MOD INT * startpos, MOD INT * endpos, IN LifeTime * lt,
                     }
                     break;
                 case HOLE_INTERF_LT_NUM: {
-                    INT count = 0;
+                    UINT count = 0;
                     if (is_first) {
                         is_first = false;
                         ig.getLifeTimeList(lt_group, SR_regfile(LT_sr(lt)));
@@ -4827,7 +4796,7 @@ void LRA::computeLTResideInHole(MOD List<LifeTime*> & reside_in_lts,
                                 IN LifeTime * lt, IN InterfGraph & ig,
                                 IN LifeTimeMgr & mgr)
 {
-    INT hole_startpos, hole_endpos;
+    BSIdx hole_startpos, hole_endpos;
     getMaxHole(&hole_startpos, &hole_endpos, lt, ig, mgr, HOLE_LENGTH);
     xcom::BitSet * hole = LT_pos(lt)->get_subset_in_range(hole_startpos,
         hole_endpos, *getBitSetMgr()->create());
@@ -4835,14 +4804,12 @@ void LRA::computeLTResideInHole(MOD List<LifeTime*> & reside_in_lts,
     List<LifeTime*> lt_group;
     ASSERTN(SR_regfile(LT_sr(lt)),("regfile undefined"));
     ig.getLifeTimeList(lt_group, SR_regfile(LT_sr(lt)));
-    INT count = 0;
     for (LifeTime * tmp = lt_group.get_head(); tmp != nullptr;
          tmp = lt_group.get_next()) {
 
         if (tmp == lt) continue;
         if (hole->is_contained_in_range(LT_pos(tmp)->get_first(),
                                         LT_pos(tmp)->get_last(), true)) {
-            count++;
             reside_in_lts.append_tail(tmp);
         }
     }
@@ -6893,14 +6860,14 @@ bool LRA::partitionGroup(DataDepGraph & ddg,
 
     //If OR not process group. vector is in dense storage
     BitSet gp_need_process; //it is a dense storage.
-    gp_need_process.bunion(gm.get_last_group());
-    gp_need_process.diff(gm.get_last_group());
-    for (INT i = 1; i <= gm.get_last_group(); i++) {
+    gp_need_process.bunion((BSIdx)gm.get_last_group());
+    gp_need_process.diff((BSIdx)gm.get_last_group());
+    for (VecIdx i = 1; i <= gm.get_last_group(); i++) {
         List<OR*> * orlist = gm.get_orlist_in_group(i);
         if (orlist == nullptr) {
             continue;
         }
-        gp_need_process.bunion(i);
+        gp_need_process.bunion((BSIdx)i);
 
         //Find the must be cluster.
         CLUST must_clust = CLUST_UNDEF;
@@ -6929,7 +6896,8 @@ bool LRA::partitionGroup(DataDepGraph & ddg,
         }
 
         //Assigning the must be cluster for group.
-        if (gp_need_process.is_contain(i) && must_clust != CLUST_UNDEF) {
+        if (gp_need_process.is_contain((BSIdx)i) &&
+            must_clust != CLUST_UNDEF) {
             if ((((float)orlist->get_elem_count()) /
                  ((float)tmpddg->getVertexNum())) < GROUP_DIFF_THRESHOLD) {
                 if (isReasonableCluster(must_clust, *orlist,
@@ -6945,7 +6913,7 @@ bool LRA::partitionGroup(DataDepGraph & ddg,
                     }
                 }
             }
-            gp_need_process.diff(i);
+            gp_need_process.diff((BSIdx)i);
         }
     }
 
@@ -6956,7 +6924,7 @@ bool LRA::partitionGroup(DataDepGraph & ddg,
     List<INT> ordered_groups_idx;
 
     //Sort out all groups which expected to be assigned.
-    for (INT i = 1; i <= gm.get_last_group(); i++) {
+    for (VecIdx i = 1; i <= gm.get_last_group(); i++) {
         if (!gp_need_process.is_contain(i)) {
             continue;
         }
@@ -7483,11 +7451,8 @@ bool LRA::schedulFuncUnit(IN LifeTimeMgr & mgr, IN DataDepGraph & ddg,
 
 //Return the registers which have not been allocated within
 //life time interval from 'start' to 'end'.
-RegSet & LRA::computeUnusedRegSet(REGFILE regfile,
-                                  INT start,
-                                  INT end,
-                                  IN InterfGraph & ig,
-                                  OUT RegSet & rs)
+RegSet & LRA::computeUnusedRegSet(REGFILE regfile, BSIdx start, BSIdx end,
+                                  IN InterfGraph & ig, OUT RegSet & rs)
 {
     ASSERTN(regfile != RF_UNDEF, ("Undefined regfile"));
 
@@ -7496,7 +7461,8 @@ RegSet & LRA::computeUnusedRegSet(REGFILE regfile,
 
     List<LifeTime*> lt_lst;
     ig.getLifeTimeList(lt_lst, regfile, start, end);
-    for (LifeTime * lt = lt_lst.get_head(); lt != nullptr; lt = lt_lst.get_next()) {
+    for (LifeTime * lt = lt_lst.get_head();
+         lt != nullptr; lt = lt_lst.get_next()) {
         ASSERTN(LT_has_allocated(lt), ("Life time without register assigned"));
         rs.diff(SR_phy_reg(LT_sr(lt)));
     }
@@ -7506,9 +7472,7 @@ RegSet & LRA::computeUnusedRegSet(REGFILE regfile,
 
 //Choose the physical register to be spill location,
 //or return REG_UNDEF if not turned up.
-REG LRA::chooseAvailSpillLoc(CLUST clust,
-                             INT start,
-                             INT end,
+REG LRA::chooseAvailSpillLoc(CLUST clust, BSIdx start, BSIdx end,
                              InterfGraph & ig)
 {
     RegSet regset;
@@ -7528,8 +7492,8 @@ REG LRA::chooseAvailSpillLoc(CLUST clust,
         }
     }
 
-    INT lastone = regset.get_last();
-    if (lastone < 0) { return REG_UNDEF; }
+    BSIdx lastone = regset.get_last();
+    if (lastone != BS_UNDEF) { return REG_UNDEF; }
     return (REG)lastone;
 }
 
@@ -7610,13 +7574,13 @@ SR * LRA::findAvailPhyRegFromLoadList(IN OR * o,
                                       IN LifeTimeMgr & mgr, IN InterfGraph & ig)
 {
     SR * spill_loc_sr = nullptr;
-    INT start = mgr.getPos(o, true);
+    BSIdx start = mgr.getPos(o, true);
     OR * next_followed = nullptr;
     for (OR * ld = followed_lds.get_tail(); ld != nullptr; ld = next_followed) {
         next_followed = followed_lds.get_prev();
-        INT end = mgr.getPos(ld, false);
+        BSIdx end = mgr.getPos(ld, false);
         REG avail_reg = chooseAvailSpillLoc(m_cg->computeORCluster(ld),
-            start, end, ig);
+                                            start, end, ig);
         if (avail_reg == REG_UNDEF) {
             followed_lds.remove_tail();
             next_followed = followed_lds.get_tail();
@@ -7627,7 +7591,7 @@ SR * LRA::findAvailPhyRegFromLoadList(IN OR * o,
         }
 
         //Find appropriate register to hold value.
-        ASSERT0(avail_reg > REG_UNDEF && avail_reg < REG_NUM);
+        ASSERT0(xgen::isLegalReg(avail_reg));
         spill_loc_sr = m_cg->genReg();
         SR_phy_reg(spill_loc_sr) = avail_reg;
         SR_regfile(spill_loc_sr) = tmMapReg2RegFile(avail_reg);
@@ -7841,7 +7805,6 @@ void LRA::reviseMiscOR()
 bool LRA::updateInfoEffectedByInlineASM()
 {
     if (m_ramgr != nullptr) { return true; }
-
     ORCt * ct;
     for (OR * o = ORBB_orlist(m_bb)->get_head(&ct);
          o != nullptr; o = ORBB_orlist(m_bb)->get_next(&ct)) {
@@ -7851,7 +7814,7 @@ bool LRA::updateInfoEffectedByInlineASM()
         if (asm_info == nullptr) { continue; }
 
         RegSet const* clobber_regs = asm_info->get_clobber_set();
-        for (INT reg = clobber_regs->get_first();
+        for (BSIdx reg = clobber_regs->get_first();
              reg != BS_UNDEF; reg = clobber_regs->get_next(reg)) {
             m_ramgr->updateAsmClobberCallee(tmMapReg2RegFile((REG)reg), reg);
         }
@@ -7867,7 +7830,6 @@ void LRA::middleLRAOpt(MOD DataDepGraph & ddg, MOD LifeTimeMgr & mgr,
 {
     //Following passes have to analyze REG-IN and
     //PHY-REG dependence.
-
     bool need_rebuild_mgr = false;
     if ((HAVE_FLAG(m_opt_phase, LRA_OPT_RCEL) ||
          HAVE_FLAG(m_opt_phase, LRA_OPT_DDE)) &&

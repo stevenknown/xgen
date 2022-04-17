@@ -42,5 +42,11 @@ public:
     bool is_predicate; //indicate whether if the register file is predicate.
 };
 
+//Return true if regfile is legal to target machine.
+inline bool isLegalRegFile(REGFILE rf)
+{
+    return rf > RF_UNDEF && rf < RF_NUM;
+}
+
 } //namespace xgen
 #endif

@@ -14,7 +14,6 @@ void test_local_killing_def(int a, int b, int * p)
     return a + b;
 }
 
-
 int g1,g2;
 long long g3;
 long long f2(int * p)

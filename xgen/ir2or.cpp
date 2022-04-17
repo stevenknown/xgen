@@ -520,7 +520,7 @@ void IR2OR::convertCopyPR(IR const* tgt, IN SR * src,
                           OUT RecycORList & ors, MOD IOC * cont)
 {
     ASSERT0(tgt->isPROp());
-    UINT tgtprno = tgt->getPrno();
+    PRNO tgtprno = tgt->getPrno();
     ASSERT0(tgtprno != PRNO_UNDEF);
     SR * tgtx = m_cg->mapPR2SR(tgtprno);
     if (tgtx != nullptr) {

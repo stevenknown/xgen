@@ -44,7 +44,7 @@ ORCFG::ORCFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
     }
 
     //Append bb list to vector and base graph
-    ASSERT0(m_bb_vec.get_last_idx() == -1);
+    ASSERT0(m_bb_vec.get_last_idx() == VEC_UNDEF);
     for (ORBB * bb = m_bb_list->get_head();
          bb != nullptr; bb = m_bb_list->get_next()) {
         m_bb_vec.set(bb->id(), bb);

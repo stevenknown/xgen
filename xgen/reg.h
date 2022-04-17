@@ -40,7 +40,11 @@ class RegSet : public xcom::BitSet {
 public:
     RegSet(UINT init_pool_size = 32) : xcom::BitSet(init_pool_size) {}
     RegSet(RegSet const& rs) { xcom::BitSet::copy(rs); }
+
     void dump(FILE * h) const;
+
+    //Convert from BSIdx to REG.
+    static REG toReg(BSIdx x) { return IS_BSUNDEF(x) ? REG_UNDEF : (REG)x; }
 };
 
 
@@ -49,6 +53,10 @@ class RegFileSet : public xcom::BitSet {
 public:
     RegFileSet(UINT init_pool_size = 2) : xcom::BitSet(init_pool_size) {}
     RegFileSet(RegFileSet const& rfs) { xcom::BitSet::copy(rfs); }
+
+    //Convert from BSIdx to REGFILE.
+    static REGFILE toRegFile(BSIdx x)
+    { return IS_BSUNDEF(x) ? RF_UNDEF : (REGFILE)x; }
 };
 
 
@@ -70,5 +78,12 @@ public:
         return rs;
     }
 };
+
+//Return true if reg is legal to target machine.
+inline bool isLegalReg(REG reg)
+{
+    return reg > REG_UNDEF && reg < REG_NUM;
+}
+
 } //namespace xgen
 #endif

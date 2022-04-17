@@ -41,9 +41,9 @@ class ORAsmInfo;
 //Map Symbol Register Id to specifical SR.
 typedef xcom::HMap<UINT, SR*> SRegid2SR;
 
-class PRNO2SR : public xcom::HMap<UINT, SR*, xcom::HashFuncBase2<UINT> > {
+class PRNO2SR : public xcom::HMap<PRNO, SR*, xcom::HashFuncBase2<PRNO> > {
 public:
-    PRNO2SR() : xcom::HMap<UINT, SR*, xcom::HashFuncBase2<UINT> >(0) {}
+    PRNO2SR() : xcom::HMap<PRNO, SR*, xcom::HashFuncBase2<PRNO> >(0) {}
 };
 
 
@@ -103,7 +103,7 @@ protected:
     public:
         ~SimVec()
         {
-            for (INT i = 0; i <= get_last_idx(); i++) {
+            for (VecIdx i = 0; i <= get_last_idx(); i++) {
                 BBSimulator * sim = get(i);
                 if (sim != nullptr) {
                     delete sim;
@@ -861,7 +861,7 @@ public:
     virtual OR_TYPE mapIRType2ORType(IR_TYPE ir_type, UINT ir_opnd_size,
                                      IN SR * opnd0, IN SR * opnd1,
                                      bool is_signed) = 0;
-    SR * mapPR2SR(UINT prno) const
+    SR * mapPR2SR(PRNO prno) const
     { return const_cast<CG*>(this)->m_pr2sr_map.get(prno); }
     SR * mapSymbolReg2SR(UINT regid) const
     { return const_cast<CG*>(this)->m_regid2sr_map.get(regid); }
@@ -974,7 +974,7 @@ public:
     virtual void reviseFormalParamAccess(UINT lv_size);
 
     void storeArgToStack(ArgDescMgr * argdesc, OUT ORList & ors, IN IOC *);
-    void setMapPR2SR(UINT prno, SR * sr) { m_pr2sr_map.set(prno, sr); }
+    void setMapPR2SR(PRNO prno, SR * sr) { m_pr2sr_map.set(prno, sr); }
     void setMapSymbolReg2SR(UINT regid, SR * sr)
     {
         DUMMYUSE(regid);

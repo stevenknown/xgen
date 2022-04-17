@@ -163,7 +163,7 @@ bool CGMgr::genAndPrtGlobalVariable(Region * rg)
     ASSERT0(rg->is_program());
     CG * cg = allocCG(rg);
     VarVec * varvec = rg->getVarMgr()->getVarVec();
-    for (INT i = 0; i <= varvec->get_last_idx(); i++) {
+    for (VecIdx i = 0; i <= varvec->get_last_idx(); i++) {
         Var * v = varvec->get(i);
         if (v == nullptr ||
             !v->is_global() ||

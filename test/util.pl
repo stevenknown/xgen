@@ -1228,7 +1228,7 @@ sub copyDir
     my $old = $_[0]; #old directory
     my $new = $_[1]; #new directory
     my($num_of_files_and_dirs, $num_of_dirs, $depth_traversed) =
-        dircopy($org, $new)
+        dircopy($old, $new)
         or abortex();
     return ($num_of_files_and_dirs, $num_of_dirs, $depth_traversed);
 }

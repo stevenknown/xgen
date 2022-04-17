@@ -1286,7 +1286,7 @@ void CG::initGlobalVar(VarMgr * vm)
     //Record global Var in .data section.
     VarVec * varvec = vm->getVarVec();
     SR * base, * ofst;
-    for (INT i = 0; i <= varvec->get_last_idx(); i++) {
+    for (VecIdx i = 0; i <= varvec->get_last_idx(); i++) {
         xoc::Var * v = varvec->get(i);
         if (v == nullptr) { continue; }
 
@@ -1332,7 +1332,7 @@ SR * CG::dupSR(SR const* sr)
 UINT CG::compute_pad()
 {
     UINT maxpad = 0;
-    for (INT bbid = 0; bbid <= m_ipl_vec.get_last_idx(); bbid++) {
+    for (VecIdx bbid = 0; bbid <= m_ipl_vec.get_last_idx(); bbid++) {
         IssuePackageList * ipl = m_ipl_vec.get(bbid);
         if (ipl == nullptr) { continue; }
 
@@ -1364,7 +1364,7 @@ void CG::dumpPackage()
     xcom::StrBuf format(128);
     format.strcat("%%-%ds", compute_pad());
 
-    for (INT bbid = 0; bbid <= m_ipl_vec.get_last_idx(); bbid++) {
+    for (VecIdx bbid = 0; bbid <= m_ipl_vec.get_last_idx(); bbid++) {
         IssuePackageList * ipl = m_ipl_vec.get(bbid);
         if (ipl == nullptr) { continue; }
 
@@ -2126,8 +2126,8 @@ CLUST CG::computeAsmCluster(IN OR * o)
         for (REGFILE rf = (REGFILE)rfs->get_first();
              rf != RF_UNDEF; rf = (REGFILE)rfs->get_next(rf)) {
             RegSet const* rs = tmMapRegFile2RegSet(rf);
-            for (REG reg = rs->get_first();
-                 rs != REG_UNDEF; reg = rs->get_next(reg)) {
+            for (BSIdx reg = rs->get_first();
+                 reg != BS_UNDEF; reg = rs->get_next(reg)) {
                 CLUST cur = mapReg2Cluster(reg);
                 if (res_clust == CLUST_UNDEF) {
                     res_clust = cur;
@@ -2152,11 +2152,9 @@ CLUST CG::computeAsmCluster(IN OR * o)
         RegFileSet const* rfs = SRD_valid_regfile_set(sd);
         for (REGFILE rf = (REGFILE)rfs->get_first(); rf != RF_UNDEF;
             rf = (REGFILE)rfs->get_next(rf)) {
-
             RegSet const* rs = tmMapRegFile2RegSet(rf);
-            for (REG reg = rs->get_first(); rs != REG_UNDEF;
+            for (BSIdx reg = rs->get_first(); reg != BS_UNDEF;
                 reg = rs->get_next(reg)) {
-
                 CLUST cur = mapReg2Cluster(reg);
                 if (opnd_clust == CLUST_UNDEF) {
                     opnd_clust = cur;
@@ -2250,11 +2248,10 @@ bool CG::skipArgRegister(UINT sz, OUT ArgDescMgr * argdescmgr)
         ASSERT0(sz == 2 * GENERAL_REGISTER_SIZE);
         RegSet const* rs = argdescmgr->getArgRegSet();
         REG first_reg = rs->get_first();
-        if (first_reg == (REG)BS_UNDEF) {
+        if ((BSIdx)first_reg == BS_UNDEF) {
             return false;
         }
         if (!isEvenReg(first_reg) || //bypass odd register
-
             //There are not enough continuous arg registers.
             rs->get_elem_count() < CONTINUOUS_REG_NUM) {
             argdescmgr->dropArgRegister();
@@ -2760,7 +2757,7 @@ SR * CG::genReg(UINT bytes_size)
 //to SR which is NOT dedicated register.
 void CG::assignPhyRegister(SR * sr, REG reg, REGFILE rf)
 {
-    ASSERT0(sr->is_reg() && reg != REG_UNDEF && rf != RF_UNDEF);
+    ASSERT0(sr->is_reg() && xgen::isLegalReg(reg) && xgen::isLegalRegFile(rf));
     SR_phy_reg(sr) = reg;
     SR_regfile(sr) = rf;
 
@@ -2803,6 +2800,7 @@ SR * CG::getDedicatedReg(REG phy_reg) const
 //Generate dedicated register by specified physical register.
 SR * CG::genDedicatedReg(REG phy_reg)
 {
+    ASSERT0(xgen::isLegalReg(phy_reg));
     SR * sr = m_dedicate_sr_tab.get(phy_reg);
     if (sr == nullptr) {
         sr = genReg();
@@ -2887,6 +2885,7 @@ SR * CG::genFpImm(HOST_FP val)
 //Generate SR according to specified register and register file.
 SR * CG::genSR(REG reg, REGFILE regfile)
 {
+    ASSERT0(xgen::isLegalReg(reg) && xgen::isLegalRegFile(regfile));
     SR * sr = genReg((UINT)GENERAL_REGISTER_SIZE);
     SR_phy_reg(sr) = reg;
     SR_regfile(sr) = regfile;
@@ -3312,7 +3311,7 @@ void CG::computeEntryAndExit(IN ORCFG & cfg,
                              OUT List<ORBB*> & entry_lst,
                              OUT List<ORBB*> & exit_lst)
 {
-    INT c;
+    VertexIter c;
     for (xcom::Vertex * v = cfg.get_first_vertex(c);
          v != nullptr; v = cfg.get_next_vertex(c)) {
         ORBB * bb = cfg.getBB(v->id());
@@ -3549,8 +3548,8 @@ UINT CG::calcSizeOfParameterPassedViaRegister(
     }
     UINT passed_paramsz = 0; //record the bytesize that has been passed.
     UINT size = 0;
-    for (INT phyreg = phyregset->get_first();
-         phyreg >= 0 && ct != nullptr;
+    for (BSIdx phyreg = phyregset->get_first();
+         phyreg != BS_UNDEF && ct != nullptr;
          phyreg = phyregset->get_next(phyreg)) {
         if (passed_paramsz == 0 && //only check if whole
                                    //value can be passed via reg
@@ -4332,7 +4331,7 @@ void CG::localize()
 bool CG::verifyPackageList()
 {
     START_TIMER(t0, "Verify Package List");
-    for (INT bbid = 0; bbid <= m_ipl_vec.get_last_idx(); bbid++) {
+    for (VecIdx bbid = 0; bbid <= m_ipl_vec.get_last_idx(); bbid++) {
         IssuePackageList * ipl = m_ipl_vec.get(bbid);
         if (ipl == nullptr) { continue; }
 

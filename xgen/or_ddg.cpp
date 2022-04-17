@@ -1078,7 +1078,7 @@ void DataDepGraph::removeOR(OR * o)
 
 
 //Get first node on graph.
-OR * DataDepGraph::getFirstOR(INT & cur)
+OR * DataDepGraph::getFirstOR(VertexIter & cur)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     return getOR(VERTEX_id(get_first_vertex(cur)));
@@ -1086,7 +1086,7 @@ OR * DataDepGraph::getFirstOR(INT & cur)
 
 
 //Get next node on graph.
-OR * DataDepGraph::getNextOR(INT & cur)
+OR * DataDepGraph::getNextOR(VertexIter & cur)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     return getOR(VERTEX_id(get_next_vertex(cur)));
@@ -1389,7 +1389,7 @@ UINT DataDepGraph::computeEstartAndLstart(BBSimulator const& sim,
     OR * max_length_or = nullptr;
 
     //Find root nodes.
-    INT c;
+    VertexIter c;
     for (xcom::Vertex * v = get_first_vertex(c);
          v != nullptr; v = get_next_vertex(c)) {
         if (v->getInDegree() == 0) {
@@ -1515,7 +1515,7 @@ void DataDepGraph::simplifyGraph()
     sortInTopologOrder(vex_vec);
     TMap<UINT, UINT> vid2pos_in_bitset_map;
     //Mapping vertex id to its position in 'vex_vec'.
-    INT i;
+    VecIdx i;
     for (i = 0; i <= vex_vec.get_last_idx(); i++) {
         vid2pos_in_bitset_map.set(vex_vec.get(i)->id(), i);
     }
@@ -1555,8 +1555,8 @@ void DataDepGraph::simplifyGraph()
                 //Get bitset that 'pos_i' associated.
                 xcom::BitSet * kid_from_bs = edge_indicator.get(kid_from_pos);
                 if (kid_from_bs) {
-                    for (INT pos_j = bs->get_next(pos_i);
-                         pos_j >= 0; pos_j = bs->get_next(pos_j)) {
+                    for (BSIdx pos_j = bs->get_next(pos_i);
+                         pos_j != BS_UNDEF; pos_j = bs->get_next(pos_j)) {
                         if (kid_from_bs->is_contain(pos_j)) {
                             //The edge 'i->pos_j' is redundant.
                             INT to_vid = vex_vec.get(pos_j)->id();
@@ -1710,7 +1710,7 @@ void DataDepGraph::dump(INT flag, INT rootoridx, CHAR const* name) const
             "edge.color: darkgreen\n");
 
     //Print nodes
-    INT c;
+    VertexIter c;
     for (xcom::Vertex * v = get_first_vertex(c);
          v != nullptr; v = get_next_vertex(c)) {
         OR * o = getOR(v->id());

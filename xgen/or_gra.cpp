@@ -214,7 +214,7 @@ GLT_MGR::GLT_MGR(RaMgr * ra_mgr, CG * cg) : m_sr2glt_map(128)
 
 GLT_MGR::~GLT_MGR()
 {
-    for (INT i = 0; i <= m_map_bb2ltmgr.get_last_idx(); i++) {
+    for (VecIdx i = 0; i <= m_map_bb2ltmgr.get_last_idx(); i++) {
         LifeTimeMgr * ltmgr = m_map_bb2ltmgr.get(i);
         if (ltmgr != nullptr) {
             delete ltmgr;
@@ -278,7 +278,7 @@ void GLT_MGR::dump()
 
         //Print live BB.
         if (livebbs == nullptr || livebbs->is_empty()) { continue; }
-        INT start = 0;
+        BSIdx start = 0;
         for (BSIdx u = livebbs->get_first(); u != BS_UNDEF;
              u = livebbs->get_next(u)) {
             for (BSIdx j = start; j < u; j++) {
@@ -451,7 +451,7 @@ void GInterfGraph::dump(CHAR const* name) const
 
     StrBuf buf(64);
     //Print node
-    INT c;
+    VertexIter c;
     for (xcom::Vertex const* v = get_first_vertex(c);
          v != nullptr;  v = get_next_vertex(c)) {
         G_LIFE_TIME * glt = m_glt_mgr->get_glt(VERTEX_id(v));
@@ -505,11 +505,11 @@ void GInterfGraph::build()
     //Check interference
     Vector<G_LIFE_TIME*> * gltvec =
         GLT_MGR_sr2glt_map(*m_glt_mgr).get_tgt_elem_vec();
-    for (INT i = 0; i <= gltvec->get_last_idx(); i++) {
+    for (VecIdx i = 0; i <= gltvec->get_last_idx(); i++) {
         G_LIFE_TIME * lt1 = gltvec->get(i);
         ASSERT0(lt1 != nullptr);
         addVertex(GLT_id(lt1));
-        for (INT j = i + 1; j <= gltvec->get_last_idx(); j++) {
+        for (VecIdx j = i + 1; j <= gltvec->get_last_idx(); j++) {
             G_LIFE_TIME * lt2 = gltvec->get(j);
             ASSERT0(lt2 != nullptr);
             if (isInterferred(lt1, lt2)) {

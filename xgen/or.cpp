@@ -401,7 +401,7 @@ ORMgr::ORMgr(SRMgr * srmgr)
 
 void ORMgr::clean()
 {
-    for (INT i = ORID_UNDEF + 1; i <= get_last_idx(); i++) {
+    for (VecIdx i = ORID_UNDEF + 1; i <= get_last_idx(); i++) {
         OR * o = get(i);
         ASSERT0(o);
         delete o; //invoke virtual destructor of OR.
@@ -432,7 +432,7 @@ OR * ORMgr::genOR(OR_TYPE ort, CG * cg)
         o = allocOR();
         ASSERT0(ORID_UNDEF == 0);
         //Do not use ORID_UNDEF as index.
-        INT idx = get_last_idx();
+        VecIdx idx = get_last_idx();
         OR_id(o) = idx < 0 ? ORID_UNDEF + 1 : idx + 1;
         set(o->id(), o);
     }

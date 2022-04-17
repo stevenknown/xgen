@@ -3321,10 +3321,10 @@ bool ARMCG::skipArgRegister(Var const* param,
         if (!isEvenReg(reg) || //paired register start at even.
 
             //at least two registers available
-            regset->get_next(reg) == -1) {
+            regset->get_next(reg) == BS_UNDEF) {
             //Passed the odd number register to facilitate the use
             //of value in paired-register.
-            ASSERTN(isEvenReg(regset->get_next(reg)),
+            ASSERTN(isEvenReg((REG)regset->get_next(reg)),
                 ("not continuous"));
             return true;
         }

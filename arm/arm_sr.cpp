@@ -71,10 +71,10 @@ CHAR const* ARMSR::get_name(StrBuf & buf, CG const* cg) const
         return SR::get_name(buf, cg);
 
         //Print physical register id and register file.
-        if (SR_phy_reg(this) != REG_UNDEF) {
-            buf.strcat("(%s)", tmGetRegName(SR_phy_reg(this)));
+        if (getPhyReg() != REG_UNDEF) {
+            buf.strcat("(%s)", tmGetRegName(getPhyReg()));
         }
-        if (SR_regfile(this) != RF_UNDEF) {
+        if (getRegFile() != RF_UNDEF) {
             buf.strcat("(%s)", tmGetRegFileName(SR_regfile(this)));
         }
         break;

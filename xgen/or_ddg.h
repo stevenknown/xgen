@@ -189,8 +189,8 @@ public:
     }
     //The returned OR may be changed.
     OR * getOR(UINT orid) const { return m_ormgr->getOR(orid); }
-    OR * getFirstOR(INT & cur);
-    OR * getNextOR(INT & cur);
+    OR * getFirstOR(VertexIter & cur);
+    OR * getNextOR(VertexIter & cur);
     void get_neighbors(MOD ORList & nis, OR const* o);
     void getSuccsByOrder(MOD ORList & succs, IN OR * o);
     void getSuccsByOrderTraverseNode(MOD ORList & succs, OR const* o);

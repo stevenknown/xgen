@@ -105,7 +105,7 @@ public:
     }
     ~ArgDescMgr()
     {
-        for (INT i = 0; i <= m_arg_desc.get_last_idx(); i++) {
+        for (VecIdx i = 0; i <= m_arg_desc.get_last_idx(); i++) {
             ArgDesc * desc = m_arg_desc.get(i);
             delete desc;
         }
@@ -116,8 +116,7 @@ public:
     ArgDesc * addDesc()
     {
         ArgDesc * desc = new ArgDesc();
-        m_arg_desc.set(m_arg_desc.get_last_idx() < 0 ?
-            0 : m_arg_desc.get_last_idx() + 1, desc);
+        m_arg_desc.set(m_arg_desc.get_elem_count(), desc);
         m_arg_list.append_tail(desc);
         return desc;
     }

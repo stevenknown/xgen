@@ -1,13 +1,11 @@
 //====---- Dump region '.program' ----====
 region program ".program" () {
-
     var in1:mc<256>:(align(64));
     var in0:mc<256>:(align(64));
     var out:mc<256>:(align(64));
     var out2:mc<256>:(align(64));
     var out3:mc<256>:(align(64));
     var out4:mc<256>:(align(64));
-
     region func main () {
         //START BB1
         st:mc<256> in1 = ild:mc<256> $1:*<1>;

@@ -292,7 +292,7 @@ UINT SR::getByteSize() const
 //
 void SRMgr::clean()
 {
-    for (INT i = SRID_UNDEF + 1; i <= m_sridx2sr.get_last_idx(); i++) {
+    for (VecIdx i = SRID_UNDEF + 1; i <= m_sridx2sr.get_last_idx(); i++) {
         SR * sr = m_sridx2sr.get(i);
         ASSERT0(sr);
         delete sr; //invoke virtual destructor of SR.
@@ -319,8 +319,8 @@ SR * SRMgr::genSR()
     sr = allocSR();
     ASSERT0(SRID_UNDEF == 0);
     //Do not use SRID_UNDEF as index.
-    INT idx = m_sridx2sr.get_last_idx();
-    SR_id(sr) = idx < 0 ? SRID_UNDEF + 1 : idx + 1;
+    VecIdx idx = m_sridx2sr.get_last_idx();
+    SR_id(sr) = IS_VECUNDEF(idx) ? SRID_UNDEF + 1 : idx + 1;
     m_sridx2sr.set(SR_id(sr), sr);
     return sr;
 }

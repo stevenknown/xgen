@@ -51,13 +51,12 @@ class T2IRCtx {
 public:
     //Progagate information top down and collect information bottom up.
     //Top level of current ir list.
-    //because the top level of ir list must be IR_ST or IR_IST.
-    //So store cannot be child node of IR.
+    //Note the top level of ir list must be stmt.
     IR ** top_level_irlist;
 
     //Collect information bottom up.
-    //Both of Post Dec/Inc will take side effects for base region
-    //So we must append the side effect ST operation followed, and
+    //Both of Post Dec/Inc will take side effects for base-region,
+    //thus we must append the side-effect stmt followed, and
     //record the side-effect ir as epilog of current statement.
     IR ** epilog_ir_list;
 
@@ -67,12 +66,12 @@ public:
     bool is_parse_callee;
 
     //Progagate information top down.
-    //for lvalue expression , TR_ID should corresponding
+    //For lvalue expression, TR_ID should corresponding
     //with IR_ID, but IR_LD.
     bool is_lvalue;
 
     //Progagate information top down.
-    //Whether we need to record operations at epilog.
+    //Set to true if we need to record operations at epilog.
     //e.g a++, post-add is epilog operation.
     bool is_record_epilog;
 
@@ -113,8 +112,9 @@ class CTree2IR {
 protected:
     Decl const* m_declared_return_type;
     Region * m_rg;
+    RegionMgr * m_rm;
     TypeMgr * m_tm;
-    Var * m_retval_buf;
+    xoc::Var * m_retval_buf;
     List<CaseValue*> * m_case_list; //for switch/case used only
     Stack<List<CaseValue*>*> m_case_list_stack; //for switch/case used only
     SMemPool * m_pool;
@@ -125,15 +125,27 @@ protected:
     IR * convertLogicalOR(IN Tree * t, INT lineno, IN T2IRCtx * cont);
     IR * convertCallee(Tree const* t, bool * is_direct,
                        T2IRCtx const* cont);
+    xoc::Var * convertReturnValBufVar(xoc::Type const* rettype,
+                                      OUT UINT * return_val_size);
     //Handle return value buffer.
-    IR * convertCallReturnBuf(Type const* rettype, IR const* callee,
-                              UINT * return_val_size, Var ** retval_buf);
+    IR * convertCallReturnBuf(xoc::Type const* rettype, IR const* callee,
+                              OUT UINT * return_val_size,
+                              OUT xoc::Var ** retval_buf);
     IR * convertCallReturnVal(IR * call, UINT return_val_size,
-                              Var * retval_buf, Type const* rettype,
+                              xoc::Var * retval_buf,
+                              xoc::Type const* rettype,
                               INT lineno);
     IR * convertCallItself(Tree * t, IR * arglist,
                            IR * callee, bool is_direct, INT lineno,
                            T2IRCtx * cont);
+
+    //Generate IR for field-access if the base-region is a structure that
+    //returned by a function call.
+    IR * convertFieldAccessForReturnValAggr(Tree const* t, IR * retval,
+                                            T2IRCtx * cont);
+
+    xoc::Var * genLocalVar(xoc::Sym const* sym, xoc::Type const* ty);
+    xoc::Var * genLocalVar(CHAR const* name, xoc::Type const* ty);
 
     IR * only_left_last(IR * head);
 
@@ -153,6 +165,7 @@ public:
         //retty may be NULL.
         m_declared_return_type = retty;
         m_rg = rg;
+        m_rm = rg->getRegionMgr();
         m_tm = rg->getTypeMgr();
         m_case_list = nullptr;
         m_retval_buf = nullptr;
@@ -164,11 +177,11 @@ public:
     LabelInfo * getUniqueLabel(LabelInfo * lab)
     { return m_labtab.append_and_retrieve(lab); }
 
-    //Generate a Var if the bytesize of RETURN is bigger than total size of
+    //Generate a xoc::Var if the bytesize of RETURN is bigger than total size of
     //return-registers.
     //e.g: Given 32bit target machine, the return register is a0, a1,
     //If the return type is structure whose size is bigger than 64bit, we need
-    //to generate an implcitly Var to indicate the stack buffer which used
+    //to generate an implcitly xoc::Var to indicate the stack buffer which used
     //to hold the return value.
     IR * genReturnValBuf(IR * ir);
 
@@ -179,13 +192,13 @@ public:
     BYTE getMantissaNum(CHAR const* fpval);
 
     //Return XOC data type according to given CFE declaration.
-    //If 'decl' presents a simply type, convert type-spec to DATA_TYPE
+    //If 'decl' presents a simply type, convert type-spec to xoc::DATA_TYPE
     //descriptor.
     //If 'decl' presents a pointer type, convert pointer-type to D_PTR.
     //If 'decl' presents an array, convert type to D_M descriptor.
     //size: return byte size of decl.
-    static DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size,
-                                    TypeMgr * tm);
+    static xoc::DATA_TYPE get_decl_dtype(Decl const* decl, UINT * size,
+                                         TypeMgr * tm);
 
     //Construct XOC Region and convert C-Language-Ast to XOC IR.
     static bool generateRegion(RegionMgr * rm);
@@ -196,8 +209,8 @@ public:
     IR * buildLda(Tree const* t);
 
     bool is_istore_lhs(Tree const* t) const;
-    bool is_readonly(Var const* v) const;
-    bool is_alloc_heap(Var const* v) const;
+    bool is_readonly(xoc::Var const* v) const;
+    bool is_alloc_heap(xoc::Var const* v) const;
     bool is_align(Sym const* sym) const;
 
     xoc::Type const* checkAndGenCVTType(Decl const* tgt, Decl const* src);

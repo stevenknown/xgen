@@ -111,7 +111,7 @@ public:
 
     Section * genSection(CHAR const* sect_name, bool allocable, UINT size);
     Section * genStackSection();
-    UINT getSectNum() const { return m_sect_vec.get_last_idx() + 1; }
+    UINT getSectNum() const { return m_sect_vec.get_elem_count(); }
 };
 
 } //namespace xgen

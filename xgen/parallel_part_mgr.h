@@ -160,7 +160,7 @@ public:
     void destroy()
     {
         if (!Vector<ParallelPartMgr*>::is_init()) { return; }
-        for (INT i = 0; i <= get_last_idx(); i++) {
+        for (VecIdx i = 0; i <= get_last_idx(); i++) {
             ParallelPartMgr * ppm = get(i);
             if (ppm != nullptr) {
                 ppm->destroy();

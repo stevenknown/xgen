@@ -59,7 +59,7 @@ void RegFileGroup::init()
 void RegFileGroup::destroy()
 {
     if (!m_is_init) { return; }
-    for (INT i = 0; i <= m_group2orlist_map.get_last_idx(); i++) {
+    for (VecIdx i = 0; i <= m_group2orlist_map.get_last_idx(); i++) {
         List<OR*> * orlist = m_group2orlist_map.get(i);
         if (orlist == nullptr) {
             continue;
@@ -76,7 +76,7 @@ void RegFileGroup::destroy()
 INT RegFileGroup::getNumOfGroup() const
 {
     ASSERTN(m_is_init, ("List not yet initialized."));
-    return m_group2orlist_map.get_last_idx() + 1;
+    return m_group2orlist_map.get_elem_count();
 }
 
 
@@ -116,7 +116,7 @@ void RegFileGroup::clone(RegFileGroup & group)
     }
 
     //clone OR group mapping
-    for (INT i = 0; i <= group.m_oridx2group_map.get_last_idx(); i++) {
+    for (VecIdx i = 0; i <= group.m_oridx2group_map.get_last_idx(); i++) {
         m_oridx2group_map.set(i, group.m_oridx2group_map.get(i));
     }
 }
@@ -148,7 +148,7 @@ void RegFileGroup::dump()
             m_cg->getRegion()->getRegionName(), m_bb->id());
 
     StrBuf buf(64);
-    for (INT i = 0; i <= m_group2orlist_map.get_last_idx(); i++) {
+    for (VecIdx i = 0; i <= m_group2orlist_map.get_last_idx(); i++) {
         fprintf(h, "\n\tGroup(%d):\n", i);
         List<OR*> * orlist = m_group2orlist_map.get(i);
         if (orlist != nullptr) {

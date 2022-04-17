@@ -171,9 +171,9 @@ public:
     union {
         //Attributes if current SR represents a symbol register.
         struct {
-            UINT symbol_regid; //symbol register id, start at 1.
+            UINT symbol_regid; //symbol register id, start at SRID_UNDEF + 1.
             REGFILE regfile; //physical register file.
-            REG phy_regid; //physical register id, start at 1.
+            REG phy_regid; //physical register id, start at REG_UNDEF + 1.
             xoc::Var * spill_var; //xoc::Var to hold spilled register.
         } u2;
 
@@ -303,7 +303,7 @@ public:
         size_t count = m_freesr_list.count_mem();
         count += m_sridx2sr.count_mem();
         SR * sr = nullptr;
-        for (INT i = 0; i <= m_sridx2sr.get_last_idx(); i++) {
+        for (VecIdx i = 0; i <= m_sridx2sr.get_last_idx(); i++) {
             sr = m_sridx2sr[i];
             if (sr != nullptr) { break; }
         }
@@ -311,7 +311,7 @@ public:
         return count;
     }
     void freeSR(SR * sr);
-    UINT getSRNum() const { return m_sridx2sr.get_last_idx() + 1; }
+    UINT getSRNum() const { return m_sridx2sr.get_elem_count(); }
     virtual SR * get(UINT unique_id);
     virtual SR * genSR();
 };
