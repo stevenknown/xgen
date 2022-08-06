@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _DRIVER_H_
 #define _DRIVER_H_
 
+namespace xocc {
+
 //Exported Variables, only used in FE.
 //If one requires to export variables, or types to other
 //module, please put them in fexp.h.
@@ -48,6 +50,9 @@ bool compileCFile(CHAR const* fn);
 bool compileGRFile(CHAR const* fn);
 bool compileGRFileList();
 bool compileCFileList();
-xoc::Var * mapDecl2VAR(Decl * decl);
-Decl * mapVAR2Decl(xoc::Var * var);
+xoc::Var * mapDecl2VAR(xfe::Decl * decl);
+xfe::Decl * mapVAR2Decl(xoc::Var * var);
+void resetMapBetweenVARandDecl(xoc::Var * var);
+
+} //namespace xocc
 #endif

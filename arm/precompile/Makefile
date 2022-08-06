@@ -38,7 +38,8 @@ COM_OBJS +=\
 ../../com/strbuf.o \
 ../../com/diagnostic.o \
 ../../com/bs.o \
-../../com/comf.o
+../../com/comf.o\
+../../com/byteop.o
 
 gentminfo.exe: gen_objs com_objs
 ifeq ($(HOST_CC),)

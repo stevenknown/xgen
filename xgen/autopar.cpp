@@ -243,8 +243,8 @@ static void modifyBB2(MOD ORBB * bb2, ORBB const* orig_bb,
 
     //trip_count = orig_trip_count - orig_trip_count % npart
     IR * loop_trip_ir = nullptr;
-    OR_TYPE opc_intconst =
-            OR_TYPE_make_op(OPR_INTCONST,
+    OR_CODE opc_intconst =
+            OR_CODE_make_op(OPR_INTCONST,
                             IR_loop_trip(orig_loopinfo)->getType());
     if (SR_is_const(rem_count_sr)) {
         LOOPINFO_trip_count_sr(loop_info) = rem_count_sr;
@@ -253,8 +253,8 @@ static void modifyBB2(MOD ORBB * bb2, ORBB const* orig_bb,
         BB_Add_Annotation(bb2, ANNOT_LOOPINFO, loop_info);
     } else {
         LI_trip_count_sr(loop_info) = rem_count_sr;
-        OR_TYPE opc_mod =
-            OR_TYPE_make_op(OPR_MOD,
+        OR_CODE opc_mod =
+            OR_CODE_make_op(OPR_MOD,
                 IR_loop_trip(orig_loopinfo)->getType());
         loop_trip_ir = m_rg->buildBinarySimpOp(opc_mod,
             m_rg->dupIRTree(IR_loop_trip(orig_loopinfo)),
@@ -293,15 +293,15 @@ static void modifyBB2(MOD ORBB * bb2, ORBB const* orig_bb,
             ASSERT0(!m_cg->is_gt(cmp_or));
             if (!m_cg->is_lt(cmp_or)) {
                 //Revise comparing opcode.
-                OR_TYPE lt_opc;
+                OR_CODE lt_opc;
                 if (SR_is_const(rem_count_sr)) {
-                    lt_opc = m_cg->computeEquivalentORType(OR_slti_m,
+                    lt_opc = m_cg->computeEquivalentORCode(OR_slti_m,
                         m_cg->computeORUnit(cmp_or, nullptr),
                         m_cg->computeORCluster(cmp_or, nullptr));
                 } else {
                     UnitSet const* us = m_cg->computeORUnit(cmp_or);
                     ASSERT0(us && us->get_elem_count() == 1);
-                    lt_opc = m_cg->computeEquivalentORType(OR_slt_m,
+                    lt_opc = m_cg->computeEquivalentORCode(OR_slt_m,
                         us->get_first(), m_cg->computeORCluster(cmp_or));
                 }
                 OR_code(cmp_or) = lt_opc;
@@ -312,13 +312,13 @@ static void modifyBB2(MOD ORBB * bb2, ORBB const* orig_bb,
             ASSERT0(!m_cg->is_lt(cmp_or));
             if (!m_cg->is_gt(cmp_or)) {
                 //Revise comparing opcode.
-                OR_TYPE gt_ot;
+                OR_CODE gt_ot;
                 if (SR_is_const(rem_count_sr)) {
-                    gt_ot = m_cg->computeEquivalentORType(OR_sgti_m,
+                    gt_ot = m_cg->computeEquivalentORCode(OR_sgti_m,
                         m_cg->computeORUnit(cmp_or),
                         m_cg->compute_op_clust(cmp_or, nullptr));
                 } else {
-                    gt_ot = m_cg->computeEquivalentORType(OR_sgt_m,
+                    gt_ot = m_cg->computeEquivalentORCode(OR_sgt_m,
                         m_cg->computeORUnit(cmp_or),
                         m_cg->computeORCluster(cmp_or, nullptr));
                 }
@@ -431,8 +431,8 @@ static void modifyBB(MOD ORBB * bb,
             num_para_part;
 
     //trip_count = orig_trip_count - orig_trip_count % npart
-    OR_TYPE opc_intconst =
-            OR_TYPE_make_op(IR_CONST,
+    OR_CODE opc_intconst =
+            OR_CODE_make_op(IR_CONST,
                             IR_loop_trip(orig_loopinfo)->getType());
     if (SR_is_const(trip_count_sr)) {
         INT new_trip_count_val =
@@ -446,11 +446,11 @@ static void modifyBB(MOD ORBB * bb,
         LOOPINFO_trip_count_sr(orig_loop_info) = nullptr;
         //Information to regenerate trip count IR was lost!
         //Cannot generate the IR.
-        //OR_TYPE mod =
-        //    OR_TYPE_make_op(IR_MOD,
+        //OR_CODE mod =
+        //    OR_CODE_make_op(IR_MOD,
         //                    IR_loop_trip(orig_loopinfo)->getType());
-        //OR_TYPE sub =
-        //    OR_TYPE_make_op(IR_SUB,
+        //OR_CODE sub =
+        //    OR_CODE_make_op(IR_SUB,
         //                    IR_loop_trip(orig_loopinfo)->getType());
         //IR * mod =
         //    m_rg->buildStore(mod,

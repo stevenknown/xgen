@@ -72,10 +72,6 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     if (g_do_ivr) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_IVR));
     }
-    if (g_do_licm) {
-        passlist.append_tail(m_pass_mgr->registerPass(PASS_LICM));
-    }
-
     CopyProp * cp = nullptr;
     if (g_do_cp || g_do_cp_aggressive) {
         cp = (CopyProp*)m_pass_mgr->registerPass(PASS_CP);
@@ -83,12 +79,14 @@ bool ARMScalarOpt::perform(OptCtx & oc)
                                CP_PROP_UNARY_AND_SIMPLEX : CP_PROP_SIMPLEX);
         passlist.append_tail(cp);
     }
-
-    if (g_do_rp) {
-        passlist.append_tail(m_pass_mgr->registerPass(PASS_RP));
-    }
     if (g_do_rce) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_RCE));
+    }
+    if (g_do_licm) {
+        passlist.append_tail(m_pass_mgr->registerPass(PASS_LICM));
+    }
+    if (g_do_rp) {
+        passlist.append_tail(m_pass_mgr->registerPass(PASS_RP));
     }
     if (g_do_gcse) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_GCSE));
@@ -111,7 +109,6 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     if (g_do_lftr) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_LFTR));
     }
-
     bool res = false;
     bool change;
     UINT count = 0;
@@ -129,7 +126,7 @@ bool ARMScalarOpt::perform(OptCtx & oc)
                 doit = pass->perform(oc);
             }
             if (doit) {
-                //RefineCtx rf;
+                //RefineCtx rf(&oc);
                 //RC_insert_cvt(rf) = false;
                 //m_rg->getRefine()->refineBBlist(m_rg->getBBList(), rf);
                 change = true;
@@ -141,9 +138,11 @@ bool ARMScalarOpt::perform(OptCtx & oc)
             ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
             ASSERT0(m_rg->getCFG()->verify());
             ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg));
-            ASSERT0(MDSSAMgr::verifyMDSSAInfo(m_rg));
+            ASSERT0(MDSSAMgr::verifyMDSSAInfo(m_rg, oc));
             ASSERT0(m_cfg->verifyRPO(oc));
+            ASSERT0(m_cfg->verifyLoopInfo(oc));
             ASSERT0(m_cfg->verifyDomAndPdom(oc));
+            ASSERT0(!m_rg->getLogMgr()->isEnableBuffer());
         }
         count++;
     } while (change && count < 20);

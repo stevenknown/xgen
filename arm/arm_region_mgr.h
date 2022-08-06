@@ -31,7 +31,7 @@ author: Su Zhenyu
 #ifndef _ARM_REGION_MGR_H_
 #define _ARM_REGION_MGR_H_
 
-class ARMRegionMgr : public CLRegionMgr {
+class ARMRegionMgr : public RegionMgr {
     COPY_CONSTRUCTOR(ARMRegionMgr);
 protected:
     AsmPrinterMgr m_asmprtmgr;
@@ -51,5 +51,7 @@ public:
 
     bool CodeGen(Region * rg);
 };
+
+ARMRegionMgr * allocARMRegionMgr();
 
 #endif

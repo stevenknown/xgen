@@ -34,7 +34,7 @@ namespace xgen {
 
 static bool canOpndBeLabel(OR const* o, UINT idx)
 {
-    ORTypeDesc const* otd = tmGetORTypeDesc(o->getCode());
+    ORCodeDesc const* otd = tmGetORCodeDesc(o->getCode());
     SRDescGroup<> const* sdg = OTD_srd_group(otd);
     ASSERT0(sdg);
     SRDesc const* sr_desc = sdg->get_opnd(idx);
@@ -45,7 +45,7 @@ static bool canOpndBeLabel(OR const* o, UINT idx)
 
 static bool canOpndBeLabelList(OR const* o, UINT idx)
 {
-    ORTypeDesc const* otd = tmGetORTypeDesc(o->getCode());
+    ORCodeDesc const* otd = tmGetORCodeDesc(o->getCode());
     SRDescGroup<> const* sdg = OTD_srd_group(otd);
     ASSERT0(sdg);
     SRDesc const* sr_desc = sdg->get_opnd(idx);
@@ -425,7 +425,7 @@ OR * ORMgr::getOR(UINT id)
 }
 
 
-OR * ORMgr::genOR(OR_TYPE ort, CG * cg)
+OR * ORMgr::genOR(OR_CODE ort, CG * cg)
 {
     OR * o = m_free_or_list.remove_head();
     if (o == nullptr) {

@@ -28,28 +28,36 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-#include "xgeninc.h"
+#ifndef __EQU_OR_CODE_H__
+#define __EQU_OR_CODE_H__
 
 namespace xgen {
 
-bool CLRegionMgr::compileFuncRegion(xoc::Region * func, CGMgr * cgmgr,
-                                    xoc::OptCtx * oc)
-{
-    ASSERT0(func && cgmgr && oc);
-    ASSERT0(func->is_function() || func->is_program() || func->is_inner());
-    START_TIMER_FMT(t, ("compileFuncRegion '%s'", func->getRegionName()));
-    //Note we regard INNER region as FUNCTION region.
-    if (!xoc::RegionMgr::processFuncRegion(func, oc)) {
-        return false;
-    }
-    if (g_do_cg) {
-        cgmgr->generate(func);
-        if (g_dump_opt.isDumpMemUsage()) {
-            func->dumpMemUsage();
+//The equivalent OR codes are same in utilities for
+//different function-unit in hardware.
+//e.g:Assume machine has three independent function units M, I, O, and each
+//    unit supplies several operations which implement same function.
+//    They are add_m, add_i, add_o.
+//    The equivalent group is [add_m, add_i, add_o] for each add_m, add_i,
+//    add_o operations.
+#define EQUORC_unit2orcode(e, u)   ((e)->m_func_unit2orcode[u])
+#define EQUORC_num_equorcode(e)    ((e)->m_num_of_equorcode)
+
+typedef struct EquORCodes {
+    //Record the number of Equal OR code.
+    UINT m_num_of_equorcode;
+
+    //Record Equal ORCode.
+    OR_CODE m_func_unit2orcode[UNIT_NUM];
+
+    void init()
+    {
+        m_num_of_equorcode = 0;
+        for (UINT i = 0; i < UNIT_NUM; i++) {
+            m_func_unit2orcode[i] = OR_UNDEF;
         }
     }
-    END_TIMER_FMT(t, ("compileFuncRegion '%s'", func->getRegionName()));
-    return true;
-}
+} EquORCodes;
 
 } //namespace xgen
+#endif

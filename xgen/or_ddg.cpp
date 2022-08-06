@@ -151,8 +151,8 @@ void DataDepGraph::fullyConnectPredAndSucc(OR * o)
 {
     xcom::Vertex * v = getVertex(o->id());
     ASSERT0(v);
-    xcom::EdgeC * pred_lst = VERTEX_in_list(v);
-    xcom::EdgeC * succ_lst = VERTEX_out_list(v);
+    xcom::EdgeC * pred_lst = v->getInList();
+    xcom::EdgeC * succ_lst = v->getOutList();
     while (pred_lst) {
         OR * from = getOR(pred_lst->getFromId());
         xcom::EdgeC * tmp_succ_lst = succ_lst;
@@ -716,7 +716,7 @@ void DataDepGraph::getORListWhichAccessSameMem(OUT ORList & mem_ors,
     while (worklst.get_elem_count() > 0) {
         xcom::Vertex * head = worklst.remove_head();
         //Add succ nodes.
-        xcom::EdgeC * el = VERTEX_out_list(head);
+        xcom::EdgeC * el = head->getOutList();
         while (el != nullptr) {
             xcom::Edge * e = EC_edge(el);
             el = EC_next(el);
@@ -1101,7 +1101,7 @@ void DataDepGraph::getPredsByOrder(MOD ORList & preds, IN OR * o)
 
     xcom::Vertex * v = getVertex(o->id());
     if (v == nullptr) return;
-    xcom::EdgeC * el = VERTEX_in_list(v);
+    xcom::EdgeC * el = v->getInList();
     if (el == nullptr) return;
 
     while (el != nullptr) {
@@ -1133,7 +1133,7 @@ void DataDepGraph::getSuccsByOrder(MOD ORList & succs, IN OR * o)
     xcom::Vertex * v = getVertex(o->id());
     if (v == nullptr) { return; }
 
-    for (xcom::EdgeC * el = VERTEX_out_list(v); el != nullptr; el = EC_next(el)) {
+    for (xcom::EdgeC * el = v->getOutList(); el != nullptr; el = EC_next(el)) {
         OR * succ = getOR(el->getToId());
         ASSERTN(succ, ("DDG is invalid."));
         OR * marker;
@@ -1160,7 +1160,7 @@ void DataDepGraph::getDependentPreds(OUT ORTab & preds, OR const* o)
 {
     xcom::Vertex * v = getVertex(o->id());
     if (v == nullptr) { return; }
-    xcom::EdgeC * el = VERTEX_in_list(v);
+    xcom::EdgeC * el = v->getInList();
     if (el == nullptr) { return; }
 
     preds.clean();
@@ -1227,7 +1227,7 @@ void DataDepGraph::getSuccsByOrderTraverseNode(MOD ORList & succs,
 
     xcom::Vertex * v = getVertex(o->id());
     if (v == nullptr) { return; }
-    xcom::EdgeC * el = VERTEX_out_list(v);
+    xcom::EdgeC * el = v->getOutList();
     if (el == nullptr) { return; }
 
     List<xcom::Vertex*> worklst;
@@ -1239,7 +1239,7 @@ void DataDepGraph::getSuccsByOrderTraverseNode(MOD ORList & succs,
 
     while (worklst.get_elem_count() > 0) {
         xcom::Vertex * sv = worklst.remove_head();
-        xcom::EdgeC * el2 = VERTEX_out_list(sv);
+        xcom::EdgeC * el2 = sv->getOutList();
         while (el2 != nullptr) {
             xcom::Vertex * to = el2->getTo();
             if (!visited.is_contain(to->id())) {
@@ -1284,7 +1284,7 @@ void DataDepGraph::get_succs(MOD ORList & succs, OR const* o)
     succs.clean();
     xcom::Vertex * v = getVertex(o->id());
     if (v == nullptr) return;
-    xcom::EdgeC * el = VERTEX_out_list(v);
+    xcom::EdgeC * el = v->getOutList();
     if (el == nullptr) return;
 
     while (el != nullptr) {
@@ -1303,7 +1303,7 @@ void DataDepGraph::get_preds(MOD List<xcom::Vertex*> & preds,
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     preds.clean();
     if (v == nullptr) { return; }
-    xcom::EdgeC * el = VERTEX_in_list(v);
+    xcom::EdgeC * el = v->getInList();
     if (el == nullptr) { return; }
     while (el != nullptr) {
         preds.append_tail(el->getFrom());
@@ -1320,7 +1320,7 @@ void DataDepGraph::get_preds(MOD ORList & preds, OR const* o)
 
     xcom::Vertex * v = getVertex(o->id());
     if (v == nullptr) return;
-    xcom::EdgeC * el = VERTEX_in_list(v);
+    xcom::EdgeC * el = v->getInList();
     if (el == nullptr) return;
 
     while (el != nullptr) {
@@ -1337,7 +1337,7 @@ void DataDepGraph::get_neighbors(MOD ORList & nis, OR const* o)
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     xcom::Vertex * v = getVertex(o->id());
     if (v == nullptr) return;
-    xcom::EdgeC * el = VERTEX_out_list(v);
+    xcom::EdgeC * el = v->getOutList();
     if (el == nullptr) return;
     while (el != nullptr) {
         OR * succ = getOR(el->getToId());
@@ -1346,7 +1346,7 @@ void DataDepGraph::get_neighbors(MOD ORList & nis, OR const* o)
         el = EC_next(el);
     }
 
-    el = VERTEX_in_list(v);
+    el = v->getInList();
     if (el == nullptr) return;
     while (el != nullptr) {
         OR * pred = getOR(el->getFromId());
@@ -1405,7 +1405,7 @@ UINT DataDepGraph::computeEstartAndLstart(BBSimulator const& sim,
         ASSERTN(!visited.is_contain(v->id()), ("circuit exists in graph"));
         INT estart = 0;
         //Scan pred nodes.
-        xcom::EdgeC * el = VERTEX_in_list(v);
+        xcom::EdgeC * el = v->getInList();
         while (el != nullptr) {
             xcom::Vertex * from = el->getFrom();
             ASSERTN(visited.is_contain(from->id()),
@@ -1423,7 +1423,7 @@ UINT DataDepGraph::computeEstartAndLstart(BBSimulator const& sim,
         visited.bunion(v->id());
 
         //Scan succ nodes.
-        el = VERTEX_out_list(v);
+        el = v->getOutList();
         if (el == nullptr) {
             //Calculate length of critical path and record
             //the 'o' relevant.
@@ -1479,7 +1479,7 @@ UINT DataDepGraph::computeEstartAndLstart(BBSimulator const& sim,
         m_lstart.setAlways(v->id(), lstart);
 
         //Scan pred nodes.
-        el = VERTEX_in_list(v);
+        el = v->getInList();
         while (el != nullptr) {
             xcom::Vertex * from = el->getFrom();
             UINT out = out_degree.get(from->id());

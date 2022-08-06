@@ -106,7 +106,7 @@ protected:
                                            OUT RecycORList & tors,
                                            IN IOC * cont);
 
-    void getResultPredByIRTYPE(IR_TYPE code, SR ** truepd, SR ** falsepd,
+    void getResultPredByIRCode(IR_CODE code, SR ** truepd, SR ** falsepd,
                                bool is_signed);
     ARMCG * getCG() { return (ARMCG*)m_cg; }
     ARMCGMgr * getCGMgr() { return (ARMCGMgr*)m_cg->getCGMgr(); }

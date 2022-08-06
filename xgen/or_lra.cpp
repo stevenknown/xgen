@@ -1919,10 +1919,10 @@ bool LifeTimeMgr::isRecalcSR(SR * sr)
 }
 
 
-//Return true if operation 'ortype' passed through by 'lt',
+//Return true if operation 'orcode' passed through by 'lt',
 //otherwise return false.
-//'orlst': operations which has the 'ortype'.
-bool LifeTimeMgr::isContainOR(IN LifeTime * lt, OR_TYPE ortype,
+//'orlst': operations which has the 'orcode'.
+bool LifeTimeMgr::isContainOR(IN LifeTime * lt, OR_CODE orcode,
                               OUT List<OR*> * orlst)
 {
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
@@ -1934,7 +1934,7 @@ bool LifeTimeMgr::isContainOR(IN LifeTime * lt, OR_TYPE ortype,
         if (LT_desc(lt).get(i)) {
             OR * o = m_pos2or_map.get(i);
             ASSERTN(o, ("Position:%d has not any o mapped",i));
-            if (o->getCode() == ortype) {
+            if (o->getCode() == orcode) {
                 find = true;
                 if (orlst) {
                     orlst->append_tail(o);
@@ -2918,7 +2918,7 @@ void LRA::genSpill(LifeTime * lt, SR * oldsr, BSIdx pos,
                    xoc::Var * spill_var, LifeTimeMgr & mgr,
                    bool is_rename, ORList * sors)
 {
-    ASSERT0(spill_var && VAR_is_spill(spill_var));
+    ASSERT0(spill_var && spill_var->is_spill());
     ORList spill_ors;
     if (sors == nullptr) {
         sors = &spill_ors;
@@ -3025,7 +3025,7 @@ SR * LRA::genReload(IN LifeTime * lt, IN SR * oldsr,
                     BSIdx pos, IN xoc::Var * spill_var,
                     IN LifeTimeMgr & mgr, OUT ORList * ors)
 {
-    ASSERT0(spill_var && VAR_is_spill(spill_var));
+    ASSERT0(spill_var && spill_var->is_spill());
     SR * newsr = nullptr;
     ORList spill_ors;
     if (ors == nullptr) {
@@ -4407,7 +4407,7 @@ bool LRA::elimRedundantStoreLoad(DataDepGraph & ddg)
                 //[rn] = xxx, keep the OR for conservative.
                 //[.data+N] = xxx, keep the OR for conservative
                 //unless IPA tell us the refferrence detail.
-                VAR_is_global(st_spill_loc)) {
+                st_spill_loc->is_global()) {
                 continue;
             }
 
@@ -5926,14 +5926,14 @@ void LRA::coalesceMovi(OR * o, DataDepGraph & ddg, bool * is_resch,
                 UNIT succ_unit = m_cg->computeORUnit(succ)->checkAndGet();
                 CLUST succ_clust = m_cg->computeORCluster(succ);
                 UNIT or_unit = m_cg->computeORUnit(o)->checkAndGet();
-                OR_TYPE new_opc = OR_UNDEF;
+                OR_CODE new_opc = OR_UNDEF;
                 if (or_unit != succ_unit) {
-                    new_opc = m_cg->computeEquivalentORType(o->getCode(),
+                    new_opc = m_cg->computeEquivalentORCode(o->getCode(),
                         succ_unit, succ_clust);
                 } else {
                     new_opc = o->getCode();
                 }
-                ASSERTN(new_opc != OR_UNDEF, ("illegal ortype"));
+                ASSERTN(new_opc != OR_UNDEF, ("illegal orcode"));
                 ors.append_tail(m_cg->buildOR(new_opc,
                                 1, 2, succ_tgt, pd, lit));
                 if (ors.get_head() != nullptr) {
@@ -6818,7 +6818,7 @@ bool LRA::partitionGroup(DataDepGraph & ddg,
         if (!v) { //node has been removed
             continue;
         }
-        if (VERTEX_out_list(v) == nullptr) {
+        if (v->getOutList() == nullptr) {
             proclist.append_tail(o);
             gm.addOR(o, last_gp_idx);
             last_gp_idx++;
@@ -7616,7 +7616,7 @@ bool LRA::hoistSpillLocForStore(IN OR * o, IN InterfGraph & ig,
     if (st_spill_loc == nullptr || //[rn] = xxx, keep the OR for conservative.
         //[.data+N] = xxx, keep the OR for conservative unless IPA
         //tell us the refferrence detail.
-        VAR_is_global(st_spill_loc)) {
+        st_spill_loc->is_global()) {
         return false;
     }
 
@@ -8380,7 +8380,6 @@ bool LRA::perform()
     m_cur_phase |= PHASE_RA_DONE;
     finalLRAOpt(mgr, ig, ddg);
     postLRA();
-
 SUCC:
     //END_TIMER_FMT(t, ("Perform Local Register Allocation for ORBB%d",
     //                  m_bb->id()));

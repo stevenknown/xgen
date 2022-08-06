@@ -1,5 +1,4 @@
 XGEN_OBJS +=\
-../xgen/cl_region_mgr.o\
 ../xgen/ir2or.o\
 ../xgen/autopar.o\
 ../xgen/cg.o\

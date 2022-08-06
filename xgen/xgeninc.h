@@ -39,7 +39,7 @@ author: Su Zhenyu
 #include "../opt/cominc.h"
 #include "../opt/comopt.h"
 #include "xgenoption.h"
-#include "equortype.h"
+#include "equorcode.h"
 #include "scheinfo.h"
 #include "targ_interface.h"
 #include "reg.h"
@@ -69,8 +69,6 @@ author: Su Zhenyu
 #include "cg.h"
 #include "parallel_part_mgr.h"
 #include "instruction_partition.h"
-#include "cl_region_mgr.h"
-#include "cl_dbg.h"
 
 using namespace xgen;
 

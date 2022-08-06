@@ -39,7 +39,7 @@ void ARMIR2OR::convertBinaryOp(IR const* ir, OUT RecycORList & ors,
             ("missing operand"));
     ASSERTN(!ir->is_vec(), ("TODO"));
 
-    //TO BE DETERMINED:Inequal byte size loading should be handled.
+    //TBD:Inequal byte size loading should be handled.
     //ASSERT0((BIN_opnd0(ir)->getTypeSize(m_tm) ==
     //         BIN_opnd1(ir)->getTypeSize(m_tm)) ||
     //        (BIN_opnd0(ir)->is_ptr() || BIN_opnd1(ir)->is_ptr()));
@@ -54,8 +54,8 @@ void ARMIR2OR::convertBinaryOp(IR const* ir, OUT RecycORList & ors,
         convertAddSubFp(ir, ors, cont);
         return;
     }
-
-    ASSERT0(!BIN_opnd0(ir)->is_any() && !BIN_opnd1(ir)->is_any());
+    ASSERTN(!BIN_opnd0(ir)->is_any() && !BIN_opnd1(ir)->is_any(),
+            ("operand of '%s' can not be ANY", IRNAME(ir)));
     if (BIN_opnd0(ir)->getTypeSize(m_tm) > DWORD_LENGTH_OF_TARGET_MACHINE ||
         BIN_opnd1(ir)->getTypeSize(m_tm) > DWORD_LENGTH_OF_TARGET_MACHINE) {
         //ADD may be vector-add or simulated-add-call.
@@ -155,7 +155,7 @@ void ARMIR2OR::convertLda(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     ASSERT0(ir->is_lda());
     Var * v = LDA_idinfo(ir);
     ASSERT0(v);
-    ASSERTN(!VAR_is_unallocable(v), ("var must be allocable during CG"));
+    ASSERTN(!v->is_unallocable(), ("var must be allocable during CG"));
     convertLda(v, LDA_ofst(ir), ::getDbx(ir), ors, cont);
 }
 
@@ -182,8 +182,7 @@ void ARMIR2OR::convertReturnValue(IR const* ir, OUT RecycORList & ors,
     } else {
         //Get the first formal parameter, it is the return buffer of the value.
         Var const* v = getCG()->get_param_vars().get(0);
-        ASSERT0(v);
-        DUMMYUSE(v);
+        CHECK0_DUMMYUSE(v);
         ASSERTN(!g_gen_code_for_big_return_value, ("TODO"));
         return;
     }
@@ -601,10 +600,10 @@ void ARMIR2OR::invertBoolValue(Dbx * dbx, SR * val, OUT RecycORList & ors)
 {
     ASSERT0(val);
     SR * one = getCG()->genIntImm(1, false);
-    OR_TYPE orty = m_cg->mapIRType2ORType(IR_XOR, m_tm->getDTypeByteSize(D_B),
+    OR_CODE orty = m_cg->mapIRCode2ORCode(IR_XOR, m_tm->getDTypeByteSize(D_B),
                                           val, one, false);
     ASSERTN(orty != OR_UNDEF,
-            ("mapIRType2ORType() can not find proper operation"));
+            ("mapIRCode2ORCode() can not find proper operation"));
 
     OR * o;
     if (HAS_PREDICATE_REGISTER) {
@@ -622,7 +621,7 @@ void ARMIR2OR::invertBoolValue(Dbx * dbx, SR * val, OUT RecycORList & ors)
 }
 
 
-void ARMIR2OR::getResultPredByIRTYPE(IR_TYPE code, SR ** truepd,
+void ARMIR2OR::getResultPredByIRCode(IR_CODE code, SR ** truepd,
                                      SR ** falsepd, bool is_signed)
 {
     ASSERT0(truepd && falsepd);
@@ -714,7 +713,7 @@ void ARMIR2OR::convertRelationOpDWORDForEquality(IR const* ir,
 
     SR * truepd = nullptr;
     SR * falsepd = nullptr;
-    getResultPredByIRTYPE(ir->getCode(), &truepd, &falsepd, is_signed);
+    getResultPredByIRCode(ir->getCode(), &truepd, &falsepd, is_signed);
     tors.copyDbx(ir);
     ors.move_tail(tors);
     recordRelationOpResult(ir, truepd, falsepd, truepd, ors, cont);
@@ -732,7 +731,7 @@ void ARMIR2OR::convertRelationOpDWORDForLTGELEGT(IR const* ir,
     ASSERT0(ir->is_lt() || ir->is_ge() || ir->is_le() || ir->is_gt());
     SR * truepd = nullptr;
     SR * falsepd = nullptr;
-    IR_TYPE code;
+    IR_CODE code;
     //Note truepd/falsepd of IR_GT is same with LT, and
     //truepd/falsepd of IR_LE is same with GE.
     if (ir->is_le()) {
@@ -742,7 +741,7 @@ void ARMIR2OR::convertRelationOpDWORDForLTGELEGT(IR const* ir,
     } else {
         code = ir->getCode();
     }
-    getResultPredByIRTYPE(code, &truepd, &falsepd, is_signed);
+    getResultPredByIRCode(code, &truepd, &falsepd, is_signed);
 
     if (is_signed) {
         //SBCS: If S is specified, the SBC instruction updates the
@@ -895,26 +894,36 @@ void ARMIR2OR::convertRelationOpDWORD(IR const* ir, OUT RecycORList & ors,
     ASSERT0(ir && ir->is_relation());
     IR const* opnd0 = BIN_opnd0(ir);
     IR const* opnd1 = BIN_opnd1(ir);
-
-    ASSERT0(!opnd0->is_any() && !opnd1->is_any());
-    ASSERT0(opnd0->getTypeSize(m_tm) == opnd1->getTypeSize(m_tm));
-
+    ASSERTN(!opnd0->is_any() && !opnd1->is_any(),
+            ("operand of '%s' can not be ANY", IRNAME(ir)));
+    UINT maxopndsize = MAX(opnd0->getTypeSize(m_tm), opnd1->getTypeSize(m_tm));
+    xoc::Type const* maxty =
+        opnd1->getTypeSize(m_tm) < opnd1->getTypeSize(m_tm) ?
+            opnd1->getType() : opnd1->getType();
     //Integer, dould size of GENERAL_REGISTER_SIZE.
-    ASSERT0(opnd0->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
+    ASSERTN(maxopndsize == GENERAL_REGISTER_SIZE * 2, ("only support DWORD"));
 
     RecycORList tors(this);
     IOC tmp;
     //Operands 0
-    convertGeneralLoad(opnd0, tors, &tmp);
+    IR const* loc0 = opnd0;
+    if (loc0->getTypeSize(m_tm) < maxopndsize) {
+        loc0 = m_rg->buildCvt(m_rg->dupIRTree(opnd0), maxty); 
+    }
+    convertGeneralLoad(loc0, tors, &tmp);
     SR * sr0 = tmp.get_reg(0);
     ASSERT0(sr0->is_vec());
 
     //Operands 1
     tmp.clean();
-    convertGeneralLoad(opnd1, tors, &tmp);
+    IR const* loc1 = opnd1;
+    if (loc1->getTypeSize(m_tm) < maxopndsize) {
+        loc1 = m_rg->buildCvt(m_rg->dupIRTree(opnd1), maxty); 
+    }
+    convertGeneralLoad(loc1, tors, &tmp);
     SR * sr1 = tmp.get_reg(0);
     ASSERT0(sr1->is_vec());
-    ASSERT0(sr0->getByteSize() == opnd0->getTypeSize(m_tm));
+    ASSERT0(sr0->getByteSize() == maxopndsize);
     ASSERT0(sr0->getByteSize() == sr1->getByteSize());
 
     //ARM Conditions Flag.
@@ -975,26 +984,29 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
     ASSERT0(ir->is_relation());
     IR * opnd0 = BIN_opnd0(ir);
     IR * opnd1 = BIN_opnd1(ir);
+    ASSERT0(opnd0 && opnd1);
     if (opnd0->getType()->is_pointer()) {
         ASSERT0(opnd0->getTypeSize(m_tm) >= opnd1->getTypeSize(m_tm));
     }
     if (opnd1->getType()->is_pointer()) {
         ASSERT0(opnd1->getTypeSize(m_tm) >= opnd0->getTypeSize(m_tm));
     }
-    ASSERT0(opnd0 && opnd1);
 
     if (opnd0->is_fp()) {
         convertRelationOpFp(ir, ors, cont);
         return;
     }
 
-    if (opnd0->is_any() ||
-        opnd0->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2) {
+    ASSERTN(!opnd0->is_any() && !opnd1->is_any(),
+            ("operand of '%s' can not be ANY", IRNAME(ir)));
+    UINT maxopndsize = MAX(opnd0->getTypeSize(m_tm), opnd1->getTypeSize(m_tm));
+    if (maxopndsize == GENERAL_REGISTER_SIZE * 2) {
         convertRelationOpDWORD(ir, ors, cont);
         return;
     }
 
     ASSERT0(opnd0->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE);
+    ASSERT0(opnd1->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE);
 
     IOC tmp;
     //Operands 0
@@ -1013,7 +1025,7 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
     cont->set_reg(RESULT_REGISTER_INDEX, nullptr);
     SR * truepd = nullptr;
     SR * falsepd = nullptr;
-    getResultPredByIRTYPE(ir->getCode(), &truepd, &falsepd,
+    getResultPredByIRCode(ir->getCode(), &truepd, &falsepd,
                           opnd0->is_signed());
 
     recordRelationOpResult(ir, truepd, falsepd, truepd, ors, cont);
@@ -1143,11 +1155,11 @@ void ARMIR2OR::convertBitNot(IR const* ir, OUT RecycORList & ors,
     ASSERT0(opnd && opnd->is_reg());
 
     // 2.1 Make sure we have an anticipated or-type.
-    OR_TYPE orty = m_cg->mapIRType2ORType(IR_XOR,
+    OR_CODE orty = m_cg->mapIRCode2ORCode(IR_XOR,
                                           UNA_opnd(ir)->getTypeSize(m_tm),
                                           res_sr0, opnd, ir->is_signed());
     ASSERTN(orty != OR_UNDEF,
-            ("mapIRType2ORType() can not find properly target"
+            ("mapIRCode2ORCode() can not find properly target"
              "instruction, you should handle this situation."));
 
     // 2.2 Build XOR operation.
@@ -1345,7 +1357,8 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
     ASSERT0(ir && ir->is_relation());
     IR const* op0 = BIN_opnd0(ir);
     IR const* op1 = BIN_opnd1(ir);
-
+    ASSERTN(!op0->is_any() && !op1->is_any(),
+            ("operand of '%s' can not be ANY", IRNAME(ir)));
     ASSERT0(op0->getTypeSize(m_tm) == op1->getTypeSize(m_tm));
 
     RecycORList tors(this);
@@ -1588,7 +1601,7 @@ void ARMIR2OR::convertTruebrFp(IR const* ir, OUT RecycORList & ors,
     SR * tgt_lab = getCG()->genLabel(BR_lab(ir));
     getCG()->buildCompare(OR_cmp_i, true, retv,
                           getCG()->genZero(), tors.getList(), cont);
-    //cmp does not produce result in register.
+    //cmp does not produce result register.
     ASSERT0(cont->get_reg(0) == nullptr);
     getCG()->buildCondBr(tgt_lab, tors.getList(), cont);
     tors.copyDbx(ir);
@@ -1605,8 +1618,11 @@ void ARMIR2OR::convertTruebr(IR const* ir, OUT RecycORList & ors, IOC * cont)
         convertTruebrFp(ir, ors, cont);
         return;
     }
+    IR * opnd1 = BIN_opnd1(BR_det(ir));
+    ASSERTN(!opnd0->is_any() && !opnd1->is_any(),
+            ("operand of '%s' can not be ANY", IRNAME(ir)));
 
-    if (opnd0->is_any() || opnd0->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE) {
+    if (opnd0->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE) {
         IR2OR::convertTruebr(ir, ors, cont);
         return;
     }
@@ -1705,7 +1721,7 @@ Var const* ARMIR2OR::int2fp(IR const* tgt, IR const* src)
 
     ASSERT0(tgt->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
     if (src->is_sint()) {
-        if (src->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE) {
+        if (src->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE) {
             //sign int -> double.
             return getBuiltinVar(BUILTIN_FLOATSIDF);
         }
@@ -1810,7 +1826,7 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
         return;
     }
 
-    ASSERTN(!newir->is_any(), ("Unsupported CVT to ANY"));
+    ASSERTN(!newir->is_any(), ("unsupport CVT to ANY"));
     RecycORList tors(this);
     IOC tmp;
     convertGeneralLoad(CVT_exp(newir), tors, &tmp);
@@ -1892,7 +1908,7 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT RecycORList & ors,
     convert(exp, tors, &tmp);
     SR * r0 = getCG()->genR0();
 
-    ASSERT0(!exp->is_any());
+    ASSERTN(!exp->is_any(), ("data type of '%s' can not be ANY", IRNAME(exp)));
     if (exp->getTypeSize(m_tm) >
         NUM_OF_RETURN_VAL_REGISTERS * GENERAL_REGISTER_SIZE) {
         SR * srcaddr = tmp.get_addr();
@@ -1900,7 +1916,9 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT RecycORList & ors,
 
         //Copy return-value to buffer.
         Var const* retbuf = m_rg->findFormalParam(0);
-        ASSERT0(retbuf && retbuf->getByteSize(m_tm) == exp->getTypeSize(m_tm));
+        ASSERT0(retbuf);
+        ASSERTN(retbuf->getByteSize(m_tm) >= exp->getTypeSize(m_tm),
+                ("return-value-buffer is not big enough"));
         tmp.clean_bottomup();
         getCG()->buildLda(retbuf, 0, nullptr, tors.getList(), &tmp);
         SR * retbufaddr = tmp.get_reg(0);

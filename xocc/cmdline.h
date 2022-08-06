@@ -30,6 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _CMDLINE_H_
 #define _CMDLINE_H_
 
+namespace xocc {
+
 bool processCmdLine(INT argc, CHAR const* argv[]);
 
+} //namespace xocc
 #endif

@@ -28,12 +28,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @*/
 
 #include "../opt/cominc.h"
-#include "feinc.h"
+#include "xoccinc.h"
 #include "../xgen/xgeninc.h"
 #include "errno.h"
 #include "../opt/util.h"
 #include "../reader/grreader.h"
 #include "../opt/comopt.h"
+
+namespace xocc {
 
 //#define LR0_FE
 
@@ -53,136 +55,71 @@ bool g_is_dumpgr = false;
 xcom::List<CHAR const*> g_cfile_list;
 xcom::List<CHAR const*> g_grfile_list;
 
-static TMap<Decl*, Var*> g_decl2var_map;
-static TMap<Var*, Decl*> g_var2decl_map;
+static TMap<xfe::Decl*, Var*> g_decl2var_map;
+static TMap<Var*, xfe::Decl*> g_var2decl_map;
 
-#ifdef _DEBUG_
-void resetMapBetweenVARandDecl(Var * v)
+void resetMapBetweenVARandDecl(xoc::Var * var)
 {
-    Decl * decl = g_var2decl_map.get(v);
+    xfe::Decl * decl = g_var2decl_map.get(var);
     if (decl != nullptr) {
         g_decl2var_map.setAlways(decl, nullptr);
     }
-    g_var2decl_map.setAlways(v, nullptr);
+    g_var2decl_map.setAlways(var, nullptr);
 }
-#endif
 
 
-//
-//START DbxMgr
-//
 INT report_location(CHAR const* file, INT line)
 {
     printf("\n\n\n%s : %d", file, line);
     return 0;
 }
 
-#ifdef _DEBUG_
-#define WARN(parmlist) (report_location(__FILE__, __LINE__), \
-                        xoc::interwarn parmlist)
-#else
-#define WARN(parmlist)
-#endif
-
-void CLDbxMgr::printSrcLine(Dbx const* dbx, PrtCtx * ctx)
-{
-    ASSERT0(ctx && dbx);
-    if (ctx->logmgr == nullptr) { return; }
-
-    UINT lineno = getLineNum(dbx);
-    if (lineno == m_cur_lineno) {
-        //It is dispensable that print the same souce file multiple times.
-        return;
-    }
-
-    m_cur_lineno = lineno;
-    if (lineno == 0) {
-        //No line number info recorded.
-        if (ctx != nullptr && ctx->prefix != nullptr) {
-            note(ctx->logmgr, "\n%s[0]\n", ctx->prefix);
-        } else {
-            note(ctx->logmgr, "\n[0]\n");
-        }
-        return;
-    }
-
-    if (g_hsrc != nullptr) {
-        UINT srcline = CParser::mapRealLineToSrcLine(m_cur_lineno);
-        if (srcline == 0) {
-            srcline = m_cur_lineno;
-        }
-        ASSERTN(srcline < OFST_TAB_LINE_SIZE, ("unexpected src line"));
-        ::fseek(g_hsrc, g_ofst_tab[srcline], SEEK_SET);
-        if (::fgets(g_cur_line, g_cur_line_len, g_hsrc) != nullptr) {
-            if (ctx != nullptr && ctx->prefix != nullptr) {
-                note(ctx->logmgr, "\n\n%s[%u]%s",
-                     ctx->prefix, m_cur_lineno, g_cur_line);
-            } else {
-                note(ctx->logmgr, "\n\n[%u]%s", m_cur_lineno, g_cur_line);
-            }
-        }
-    }
-}
-
-
-void CLDbxMgr::printSrcLine(xcom::StrBuf & output, Dbx const* dbx, PrtCtx * ctx)
-{
-    ASSERT0(ctx && dbx);
-    UINT lineno = getLineNum(dbx);
-    if (lineno == m_cur_lineno) {
-        //It is dispensable that print the same souce file multiple times.
-        return;
-    }
-    m_cur_lineno = lineno;
-    if (lineno == 0) {
-        //No line number info recorded.
-        if (ctx != nullptr && ctx->prefix != nullptr) {
-            output.strcat("\n%s[0]\n", ctx->prefix);
-        } else {
-            output.strcat("\n[0]\n");
-        }
-        return;
-    }
-
-    if (g_hsrc != nullptr) {
-        UINT srcline = CParser::mapRealLineToSrcLine(m_cur_lineno);
-        if (srcline == 0) {
-            srcline = m_cur_lineno;
-        }
-        ASSERTN(srcline < OFST_TAB_LINE_SIZE, ("unexpected src line"));
-        ::fseek(g_hsrc, g_ofst_tab[srcline], SEEK_SET);
-        if (::fgets(g_cur_line, g_cur_line_len, g_hsrc) != nullptr) {
-            if (ctx != nullptr && ctx->prefix != nullptr) {
-                output.strcat("\n\n%s[%u]%s", ctx->prefix,
-                              m_cur_lineno, g_cur_line);
-            } else {
-                output.strcat("\n\n[%u]%s", m_cur_lineno, g_cur_line);
-            }
-        }
-    }
-}
-//END DbxMgr
-
-
-Var * mapDecl2VAR(Decl * decl)
+Var * mapDecl2VAR(xfe::Decl * decl)
 {
     return g_decl2var_map.get(decl);
 }
 
 
-Decl * mapVAR2Decl(Var * var)
+xfe::Decl * mapVAR2Decl(Var * var)
 {
     return g_var2decl_map.get(var);
 }
 
 
-//Transforming Decl into Var.
-//'decl': variable declaration in front end.
-static Var * addDecl(IN Decl * decl, MOD VarMgr * var_mgr, TypeMgr * dm)
+static xoc::Type const* makeType(xfe::Decl const* decl, TypeMgr * tm)
 {
-    ASSERTN(DECL_dt(decl) == DCL_DECLARATION, ("unsupported"));
-    if (decl->is_user_type_decl()) { return nullptr; }
+    ASSERT0(tm);
+    if (decl->is_fun_def() || decl->is_fun_decl()) {
+        return tm->getSimplexTypeEx(xoc::D_ANY);
+    }
+    UINT data_size = 0;
+    DATA_TYPE data_type = CTree2IR::get_decl_dtype(decl, &data_size, tm);
+    if (IS_PTR(data_type)) {
+        ASSERT0(decl->regardAsPointer());
+        UINT basesize = decl->get_pointer_base_size();
 
+        //Note: If pointer_base_size is 0, then the pointer can not
+        //do any operation, such as pointer arithmetic.
+        //ASSERTN(basesize > 0, ("meet incomplete type."));
+
+        return tm->getPointerType(basesize);
+    }
+    if (IS_MC(data_type)) {
+        //Is data_size likely to be 0?
+        return tm->getMCType(data_size);
+    }
+    //data_size must definitly equal to corresponding size.
+    ASSERT0(data_size == tm->getDTypeByteSize(data_type));
+    return tm->getSimplexTypeEx(data_type);
+}
+
+
+//Transforming Decl into Var.
+//decl: variable declaration in front end.
+static Var * addDecl(IN Decl * decl, MOD VarMgr * var_mgr, TypeMgr * tm)
+{
+    ASSERTN(decl->is_dt_declaration(), ("unsupported"));
+    if (decl->is_user_type_decl()) { return nullptr; }
     UINT flag = 0;
     if (decl->is_global_variable()) {
         ASSERT0(!decl->is_local_variable());
@@ -192,78 +129,43 @@ static Var * addDecl(IN Decl * decl, MOD VarMgr * var_mgr, TypeMgr * dm)
     } else {
         UNREACHABLE();
     }
-
     if (decl->is_static()) {
         SET_FLAG(flag, VAR_PRIVATE);
     }
-
     if (decl->is_constant()) {
         SET_FLAG(flag, VAR_READONLY);
     }
-
     if (decl->is_volatile()) {
         SET_FLAG(flag, VAR_VOLATILE);
     }
-
     if (decl->is_restrict()) {
         SET_FLAG(flag, VAR_IS_RESTRICT);
     }
-
     if (decl->is_initialized()) {
         //TODO: record initial value in Var at CTree2IR.
         //SET_FLAG(flag, VAR_HAS_INIT_VAL);
     }
-
-    UINT data_size = 0;
-
-    ASSERT0(dm);
-
-    DATA_TYPE data_type = CTree2IR::get_decl_dtype(decl, &data_size, dm);
-    Type const* type = nullptr;
-    if (IS_PTR(data_type)) {
-        ASSERT0(decl->regardAsPointer());
-        UINT basesize = decl->get_pointer_base_size();
-
-        //Note: If pointer_base_size is 0, then the pointer can not
-        //do any operation, such as pointer arithmetic.
-        //ASSERTN(basesize > 0, ("meet incomplete type."));
-
-        type = dm->getPointerType(basesize);
-    } else if (IS_MC(data_type)) {
-        //Is data_size likely to be 0?
-        type = dm->getMCType(data_size);
-    } else {
-        //data_size must definitly equal to corresponding size.
-        ASSERT0(data_size == dm->getDTypeByteSize(data_type));
-        type = dm->getSimplexTypeEx(data_type);
-    }
-
+    xoc::Type const* type = makeType(decl, tm);
+    ASSERT0(type);
     if (decl->is_formal_param()) {
         //Declaration is formal parameter.
         SET_FLAG(flag, VAR_IS_FORMAL_PARAM);
     }
-
     if (decl->is_array()) {
         SET_FLAG(flag, VAR_IS_ARRAY);
     }
-
-    ASSERT0(type);
-
     CHAR const* var_name = decl->get_decl_sym()->getStr();
-    Var * v = var_mgr->registerVar(var_name, type,
-                                   (UINT)xcom::ceil_align(MAX(DECL_align(decl),
-                                                          STACK_ALIGNMENT),
-                                   STACK_ALIGNMENT), flag);
-    if (VAR_is_global(v)) {
+    UINT var_align = (UINT)xcom::ceil_align(
+        MAX(DECL_align(decl), STACK_ALIGNMENT), STACK_ALIGNMENT);
+    Var * v = var_mgr->registerVar(var_name, type, var_align, flag);
+    if (v->is_global()) {
         //For conservative purpose.
-        VAR_is_addr_taken(v) = true;
+        v->setflag(VAR_ADDR_TAKEN);
     }
-
     if (decl->is_formal_param()) {
         VAR_formal_param_pos(v) = g_formal_parameter_start +
                                   DECL_formal_param_pos(decl);
     }
-
     g_decl2var_map.setAlways(decl, v);
     g_var2decl_map.setAlways(v, decl);
     return v;
@@ -291,22 +193,22 @@ static void scanAndInitVar(Scope * s, VarMgr * vm, TypeMgr * tm)
                     ASSERT0(DECL_decl_scope(decl) == s);
                     Var * v = addDecl(decl, vm, tm);
                     ASSERT0(v); //Function definition should not be fake.
-                    VAR_is_func_decl(v) = true;
+                    v->setflag(VAR_IS_FUNC);
                     continue;
                 }
 
                 if (mapDecl2VAR(decl) == nullptr) {
-                    //Function declaration.
+                    //Function forward declaration.
                     Var * v = addDecl(decl, vm, tm);
                     if (v != nullptr) {
                         //Function declaration should not be fake, since
                         //it might be taken address.
                         //e.g: extern void foo();
                         //  void * p = &foo;
-                        //VAR_is_fake(v) = true;
+                        //v->setflag(VAR_IS_FAKE);
                         //Note type-variable that defined by 'typedef'
                         //will NOT be mapped to XOC Variable.
-                        VAR_is_func_decl(v) = true;
+                        v->setflag((VAR_FLAG)(VAR_IS_FUNC|VAR_IS_DECL));
                     }
                     continue;
                 }
@@ -486,7 +388,7 @@ static void compileProgramRegion(CHAR const* fn, Region * rg, CGMgr * cgmgr)
 
 static void compileFuncRegion(Region * rg, CLRegionMgr * rm, CGMgr * cgmgr)
 {
-    OptCtx * oc = rm->getAndGenOptCtx(rg->id());
+    OptCtx * oc = rm->getAndGenOptCtx(rg);
     bool s = rm->compileFuncRegion(rg, cgmgr, oc);
     ASSERT0(s);
     DUMMYUSE(s);
@@ -525,7 +427,7 @@ static void compileRegionSet(CHAR const* fn, CLRegionMgr * rm, CGMgr * cgmgr)
     }
     ASSERT0(program);
 
-    OptCtx * oc = rm->getAndGenOptCtx(program->id());
+    OptCtx * oc = rm->getAndGenOptCtx(program);
     bool s = rm->processProgramRegion(program, oc);
     ASSERT0(s);
     DUMMYUSE(s);
@@ -537,7 +439,7 @@ static void compileRegionSet(CHAR const* fn, CLRegionMgr * rm, CGMgr * cgmgr)
 
 static CLRegionMgr * initRegionMgr()
 {
-    CLRegionMgr * rm = allocRegionMgr();
+    CLRegionMgr * rm = xocc::allocCLRegionMgr();
     rm->initVarMgr();
     rm->initTargInfo();
 
@@ -619,7 +521,7 @@ bool compileGRFile(CHAR const* fn)
     ASSERT0(fn);
     bool res = true;
     xoc::TargInfo * ti = nullptr;
-    xgen::CLRegionMgr * rm = nullptr;
+    xocc::CLRegionMgr * rm = nullptr;
     xgen::CGMgr * cgmgr = nullptr;
     FILE * asmh = nullptr;
     START_TIMER_FMT(t, ("Compile GR File '%s'", fn));
@@ -646,8 +548,7 @@ bool compileGRFile(CHAR const* fn)
         if (r->getPassMgr() != nullptr) {
             xoc::PRSSAMgr * ssamgr = r->getPRSSAMgr();
             if (ssamgr != nullptr && ssamgr->is_valid()) {
-                OptCtx * oc = rm->getAndGenOptCtx(r->id());
-                ssamgr->destruction(oc);
+                ssamgr->destruction(*rm->getAndGenOptCtx(r));
             }
         }
     }
@@ -670,7 +571,7 @@ bool compileCFile(CHAR const* fn)
     START_TIMER_FMT(t, ("Compile C File '%s'", fn));
     bool succ = true;
     xoc::TargInfo * ti = nullptr;
-    xgen::CLRegionMgr * rm = nullptr;
+    xocc::CLRegionMgr * rm = nullptr;
     xgen::CGMgr * cgmgr = nullptr;
     FILE * asmh = nullptr;
     initCompile(fn, &rm, &asmh, &cgmgr, &ti);
@@ -754,3 +655,5 @@ bool compileGRFileList()
     }
     return true;
 }
+
+} //namespace xocc

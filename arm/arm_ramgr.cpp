@@ -30,50 +30,27 @@ author: Su Zhenyu
 @*/
 #include "../xgen/xgeninc.h"
 
-//Save predicate register at entry BB
+//Saving region-used callee registers.
 //'bblist': records BBs that have to reallocate register.
-void ARMRaMgr::saveCalleePredicateAtEntry(REGFILE regfile, IN ORBB * entry,
-                                          IN RegSet used_callee_regs[],
-                                          OUT ORBBList & bblist,
-                                          OUT xcom::TMap<REG, Var*> &)
+void ARMRaMgr::spillRegFileAtEntry(REGFILE regfile, IN ORBB * entry,
+                                   RegSet const used_callee_regs[],
+                                   OUT ORBBList & bblist,
+                                   OUT Reg2Var & reg2var)
 {
-    return;
-}
-
-
-
-//Save predicate register at exit BB
-//'bblist': records BBs that have to reallocate register.
-void ARMRaMgr::saveCalleePredicateAtExit(REGFILE regfile, IN ORBB * exit,
-                                         IN RegSet used_callee_regs[],
-                                         OUT ORBBList & bblist,
-                                         xcom::TMap<REG, Var*> const&)
-{
-    return;
+    RaMgr::spillRegFileAtEntry(regfile, entry, used_callee_regs,
+                               bblist, reg2var);
 }
 
 
 //Saving region-used callee registers.
 //'bblist': records BBs that have to reallocate register.
-void ARMRaMgr::saveCalleeRegFileAtEntry(REGFILE regfile, IN ORBB * entry,
-                                        IN RegSet used_callee_regs[],
-                                        OUT ORBBList & bblist,
-                                        OUT xcom::TMap<REG, Var*> & reg2var)
+void ARMRaMgr::reloadRegFileAtExit(REGFILE regfile, IN ORBB * exit,
+                                   RegSet const used_callee_regs[],
+                                   OUT ORBBList & bblist,
+                                   Reg2Var const& reg2var)
 {
-    RaMgr::saveCalleeRegFileAtEntry(regfile, entry, used_callee_regs,
-                                    bblist, reg2var);
-}
-
-
-//Saving region-used callee registers.
-//'bblist': records BBs that have to reallocate register.
-void ARMRaMgr::saveCalleeRegFileAtExit(REGFILE regfile, IN ORBB * exit,
-                                       IN RegSet used_callee_regs[],
-                                       OUT ORBBList & bblist,
-                                       xcom::TMap<REG, Var*> const& reg2var)
-{
-    RaMgr::saveCalleeRegFileAtExit(regfile, exit, used_callee_regs,
-                                   bblist, reg2var);
+    RaMgr::reloadRegFileAtExit(regfile, exit, used_callee_regs,
+                               bblist, reg2var);
 }
 
 

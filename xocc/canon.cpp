@@ -27,7 +27,9 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @*/
 #include "../opt/cominc.h"
-#include "feinc.h"
+#include "xoccinc.h"
+
+namespace xocc {
 
 IR * Canon::handle_det_list(IN IR * ir_list, OUT bool & change, CanonCtx * cc)
 {
@@ -317,3 +319,5 @@ IR * Canon::handle_stmt_list(IR * ir_list, bool & change)
     }
     return ir_list;
 }
+
+} //namespace xocc

@@ -209,12 +209,13 @@ public:
         LabelInfoList const* label_list; //the list of LabelInfo.
     } u1;
 
+    //Record the sr's position in the vector, start at 0.
+    //sr is either register or immeidate.
     //Note SR which has composed SRVec can not make up another SRVec.
     //The relationship between SR and SRVec is unique.
     //SRs in SRVec do not have to be consecutive.
     INT m_sr_vec_idx;
     SRVec * m_sr_vec;
-
 public:
     SR() { clean(); }
     virtual ~SR() {}
@@ -292,7 +293,7 @@ class SRMgr {
 protected:
     xcom::List<SR*> m_freesr_list;
     xcom::Vector<SR*> m_sridx2sr; //sridx is dense integer.
-
+protected:
     virtual SR * allocSR();
 public:
     SRMgr() {}
@@ -346,6 +347,7 @@ public:
 //This class defined the vector of SR.
 //A SRVec binds several SR into one group, and each element SR in the group
 //has a pointer which points to the group that the SR is belonged to.
+//Note whole SRVec and its growable buffer are allocated in mempool.
 class SRVec : public SimpleVector<SR*, 1, MAX_SRVEC_NUM> {
 public:
     UINT get_elem_count() { return getElemNum(); }

@@ -41,22 +41,16 @@ class CG;
 class RegFileGroup {
     COPY_CONSTRUCTOR(RegFileGroup);
 protected:
-    Vector<List<OR*>*> m_group2orlist_map;
-    Vector<INT> m_oridx2group_map;
-    bool m_is_init;
+    BYTE m_is_init:1;
     ORBB * m_bb;
     CG * m_cg;
     SMemPool * m_pool;
-
+    Vector<List<OR*>*> m_group2orlist_map;
+    Vector<INT> m_oridx2group_map;
 protected:
     void * xmalloc(INT size);
-
 public:
-    RegFileGroup()
-    {
-        m_is_init = false;
-        init();
-    }
+    RegFileGroup() { m_is_init = false; init(); }
     virtual ~RegFileGroup() { destroy(); }
 
     void addOR(OR * o, INT group);
@@ -64,14 +58,14 @@ public:
     void clone(RegFileGroup & group);
     virtual void computeGroup();
 
-    void init();
     void destroy();
+    void dump();
+
+    void init();
 
     INT getNumOfGroup() const;
     INT getORGroup(OR const* o) const;
     List<OR*> * getORListInGroup(INT i);
-
-    void dump();
 
     void setBB(ORBB * bb);
 

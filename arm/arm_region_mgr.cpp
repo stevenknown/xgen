@@ -48,7 +48,7 @@ TargInfo * ARMRegionMgr::allocTargInfo()
 }
 
 
-CLRegionMgr * xgen::allocRegionMgr()
+ARMRegionMgr * allocARMRegionMgr()
 {
     return new ARMRegionMgr();
 }

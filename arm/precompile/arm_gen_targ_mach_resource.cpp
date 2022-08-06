@@ -33,7 +33,7 @@ author: Su Zhenyu
 #include "../../xgen/xgeninc.h"
 
 static FILE * g_output = nullptr;
-static List<EquORTypes*> g_or_types_list;
+static List<EquORCodes*> g_or_codes_list;
 static List<RegFileSet*> g_regfile_set_list;
 static List<RegSet*> g_reg_set_list;
 static List<SRDescGroup<>*> g_sr_desc_group_list;
@@ -49,7 +49,7 @@ static CHAR const* g_reg2regfile_name = "g_reg2regfile";
 static CHAR const* g_regfile2regset_allocable_name =
     "g_regfile2regset_allocable";
 static CHAR const* g_regfile2regset_name = "g_regfile2regset";
-static CHAR const* g_or_type_desc_name = "g_or_type_desc";
+static CHAR const* g_or_code_desc_name = "g_or_code_desc";
 static CHAR const* g_cluster2regset_name = "g_cluster2regset";
 
 #define CYCLE_OF_EX1 1
@@ -58,8 +58,8 @@ static CHAR const* g_cluster2regset_name = "g_cluster2regset";
 #define CYCLE_OF_WB 4 //write back stage
 
 //Each of group initializing element must be placed conforming
-//to the order of OR_TYPE corelated.
-static ORTypeDesc g_or_type_desc [] = {
+//to the order of OR_CODE corelated.
+static ORCodeDesc g_or_code_desc [] = {
     {OR_UNDEF, "UNDEF", },
 
     //Scalar Unit - Branch/Jump/Repeat Instruction
@@ -255,11 +255,11 @@ static RegSet * newRegSet()
 }
 
 
-static EquORTypes * newEquORType()
+static EquORCodes * newEquORCode()
 {
-    EquORTypes * ot = new EquORTypes();
+    EquORCodes * ot = new EquORCodes();
     ot->init();
-    g_or_types_list.append_tail(ot);
+    g_or_codes_list.append_tail(ot);
     return ot;
 }
 
@@ -283,10 +283,10 @@ static SRDesc * newSRDesc()
 }
 
 
-inline static void setSRDescGroup(OR_TYPE ort, SRDescGroup<> * srdg)
+inline static void setSRDescGroup(OR_CODE ort, SRDescGroup<> * srdg)
 {
-    ASSERTN(OTD_srd_group(&g_or_type_desc[ort]) == nullptr, ("has been set"));
-    OTD_srd_group(&g_or_type_desc[ort]) = srdg;
+    ASSERTN(OTD_srd_group(&g_or_code_desc[ort]) == nullptr, ("has been set"));
+    OTD_srd_group(&g_or_code_desc[ort]) = srdg;
 }
 
 
@@ -1261,7 +1261,7 @@ static void initSRDesc(xcom::BitSet const regfile2regset[])
 static void initFuncUnit()
 {
     for (UINT i = OR_UNDEF + 1; i < OR_LAST; i++) {
-        OTD_unit(&g_or_type_desc[i]) = UNIT_A;
+        OTD_unit(&g_or_code_desc[i]) = UNIT_A;
     }
 }
 
@@ -1325,12 +1325,12 @@ static void initAndPrtRegisterName()
 }
 
 
-static void initEquORType()
+static void initEquORCode()
 {
     for (UINT i = OR_UNDEF + 1; i < OR_LAST; i++) {
-        EquORTypes * g = newEquORType();
-        EQUORTY_unit2ortype(g, UNIT_A) = (OR_TYPE)i;
-        OTD_equ_or_types(&g_or_type_desc[i]) = g;
+        EquORCodes * g = newEquORCode();
+        EQUORC_unit2orcode(g, UNIT_A) = (OR_CODE)i;
+        OTD_equ_or_codes(&g_or_code_desc[i]) = g;
     }
 }
 
@@ -1338,34 +1338,34 @@ static void initEquORType()
 //Initializing or-type description.
 static void initORProperty()
 {
-    ORTypeDesc * od;
+    ORCodeDesc * od;
 
     for (INT i = OR_UNDEF + 1; i < OR_NUM; i++) {
-        od = &g_or_type_desc[i];
+        od = &g_or_code_desc[i];
         OTD_is_predicated(od) = true;
     }
 
-    od = &g_or_type_desc[OR_spadjust_i];
+    od = &g_or_code_desc[OR_spadjust_i];
     OTD_is_fake(od) = true; //expand OR if offset is out of range.
     OTD_is_bus(od) = true;
 
-    od = &g_or_type_desc[OR_spadjust_r];
+    od = &g_or_code_desc[OR_spadjust_r];
     OTD_is_fake(od) = true;
     OTD_is_bus(od) = true;
 
-    od = &g_or_type_desc[OR_label];
+    od = &g_or_code_desc[OR_label];
     OTD_is_fake(od) = true;
 
-    od = &g_or_type_desc[OR_asm];
+    od = &g_or_code_desc[OR_asm];
     OTD_is_volatile(od) = true;
     OTD_is_side_effect(od) = true;
     OTD_is_asm(od) = true;
 
-    od = &g_or_type_desc[OR_nop];
+    od = &g_or_code_desc[OR_nop];
     OTD_is_nop(od) = true;
 
     //load
-    OR_TYPE load[] = {
+    OR_CODE load[] = {
         OR_ldm,
         OR_ldr,
         OR_ldrb,
@@ -1381,7 +1381,7 @@ static void initORProperty()
         OR_ldrd_i8,
     };
     for (UINT i = 0; i < sizeof(load) / sizeof(load[0]); i++) {
-        od = &g_or_type_desc[load[i]];
+        od = &g_or_code_desc[load[i]];
         OTD_is_load(od) = true;
         switch (load[i]) {
         case OR_ldr:
@@ -1396,19 +1396,19 @@ static void initORProperty()
         }
     }
 
-    od = &g_or_type_desc[OR_lsr_i];
+    od = &g_or_code_desc[OR_lsr_i];
     OTD_is_fake(od) = true; //expand OR if shift-size is out of range.
 
-    od = &g_or_type_desc[OR_lsr_i32];
+    od = &g_or_code_desc[OR_lsr_i32];
     OTD_is_fake(od) = true; //expand OR if shift-size is out of range.
 
-    od = &g_or_type_desc[OR_lsl_i32];
+    od = &g_or_code_desc[OR_lsl_i32];
     OTD_is_fake(od) = true; //expand OR if shift-size is out of range.
 
-    od = &g_or_type_desc[OR_asr_i32];
+    od = &g_or_code_desc[OR_asr_i32];
     OTD_is_fake(od) = true; //expand OR if shift-size is out of range.
 
-    OR_TYPE store[] = {
+    OR_CODE store[] = {
         OR_stm,
         OR_str,
         OR_strb,
@@ -1422,7 +1422,7 @@ static void initORProperty()
         OR_strd_i8,
     };
     for (UINT i = 0; i < sizeof(store) / sizeof(store[0]); i++) {
-        od = &g_or_type_desc[store[i]];
+        od = &g_or_code_desc[store[i]];
         OTD_is_store(od) = true;
         switch (store[i]) {
         case OR_str:
@@ -1437,61 +1437,61 @@ static void initORProperty()
         }
     }
 
-    od = &g_or_type_desc[OR_bl];
+    od = &g_or_code_desc[OR_bl];
     OTD_is_call(od) = true;
 
-    od = &g_or_type_desc[OR_ret];
+    od = &g_or_code_desc[OR_ret];
     OTD_is_return(od) = true;
 
-    od = &g_or_type_desc[OR_ret1];
+    od = &g_or_code_desc[OR_ret1];
     OTD_is_return(od) = true;
 
-    od = &g_or_type_desc[OR_ret2];
+    od = &g_or_code_desc[OR_ret2];
     OTD_is_return(od) = true;
 
-    od = &g_or_type_desc[OR_ret3];
+    od = &g_or_code_desc[OR_ret3];
     OTD_is_return(od) = true;
 
-    od = &g_or_type_desc[OR_ret4];
+    od = &g_or_code_desc[OR_ret4];
     OTD_is_return(od) = true;
 
-    od = &g_or_type_desc[OR_b];
+    od = &g_or_code_desc[OR_b];
     OTD_is_cond_br(od) = true;
 
-    od = &g_or_type_desc[OR_bx];
+    od = &g_or_code_desc[OR_bx];
     OTD_is_uncond_br(od) = true;
     OTD_is_indirect_br(od) = true;
 
-    od = &g_or_type_desc[OR_nop];
+    od = &g_or_code_desc[OR_nop];
     OTD_is_nop(od) = true;
 
-    od = &g_or_type_desc[OR_add_i];
+    od = &g_or_code_desc[OR_add_i];
     OTD_is_addi(od) = true;
     OTD_is_fake(od) = true; //expand OR if immediate-addend is out of range.
 
-    od = &g_or_type_desc[OR_sub_i];
+    od = &g_or_code_desc[OR_sub_i];
     OTD_is_subi(od) = true;
     OTD_is_fake(od) = true; //expand OR if immediate-addend is out of range.
 
-    od = &g_or_type_desc[OR_mov_i];
+    od = &g_or_code_desc[OR_mov_i];
     OTD_is_movi(od) = true;
 
-    od = &g_or_type_desc[OR_mov32_i];
+    od = &g_or_code_desc[OR_mov32_i];
     OTD_is_movi(od) = true;
     OTD_is_fake(od) = true; //expand OR if immediate-addend is out of range.
 
-    od = &g_or_type_desc[OR_movw_i];
+    od = &g_or_code_desc[OR_movw_i];
     OTD_is_movi(od) = true;
 
-    od = &g_or_type_desc[OR_movt_i];
+    od = &g_or_code_desc[OR_movt_i];
     OTD_is_movi(od) = true;
 }
 
 
 static void fini()
 {
-    for (EquORTypes * ot = g_or_types_list.get_head();
-         ot != nullptr; ot = g_or_types_list.get_next()) {
+    for (EquORCodes * ot = g_or_codes_list.get_head();
+         ot != nullptr; ot = g_or_codes_list.get_next()) {
         delete ot;
     }
 
@@ -1528,7 +1528,7 @@ inline static void prtUnit(UINT u)
 }
 
 
-inline static void prtEquORTypeAddress(EquORTypes const* equort)
+inline static void prtEquORCodeAddress(EquORCodes const* equort)
 {
     if (equort == nullptr) {
         fprintf(g_output, "nullptr,");
@@ -1550,10 +1550,10 @@ inline static void prtSRDescGroupAddress(SRDescGroup<> const* srdgroup)
 }
 
 
-static CHAR const* getORTypeName(OR_TYPE ot, OUT xcom::StrBuf & buf)
+static CHAR const* getORCodeName(OR_CODE ot, OUT xcom::StrBuf & buf)
 {
-    //Print ORType and name.
-    CHAR const* name = OTD_name(&g_or_type_desc[ot]);
+    //Print ORCode and name.
+    CHAR const* name = OTD_name(&g_or_code_desc[ot]);
     buf.sprint("OR_%s", name);
 
     //Replace . with _
@@ -1564,23 +1564,23 @@ static CHAR const* getORTypeName(OR_TYPE ot, OUT xcom::StrBuf & buf)
 }
 
 
-static void prtEquORTypesList()
+static void prtEquORCodesList()
 {
     xcom::StrBuf buf(64);
-    //Print a list of EquORTypes.
-    fprintf(g_output, "\n//Initialize EquORTypes.\n");
-    for (EquORTypes * e = g_or_types_list.get_head();
-         e != nullptr; e = g_or_types_list.get_next()) {
-        fprintf(g_output, "static EquORTypes g_equort_%p = {", e);
+    //Print a list of EquORCodes.
+    fprintf(g_output, "\n//Initialize EquORCodes.\n");
+    for (EquORCodes * e = g_or_codes_list.get_head();
+         e != nullptr; e = g_or_codes_list.get_next()) {
+        fprintf(g_output, "static EquORCodes g_equort_%p = {", e);
 
         //Initialize first class member.
         UINT num = 0;
         for (UINT u = UNIT_UNDEF + 1; u < UNIT_NUM; u++) {
-            if (EQUORTY_unit2ortype(e, u) != OR_UNDEF) {
+            if (EQUORC_unit2orcode(e, u) != OR_UNDEF) {
                 num++;
             }
         }
-        EQUORTY_num_equortype(e) = num;
+        EQUORC_num_equorcode(e) = num;
         fprintf(g_output, "%d,", num);
         //
 
@@ -1588,7 +1588,7 @@ static void prtEquORTypesList()
         fprintf(g_output, "{");
         for (INT i = UNIT_UNDEF; i < UNIT_NUM; i++) {
             fprintf(g_output, "%s,",
-                getORTypeName(EQUORTY_unit2ortype(e, i), buf));
+                getORCodeName(EQUORC_unit2orcode(e, i), buf));
         }
         fprintf(g_output, "},");
         //
@@ -1731,20 +1731,20 @@ static void prtORScheInfoContent(ORScheInfo const& si)
 }
 
 
-static void prtORTypeDesc(ORTypeDesc const* otd)
+static void prtORCodeDesc(ORCodeDesc const* otd)
 {
     StrBuf buf(64);
     fprintf(g_output, "  {");
 
-    //Print ORType and name.
-    fprintf(g_output, "%s,", getORTypeName(OTD_code(otd), buf));
+    //Print ORCode and name.
+    fprintf(g_output, "%s,", getORCodeName(OTD_code(otd), buf));
     fprintf(g_output, "\"%s\",", OTD_name(otd));
 
     //Print function unit.
     prtUnit(OTD_unit(otd));
 
-    //Print EquORTypes.
-    prtEquORTypeAddress(OTD_equ_or_types(otd));
+    //Print EquORCodes.
+    prtEquORCodeAddress(OTD_equ_or_codes(otd));
 
     //Print SRDescGroup.
     prtSRDescGroupAddress(OTD_srd_group(otd));
@@ -1781,17 +1781,17 @@ static void prtORTypeDesc(ORTypeDesc const* otd)
 }
 
 
-static void prtORTypeDescTab()
+static void prtORCodeDescTab()
 {
     xcom::StrBuf buf(64);
 
-    //Print ORTypeDesc.
-    fprintf(g_output, "\n//Initialize ORTypeDesc.\n");
-    fprintf(g_output, "ORTypeDesc const %s [] = {\n", g_or_type_desc_name);
-    UINT num = sizeof(g_or_type_desc) / sizeof(g_or_type_desc[0]);
+    //Print ORCodeDesc.
+    fprintf(g_output, "\n//Initialize ORCodeDesc.\n");
+    fprintf(g_output, "ORCodeDesc const %s [] = {\n", g_or_code_desc_name);
+    UINT num = sizeof(g_or_code_desc) / sizeof(g_or_code_desc[0]);
     for (UINT i = 0; i < num; i++) {
         ASSERT0(i < OR_NUM);
-        prtORTypeDesc(&g_or_type_desc[i]);
+        prtORCodeDesc(&g_or_code_desc[i]);
     }
     fprintf(g_output, "};\n");
     fflush(g_output);
@@ -1859,9 +1859,9 @@ static void prtSlotName()
 //Return true if specified operand or result is cpsr register.
 //NOTE SRDescGroup INFORMATION MUST BE AVAILABLE BEFORE INVOKE
 //THIS FUNCTION.
-static bool isRflagRegister(OR_TYPE ot, UINT idx, bool is_result)
+static bool isRflagRegister(OR_CODE ot, UINT idx, bool is_result)
 {
-    ORTypeDesc const* otd = &g_or_type_desc[ot];    
+    ORCodeDesc const* otd = &g_or_code_desc[ot];    
     SRDescGroup<> const* sdg = OTD_srd_group(otd);
     RegFileSet cpsr;
     cpsr.bunion(RF_CPSR);
@@ -1884,9 +1884,9 @@ static bool isRflagRegister(OR_TYPE ot, UINT idx, bool is_result)
 
 //Return the info of result available cycle.
 //Use 'get' to compute sche-info as later as possible instead of 'create'.
-static void initAndPrtScheInfoImpl(OR_TYPE ot)
+static void initAndPrtScheInfoImpl(OR_CODE ot)
 {
-    ORTypeDesc * otd = &g_or_type_desc[ot];
+    ORCodeDesc * otd = &g_or_code_desc[ot];
     UINT mem_result_num = 0;
     if (OTD_is_store(otd)) {
         mem_result_num = 1; //store needs one cycle.
@@ -2124,7 +2124,7 @@ static void initAndPrtScheInfoImpl(OR_TYPE ot)
 static void initScheInfo()
 {
     for (UINT i = OR_UNDEF; i < OR_NUM; i++) {
-        initAndPrtScheInfoImpl((OR_TYPE)i);
+        initAndPrtScheInfoImpl((OR_CODE)i);
     }
 }
 
@@ -2157,11 +2157,11 @@ void initAndPrtCluster2Allocable(
 
 
 #ifdef _DEBUG_
-static bool verifyORTypeDesc()
+static bool verifyORCodeDesc()
 {
-    for (UINT i = OR_UNDEF; i < sizeof(g_or_type_desc) /
-         sizeof(g_or_type_desc[0]); i++) {
-        ASSERT0((UINT)OTD_code(&g_or_type_desc[i]) == i);
+    for (UINT i = OR_UNDEF; i < sizeof(g_or_code_desc) /
+         sizeof(g_or_code_desc[0]); i++) {
+        ASSERT0((UINT)OTD_code(&g_or_code_desc[i]) == i);
     }
     return true;
 }
@@ -2174,7 +2174,7 @@ int main()
     UNLINK(name);
     g_output = fopen(name, "a+");
 
-    ASSERT0(verifyORTypeDesc());
+    ASSERT0(verifyORCodeDesc());
     prtHeaderFile();
     prtEmptyROBitSet();
     prtRegFileProp();
@@ -2198,14 +2198,14 @@ int main()
     initAndPrtCluster2Allocable(allocable, cluster2regset);
     initSRDesc(regfile2regset);
     initORProperty();
-    initEquORType();
+    initEquORCode();
     initFuncUnit();
     initScheInfo();
 
-    prtEquORTypesList();
+    prtEquORCodesList();
     prtSRDescList();
     prtSRDescGroupList();
-    prtORTypeDescTab();
+    prtORCodeDescTab();
 
     fclose(g_output);
     fini();

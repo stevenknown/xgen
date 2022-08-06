@@ -44,7 +44,7 @@ class ArgDescMgr;
 //Record information during convertion in between IR and OR.
 #define IOC_is_inverted(cont) ((cont)->u2.s1.is_inverted)
 #define IOC_pred(cont) ((cont)->pred)
-#define IOC_ortype(cont) ((cont)->ortype)
+#define IOC_orcode(cont) ((cont)->orcode)
 #define IOC_sr_vec(cont) ((cont)->reg_vec)
 #define IOC_param_size(cont) ((cont)->u1.param_size)
 #define IOC_mem_byte_size(cont) ((cont)->u1.mem_byte_size)
@@ -64,7 +64,7 @@ public:
     SR * pred; //used as input parameter, record predicate register if required.
     SR * addr; //used as input parameter, record memory address pseduo register.
     Vector<SR*> reg_vec;
-    OR_TYPE ortype; //used as output, record OR_TYPE of result if exist.
+    OR_CODE orcode; //used as output, record OR_CODE of result if exist.
 
     union {
         //used as input parameter, record total size of real
@@ -83,7 +83,7 @@ public:
     {
         u2.u2val = 0;
         pred = nullptr;
-        ortype = OR_UNDEF;
+        orcode = OR_UNDEF;
         u1.param_size = 0;
         u1.mem_byte_size = 0;
         reg_vec.init();
@@ -95,7 +95,7 @@ public:
     {
         u2.u2val = 0;
         pred = nullptr;
-        ortype = OR_UNDEF;
+        orcode = OR_UNDEF;
         u1.param_size = 0;
         u1.mem_byte_size = 0;
         reg_vec.clean();
@@ -103,7 +103,7 @@ public:
     }
 
     virtual void set_pred(SR * p) { pred = p; }
-    virtual void set_ortype(OR_TYPE ort) { ortype = ort; }
+    virtual void set_orcode(OR_CODE ort) { orcode = ort; }
     virtual void set_addr(SR * a) { addr = a; }
     virtual void set_reg(INT i, SR * s)
     {
@@ -132,14 +132,15 @@ public:
         if (val != nullptr) { return val; }
         return get_addr();
     }
-    OR_TYPE get_ortype() const { return ortype; }
+    UINT getMemByteSize() const { return IOC_mem_byte_size(this); }
+    OR_CODE get_orcode() const { return orcode; }
 
     void clean_regvec() { reg_vec.clean(); }
     void clean_bottomup()
     {
         clean_regvec();
         set_addr(nullptr);
-        set_ortype(OR_UNDEF);
+        set_orcode(OR_UNDEF);
     }
 };
 //END IOC

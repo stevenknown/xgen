@@ -49,6 +49,8 @@ protected:
     void dump_edge(FILE * h);
     //Print graph structure description.
     void dump_head(FILE * h);
+
+    virtual void recomputeDomInfo(MOD OptCtx & oc) {}
 public:
     ORCFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg);
     virtual ~ORCFG() {}
@@ -75,20 +77,25 @@ public:
     virtual bool isRegionEntry(ORBB * bb) const { return ORBB_is_entry(bb); }
     virtual bool isRegionExit(ORBB * bb) const { return ORBB_is_exit(bb); }
 
-    virtual void removeDomInfo(C<ORBB*> * bbct, CfgOptCtx const& ctx)
+    //The function do preprocess before CFG changed during RemoveBB.
+    //Note the function have to be invoked before CFG change.
+    virtual void preprocessBeforeRemoveBB(ORBB * bb, MOD CfgOptCtx & ctx)
+    {}
+
+    virtual void removeDomInfo(C<ORBB*> * bbct, MOD CfgOptCtx & ctx)
     {
-        if (ctx.need_update_dominfo()) {
-            DGraph::removeDomInfo(bbct->val()->id());
-        }
+        //Note the iteration of predecessor and successor may be costly.
+        DGraph::removeDomInfo(bbct->val()->id(), ctx.needUpdateDomInfo(),
+                              CFGOPTCTX_vertex_iter_time(&ctx));
     }
 
     //Remove 'bb' from CFG, vector and bb-list.
-    virtual void removeBB(C<ORBB*> * bbct, CfgOptCtx const& ctx)
+    virtual void removeBB(C<ORBB*> * bbct, OUT CfgOptCtx & ctx)
     {
         ASSERT0(bbct && m_bb_list->in_list(bbct));
         ORBB * bb = bbct->val();
         m_bb_vec.set(bb->id(), nullptr);
-    
+
         //Note labels should have been moved to other BB.
         //C<LabelInfo const*> * ct;
         //for (lablst.get_head(&ct);
@@ -101,20 +108,18 @@ public:
     }
 
     //Remove 'bb' from CFG, vector and bb-list.
-    virtual void removeBB(ORBB * bb, CfgOptCtx const& ctx)
+    virtual void removeBB(ORBB * bb, OUT CfgOptCtx & ctx)
     {
-        C<ORBB*> * bbct;
-        m_bb_list->find(bb, &bbct);
+        ASSERTN(0, ("Use alternative removeBB(container)"));
     }
-    virtual void remove_xr(ORBB * bb, OR * o);
+    virtual void remove_xr(ORBB * bb, OR * o, CfgOptCtx const& ctx);
     virtual void resetMapBetweenLabelAndBB(ORBB * bb);
-    
-    //Remove related PHI operand from successor BB.
-    //Before removing current BB or change BB's successor,
-    //you need remove the related PHI operand if BB successor has PHI.
-    virtual void removeSuccPhiOpnd(ORBB const* bb) {}
 
     virtual void setRPO(ORBB * bb, INT order) { ORBB_rpo(bb) = order; }
+    virtual void setVertex(ORBB * bb, Vertex * v) { BB_vex(bb) = v; }
+    virtual void setVertex(ORBB * from, ORBB * to, Edge * e)
+    { ORBB_vex(from) = e->from(); ORBB_vex(to) = e->to(); }
+
     virtual void moveLabels(ORBB * src, ORBB * tgt);
 };
 

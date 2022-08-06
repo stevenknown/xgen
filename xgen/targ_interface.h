@@ -35,9 +35,9 @@ namespace xgen {
 
 typedef UINT REG;
 class RegSet;
-class ORTypeDesc;
+class ORCodeDesc;
 class SRDesc;
-struct EquORTypes;
+struct EquORCodes;
 class TargMach;
 class CGMgr;
 
@@ -56,8 +56,8 @@ CHAR const* tmGetRegFileName(REGFILE);
 //Return name of given slot.
 CHAR const* tmGetSlotName(SLOT);
 
-//Return name of OR type.
-CHAR const* tmGetORTypeName(OR_TYPE);
+//Return name of OR code.
+CHAR const* tmGetORCodeName(OR_CODE);
 
 //Return a set of registers for given register-file.
 RegSet const* tmMapRegFile2RegSet(REGFILE);
@@ -72,13 +72,13 @@ RegSet const* tmMapRegFile2RegSetAllocable(REGFILE rf);
 RegSet const* tmMapCluster2RegSetAlloable(CLUST clust);
 
 //Return description for given or-type.
-ORTypeDesc const* tmGetORTypeDesc(OR_TYPE);
+ORCodeDesc const* tmGetORCodeDesc(OR_CODE);
 
 //Return SR description of the operand indexed by 'idx' for given or-type.
-SRDesc const* tmGetOpndSRDesc(OR_TYPE ot, UINT idx);
+SRDesc const* tmGetOpndSRDesc(OR_CODE ot, UINT idx);
 
 //Return SR description of the result indexed by 'idx' for given or-type.
-SRDesc const* tmGetResultSRDesc(OR_TYPE ot, UINT idx);
+SRDesc const* tmGetResultSRDesc(OR_CODE ot, UINT idx);
 
 //Return true if regfile is integer register file.
 bool tmIsIntRegFile(REGFILE rf);
@@ -93,16 +93,16 @@ bool tmIsPredicateRegFile(REGFILE rf);
 RegSet const* tmMapCluster2RegSet(CLUST);
 
 //Return the number of source operands for given or-type.
-UINT tmGetOpndNum(OR_TYPE);
+UINT tmGetOpndNum(OR_CODE);
 
 //Return the number of target operands for given or-type.
-UINT tmGetResultNum(OR_TYPE);
+UINT tmGetResultNum(OR_CODE);
 
 //Get equivalent or-types that has same functions.
-EquORTypes const* tmGetEqualORType(OR_TYPE);
+EquORCodes const* tmGetEqualORCode(OR_CODE);
 
 //Get the number of equivalent or-types that has same functions.
-UINT tmGetNumOfEqualORType(OR_TYPE);
+UINT tmGetNumOfEqualORCode(OR_CODE);
 
 //Get allocable register set.
 RegSet const* tmGetRegSetAllocable();
@@ -123,7 +123,7 @@ RegSet const* tmGetRegSetOfCallerSaved();
 RegSet const* tmGetRegSetOfCalleeSaved();
 
 //Get the Read and Write available cycle.
-ORScheInfo const* tmGetORScheInfo(OR_TYPE ot);
+ORScheInfo const* tmGetORScheInfo(OR_CODE ot);
 
 //Allocate CGMgr for target machine.
 CGMgr * allocCGMgr(RegionMgr * rm);

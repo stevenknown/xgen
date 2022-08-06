@@ -169,7 +169,7 @@ bool CGMgr::genAndPrtGlobalVariable(Region * rg)
             !v->is_global() ||
             v->is_fake() ||
             v->is_unallocable() ||
-            v->is_func_decl()) {
+            v->is_func()) {
             continue;
         }
         cg->computeAndUpdateGlobalVarLayout(v, nullptr, nullptr);

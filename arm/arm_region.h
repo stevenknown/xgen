@@ -34,15 +34,14 @@ author: Su Zhenyu
 typedef TMap<xoc::Var*, MD*> Var2XX;
 class ARMRegion : public Region {
 protected:
+    //Simply IR to lower level IR, and insert CVT if needed.
     void simplify(OptCtx & oc);
     void HighProcessImpl(OptCtx & oc);
     void MiddleProcessAggressiveAnalysis(OptCtx & oc);
     bool ARMHighProcess(OptCtx & oc);
 public:
     ARMRegion(REGION_TYPE rt, RegionMgr * rm) : Region(rt, rm) {}
-    virtual void destroy();
     virtual PassMgr * allocPassMgr();
-
     bool simplifyToPRmode(OptCtx & oc);
     virtual bool HighProcess(OptCtx & oc);
     virtual bool MiddleProcess(OptCtx & oc);

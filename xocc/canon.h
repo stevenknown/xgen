@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __CANON_H__
 #define __CANON_H__
 
+namespace xocc {
+
 //The class canonicalize IR tree into well-formed layout that conform to
 //the guidelines of XOC IR pass preferred.
 
@@ -59,4 +61,5 @@ public:
     IR * handle_stmt_list(IR * ir_list, bool & change);
 };
 
+} //namespace xocc
 #endif

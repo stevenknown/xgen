@@ -181,12 +181,11 @@ typedef C<LifeTime*> * LifeTimeListIter;
 class ORMap {
     typedef xcom::TMap<UINT, List<OR*>*> ORId2ORList;
     typedef xcom::TMapIter<UINT, List<OR*>*> ORId2ORListIter;
-
+    BYTE m_is_init:1; //To make sure functions are idempotent.
+    SMemPool * m_pool;
     ORId2ORList m_or2orlist_map;
     ORList m_or_list; //Only for fast accessing one by one.
-    bool m_is_init;
-    SMemPool * m_pool;
-
+private:
     void * xmalloc(INT size);
 public:
     ORMap()
@@ -236,11 +235,11 @@ public:
 class GroupMgr {
     xcom::Vector<List<OR*>*> m_groupidx2ors_map; //group id is dense integer
     xcom::TMap<UINT, INT> m_oridx2group_map;
-    bool m_is_init;
+    BYTE m_is_init:1; //To make sure functions are idempotent.
     ORBB * m_bb;
     CG * m_cg;
     SMemPool * m_pool;
-
+private:
     void * xmalloc(INT size);
 public:
     GroupMgr(ORBB * bb, CG * cg) { m_is_init = false; init(bb, cg); }
@@ -502,7 +501,7 @@ public:
     //Check all occurrence of SR's lifetime, and retrue if all of them
     //are recalculable.
     virtual bool isRecalcSR(SR * sr);
-    bool isContainOR(IN LifeTime * lt, OR_TYPE ortype,
+    bool isContainOR(IN LifeTime * lt, OR_CODE orcode,
                      OUT List<OR*> * orlst);
 
     void setAnticiReg(LifeTime const* lt, RegSet * rset);
@@ -598,13 +597,11 @@ public:
 //will incorporate with life time manager intact synchronously.
 class InterfGraph : public xcom::Graph {
     COPY_CONSTRUCTOR(InterfGraph);
-private:
-    ORBB * m_bb;
-    bool m_is_init;
-
     //True if cluster information must be checked during processing.
-    bool m_clustering;
-    bool m_is_estimate;
+    BYTE m_clustering:1;
+    BYTE m_is_estimate:1;
+    BYTE m_is_init:1; //To make sure functions are idempotent.
+    ORBB * m_bb;
     LifeTimeMgr * m_lt_mgr;
     xcom::List<LifeTime*> m_lt_rf_group[RF_NUM];
     xcom::List<LifeTime*> m_lt_cl_group[CLUST_NUM];
@@ -680,7 +677,7 @@ protected:
 
     bool checkSpillCanBeRemoved(xoc::Var const* spill_loc);
 
-    void genSRWith2opnds(OR_TYPE src,
+    void genSRWith2opnds(OR_CODE src,
                          CLUST clust,
                          SR * result,
                          SR * src1,

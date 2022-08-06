@@ -28,12 +28,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @*/
 
 #include "../opt/cominc.h"
-#include "feinc.h"
+#include "xoccinc.h"
 #include "../xgen/xgeninc.h"
 #include "errno.h"
 #include "../opt/util.h"
 #include "../reader/grreader.h"
 #include "../opt/comopt.h"
+
+namespace xocc {
 
 static bool g_cfg_opt = true;
 static bool g_ask_for_help = false;
@@ -97,8 +99,9 @@ static bool process_opt(INT argc, CHAR const* argv[], INT & i)
         break;
     case '1':
         xoc::g_opt_level = OPT_LEVEL1;
-        xoc::g_do_pr_ssa = true;
-        xoc::g_do_md_ssa = true;
+        xoc::g_do_prssa = true;
+        xoc::g_do_mdssa = true;
+        xoc::g_infer_type = true;
         //Only do refinement.
         break;
     case '2':
@@ -106,9 +109,11 @@ static bool process_opt(INT argc, CHAR const* argv[], INT & i)
         xoc::g_do_cp = true;
         xoc::g_do_dce = true;
         xoc::g_do_licm = true;
+        xoc::g_do_rce = true;
         xoc::g_do_rp = true;
-        xoc::g_do_pr_ssa = true;
-        xoc::g_do_md_ssa = true;
+        xoc::g_do_prssa = true;
+        xoc::g_do_mdssa = true;
+        xoc::g_infer_type = true;
         g_cfg_opt = true;
         break;
     case '3':
@@ -118,10 +123,12 @@ static bool process_opt(INT argc, CHAR const* argv[], INT & i)
         xoc::g_do_dce = true;
         xoc::g_do_dce_aggressive = true;
         xoc::g_do_licm = true;
+        xoc::g_do_rce = true;
         xoc::g_do_rp = true;
         xoc::g_do_lftr = true;
-        xoc::g_do_pr_ssa = true;
-        xoc::g_do_md_ssa = true;
+        xoc::g_do_prssa = true;
+        xoc::g_do_mdssa = true;
+        xoc::g_infer_type = true;
         g_cfg_opt = true;
         break;
     case 's':
@@ -129,15 +136,16 @@ static bool process_opt(INT argc, CHAR const* argv[], INT & i)
         xoc::g_opt_level = SIZE_OPT;
         xoc::g_do_dce = true;
         xoc::g_do_licm = true;
+        xoc::g_do_rce = true;
         xoc::g_do_rp = true;
-        xoc::g_do_pr_ssa = true;
-        xoc::g_do_md_ssa = true;
+        xoc::g_do_prssa = true;
+        xoc::g_do_mdssa = true;
         g_cfg_opt = true;
         break;
     default:
         xoc::g_opt_level = OPT_LEVEL1;
-        xoc::g_do_pr_ssa = true;
-        xoc::g_do_md_ssa = true;
+        xoc::g_do_prssa = true;
+        xoc::g_do_mdssa = true;
     }
 
     i++;
@@ -292,9 +300,9 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "enable linear-function-test-replacement optimization", },
     { "ivr", &xoc::g_do_ivr,
       "enable induction-variable-recognization", },
-    { "mdssa", &xoc::g_do_md_ssa,
+    { "mdssa", &xoc::g_do_mdssa,
       "enable md-ssa analysis", },
-    { "prssa", &xoc::g_do_pr_ssa,
+    { "prssa", &xoc::g_do_prssa,
       "enable pr-ssa analysis", },
     { "prmode", &xoc::g_is_lower_to_pr_mode,
       "lowering cascading IR mode to pr-transfering mode", },
@@ -631,6 +639,7 @@ static void usage()
 static void inferOption()
 {
     if (xoc::g_opt_level == OPT_LEVEL0) {
+        disable_opt(OPT_LEVEL3);
         xoc::g_do_cfg_dom = false;
         xoc::g_do_cfg_pdom = false;
         xoc::g_do_loop_ana = false;
@@ -640,8 +649,8 @@ static void inferOption()
         xoc::g_do_aa = false;
         xoc::g_do_md_du_analysis = false;
         xoc::g_is_support_dynamic_type = false;
-        xoc::g_do_md_ssa = false;
-        xoc::g_do_pr_ssa = false;
+        xoc::g_do_mdssa = false;
+        xoc::g_do_prssa = false;
         xoc::g_compute_pr_du_chain = false;
         xoc::g_compute_nonpr_du_chain = false;
         xoc::g_do_refine = false;
@@ -723,3 +732,5 @@ bool processCmdLine(INT argc, CHAR const* argv[])
     inferOption();
     return true;
 }
+
+} //namespace xocc

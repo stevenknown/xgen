@@ -477,7 +477,7 @@ void ARMCG::buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,
     }
 
     if (IOC_mem_byte_size(cont) <= 4) {
-        OR_TYPE ort;
+        OR_CODE ort;
         switch (IOC_mem_byte_size(cont)) {
         case 1: ort = is_signed ? OR_ldrsb : OR_ldrb; break;
         case 2: ort = is_signed ? OR_ldrsh : OR_ldrh; break;
@@ -520,9 +520,9 @@ void ARMCG::buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,
 }
 
 
-void ARMCG::buildStoreCase13Bytes(IN SR * store_val, IN SR * base,
-                                  IN SR * sr_ofst, Var const* v,
-                                  OUT ORList & ors, MOD IOC * cont)
+void ARMCG::buildStoreFor3Byte(IN SR * store_val, IN SR * base,
+                               IN SR * sr_ofst, Var const* v,
+                               OUT ORList & ors, MOD IOC * cont)
 {
     ASSERT0(IOC_mem_byte_size(cont) == 3);
 
@@ -553,82 +553,113 @@ void ARMCG::buildStoreCase13Bytes(IN SR * store_val, IN SR * base,
 }
 
 
-void ARMCG::buildStoreCase1(IN SR * store_val, IN SR * base, IN SR * sr_ofst,
-                            Var const* v, bool is_signed,
-                            OUT ORList & ors, MOD IOC * cont)
+void ARMCG::genAddrCompForStoreLessThan4Byte(SR ** base, SR ** ofst,
+                                             OUT ORList & ors, IOC const* cont)
 {
-    ASSERT0(IOC_mem_byte_size(cont) <= 4);
-    if (IOC_mem_byte_size(cont) == 3) {
-        buildStoreCase13Bytes(store_val, base, sr_ofst, v, ors, cont);
-        return;
-    }
-
-    OR_TYPE code = OR_UNDEF;
-    switch (IOC_mem_byte_size(cont)) {
+    switch (cont->getMemByteSize()) {
     case 1:
-        if (sr_ofst->is_int_imm()) {
-            if (isValidImmOpnd(OR_strb_i12, sr_ofst->getInt())) {
-                code = OR_strb_i12;
-            } else {
-                //base + ofst
-                //=>
-                //t = base + ofst
-                //base = t
-                IOC tc;
-                buildAdd(base, sr_ofst, IOC_mem_byte_size(cont),
-                         false, ors, &tc);
-                base = tc.get_reg(0);
-                ASSERT0(base && base->is_reg());
-                code = OR_strb;
-                sr_ofst = genIntImm(0, false);
-            }
-        } else if (sr_ofst->is_var()) {
-            code = OR_strb;
-        } else {
-            UNREACHABLE();
+        if ((*ofst)->is_int_imm() &&
+            !isValidImmOpnd(OR_strb_i12, (*ofst)->getInt())) {
+            //Add byte-offset into base address ahead of time.
+            //Address computation always be GENERAL_REGISTER_SIZE.
+            //base + ofst
+            //=>
+            //t = base + ofst
+            //base = t
+            IOC tc;
+            buildAdd(*base, *ofst, IOC_mem_byte_size(cont), false, ors, &tc);
+            *base = tc.get_reg(0);
+            ASSERT0(*base && (*base)->is_reg());
+            *ofst = genIntImm(0, false);
         }
         break;
     case 2:
-        if (sr_ofst->is_int_imm()) {
-            if (isValidImmOpnd(OR_strh_i8, sr_ofst->getInt())) {
-                code = OR_strh_i8;
-            } else {
-                IOC tc;
-                buildAdd(base, sr_ofst, IOC_mem_byte_size(cont),
-                         false, ors, &tc);
-                base = tc.get_reg(0);
-                ASSERT0(base && base->is_reg());
-                code = OR_str;
-                sr_ofst = genIntImm(0, false);
-            }
-        } else if (sr_ofst->is_var()) {
-            code = OR_strh;
-        } else {
-            UNREACHABLE();
+        if ((*ofst)->is_int_imm() &&
+            !isValidImmOpnd(OR_strh_i8, (*ofst)->getInt())) {
+            //Add byte-offset into base address ahead of time.
+            //Address computation always be GENERAL_REGISTER_SIZE.
+            IOC tc;
+            buildAdd(*base, (*ofst), IOC_mem_byte_size(cont),
+                     false, ors, &tc);
+            *base = tc.get_reg(0);
+            ASSERT0(*base && (*base)->is_reg());
+            *ofst = genIntImm(0, false);
         }
         break;
     case 4:
-        if (sr_ofst->is_int_imm()) {
-            if (isValidImmOpnd(OR_str_i12, sr_ofst->getInt())) {
-                code = OR_str_i12;
-            } else {
-                IOC tc;
-                buildAdd(base, sr_ofst, IOC_mem_byte_size(cont),
-                         false, ors, &tc);
-                base = tc.get_reg(0);
-                ASSERT0(base && base->is_reg());
-                code = OR_str;
-                sr_ofst = genIntImm(0, false);
-            }
-        } else if (sr_ofst->is_var()) {
-            code = OR_str;
-        } else {
-            UNREACHABLE();
+        if ((*ofst)->is_int_imm() &&
+            !isValidImmOpnd(OR_str_i12, (*ofst)->getInt())) {
+            //Add byte-offset into base address ahead of time.
+            //Address computation always be GENERAL_REGISTER_SIZE.
+            IOC tc;
+            buildAdd(*base, *ofst, IOC_mem_byte_size(cont),
+                     false, ors, &tc);
+            *base = tc.get_reg(0);
+            ASSERT0(*base && (*base)->is_reg());
+            *ofst = genIntImm(0, false);
         }
         break;
     default: UNREACHABLE();
     }
+}
 
+
+OR_CODE ARMCG::selectORCodeForStoreLessThan4Byte(SR const* ofst,
+                                                 IOC const* cont) const
+{
+    switch (cont->getMemByteSize()) {
+    case 1:
+        if (ofst->is_int_imm()) {
+            if (isValidImmOpnd(OR_strb_i12, ofst->getInt())) {
+                return OR_strb_i12;
+            }
+            return OR_strb;
+        }
+        if (ofst->is_var()) {
+            return OR_strb;
+        }
+        UNREACHABLE();
+    case 2:
+        if (ofst->is_int_imm()) {
+            if (isValidImmOpnd(OR_strh_i8, ofst->getInt())) {
+                return OR_strh_i8;
+            }
+            return OR_strh;
+        }
+        if (ofst->is_var()) {
+            return OR_strh;
+        }
+        UNREACHABLE();
+    case 4:
+        if (ofst->is_int_imm()) {
+            if (isValidImmOpnd(OR_str_i12, ofst->getInt())) {
+                return OR_str_i12;
+            }
+            return OR_str;
+        }
+        if (ofst->is_var()) {
+            return OR_str;
+        }
+        UNREACHABLE();
+    default: UNREACHABLE();
+    }
+    return OR_UNDEF;
+}
+
+
+void ARMCG::buildStoreForLessThan4Byte(SR * store_val, IN SR * base,
+                                       IN SR * sr_ofst,
+                                       Var const* v, bool is_signed,
+                                       OUT ORList & ors, MOD IOC * cont)
+{
+    ASSERT0(IOC_mem_byte_size(cont) <= 4);
+    if (IOC_mem_byte_size(cont) == 3) {
+        buildStoreFor3Byte(store_val, base, sr_ofst, v, ors, cont);
+        return;
+    }
+    OR_CODE code = selectORCodeForStoreLessThan4Byte(sr_ofst, cont);
+    ASSERT0(code != OR_UNDEF);
+    genAddrCompForStoreLessThan4Byte(&base, &sr_ofst, ors, cont);
     OR * o = genOR(code);
     o->set_first_store_val(store_val, this);
     o->set_store_base(base, this);
@@ -643,33 +674,51 @@ void ARMCG::buildStoreCase1(IN SR * store_val, IN SR * base, IN SR * sr_ofst,
 }
 
 
-void ARMCG::buildStoreCase2(IN SR * store_val,
-                            IN SR * base,
-                            IN SR * sr_ofst,
-                            Var const* v,
-                            bool is_signed,
-                            OUT ORList & ors,
-                            MOD IOC * cont)
+//Select or-code.
+OR_CODE ARMCG::selectORCodeForStore8Byte(SR const* ofst) const
+{
+    if (ofst->is_int_imm()) {
+        if (isValidImmOpnd(OR_strd_i8, ofst->getInt())) {
+            return OR_strd_i8;
+        }
+        return OR_strd;
+    }
+    if (ofst->is_var()) {
+        return OR_strd;
+    }
+    UNREACHABLE();
+    return OR_UNDEF;
+}
+
+
+//Generate auxiliary address computation operation.
+void ARMCG::genAddrCompFor8ByteStore(MOD SR ** base, MOD SR ** ofst,
+                                     OUT ORList & ors)
+{
+    if (!(*ofst)->is_int_imm() ||
+        isValidImmOpnd(OR_strd_i8, (*ofst)->getInt())) {
+        return;
+    }
+    IOC tc;
+    //Add byte-offset into base address ahead of time.
+    //Address computation always be GENERAL_REGISTER_SIZE.
+    buildAdd(*base, *ofst, GENERAL_REGISTER_SIZE, false, ors, &tc);
+    *base = tc.get_reg(0);
+    ASSERT0(*base && (*base)->is_reg());
+    *ofst = genIntImm(0, false);
+}
+
+
+void ARMCG::buildStoreFor8Byte(SR const* store_val, SR * base, SR * sr_ofst,
+                               Var const* v, bool is_signed,
+                               OUT ORList & ors, MOD IOC * cont)
 {
     ASSERT0(IOC_mem_byte_size(cont) > 4 && IOC_mem_byte_size(cont) <= 8);
-    OR_TYPE code = OR_UNDEF;
-    if (sr_ofst->is_int_imm()) {
-        if (isValidImmOpnd(OR_strd_i8, sr_ofst->getInt())) {
-            code = OR_strd_i8;
-        } else {
-            IOC tc;
-            buildAdd(base, sr_ofst, IOC_mem_byte_size(cont),
-                     false, ors, &tc);
-            base = tc.get_reg(0);
-            ASSERT0(base && base->is_reg());
-            code = OR_str;
-            sr_ofst = genIntImm(0, false);
-        }
-    } else if (sr_ofst->is_var()) {
-        code = OR_strd;
-    } else {
-        UNREACHABLE();
-    }
+    OR_CODE code = selectORCodeForStore8Byte(sr_ofst);
+    ASSERT0(code != OR_UNDEF);
+    genAddrCompFor8ByteStore(&base, &sr_ofst, ors);
+
+    //Generate memory-store operation.
     OR * o = genOR(code);
     ASSERT0(store_val->getByteSize() == 8);
     ASSERT0(store_val->is_vec());
@@ -693,15 +742,12 @@ void ARMCG::buildStoreCase2(IN SR * store_val,
 //    r1 = 0x2,
 //    r2 = 0x2,
 //    r0 = eq, r1, r2 ;then r0 is 1.
-OR_TYPE ARMCG::mapIRType2ORType(IR_TYPE ir_type,
-                                UINT ir_opnd_size,
-                                IN SR * opnd0,
-                                IN SR * opnd1,
-                                bool is_signed)
+OR_CODE ARMCG::mapIRCode2ORCode(IR_CODE ir_code, UINT ir_opnd_size,
+                                IN SR * opnd0, IN SR * opnd1, bool is_signed)
 {
     DUMMYUSE(opnd0);
-    OR_TYPE orty = OR_UNDEF;
-    switch (ir_type) {
+    OR_CODE orty = OR_UNDEF;
+    switch (ir_code) {
     case IR_ADD:
         ASSERT0(opnd0->is_reg() && opnd1);
         if (opnd1->is_reg()) {
@@ -848,26 +894,22 @@ void ARMCG::buildStore(IN SR * store_val, IN SR * base, IN SR * ofst,
     ASSERT0(sr_ofst);
     ASSERT0(cont != nullptr);
     if (IOC_mem_byte_size(cont) <= 4) {
-        buildStoreCase1(store_val, base, sr_ofst, v, is_signed, ors, cont);
+        buildStoreForLessThan4Byte(store_val, base, sr_ofst, v,
+                                   is_signed, ors, cont);
         return;
     }
-
     if (IOC_mem_byte_size(cont) <= 8) {
-        buildStoreCase2(store_val, base, sr_ofst, v, is_signed, ors, cont);
+        buildStoreFor8Byte(store_val, base, sr_ofst, v, is_signed,
+                           ors, cont);
         return;
     }
-
     UNREACHABLE();
 }
 
 
 //Build copy-operation with predicate register.
-void ARMCG::buildCopyPred(CLUST clust,
-                          UNIT unit,
-                          SR * to,
-                          SR * from,
-                          SR * pd,
-                          ORList & ors)
+void ARMCG::buildCopyPred(CLUST clust, UNIT unit, SR * to, SR * from,
+                          SR * pd, ORList & ors)
 {
     ASSERT0(to && to->is_reg() && from && from->is_reg());
     buildCopy(clust, unit, to, from, ors);
@@ -1133,14 +1175,10 @@ void ARMCG::buildDecReg(SR * reg, UINT val, OUT ORList & ors, IOC * cont)
             OR_code(ors.get_tail()) == OR_add_i);
 }
 
-void ARMCG::buildCopy(CLUST clust,
-                      UNIT unit,
-                      SR * to,
-                      SR * from,
-                      ORList & ors)
+void ARMCG::buildCopy(CLUST clust, UNIT unit, SR * to, SR * from, ORList & ors)
 {
     ASSERT0(to->is_reg() && from->is_reg());
-    OR_TYPE ot = computeEquivalentORType(OR_mov, unit, clust);
+    OR_CODE ot = computeEquivalentORCode(OR_mov, unit, clust);
     OR * o = genOR(ot);
     o->set_copy_to(to, this);
     o->set_copy_from(from, this);
@@ -1303,7 +1341,7 @@ void ARMCG::buildICall(SR * callee, UINT ret_val_size,
         cont->set_reg(RESULT_REGISTER_INDEX, sr);
         return;
     }
-    ASSERTN(0, ("TODO"));    
+    ASSERTN(0, ("TODO"));
 }
 
 
@@ -1329,7 +1367,7 @@ void ARMCG::buildCall(Var const* callee, UINT ret_val_size, OUT ORList & ors,
         return;
     }
     //Return value will be stored in 'retval_buf_of_XXX'.
-    cont->set_reg(RESULT_REGISTER_INDEX, nullptr);    
+    cont->set_reg(RESULT_REGISTER_INDEX, nullptr);
 }
 
 CLUST ARMCG::mapSlot2Cluster(SLOT slot)
@@ -1496,9 +1534,9 @@ CLUST ARMCG::computeORCluster(OR const*) const
 }
 
 
-//Change 'or' to 'ortype', modifing all operands and results.
+//Change 'or' to 'orcode', modifing all operands and results.
 //Performing verification and substitution certainly.
-bool ARMCG::changeORType(MOD OR * o, OR_TYPE ortype, CLUST src,
+bool ARMCG::changeORCode(MOD OR * o, OR_CODE orcode, CLUST src,
                          CLUST tgt, RegFileSet const* regfile_unique)
 {
     DUMMYUSE(src);
@@ -1555,7 +1593,7 @@ bool ARMCG::changeORType(MOD OR * o, OR_TYPE ortype, CLUST src,
             }
         }
     }
-    OR_code(o) = ortype;
+    OR_code(o) = orcode;
     return true;
 }
 
@@ -1705,7 +1743,7 @@ void ARMCG::buildShiftLeft(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
     if (sr_size <= 4) {
         //There is no different between signed and unsigned left shift.
         SR * res = genReg();
-        OR_TYPE ort = OR_UNDEF;
+        OR_CODE ort = OR_UNDEF;
         if (shift_ofst->is_reg()) {
             ort = OR_lsl;
         } else if (shift_ofst->is_imm()) {
@@ -1740,7 +1778,7 @@ void ARMCG::buildShiftRightCase1(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
                                  MOD IOC * cont)
 {
     SR * res = genReg();
-    OR_TYPE ort = OR_UNDEF;
+    OR_CODE ort = OR_UNDEF;
     if (is_signed) {
         if (shift_ofst->is_reg()) { ort = OR_asr; }
         else if (shift_ofst->is_imm()) { ort = OR_asr_i32; }
@@ -1780,7 +1818,7 @@ void ARMCG::buildShiftRightCase2(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
     //    movge res_lo <- r6
     //    asr res_hi <- src_hi, r4
     //    strd {res_lo,res_hi} -> result
-    OR_TYPE ort = OR_UNDEF;
+    OR_CODE ort = OR_UNDEF;
     if (is_signed) {
         ort = OR_asr;
     } else {
@@ -1874,7 +1912,7 @@ void ARMCG::buildShiftRightCase3_1(IN SR * src,
     ors.append_tail(o);
 
     //hi = hi >> shift_ofst
-    OR_TYPE ort = OR_lsr_i;
+    OR_CODE ort = OR_lsr_i;
     if (is_signed) {
         ort = OR_asr_i;
     } else {
@@ -1904,7 +1942,7 @@ void ARMCG::buildShiftRightCase3_2(IN SR * src,
     //    hi <- 0
     //}
 
-    OR_TYPE ort = OR_UNDEF;
+    OR_CODE ort = OR_UNDEF;
     if (is_signed) {
         ort = OR_asr_i;
     }
@@ -2066,7 +2104,7 @@ void ARMCG::buildAddRegImm(SR * src, SR * imm,  UINT sr_size,
 
     if (sr_size <= 8) {
         SRVec * sv = src->getVec();
-        ASSERT0(sv != nullptr && SR_vec_idx(src) == 0);
+        ASSERT0(sv != nullptr && src->getVecIdx() == 0);
 
         //load low 32bit imm
         SR * t = genReg();
@@ -2155,7 +2193,7 @@ void ARMCG::buildAddRegReg(bool is_add, SR * src1, SR * src2, UINT sr_size,
 {
     ASSERT0(src1->is_reg() && src2->is_reg());
     if (sr_size <= 4) { //< 4bytes
-        OR_TYPE orty = OR_UNDEF;
+        OR_CODE orty = OR_UNDEF;
         if (is_add) {
             orty = OR_add;
         } else {
@@ -2182,8 +2220,8 @@ void ARMCG::buildAddRegReg(bool is_add, SR * src1, SR * src2, UINT sr_size,
         SR * res = getSRVecMgr()->genSRVec(2, genReg(), genReg());
         SR * res_2 = res->getVec()->get(1);
 
-        OR_TYPE orty = OR_UNDEF;
-        OR_TYPE orty2 = OR_UNDEF;
+        OR_CODE orty = OR_UNDEF;
+        OR_CODE orty2 = OR_UNDEF;
         List<SR*> reslst;
         List<SR*> opndlst;
         if (is_add) {
@@ -2259,7 +2297,7 @@ void ARMCG::buildAddRegReg(bool is_add, SR * src1, SR * src2, UINT sr_size,
 }
 
 
-void ARMCG::buildARMCmp(OR_TYPE cmp_ot,
+void ARMCG::buildARMCmp(OR_CODE cmp_ot,
                         IN SR * pred,
                         IN SR * opnd0,
                         IN SR * opnd1,
@@ -2275,7 +2313,7 @@ void ARMCG::buildUncondBr(IN SR * tgt_lab, OUT ORList & ors, MOD IOC *)
 {
     ASSERT0(tgt_lab && tgt_lab->is_label());
     //OR_b with TruePred is unconditional branch.
-    //ASSERT0(OTD_is_uncond_br(tmGetORTypeDesc(OR_b)));
+    //ASSERT0(OTD_is_uncond_br(tmGetORCodeDesc(OR_b)));
     OR * o = genOR(OR_b);
     o->setLabel(tgt_lab, this);
     o->set_pred(getTruePred(), this);
@@ -2286,7 +2324,7 @@ void ARMCG::buildUncondBr(IN SR * tgt_lab, OUT ORList & ors, MOD IOC *)
 }
 
 
-void ARMCG::buildCompare(OR_TYPE br_cond,
+void ARMCG::buildCompare(OR_CODE br_cond,
                          bool is_truebr,
                          IN SR * opnd0,
                          IN SR * opnd1,
@@ -2352,12 +2390,12 @@ void ARMCG::buildStoreAndAssignRegister(SR * reg, UINT offset,
 }
 
 
-bool ARMCG::isValidResultRegfile(OR_TYPE ortype,
+bool ARMCG::isValidResultRegfile(OR_CODE orcode,
                                  INT resnum,
                                  REGFILE regfile) const
 {
-    if (!CG::isValidResultRegfile(ortype, resnum, regfile)) {
-        RegFileSet const* rfs = getValidRegfileSet(ortype, resnum, true);
+    if (!CG::isValidResultRegfile(orcode, resnum, regfile)) {
+        RegFileSet const* rfs = getValidRegfileSet(orcode, resnum, true);
         if (regfile == RF_SP && rfs->is_contain(RF_R)) {
             return true;
         }
@@ -2369,12 +2407,12 @@ bool ARMCG::isValidResultRegfile(OR_TYPE ortype,
 
 //Check 'regfile' to determine whether it is correct relatived to the 'opndnum'
 //operand of 'opcode'.
-bool ARMCG::isValidOpndRegfile(OR_TYPE ortype,
+bool ARMCG::isValidOpndRegfile(OR_CODE orcode,
                                INT opndnum,
                                REGFILE regfile) const
 {
-    if (!CG::isValidOpndRegfile(ortype, opndnum, regfile)) {
-        RegFileSet const* rfs = getValidRegfileSet(ortype, opndnum, false);
+    if (!CG::isValidOpndRegfile(orcode, opndnum, regfile)) {
+        RegFileSet const* rfs = getValidRegfileSet(orcode, opndnum, false);
         if (regfile == RF_SP && rfs->is_contain(RF_R)) {
             return true;
         }
@@ -2538,14 +2576,14 @@ bool ARMCG::isSameLikeCluster(OR const* or1, OR const* or2) const
 }
 
 
-//Return true if or-type 'ortype' has the number of 'res_num' results.
-bool ARMCG::isMultiResultOR(OR_TYPE ortype, UINT res_num) const
+//Return true if or-type 'orcode' has the number of 'res_num' results.
+bool ARMCG::isMultiResultOR(OR_CODE orcode, UINT res_num) const
 {
     DUMMYUSE(res_num);
-    if (isMultiLoad(ortype, 2)) {
+    if (isMultiLoad(orcode, 2)) {
         return true;
     }
-    switch (ortype) {
+    switch (orcode) {
     case OR_ldm:
     case OR_stm:
     case OR_smull:
@@ -2561,17 +2599,17 @@ bool ARMCG::isMultiResultOR(OR_TYPE ortype, UINT res_num) const
 }
 
 
-//Return true if or-type 'ortype' has the number of 'res_num' results.
-bool ARMCG::isMultiResultOR(OR_TYPE ortype) const
+//Return true if or-type 'orcode' has the number of 'res_num' results.
+bool ARMCG::isMultiResultOR(OR_CODE orcode) const
 {
-    return isMultiResultOR(ortype, 2);
+    return isMultiResultOR(orcode, 2);
 }
 
 
-bool ARMCG::isMultiStore(OR_TYPE ortype, INT opnd_num) const
+bool ARMCG::isMultiStore(OR_CODE orcode, INT opnd_num) const
 {
     if (opnd_num == -1) {
-        switch (ortype) {
+        switch (orcode) {
         case OR_stm:
         case OR_smull:
         case OR_smlal:
@@ -2581,7 +2619,7 @@ bool ARMCG::isMultiStore(OR_TYPE ortype, INT opnd_num) const
         default: break;
         }
     } else if (opnd_num == 2) {
-        switch (ortype) {
+        switch (orcode) {
         case OR_smull:
         case OR_smlal:
         case OR_strd:
@@ -2594,17 +2632,17 @@ bool ARMCG::isMultiStore(OR_TYPE ortype, INT opnd_num) const
 }
 
 
-bool ARMCG::isMultiLoad(OR_TYPE ortype, INT res_num) const
+bool ARMCG::isMultiLoad(OR_CODE orcode, INT res_num) const
 {
     if (res_num == -1) {
-        switch (ortype) {
+        switch (orcode) {
         case OR_ldrd:
         case OR_ldm:
             return true;
         default:;
         }
     } else if (res_num == 2) {
-        switch (ortype) {
+        switch (orcode) {
         case OR_ldrd:
             return true;
         default:;
@@ -2702,7 +2740,7 @@ bool ARMCG::isReduction(OR const* o) const
 //Return the index of copied source operand.
 INT ARMCG::computeCopyOpndIdx(OR * o)
 {
-    OR_TYPE opr = o->getCode();
+    OR_CODE opr = o->getCode();
     switch (opr) {
     case OR_add_i:
     case OR_orr_i:
@@ -2826,7 +2864,7 @@ SLOT ARMCG::computeORSlot(OR const* o)
 void ARMCG::expandFakeStore(IN OR * o, OUT IssuePackageList * ipl)
 {
     ASSERT0(o && ipl);
-    OR_TYPE real_code = OR_UNDEF;
+    OR_CODE real_code = OR_UNDEF;
     switch (o->getCode()) {
     case OR_str: real_code = OR_str_i12; break;
     case OR_strd: real_code = OR_strd_i8; break;
@@ -2993,7 +3031,7 @@ void ARMCG::expandFakeSpadjust(IN OR * o, OUT IssuePackageList * ipl)
 void ARMCG::expandFakeLoad(IN OR * o, OUT IssuePackageList * ipl)
 {
     ASSERT0(o && ipl);
-    OR_TYPE real_code = OR_UNDEF;
+    OR_CODE real_code = OR_UNDEF;
     switch (o->getCode()) {
     case OR_ldr: real_code = OR_ldr_i12; break;
     case OR_ldrb: real_code = OR_ldrb_i12; break;
@@ -3160,8 +3198,8 @@ void ARMCG::expandFakeMov32(IN OR * o, OUT IssuePackageList * ipl)
 
 void ARMCG::expandFakeShift(IN OR * o, OUT IssuePackageList * ipl)
 {
-    OR_TYPE ckort = OR_UNDEF;
-    OR_TYPE newort = OR_UNDEF;
+    OR_CODE ckort = OR_UNDEF;
+    OR_CODE newort = OR_UNDEF;
     switch (o->getCode()) {
     case OR_lsr_i32:
         ckort = OR_lsr_i;
@@ -3280,7 +3318,7 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
             renameOpnd(o, imm, genR12(), false);
 
             //Change OR code from OR_xxx_i to OR_xxx.
-            OR_TYPE newort = OR_UNDEF;
+            OR_CODE newort = OR_UNDEF;
             switch (o->getCode()) {
             case OR_add_i: newort = OR_add; break;
             case OR_sub_i: newort = OR_sub; break;
@@ -3349,4 +3387,4 @@ void ARMCG::reloadRegFromStack(SR * reg, OUT ORList & ors)
     ASSERT0(reg->is_reg());
     OR * pop = buildOR(OR_pop, 2, 2, reg, getSP(), getTruePred(), getSP());
     ors.append_tail(pop);
-}                            
+}

@@ -31,7 +31,6 @@ author: Su Zhenyu
 
 class ARMVar : public Var {
 public:
-    virtual CHAR const* dumpVARDecl(OUT StrBuf & buf) const;
 };
 
 

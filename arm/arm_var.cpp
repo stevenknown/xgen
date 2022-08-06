@@ -29,29 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 author: Su Zhenyu
 @*/
 #include "../xgen/xgeninc.h"
-#include "../xocc/feinc.h"
 
-//
-//START ARMVar
-//
-CHAR const* ARMVar::dumpVARDecl(StrBuf & buf) const
-{
-    Decl * decl = mapVAR2Decl(const_cast<ARMVar*>(this));
-    if (decl != nullptr) {
-        ASSERT0(DECL_dt(decl) == DCL_DECLARATION);
-        format_declaration(buf, decl, true);
-        return buf.buf;
-    }
-    return nullptr;
-}
-//END ARMVar
-
-
-//
-//START ARMVarMgr
-//
 Var * ARMVarMgr::allocVAR()
 {
     return new ARMVar();
 }
-//END ARMVarMgr

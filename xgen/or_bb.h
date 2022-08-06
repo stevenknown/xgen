@@ -120,6 +120,7 @@ public:
 #define ORBB_livein(b) ((b)->m_live_in)
 #define ORBB_liveout(b) ((b)->m_live_out)
 #define ORBB_id(b) ((b)->m_id)
+#define ORBB_vex(b) ((b)->m_vertex)
 #define ORBB_orlist(b) ((b)->m_or_list)
 #define ORBB_ornum(b) (ORBB_orlist(b)->get_elem_count())
 #define ORBB_first_or(b) (ORBB_orlist(b)->get_head())
@@ -130,7 +131,7 @@ public:
 #define ORBB_is_exit(b) ((b)->m_is_exit)
 #define ORBB_is_target(b) ((b)->m_is_target)
 #define ORBB_attr(b) ((b)->m_attr)
-#define ORBB_rpo(b) ((b)->m_rpo)
+#define ORBB_rpo(b) (VERTEX_rpo(ORBB_vex(b)))
 #define ORBB_cg(b) ((b)->m_cg)
 #define ORBB_entry_spadjust(b) ((b)->m_entry_spadjust)
 #define ORBB_exit_spadjust(b) ((b)->m_exit_spadjust)
@@ -141,16 +142,15 @@ public:
     UINT m_is_exit:1; //bb is a region exit.
     UINT m_is_entry:1; //bb a region entry.
     UINT m_is_target:1; //bb is the jumping target.
-    INT m_rpo;
     BBORList * m_or_list; //OR list
     CG * m_cg;
     OR * m_entry_spadjust; //record sp-adjust OR if bb is entry bb.
     OR * m_exit_spadjust; //record sp-adjust OR if bb is exit bb.
+    xcom::Vertex * m_vertex; //record the corresponding vertex on CFG.
     ULONG m_attr; //BB attributes
     xcom::BitSet m_live_in; //record live in SR id.
     xcom::BitSet m_live_out; //record live out SR id.
     List<LabelInfo const*> m_lab_list; //Record all of labels attached on BB
-
 public:
     explicit ORBB(CG * cg);
     ~ORBB();
@@ -162,6 +162,7 @@ public:
         m_lab_list.append_tail(li);
     }
 
+    void cleanVex() { ORBB_vex(this) = nullptr; }
     void cleanLabelInfoList() { getLabelList().clean(); }
 
     void dump();
@@ -174,6 +175,7 @@ public:
     OR * getNextOR() const { return ORBB_next_or(this); }
     OR * getPrevOR() const { return ORBB_prev_or(this); }
     OR * getLastOR() const { return ORBB_last_or(this); }
+    xcom::Vertex * getVex() const { return ORBB_vex(this); }
 
     bool hasMDPhi(CFG<ORBB, OR> const* cfg) const { return false; }
     bool hasLabel(LabelInfo const* o) const;

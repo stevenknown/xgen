@@ -84,6 +84,9 @@ typedef UINT DDGParam;
 
 class DataDepGraph : public xcom::Graph {
 protected:
+    BYTE m_is_init:1; //To make sure functions are idempotent.
+    BYTE m_is_clonal:1;
+    BYTE m_unique_mem_loc:1;
     ORBB * m_bb;
     CG * m_cg;
     ORMgr * m_ormgr;
@@ -92,13 +95,9 @@ protected:
     Stack<DDGParam> m_params_stack;
     DDGParam m_ddg_param;
     RegSet m_tmp_alias_regset; //for local tmp used.
-
     typedef TMap<UINT, UINT> ID2Cyc;
     ID2Cyc m_estart;
     ID2Cyc m_lstart;
-    bool m_is_init;
-    bool m_is_clonal;
-    bool m_unique_mem_loc;
 protected:
     //This function will establish dependency for memory operation one by one
     //rather than doing any analysis which is in order to speedup compilation.

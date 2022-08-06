@@ -37,15 +37,16 @@ author: Su Zhenyu
 class ARMCG : public CG {
     COPY_CONSTRUCTOR(ARMCG);
 private:
-    void buildStoreCase13Bytes(IN SR * store_val, IN SR * base,
-                               IN SR * sr_ofst, Var const* v,
-                               OUT ORList & ors, MOD IOC * cont);
-    void buildStoreCase1(IN SR * store_val, IN SR * base,
-                         IN SR * sr_ofst, Var const* v, bool is_signed,
-                         OUT ORList & ors, MOD IOC * cont);
-    void buildStoreCase2(IN SR * store_val, IN SR * base,
-                         IN SR * sr_ofst, Var const* v, bool is_signed,
-                         OUT ORList & ors, MOD IOC * cont);
+    void buildStoreFor3Byte(IN SR * store_val, IN SR * base,
+                            IN SR * sr_ofst, Var const* v,
+                            OUT ORList & ors, MOD IOC * cont);
+    void buildStoreForLessThan4Byte(SR * store_val, IN SR * base,
+                                    IN SR * sr_ofst, Var const* v,
+                                    bool is_signed, OUT ORList & ors,
+                                    MOD IOC * cont);
+    void buildStoreFor8Byte(SR const* store_val, SR * base,
+                            SR * sr_ofst, Var const* v, bool is_signed,
+                            OUT ORList & ors, MOD IOC * cont);
     void buildShiftRightCase1(IN SR * src, ULONG sr_size,
                               IN SR * shift_ofst, bool is_signed,
                               OUT ORList & ors, MOD IOC * cont);
@@ -123,6 +124,14 @@ private:
     void expandFakeMultiLoad(IN OR * o, OUT IssuePackageList * ipl);
     void expandFakeMov32(IN OR * o, OUT IssuePackageList * ipl);
 
+    void genAddrCompFor8ByteStore(MOD SR ** base, MOD SR ** ofst,
+                                  OUT ORList & ors);
+    void genAddrCompForStoreLessThan4Byte(SR ** base, SR ** ofst,
+                                          OUT ORList & ors, IOC const* cont);
+
+    OR_CODE selectORCodeForStoreLessThan4Byte(SR const* ofst,
+                                              IOC const* cont) const;
+    OR_CODE selectORCodeForStore8Byte(SR const* ofst) const;
 protected:
     SR const* m_sp;
     SR const* m_fp;
@@ -272,12 +281,12 @@ public:
     virtual void buildAddRegReg(bool is_add, SR * src1, SR * src2, UINT sr_size,
                                 bool is_sign, OUT ORList & ors, MOD IOC * cont);
     virtual void buildCondBr(IN SR * tgt_lab, OUT ORList & ors, MOD IOC * cont);
-    virtual void buildCompare(OR_TYPE br_cond, bool is_truebr,
+    virtual void buildCompare(OR_CODE br_cond, bool is_truebr,
                               IN SR * opnd0, IN SR * opnd1,
                               OUT ORList & ors, MOD IOC * cont);
     virtual void buildUncondBr(IN SR * tgt_lab, OUT ORList & ors,
                                MOD IOC * cont);
-    void buildARMCmp(OR_TYPE cmp_ot, IN SR * pred, IN SR * opnd0, IN SR * opnd1,
+    void buildARMCmp(OR_CODE cmp_ot, IN SR * pred, IN SR * opnd0, IN SR * opnd1,
                      OUT ORList & ors, MOD IOC * cont);
     void buildShiftLeftImm(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
                            OUT ORList & ors, MOD IOC * cont);
@@ -299,7 +308,7 @@ public:
     virtual void buildStoreAndAssignRegister(SR * reg, UINT offset,
                                              OUT ORList & ors, MOD IOC * cont);
 
-    virtual bool changeORType(MOD OR * o, OR_TYPE ortype, CLUST src,
+    virtual bool changeORCode(MOD OR * o, OR_CODE orcode, CLUST src,
                               CLUST tgt, RegFileSet const* regfile_unique);
     virtual CLUST computeORCluster(OR const* o) const;
     virtual INT computeCopyOpndIdx(OR * o);
@@ -324,9 +333,9 @@ public:
     virtual bool isPassArgumentThroughRegister() { return true; }
     virtual bool isValidRegInSRVec(OR const* o, SR const* sr,
                                    UINT idx, bool is_result) const;
-    virtual bool isValidResultRegfile(OR_TYPE ortype, INT resnum,
+    virtual bool isValidResultRegfile(OR_CODE orcode, INT resnum,
                                       REGFILE regfile) const;
-    virtual bool isValidOpndRegfile(OR_TYPE ortype, INT opndnum,
+    virtual bool isValidOpndRegfile(OR_CODE orcode, INT opndnum,
                                     REGFILE regfile) const;
     virtual bool isSPUnit(UNIT unit) const;
     virtual bool isIntRegSR(OR const* o, SR const* sr, UINT idx,
@@ -337,16 +346,16 @@ public:
     virtual bool isSameCluster(SLOT slot1, SLOT slot2) const;
     virtual bool isSameLikeCluster(SLOT slot1, SLOT slot2) const;
     virtual bool isSameLikeCluster(OR const* or1, OR const* or2) const;
-    virtual bool isMultiResultOR(OR_TYPE ortype, UINT res_num) const;
-    virtual bool isMultiResultOR(OR_TYPE ortype) const;
-    virtual bool isMultiStore(OR_TYPE ortype, INT opnd_num) const;
-    virtual bool isMultiLoad(OR_TYPE ortype, INT res_num) const;
+    virtual bool isMultiResultOR(OR_CODE orcode, UINT res_num) const;
+    virtual bool isMultiResultOR(OR_CODE orcode) const;
+    virtual bool isMultiStore(OR_CODE orcode, INT opnd_num) const;
+    virtual bool isMultiLoad(OR_CODE orcode, INT res_num) const;
     virtual bool isCopyOR(OR const* o) const;
     virtual bool isStackPointerValueEqu(SR const* base1, SR const* base2) const;
     virtual bool isSP(SR const* sr) const;
     virtual bool isReduction(OR const* o) const;
     virtual bool isEvenReg(REG reg) const;
-    virtual OR_TYPE invertORType(OR_TYPE ot)
+    virtual OR_CODE invertORCode(OR_CODE ot)
     {
         switch (ot) {
         case OR_add_i: return OR_sub_i;
@@ -356,7 +365,7 @@ public:
         return OR_UNDEF;
     }
 
-    virtual OR_TYPE mapIRType2ORType(IR_TYPE ir_type, UINT ir_opnd_size,
+    virtual OR_CODE mapIRCode2ORCode(IR_CODE ir_code, UINT ir_opnd_size,
                                      IN SR * opnd0, IN SR * opnd1,
                                      bool is_signed);
     virtual UnitSet & mapRegFile2UnitSet(REGFILE regfile, SR const* sr,

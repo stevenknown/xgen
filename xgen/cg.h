@@ -259,13 +259,13 @@ public:
     //Generate OR with variant number of operands and results.
     //Note user should pass into the legal number of result and operand SRs
     //that corresponding to 'orty'.
-    virtual OR * buildOR(OR_TYPE orty, UINT resnum, UINT opndnum, ...);
-    virtual OR * buildOR(OR_TYPE orty, IN SRList & result, IN SRList & opnd);
+    virtual OR * buildOR(OR_CODE orty, UINT resnum, UINT opndnum, ...);
+    virtual OR * buildOR(OR_CODE orty, IN SRList & result, IN SRList & opnd);
 
     //Generate OR with variant number of operands and results.
     //Note user should pass into the legal number of result and operand SRs
     //that corresponding to 'orty'.
-    OR * buildOR(OR_TYPE orty, ...);
+    OR * buildOR(OR_CODE orty, ...);
 
     //The function builds stack-pointer adjustment operation.
     //Note XGEN supposed that the direction of stack-pointer is always
@@ -303,7 +303,7 @@ public:
     //This function build OR according to given 'code'.
     //Implement the target dependent version if needed.
     //'sr_size': The number of integral multiple of byte-size of single SR.
-    virtual void buildBinaryOR(IR_TYPE code, SR * src1, SR * src2,
+    virtual void buildBinaryOR(IR_CODE code, SR * src1, SR * src2,
                                bool is_signed, OUT ORList & ors, MOD IOC * cont);
 
     //'sr_size': The number of integral multiple of byte-size of single SR.
@@ -398,7 +398,7 @@ public:
                                MOD IOC * cont) = 0;
     virtual void buildCondBr(IN SR * tgt_lab, OUT ORList & ors,
                              MOD IOC * cont) = 0;
-    virtual void buildCompare(OR_TYPE br_cond, bool is_truebr,
+    virtual void buildCompare(OR_CODE br_cond, bool is_truebr,
                               IN SR * opnd0, IN SR * opnd1, OUT ORList & ors,
                               MOD IOC * cont) = 0;
 
@@ -477,12 +477,12 @@ public:
 
     //Return the alternative equivalent o-type of 'from'
     //that correspond with 'to_unit' and 'to_clust'.
-    virtual OR_TYPE computeEquivalentORType(OR_TYPE from, UNIT to_unit,
+    virtual OR_CODE computeEquivalentORCode(OR_CODE from, UNIT to_unit,
                                             CLUST to_clust)
     {
         DUMMYUSE(to_clust);
-        ASSERTN(tmGetEqualORType(from), ("miss EquORTypes information"));
-        return EQUORTY_unit2ortype(tmGetEqualORType(from), to_unit);
+        ASSERTN(tmGetEqualORCode(from), ("miss EquORCodes information"));
+        return EQUORC_unit2orcode(tmGetEqualORCode(from), to_unit);
     }
 
     //Return the alternative equivalent o-type of 'o'
@@ -535,7 +535,7 @@ public:
                                  bool is_test);
 
     //Change 'o' to 'ot', modifing all operands and results.
-    virtual bool changeORType(OR * o, OR_TYPE ot, CLUST src,
+    virtual bool changeORCode(OR * o, OR_CODE ot, CLUST src,
                               CLUST tgt, RegFileSet const* regfile_unique);
 
     virtual SR * dupSR(SR const* sr);
@@ -660,7 +660,7 @@ public:
     UINT getMaxArgSectionSize() const { return m_max_real_arg_size; }
     xoc::Var * genTempVar(xoc::Type const* type, UINT align, bool func_level);
     OR * getOR(UINT id);
-    OR * genOR(OR_TYPE ort) { return m_cgmgr->getORMgr()->genOR(ort, this); }
+    OR * genOR(OR_CODE ort) { return m_cgmgr->getORMgr()->genOR(ort, this); }
     virtual REGFILE getRflagRegfile() const = 0;
     virtual REGFILE getPredicateRegfile() const;
     Vector<xoc::Var const*> const& get_param_vars() const { return m_params; }
@@ -670,9 +670,9 @@ public:
         return nullptr;
     }
 
-    virtual RegFileSet const* getValidRegfileSet(OR_TYPE ortype, UINT idx,
+    virtual RegFileSet const* getValidRegfileSet(OR_CODE orcode, UINT idx,
                                                  bool is_result) const;
-    virtual RegSet const* getValidRegSet(OR_TYPE ortype, UINT idx,
+    virtual RegSet const* getValidRegSet(OR_CODE orcode, UINT idx,
                                          bool is_result) const;
     SRMgr * getSRMgr() { return m_cgmgr->getSRMgr(); }
     ORMgr * getORMgr() { return m_cgmgr->getORMgr(); }
@@ -713,19 +713,19 @@ public:
     bool isOpndSameWithResult(SR const* test_sr, OR const* o,
                               OUT INT * opndnum, OUT INT * resnum) const;
     //Return true if specified operand or result is Rflag register.
-    bool isRflagRegister(OR_TYPE ot, UINT idx, bool is_result) const;
+    bool isRflagRegister(OR_CODE ot, UINT idx, bool is_result) const;
     virtual bool isReductionOR(OR const* o) const;
 
     //Return true if specified immediate operand is in valid range.
-    bool isValidImmOpnd(OR_TYPE ot, UINT idx, HOST_INT imm) const;
-    bool isValidImmOpnd(OR_TYPE ot, HOST_INT imm) const;
+    bool isValidImmOpnd(OR_CODE ot, UINT idx, HOST_INT imm) const;
+    bool isValidImmOpnd(OR_CODE ot, HOST_INT imm) const;
     bool isValidImmOpnd(OR const* o) const;
     //Return true if specified immediate in
     //valid range that described with bitsize.
     bool isValidImm(UINT bitsize, HOST_INT imm) const;
 
     //Return true if regfile can be assigned to referred operand.
-    virtual bool isValidRegFile(OR_TYPE ot, INT opndnum, REGFILE regfile,
+    virtual bool isValidRegFile(OR_CODE ot, INT opndnum, REGFILE regfile,
                                 bool is_result) const;
 
     //Return true if regfile can be assigned to referred operand.
@@ -813,21 +813,21 @@ public:
     virtual bool isSameLikeCluster(OR const*, OR const*) const = 0;
 
     //Return true if or-type has the number of 'res_num' results.
-    virtual bool isMultiResultOR(OR_TYPE, UINT res_num) const = 0;
+    virtual bool isMultiResultOR(OR_CODE, UINT res_num) const = 0;
 
     //Return true if or-type has multiple results.
-    virtual bool isMultiResultOR(OR_TYPE) const = 0;
+    virtual bool isMultiResultOR(OR_CODE) const = 0;
 
     //'opnd_num': -1 means return true if or-type has multiple storre-val.
-    virtual bool isMultiStore(OR_TYPE, INT opnd_num) const = 0;
+    virtual bool isMultiStore(OR_CODE, INT opnd_num) const = 0;
 
     //'res_num': -1 means return true if ot has multiple result SR.
     //    non -1 means return true if ot has the number of 'res_num' results.
-    virtual bool isMultiLoad(OR_TYPE, INT res_num) const = 0;
+    virtual bool isMultiLoad(OR_CODE, INT res_num) const = 0;
 
-    virtual bool isValidOpndRegfile(OR_TYPE opcode, INT opndnum,
+    virtual bool isValidOpndRegfile(OR_CODE opcode, INT opndnum,
                                     REGFILE regfile) const;
-    virtual bool isValidResultRegfile(OR_TYPE opcode, INT resnum,
+    virtual bool isValidResultRegfile(OR_CODE opcode, INT resnum,
                                       REGFILE regfile) const;
     virtual bool isValidRegInSRVec(OR  const* o, SR  const* sr,
                                    UINT idx, bool is_result) const;
@@ -846,19 +846,19 @@ public:
     //Return true if function code uses stack frame pointer register.
     bool isUseFP() const { return m_is_use_fp && g_is_enable_fp; }
 
-    virtual OR_TYPE invertORType(OR_TYPE)
+    virtual OR_CODE invertORCode(OR_CODE)
     {
         ASSERTN(0, ("Target Dependent Code"));
         return OR_UNDEF;
     }
 
-    //Map from IR type to OR type.
+    //Map from IR code to OR code.
     //Target may apply comparing instruction to calculate boolean value.
     //e.g:
     //     r1 <- 0x1,
     //     r2 <- 0x2,
     //     r0 <- eq, r1, r2 ;then r0 is 0
-    virtual OR_TYPE mapIRType2ORType(IR_TYPE ir_type, UINT ir_opnd_size,
+    virtual OR_CODE mapIRCode2ORCode(IR_CODE ir_code, UINT ir_opnd_size,
                                      IN SR * opnd0, IN SR * opnd1,
                                      bool is_signed) = 0;
     SR * mapPR2SR(PRNO prno) const
@@ -955,6 +955,11 @@ public:
         ASSERTN(0, ("Target Dependent Code"));
         return CLUST_UNDEF;
     }
+
+    //Return true if var need to allocate memory space.
+    //e.g: function declaration does not need to allocate space.
+    virtual bool needAllocateMemorySpace(Var const* var) const
+    { return !var->is_decl() && !var->is_func(); }
 
     void relocateStackVarOffset();
     void renameResult(OR * o, SR * oldsr, SR * newsr, bool match_phy_reg);

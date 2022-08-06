@@ -268,7 +268,7 @@ void ARMAsmPrinter::printBss(FILE * asmh, Section & sect)
     ASSERT0(SECT_var(&sect));
     for (Var const* v = SECT_var_list(&sect).get_head();
          v != nullptr; v = SECT_var_list(&sect).get_next()) {
-        if (m_asmprtmgr->getPrintedVARTab().find(v) || VAR_is_func_decl(v)) {
+        if (m_asmprtmgr->getPrintedVARTab().find(v) || v->is_func()) {
             continue;
         }
         m_asmprtmgr->getPrintedVARTab().append(v);

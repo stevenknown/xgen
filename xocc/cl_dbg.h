@@ -28,8 +28,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
+#ifndef _CLDBX_MGR_H_
+#define _CLDBX_MGR_H_
 
-class CLDbxMgr : public DbxMgr {
+namespace xocc {
+
+class CLDbxMgr : public xoc::DbxMgr {
     //Append src file line into dump file.
     //Only print statement line.
     UINT m_cur_lineno;
@@ -39,7 +43,9 @@ public:
     //Do some prepare work before print source file.
     virtual void doPrepareWorkBeforePrint() { m_cur_lineno = 0; }
 
-    virtual void printSrcLine(Dbx const* dbx, PrtCtx * ctx);
+    virtual void printSrcLine(xoc::Dbx const* dbx, PrtCtx * ctx);
     virtual void printSrcLine(StrBuf & output, Dbx const* dbx, PrtCtx * ctx);
 };
 
+} //namespace xocc
+#endif

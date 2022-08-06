@@ -122,18 +122,18 @@ CHAR const* xgen::tmGetSlotName(SLOT s)
 }
 
 
-//Return name of OR type.
-CHAR const* xgen::tmGetORTypeName(OR_TYPE ort)
+//Return name of OR code.
+CHAR const* xgen::tmGetORCodeName(OR_CODE ort)
 {
-    return OTD_name(tmGetORTypeDesc(ort));
+    return OTD_name(tmGetORCodeDesc(ort));
 }
 
 
 //Return description for given or-type.
-ORTypeDesc const* xgen::tmGetORTypeDesc(OR_TYPE ot)
+ORCodeDesc const* xgen::tmGetORCodeDesc(OR_CODE ot)
 {
-    ORTypeDesc const* od = &g_or_type_desc[ot];
-    ASSERTN(od, ("miss ORTypeDesc of '%s'", tmGetORTypeName(ot)));
+    ORCodeDesc const* od = &g_or_code_desc[ot];
+    ASSERTN(od, ("miss ORCodeDesc of '%s'", tmGetORCodeName(ot)));
     return od;
 }
 
@@ -146,40 +146,40 @@ RegSet const* xgen::tmMapCluster2RegSet(CLUST cl)
 
 
 //Return the number of source operands for given or-type.
-UINT xgen::tmGetOpndNum(OR_TYPE ortype)
+UINT xgen::tmGetOpndNum(OR_CODE orcode)
 {
-    ORTypeDesc const* otd = tmGetORTypeDesc(ortype);
+    ORCodeDesc const* otd = tmGetORCodeDesc(orcode);
     SRDescGroup<> const* sdg  = OTD_srd_group(otd);
-    ASSERTN(sdg, ("miss SRD group info of '%s'", tmGetORTypeName(ortype)));
+    ASSERTN(sdg, ("miss SRD group info of '%s'", tmGetORCodeName(orcode)));
     return sdg->get_opnd_num();
 }
 
 
 //Return the number of target operands for given or-type.
-UINT xgen::tmGetResultNum(OR_TYPE ortype)
+UINT xgen::tmGetResultNum(OR_CODE orcode)
 {
-    ORTypeDesc const* otd = tmGetORTypeDesc(ortype);
+    ORCodeDesc const* otd = tmGetORCodeDesc(orcode);
     SRDescGroup<> const* sdg  = OTD_srd_group(otd);
-    ASSERTN(sdg, ("miss SRD group info of '%s'", tmGetORTypeName(ortype)));
+    ASSERTN(sdg, ("miss SRD group info of '%s'", tmGetORCodeName(orcode)));
     return sdg->get_res_num();
 }
 
 
 //Return description of or-type.
-EquORTypes const* xgen::tmGetEqualORType(OR_TYPE ot)
+EquORCodes const* xgen::tmGetEqualORCode(OR_CODE ot)
 {
-    ORTypeDesc const* od = tmGetORTypeDesc(ot);
-    ASSERTN(od, ("miss ORTypeDesc info of '%s'", tmGetORTypeName(ot)));
-    return OTD_equ_or_types(od);
+    ORCodeDesc const* od = tmGetORCodeDesc(ot);
+    ASSERTN(od, ("miss ORCodeDesc info of '%s'", tmGetORCodeName(ot)));
+    return OTD_equ_or_codes(od);
 }
 
 
 //Get the number of equivalent or-types that has same functions.
-UINT xgen::tmGetNumOfEqualORType(OR_TYPE ot)
+UINT xgen::tmGetNumOfEqualORCode(OR_CODE ot)
 {
-    ORTypeDesc const* od = tmGetORTypeDesc(ot);
-    ASSERTN(od, ("miss ORTypeDesc info of '%s'", tmGetORTypeName(ot)));
-    return EQUORTY_num_equortype(OTD_equ_or_types(od));
+    ORCodeDesc const* od = tmGetORCodeDesc(ot);
+    ASSERTN(od, ("miss ORCodeDesc info of '%s'", tmGetORCodeName(ot)));
+    return EQUORC_num_equorcode(OTD_equ_or_codes(od));
 }
 
 
@@ -214,10 +214,10 @@ RegSet const* xgen::tmGetRegSetOfCalleeSaved()
 
 
 //Get the Read and Write available cycle.
-ORScheInfo const* xgen::tmGetORScheInfo(OR_TYPE ot)
+ORScheInfo const* xgen::tmGetORScheInfo(OR_CODE ot)
 {
     ASSERT0(ot < OR_NUM);
-    return &OTD_sche_info(&g_or_type_desc[ot]);
+    return &OTD_sche_info(&g_or_code_desc[ot]);
 }
 
 

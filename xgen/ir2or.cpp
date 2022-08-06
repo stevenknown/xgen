@@ -268,7 +268,8 @@ void IR2OR::convertLoadConst(IR const* ir, OUT RecycORList & ors,
         convertLoadConstStr(ir, ors, cont);
         return;
     }
-    ASSERTN(0, ("unsupport immediate value DATA_TYPE:%d", ir->getDType()));
+    ASSERTN(0, ("unsupport immediate value DATA_TYPE:%s",
+                TypeMgr::getDTypeName(ir->getDType())));
 }
 
 
@@ -299,7 +300,7 @@ void IR2OR::convertGeneralLoad(IR const* ir, OUT RecycORList & ors,
     }
 
     SR * res = cont->get_reg(0);
-    ASSERT0(!ir->is_any());
+    ASSERTN(!ir->is_any(), ("data type of '%s' can not be ANY", IRNAME(ir)));
     ASSERT0(res && res->getByteSize() >= ir->getTypeSize(m_tm));
     if (res->is_reg()) { return; }
 
@@ -452,20 +453,19 @@ void IR2OR::convertLoadVar(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
 //'ir': type must be IR_ID.
 void IR2OR::convertId(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
 {
-    ASSERT0(ir && ir->is_id() && ir->getTypeSize(m_tm) > 0);
+    ASSERT0(ir && ir->is_id()); //ID's type is useless.
     ASSERT0(cont);
-    ASSERT0(ir->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE);
-
+    ASSERT0(ir->is_any() || ir->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE);
     RecycORList tmp_ors(this);
-    SR * load_val = m_cg->genReg();
-    IOC_mem_byte_size(cont) = ir->getTypeSize(m_tm);
-    m_cg->buildLoad(load_val, ID_info(ir), 0, ir->is_signed(),
-                    tmp_ors.getList(), cont);
+    IOC_mem_byte_size(cont) = ir->is_any() ? 0 : ir->getTypeSize(m_tm);
+    m_cg->buildLda(ID_info(ir), 0, xoc::getDbx(ir),
+                   tmp_ors.getList(), cont);
+    SR * loaded_val = cont->get_reg(0); //get target memory address.
     tmp_ors.copyDbx(ir);
     ors.move_tail(tmp_ors);
 
     //Set result SR.
-    cont->set_reg(0, load_val);
+    cont->set_reg(0, loaded_val);
 }
 
 
@@ -633,7 +633,8 @@ Var * IR2OR::registerLocalVar(IR const* pr)
 {
     ASSERT0(pr->is_pr() || pr->is_stpr() || pr->isCallStmt());
     Var * var = m_rg->genVarForPR(pr->getPrno(), pr->getType());
-    VAR_is_unallocable(var) = false; //PR variable will be allocated on stack
+    //PR variable will be allocated on stack
+    var->removeflag(VAR_IS_UNALLOCABLE);
     return var;
 }
 
@@ -674,10 +675,10 @@ void IR2OR::convertUnaryOp(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
 
     //Result's type-size might be not same as opnd. e.g: a < b,
     //result type is BOOL, opnd type is INT.
-    OR_TYPE orty = m_cg->mapIRType2ORType(ir->getCode(),
+    OR_CODE orty = m_cg->mapIRCode2ORCode(ir->getCode(),
                                           UNA_opnd(ir)->getTypeSize(m_tm),
                                           opnd, nullptr, ir->is_signed());
-    ASSERTN(orty != OR_UNDEF, ("mapIRType2ORType() should be overloaded"));
+    ASSERTN(orty != OR_UNDEF, ("mapIRCode2ORCode() should be overloaded"));
 
     OR * o;
     if (HAS_PREDICATE_REGISTER) {
@@ -715,19 +716,21 @@ void IR2OR::convertBinaryOp(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     SR * opnd1 = tmp.get_reg(0);
     ASSERT0(opnd1 != nullptr && opnd1->is_reg());
 
-    //Result
-    SR * res = m_cg->genReg((UINT)ir->getTypeSize(m_tm));
-
-    //Choose an or-type.
+    //Choose an OR-type.
+    ASSERTN(!BIN_opnd0(ir)->is_any() && !BIN_opnd1(ir)->is_any(),
+            ("data type of operand of '%s' can not be ANY", IRNAME(ir)));
     ASSERTN(BIN_opnd0(ir)->getTypeSize(m_tm) ==
             BIN_opnd1(ir)->getTypeSize(m_tm), ("must be same bitsize"));
+    UINT orsize = BIN_opnd0(ir)->getTypeSize(m_tm);
+
+    //Result
+    SR * res = m_cg->genReg(orsize);
 
     //Result's type-size might be not same as opnd. e,g: a < b,
     //result type is BOOL, opnd type is INT.
-    OR_TYPE orty = m_cg->mapIRType2ORType(ir->getCode(),
-                                          BIN_opnd0(ir)->getTypeSize(m_tm),
+    OR_CODE orty = m_cg->mapIRCode2ORCode(ir->getCode(), orsize,
                                           opnd0, opnd1, ir->is_signed());
-    ASSERTN(orty != OR_UNDEF, ("mapIRType2ORType() should be overloaded"));
+    ASSERTN(orty != OR_UNDEF, ("mapIRCode2ORCode() should be overloaded"));
 
     OR * o;
     if (HAS_PREDICATE_REGISTER) {
@@ -1029,8 +1032,7 @@ void IR2OR::convertFalsebr(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     IR * br_det = BR_det(newir);
     ASSERT0(br_det->is_lt() || br_det->is_le() || br_det->is_gt() ||
             br_det->is_ge() || br_det->is_eq() || br_det->is_ne());
-
-    IR_code(br_det) = IR::invertIRType(br_det->getCode());
+    IR_code(br_det) = IR::invertIRCode(br_det->getCode());
     IR_code(newir) = IR_TRUEBR;
     convertTruebr(newir, ors, cont);
     m_rg->freeIRTree(newir);
@@ -1077,7 +1079,7 @@ void IR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
     UINT maxbytesize = MAX(opnd0->getTypeSize(m_tm), opnd1->getTypeSize(m_tm));
 
     bool is_signed = opnd0->is_signed() || opnd0->is_signed() ? true : false;
-    OR_TYPE t = m_cg->mapIRType2ORType(ir->getCode(), maxbytesize,
+    OR_CODE t = m_cg->mapIRCode2ORCode(ir->getCode(), maxbytesize,
                                        sr0, sr1, is_signed);
 
     //Generate compare operations.
@@ -1085,8 +1087,8 @@ void IR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
     bool is_truebr = true;
     if (t == OR_UNDEF) {
         //Query the converse or-type.
-        IR_TYPE rev_t = IR::invertIRType(ir->getCode());
-        t = m_cg->mapIRType2ORType(rev_t, maxbytesize, sr0, sr1, is_signed);
+        IR_CODE rev_t = IR::invertIRCode(ir->getCode());
+        t = m_cg->mapIRCode2ORCode(rev_t, maxbytesize, sr0, sr1, is_signed);
         ASSERTN(t != OR_UNDEF, ("miss comparsion or-type for branch"));
         is_truebr = false;
     }
@@ -1095,7 +1097,7 @@ void IR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
     tors.copyDbx(ir);
     ors.move_tail(tors);
 
-    cont->set_ortype(t); //record the ortype.
+    cont->set_orcode(t); //record the orcode.
 }
 
 
@@ -1195,9 +1197,10 @@ void IR2OR::convertCall(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
 void IR2OR::convertRegion(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
 {
     if (!g_is_generate_code_for_inner_region) { return; }
-
     Region * rg = REGION_ru(ir);
     ASSERT0(rg);
+    if (rg->is_blackbox()) { return; }
+
     CGMgr * current_cgmgr = getCG()->getCGMgr();
     RegionMgr * rm = current_cgmgr->getRegionMgr();
     CGMgr * newcgmgr = xgen::allocCGMgr(rm);
@@ -1207,11 +1210,10 @@ void IR2OR::convertRegion(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     //flow IR, user have to simplify CFS into lower level branch IR.
     SimpCtx simp;
     simp.setSimpCFS();
+    rg->initPassMgr();
     rg->getIRSimp()->simplifyIRList(&simp);
-
     //Assign Var for PR that generated by simplification.
     rg->getMDMgr()->assignMD(true, false);
-
     newcgmgr->generate(rg);
     delete newcgmgr;
 } 
@@ -1227,6 +1229,7 @@ void IR2OR::convert(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
         ASSERT0(cont->get_reg(0) || cont->get_addr());
         break;
     case IR_ID:
+        //TBD:Do we need to generate code for IR_ID?
         //load ID into register.
         convertId(ir, tors, cont);
         break;
@@ -1378,7 +1381,7 @@ void IR2OR::convert(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     case IR_LABEL:
         convertLabel(ir, tors, cont);
         break; 
-    default: ASSERTN(0, ("unknown IR type:%s", IRNAME(ir)));
+    default: ASSERTN(0, ("unknown IR code:%s", IRNAME(ir)));
     }
     ors.move_tail(tors);
 }

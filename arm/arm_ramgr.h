@@ -43,22 +43,23 @@ public:
 
     virtual void postProcess();
 
-    virtual void saveCalleePredicateAtEntry(REGFILE regfile, ORBB * entry,
-                                            IN RegSet used_callee_regs[],
-                                            OUT ORBBList & bblist,
-                                            OUT TMap<REG, Var*> & reg2var);
-    virtual void saveCalleePredicateAtExit(REGFILE regfile, ORBB * exit,
-                                           IN RegSet used_callee_regs[],
-                                           OUT ORBBList & bblist,
-                                           TMap<REG, Var*> const& reg2var);
-    virtual void saveCalleeRegFileAtEntry(REGFILE regfile, ORBB * entry,
-                                          IN RegSet used_callee_regs[],
-                                          OUT ORBBList & bblist,
-                                          OUT TMap<REG, Var*> & reg2var);
-    virtual void saveCalleeRegFileAtExit(REGFILE regfile, ORBB * exit,
-                                         IN RegSet used_callee_regs[],
-                                         OUT ORBBList & bblist,
-                                         TMap<REG, Var*> const& reg2var);
+    virtual void reloadPredicateAtExit(REGFILE regfile, ORBB * exit,
+                                       RegSet const used_callee_regs[],
+                                       OUT ORBBList & bblist,
+                                       Reg2Var const& reg2var) {}
+    virtual void reloadRegFileAtExit(REGFILE regfile, ORBB * exit,
+                                     RegSet const used_callee_regs[],
+                                     OUT ORBBList & bblist,
+                                     Reg2Var const& reg2var);
+
+    virtual void spillRegFileAtEntry(REGFILE regfile, ORBB * entry,
+                                     RegSet const used_callee_regs[],
+                                     OUT ORBBList & bblist,
+                                     OUT Reg2Var & reg2var);
+    virtual void spillPredicateAtEntry(REGFILE regfile, ORBB * entry,
+                                       RegSet const used_callee_regs[],
+                                       OUT ORBBList & bblist,
+                                       OUT Reg2Var & reg2var) {}
 };
 
 #endif

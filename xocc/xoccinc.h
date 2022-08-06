@@ -26,15 +26,16 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @*/
-
-#ifndef __FEINC_H__
-#define __FEINC_H__
-
-//Front end level included files
+#include "../opt/cominc.h"
+#include "../opt/comopt.h"
+#include "../xgen/xgeninc.h"
+//Place target dependent macros definition file before cfeinc.h
 #include "../cfe/cfeinc.h"
 #include "canon.h"
 #include "tree2ir.h"
 #include "driver.h"
 #include "cmdline.h"
-
-#endif
+#include "cl_dbg.h"
+#include "cl_region_mgr.h"
+#include "cl_region.h"
+#include "cl_var.h"

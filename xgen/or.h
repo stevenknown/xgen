@@ -53,7 +53,7 @@ typedef Vector<OR*> ORVec; //OR vector
 #define OTD_code(o) ((o)->m_code)
 #define OTD_name(o) ((o)->m_name)
 #define OTD_unit(o) ((o)->m_unit)
-#define OTD_equ_or_types(o) ((o)->m_equ_or_types)
+#define OTD_equ_or_codes(o) ((o)->m_equ_or_codes)
 #define OTD_srd_group(o) ((o)->m_sr_desc_group)
 #define OTD_sche_info(o) ((o)->m_sche_info)
 #define OTD_is_fake(o) ((o)->m_is_fake)
@@ -77,13 +77,13 @@ typedef Vector<OR*> ORVec; //OR vector
 #define OTD_is_movi(o) ((o)->m_is_movi)
 #define OTD_is_addi(o) ((o)->m_is_addi)
 #define OTD_is_subi(o) ((o)->m_is_subi)
-class ORTypeDesc {
+class ORCodeDesc {
 public:
     //////////////////////////////////////////////////////////////////////////
     //NOTE: DO NOT CHANGE THE LAYOUT OF MEMBER.                             //
     //THE LAYOUT OF MEMBER CORRESPONDS TO TERGET DEPENDENT CONFIG FILE.     //
     //////////////////////////////////////////////////////////////////////////
-    OR_TYPE m_code;
+    OR_CODE m_code;
     CHAR const* m_name;
 
     //Hardware unit.
@@ -91,7 +91,7 @@ public:
 
     //The equivalent or-types that are same in utilities for
     //different hardware function-unit.
-    EquORTypes * m_equ_or_types;
+    EquORCodes * m_equ_or_codes;
 
     //Description of source operands and result operands.
     SRDescGroup<> * m_sr_desc_group;
@@ -131,38 +131,38 @@ public:
 #define OR_id(o) ((o)->uid)
 #define OR_order(o) ((o)->order)
 #define OR_bb(o) ((o)->ubb)
-#define OR_unit(o) OTD_unit(tmGetORTypeDesc(o->getCode()))
-#define OR_code_name(o) OTD_name(tmGetORTypeDesc(o->getCode()))
+#define OR_unit(o) OTD_unit(tmGetORCodeDesc(o->getCode()))
+#define OR_code_name(o) OTD_name(tmGetORCodeDesc(o->getCode()))
 #define OR_dbx(o) ((o)->dbx)
-#define OR_is_call(o) OTD_is_call(tmGetORTypeDesc(o->getCode()))
-#define OR_is_uncond_br(o) OTD_is_uncond_br(tmGetORTypeDesc(o->getCode()))
-#define OR_is_indirect_br(o) OTD_is_indirect_br(tmGetORTypeDesc(o->getCode()))
-#define OR_is_cond_br(o) OTD_is_cond_br(tmGetORTypeDesc(o->getCode()))
-#define OR_is_return(o) OTD_is_return(tmGetORTypeDesc(o->getCode()))
+#define OR_is_call(o) OTD_is_call(tmGetORCodeDesc(o->getCode()))
+#define OR_is_uncond_br(o) OTD_is_uncond_br(tmGetORCodeDesc(o->getCode()))
+#define OR_is_indirect_br(o) OTD_is_indirect_br(tmGetORCodeDesc(o->getCode()))
+#define OR_is_cond_br(o) OTD_is_cond_br(tmGetORCodeDesc(o->getCode()))
+#define OR_is_return(o) OTD_is_return(tmGetORCodeDesc(o->getCode()))
 #define OR_is_br(o) (OR_is_cond_br(o) || OR_is_uncond_br(o) || \
                      OR_is_return(o) || OR_is_call(o))
-#define OR_is_predicated(o) OTD_is_predicated(tmGetORTypeDesc(o->getCode()))
-#define OR_is_load(o) OTD_is_load(tmGetORTypeDesc(o->getCode()))
-#define OR_is_store(o) OTD_is_store(tmGetORTypeDesc(o->getCode()))
+#define OR_is_predicated(o) OTD_is_predicated(tmGetORCodeDesc(o->getCode()))
+#define OR_is_load(o) OTD_is_load(tmGetORCodeDesc(o->getCode()))
+#define OR_is_store(o) OTD_is_store(tmGetORCodeDesc(o->getCode()))
 #define OR_is_signed(o) ((o)->u1.s1.is_signed)
 #define OR_is_spill(o) ((o)->u1.s1.is_spill)
 #define OR_is_reload(o) ((o)->u1.s1.is_reload)
 #define OR_is_terminate(o) ((o)->u1.s1.is_terminate_control_flow)
 #define OR_is_need_compute_var_ofst(o)  ((o)->u1.s1.need_to_compute_var_ofst)
 #define OR_is_mem(o) (o->is_store() || o->is_load())
-#define OR_is_fake(o) OTD_is_fake(tmGetORTypeDesc(o->getCode()))
-#define OR_is_bus(o) OTD_is_bus(tmGetORTypeDesc(o->getCode()))
-#define OR_is_nop(o) OTD_is_nop(tmGetORTypeDesc(o->getCode()))
-#define OR_is_volatile(o) OTD_is_volatile(tmGetORTypeDesc(o->getCode()))
-#define OR_is_side_effect(o) OTD_is_side_effect(tmGetORTypeDesc(o->getCode()))
-#define OR_is_asm(o) OTD_is_asm(tmGetORTypeDesc(o->getCode()))
-#define OR_is_unaligned(o) OTD_is_unaligned(tmGetORTypeDesc(o->getCode()))
-#define OR_is_eq(o) OTD_is_eq(tmGetORTypeDesc(o->getCode()))
-#define OR_is_lt(o) OTD_is_lt(tmGetORTypeDesc(o->getCode()))
-#define OR_is_gt(o) OTD_is_gt(tmGetORTypeDesc(o->getCode()))
-#define OR_is_movi(o) OTD_is_movi(tmGetORTypeDesc(o->getCode()))
-#define OR_is_addi(o) OTD_is_addi(tmGetORTypeDesc(o->getCode()))
-#define OR_is_subi(o) OTD_is_subi(tmGetORTypeDesc(o->getCode()))
+#define OR_is_fake(o) OTD_is_fake(tmGetORCodeDesc(o->getCode()))
+#define OR_is_bus(o) OTD_is_bus(tmGetORCodeDesc(o->getCode()))
+#define OR_is_nop(o) OTD_is_nop(tmGetORCodeDesc(o->getCode()))
+#define OR_is_volatile(o) OTD_is_volatile(tmGetORCodeDesc(o->getCode()))
+#define OR_is_side_effect(o) OTD_is_side_effect(tmGetORCodeDesc(o->getCode()))
+#define OR_is_asm(o) OTD_is_asm(tmGetORCodeDesc(o->getCode()))
+#define OR_is_unaligned(o) OTD_is_unaligned(tmGetORCodeDesc(o->getCode()))
+#define OR_is_eq(o) OTD_is_eq(tmGetORCodeDesc(o->getCode()))
+#define OR_is_lt(o) OTD_is_lt(tmGetORCodeDesc(o->getCode()))
+#define OR_is_gt(o) OTD_is_gt(tmGetORCodeDesc(o->getCode()))
+#define OR_is_movi(o) OTD_is_movi(tmGetORCodeDesc(o->getCode()))
+#define OR_is_addi(o) OTD_is_addi(tmGetORCodeDesc(o->getCode()))
+#define OR_is_subi(o) OTD_is_subi(tmGetORCodeDesc(o->getCode()))
 #define OR_flag(o) ((o)->u1.s1byte)
 class OR {
     COPY_CONSTRUCTOR(OR);
@@ -182,7 +182,7 @@ public:
     //DO NOT MODIFY 'id' DURING cleaning, cloning or copying of OR.
     UINT uid;
 
-    OR_TYPE code; //operation type, various to different target machine.
+    OR_CODE code; //operation type, various to different target machine.
 
     //Container of OR, used for List operations,
     //only available when OR in list.
@@ -223,7 +223,7 @@ public:
     virtual CHAR const* dump(StrBuf & buf, CG * cg) const;
     virtual void dump(CG * cg) const;
 
-    OR_TYPE getCode() const { return code; }
+    OR_CODE getCode() const { return code; }
     CHAR const* getCodeName() const { return OR_code_name(this); }
     ORBB * getBB() const { return OR_bb(this); }
     SR * get_opnd(UINT i) const
@@ -615,7 +615,7 @@ public:
     SMemPool * get_pool() const { return m_pool; }
     OR * getOR(UINT id);
     //Generate OR object.
-    OR * genOR(OR_TYPE ort, CG * cg);
+    OR * genOR(OR_CODE ort, CG * cg);
     virtual void freeOR(IN OR * o);
     void freeSR(OR * o);
 };

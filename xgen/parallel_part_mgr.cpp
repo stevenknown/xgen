@@ -261,7 +261,7 @@ bool ParallelPartMgr::hasPDomOcc(ORBB * bb, SR * gsr)
     xcom::BitSet * occ = g_sr2bbset_map.get(gsr);
     ASSERT0(occ);
     if (occ->get_elem_count() > 1) {
-        xcom::DomSet * pdom = ORBB_cg(bb)->getORCFG()->get_pdom_set(bb->id());
+        xcom::DomSet * pdom = ORBB_cg(bb)->getORCFG()->gen_pdom_set(bb->id());
         ASSERT0((pdom != nullptr && !pdom->is_empty()) || !bb->isLiveOut(gsr));
         for (UINT bbid = occ->get_first();
              bbid != 0; bbid = occ->get_next(bbid)) {
