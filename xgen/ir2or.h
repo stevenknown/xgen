@@ -200,6 +200,8 @@ protected:
 
     void flattenSRVec(IOC const* cont, Vector<SR*> * vec);
 
+    //The function try extend loaded value to larger size when the loaded
+    //value is passed through registers.
     void tryExtendLoadValByMemSize(bool is_signed, Dbx const* dbx,
                                    OUT RecycORList & ors, MOD IOC * cont);
 public:

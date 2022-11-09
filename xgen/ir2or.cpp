@@ -284,12 +284,18 @@ void IR2OR::convertLoadConst(IR const* ir, OUT RecycORList & ors,
 void IR2OR::tryExtendLoadValByMemSize(bool is_signed, Dbx const* dbx,
                                       OUT RecycORList & ors, MOD IOC * cont)
 {
+    if (cont->get_addr() != nullptr) {
+        //Loaded value is passed through a variable whereas the function only
+        //handle register.
+        return;
+    }
     SR * loadval = cont->get_reg(0);
-    ASSERT0((loadval && loadval->is_reg()) || cont->get_addr());
+    ASSERT0(loadval && loadval->is_reg());
     if (cont->getMemByteSize() <= loadval->getByteSize()) { return; }
     m_cg->buildTypeCvt(cont->get_reg(0), cont->getMemByteSize(),
                        loadval->getByteSize(), is_signed, dbx, ors.getList(),
                        cont);
+    
 }
 
 
