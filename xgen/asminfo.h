@@ -45,7 +45,7 @@ public:
     RegSet const* get_clobber_set() { return &m_clobber_set; }
 
     void set_srd_group(SRDescGroup<> * sdg) { m_sdg = sdg; }
-    void set_clobber_set_reg(REG reg) { m_clobber_set.bunion(reg); }
+    void set_clobber_set_reg(Reg reg) { m_clobber_set.bunion(reg); }
 };
 
 } //namespace xgen

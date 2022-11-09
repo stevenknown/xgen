@@ -116,12 +116,12 @@ CG::~CG()
         m_or_cfg = nullptr;
     }
 
-    //Free (but is not delete) all OR, SR, and ORBB.
-    //m_or_bb_mgr should be deleted after freeORBBList().
+    //Destroy all OR, SR.
+    //m_or_bb_mgr should be deleted subsequently.
     //OR will be deleted by ORMgr, and SR will be deleted by SRMgr,
-    //ORBB will be deleted by ORBBMgr.
-    freeORBBList();
+    getCGMgr()->resetSRAndORMgr();
 
+    //ORBB will be deleted by ORBBMgr.
     if (m_or_bb_mgr != nullptr) {
         delete m_or_bb_mgr;
         m_or_bb_mgr = nullptr;
@@ -521,7 +521,7 @@ void CG::buildMod(CLUST clust, SR ** result, SR * src1, SR * src2,
         return;
     }
 
-    ASSERTN(!SR_is_int_imm(*result), ("Not allocate result sr"));
+    ASSERTN(!(*result)->is_int_imm(), ("Not allocate result sr"));
     OR * o = buildOR(orty, 1, 3, *result, getTruePred(), src1, src2);
     OR_clust(o) = clust;
     ors.append_tail(o);
@@ -565,6 +565,50 @@ void CG::buildAlloca(OUT ORList & ors, SR * bytesize, MOD IOC * cont)
 }
 
 
+void CG::buildTypeCvt(SR * src, UINT tgt_size, UINT src_size, bool is_signed,
+                      Dbx const* dbx, OUT ORList & ors, MOD IOC * cont)
+{
+    if (tgt_size <= src_size || tgt_size <= GENERAL_REGISTER_SIZE) {
+        return;
+    }
+    ORList tors;
+    if (tgt_size > 2 * GENERAL_REGISTER_SIZE) {
+        ASSERTN(0, ("TODO"));
+        return;
+    }
+    if (src_size <= GENERAL_REGISTER_SIZE) {
+        SR * tgt_low = src;
+        ASSERT0(tgt_low != nullptr);
+        SR * tgt_high = nullptr;
+        IOC tc;
+        if (is_signed) {
+            UINT shiftbit = GENERAL_REGISTER_SIZE * BIT_PER_BYTE - 1;
+            //Regard src >> 31(arithmatic shift right)
+            //as the sign extension.
+            buildShiftRight(tgt_low, GENERAL_REGISTER_SIZE,
+                            genIntImm((HOST_INT)shiftbit, false),
+                            true, tors, &tc);
+            tgt_high = tc.get_reg(0);
+            ASSERT0(tgt_high != nullptr);
+        } else {
+            tgt_high = genReg();
+            buildMove(tgt_high, genZero(), tors, &tc);
+        }
+        tors.copyDbx(dbx);
+        ors.move_tail(tors);
+        cont->set_reg(0, tgt_low);
+        getSRVecMgr()->genSRVec(2, tgt_low, tgt_high);
+        return;
+    }
+    //Just do some check.
+    SR * src_low = src;
+    CHECK0_DUMMYUSE(src_low);
+    ASSERT0(src_low->getVec() != nullptr && SR_vec_idx(src_low) == 0);
+    ASSERT0(src_low->getVec()->get(1) != nullptr);
+    ASSERT0(src_low->getByteSize() == 2 * GENERAL_REGISTER_SIZE);
+}
+
+
 //Convert data type from 'src' to 'tgt'.
 void CG::buildTypeCvt(xoc::IR const* tgt, xoc::IR const* src,
                       OUT ORList & ors, MOD IOC * cont)
@@ -572,45 +616,8 @@ void CG::buildTypeCvt(xoc::IR const* tgt, xoc::IR const* src,
     ASSERTN(!tgt->is_vec() && !src->is_vec(), ("TODO"));
     UINT tgt_size = tgt->getTypeSize(m_tm);
     UINT src_size = src->getTypeSize(m_tm);
-    if (tgt_size <= src_size || tgt_size <= GENERAL_REGISTER_SIZE) {
-        return;
-    }
-
-    ORList tors;
-    if (tgt_size <= 8) {
-        if (src_size <= 4) {
-            SR * tgt_low = cont->get_reg(0);
-            ASSERT0(tgt_low != nullptr);
-            SR * tgt_high = nullptr;
-
-            IOC tmp;
-            if (src->is_signed()) {
-                //Regard src >> 31(arithmatic shift right)
-                //as the sign extension.
-                buildShiftRight(tgt_low, GENERAL_REGISTER_SIZE,
-                                genIntImm((HOST_INT)31, false),
-                                true, tors, &tmp);
-                tgt_high = tmp.get_reg(0);
-                ASSERT0(tgt_high != nullptr);
-            } else {
-                tgt_high = genReg();
-                buildMove(tgt_high, genZero(), tors, &tmp);
-            }
-            tors.copyDbx(tgt);
-            ors.move_tail(tors);
-            cont->set_reg(0, tgt_low);
-            getSRVecMgr()->genSRVec(2, tgt_low, tgt_high);
-        } else {
-            //Just do some check.
-            SR * src_low = cont->get_reg(0);
-            CHECK0_DUMMYUSE(src_low);
-            ASSERT0(src_low->getVec() != nullptr && SR_vec_idx(src_low) == 0);
-            ASSERT0(src_low->getVec()->get(1) != nullptr);
-            ASSERT0(src_low->getByteSize() == 8);
-        }
-        return;
-    }
-    ASSERTN(0, ("TODO"));
+    buildTypeCvt(cont->get_reg(0), tgt_size, src_size, src->is_signed(),
+                 xoc::getDbx(tgt), ors, cont);
 }
 
 
@@ -706,9 +713,7 @@ static void buildLdaForGlobalVar(Dbx const* dbx, xoc::Var const* var,
     #endif
 
     //Transfer the debug information.
-    if (dbx != nullptr) {
-        tors.copyDbx(dbx);
-    }
+    tors.copyDbx(dbx);
     ors.move_tail(tors);
     ASSERT0(cont);
     ASSERT0(cont->get_reg(0) && cont->get_reg(0)->is_reg());
@@ -735,9 +740,7 @@ static void buildLdaForLocalVar(Dbx const* dbx, SR * base, SR * ofst, CG * cg,
     }
 
     //Transfer the debug information.
-    if (dbx != nullptr) {
-        tors.copyDbx(dbx);
-    }
+    tors.copyDbx(dbx);
     ors.move_tail(tors);
     ASSERT0(cont);
 
@@ -781,8 +784,8 @@ void CG::buildGeneralLoad(IN SR * val, HOST_INT ofst, bool is_signed,
     }
 
     ASSERT0(val->is_var() || val->is_reg());
-    ASSERTN(IOC_mem_byte_size(cont) > 0, ("illegal/redundant mem size"));
-    if (IOC_mem_byte_size(cont) > GENERAL_REGISTER_SIZE * 2) {
+    ASSERTN(cont->getMemByteSize() > 0, ("illegal/redundant mem size"));
+    if (cont->getMemByteSize() > GENERAL_REGISTER_SIZE * 2) {
         //Load too large value into register, convert the load to
         //memory copy, and return the begin address to copy.
         SR * addr = nullptr;
@@ -801,9 +804,9 @@ void CG::buildGeneralLoad(IN SR * val, HOST_INT ofst, bool is_signed,
 
     //Build genernal load.
     SR * load_val = nullptr;
-    if (IOC_mem_byte_size(cont) <= GENERAL_REGISTER_SIZE) {
+    if (cont->getMemByteSize() <= GENERAL_REGISTER_SIZE) {
         load_val = genReg();
-    } else if (IOC_mem_byte_size(cont) <= GENERAL_REGISTER_SIZE * 2) {
+    } else if (cont->getMemByteSize() <= GENERAL_REGISTER_SIZE * 2) {
         load_val = genReg();
         load_val = getSRVecMgr()->genSRVec(2, load_val, genReg());
     } else { UNREACHABLE(); }
@@ -1331,7 +1334,7 @@ OR * CG::dupOR(OR const* o)
 
 SR * CG::dupSR(SR const* sr)
 {
-    SR * n = getSRMgr()->genSR();
+    SR * n = getSRMgr()->genSR(sr->getCode());
     n->copy(sr);
     return n;
 }
@@ -1544,7 +1547,7 @@ bool CG::changeORUnit(OR * o, UNIT to_unit, CLUST to_clust,
 
             if (sr->is_reg() &&
                 regfile_unique != nullptr &&
-                regfile_unique->is_contain(SR_sregid(sr))) {
+                regfile_unique->is_contain(SR_sym_reg(sr))) {
                 //Even if regfile of 'sr' has been marked as UNIQUE,
                 //but some of them still have chance to change to other
                 //function unit when the new function unit could also
@@ -1576,7 +1579,7 @@ bool CG::changeORUnit(OR * o, UNIT to_unit, CLUST to_clust,
             }
             if (sr->is_reg() &&
                 regfile_unique != nullptr &&
-                regfile_unique->is_contain(SR_sregid(sr))) {
+                regfile_unique->is_contain(SR_sym_reg(sr))) {
                 ASSERTN(sr->getRegFile() != RF_UNDEF,
                         ("Regfile unique sr should alloated regfile"));
                 //First handle the specical case.
@@ -1656,7 +1659,7 @@ bool CG::changeORCode(OR * o, OR_CODE ot, CLUST src, CLUST tgt,
             continue;
         }
         if (regfile_unique == nullptr ||
-            !regfile_unique->is_contain(SR_sregid(sr))) {
+            !regfile_unique->is_contain(SR_sym_reg(sr))) {
             //Reassign regfile.
             SR_phy_reg(sr) = REG_UNDEF;
             SR_regfile(sr) = RF_UNDEF;
@@ -1688,7 +1691,7 @@ bool CG::changeORCode(OR * o, OR_CODE ot, CLUST src, CLUST tgt,
             continue;
         }
         if (regfile_unique == nullptr ||
-            !regfile_unique->is_contain(SR_sregid(sr))) {
+            !regfile_unique->is_contain(SR_sym_reg(sr))) {
             //Reassign regfile.
             SR_phy_reg(sr) = REG_UNDEF;
             SR_regfile(sr) = RF_UNDEF;
@@ -2255,7 +2258,7 @@ bool CG::skipArgRegister(UINT sz, OUT ArgDescMgr * argdescmgr)
     if (sz == CONTINUOUS_REG_NUM * GENERAL_REGISTER_SIZE) {
         ASSERT0(sz == 2 * GENERAL_REGISTER_SIZE);
         RegSet const* rs = argdescmgr->getArgRegSet();
-        REG first_reg = rs->get_first();
+        Reg first_reg = rs->get_first();
         if ((BSIdx)first_reg == BS_UNDEF) {
             return false;
         }
@@ -2278,7 +2281,7 @@ bool CG::passArgInMemory(SR * argaddr, UINT * argsz,
                          IOC *)
 {
     UINT total_size = *argsz;
-    IOC tmp_cont;
+    IOC tc;
 
     //CG compute the ADDR for data rather than generate load operation.
     //Get the address of LoadValue.
@@ -2295,11 +2298,11 @@ bool CG::passArgInMemory(SR * argaddr, UINT * argsz,
         if (argreg == nullptr) {
             break;
         }
-        tmp_cont.clean();
-        IOC_mem_byte_size(&tmp_cont) = transfer_size;
+        tc.clean();
+        IOC_mem_byte_size(&tc) = transfer_size;
         bool is_signed = false; //transfer size is the same length as register.
         buildLoad(argreg, argaddr, genIntImm(i * transfer_size, false),
-                  is_signed, ors, &tmp_cont);
+                  is_signed, ors, &tc);
         (*argsz) -= transfer_size;
         argdescmgr->updatePassedArgInRegister(transfer_size);
     }
@@ -2330,7 +2333,7 @@ bool CG::passArgInRegister(SR * argval, UINT * sz, ArgDescMgr * argdescmgr,
     Vector<SR*> vec;
     flattenInVec(argval, &vec);
 
-    IOC tmp_cont;
+    IOC tc;
     //Try to pass data through argument-register.
     //Transfer data in single register size.
     UINT transfer_size = GENERAL_REGISTER_SIZE;
@@ -2348,8 +2351,8 @@ bool CG::passArgInRegister(SR * argval, UINT * sz, ArgDescMgr * argdescmgr,
         //Only move register size data for each time.
         ASSERT0(arg_val);
 
-        tmp_cont.clean();
-        buildMove(argreg, arg_val, ors, &tmp_cont);
+        tc.clean();
+        buildMove(argreg, arg_val, ors, &tc);
 
         //Update avaiable registers info.
         argdescmgr->updatePassedArgInRegister(transfer_size);
@@ -2418,9 +2421,7 @@ void CG::passArgVariant(ArgDescMgr * argdescmgr, OUT ORList & ors, UINT num,
         tmp.clean();
         tors.clean();
         passArg(argval, argaddr, argsz, argdescmgr, tors, &tmp);
-        if (dbx != nullptr) {
-            tors.copyDbx(dbx);
-        }
+        tors.copyDbx(dbx);
         ors.move_tail(tors);
     }
     va_end(ptr);
@@ -2540,11 +2541,7 @@ void CG::storeArgToStack(ArgDescMgr * argdescmgr, OUT ORList & ors, IN IOC *)
                        genIntImm((HOST_INT)desc->tgt_ofst, false),
                        false, tors, &tc);
         }
-
-        if (desc->arg_dbx != nullptr) {
-            tors.copyDbx(desc->arg_dbx);
-        }
-
+        tors.copyDbx(desc->arg_dbx);
         ors.move_tail(tors);
     }
 }
@@ -2735,13 +2732,12 @@ SR * CG::genReg(UINT bytes_size)
         UINT n = xceiling(bytes_size, GENERAL_REGISTER_SIZE);
         List<SR*> ls;
         for (UINT i = 0; i < n; i++) {
-            SR * sr = getSRMgr()->genSR();
+            SR * sr = getSRMgr()->genSR(SR_REG);
             if (i == 0) {
                 first = sr;
             }
-            SR_type(sr) = SR_REG;
-            SR_sregid(sr) = ++m_reg_count;
-            setMapSymbolReg2SR(SR_sregid(sr), sr);
+            SR_sym_reg(sr) = ++m_reg_count;
+            setMapSymbolReg2SR(SR_sym_reg(sr), sr);
             SR_phy_reg(sr) = REG_UNDEF;
             SR_regfile(sr) = RF_UNDEF;
             ls.append_tail(sr);
@@ -2750,10 +2746,9 @@ SR * CG::genReg(UINT bytes_size)
         return first;
     }
 
-    first = getSRMgr()->genSR();
-    SR_type(first) = SR_REG;
-    SR_sregid(first) = ++m_reg_count;
-    setMapSymbolReg2SR(SR_sregid(first), first);
+    first = getSRMgr()->genSR(SR_REG);
+    SR_sym_reg(first) = ++m_reg_count;
+    setMapSymbolReg2SR(SR_sym_reg(first), first);
     SR_phy_reg(first) = REG_UNDEF;
     SR_regfile(first) = RF_UNDEF;
     return first;
@@ -2763,7 +2758,7 @@ SR * CG::genReg(UINT bytes_size)
 //Assign physical register manually.
 //During some passes, e.g IR2OR, user expects to assign physical register
 //to SR which is NOT dedicated register.
-void CG::assignPhyRegister(SR * sr, REG reg, REGFILE rf)
+void CG::assignPhyRegister(SR * sr, Reg reg, REGFILE rf)
 {
     ASSERT0(sr->is_reg() && xgen::isLegalReg(reg) && xgen::isLegalRegFile(rf));
     SR_phy_reg(sr) = reg;
@@ -2779,7 +2774,7 @@ void CG::assignPhyRegister(SR * sr, REG reg, REGFILE rf)
 
 //Generate a global SR that bytes_size is not more than
 //GENERAL_REGISTER_SIZE.
-SR * CG::genRegWithPhyReg(REG reg, REGFILE rf)
+SR * CG::genRegWithPhyReg(Reg reg, REGFILE rf)
 {
     SR * sr = genReg();
     assignPhyRegister(sr, reg, rf);
@@ -2790,23 +2785,22 @@ SR * CG::genRegWithPhyReg(REG reg, REGFILE rf)
 //Generate SR by specified Symbol Register Id.
 SR * CG::genReg(SymRegId regid)
 {
-    SR * sr = getSRMgr()->genSR();
-    SR_type(sr) = SR_REG;
-    SR_sregid(sr) = regid;
+    SR * sr = getSRMgr()->genSR(SR_REG);
+    SR_sym_reg(sr) = regid;
     setMapSymbolReg2SR(regid, sr);
     return sr;
 }
 
 
 //Get dedicated register by specified physical register.
-SR * CG::getDedicatedReg(REG phy_reg) const
+SR * CG::getDedicatedReg(Reg phy_reg) const
 {
     return const_cast<CG*>(this)->m_dedicate_sr_tab.get(phy_reg);
 }
 
 
 //Generate dedicated register by specified physical register.
-SR * CG::genDedicatedReg(REG phy_reg)
+SR * CG::genDedicatedReg(Reg phy_reg)
 {
     ASSERT0(xgen::isLegalReg(phy_reg));
     SR * sr = m_dedicate_sr_tab.get(phy_reg);
@@ -2833,10 +2827,7 @@ SR * CG::genPredReg()
 
 SR * CG::genLabelList(LabelInfoList const* lilst)
 {
-    SR * sr = getSRMgr()->genSR();
-    SR_type(sr) = SR_LAB_LIST;
-
-    //label list
+    SR * sr = getSRMgr()->genSR(SR_LAB_LIST);
     SR_label_list(sr) = lilst;
     return sr;
 }
@@ -2844,10 +2835,7 @@ SR * CG::genLabelList(LabelInfoList const* lilst)
 
 SR * CG::genLabel(LabelInfo const* li)
 {
-    SR * sr = getSRMgr()->genSR();
-    SR_type(sr) = SR_LAB;
-
-    //label
+    SR * sr = getSRMgr()->genSR(SR_LAB);
     SR_label(sr) = li;
     return sr;
 }
@@ -2857,9 +2845,7 @@ SR * CG::genLabel(LabelInfo const* li)
 SR * CG::genVAR(xoc::Var const* var)
 {
     ASSERT0(var != nullptr && getSRMgr() != nullptr);
-    SR * sr = getSRMgr()->genSR();
-    SR_type(sr) = SR_VAR;
-
+    SR * sr = getSRMgr()->genSR(SR_VAR);
     //Symbol variable, it might be symbol, spill_loc, etc.
     SR_var(sr) = var;
     return sr;
@@ -2869,8 +2855,7 @@ SR * CG::genVAR(xoc::Var const* var)
 //Generate SR that indicates integer.
 SR * CG::genIntImm(HOST_INT val, bool is_signed)
 {
-    SR * sr = getSRMgr()->genSR();
-    SR_type(sr) = SR_INT_IMM;
+    SR * sr = getSRMgr()->genSR(SR_INT_IMM);
     if (is_signed) {
         SR_int_imm(sr) = (HOST_INT)val;
     } else {
@@ -2883,15 +2868,14 @@ SR * CG::genIntImm(HOST_INT val, bool is_signed)
 //Generate SR that indicates float point.
 SR * CG::genFpImm(HOST_FP val)
 {
-    SR * sr = getSRMgr()->genSR();
-    SR_type(sr) = SR_FP_IMM;
+    SR * sr = getSRMgr()->genSR(SR_FP_IMM);
     SR_fp_imm(sr) = val;
     return sr;
 }
 
 
 //Generate SR according to specified register and register file.
-SR * CG::genSR(REG reg, REGFILE regfile)
+SR * CG::genSR(Reg reg, REGFILE regfile)
 {
     ASSERT0(xgen::isLegalReg(reg) && xgen::isLegalRegFile(regfile));
     SR * sr = genReg((UINT)GENERAL_REGISTER_SIZE);
@@ -2902,9 +2886,9 @@ SR * CG::genSR(REG reg, REGFILE regfile)
 
 
 //Generate a empty SR.
-SR * CG::genSR()
+SR * CG::genSR(SR_CODE c)
 {
-    return getSRMgr()->genSR();
+    return getSRMgr()->genSR(c);
 }
 
 
@@ -2952,7 +2936,7 @@ RegSet const* CG::getValidRegSet(OR_CODE orcode, UINT idx,
 
 
 //Map phsical register to dedicated symbol register if exist.
-SR * CG::getDedicatedSRForPhyReg(REG reg)
+SR * CG::getDedicatedSRForPhyReg(Reg reg)
 {
     return m_dedicate_sr_tab.get(reg);
 }
@@ -3291,7 +3275,8 @@ bool CG::mayUse(OR const* o, SR const* sr) const
 }
 
 
-//Compute the index of operand, return -1 if 'opnd' is not an opnd of 'o'.
+//Compute the index of operand, return OR_SR_IDX_UNDEF if 'opnd' is not an
+//opnd of 'o'.
 INT CG::computeOpndIdx(OR * o, SR const* opnd)
 {
     for (UINT i = 0; i < o->opnd_num(); i++) {
@@ -3299,11 +3284,12 @@ INT CG::computeOpndIdx(OR * o, SR const* opnd)
             return i;
         }
     }
-    return -1;
+    return OR_SR_IDX_UNDEF;
 }
 
 
-//Compute the index of 'res', return -1 if 'res' is not a result of 'o'.
+//Compute the index of 'res', return OR_SR_IDX_UNDEF if 'res' is not a
+//result of 'o'.
 INT CG::computeResultIdx(OR * o, SR const* res)
 {
     for (UINT i = 0; i < o->result_num(); i++) {
@@ -3311,7 +3297,7 @@ INT CG::computeResultIdx(OR * o, SR const* res)
             return i;
         }
     }
-    return -1;
+    return OR_SR_IDX_UNDEF;
 }
 
 
@@ -3336,6 +3322,101 @@ void CG::computeEntryAndExit(IN ORCFG & cfg,
 }
 
 
+void CG::generateFuncUnitDedicatedCodeForEntryBB(List<ORBB*> const& entry_lst,
+                                                 bool has_call,
+                                                 OUT ORList & ors)
+{
+    List<ORBB*>::Iter it;
+    for (ORBB * bb = entry_lst.get_head(&it);
+         bb != nullptr; bb = entry_lst.get_next(&it)) {
+        Dbx const* dbx = nullptr;
+        if (ORBB_first_or(bb) != nullptr) {
+            dbx = &OR_dbx(ORBB_first_or(bb));
+        }
+
+        //Save function return-address to stack.
+        if (has_call) {
+            ors.clean();
+            SR * sr = genReturnAddr();
+            xoc::Var * loc = genSpillVar(sr);
+            ASSERT0(loc != nullptr);
+
+            IOC tc1;
+            IOC_mem_byte_size(&tc1) = GENERAL_REGISTER_SIZE;
+            buildStore(sr, loc, 0, false, ors, &tc1);
+            ors.copyDbx(dbx);
+            ORBB_orlist(bb)->append_head(ors);
+        }
+
+        //Add spadjust operations
+        ors.clean();
+        IOC tc2;
+        IOC_int_imm(&tc2) = 0;
+        buildSpadjust(ors, &tc2);
+        ASSERTN(ors.get_elem_count() == 1, ("at most one spadjust operation."));
+        ors.copyDbx(dbx);
+        ORBB_orlist(bb)->append_head(ors);
+        ORBB_entry_spadjust(bb) = ors.get_head();
+    }
+}
+
+
+void CG::generateFuncUnitDedicatedCodeForExitBB(List<ORBB*> const& exit_lst,
+                                                bool has_call,
+                                                OUT ORList & ors)
+{
+    List<ORBB*>::Iter it;
+    for (ORBB * bb = exit_lst.get_head(&it);
+         bb != nullptr; bb = exit_lst.get_next(&it)) {
+        OR * last_or = ORBB_last_or(bb);
+        Dbx const* dbx = nullptr;
+        if (last_or != nullptr) {
+            dbx = &OR_dbx(last_or);
+        }
+
+        //Protection of ret-address.
+        if (has_call) {
+            ors.clean();
+            SR * sr = genReturnAddr();
+            xoc::Var * loc = genSpillVar(sr);
+            ASSERT0(loc != nullptr);
+
+            IOC tc2;
+            IOC_mem_byte_size(&tc2) = GENERAL_REGISTER_SIZE;
+            buildLoad(sr, loc, 0, false, ors, &tc2);
+            ors.copyDbx(dbx);
+            if (last_or != nullptr &&
+                (OR_is_call(last_or) ||
+                 OR_is_cond_br(last_or) ||
+                 OR_is_uncond_br(last_or) ||
+                 OR_is_return(last_or))) {
+                 ORBB_orlist(bb)->insert_before(ors, last_or);
+            } else {
+                ORBB_orlist(bb)->append_tail(ors);
+            }
+        }
+
+        //Add spadjust operations
+        ors.clean();
+        IOC tc2;
+        IOC_int_imm(&tc2) = 0;
+        buildSpadjust(ors, &tc2);
+        ors.copyDbx(dbx);
+        ASSERTN(ors.get_elem_count() == 1, ("at most one spadjust operation."));
+        if (last_or != nullptr &&
+            (OR_is_call(last_or) ||
+             OR_is_cond_br(last_or) ||
+             OR_is_uncond_br(last_or) ||
+             OR_is_return(last_or))) {
+             ORBB_orlist(bb)->insert_before(ors, last_or);
+        } else {
+            ORBB_orlist(bb)->append_tail(ors);
+        }
+        ORBB_exit_spadjust(bb) = ors.get_head();
+    }
+}
+
+
 //Generate SP adjustment operation, and the code protecting the
 //Return Address if region has a call.
 //If SP adjust operations are more than one, you should construct a
@@ -3350,99 +3431,13 @@ void CG::generateFuncUnitDedicatedCode()
             break;
         }
     }
-
     ASSERT0(m_or_cfg);
     ORList ors;
-    IOC cont;
     List<ORBB*> entry_lst;
     List<ORBB*> exit_lst;
     computeEntryAndExit(*m_or_cfg, entry_lst, exit_lst);
-    for (ORBB * bb = entry_lst.get_head();
-         bb != nullptr; bb = entry_lst.get_next()) {
-        Dbx const* dbx = nullptr;
-        if (ORBB_first_or(bb) != nullptr) {
-            dbx = &OR_dbx(ORBB_first_or(bb));
-        }
-
-        //Save function return-address to stack.
-        if (has_call) {
-            ors.clean();
-            SR * sr = genReturnAddr();
-            xoc::Var * loc = genSpillVar(sr);
-            ASSERT0(loc != nullptr);
-
-            IOC cont1;
-            IOC_mem_byte_size(&cont1) = GENERAL_REGISTER_SIZE;
-            buildStore(sr, loc, 0, false, ors, &cont1);
-            if (dbx != nullptr) {
-                ors.copyDbx(dbx);
-            }
-            ORBB_orlist(bb)->append_head(ors);
-        }
-
-        //Add spadjust operations
-        ors.clean();
-        IOC_int_imm(&cont) = 0;
-        buildSpadjust(ors, &cont);
-        ASSERTN(ors.get_elem_count() == 1, ("at most one spadjust operation."));
-        if (dbx != nullptr) {
-            ors.copyDbx(dbx);
-        }
-        ORBB_orlist(bb)->append_head(ors);
-        ORBB_entry_spadjust(bb) = ors.get_head();
-    }
-
-    for (ORBB * bb = exit_lst.get_head();
-         bb != nullptr; bb = exit_lst.get_next()) {
-        OR * last_or = ORBB_last_or(bb);
-        Dbx const* dbx = nullptr;
-        if (last_or != nullptr) {
-            dbx = &OR_dbx(last_or);
-        }
-
-        //Protection of ret-address.
-        if (has_call) {
-            ors.clean();
-            SR * sr = genReturnAddr();
-            xoc::Var * loc = genSpillVar(sr);
-            ASSERT0(loc != nullptr);
-
-            IOC cont2;
-            IOC_mem_byte_size(&cont2) = GENERAL_REGISTER_SIZE;
-            buildLoad(sr, loc, 0, false, ors, &cont2);
-            if (dbx != nullptr) {
-                ors.copyDbx(dbx);
-            }
-            if (last_or != nullptr &&
-                (OR_is_call(last_or) ||
-                 OR_is_cond_br(last_or) ||
-                 OR_is_uncond_br(last_or) ||
-                 OR_is_return(last_or))) {
-                 ORBB_orlist(bb)->insert_before(ors, last_or);
-            } else {
-                ORBB_orlist(bb)->append_tail(ors);
-            }
-        }
-
-        //Add spadjust operations
-        ors.clean();
-        IOC_int_imm(&cont) = 0;
-        buildSpadjust(ors, &cont);
-        if (dbx != nullptr) {
-            ors.copyDbx(dbx);
-        }
-        ASSERTN(ors.get_elem_count() == 1, ("at most one spadjust operation."));
-        if (last_or != nullptr &&
-            (OR_is_call(last_or) ||
-             OR_is_cond_br(last_or) ||
-             OR_is_uncond_br(last_or) ||
-             OR_is_return(last_or))) {
-             ORBB_orlist(bb)->insert_before(ors, last_or);
-        } else {
-            ORBB_orlist(bb)->append_tail(ors);
-        }
-        ORBB_exit_spadjust(bb) = ors.get_head();
-    }
+    generateFuncUnitDedicatedCodeForEntryBB(entry_lst, has_call, ors);
+    generateFuncUnitDedicatedCodeForExitBB(exit_lst, has_call, ors);
 }
 
 
@@ -3915,10 +3910,10 @@ void CG::constructORBBList(IN ORList & or_list)
     //Do some verifications.
     for (ORBB * bb = m_or_bb_list.get_head();
          bb != nullptr; bb = m_or_bb_list.get_next()) {
-        INT cur_order = -1;
+        INT cur_order = OR_ORDER_UNDEF;
         for (OR  * o = ORBB_first_or(bb); o != nullptr; o = ORBB_next_or(bb)) {
-            ASSERT0(OR_order(o) != -1);
-            if (cur_order == -1) {
+            ASSERT0(OR_order(o) != OR_ORDER_UNDEF);
+            if (cur_order == OR_ORDER_UNDEF) {
                 cur_order = OR_order(o);
             } else {
                 ASSERT0(OR_order(o) > cur_order);
@@ -4186,15 +4181,15 @@ void CG::localizeBB(SR * sr, ORBB * bb)
     if (SR_spill_var(sr) == nullptr) {
         genSpillVar(sr);
     }
-    IOC toc;
+    IOC tc;
     ASSERT0(SR_spill_var(sr));
-    IOC_mem_byte_size(&toc) = GENERAL_REGISTER_SIZE; // sr->getByteSize();
+    IOC_mem_byte_size(&tc) = GENERAL_REGISTER_SIZE; // sr->getByteSize();
     ORList ors;
     if (first_usestmt_ct != nullptr) {
         //Handle upward exposed use.
-        toc.clean_bottomup();
+        tc.clean_bottomup();
         SR * newsr = genReg();
-        buildLoad(newsr, SR_spill_var(sr), 0, false, ors, &toc);
+        buildLoad(newsr, SR_spill_var(sr), 0, false, ors, &tc);
         ASSERT0(first_usestmt_ct != ORBB_orlist(bb)->end());
         ORBB_orlist(bb)->insert_before(ors, first_usestmt_ct);
 
@@ -4223,11 +4218,11 @@ void CG::localizeBB(SR * sr, ORBB * bb)
 
     if (first_defstmt_ct != nullptr) {
         //Handle downward exposed use.
-        toc.clean_bottomup();
+        tc.clean_bottomup();
         ors.clean();
 
         SR * newsr = genReg();
-        buildStore(newsr, SR_spill_var(sr), 0, false, ors, &toc);
+        buildStore(newsr, SR_spill_var(sr), 0, false, ors, &tc);
         if (HAS_PREDICATE_REGISTER) {
             SR * pd = last_defstmt_ct->val()->get_pred();
             if (pd != nullptr) {
@@ -4467,7 +4462,7 @@ static void performCFGOptimization(CG * cg, OptCtx & oc)
 //Guarantee IR_RETURN at the end of function.
 void CG::addReturnForEmptyRegion()
 {
-    IR * ret = m_rg->buildReturn(nullptr);
+    IR * ret = m_rg->getIRMgr()->buildReturn(nullptr);
     IRBB * bb = m_rg->getBBList()->get_head();
     if (bb != nullptr) {
         ASSERTN(m_rg->getIRList() == nullptr,

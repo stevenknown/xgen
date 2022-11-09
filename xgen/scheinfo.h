@@ -34,12 +34,12 @@ author: Su Zhenyu
 namespace xgen {
 
 //Corresponding to the information of target machine operation.
-#define ORSI_last_result_avail_cyc(oi)      ((oi)->last_result_avail_cyc)
-#define ORSI_first_result_avail_cyc(oi)     ((oi)->first_result_avail_cyc)
-#define ORSI_reg_result_avail_cyc(oi, i)    ((oi)->reg_result_cyc_buf[(i)])
-#define ORSI_mem_result_avail_cyc(oi, i)    ((oi)->mem_result_cyc_buf[(i)])
-#define ORSI_reg_result_cyc_buf(oi)         ((oi)->reg_result_cyc_buf)
-#define ORSI_mem_result_cyc_buf(oi)         ((oi)->mem_result_cyc_buf)
+#define ORSI_last_result_avail_cyc(oi) ((oi)->last_result_avail_cyc)
+#define ORSI_first_result_avail_cyc(oi) ((oi)->first_result_avail_cyc)
+#define ORSI_reg_result_avail_cyc(oi, i) ((oi)->reg_result_cyc_buf[(i)])
+#define ORSI_mem_result_avail_cyc(oi, i) ((oi)->mem_result_cyc_buf[(i)])
+#define ORSI_reg_result_cyc_buf(oi) ((oi)->reg_result_cyc_buf)
+#define ORSI_mem_result_cyc_buf(oi) ((oi)->mem_result_cyc_buf)
 typedef struct ORScheInfo {
 public:
     UINT * reg_result_cyc_buf; //record each of register result available cycle

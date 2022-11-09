@@ -39,14 +39,22 @@ namespace xgen {
 //NOTE: phsical register id start at 1.
 void RegSet::dump(FILE * h) const
 {
+    StrBuf buf(32);
+    dump(buf);
+    fprintf(h, "%s", buf.buf);
+    fflush(h);
+}
+
+
+void RegSet::dump(OUT StrBuf & buf) const
+{
     for (BSIdx i = get_first(); i != BS_UNDEF;) {
-        fprintf(h, "%s", tmGetRegName((REG)i));
+        buf.strcat("%s", tmGetRegName((Reg)i));
         i = get_next(i);
         if (i != BS_UNDEF) {
-            fprintf(h, ",");
+            buf.strcat(",");
         }
     }
-    fflush(h);
 }
 ///END RegSet
 

@@ -235,7 +235,7 @@ public:
     //Assign physical register manually.
     //During some passes, e.g IR2OR, user expects to assign physical register
     //to SR which is NOT dedicated register.
-    virtual void assignPhyRegister(SR * sr, REG reg, REGFILE rf);
+    virtual void assignPhyRegister(SR * sr, Reg reg, REGFILE rf);
     virtual BBSimulator * allocBBSimulator(ORBB * bb);
     virtual LIS * allocLIS(ORBB * bb, DataDepGraph * ddg,
                            BBSimulator * sim, UINT sch_mode);
@@ -348,12 +348,15 @@ public:
                            HOST_INT ofst, bool is_signed,
                            OUT ORList & ors, MOD IOC * cont)
     {
-        ASSERT0(SR_is_reg(load_val));
+        ASSERT0(load_val->is_reg());
         buildLoad(load_val, genVAR(base), genIntImm(ofst, true), is_signed,
                   ors, cont);
     }
     virtual void buildGeneralLoad(IN SR * val, HOST_INT ofst, bool is_signed,
                                   OUT ORList & ors, MOD IOC * cont);
+    virtual void buildTypeCvt(SR * src, UINT tgt_size, UINT src_size,
+                              bool is_signed, Dbx const* dbx, OUT ORList & ors,
+                              MOD IOC * cont);
     virtual void buildTypeCvt(IR const* tgt, IR const* src,
                               OUT ORList & ors, MOD IOC * cont);
 
@@ -428,7 +431,13 @@ public:
     void constructORBBList(IN ORList  & or_list);
     void computeEntryAndExit(IN ORCFG & cfg, OUT List<ORBB*> & entry_lst,
                              OUT List<ORBB*> & exit_lst);
+
+    //Compute the index of operand, return OR_SR_IDX_UNDEF if 'opnd' is not an
+    //opnd of 'o'.
     INT computeOpndIdx(OR * o, SR const* opnd);
+
+    //Compute the index of 'res', return OR_SR_IDX_UNDEF if 'res' is not a
+    //result of 'o'.
     INT computeResultIdx(OR * o, SR const* res);
 
     //Estimate and reserve stack memory space for real parameters.
@@ -594,8 +603,8 @@ public:
     SR * genVAR(xoc::Var const* var);
     SR * genLabel(LabelInfo const* li);
     SR * genLabelList(LabelInfoList const* lilst);
-    SR * genSR();
-    SR * genSR(REG reg, REGFILE regfile);
+    SR * genSR(SR_CODE c);
+    SR * genSR(Reg reg, REGFILE regfile);
 
     //Generate a SR if bytes_size not more than GENERAL_REGISTER_SIZE,
     //otherwise generate a vector or SR.
@@ -607,7 +616,7 @@ public:
 
     //Generate a global SR that bytes_size is not more than
     //GENERAL_REGISTER_SIZE.
-    SR * genRegWithPhyReg(REG reg, REGFILE rf);
+    SR * genRegWithPhyReg(Reg reg, REGFILE rf);
 
     //Generate SR that indicates const value.
     SR * genIntImm(HOST_INT val, bool is_signed);
@@ -617,9 +626,9 @@ public:
 
     Region * getRegion() const { return m_rg; }
     //Generate dedicated register by specified physical register.
-    SR * genDedicatedReg(REG phy_reg);
+    SR * genDedicatedReg(Reg phy_reg);
     //Get dedicated register by specified physical register.
-    SR * getDedicatedReg(REG phy_reg) const;
+    SR * getDedicatedReg(Reg phy_reg) const;
     virtual SR * getSP() const;
     virtual SR * getFP() const;
     virtual SR * getGP() const;
@@ -643,6 +652,12 @@ public:
     //Or return the spill location if exist.
     //'sr': the referrence SR.
     xoc::Var * genSpillVar(SR * sr);
+    void generateFuncUnitDedicatedCodeForEntryBB(List<ORBB*> const& entry_lst,
+                                                 bool has_call,
+                                                 OUT ORList & ors);
+    void generateFuncUnitDedicatedCodeForExitBB(List<ORBB*> const& exit_lst,
+                                                bool has_call,
+                                                OUT ORList & ors);
     void generateFuncUnitDedicatedCode();
     ORCFG * getORCFG() const { return m_or_cfg; }
     xoc::TypeMgr * getTypeMgr() const { return m_tm; }
@@ -681,7 +696,7 @@ public:
     IssuePackageMgr * getIssuePackageMgr() { return &m_ip_mgr; }
 
     //Map phsical register to dedicated symbol register if exist.
-    SR * getDedicatedSRForPhyReg(REG reg);
+    SR * getDedicatedSRForPhyReg(Reg reg);
 
     //Generate and return the mask code that used to reserved the lower
     //'bytesize' bytes.
@@ -696,7 +711,7 @@ public:
     void initGlobalVar(VarMgr * vm);
     bool isComputeStackOffset() const { return m_is_compute_sect_offset; }
     bool isGRAEnable() const;
-    bool isEvenReg(REG reg) const
+    bool isEvenReg(Reg reg) const
     {
         //register start from '1'. And '0' denotes memory.
         return (reg % 2) == 1;
@@ -930,7 +945,7 @@ public:
     }
 
     //Return the cluster which owns 'reg'
-    virtual CLUST mapReg2Cluster(REG) const
+    virtual CLUST mapReg2Cluster(Reg) const
     {
         ASSERTN(0, ("Target Dependent Code"));
         CLUST clust = CLUST_UNDEF;
@@ -983,7 +998,7 @@ public:
     void setMapSymbolReg2SR(UINT regid, SR * sr)
     {
         DUMMYUSE(regid);
-        m_regid2sr_map.set(SR_sregid(sr), sr);
+        m_regid2sr_map.set(SR_sym_reg(sr), sr);
     }
 
     void setCluster(ORList & ors, CLUST clust);
@@ -1002,7 +1017,7 @@ public:
 
     //True if current argument register should be bypassed.
     virtual bool skipArgRegister(Var const* param, RegSet const* regset,
-                                 REG reg) const
+                                 Reg reg) const
     {
         DUMMYUSE(param && regset && reg);
         ASSERTN(0, ("Target Dependent Code")); return false;

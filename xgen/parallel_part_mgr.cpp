@@ -334,7 +334,7 @@ bool ParallelPartMgr::verifyReductionOR()
             if (sr->is_global()) {
                 if (m_bb->isLiveOut(sr) &&
                     hasPDomOcc(m_bb, sr) &&
-                    ORBB_liveout(m_bb).is_contain(SR_sregid(sr))) {
+                    ORBB_liveout(m_bb).is_contain(SR_sym_reg(sr))) {
                     if (!m_cg->isReductionOR(o)) {
                         return false;
                     }
@@ -526,40 +526,40 @@ void ParallelPartMgr::computeUniqueRegFile(OR * o,
         if (!m_cg->isIntRegSR(o, sr, i, true)) {
             continue;
         }
-        if (is_regfile_unique.is_contain(SR_sregid(sr))) {
+        if (is_regfile_unique.is_contain(SR_sym_reg(sr))) {
             continue;
         }
         if (sr->getPhyReg() != REG_UNDEF) {
             SR_regfile(sr) = tmMapReg2RegFile(sr->getPhyReg());
             ASSERTN(sr->getRegFile() != RF_UNDEF, ("Unknown regfile"));
-            is_regfile_unique.bunion(SR_sregid(sr));
+            is_regfile_unique.bunion(SR_sym_reg(sr));
             continue;
         }
 
         //Can allocate global register over again.
         //if (sr->is_global()) {
-        //    is_regfile_unique.bunion(SR_sregid(sr));
+        //    is_regfile_unique.bunion(SR_sym_reg(sr));
         //    continue;
         //}
 
         if (SR_is_dedicated(sr)) {
-            is_regfile_unique.bunion(SR_sregid(sr));
+            is_regfile_unique.bunion(SR_sym_reg(sr));
             continue;
         }
         if (sr->is_pred()) {
             SR_regfile(sr) = m_cg->getPredicateRegfile();
-            is_regfile_unique.bunion(SR_sregid(sr));
+            is_regfile_unique.bunion(SR_sym_reg(sr));
             continue;
         }
         if (sr->is_rflag()) {
             SR_regfile(sr) = m_cg->getRflagRegfile();
-            is_regfile_unique.bunion(SR_sregid(sr));
+            is_regfile_unique.bunion(SR_sym_reg(sr));
             continue;
         }
         if (o->is_asm()) {
             if (sr->getPhyReg() != REG_UNDEF ||
                 sr->getRegFile() != RF_UNDEF) {
-                is_regfile_unique.bunion(SR_sregid(sr));
+                is_regfile_unique.bunion(SR_sym_reg(sr));
                 continue;
             }
         }
@@ -570,31 +570,31 @@ void ParallelPartMgr::computeUniqueRegFile(OR * o,
         if (!m_cg->isIntRegSR(o, sr, i, false)) {
             continue;
         }
-        if (is_regfile_unique.is_contain(SR_sregid(sr))) {
+        if (is_regfile_unique.is_contain(SR_sym_reg(sr))) {
             continue;
         }
         if (sr->getPhyReg() != REG_UNDEF) {
             SR_regfile(sr) = tmMapReg2RegFile(sr->getPhyReg());
             ASSERTN(sr->getRegFile() != RF_UNDEF,
                     ("Unknown regfile"));
-            is_regfile_unique.bunion(SR_sregid(sr));
+            is_regfile_unique.bunion(SR_sym_reg(sr));
             continue;
         }
 
         //Can allocate global register over again.
         //if (sr->is_global()) {
-        //    is_regfile_unique.bunion(SR_sregid(sr));
+        //    is_regfile_unique.bunion(SR_sym_reg(sr));
         //    continue;
         //}
 
         if (SR_is_dedicated(sr)) {
-            is_regfile_unique.bunion(SR_sregid(sr));
+            is_regfile_unique.bunion(SR_sym_reg(sr));
             continue;
         }
         if (o->is_asm()) {
             if (sr->getPhyReg() != REG_UNDEF ||
                 sr->getRegFile() != RF_UNDEF) {
-                is_regfile_unique.bunion(SR_sregid(sr));
+                is_regfile_unique.bunion(SR_sym_reg(sr));
                 continue;
             }
         }
@@ -621,7 +621,7 @@ bool ParallelPartMgr::modifyReductionOR(OR * o, INT mul)
 {
     ASSERTN(m_cg->isReductionOR(o), ("o is not reducible"));
     SR * step = o->get_opnd(2);
-    ASSERT0(step && SR_is_imm(step));
+    ASSERT0(step && step->is_imm());
     //TODO: Support multiply when step is variant.
     ASSERT0(step->is_constant());
     SR * new_step = m_cg->genIntImm((HOST_INT)step->getInt() * mul, true);

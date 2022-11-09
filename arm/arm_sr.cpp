@@ -36,7 +36,7 @@ author: Su Zhenyu
 //Return SR name during print assembly file.
 CHAR const* ARMSR::getAsmName(StrBuf & buf, CG const* cg) const
 {
-    switch (SR_type(this)) {
+    switch (SR_code(this)) {
     case SR_INT_IMM:
         buf.strcat("#");
         return SR::getAsmName(buf, cg);
@@ -66,7 +66,7 @@ CHAR const* ARMSR::getAsmName(StrBuf & buf, CG const* cg) const
 //'buf': output string buffer.
 CHAR const* ARMSR::get_name(StrBuf & buf, CG const* cg) const
 {
-    switch (SR_type(this)) {
+    switch (SR_code(this)) {
     case SR_REG: {
         return SR::get_name(buf, cg);
 

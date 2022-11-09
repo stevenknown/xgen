@@ -33,13 +33,13 @@ author: Su Zhenyu
 
 class ARMDDG : public DataDepGraph {
     COPY_CONSTRUCTOR(ARMDDG);
-    RegSet m_alias_regset_pred;
+    xgen::RegSet m_alias_regset_pred;
 protected:
     bool m_use_rflag;
 
     //Collect the alias register into set.
     //Registers in alias set will be add dependence in building DDG.
-    virtual void collectAliasRegSet(REG reg, OUT RegSet & alias_regset);
+    virtual void collectAliasRegSet(Reg reg, OUT xgen::RegSet & alias_regset);
 
 public:
     ARMDDG(ARMCG * cg);

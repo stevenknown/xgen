@@ -40,8 +40,8 @@ namespace xgen {
 //    They are add_m, add_i, add_o.
 //    The equivalent group is [add_m, add_i, add_o] for each add_m, add_i,
 //    add_o operations.
-#define EQUORC_unit2orcode(e, u)   ((e)->m_func_unit2orcode[u])
-#define EQUORC_num_equorcode(e)    ((e)->m_num_of_equorcode)
+#define EQUORC_unit2orcode(e, u) ((e)->m_func_unit2orcode[u])
+#define EQUORC_num_equorcode(e) ((e)->m_num_of_equorcode)
 
 typedef struct EquORCodes {
     //Record the number of Equal OR code.

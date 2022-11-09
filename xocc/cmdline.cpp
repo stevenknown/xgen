@@ -81,6 +81,8 @@ static void disable_opt(INT opt_level)
         xoc::g_do_lftr = false;
         xoc::g_infer_type = false;
         xoc::g_do_rce = false;
+        xoc::g_do_gvn = false;
+        xoc::g_do_lsra = false;
         g_cfg_opt = false;
         break;
     default: UNREACHABLE();
@@ -130,6 +132,9 @@ static bool process_opt(INT argc, CHAR const* argv[], INT & i)
         xoc::g_do_mdssa = true;
         xoc::g_infer_type = true;
         g_cfg_opt = true;
+        #ifdef FOR_IP
+        //xoc::g_do_lsra = true;
+        #endif
         break;
     case 's':
     case 'S':
@@ -330,6 +335,8 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "enable code generation for inner region", },
     { "refine_duchain", &xoc::g_do_refine_duchain,
       "enable refine-duchain optimization", },
+    { "lsra", &xoc::g_do_lsra,
+       "enable linear-scan-register-allocation", },
 };
 
 
@@ -396,6 +403,8 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "output GR language according region information", },
     { "irid", &xoc::g_dump_opt.is_dump_ir_id,
       "dump IR's id", },
+    { "lsra", &xoc::g_dump_opt.is_dump_lsra,
+      "dump linear-scan-register-allocation", },
 };
 
 
@@ -645,7 +654,7 @@ static void inferOption()
         xoc::g_do_loop_ana = false;
         xoc::g_do_cdg = false;
         xoc::g_do_cfg_remove_redundant_branch = false;
-        xoc::g_invert_brtgt = false;
+        xoc::g_invert_branch_target = false;
         xoc::g_do_aa = false;
         xoc::g_do_md_du_analysis = false;
         xoc::g_is_support_dynamic_type = false;
@@ -667,7 +676,7 @@ static void inferOption()
         xoc::g_do_cfg_remove_empty_bb = false;
         xoc::g_do_cfg_remove_unreach_bb = false;
         xoc::g_do_cfg_remove_trampolin_bb = false;
-        xoc::g_invert_brtgt = false;
+        xoc::g_invert_branch_target = false;
         xoc::g_do_cfg_remove_redundant_branch = false;
         xoc::g_do_cfg_remove_trampolin_branch = false;
         xoc::g_do_cfg_remove_redundant_label = false;

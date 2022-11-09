@@ -132,11 +132,11 @@ void ORCFG::moveLabels(ORBB * src, ORBB * tgt)
 
 
 //Cut off the mapping relation bwteen Labels and BB.
-void ORCFG::resetMapBetweenLabelAndBB(ORBB * bb)
+void ORCFG::removeMapBetweenLabelAndBB(ORBB * bb)
 {
     for (xoc::LabelInfo const* li = bb->getLabelList().get_head();
          li != nullptr; li = bb->getLabelList().get_next()) {
-        m_lab2bb.setAlways(li, nullptr);
+        m_lab2bb.remove(li);
     }
     bb->cleanLabelInfoList();
 }

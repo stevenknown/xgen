@@ -487,7 +487,7 @@ void ORBB::setLiveOut(SR * sr)
 {
     ASSERT0(sr->is_reg());
     SR_is_global(sr) = 1;
-    ORBB_liveout(this).bunion(SR_sregid(sr));
+    ORBB_liveout(this).bunion(SR_sym_reg(sr));
 }
 
 
@@ -495,7 +495,7 @@ void ORBB::setLiveIn(SR * sr)
 {
     ASSERT0(sr->is_reg());
     SR_is_global(sr) = 1;
-    ORBB_livein(this).bunion(SR_sregid(sr));
+    ORBB_livein(this).bunion(SR_sym_reg(sr));
 }
 
 
@@ -503,7 +503,7 @@ bool ORBB::isLiveIn(SR * sr)
 {
     ASSERT0(sr->is_reg());
     if (sr->is_global() &&
-        (ORBB_livein(this).is_contain(SR_sregid(sr)))) {
+        (ORBB_livein(this).is_contain(SR_sym_reg(sr)))) {
         return true;
     }
     return false;
@@ -513,7 +513,7 @@ bool ORBB::isLiveIn(SR * sr)
 bool ORBB::isLiveOut(SR * sr)
 {
     if (sr->is_global() &&
-        (ORBB_liveout(this).is_contain(SR_sregid(sr)))) {
+        (ORBB_liveout(this).is_contain(SR_sym_reg(sr)))) {
         return true;
     }
     return false;

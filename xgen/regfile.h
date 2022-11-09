@@ -33,6 +33,18 @@ author: Su Zhenyu
 
 namespace xgen {
 
+//Register File set
+class RegFileSet : public xcom::BitSet {
+public:
+    RegFileSet(UINT init_pool_size = 2) : xcom::BitSet(init_pool_size) {}
+    RegFileSet(RegFileSet const& rfs) { xcom::BitSet::copy(rfs); }
+
+    //Convert from BSIdx to REGFILE.
+    static REGFILE toRegFile(BSIdx x)
+    { return IS_BSUNDEF(x) ? RF_UNDEF : (REGFILE)x; }
+};
+
+
 //This class indicate the properties of register file.
 class RegFileProp {
 public:

@@ -48,6 +48,8 @@ typedef Vector<OR*> ORVec; //OR vector
 #define OFST_LOAD_BASE 0
 #define OFST_LOAD_OFST 1
 #define ORID_UNDEF 0
+#define OR_ORDER_UNDEF -1
+#define OR_SR_IDX_UNDEF -1
 
 //OR Descriptor
 #define OTD_code(o) ((o)->m_code)
@@ -79,10 +81,10 @@ typedef Vector<OR*> ORVec; //OR vector
 #define OTD_is_subi(o) ((o)->m_is_subi)
 class ORCodeDesc {
 public:
-    //////////////////////////////////////////////////////////////////////////
-    //NOTE: DO NOT CHANGE THE LAYOUT OF MEMBER.                             //
-    //THE LAYOUT OF MEMBER CORRESPONDS TO TERGET DEPENDENT CONFIG FILE.     //
-    //////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+    //NOTE: DO NOT CHANGE THE LAYOUT OF MEMBER.                              //
+    //THE LAYOUT OF MEMBER CORRESPONDS TO TERGET DEPENDENT CONFIG FILE.      //
+    ///////////////////////////////////////////////////////////////////////////
     OR_CODE m_code;
     CHAR const* m_name;
 
@@ -172,17 +174,18 @@ protected:
     typedef SimpleVector<SR*, 2, MAX_OR_RESULT_NUM> ResultVec;
     OpndVec m_opnd; //Operand of micro operation
     ResultVec m_result; //Result of micro operation
-
 protected:
     OpndVec * get_opnd_vec() { return &m_opnd; }
     ResultVec * get_result_vec() { return &m_result; }
-
 public:
-    //each op has its own unique id.
-    //DO NOT MODIFY 'id' DURING cleaning, cloning or copying of OR.
+    //Unique id.
+    ///////////////////////////////////////////////////////////////////////////
+    //NOTE: DO NOT MODIFY 'id' DURING CLEANING, CLONING OR COPYING OF OR.    //
+    ///////////////////////////////////////////////////////////////////////////
     UINT uid;
 
-    OR_CODE code; //operation type, various to different target machine.
+    //Operation type, various to different target machine.
+    OR_CODE code;
 
     //Container of OR, used for List operations,
     //only available when OR in list.
@@ -193,10 +196,17 @@ public:
     ORBB * ubb;
     union {
         struct {
-            BYTE is_signed:1; //Is OR signed?
-            BYTE is_spill:1; //Is OR spilling operation?
-            BYTE is_reload:1; //Is OR reloading operation?
-            BYTE is_terminate_control_flow:1; //Is OR terminate control flow?
+            //True if OR is signed.
+            BYTE is_signed:1;
+
+            //True if OR is spill-operation.
+            BYTE is_spill:1;
+
+            //True if OR is reload-operation.
+            BYTE is_reload:1;
+
+            //True if OR terminates the control flow.
+            BYTE is_terminate_control_flow:1;
 
             //Set to true if OR has a dummy offset which indicated by Var.
             //And the offset should be caclulated to be an integer
@@ -206,7 +216,6 @@ public:
         BYTE s1byte;
     } u1;
     Dbx dbx;
-
 public:
     OR() { init(); }
     virtual ~OR() { destroy(); }
@@ -214,6 +223,7 @@ public:
     void clean();
     virtual void clone(OR const* o, CG * cg);
     void copyDbx(IR const* ir);
+    void copyDbx(Dbx const* dbx);
 
     void destroy()
     {
@@ -372,7 +382,7 @@ public:
         container = nullptr;
         clust = CLUST_UNDEF;
         uid = ORID_UNDEF;
-        order = -1;
+        order = OR_ORDER_UNDEF;
         ubb = nullptr;
         OR_flag(this) = 0;
         m_opnd.init();
@@ -502,21 +512,21 @@ public:
     //Set Label operand, it should be a label SR, the default operand index
     //is HAS_PREDICATE_REGISTER + 0.
     //Layout of opnds:
-    //-----------------------------------------------------------
+    //-------------------------------------------------------------------------
     // 0         | 1     | 2   |
     // predicate | label | ... |
     // register  |       |     |
-    //-----------------------------------------------------------
+    //-------------------------------------------------------------------------
     virtual void setLabel(SR * v, CG * cg);
 
     //Get Label List, it should be a label-list SR, the default operand index
     //is HAS_PREDICATE_REGISTER + 0.
     //Layout of opnds:
-    //-----------------------------------------------------------
+    //-------------------------------------------------------------------------
     // 0         | 1     | 2   |
     // predicate | label | ... |
     // register  | list  |     |
-    //-----------------------------------------------------------
+    //-------------------------------------------------------------------------
     virtual void setLabelList(SR * v, CG * cg);
     virtual void set_lda_result(SR * v, CG * cg) { set_result(0, v, cg); }
     virtual void set_mov_to(SR * v, CG * cg) { set_result(0, v, cg); }
@@ -547,7 +557,7 @@ public:
     }
     void copyDbx(Dbx const* dbx)
     {
-        ASSERT0(dbx);
+        if (dbx == nullptr) { return; }
         for (OR * o = get_head(); o != nullptr; o = get_next()) {
             OR_dbx(o).copy(*dbx);
         }

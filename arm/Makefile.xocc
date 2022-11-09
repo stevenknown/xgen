@@ -82,6 +82,11 @@ CFLAGS +=\
    #-Wtype-limits
    #-Werror=reorder
 
+ifeq ($(FOR_IP), true)
+CFLAGS +=\
+   -DFOR_IP
+endif
+
 ifneq (,$(filter $(HOST_CC),g++ gcc))
   CFLAGS += -Wno-strict-aliasing -finline-limit=10000000
 endif

@@ -33,7 +33,7 @@ author: Su Zhenyu
 
 namespace xgen {
 
-typedef ULONG SymRegId; //Symbol Register Id, it must be different with REG.
+typedef UINT Reg;
 
 //Register set
 class RegSet : public xcom::BitSet {
@@ -42,21 +42,10 @@ public:
     RegSet(RegSet const& rs) { xcom::BitSet::copy(rs); }
 
     void dump(FILE * h) const;
+    void dump(OUT StrBuf & buf) const;
 
-    //Convert from BSIdx to REG.
-    static REG toReg(BSIdx x) { return IS_BSUNDEF(x) ? REG_UNDEF : (REG)x; }
-};
-
-
-//Register File set
-class RegFileSet : public xcom::BitSet {
-public:
-    RegFileSet(UINT init_pool_size = 2) : xcom::BitSet(init_pool_size) {}
-    RegFileSet(RegFileSet const& rfs) { xcom::BitSet::copy(rfs); }
-
-    //Convert from BSIdx to REGFILE.
-    static REGFILE toRegFile(BSIdx x)
-    { return IS_BSUNDEF(x) ? RF_UNDEF : (REGFILE)x; }
+    //Convert from BSIdx to Reg.
+    static Reg toReg(BSIdx x) { return IS_BSUNDEF(x) ? REG_UNDEF : (Reg)x; }
 };
 
 
@@ -80,7 +69,7 @@ public:
 };
 
 //Return true if reg is legal to target machine.
-inline bool isLegalReg(REG reg)
+inline bool isLegalReg(Reg reg)
 {
     return reg > REG_UNDEF && reg < REG_NUM;
 }

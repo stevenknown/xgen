@@ -113,7 +113,7 @@ public:
         ASSERTN(0, ("Use alternative removeBB(container)"));
     }
     virtual void remove_xr(ORBB * bb, OR * o, CfgOptCtx const& ctx);
-    virtual void resetMapBetweenLabelAndBB(ORBB * bb);
+    virtual void removeMapBetweenLabelAndBB(ORBB * bb);
 
     virtual void setRPO(ORBB * bb, INT order) { ORBB_rpo(bb) = order; }
     virtual void setVertex(ORBB * bb, Vertex * v) { BB_vex(bb) = v; }

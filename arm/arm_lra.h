@@ -34,15 +34,15 @@ author: Su Zhenyu
 //
 //START ARMLifeTimeMgr
 //
-class ARMLifeTimeMgr : public LifeTimeMgr {
+class ARMLifeTimeMgr : public xgen::LifeTimeMgr {
 public:
-    ARMLifeTimeMgr(CG * cg) : LifeTimeMgr(cg) {}
+    ARMLifeTimeMgr(CG * cg) : xgen::LifeTimeMgr(cg) {}
     virtual ~ARMLifeTimeMgr() {}
 
     virtual void handlePreferredReg(OR const*);
 
     virtual void considerSpecialConstraints(IN OR *, SR const*,
-                                            OUT RegSet & usable_regs);
+                                            OUT xgen::RegSet & usable_regs);
 };
 //END ARMLifeTimeMgr
 

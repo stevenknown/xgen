@@ -162,7 +162,7 @@ void RaMgr::postProcess()
 }
 
 
-void RaMgr::updateAsmClobberCallee(REGFILE regfile, REG reg)
+void RaMgr::updateAsmClobberCallee(REGFILE regfile, Reg reg)
 {
     ASSERTN(regfile != RF_UNDEF && reg != REG_UNDEF,
             ("Illegal regfile and reg"));
@@ -173,7 +173,7 @@ void RaMgr::updateAsmClobberCallee(REGFILE regfile, REG reg)
 }
 
 
-void RaMgr::updateCallee(REGFILE regfile, REG reg)
+void RaMgr::updateCallee(REGFILE regfile, Reg reg)
 {
     ASSERTN(regfile != RF_UNDEF && reg != REG_UNDEF,
             ("Illegal regfile and reg"));

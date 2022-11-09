@@ -36,14 +36,14 @@ author: Su Zhenyu
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include "../opt/cominc.h"
-#include "../opt/comopt.h"
 #include "xgenoption.h"
+#include "../opt/cominc.h"
 #include "equorcode.h"
 #include "scheinfo.h"
-#include "targ_interface.h"
 #include "reg.h"
 #include "regfile.h"
+#include "targ_interface.h"
+#include "../opt/comopt.h"
 #include "regfilegroup.h"
 #include "sr.h"
 #include "srdesc.h"

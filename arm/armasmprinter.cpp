@@ -167,7 +167,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     case OR_movw_i: {
         SR * v = o->get_mov_from();
         ASSERT0(v);
-        if (SR_type(v) == SR_VAR) {
+        if (v->is_var()) {
             for (UINT i = 0; i < o->result_num(); i++) {
                 if (i != 0) {
                     buf.strcat(", ");
@@ -186,7 +186,7 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
     case OR_movt_i: {
         SR * v = o->get_mov_from();
         ASSERT0(v);
-        if (SR_type(v) == SR_VAR) {
+        if (v->is_var()) {
             for (UINT i = 0; i < o->result_num(); i++) {
                 if (i != 0) {
                     buf.strcat(", ");

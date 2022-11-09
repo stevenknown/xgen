@@ -396,7 +396,7 @@ void DataDepGraph::removeRedundantDep()
                 //and the modifying SP/FP operation is redundant.
                 SR * base_sr = from->get_mem_base();
                 if (!m_cg->mustDef(to, base_sr)) {
-                    //Not REG-FLOW dep
+                    //Not Reg-FLOW dep
                     removeEdge(from, to);
                     continue;
                 }
@@ -420,7 +420,7 @@ void DataDepGraph::removeRedundantDep()
                 //and the modifying SP/FP operation is redundant.
                 SR * base_sr = to->get_mem_base();
                 if (!m_cg->mustDef(from, base_sr)) {
-                    //Not REG-FLOW dep
+                    //Not Reg-FLOW dep
                     removeEdge(from, to);
                     continue;
                 }
@@ -447,20 +447,20 @@ void DataDepGraph::handleResultsPhyRegOut(OR const* o, SR const* sr,
                                           OUT Reg2ORList & map_reg2useors)
 {
     ASSERT0(o && sr);
-    REG reg = sr->getPhyReg();
+    Reg reg = sr->getPhyReg();
     ASSERT0(reg != REG_UNDEF);
 
     m_tmp_alias_regset.clean();
     collectAliasRegSet(reg, m_tmp_alias_regset);
     for (BSIdx i = m_tmp_alias_regset.get_first();
          i != BS_UNDEF; i = m_tmp_alias_regset.get_next(i)) {
-        handleResultsPhyRegOut(o, (REG)i, map_reg2defors, map_reg2useors);
+        handleResultsPhyRegOut(o, (Reg)i, map_reg2defors, map_reg2useors);
     }
 }
 
 
 //Build dependence of physical register.
-void DataDepGraph::handleResultsPhyRegOut(OR const* o, REG reg,
+void DataDepGraph::handleResultsPhyRegOut(OR const* o, Reg reg,
                                           OUT Reg2ORList & map_reg2defors,
                                           OUT Reg2ORList & map_reg2useors)
 {
@@ -561,7 +561,7 @@ void DataDepGraph::handleResults(OR const* o,
 }
 
 
-void DataDepGraph::collectAliasRegSet(REG reg, OUT RegSet & alias_regset)
+void DataDepGraph::collectAliasRegSet(Reg reg, OUT xgen::RegSet & alias_regset)
 {
     alias_regset.bunion(reg);
 }
@@ -573,19 +573,19 @@ void DataDepGraph::handleOpndsPhyRegFlow(OR const* o, SR const* sr,
                                          OUT Reg2ORList & map_reg2useors)
 {
     ASSERT0(o && sr);
-    REG reg = sr->getPhyReg();
+    Reg reg = sr->getPhyReg();
     ASSERT0(reg != REG_UNDEF);
 
     m_tmp_alias_regset.clean();
     collectAliasRegSet(reg, m_tmp_alias_regset);
     for (BSIdx i = m_tmp_alias_regset.get_first();
          i != BS_UNDEF; i = m_tmp_alias_regset.get_next(i)) {
-        handleOpndsPhyRegFlow(o, (REG)i, map_reg2defors, map_reg2useors);
+        handleOpndsPhyRegFlow(o, (Reg)i, map_reg2defors, map_reg2useors);
     }
 }
 
 
-void DataDepGraph::handleOpndsPhyRegFlow(OR const* o, REG reg,
+void DataDepGraph::handleOpndsPhyRegFlow(OR const* o, Reg reg,
                                          OUT Reg2ORList & map_reg2defors,
                                          OUT Reg2ORList & map_reg2useors)
 {

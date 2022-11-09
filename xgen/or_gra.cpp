@@ -132,14 +132,14 @@ void OR_DF_MGR::computeLocalLiveness(ORBB * bb)
             SR * sr = o->get_result(i);
             ASSERT0(sr != nullptr);
             if (!sr->is_reg()) { continue; }
-            gen->bunion(SR_sregid(sr));
+            gen->bunion(SR_sym_reg(sr));
         }
         use->diff(*gen);
         for (i = 0; i < o->opnd_num(); i++) {
             SR * sr = o->get_opnd(i);
             if (!sr->is_reg()) { continue; }
             ASSERT0(sr != nullptr);
-            use->bunion(SR_sregid(sr));
+            use->bunion(SR_sym_reg(sr));
         }
     }
 }
@@ -248,7 +248,7 @@ void GLT_MGR::dump()
                 buf.clean();
                 sr->get_name(buf, m_cg);
                 max_name_len = MAX(max_name_len, (UINT)buf.strlen());
-                srbs.bunion(SR_sregid(sr));
+                srbs.bunion(SR_sym_reg(sr));
             }
             for (i = 0; i < o->result_num(); i++) {
                 SR * sr = o->get_result(i);
@@ -256,7 +256,7 @@ void GLT_MGR::dump()
                 if (!sr->is_reg()) { continue; }
                 sr->get_name(buf, m_cg);
                 max_name_len = MAX(max_name_len, (UINT)buf.strlen());
-                srbs.bunion(SR_sregid(sr));
+                srbs.bunion(SR_sym_reg(sr));
             }
         }
     }
@@ -296,10 +296,10 @@ void GLT_MGR::dump()
 
 xcom::BitSet * GLT_MGR::map_sr2livebbs(IN SR * sr)
 {
-    xcom::BitSet * bs = m_map_sr2livebb.get(SR_sregid(sr));
+    xcom::BitSet * bs = m_map_sr2livebb.get(SR_sym_reg(sr));
     if (bs == nullptr) {
         bs = m_bs_mgr.create();
-        m_map_sr2livebb.set(SR_sregid(sr), bs);
+        m_map_sr2livebb.set(SR_sym_reg(sr), bs);
     }
     return bs;
 }

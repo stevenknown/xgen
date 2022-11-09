@@ -194,6 +194,14 @@ public:
     //Print result of CG to asm file.
     void prtCGResult(CG const* cg);
 
+    //The function destroy all SR and OR objects and reinitialize SRMgr
+    //and ORMgr.
+    void resetSRAndORMgr()
+    {
+        destroySRAndORMgr();
+        initSRAndORMgr();
+    }
+
     //Set handler for printing assembly into file.
     void setAsmFileHandler(FILE * asmh) { m_asm_file_handler = asmh; }
     CGMgr * self() { return this; }

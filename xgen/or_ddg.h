@@ -94,7 +94,7 @@ protected:
     SMemPool * m_pool;
     Stack<DDGParam> m_params_stack;
     DDGParam m_ddg_param;
-    RegSet m_tmp_alias_regset; //for local tmp used.
+    xgen::RegSet m_tmp_alias_regset; //for local tmp used.
     typedef TMap<UINT, UINT> ID2Cyc;
     ID2Cyc m_estart;
     ID2Cyc m_lstart;
@@ -113,9 +113,9 @@ protected:
     void * cloneVertexInfo(xcom::Vertex * v);
     //Collect the alias register into set.
     //Registers in alias set will be add dependence in building DDG.
-    virtual void collectAliasRegSet(REG reg, OUT RegSet & alias_regset);
+    virtual void collectAliasRegSet(Reg reg, OUT xgen::RegSet & alias_regset);
 
-    void handleResultsPhyRegOut(OR const* o, REG reg,
+    void handleResultsPhyRegOut(OR const* o, Reg reg,
                                 OUT Reg2ORList & map_reg2defors,
                                 OUT Reg2ORList & map_reg2useors);
     void handleResultsPhyRegOut(OR const* o, SR const* sr,
@@ -124,7 +124,7 @@ protected:
     void handleResultsSymRegOut(OR const* o, SR const* sr,
                                 OUT SR2ORList & map_sr2defors,
                                 OUT SR2ORList & map_sr2useors);
-    void handleOpndsPhyRegFlow(OR const* o, REG reg,
+    void handleOpndsPhyRegFlow(OR const* o, Reg reg,
                                OUT Reg2ORList & map_reg2defors,
                                OUT Reg2ORList & map_reg2useors);
     void handleOpndsPhyRegFlow(OR const* o, SR const* sr,

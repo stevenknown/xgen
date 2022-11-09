@@ -39,13 +39,13 @@ PassMgr * ARMRegion::allocPassMgr()
 //Simply IR to lower level IR, and insert CVT if needed.
 void ARMRegion::simplify(OptCtx & oc)
 {
-    initPassMgr();
+    ASSERTN(getPassMgr(), ("need PassMgr and IRMgr"));
     //Note PRSSA and MDSSA are unavailable.
     if (getBBList() == nullptr || getBBList()->get_elem_count() == 0) {
         return;
     }
 
-    SimpCtx simp;
+    SimpCtx simp(&oc);
     simp.setSimpCFS();
     simp.setSimpArray();
     simp.setSimpSelect();
@@ -62,7 +62,7 @@ void ARMRegion::simplify(OptCtx & oc)
         reconstructBBList(oc) && cfg_is_valid) {
 
         //Simplification may generate new memory operations.
-        ASSERT0(verifyMDRef());
+        ASSERT0(getDUMgr() && getDUMgr()->verifyMDRef());
 
         //Before CFG building.
         CfgOptCtx ctx(oc);
@@ -82,7 +82,6 @@ void ARMRegion::simplify(OptCtx & oc)
 
         getCFG()->performMiscOpt(oc);
     } else if (g_do_md_du_analysis || g_do_mdssa) {
-        ASSERT0(verifyMDRef());
         ASSERT0(verifyIRandBB(getBBList(), this));
     }
 
@@ -106,7 +105,7 @@ bool ARMRegion::simplifyToPRmode(OptCtx & oc)
     if (bbl->get_elem_count() == 0) {
         return true;
     }
-    SimpCtx simp;
+    SimpCtx simp(&oc);
     simp.setSimpCFS();
     simp.setSimpArray();
     simp.setSimpSelect();
@@ -141,7 +140,7 @@ bool ARMRegion::simplifyToPRmode(OptCtx & oc)
 
 bool ARMRegion::ARMHighProcess(OptCtx & oc)
 {
-    SimpCtx simp;
+    SimpCtx simp(&oc);
     if (g_do_cfs_opt) {
         CfsOpt co(this);
         co.perform(simp);
@@ -162,6 +161,7 @@ bool ARMRegion::ARMHighProcess(OptCtx & oc)
     }
 
     initPassMgr();
+    initIRMgr();
     HighProcessImpl(oc);
     return true;
 }
@@ -212,7 +212,6 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
     //grouped together.
     getMDMgr()->assignMD(false, true);
     getMDMgr()->assignMD(true, false);
-
     if (g_do_aa) {
         ASSERT0(g_cst_bb_list && oc.is_cfg_valid());
         getPassMgr()->checkValidAndRecompute(&oc, PASS_DOM, PASS_LOOP_INFO,
@@ -392,7 +391,8 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         //Do scalar optimizations after simplification.
         getPassMgr()->registerPass(PASS_SCALAR_OPT)->perform(oc);
     }
-    ASSERT0((!g_do_md_du_analysis && !g_do_mdssa) || verifyMDRef());
+    ASSERT0((!g_do_md_du_analysis && !g_do_mdssa) ||
+            getDUMgr()->verifyMDRef());
     ASSERT0(verifyIRandBB(getBBList(), this));
     ASSERT0(verifyMDDUChain(this, oc));
 

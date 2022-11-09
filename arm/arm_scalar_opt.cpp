@@ -61,8 +61,13 @@ static void updateCounter(Pass const* pass, UINT & cp_count,
 bool ARMScalarOpt::perform(OptCtx & oc)
 {
     ASSERT0(oc.is_cfg_valid());
-    ASSERT0(m_rg && m_rg->getCFG()->verify());
+    ASSERT0(m_rg && m_rg->getCFG()->verify());    
     List<Pass*> passlist; //A list of Optimization.
+    #ifdef FOR_IP
+    if (g_do_lsra) {
+        passlist.append_tail(m_pass_mgr->registerPass(PASS_LINEAR_SCAN_RA));
+    }
+    #endif
     if (g_do_gvn) {
         m_pass_mgr->registerPass(PASS_GVN);
     }
@@ -133,7 +138,7 @@ bool ARMScalarOpt::perform(OptCtx & oc)
                 updateCounter(pass, cp_count, licm_count);
             }
             res |= doit;
-            ASSERT0(m_rg->verifyMDRef());
+            ASSERT0(m_dumgr->verifyMDRef());
             ASSERT0(xoc::verifyMDDUChain(m_rg, oc));
             ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
             ASSERT0(m_rg->getCFG()->verify());

@@ -354,7 +354,7 @@ public:
     virtual bool isStackPointerValueEqu(SR const* base1, SR const* base2) const;
     virtual bool isSP(SR const* sr) const;
     virtual bool isReduction(OR const* o) const;
-    virtual bool isEvenReg(REG reg) const;
+    virtual bool isEvenReg(Reg reg) const;
     virtual OR_CODE invertORCode(OR_CODE ot)
     {
         switch (ot) {
@@ -380,7 +380,7 @@ public:
         OUT List<REGFILE> & regfiles) const;
     virtual SLOT mapUnit2Slot(UNIT unit, CLUST clst) const;
     virtual CLUST mapRegFile2Cluster(REGFILE regfile, SR const* sr) const;
-    virtual CLUST mapReg2Cluster(REG reg) const;
+    virtual CLUST mapReg2Cluster(Reg reg) const;
     virtual CLUST mapSR2Cluster(OR const* o, SR const* sr) const;
 
     virtual DataDepGraph * allocDDG();
@@ -393,8 +393,8 @@ public:
     virtual void setSpadjustOffset(OR * spadj, INT size);
 
     //True if current argument register should be bypassed.
-    virtual bool skipArgRegister(Var const* param, RegSet const* regset,
-                                 REG reg) const;
+    virtual bool skipArgRegister(Var const* param, xgen::RegSet const* regset,
+                                 Reg reg) const;
 
     //Interface to generate ORs to store physical register on top of stack.
     virtual void storeRegToStack(SR * reg, OUT ORList & ors);

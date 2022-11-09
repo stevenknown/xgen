@@ -63,14 +63,14 @@ SR const* checkSRREG(SR const* sr)
 
 SR const* checkSRSTR(SR const* sr)
 {
-    ASSERT0(SR_is_str(sr));
+    ASSERT0(sr->is_str());
     return sr;
 }
 
 
 SR const* checkSRIMM(SR const* sr)
 {
-    ASSERT0(SR_is_imm(sr));
+    ASSERT0(sr->is_imm());
     return sr;
 }
 #endif
@@ -79,180 +79,27 @@ SR const* checkSRIMM(SR const* sr)
 //
 //START SR
 //
+void SR::copy(SR const* sr)
+{
+    SR_code(this) = sr->getCode();
+    u2.bitflags = sr->u2.bitflags;
+}
+
+
 void SR::copy(SR const* sr, bool is_clone_vec, IN CG * cg)
 {
-    type = sr->type;
-    u2.bitflags = sr->u2.bitflags;
-    u1 = sr->u1;
+    copy(sr);
     if (is_clone_vec && sr->is_vec()) {
-        ASSERT0(cg);
+        ASSERT0(cg && SR_vec(sr));
         List<SR*> l;
         for (UINT i = 0; i < SR_vec(sr)->get_elem_count(); i++) {
-            SR * sv = cg->genSR();
-            sv->copy(SR_vec(sr)->get(i), is_clone_vec, cg);
+            SR const* src = SR_vec(sr)->get(i);
+            SR * sv = cg->genSR(src->getCode());
+            sv->copy(src, false, cg);
             l.append_tail(sv);
         }
         SR_vec(this) = SR_vec(cg->getSRVecMgr()->genSRVec(l));
     }
-}
-
-
-void SR::clean()
-{
-    //There is virtual table.
-    type = SR_UNDEF;
-    u2.bitflags = 0;
-    u1.u2.symbol_regid = SYMREG_UNDEF;
-    u1.u2.regfile = RF_UNDEF;
-    u1.u2.phy_regid = REG_UNDEF;
-    u1.u2.spill_var = nullptr;
-    m_sr_vec = nullptr; //vec will be dropped to pool. TODO: recycle it.
-    m_sr_vec_idx = SRVEC_IDX_UNDEF;
-}
-
-
-//Return SR name during print assembly file.
-CHAR const* SR::getAsmName(StrBuf & buf, CG const* cg) const
-{
-    CHAR const* strformatx = "0x%x";
-    CHAR const* strformatd = "%d";
-    switch (SR_type(this)) {
-    case SR_INT_IMM:
-        if (GENERAL_REGISTER_SIZE == sizeof(INT)) {
-            strformatx = "0x%x";
-            strformatd = "%d";
-        } else if (GENERAL_REGISTER_SIZE == sizeof(LONG)) {
-            strformatx = "0x%lx";
-            strformatd = "%ld";
-        } else if (GENERAL_REGISTER_SIZE == sizeof(LONGLONG)) {
-            strformatx = "0x%llx";
-            strformatd = "%lld";
-        }
-        if (getInt() > THRESHOLD_DISPLAY_IN_HEX) {
-            buf.strcat(strformatx, getInt());
-        } else {
-            buf.strcat(strformatd, getInt());
-        }
-        break;
-    case SR_FP_IMM:
-        buf.strcat("%f", SR_fp_imm(this));
-        break;
-    case SR_VAR:
-        if (SR_var_ofst(this) != 0) {
-            buf.strcat("%s#+%d", SYM_name(SR_var(this)->get_name()),
-                       SR_var_ofst(this));
-            break;
-        } else {
-            buf.strcat("%s#", SYM_name(SR_var(this)->get_name()));
-            break;
-        }
-    case SR_REG:
-        return tmGetRegName(getPhyReg());
-    case SR_STR:
-        return SYM_name(SR_str(this));
-    case SR_LAB:
-        ASSERT0(cg);
-        return cg->formatLabelName(SR_label(this), buf);
-    case SR_LAB_LIST:
-        //LabelList string is not necessary to asm file.
-        break;
-    default: UNREACHABLE();
-    }
-    return buf.buf;
-}
-
-
-//Return symbol register name and info, used by tracing routines.
-//'buf': output string buffer.
-CHAR const* SR::get_name(StrBuf & buf, CG const* cg) const
-{
-    switch (SR_type(this)) {
-    case SR_INT_IMM:
-        buf.strcat("#%lld", (LONGLONG)getInt());
-        break;
-    case SR_FP_IMM:
-        buf.strcat("#%f", SR_fp_imm(this));
-        break;
-    case SR_VAR: {
-        ASSERT0(SR_var(this));
-        ASSERT0(SR_var(this)->get_name());
-        CHAR * name = SYM_name(SR_var(this)->get_name());
-        ASSERT0(SR_var_ir(this) == nullptr || SR_var_ir(this)->is_id());
-        buf.strcat("'%s'", name);
-
-        if (SR_var_ir(this) != nullptr) {
-            TMWORD ofst = SR_var_ir(this)->getOffset();
-            if (ofst != 0) {
-                buf.strcat("+%u", ofst);
-            }
-        }
-
-        if (SR_var_ofst(this) != 0) {
-            buf.strcat("+%u", SR_var_ofst(this));
-        }
-        break;
-    }
-    case SR_REG:
-        if (is_sp()) {
-            if (this == cg->getSP()) {
-                buf.strcat("sp");
-            } else {
-                UNREACHABLE();
-            }
-        } else if (is_fp()) {
-            if (this == cg->getFP()) {
-                buf.strcat("fp");
-            } else {
-                UNREACHABLE();
-            }
-        } else if (is_gp()) {
-            if (this == cg->getGP()) {
-                buf.strcat("gp");
-            } else {
-                UNREACHABLE();
-            }
-        } else if (is_rflag()) {
-            //Rflag register
-            buf.strcat("rflag");
-        } else if (is_param_pointer()) {
-            //Parameter pointer.
-            buf.strcat("sr%lu(PARAM)", (ULONG)SR_sregid(this));
-        } else if (HAS_PREDICATE_REGISTER && this == cg->getTruePred()) {
-            //True predicate register.
-            buf.strcat("tp");
-        } else {
-            //General Purpose Register
-            if (is_global()) {
-                buf.strcat("gsr%lu", (ULONG)SR_sregid(this));
-            } else {
-                buf.strcat("sr%lu", (ULONG)SR_sregid(this));
-            }
-        }
-
-        //Print physical register id and register file.
-        if (getPhyReg() != REG_UNDEF) {
-            buf.strcat("(%s)", tmGetRegName((REG)getPhyReg()));
-        }
-        if (getRegFile() != RF_UNDEF) {
-            buf.strcat("(%s)", tmGetRegFileName(getRegFile()));
-        }
-        break;
-    case SR_STR: {
-        CHAR * s = SYM_name(SR_str(this));
-        buf.nstrcat(MAX_SR_NAME_BUF_LEN, "\"%s\"", s);
-        break;
-    }
-    case SR_LAB:
-        ASSERT0(cg);
-        cg->formatLabelName(SR_label(this), buf);
-        break;
-    case SR_LAB_LIST:
-        ASSERT0(cg);
-        cg->formatLabelListString(SR_label_list(this), buf);
-        break;
-    default: UNREACHABLE();
-    }
-    return buf.buf;
 }
 
 
@@ -266,7 +113,7 @@ void SR::dump(CG * cg) const
 
 bool SR::is_equal(SR const* sr)
 {
-    return type == sr->type &&
+    return m_code == sr->getCode() &&
            u2.bitflags == sr->u2.bitflags &&
            getInt() == sr->getInt() &&
            SR_imm_size(this) == SR_imm_size(sr) &&
@@ -294,51 +141,49 @@ void SRMgr::clean()
 {
     for (VecIdx i = SRID_UNDEF + 1; i <= m_sridx2sr.get_last_idx(); i++) {
         SR * sr = m_sridx2sr.get(i);
-        ASSERT0(sr);
-        delete sr; //invoke virtual destructor of SR.
+        if (sr != nullptr) {
+            delete sr; //invoke virtual destructor of SR.
+        }
     }
     m_sridx2sr.clean();
-    m_freesr_list.clean();
+    m_sr_count = SRID_UNDEF;
 }
 
 
-SR * SRMgr::allocSR()
+SR * SRMgr::allocSR(SR_CODE c)
 {
-    return new SR();
-}
-
-
-SR * SRMgr::genSR()
-{
-    SR * sr = m_freesr_list.remove_head();
-    if (sr != nullptr) {
-        ASSERT0(sr->is_free());
-        SR_is_free(sr) = false;
-        return sr;
+    switch (c) {
+    case SR_REG: return new RegSR();
+    case SR_INT_IMM: return new IntSR();
+    case SR_FP_IMM: return new FPSR();
+    case SR_VAR: return new VarSR();
+    case SR_STR: return new StrSR();
+    case SR_LAB: return new LabSR();
+    case SR_LAB_LIST: return new LabListSR();
+    default: UNREACHABLE();
     }
-    sr = allocSR();
-    ASSERT0(SRID_UNDEF == 0);
-    //Do not use SRID_UNDEF as index.
-    VecIdx idx = m_sridx2sr.get_last_idx();
-    SR_id(sr) = IS_VECUNDEF(idx) ? SRID_UNDEF + 1 : idx + 1;
-    m_sridx2sr.set(SR_id(sr), sr);
-    return sr;
+    return nullptr;
 }
 
 
-SR * SRMgr::get(UINT unique_id)
+SR * SRMgr::genSR(SR_CODE c)
 {
-    return m_sridx2sr.get(unique_id);
+    SR * sr = allocSR(c);
+    ASSERT0(sr && SRID_UNDEF == 0);
+    //DO NOT USE SRID_UNDEF AS INDEX.
+    m_sr_count++;
+    SR_id(sr) = m_sr_count;
+    m_sridx2sr.set(sr->id(), sr);
+    return sr;
 }
 
 
 void SRMgr::freeSR(SR * sr)
 {
-    if (sr->is_free()) { return; }
     ASSERT0(!SR_is_dedicated(sr));
+    m_sridx2sr.set(sr->id(), nullptr);
     sr->clean();
-    SR_is_free(sr) = true;
-    m_freesr_list.append_head(sr);
+    delete sr;
 }
 //END SRMgr
 

@@ -104,7 +104,7 @@ void OR::clean()
     code = OR_UNDEF;
     clust = CLUST_UNDEF; //cluster
     container = nullptr;
-    order = -1;
+    order = OR_ORDER_UNDEF;
     ubb = nullptr;
     OR_flag(this) = 0;
     dbx.clean();
@@ -113,13 +113,18 @@ void OR::clean()
 }
 
 
+void OR::copyDbx(Dbx const* dbx)
+{
+    if (dbx != nullptr) {
+        OR_dbx(this).copy(*dbx);
+    }
+}
+
+
 void OR::copyDbx(IR const* ir)
 {
     ASSERT0(ir);
-    Dbx * t = ::getDbx(ir);
-    if (t != nullptr) {
-        OR_dbx(this).copy(*t);
-    }
+    copyDbx(::getDbx(ir));
 }
 
 
@@ -130,7 +135,7 @@ void OR::clone(OR const* o, CG * cg)
     m_result.copy(o->m_result, cg->getORMgr()->get_pool());
     dbx.copy(o->dbx);
     code = o->code;
-    order = -1; //order in BB need to recompute.
+    order = OR_ORDER_UNDEF; //order in BB need to recompute.
     ubb = o->ubb;
     OR_flag(this) = OR_flag(o);
 }
@@ -341,7 +346,7 @@ INT OR::get_opnd_idx(SR * sr) const
             return i;
         }
     }
-    return -1;
+    return OR_SR_IDX_UNDEF;
 }
 
 
@@ -353,7 +358,7 @@ INT OR::get_result_idx(SR * sr) const
             return i;
         }
     }
-    return -1;
+    return OR_SR_IDX_UNDEF;
 }
 
 

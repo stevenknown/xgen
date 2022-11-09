@@ -449,7 +449,9 @@ static CLRegionMgr * initRegionMgr()
 
     //Retain CFG, DU info for IPA used.
     g_compute_region_imported_defuse_md = true;
-    g_retain_pass_mgr_for_region = false;
+
+    //Post-simplification need IRMgr and PassMgr.
+    //g_retain_pass_mgr_for_region = false;
     //g_compute_pr_du_chain = false;
     //g_compute_nonpr_du_chain = false;
     //g_do_call_graph = true;

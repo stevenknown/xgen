@@ -57,12 +57,12 @@ IR * Canon::handle_select(IN IR * ir, OUT bool & change, CanonCtx * cc)
     // normalize to:
     //     x>0 ? d:2
     bool lchange = false;
-    SELECT_pred(ir) = only_left_last(SELECT_pred(ir));
-    SELECT_pred(ir) = handle_exp(SELECT_pred(ir), lchange, cc);
+    SELECT_det(ir) = only_left_last(SELECT_det(ir));
+    SELECT_det(ir) = handle_exp(SELECT_det(ir), lchange, cc);
 
-    if (!SELECT_pred(ir)->is_judge()) {
-        SELECT_pred(ir) = m_rg->buildJudge(SELECT_pred(ir));
-        ir->setParent(SELECT_pred(ir));
+    if (!SELECT_det(ir)->is_judge()) {
+        SELECT_det(ir) = m_rg->getIRMgr()->buildJudge(SELECT_det(ir));
+        ir->setParent(SELECT_det(ir));
     }
 
     SELECT_trueexp(ir) = only_left_last(SELECT_trueexp(ir));
@@ -177,10 +177,10 @@ IR * Canon::handle_exp(IN IR * ir, OUT bool & change, CanonCtx * cc)
 {
     ASSERT0(ir->is_exp());
     switch (ir->getCode()) {
+    SWITCH_CASE_DIRECT_MEM_EXP:
+    SWITCH_CASE_INDIRECT_MEM_EXP:
     case IR_CONST:
     case IR_ID:
-    case IR_LD:
-    case IR_ILD:
         return ir;
     case IR_LDA: // &a get address of 'a'
         return handle_lda(ir, change, cc);
@@ -196,14 +196,14 @@ IR * Canon::handle_exp(IN IR * ir, OUT bool & change, CanonCtx * cc)
         return ir;
     case IR_LABEL:
         return ir;
-    case IR_ARRAY:
+    SWITCH_CASE_READ_ARRAY:
         for (IR * k = ARR_sub_list(ir); k != NULL; k = k->get_next()) {
             IR * tmp = handle_exp(k, change, cc);
-            ASSERTN(tmp == k, ("need to be replaced from sublist")); 
+            ASSERTN(tmp == k, ("need to be replaced from sublist"));
         }
         ARR_base(ir) = handle_exp(ARR_base(ir), change, cc);
         return ir;
-    case IR_PR:
+    SWITCH_CASE_READ_PR:
         return ir;
     case IR_SELECT:
         return handle_select(ir, change, cc);
@@ -236,18 +236,14 @@ IR * Canon::handle_stmt(IN IR * ir, OUT bool & change, CanonCtx * cc)
 {
     bool tmpc = false;
     switch (ir->getCode()) {
-    case IR_ST:
+    SWITCH_CASE_DIRECT_MEM_STMT:
+    SWITCH_CASE_INDIRECT_MEM_STMT:
+    SWITCH_CASE_WRITE_ARRAY:
     case IR_STPR:
-    case IR_IST:
-    case IR_STARRAY:
         ir->setRHS(handle_exp(ir->getRHS(), tmpc, cc));
         break;
-    case IR_CALL:
-    case IR_ICALL:
+    SWITCH_CASE_CALL:
         handle_call(ir, tmpc, cc);
-        break;
-    case IR_GOTO:
-    case IR_IGOTO:
         break;
     case IR_DO_WHILE:
     case IR_WHILE_DO:
@@ -269,24 +265,19 @@ IR * Canon::handle_stmt(IN IR * ir, OUT bool & change, CanonCtx * cc)
         SWITCH_vexp(ir) = handle_det_list(SWITCH_vexp(ir), tmpc, cc);
         SWITCH_body(ir) = handle_stmt_list(SWITCH_body(ir), tmpc);
         break;
-
-    case IR_TRUEBR:
-    case IR_FALSEBR:
+    SWITCH_CASE_CONDITIONAL_BRANCH_OP:
         BR_det(ir) = handle_det_list(BR_det(ir), tmpc, cc);
         break;
+    SWITCH_CASE_LOOP_ITER_CFS_OP:
+    SWITCH_CASE_UNCONDITIONAL_BRANCH_OP:
     case IR_RETURN:
-    case IR_BREAK:
-    case IR_CONTINUE:
     case IR_LABEL:
         break;
-    case IR_PHI:
     default: UNREACHABLE(); //TODO
     }
-
     if (tmpc && ir->is_stmt()) {
         ir->setParentPointer(false);
     }
-
     change |= tmpc;
     return ir;
 }

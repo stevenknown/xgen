@@ -1957,7 +1957,7 @@ RegSet * LifeTimeMgr::getUsableRegSet(LifeTime * lt) const
 
 
 //Append anticipated register
-void LifeTimeMgr::addAnticiReg(LifeTime const* lt, REG reg)
+void LifeTimeMgr::addAnticiReg(LifeTime const* lt, Reg reg)
 {
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
     RegSet * rs = m_lt2antici_reg_set_map.get(lt);
@@ -2633,7 +2633,7 @@ void LRA::show_phase(CHAR const* phase_name)
 //policy that the selecting should obviate choose identical
 //register with those registers which are other ors at same
 //layer with the first occurrence o of 'lt'.
-REG LRA::chooseByRegFileGroup(RegSet & regs, LifeTime * lt,
+Reg LRA::chooseByRegFileGroup(RegSet & regs, LifeTime * lt,
                               LifeTimeMgr & mgr, RegFileGroup * rfg)
 {
     if (rfg == nullptr) {
@@ -2740,8 +2740,8 @@ bool LRA::assignRegister(LifeTime * lt, InterfGraph & ig, LifeTimeMgr & mgr,
     }
 
     //First select preference register.
-    REG reg = REG_UNDEF;
-    REG pref_reg = LT_preferred_reg(lt);
+    Reg reg = REG_UNDEF;
+    Reg pref_reg = LT_preferred_reg(lt);
     if (pref_reg != REG_UNDEF) {
         if (usable->is_contain(pref_reg)) {
             reg = pref_reg; //Not any choose.
@@ -2837,7 +2837,7 @@ FIN:
 
 
 //Return true if registers of all sibling of lt are continuous and valid.
-bool LRA::checkAndAssignNextSiblingLT(REG treg, LifeTime const* lt,
+bool LRA::checkAndAssignNextSiblingLT(Reg treg, LifeTime const* lt,
                                       LifeTimeMgr * mgr,
                                       RegSet const* usable_rs)
 {
@@ -2869,7 +2869,7 @@ bool LRA::checkAndAssignNextSiblingLT(REG treg, LifeTime const* lt,
 
 
 //Return true if registers of all sibling of lt are continuous and valid.
-bool LRA::checkAndAssignPrevSiblingLT(REG treg, LifeTime const* lt,
+bool LRA::checkAndAssignPrevSiblingLT(Reg treg, LifeTime const* lt,
                                       LifeTimeMgr * mgr,
                                       RegSet const* usable_rs)
 {
@@ -3454,7 +3454,7 @@ void LRA::reassignRegFileForNewSR(MOD ClustRegInfo cri[CLUST_NUM],
         SR * sr = LT_sr(lt);
         ASSERTN(sr->is_reg(), ("sr is not a register"));
         if (LT_has_allocated(lt) || sr->getRegFile() != RF_UNDEF) {
-            is_regfile_unique.bunion(SR_sregid(sr));
+            is_regfile_unique.bunion(SR_sym_reg(sr));
         }
         if (sr->getRegFile() == RF_UNDEF) {
             doit = true;
@@ -3567,7 +3567,7 @@ void LRA::pure_spill(LifeTime * lt, LifeTimeMgr & mgr)
 void LRA::spill(LifeTime * lt, List<LifeTime*> & prio_list,
                 List<LifeTime*> & uncolored_list, LifeTimeMgr & mgr,
                 DataDepGraph & ddg, RegFileGroup * rfg,
-                InterfGraph & ig, REG spill_location,
+                InterfGraph & ig, Reg spill_location,
                 Action & action, MOD ClustRegInfo cri[CLUST_NUM])
 {
     DUMMYUSE(spill_location);
@@ -3694,7 +3694,7 @@ void LRA::splitLTAt(BSIdx start, BSIdx end, bool is_start_spill,
 
 void LRA::splitOneLT(LifeTime * lt, List<LifeTime*> & prio_list,
                      List<LifeTime*> & uncolored_list, LifeTimeMgr & mgr,
-                     InterfGraph & ig, REG spill_location,
+                     InterfGraph & ig, Reg spill_location,
                      Action & action)
 {
     DUMMYUSE(prio_list);
@@ -4634,7 +4634,7 @@ bool LRA::elimRedundantStoreLoad(DataDepGraph & ddg)
 bool LRA::split(LifeTime * lt, List<LifeTime*> & prio_list,
                 List<LifeTime*> & uncolored_list, LifeTimeMgr & mgr,
                 DataDepGraph & ddg, RegFileGroup * rfg, InterfGraph & ig,
-                REG spill_location, Action & action,
+                Reg spill_location, Action & action,
                 MOD ClustRegInfo cri[CLUST_NUM])
 {
     show_phase("---Split start");
@@ -5039,7 +5039,7 @@ bool LRA::solveConflictRecursive(LifeTime * lt,
                                  DataDepGraph & ddg, RegFileGroup * rfg,
                                  Action & action)
 {
-    REG spill_location = REG_UNDEF;
+    Reg spill_location = REG_UNDEF;
     switch (action.get_action(lt)) {
     case Action::BFS_REASSIGN_REGFILE: { //Try to reassign regfile
         List<LifeTime*> try_list;
@@ -5252,18 +5252,18 @@ void LRA::computeUniqueRegFile(MOD RegFileSet & is_regfile_unique)
             if (!sr->is_reg()) {
                 continue;
             }
-            if (is_regfile_unique.is_contain(SR_sregid(sr))) {
+            if (is_regfile_unique.is_contain(SR_sym_reg(sr))) {
                 continue;
             }
             if (o->is_asm()) {
                 if (sr->getPhyReg() != REG_UNDEF ||
                     sr->getRegFile() != RF_UNDEF) {
-                    is_regfile_unique.bunion(SR_sregid(sr));
+                    is_regfile_unique.bunion(SR_sym_reg(sr));
                     continue;
                 }
             }
             if (assignUniqueRegFile(sr, o, true)) {
-                is_regfile_unique.bunion(SR_sregid(sr));
+                is_regfile_unique.bunion(SR_sym_reg(sr));
             }
         }
         for (i = 0; i < o->opnd_num(); i++) {
@@ -5271,18 +5271,18 @@ void LRA::computeUniqueRegFile(MOD RegFileSet & is_regfile_unique)
             if (!sr->is_reg()) {
                 continue;
             }
-            if (is_regfile_unique.is_contain(SR_sregid(sr))) {
+            if (is_regfile_unique.is_contain(SR_sym_reg(sr))) {
                 continue;
             }
             if (o->is_asm()) {
                 if (sr->getPhyReg() != REG_UNDEF ||
                     sr->getRegFile() != RF_UNDEF) {
-                    is_regfile_unique.bunion(SR_sregid(sr));
+                    is_regfile_unique.bunion(SR_sym_reg(sr));
                     continue;
                 }
             }
             if (assignUniqueRegFile(sr, o, false)) {
-                is_regfile_unique.bunion(SR_sregid(sr));
+                is_regfile_unique.bunion(SR_sym_reg(sr));
             }
         } //end for
     } //end for
@@ -5294,14 +5294,14 @@ void LRA::computeUniqueRegFile(MOD RegFileSet & is_regfile_unique)
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERTN(sr->is_reg() && sr->getPhyReg() != REG_UNDEF,
                     ("GSR without register"));
-            is_regfile_unique.bunion(SR_sregid(sr));
+            is_regfile_unique.bunion(SR_sym_reg(sr));
         }
         for (i = ORBB_livein(m_bb).get_first();
              i != BS_UNDEF; i = ORBB_livein(m_bb).get_next(i)) {
             SR * sr = m_cg->mapSymbolReg2SR(i);
             ASSERTN(sr->is_reg() &&
                     sr->getPhyReg() != REG_UNDEF, ("GSR without register"));
-            is_regfile_unique.bunion(SR_sregid(sr));
+            is_regfile_unique.bunion(SR_sym_reg(sr));
         }
     }
 }
@@ -5482,7 +5482,7 @@ void LRA::assignRegFile(MOD ClustRegInfo cri[CLUST_NUM],
          lt != nullptr; lt = mgr.getNextLifeTime(c)) {
         SR * sr = LT_sr(lt);
         ASSERTN(sr->is_reg(), ("sr is not a register"));
-        if (is_regfile_unique.is_contain(SR_sregid(sr))) {
+        if (is_regfile_unique.is_contain(SR_sym_reg(sr))) {
             continue;
         }
 
@@ -5559,7 +5559,7 @@ float LRA::computeRematCost(SR * sr, OR * o)
 
 
 //Compute life time priority.
-float LRA::computePrority(REG spill_location,
+float LRA::computePrority(Reg spill_location,
                           IN LifeTime * lt,
                           IN LifeTimeMgr & mgr,
                           IN DataDepGraph & ddg)
@@ -6258,7 +6258,7 @@ bool LRA::hasSideEffectResult(OR * o)
     for (UINT i = 0; i < o->result_num(); i++) {
         sr = o->get_result(i);
         if (sr->is_global() &&
-            (ORBB_liveout(m_bb).is_contain(SR_sregid(sr)))) {
+            (ORBB_liveout(m_bb).is_contain(SR_sym_reg(sr)))) {
             return true;
         }
         if (SR_is_dedicated(sr)) {
@@ -7352,12 +7352,12 @@ void LRA::markRegFileUnique(RegFileSet & is_regfile_unique)
         UINT i;
         for (i = 0; i < o->result_num(); i++) {
             if (o->get_result(i)->is_reg()) {
-                is_regfile_unique.bunion(SR_sregid(o->get_result(i)));
+                is_regfile_unique.bunion(SR_sym_reg(o->get_result(i)));
             }
         }
         for (i = 0; i < o->opnd_num(); i++) {
             if (o->get_opnd(i)->is_reg()) {
-                is_regfile_unique.bunion(SR_sregid(o->get_opnd(i)));
+                is_regfile_unique.bunion(SR_sym_reg(o->get_opnd(i)));
             }
         }
     }
@@ -7472,7 +7472,7 @@ RegSet & LRA::computeUnusedRegSet(REGFILE regfile, BSIdx start, BSIdx end,
 
 //Choose the physical register to be spill location,
 //or return REG_UNDEF if not turned up.
-REG LRA::chooseAvailSpillLoc(CLUST clust, BSIdx start, BSIdx end,
+Reg LRA::chooseAvailSpillLoc(CLUST clust, BSIdx start, BSIdx end,
                              InterfGraph & ig)
 {
     RegSet regset;
@@ -7494,7 +7494,7 @@ REG LRA::chooseAvailSpillLoc(CLUST clust, BSIdx start, BSIdx end,
 
     BSIdx lastone = regset.get_last();
     if (lastone != BS_UNDEF) { return REG_UNDEF; }
-    return (REG)lastone;
+    return (Reg)lastone;
 }
 
 
@@ -7579,7 +7579,7 @@ SR * LRA::findAvailPhyRegFromLoadList(IN OR * o,
     for (OR * ld = followed_lds.get_tail(); ld != nullptr; ld = next_followed) {
         next_followed = followed_lds.get_prev();
         BSIdx end = mgr.getPos(ld, false);
-        REG avail_reg = chooseAvailSpillLoc(m_cg->computeORCluster(ld),
+        Reg avail_reg = chooseAvailSpillLoc(m_cg->computeORCluster(ld),
                                             start, end, ig);
         if (avail_reg == REG_UNDEF) {
             followed_lds.remove_tail();
@@ -7816,7 +7816,7 @@ bool LRA::updateInfoEffectedByInlineASM()
         RegSet const* clobber_regs = asm_info->get_clobber_set();
         for (BSIdx reg = clobber_regs->get_first();
              reg != BS_UNDEF; reg = clobber_regs->get_next(reg)) {
-            m_ramgr->updateAsmClobberCallee(tmMapReg2RegFile((REG)reg), reg);
+            m_ramgr->updateAsmClobberCallee(tmMapReg2RegFile((Reg)reg), reg);
         }
     }
 
@@ -7828,8 +7828,8 @@ void LRA::middleLRAOpt(MOD DataDepGraph & ddg, MOD LifeTimeMgr & mgr,
                        MOD BBSimulator & sim, IN RegFileSet & is_regfile_unique,
                        MOD ClustRegInfo cri[CLUST_NUM])
 {
-    //Following passes have to analyze REG-IN and
-    //PHY-REG dependence.
+    //Following passes have to analyze Reg-IN and
+    //PHY-Reg dependence.
     bool need_rebuild_mgr = false;
     if ((HAVE_FLAG(m_opt_phase, LRA_OPT_RCEL) ||
          HAVE_FLAG(m_opt_phase, LRA_OPT_DDE)) &&
@@ -7961,9 +7961,9 @@ void LRA::renameSR()
                 continue;
             }
 
-            if (sr2or.get(SR_sregid(sr)) == nullptr ||
+            if (sr2or.get(SR_sym_reg(sr)) == nullptr ||
                 m_cg->isOpndSameWithResult(sr, o, nullptr, nullptr)) {
-                sr2or.set(SR_sregid(sr), o);
+                sr2or.set(SR_sym_reg(sr), o);
                 continue;
             }
 
@@ -7974,9 +7974,9 @@ void LRA::renameSR()
                 //Because we need allocate register
                 //for the new localized SRs renamed.
                 //
-                //sr2or[SR_sregid(sr)] = o;
+                //sr2or[SR_sym_reg(sr)] = o;
                 //SR * newsr = m_cg->genReg();
-                //OR * prev_def = sr2or[SR_sregid(sr)];
+                //OR * prev_def = sr2or[SR_sym_reg(sr)];
                 //m_cg->renameResult(prev_def, sr, newsr, false);
                 //ORCt * tmp = nullptr;
                 //ORBB_orlist(m_bb)->find(prev_def, &tmp);
@@ -8003,7 +8003,7 @@ void LRA::renameSR()
                 //Rename global sr may fall down on performance.
                 //Because we need allocate register for the new local sr.
                 SR * newsr = m_cg->genReg();
-                OR * prev_def = sr2or[SR_sregid(sr)];
+                OR * prev_def = sr2or[SR_sym_reg(sr)];
                 ORCt * prev_def_ct = nullptr, * tmp = nullptr;
                 ORBB_orlist(m_bb)->find(prev_def, &prev_def_ct);
                 m_cg->renameResult(prev_def, sr, newsr, false);
@@ -8017,7 +8017,7 @@ void LRA::renameSR()
                         ORBB_orlist(m_bb));
                 }
                 m_cg->renameOpnd(o, sr, newsr, false);
-                sr2or.set(SR_sregid(sr), o);
+                sr2or.set(SR_sym_reg(sr), o);
                 continue;
             }
 
@@ -8030,7 +8030,7 @@ void LRA::renameSR()
             OR * next_or = ORBB_orlist(m_bb)->get_next(&tmp_orct);
             m_cg->renameOpndAndResultFollowed(sr, newsr,
                 next_or, ORBB_orlist(m_bb));
-            sr2or.set(SR_sregid(newsr), o);
+            sr2or.set(SR_sym_reg(newsr), o);
         }
     }
 }

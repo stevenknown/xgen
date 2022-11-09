@@ -169,7 +169,7 @@ void ARMIR2OR::convertReturnValue(IR const* ir, OUT RecycORList & ors,
     if (!ir->hasReturnValue()) {
         return;
     }
-    IOC tmp_cont;
+    IOC tc;
     SR * retv = nullptr;
     if (ir->is_any() || ir->getTypeSize(m_tm) <= BYTESIZE_OF_WORD) {
         //Note if the result-type of CALL is ANY type, regard it
@@ -557,11 +557,11 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
         } else {
             UNREACHABLE();
         }
-
         return;
     }
 
-    IOC tc;
+    IOC tc(*cont);
+    IOC_mem_byte_size(&tc) = ir->getTypeSize(m_tm);
     convertGeneralLoad(opnd, ors, &tc);
     if (ir->getTypeSize(m_tm) <= BYTESIZE_OF_WORD) {
         SR * res = tc.get_reg(0);
@@ -574,7 +574,7 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     } else if (ir->getTypeSize(m_tm) <= BYTESIZE_OF_DWORD) {
         SR * res = tc.get_reg(0);
         ASSERT0(res); //result0
-        ASSERT0(res->getVec()->get(1)); //result1
+        ASSERT0(res->getVec() && res->getVec()->get(1)); //result1
         SR * src = getCG()->genZero();
         SR * src2 = getCG()->genZero();
         RecycORList tors(this);
@@ -908,7 +908,7 @@ void ARMIR2OR::convertRelationOpDWORD(IR const* ir, OUT RecycORList & ors,
     //Operands 0
     IR const* loc0 = opnd0;
     if (loc0->getTypeSize(m_tm) < maxopndsize) {
-        loc0 = m_rg->buildCvt(m_rg->dupIRTree(opnd0), maxty); 
+        loc0 = m_irmgr->buildCvt(m_rg->dupIRTree(opnd0), maxty);
     }
     convertGeneralLoad(loc0, tors, &tmp);
     SR * sr0 = tmp.get_reg(0);
@@ -918,7 +918,7 @@ void ARMIR2OR::convertRelationOpDWORD(IR const* ir, OUT RecycORList & ors,
     tmp.clean();
     IR const* loc1 = opnd1;
     if (loc1->getTypeSize(m_tm) < maxopndsize) {
-        loc1 = m_rg->buildCvt(m_rg->dupIRTree(opnd1), maxty); 
+        loc1 = m_irmgr->buildCvt(m_rg->dupIRTree(opnd1), maxty);
     }
     convertGeneralLoad(loc1, tors, &tmp);
     SR * sr1 = tmp.get_reg(0);
@@ -1084,14 +1084,14 @@ void ARMIR2OR::convertBitNotLowPerformance(IR const* ir,
     //  res = movi res, -1
     //  res = xor src, res
     RecycORList tors(this);
-    IR * movi_ir = m_rg->buildStorePR(ir->getType(),
-                                      m_rg->buildImmInt(-1, ir->getType()));
+    IR * movi_ir = m_irmgr->buildStorePR(ir->getType(),
+                                      m_irmgr->buildImmInt(-1, ir->getType()));
     convert(movi_ir, tors, cont);
 
     cont->clean_bottomup();
-    IR * mov_ir = m_rg->buildStorePR(ir->getType(),
-        m_rg->buildBinaryOpSimp(IR_XOR, UNA_opnd(ir)->getType(),
-            m_rg->dupIRTree(UNA_opnd(ir)), m_rg->buildPRdedicated(
+    IR * mov_ir = m_irmgr->buildStorePR(ir->getType(),
+        m_irmgr->buildBinaryOpSimp(IR_XOR, UNA_opnd(ir)->getType(),
+            m_rg->dupIRTree(UNA_opnd(ir)), m_irmgr->buildPRdedicated(
                 movi_ir->getPrno(), movi_ir->getType())));
 
     convert(mov_ir, tors, cont);
@@ -1266,8 +1266,8 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors, IOC * cont)
     RecycORList tors(this);
 
     //Generate Compare operation
-    convertRelationOp(SELECT_pred(ir), tors, &tmp);
-    tors.copyDbx(SELECT_pred(ir));
+    convertRelationOp(SELECT_det(ir), tors, &tmp);
+    tors.copyDbx(SELECT_det(ir));
     ors.move_tail(tors);
     SR * cres = tmp.get_reg(0);
     CHECK0_DUMMYUSE(cres);
@@ -1277,8 +1277,8 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors, IOC * cont)
     ASSERT0(true_pr && false_pr);
 
     SR * res = getCG()->genReg();
-    ASSERT0(IR_dt(BIN_opnd0(SELECT_pred(ir))) ==
-            IR_dt(BIN_opnd1(SELECT_pred(ir))));
+    ASSERT0(IR_dt(BIN_opnd0(SELECT_det(ir))) ==
+            IR_dt(BIN_opnd1(SELECT_det(ir))));
     UINT res_size = ir->getTypeSize(m_tm);
 
     //True exp value
@@ -1787,7 +1787,7 @@ void ARMIR2OR::convertCvtIntAndStr(IR const* ir, SR * opnd,
     
     ASSERT0(ir->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
     if (opnd->is_vec()) {
-        SR * opnd2 = opnd->getVec()->get(1);        
+        SR * opnd2 = opnd->getVec()->get(1);
         ASSERT0(opnd2);
         getCG()->buildMove(opnd2, getCG()->genIntImm((HOST_INT)0, false),
                            ors.getList(), cont);
@@ -1961,10 +1961,10 @@ void ARMIR2OR::convertReturn(IR const* ir, OUT RecycORList & ors,
 IR * ARMIR2OR::insertCvt(IR const* ir)
 {
     switch (ir->getCode()) {
-    case IR_ST:
-    case IR_IST:
-    case IR_STPR:
-    case IR_STARRAY: {
+    SWITCH_CASE_DIRECT_MEM_STMT:
+    SWITCH_CASE_INDIRECT_MEM_STMT:
+    SWITCH_CASE_WRITE_ARRAY:
+    case IR_STPR: {
         if (ir->is_any() || ir->getRHS()->is_any()) { break; }
         UINT tgtsz = ir->getTypeSize(m_tm);
         UINT srcsz = ir->getRHS()->getTypeSize(m_tm);
@@ -1980,7 +1980,7 @@ IR * ARMIR2OR::insertCvt(IR const* ir)
             //    cvt:f64
             //      ld:i32 'i' id:15
             IR * newir = m_rg->dupIRTree(ir);
-            IR * cvt = m_rg->buildCvt(newir->getRHS(), newir->getType());
+            IR * cvt = m_irmgr->buildCvt(newir->getRHS(), newir->getType());
             newir->setRHS(cvt);
             return newir;
         }

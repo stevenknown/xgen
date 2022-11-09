@@ -62,7 +62,7 @@ IR * ARMRefine::insertCvtForFloatCase2(IR * parent, IR * kid, bool & change)
             cvtty = m_tm->getPointerSizeType();
         }
         ASSERT0(cvtty);
-        IR * new_kid = m_rg->buildCvt(kid, cvtty);
+        IR * new_kid = m_rg->getIRMgr()->buildCvt(kid, cvtty);
         copyDbx(new_kid, kid, m_rg);
         change = true;
         return new_kid;
@@ -92,7 +92,7 @@ IR * ARMRefine::insertCvtForFloatCase1(IR * parent, IR * kid, bool & change)
         ASSERTN(0, ("incompatible types in convertion"));
     }
     if (build) {
-        IR * new_kid = m_rg->buildCvt(kid, parent->getType());
+        IR * new_kid = m_rg->getIRMgr()->buildCvt(kid, parent->getType());
         copyDbx(new_kid, kid, m_rg);
         change = true;
         return new_kid;

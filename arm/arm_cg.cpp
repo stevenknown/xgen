@@ -448,7 +448,7 @@ void ARMCG::buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,
     ASSERT0(sr_ofst);
     ASSERT0(cont);
 
-    if (IOC_mem_byte_size(cont) == 3) {
+    if (cont->getMemByteSize() == 3) {
         //Generate: ldr %rx = value;
         OR * ld = genOR(OR_ldr);
         ld->set_first_load_val(load_val, this);
@@ -463,8 +463,8 @@ void ARMCG::buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,
 
         //Generate: mov %ry, 0xFFffFF00;
         ASSERT0(!isValidImmOpnd(OR_and_i,
-                                getMaskByByte(IOC_mem_byte_size(cont))));
-        SR * maskbit = genIntImm(getMaskByByte(IOC_mem_byte_size(cont)),
+                                getMaskByByte(cont->getMemByteSize())));
+        SR * maskbit = genIntImm(getMaskByByte(cont->getMemByteSize()),
                                  false);
         SR * reg = genReg();
         buildMove(reg, maskbit, ors, cont);
@@ -476,9 +476,9 @@ void ARMCG::buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,
         return;
     }
 
-    if (IOC_mem_byte_size(cont) <= 4) {
+    if (cont->getMemByteSize() <= 4) {
         OR_CODE ort;
-        switch (IOC_mem_byte_size(cont)) {
+        switch (cont->getMemByteSize()) {
         case 1: ort = is_signed ? OR_ldrsb : OR_ldrb; break;
         case 2: ort = is_signed ? OR_ldrsh : OR_ldrh; break;
         case 4: ort = OR_ldr; break;
@@ -499,7 +499,7 @@ void ARMCG::buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,
         return;
     }
 
-    if (IOC_mem_byte_size(cont) <= 8) {
+    if (cont->getMemByteSize() <= 8) {
         OR * o = genOR(OR_ldrd);
         ASSERT0(load_val->getByteSize() == 8);
         ASSERT0(load_val->is_vec());
@@ -524,12 +524,12 @@ void ARMCG::buildStoreFor3Byte(IN SR * store_val, IN SR * base,
                                IN SR * sr_ofst, Var const* v,
                                OUT ORList & ors, MOD IOC * cont)
 {
-    ASSERT0(IOC_mem_byte_size(cont) == 3);
+    ASSERT0(cont->getMemByteSize() == 3);
 
     //Generate: mov %ry, 0xFFffFF00;
     ASSERT0(!isValidImmOpnd(OR_and_i,
-                            getMaskByByte(IOC_mem_byte_size(cont))));
-    SR * maskbit = genIntImm(getMaskByByte(IOC_mem_byte_size(cont)),
+                            getMaskByByte(cont->getMemByteSize())));
+    SR * maskbit = genIntImm(getMaskByByte(cont->getMemByteSize()),
                              false);
     SR * reg = genReg();
     buildMove(reg, maskbit, ors, cont);
@@ -567,7 +567,7 @@ void ARMCG::genAddrCompForStoreLessThan4Byte(SR ** base, SR ** ofst,
             //t = base + ofst
             //base = t
             IOC tc;
-            buildAdd(*base, *ofst, IOC_mem_byte_size(cont), false, ors, &tc);
+            buildAdd(*base, *ofst, cont->getMemByteSize(), false, ors, &tc);
             *base = tc.get_reg(0);
             ASSERT0(*base && (*base)->is_reg());
             *ofst = genIntImm(0, false);
@@ -579,7 +579,7 @@ void ARMCG::genAddrCompForStoreLessThan4Byte(SR ** base, SR ** ofst,
             //Add byte-offset into base address ahead of time.
             //Address computation always be GENERAL_REGISTER_SIZE.
             IOC tc;
-            buildAdd(*base, (*ofst), IOC_mem_byte_size(cont),
+            buildAdd(*base, (*ofst), cont->getMemByteSize(),
                      false, ors, &tc);
             *base = tc.get_reg(0);
             ASSERT0(*base && (*base)->is_reg());
@@ -592,7 +592,7 @@ void ARMCG::genAddrCompForStoreLessThan4Byte(SR ** base, SR ** ofst,
             //Add byte-offset into base address ahead of time.
             //Address computation always be GENERAL_REGISTER_SIZE.
             IOC tc;
-            buildAdd(*base, *ofst, IOC_mem_byte_size(cont),
+            buildAdd(*base, *ofst, cont->getMemByteSize(),
                      false, ors, &tc);
             *base = tc.get_reg(0);
             ASSERT0(*base && (*base)->is_reg());
@@ -652,8 +652,8 @@ void ARMCG::buildStoreForLessThan4Byte(SR * store_val, IN SR * base,
                                        Var const* v, bool is_signed,
                                        OUT ORList & ors, MOD IOC * cont)
 {
-    ASSERT0(IOC_mem_byte_size(cont) <= 4);
-    if (IOC_mem_byte_size(cont) == 3) {
+    ASSERT0(cont->getMemByteSize() <= 4);
+    if (cont->getMemByteSize() == 3) {
         buildStoreFor3Byte(store_val, base, sr_ofst, v, ors, cont);
         return;
     }
@@ -713,7 +713,7 @@ void ARMCG::buildStoreFor8Byte(SR const* store_val, SR * base, SR * sr_ofst,
                                Var const* v, bool is_signed,
                                OUT ORList & ors, MOD IOC * cont)
 {
-    ASSERT0(IOC_mem_byte_size(cont) > 4 && IOC_mem_byte_size(cont) <= 8);
+    ASSERT0(cont->getMemByteSize() > 4 && cont->getMemByteSize() <= 8);
     OR_CODE code = selectORCodeForStore8Byte(sr_ofst);
     ASSERT0(code != OR_UNDEF);
     genAddrCompFor8ByteStore(&base, &sr_ofst, ors);
@@ -893,12 +893,12 @@ void ARMCG::buildStore(IN SR * store_val, IN SR * base, IN SR * ofst,
 
     ASSERT0(sr_ofst);
     ASSERT0(cont != nullptr);
-    if (IOC_mem_byte_size(cont) <= 4) {
+    if (cont->getMemByteSize() <= 4) {
         buildStoreForLessThan4Byte(store_val, base, sr_ofst, v,
                                    is_signed, ors, cont);
         return;
     }
-    if (IOC_mem_byte_size(cont) <= 8) {
+    if (cont->getMemByteSize() <= 8) {
         buildStoreFor8Byte(store_val, base, sr_ofst, v, is_signed,
                            ors, cont);
         return;
@@ -1215,7 +1215,7 @@ void ARMCG::buildMove(SR * to, SR * from, OUT ORList & ors, MOD IOC *)
     ASSERT0(to->is_reg());
     ASSERT0(from->is_reg() || from->is_var() || from->is_int_imm() ||
             from->is_fp_imm());
-    switch (SR_type(from)) {
+    switch (from->getCode()) {
     case SR_REG:
         buildCopy(CLUST_FIRST, UNIT_A, to, from, ors);
         return;
@@ -1446,7 +1446,7 @@ CLUST ARMCG::mapRegFile2Cluster(REGFILE regfile, SR const*) const
 
 
 //Return the cluster which owns 'reg'
-CLUST ARMCG::mapReg2Cluster(REG reg) const
+CLUST ARMCG::mapReg2Cluster(Reg reg) const
 {
     for (INT c = CLUST_UNDEF + 1; c < CLUST_NUM; c++) {
         if (tmMapCluster2RegSet((CLUST)c)->is_contain(reg)) {
@@ -1505,7 +1505,7 @@ CLUST ARMCG::mapSR2Cluster(OR const* o, SR const* sr) const
     default:
         clust = OR_clust(o);
         if (clust == CLUST_UNDEF) {
-            //'sr' have no REGFILE, no REG, and not any information can
+            //'sr' have no REGFILE, no Reg, and not any information can
             //be used to determine which cluster it belong to.
             //ARM does not have any SR used at BUS beside rflag,
             //predicate register.
@@ -1557,7 +1557,7 @@ bool ARMCG::changeORCode(MOD OR * o, OR_CODE orcode, CLUST src,
             //ASSERTN(sr->getPhyReg() == REG_UNDEF &&
             //        sr->getRegFile() == RF_UNDEF, ("sr has allocated"));
             if (regfile_unique == nullptr ||
-                !regfile_unique->is_contain(SR_sregid(sr))) {
+                !regfile_unique->is_contain(SR_sym_reg(sr))) {
                 //Reassign regfile.
                 SR_phy_reg(sr) = REG_UNDEF;
                 SR_regfile(sr) = RF_UNDEF;
@@ -1585,7 +1585,7 @@ bool ARMCG::changeORCode(MOD OR * o, OR_CODE orcode, CLUST src,
             }
         } else {
             if (regfile_unique == nullptr ||
-                !regfile_unique->is_contain(SR_sregid(sr))) {
+                !regfile_unique->is_contain(SR_sym_reg(sr))) {
                 //ASSERTN(sr->getPhyReg() == REG_UNDEF &&
                 //        sr->getRegFile() == RF_UNDEF, ("sr has allocated"));
                 SR_phy_reg(sr) = REG_UNDEF;
@@ -2447,7 +2447,7 @@ bool ARMCG::isValidRegInSRVec(OR const*, SR const* sr,
 }
 
 
-bool ARMCG::isEvenReg(REG reg) const
+bool ARMCG::isEvenReg(Reg reg) const
 {
     //register start from '1'. And '0' denotes memory.
     return (reg % 2) == 1;
@@ -2658,12 +2658,12 @@ bool ARMCG::isCopyOR(OR const* o) const
     case OR_add_i:
     case OR_orr_i:
     case OR_eor_i:
-        if (SR_is_int_imm(o->get_opnd(2)) && SR_int_imm(o->get_opnd(2)) == 0) {
+        if (o->get_opnd(2)->is_int_imm() && SR_int_imm(o->get_opnd(2)) == 0) {
             return true; //check the index of source operand
         }
         break;
     case OR_and_i:
-        if (SR_is_int_imm(o->get_opnd(2)) &&
+        if (o->get_opnd(2)->is_int_imm() &&
             SR_int_imm(o->get_opnd(2)) == -1) {
             return true; //check the index of source operand
         }
@@ -2675,7 +2675,7 @@ bool ARMCG::isCopyOR(OR const* o) const
     case OR_asr_i32:
     case OR_asl_i:
     case OR_asr_i:
-        if (SR_is_int_imm(o->get_opnd(2)) && SR_int_imm(o->get_opnd(2)) == 0) {
+        if (o->get_opnd(2)->is_int_imm() && SR_int_imm(o->get_opnd(2)) == 0) {
             return true; //check the index of source operand
         }
         break;
@@ -2745,12 +2745,12 @@ INT ARMCG::computeCopyOpndIdx(OR * o)
     case OR_add_i:
     case OR_orr_i:
     case OR_eor_i:
-        if (SR_is_int_imm(o->get_opnd(2)) && SR_int_imm(o->get_opnd(2)) == 0) {
+        if (o->get_opnd(2)->is_int_imm() && SR_int_imm(o->get_opnd(2)) == 0) {
             return HAS_PREDICATE_REGISTER;
         }
         break;
     case OR_and_i:
-         if (SR_is_int_imm(o->get_opnd(2)) &&
+         if (o->get_opnd(2)->is_int_imm() &&
              SR_int_imm(o->get_opnd(2)) == -1) {
             return HAS_PREDICATE_REGISTER;
         }
@@ -2761,7 +2761,7 @@ INT ARMCG::computeCopyOpndIdx(OR * o)
     case OR_lsr_i32:
     case OR_asr_i32:
     case OR_asr_i:
-        if (SR_is_int_imm(o->get_opnd(2)) && SR_int_imm(o->get_opnd(2)) == 0) {
+        if (o->get_opnd(2)->is_int_imm() && SR_int_imm(o->get_opnd(2)) == 0) {
             return HAS_PREDICATE_REGISTER;
         }
         break;
@@ -3149,7 +3149,7 @@ void ARMCG::expandFakeMov32(IN OR * o, OUT IssuePackageList * ipl)
     OR * high = nullptr;
 
     //Decompose OR_mov32_i into OR_movw_i and OR_movt_i.
-    if (SR_type(from) == SR_INT_IMM) {
+    if (from->is_int_imm()) {
         // mov32 rd = imm
         //=>
         // movw rd, first_half_part(imm)
@@ -3166,7 +3166,7 @@ void ARMCG::expandFakeMov32(IN OR * o, OUT IssuePackageList * ipl)
                                      ((from->getInt() >> 16) & 0xFFFF),
                                      true), this);
         high->set_pred(o->get_pred(), this);
-    } else if (SR_type(from) == SR_VAR) {
+    } else if (from->is_var()) {
         // mov32 rd = Sym
         //=>
         // movw rd, Sym
@@ -3344,8 +3344,8 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
 
 
 bool ARMCG::skipArgRegister(Var const* param,
-                            RegSet const* regset,
-                            REG reg) const
+                            xgen::RegSet const* regset,
+                            Reg reg) const
 {
     #ifdef TO_BE_COMPATIBLE_WITH_ARM_LINUX_GNUEABI
     if (//only check value that is in paired-register
@@ -3362,7 +3362,7 @@ bool ARMCG::skipArgRegister(Var const* param,
             regset->get_next(reg) == BS_UNDEF) {
             //Passed the odd number register to facilitate the use
             //of value in paired-register.
-            ASSERTN(isEvenReg((REG)regset->get_next(reg)),
+            ASSERTN(isEvenReg((Reg)regset->get_next(reg)),
                 ("not continuous"));
             return true;
         }

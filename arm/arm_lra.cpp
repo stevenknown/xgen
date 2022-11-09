@@ -31,7 +31,7 @@ author: Su Zhenyu
 #include "../xgen/xgeninc.h"
 
 void ARMLifeTimeMgr::considerSpecialConstraints(IN OR * o, SR const* sr,
-                                                OUT RegSet & usable_regs)
+                                                OUT xgen::RegSet & usable_regs)
 {
     ASSERTN(o && sr, ("nullptr input"));
     ARMCG * armcg = (ARMCG*)m_cg;
@@ -110,8 +110,8 @@ void ARMLifeTimeMgr::handlePreferredReg(OR const* o)
 
     ASSERTN(low && high && low->is_reg() && high->is_reg(),
             ("Does it paired o?"));
-    LifeTime * lowlt = (LifeTime*)m_sr2lt_map.get(low);
-    LifeTime * highlt = (LifeTime*)m_sr2lt_map.get(high);
+    xgen::LifeTime * lowlt = (xgen::LifeTime*)m_sr2lt_map.get(low);
+    xgen::LifeTime * highlt = (xgen::LifeTime*)m_sr2lt_map.get(high);
     ASSERTN(lowlt && highlt, ("Miss life time."));
 
     getSibMgr()->setSib(lowlt, highlt);

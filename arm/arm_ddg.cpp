@@ -65,7 +65,7 @@ bool ARMDDG::handleDedicatedSR(SR const* sr, OR const*, bool is_result) const
 }
 
 
-void ARMDDG::collectAliasRegSet(REG reg, OUT RegSet & alias_regset)
+void ARMDDG::collectAliasRegSet(Reg reg, OUT xgen::RegSet & alias_regset)
 {
     if (m_alias_regset_pred.is_contain(reg)) {
         alias_regset.bunion(m_alias_regset_pred);

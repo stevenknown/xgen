@@ -50,71 +50,85 @@ class ArgDescMgr;
 #define IOC_mem_byte_size(cont) ((cont)->u1.mem_byte_size)
 #define IOC_int_imm(cont) ((cont)->u1.int_imm)
 class IOC {
-    COPY_CONSTRUCTOR(IOC);
 public:
+    //Propagate info bottom up.
+    //Used as a result, and record OR_CODE of result if exist.
+    OR_CODE orcode;
+    union {
+        //Propagate info top down.
+        //Used as input parameter, record total size of real
+        //parameters before a function call.
+        UINT param_size;
+
+        //Propagate info top down.
+        //used as input parameter, record memory byte-size for operation.
+        UINT mem_byte_size;
+
+        //Propagate info top down.
+        //used as input parameter, record integer literal.
+        LONGLONG int_imm;
+    } u1;
     union {
         struct {
+            //Propagate info top down.
             //Used as output result, set by convertRelationOp(),
             //true if the relation operation inverted.
             UINT is_inverted:1;
         } s1;
         UINT u2val;
     } u2;
+    //Propagate info top down.
+    //Used as input parameter, record predicate register if required.
+    SR * pred;
 
-    SR * pred; //used as input parameter, record predicate register if required.
-    SR * addr; //used as input parameter, record memory address pseduo register.
+    //Propagate info top down.
+    //Used as input parameter, record memory address pseduo register.
+    SR * addr;
+
+    //Propagate info bottom up.
     Vector<SR*> reg_vec;
-    OR_CODE orcode; //used as output, record OR_CODE of result if exist.
-
-    union {
-        //used as input parameter, record total size of real
-        //parameters before a function call.
-        UINT param_size;
-
-        //used as input parameter, record memory byte-size for operation.
-        UINT mem_byte_size;
-
-        //used as input parameter, record integer literal.
-        LONGLONG int_imm;
-    } u1;
-
 public:
     IOC()
     {
-        u2.u2val = 0;
+        ::memset(&u1, 0, sizeof(u1));;
+        ::memset(&u2, 0, sizeof(u2));;
         pred = nullptr;
-        orcode = OR_UNDEF;
-        u1.param_size = 0;
-        u1.mem_byte_size = 0;
-        reg_vec.init();
         addr = nullptr;
+        orcode = OR_UNDEF;
+        reg_vec.init();
     }
+    IOC(IOC const& src) { clean(); copy_topdown(src); }
+    IOC const& operator = (IOC const&);
     virtual ~IOC() {}
 
     virtual void clean()
     {
-        u2.u2val = 0;
+        ::memset(&u1, 0, sizeof(u1));;
+        ::memset(&u2, 0, sizeof(u2));;
         pred = nullptr;
-        orcode = OR_UNDEF;
-        u1.param_size = 0;
-        u1.mem_byte_size = 0;
-        reg_vec.clean();
         addr = nullptr;
+        orcode = OR_UNDEF;
+        reg_vec.clean();
     }
-
-    virtual void set_pred(SR * p) { pred = p; }
-    virtual void set_orcode(OR_CODE ort) { orcode = ort; }
-    virtual void set_addr(SR * a) { addr = a; }
-    virtual void set_reg(INT i, SR * s)
+    virtual void copy_topdown(IOC const& src)
     {
-        ASSERT0(i >= 0);
-        reg_vec.set(i, s);
+        u1 = src.u1;
+        u2 = src.u2;
+        pred = src.pred;
+        addr = src.addr;
     }
-    virtual void copy_result(IOC const& src)
+    virtual void copy_bottomup(IOC const& src)
     {
         reg_vec.copy(src.reg_vec);
         set_addr(src.get_addr());
-        IOC_mem_byte_size(this) = IOC_mem_byte_size(&src);
+        set_orcode(src.get_orcode());
+    }
+    void clean_regvec() { reg_vec.clean(); }
+    void clean_bottomup()
+    {
+        clean_regvec();
+        set_addr(nullptr);
+        set_orcode(OR_UNDEF);
     }
 
     virtual SR * get_pred() const { return pred; }
@@ -135,12 +149,13 @@ public:
     UINT getMemByteSize() const { return IOC_mem_byte_size(this); }
     OR_CODE get_orcode() const { return orcode; }
 
-    void clean_regvec() { reg_vec.clean(); }
-    void clean_bottomup()
+    virtual void set_pred(SR * p) { pred = p; }
+    virtual void set_orcode(OR_CODE ort) { orcode = ort; }
+    virtual void set_addr(SR * a) { addr = a; }
+    virtual void set_reg(INT i, SR * s)
     {
-        clean_regvec();
-        set_addr(nullptr);
-        set_orcode(OR_UNDEF);
+        ASSERT0(i >= 0);
+        reg_vec.set(i, s);
     }
 };
 //END IOC
@@ -151,29 +166,42 @@ class IR2OR {
 protected:
     Region * m_rg; //Current region.
     TypeMgr * m_tm; //Data manager.
+    IRMgr * m_irmgr;
     CG * m_cg; //Code generator.
     CGMgr * m_cgmgr; //Code generator mananger.
     RecycORListMgr m_recyc_orlist_mgr;
-
 protected:
     void convertIRListToORList(OUT RecycORList & or_list);
     void convertIRBBListToORList(OUT RecycORList & or_list);
+
     //Load constant float value into register.
     void convertLoadConstFP(IR const* ir, OUT RecycORList & ors,
                             MOD IOC * cont);
+
+    //Load constant integer value into register.
+    void convertLoadConstInt(HOST_INT constval, UINT constbytesize,
+                             bool is_signed, Dbx const* dbx,
+                             OUT RecycORList & ors, MOD IOC * cont);
+
     //Load constant integer value into register.
     void convertLoadConstInt(IR const* ir, OUT RecycORList & ors,
                              MOD IOC * cont);
+
     //Load constant boolean value into register.
     void convertLoadConstBool(IR const* ir, OUT RecycORList & ors,
                               MOD IOC * cont);
+
     //Load constant string address into register.
     void convertLoadConstStr(IR const* ir, OUT RecycORList & ors,
                              MOD IOC * cont);
+
     //Load constant value into register.
     void convertLoadConst(IR const* ir, OUT RecycORList & ors, MOD IOC * cont);
 
     void flattenSRVec(IOC const* cont, Vector<SR*> * vec);
+
+    void tryExtendLoadValByMemSize(bool is_signed, Dbx const* dbx,
+                                   OUT RecycORList & ors, MOD IOC * cont);
 public:
     IR2OR(CG * cg);
     virtual ~IR2OR() {}
@@ -383,6 +411,11 @@ public:
         ASSERTN(0, ("Target Dependent Code"));
     }
     virtual void convertGetElem(IR const* ir, OUT RecycORList & ors,
+                                MOD IOC * cont)
+    {
+        ASSERTN(0, ("Target Dependent Code"));
+    }
+    virtual void convertExtStmt(IR const* ir, OUT RecycORList & ors,
                                 MOD IOC * cont)
     {
         ASSERTN(0, ("Target Dependent Code"));

@@ -33,7 +33,7 @@ author: Su Zhenyu
 
 namespace xgen {
 
-class Reg2Var : public xcom::TMap<REG, xoc::Var*> {
+class Reg2Var : public xcom::TMap<Reg, xoc::Var*> {
 };
 
 #define RAMGR_gra(lm) ((lm)->m_gra)
@@ -128,8 +128,8 @@ public:
                                         OUT ORBBList & bblist,
                                         OUT Reg2Var & reg2var);
     virtual void saveCallee(RegSet const used_callee_regs[]);
-    virtual void updateAsmClobberCallee(REGFILE regfile, REG reg);
-    virtual void updateCallee(REGFILE regfile, REG reg);
+    virtual void updateAsmClobberCallee(REGFILE regfile, Reg reg);
+    virtual void updateCallee(REGFILE regfile, Reg reg);
 };
 
 } //namespace xgen

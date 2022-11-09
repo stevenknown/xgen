@@ -38,6 +38,7 @@ class SR;
 class SRVec;
 class SRVecMgr;
 
+#define SR_COUNT_INIT_VAL 1
 #define LILIST_label(l) ((l)->m_label)
 
 class LabelInfoList {
@@ -69,7 +70,7 @@ typedef enum _SR_TYPE {
     SR_STR,
     SR_LAB,
     SR_LAB_LIST,
-}  SR_TYPE;
+} SR_CODE;
 
 #define MAX_SR_NAME_BUF_LEN 1024
 
@@ -96,27 +97,8 @@ SR const* checkSRIMM(SR const* ir);
 #define CK_SR_REG(sr) (sr)
 #endif
 
-//This class defined Symbol Register.
-#define SR_type(sr) (sr)->type
+#define SR_code(sr) (sr)->m_code
 #define SR_id(sr) (sr)->m_id //unique id for each SRs
-
-//symbol register id.
-#define SR_sregid(sr) (CK_SR_REG(sr))->u1.u2.symbol_regid
-#define SR_regfile(sr) (CK_SR_REG(sr))->u1.u2.regfile
-
-//Physical Register id, always start at 1.
-#define SR_phy_reg(sr) (CK_SR_REG(sr))->u1.u2.phy_regid
-#define SR_int_imm(sr) (CK_SR_IMM(sr))->u1.u3.u4.int_imm
-#define SR_fp_imm(sr) (CK_SR_IMM(sr))->u1.u3.u4.fp_imm
-#define SR_imm_size(sr) (CK_SR_IMM(sr))->u1.u3.size
-#define SR_str(sr) (CK_SR_STR(sr))->u1.str
-#define SR_var(sr) (CK_SR_VAR(sr))->u1.u4.var
-#define SR_var_ofst(sr) (CK_SR_VAR(sr))->u1.u4.ofst
-#define SR_spill_var(sr) (CK_SR_REG(sr))->u1.u2.spill_var
-#define SR_var_ir(sr) (CK_SR_VAR(sr))->u1.u4.ir
-#define SR_label(sr) (CK_SR_LAB(sr))->u1.label
-#define SR_label_ofst(sr) (CK_SR_LAB(sr)) //Reserved
-#define SR_label_list(sr) (CK_SR_LAB_LIST(sr))->u1.label_list
 
 //If sr belong to a sr-vector, record the vector.
 //sr is either register or immeidate.
@@ -125,11 +107,14 @@ SR const* checkSRIMM(SR const* ir);
 //Record the sr's position in the vector, start at 0.
 //sr is either register or immeidate.
 #define SR_vec_idx(sr) ((sr)->m_sr_vec_idx)
+#define SR_is_str(sr) (SR_code(sr) == SR_STR)
+#define SR_is_label(sr) (SR_code(sr) == SR_LAB)
+#define SR_is_var(sr) (SR_code(sr) == SR_VAR)
+#define SR_is_label_list(sr) (SR_code(sr) == SR_LAB_LIST)
+#define SR_is_int_imm(sr) (SR_code(sr) == SR_INT_IMM)
+#define SR_is_fp_imm(sr) (SR_code(sr) == SR_FP_IMM)
+#define SR_is_reg(sr) (SR_code(sr) == SR_REG)
 #define SR_is_vec(sr) (SR_vec(sr) != nullptr)
-#define SR_is_str(sr) (SR_type(sr) == SR_STR)
-#define SR_is_label(sr) (SR_type(sr) == SR_LAB)
-#define SR_is_var(sr) (SR_type(sr) == SR_VAR)
-#define SR_is_label_list(sr) (SR_type(sr) == SR_LAB_LIST)
 #define SR_is_sp(sr) ((sr)->u2.s2.is_sp)
 #define SR_is_fp(sr) ((sr)->u2.s2.is_fp)
 #define SR_is_gp(sr) ((sr)->u2.s2.is_gp)
@@ -137,19 +122,19 @@ SR const* checkSRIMM(SR const* ir);
 #define SR_is_rflag(sr) ((sr)->u2.s2.is_rflag)
 #define SR_is_dedicated(sr) ((sr)->u2.s2.is_dedicated)
 #define SR_is_ra(sr) ((sr)->u2.s2.is_return_address)
-#define SR_is_free(sr) ((sr)->u2.s2.is_free)
 #define SR_is_global(sr) ((sr)->u2.s2.is_global)
 #define SR_is_pred(sr) ((sr)->u2.s2.is_predicated)
-#define SR_is_int_imm(sr) ((sr)->type == SR_INT_IMM)
-#define SR_is_fp_imm(sr) ((sr)->type == SR_FP_IMM)
 #define SR_is_imm(sr) (SR_is_int_imm(sr) || SR_is_fp_imm(sr))
-#define SR_is_reg(sr) ((sr)->type == SR_REG)
 #define SR_is_constant(sr) (SR_is_imm(sr) || SR_is_label(sr) || \
                             SR_is_var(sr) || SR_is_label_list(sr))
+
+//The class is the basic structure to describe miscellaneous
+//Specific-Representation of the resource of target machine.
 class SR {
     COPY_CONSTRUCTOR(SR);
+protected:
+    SR_CODE m_code;
 public:
-    SR_TYPE type;
     UINT m_id; //unique identifier within a region
     union {
         UINT bitflags;
@@ -163,51 +148,8 @@ public:
             UINT is_global:1; //global symbol register
             UINT is_predicated:1; //predicated register
             UINT is_return_address:1; //function return-address register.
-            UINT is_free:1; //set to true if current SR has been freed.
         } s2;
     } u2;
-
-    //The union repesents attributes when current SR plays different roles.
-    union {
-        //Attributes if current SR represents a symbol register.
-        struct {
-            UINT symbol_regid; //symbol register id, start at SRID_UNDEF + 1.
-            REGFILE regfile; //physical register file.
-            REG phy_regid; //physical register id, start at REG_UNDEF + 1.
-            xoc::Var * spill_var; //xoc::Var to hold spilled register.
-        } u2;
-
-        //Attributes if current SR represents a const string.
-        xoc::Sym const* str; //records a const string
-
-        //Attributes if current SR represents an integer or a float.
-        struct {
-            union {
-                //Integer.
-                //Note host LONGLONG should not less than HOST_INT,
-                //otherwise the integer might be truncated wrongfully.
-                HOST_INT int_imm;
-                HOST_FP fp_imm; //float point.
-            } u4;
-            UINT size; //byte size of imm.
-        } u3;
-
-        //Attributes if current SR represents a variable.
-        struct {
-            xoc::Var const* var; //represent memory.
-            UINT ofst; //offset base on var.
-
-            //Record the corresponding IR at middle-end if
-            //the variable generated via IR.
-            xoc::IR const* ir;
-        } u4;
-
-        //Attributes if current SR represents a label.
-        xoc::LabelInfo const* label; //records Internal-Label or Custom-Label
-
-        //Attributes if current SR represents a label-list.
-        LabelInfoList const* label_list; //the list of LabelInfo.
-    } u1;
 
     //Record the sr's position in the vector, start at 0.
     //sr is either register or immeidate.
@@ -220,26 +162,29 @@ public:
     SR() { clean(); }
     virtual ~SR() {}
 
-    virtual void copy(SR const* sr, bool is_clone_vec = false,
-                      CG * cg = nullptr);
-    virtual void clean();
+    virtual void copy(SR const* sr, bool is_clone_vec, CG * cg);
+    virtual void copy(SR const* sr);
+    virtual void clean()
+    {
+        u2.bitflags = 0;
+        m_sr_vec = nullptr; //vec will be dropped to pool. TODO: recycle it.
+        m_sr_vec_idx = SRVEC_IDX_UNDEF;
+    }
 
     //Do not count m_sr_vec into size because it is allocated in outside pool.
     virtual size_t count_mem() const { return sizeof(*this); }
 
     virtual void dump(CG * cg) const;
 
-    SR_TYPE getType() const { return SR_type(this); }
-    virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const;
-    virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const;
+    SR_CODE getCode() const { return SR_code(this); }
+    virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const
+    { return nullptr; }
+    virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const
+    { return nullptr; }
     virtual UINT getByteSize() const;
-    REGFILE getRegFile() const { return SR_regfile(this); }
-
-    //Physical Register id, always start at 1.
-    REG getPhyReg() const { return SR_phy_reg(this); }
-
-    //Get Symbol Register id.
-    UINT getSReg() const { return SR_sregid(this); }
+    inline REGFILE getRegFile() const;
+    inline Reg getPhyReg() const;
+    inline UINT getSymReg() const;
 
     //If sr belong to a sr-vector, record the vector.
     //sr is either register or immeidate.
@@ -248,16 +193,16 @@ public:
     //Record the sr's position in the vector, start at 0.
     //sr is either register or immeidate.
     INT getVecIdx() const { return SR_vec_idx(this); }
-    Var const* getVar() const { return SR_var(this); }
-    Var const* getSpillVar() const { return SR_spill_var(this); }
-    UINT getVarOfst() const { return SR_var_ofst(this); }
-    LabelInfo const* getLabel() const { return SR_label(this); }
-    LabelInfoList const* getLabelList() const { return SR_label_list(this); }
-    IR const* getVarIR() const { return SR_var_ir(this); }
-    Sym const* getStr() const { return SR_str(this); }
-    UINT getImmSize() const { return SR_imm_size(this); }
-    HOST_FP getFP() const { return SR_fp_imm(this); }
-    HOST_INT getInt() const { return SR_int_imm(this); }
+    inline Var const* getVar() const;
+    inline Var const* getSpillVar() const;
+    inline UINT getVarOfst() const;
+    inline LabelInfo const* getLabel() const;
+    inline LabelInfoList const* getLabelList() const;
+    inline IR const* getVarIR() const;
+    inline Sym const* getStr() const;
+    inline UINT getImmSize() const;
+    inline HOST_FP getFP() const;
+    inline HOST_INT getInt() const;
 
     UINT id() const { return SR_id(this); }
     virtual bool is_equal(SR const* v);
@@ -281,8 +226,92 @@ public:
     bool is_reg() const { return SR_is_reg(this); }
     bool is_constant() const { return SR_is_constant(this); }
     bool is_group() const { return SR_vec(this) != nullptr; }
-    bool is_free() const { return SR_is_free(this); }
 };
+
+#include "sr_def.h"
+
+//
+//START SR
+//
+REGFILE SR::getRegFile() const
+{
+    return ((RegSR*)this)->regfile;
+    //return SR_regfile(this);
+}
+
+
+Reg SR::getPhyReg() const
+{
+    return SR_phy_reg(this);
+}
+
+
+UINT SR::getSymReg() const
+{
+    return SR_sym_reg(this);
+}
+
+
+Var const* SR::getVar() const
+{
+    return SR_var(this);
+}
+
+
+Var const* SR::getSpillVar() const
+{
+    return SR_spill_var(this);
+}
+
+
+UINT SR::getVarOfst() const
+{
+    return SR_var_ofst(this);
+}
+
+
+LabelInfo const* SR::getLabel() const
+{
+    return SR_label(this);
+}
+
+
+LabelInfoList const* SR::getLabelList() const
+{
+    return SR_label_list(this);
+}
+
+
+IR const* SR::getVarIR() const
+{
+    return SR_var_ir(this);
+}
+
+
+Sym const* SR::getStr() const
+{
+    return SR_str(this);
+}
+
+
+UINT SR::getImmSize() const
+{
+    return SR_imm_size(this);
+}
+
+
+HOST_FP SR::getFP() const
+{
+    return SR_fp_imm(this);
+}
+
+
+HOST_INT SR::getInt() const
+{
+    return SR_int_imm(this);
+}
+//END SR
+
 
 typedef List<SR*> SRList;
 typedef xcom::Hash<SR*> SRHash; //SR hash table
@@ -291,17 +320,17 @@ typedef xcom::Hash<SR*> SRHash; //SR hash table
 //allocation and recycling.
 class SRMgr {
 protected:
-    xcom::List<SR*> m_freesr_list;
     xcom::Vector<SR*> m_sridx2sr; //sridx is dense integer.
+    UINT m_sr_count;
 protected:
-    virtual SR * allocSR();
+    virtual SR * allocSR(SR_CODE c);
 public:
-    SRMgr() {}
+    SRMgr() { m_sr_count = SRID_UNDEF; }
     virtual ~SRMgr() { clean(); }
     virtual void clean();
     size_t count_mem() const
     {
-        size_t count = m_freesr_list.count_mem();
+        size_t count = 0;
         count += m_sridx2sr.count_mem();
         SR * sr = nullptr;
         for (VecIdx i = 0; i <= m_sridx2sr.get_last_idx(); i++) {
@@ -313,8 +342,8 @@ public:
     }
     void freeSR(SR * sr);
     UINT getSRNum() const { return m_sridx2sr.get_elem_count(); }
-    virtual SR * get(UINT unique_id);
-    virtual SR * genSR();
+    SR * getSR(UINT unique_id) { return m_sridx2sr.get(unique_id); }
+    virtual SR * genSR(SR_CODE c);
 };
 
 

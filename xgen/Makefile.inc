@@ -22,4 +22,5 @@ XGEN_OBJS +=\
 ../xgen/regfilegroup.o\
 ../xgen/issue_package.o\
 ../xgen/intrinsic_mgr.o\
-../xgen/targ_interface.o
+../xgen/targ_interface.o\
+../xgen/sr_def.o

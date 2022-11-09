@@ -32,6 +32,12 @@ author: Su Zhenyu
 #include "../../com/xcominc.h"
 #include "../../xgen/xgeninc.h"
 
+#define TARG_MACH_RESOURCE_FILE_NAME "arm_targ_mach_resource.cpp"
+#define CYCLE_OF_EX1 1
+#define CYCLE_OF_EX2 2
+#define CYCLE_OF_EX3 3
+#define CYCLE_OF_WB 4 //write back stage
+
 static FILE * g_output = nullptr;
 static List<EquORCodes*> g_or_codes_list;
 static List<RegFileSet*> g_regfile_set_list;
@@ -42,7 +48,6 @@ static List<UINT*> g_uint_buffer_list;
 static CHAR const* g_reg_result_cyc_buf_name = "reg_result_cyc_buf";
 static CHAR const* g_mem_result_cyc_buf_name = "mem_result_cyc_buf";
 static CHAR const* g_robs_empty_name = "robs_empty";
-
 static CHAR const* g_cluster2regset_allocable_name =
     "g_cluster2regset_allocable";
 static CHAR const* g_reg2regfile_name = "g_reg2regfile";
@@ -51,11 +56,6 @@ static CHAR const* g_regfile2regset_allocable_name =
 static CHAR const* g_regfile2regset_name = "g_regfile2regset";
 static CHAR const* g_or_code_desc_name = "g_or_code_desc";
 static CHAR const* g_cluster2regset_name = "g_cluster2regset";
-
-#define CYCLE_OF_EX1 1
-#define CYCLE_OF_EX2 2
-#define CYCLE_OF_EX3 3
-#define CYCLE_OF_WB 4 //write back stage
 
 //Each of group initializing element must be placed conforming
 //to the order of OR_CODE corelated.
@@ -364,7 +364,7 @@ static void initAndPrtRegister(OUT xcom::BitSet & allocable)
     //Initialize regset caller-saved.
     ////////////////////////////////////////
     //R0~R3
-    for (REG reg = 1; reg <= 4; reg++) {
+    for (Reg reg = 1; reg <= 4; reg++) {
         caller_saved.bunion(reg);
     }
 
@@ -372,7 +372,7 @@ static void initAndPrtRegister(OUT xcom::BitSet & allocable)
     //Initialize regset callee-saved.
     ////////////////////////////////////////
     //R4~R11
-    for (REG reg = 5; reg <= 12; reg++) {
+    for (Reg reg = 5; reg <= 12; reg++) {
         callee_saved.bunion(reg);
     }
     //R14(LR)
@@ -382,8 +382,8 @@ static void initAndPrtRegister(OUT xcom::BitSet & allocable)
     //Initialize regset allocable.
     ////////////////////////////////////////
     //R4~R11
-    for (REG reg = 5; reg <= 12; reg++) {
-    //for (REG reg = 5; reg <= 7; reg++) {
+    for (Reg reg = 5; reg <= 12; reg++) {
+    //for (Reg reg = 5; reg <= 7; reg++) {
         allocable.bunion(reg);
     }
     //R14(LR), note R14 should be saved at prolog of current function.
@@ -433,16 +433,16 @@ static void prtRegSetArrayDeclaration(CHAR const* array_var_name,
                                       UINT bound_end)
 {
     //Print the export variable.
-    fprintf(g_output, "static RegSet const* %s [] = {",
+    fprintf(g_output, "static xgen::RegSet const* %s [] = {",
             array_var_name);
 
     //It is necessary to print empty regset.
     for (UINT i = 0; i < bound_start; i++) {
-        fprintf(g_output, "(RegSet const*)&%s,", g_robs_empty_name);
+        fprintf(g_output, "(xgen::RegSet const*)&%s,", g_robs_empty_name);
     }
 
     for (UINT i = bound_start; i < bound_end; i++) {
-        fprintf(g_output, "(RegSet const*)&robs_%s_%d,", byte_vec_name, i);
+        fprintf(g_output, "(xgen::RegSet const*)&robs_%s_%d,", byte_vec_name, i);
     }
 
     fprintf(g_output, "};\n");
@@ -1274,12 +1274,12 @@ static void initAndPrtRegisterName()
 
     xcom::StrBuf buf(32);
     for (UINT i = REG_UNDEF; i < REG_NUM; i++) {
-        REG reg = i;
+        Reg reg = i;
 
         //Index of physical register starting at 1,
         //whereas 0 indicates REG_UNDEF.
-        if (reg == 0) {
-            buf.clean();
+        if (reg == REG_UNDEF) {
+            buf.sprint("REG_UNDEF");
         } else if (reg >= 1 && reg <= 16) {
             //R0~R15
             buf.sprint("r%d", reg-1);
@@ -1645,7 +1645,7 @@ static void prtSRDesc(SRDesc const* srd, CHAR const* byte_buffer_name,
     //7th field
     if (srd->getValidRegSet() != nullptr) {
         buf.sprint("robs_%s_%p", byte_buffer_name2, srd);
-        fprintf(g_output, "(RegSet*)&%s", buf.buf);
+        fprintf(g_output, "(xgen::RegSet*)&%s", buf.buf);
     } else {
         fprintf(g_output, "nullptr");
     }
@@ -2170,9 +2170,8 @@ static bool verifyORCodeDesc()
 
 int main()
 {
-    CHAR const* name = "arm_targ_mach_resource.cpp";
-    UNLINK(name);
-    g_output = fopen(name, "a+");
+    UNLINK(TARG_MACH_RESOURCE_FILE_NAME);
+    g_output = ::fopen(TARG_MACH_RESOURCE_FILE_NAME, "a+");
 
     ASSERT0(verifyORCodeDesc());
     prtHeaderFile();
@@ -2207,7 +2206,7 @@ int main()
     prtSRDescGroupList();
     prtORCodeDescTab();
 
-    fclose(g_output);
+    ::fclose(g_output);
     fini();
     return 0;
 }

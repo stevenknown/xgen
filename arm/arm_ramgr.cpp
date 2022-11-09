@@ -33,7 +33,7 @@ author: Su Zhenyu
 //Saving region-used callee registers.
 //'bblist': records BBs that have to reallocate register.
 void ARMRaMgr::spillRegFileAtEntry(REGFILE regfile, IN ORBB * entry,
-                                   RegSet const used_callee_regs[],
+                                   xgen::RegSet const used_callee_regs[],
                                    OUT ORBBList & bblist,
                                    OUT Reg2Var & reg2var)
 {
@@ -45,7 +45,7 @@ void ARMRaMgr::spillRegFileAtEntry(REGFILE regfile, IN ORBB * entry,
 //Saving region-used callee registers.
 //'bblist': records BBs that have to reallocate register.
 void ARMRaMgr::reloadRegFileAtExit(REGFILE regfile, IN ORBB * exit,
-                                   RegSet const used_callee_regs[],
+                                   xgen::RegSet const used_callee_regs[],
                                    OUT ORBBList & bblist,
                                    Reg2Var const& reg2var)
 {
@@ -54,15 +54,15 @@ void ARMRaMgr::reloadRegFileAtExit(REGFILE regfile, IN ORBB * exit,
 }
 
 
-LifeTimeMgr * ARMRaMgr::allocLifeTimeMgr()
+xgen::LifeTimeMgr * ARMRaMgr::allocLifeTimeMgr()
 {
-    return (LifeTimeMgr*)new ARMLifeTimeMgr(m_cg);
+    return (xgen::LifeTimeMgr*)new ARMLifeTimeMgr(m_cg);
 }
 
 
 void ARMRaMgr::setUseLR()
 {
-    RegSet * regset = getLRAUsedCalleeSavedRegSet(RF_R);
+    xgen::RegSet * regset = getLRAUsedCalleeSavedRegSet(RF_R);
     regset->bunion(REG_RETURN_ADDRESS_REGISTER);
 }
 

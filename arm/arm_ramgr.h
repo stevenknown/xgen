@@ -39,25 +39,25 @@ public:
     ARMRaMgr(List<ORBB*> * bbs, bool is_func, CG * cg) :
              RaMgr(bbs, is_func, cg) {}
 
-    virtual LifeTimeMgr * allocLifeTimeMgr();
+    virtual xgen::LifeTimeMgr * allocLifeTimeMgr();
 
     virtual void postProcess();
 
     virtual void reloadPredicateAtExit(REGFILE regfile, ORBB * exit,
-                                       RegSet const used_callee_regs[],
+                                       xgen::RegSet const used_callee_regs[],
                                        OUT ORBBList & bblist,
                                        Reg2Var const& reg2var) {}
     virtual void reloadRegFileAtExit(REGFILE regfile, ORBB * exit,
-                                     RegSet const used_callee_regs[],
+                                     xgen::RegSet const used_callee_regs[],
                                      OUT ORBBList & bblist,
                                      Reg2Var const& reg2var);
 
     virtual void spillRegFileAtEntry(REGFILE regfile, ORBB * entry,
-                                     RegSet const used_callee_regs[],
+                                     xgen::RegSet const used_callee_regs[],
                                      OUT ORBBList & bblist,
                                      OUT Reg2Var & reg2var);
     virtual void spillPredicateAtEntry(REGFILE regfile, ORBB * entry,
-                                       RegSet const used_callee_regs[],
+                                       xgen::RegSet const used_callee_regs[],
                                        OUT ORBBList & bblist,
                                        OUT Reg2Var & reg2var) {}
 };

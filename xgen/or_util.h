@@ -194,7 +194,7 @@ public:
 };
 
 
-typedef xcom::HMap<REG, SR*, HashFuncBase<REG> > Reg2SR;
+typedef xcom::HMap<Reg, SR*, HashFuncBase<Reg> > Reg2SR;
 
 } //namespace xgen
 #endif

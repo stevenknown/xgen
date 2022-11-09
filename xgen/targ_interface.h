@@ -33,7 +33,6 @@ author: Su Zhenyu
 
 namespace xgen {
 
-typedef UINT REG;
 class RegSet;
 class ORCodeDesc;
 class SRDesc;
@@ -48,7 +47,7 @@ CHAR const* tmGetClusterName(CLUST);
 CHAR const* tmGetUnitName(UNIT);
 
 //Return name of register.
-CHAR const* tmGetRegName(REG reg);
+CHAR const* tmGetRegName(Reg reg);
 
 //Return name of given register-file.
 CHAR const* tmGetRegFileName(REGFILE);
@@ -63,7 +62,7 @@ CHAR const* tmGetORCodeName(OR_CODE);
 RegSet const* tmMapRegFile2RegSet(REGFILE);
 
 //Return register-file for given register.
-REGFILE tmMapReg2RegFile(REG);
+REGFILE tmMapReg2RegFile(Reg);
 
 //Return alloable register set for given register-file.
 RegSet const* tmMapRegFile2RegSetAllocable(REGFILE rf);
