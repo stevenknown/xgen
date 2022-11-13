@@ -175,7 +175,7 @@ ORCt * BBORList::insert_before(OR * o, OR * marker)
     } else {
         ORCt * cm = nullptr;
         bool b = xcom::EList<OR*, OR2Holder>::find(marker, &cm);
-        CHECK0_DUMMYUSE(b);
+        ASSERT0_DUMMYUSE(b);
         ASSERT0(cm && C_prev(cm));
 
         OR * prev = C_prev(cm)->val();
@@ -285,7 +285,7 @@ ORCt * BBORList::insert_after(OR * o, OR * marker)
     } else {
         ORCt * cm = nullptr;
         bool b = xcom::EList<OR*, OR2Holder>::find(marker, &cm);
-        CHECK0_DUMMYUSE(b);
+        ASSERT0_DUMMYUSE(b);
         ASSERT0(cm && C_next(cm));
 
         OR * next = C_next(cm)->val();
@@ -418,7 +418,7 @@ void BBORList::dump(CG * cg)
     for (OR * o = get_head(); o != nullptr; o = get_next()) {
         ASSERT0(o->getBB() == m_bb);
         bool b = xcom::EList<OR*, OR2Holder>::find(o, &cm);
-        CHECK0_DUMMYUSE(b);
+        ASSERT0_DUMMYUSE(b);
         ASSERTN(cm, ("cannot find OR in list"));
 
         buf.clean();

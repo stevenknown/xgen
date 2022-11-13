@@ -14,7 +14,7 @@ usage:
  2. copy com, reader, and opt into xgen directory     
 ```cmd
     cd xgen    
-    cp -rf ../xoc/com ../xoc/opt ../xoc/reader .    
+    cp -rf ../xoc/com ../xoc/opt ../xoc/reader ../xoc/Makefile.xoc ../xoc/Makefile.xoc.inc .    
 ```
  3. clone xocfe project    
 ```cmd

@@ -182,7 +182,7 @@ void ARMIR2OR::convertReturnValue(IR const* ir, OUT RecycORList & ors,
     } else {
         //Get the first formal parameter, it is the return buffer of the value.
         Var const* v = getCG()->get_param_vars().get(0);
-        CHECK0_DUMMYUSE(v);
+        ASSERT0_DUMMYUSE(v);
         ASSERTN(!g_gen_code_for_big_return_value, ("TODO"));
         return;
     }
@@ -514,7 +514,7 @@ void ARMIR2OR::convertMul(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     ASSERTN(ir->is_mul(), ("illegal ir"));
     IR * op0 = BIN_opnd0(ir);
     IR * or1 = BIN_opnd1(ir);
-    CHECK0_DUMMYUSE(or1);
+    ASSERT0_DUMMYUSE(or1);
     //TO BE DETERMINED:Ineuqal byte size loading should be handled.
     //ASSERT0(op0->getTypeSize(m_tm) == or1->getTypeSize(m_tm));
     if (op0->getTypeSize(m_tm) <= BYTESIZE_OF_WORD) {
@@ -1270,7 +1270,7 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors, IOC * cont)
     tors.copyDbx(SELECT_det(ir));
     ors.move_tail(tors);
     SR * cres = tmp.get_reg(0);
-    CHECK0_DUMMYUSE(cres);
+    ASSERT0_DUMMYUSE(cres);
 
     SR * true_pr = tmp.get_reg(1);
     SR * false_pr = tmp.get_reg(2);

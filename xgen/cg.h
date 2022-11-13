@@ -478,7 +478,7 @@ public:
     //Compute the byte size of memory which will be loaded/stored.
     virtual INT computeMemByteSize(OR * o)
     {
-        CHECK0_DUMMYUSE(o);
+        ASSERT0_DUMMYUSE(o);
         ASSERTN(o->is_mem(), ("Need memory operation"));
         ASSERTN(0, ("Target Dependent Code"));
         return -1;

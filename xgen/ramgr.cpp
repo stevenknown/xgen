@@ -259,7 +259,7 @@ static bool verifyORS(ORList const& ors, ORBB * bb)
 {
     ORCt * ct;
     for (ors.get_head(&ct); ct != ors.end(); ct = ors.get_next(ct)) {
-        CHECK0_DUMMYUSE(ct->val()->getBB() == bb);
+        ASSERT0_DUMMYUSE(ct->val()->getBB() == bb);
     }
     return true;
 }

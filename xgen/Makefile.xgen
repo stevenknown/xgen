@@ -1,0 +1,108 @@
+CC:=$(shell which clang++ > /dev/null)
+ifndef CC
+  CC=$(if $(shell which clang),clang,gcc)
+endif
+
+ifeq ($(TARG),)
+  #Default target is ARM.
+  TARG=FOR_ARM
+  TARG_DIR=../arm
+endif
+
+ifeq ($(DEBUG),)
+  #Default build mode is DEBUG mode.
+  DEBUG=true
+endif
+
+CFLAGS+=-Wall
+
+XOC_SRC=..
+SRC=.
+
+include $(SRC)/Makefile.inc
+include $(TARG_DIR)/Makefile.inc
+include $(XOC_SRC)/Makefile.xoc.inc
+
+ifeq ($(DEBUG), true)
+  #Add predefined macro if build host is Windows.
+  CFLAGS+=-D_DEBUG_
+endif
+
+ifdef WIN
+  #Add predefined macro if build host is Windows.
+  CFLAGS+=-D_ON_WINDOWS_
+endif
+
+CFLAGS+=\
+  -D$(TARG) \
+  -O2 \
+  -g2 \
+  -Wno-unknown-pragmas \
+  -Wno-write-strings \
+  -Wsign-promo \
+  -Wparentheses \
+  -Wformat \
+  -Wsign-compare \
+  -Wpointer-arith \
+  -Wno-multichar \
+  -Winit-self \
+  -Wswitch \
+  -D_SUPPORT_C11_
+
+#Disable -Wconversion to avoid too much complaints.
+
+ifneq (,$(filter $(CC),g++ gcc))
+  CFLAGS+=-Wno-strict-aliasing -finline-limit=10000000
+endif
+
+ifeq ($(TARG), FOR_ARM)
+  TARG_OBJS:=$(foreach n,$(ARM_OBJS),$(TARG_DIR)/$(n))
+else ifeq ($(TARG), FOR_X86)
+  TARG_OBJS:=$(foreach n,$(X86_OBJS),$(TARG_DIR)/$(n))
+else
+  $(error "UNKNOWN TARG:$(TARG)")
+endif
+
+$(XGEN_OUTPUT): targ_gen $(XOC_OUTPUT) xgen_objs targ_objs
+	@echo "BUILD $(XGEN_OUTPUT)!!"
+	ar rcs $(XGEN_OUTPUT) $(XOC_SRC)/$(XOC_OUTPUT) $(XGEN_OBJS) $(TARG_OBJS)
+	@echo "SUCCESS!!"
+
+INC=-I . -I com -I opt -I reader
+
+%.o:%.cpp
+	@echo "BUILD $<"
+	$(CC) $(CFLAGS) $(INC) -c $< -o $@
+
+$(XOC_OUTPUT):
+	@echo "BUILD $(XOC_OUTPUT)"
+	cd $(XOC_SRC) && make -f Makefile.xoc TARG=$(TARG) DEBUG=$(DEBUG)
+
+xgen_objs: $(XGEN_OBJS)
+
+targ_objs: $(TARG_OBJS)
+
+targ_gen:
+	@echo "==---- GENERATE TARGET DEPENDENT FILES ----=="
+	make -C $(TARG_DIR)/precompile CFLAGS="$(CFLAGS)" TARGET=$(TARG) HOST_CC=$(CC)
+	cd $(TARG_DIR)/precompile; ./gentminfo.exe
+
+clean:
+	@find ./ -name "*.gcda" | xargs rm -f
+	@find ./ -name "*.gcno" | xargs rm -f
+	@find ./ -name "*.o" | xargs rm -f
+	@find ./ -name "*.a" | xargs rm -f
+	@find ./ -name "*.dot" | xargs rm -f
+	@find ./ -name "*.exe" | xargs rm -f
+	@find ./ -name "*.elf" | xargs rm -f
+	@find ./ -name "*.out" | xargs rm -f
+	@find ./ -name "*.tmp" | xargs rm -f
+	@find ./ -name "*.vcg" | xargs rm -f
+	@find ./ -name "*.cxx" | xargs rm -f
+	@find ./ -name "*.asm" | xargs rm -f
+	@find ./ -name "*.swp" | xargs rm -f
+	@find ./ -name "*.swo" | xargs rm -f
+	@find ./ -name "*.log" | xargs rm -f
+	@find ./ -name "*.LOGLOG" | xargs rm -f
+	@find ./ -name "LOGLOG" | xargs rm -f
+

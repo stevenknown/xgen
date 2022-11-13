@@ -602,7 +602,7 @@ void CG::buildTypeCvt(SR * src, UINT tgt_size, UINT src_size, bool is_signed,
     }
     //Just do some check.
     SR * src_low = src;
-    CHECK0_DUMMYUSE(src_low);
+    ASSERT0_DUMMYUSE(src_low);
     ASSERT0(src_low->getVec() != nullptr && SR_vec_idx(src_low) == 0);
     ASSERT0(src_low->getVec()->get(1) != nullptr);
     ASSERT0(src_low->getByteSize() == 2 * GENERAL_REGISTER_SIZE);
@@ -3069,7 +3069,7 @@ void CG::renameOpndAndResultFollowed(SR * oldsr, SR * newsr, OR * start,
 {
     ORCt * ct = nullptr;
     bool is = ors->find(start, &ct);
-    CHECK0_DUMMYUSE(is);
+    ASSERT0_DUMMYUSE(is);
     renameOpndAndResultFollowed(oldsr, newsr, ct, ors);
 }
 

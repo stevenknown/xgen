@@ -673,7 +673,7 @@ bool ParallelPartMgr::modifyReductionOR()
         for (OR * o = red_or_lst->get_head(); o;
              o = red_or_lst->get_next()) {
             bool succ = modifyReductionOR(o, numOfParallelPart());
-            CHECK0_DUMMYUSE(succ);
+            ASSERT0_DUMMYUSE(succ);
         }
     }//end for
     return true;

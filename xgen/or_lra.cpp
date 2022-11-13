@@ -3827,7 +3827,7 @@ bool LRA::splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
         if (is_def) {
             if (pos != LT_FIRST_POS) {
                 OR * o = mgr.getOR(pos);
-                CHECK0_DUMMYUSE(o);
+                ASSERT0_DUMMYUSE(o);
                 ASSERTN(m_cg->mayDef(o, sr), ("Illegal o mapping."));
             }
             genSpill(lt1, sr, pos, spill_var, mgr, true, nullptr);
@@ -3869,7 +3869,7 @@ bool LRA::splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
         if (is_def) {
             if (pos != LT_FIRST_POS) {
                 OR * o = mgr.getOR(pos);
-                CHECK0_DUMMYUSE(o);
+                ASSERT0_DUMMYUSE(o);
                 ASSERTN(m_cg->mayDef(o, sr), ("Illegal o mapping."));
             }
             //Each of DEFs will be new-sr.
@@ -3927,7 +3927,7 @@ bool LRA::spillFirstDef(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
     //Op on 'pos' must be DEF of 'sr'
     if (defpos != LT_FIRST_POS) {
         OR * o = mgr.getOR(defpos);
-        CHECK0_DUMMYUSE(o);
+        ASSERT0_DUMMYUSE(o);
         ASSERTN(m_cg->mayDef(o, LT_sr(lt1)), ("Illegal o mapping."));
     }
     //spill var is gra_spill_var if sr is global reg.
@@ -4006,7 +4006,7 @@ void LRA::selectReasonableSplitPos(MOD BSIdx * pos1, MOD BSIdx * pos2,
     ASSERTN(lt && *pos1 >= 0 && *pos2 > 0 && *pos1 < *pos2,
         ("Illegal position"));
     SR * sr = LT_sr(lt);
-    CHECK0_DUMMYUSE(sr);
+    ASSERT0_DUMMYUSE(sr);
 
     BSIdx p1 = *pos1, p2 = *pos2;
     bool is_p1_def = false, is_p2_def = false;

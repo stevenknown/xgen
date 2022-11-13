@@ -1,15 +1,15 @@
 ifeq ($(WIN), true)
   $(info "On Windows")
   #Add predefined macro if build host is Windows.
-  CFLAGS += -D_ON_WINDOWS_
+  CFLAGS+=-D_ON_WINDOWS_
 
   #Set HOST_CC compiler  
   ifeq ($(WSL), true)
-    CFLAGS += -D_USE_GCC_
+    CFLAGS+=-D_USE_GCC_
     ifndef HOST_CC
       HOST_CC := $(shell which clang++ > /dev/null)
       ifndef HOST_CC
-        HOST_CC = $(if $(shell which clang),clang,gcc.exe)
+        HOST_CC=$(if $(shell which clang),clang,gcc.exe)
       endif
     endif
   else
@@ -17,11 +17,11 @@ ifeq ($(WIN), true)
   endif 
 else
   $(info "On Linux or Unix")
-  CFLAGS += -D_USE_GCC_
+  CFLAGS+=-D_USE_GCC_
   ifndef HOST_CC
-    HOST_CC := $(shell which clang++ > /dev/null)
+    HOST_CC:=$(shell which clang++ > /dev/null)
     ifndef HOST_CC
-      HOST_CC = $(if $(shell which clang),clang,gcc)
+      HOST_CC=$(if $(shell which clang),clang,gcc)
     endif
   else
     $(info "HOST_CC is defined="$(HOST_CC))
@@ -29,47 +29,42 @@ else
 endif
 $(info "HOST_CC=$(HOST_CC),TARGET=$(TARGET),CFLAGS=$(CFLAGS),WIN=$(WIN),WSL=$(WSL)")
 
-GEN_OBJS +=\
-arm_gen_targ_mach_resource.o
+GEN_OBJS+=arm_gen_targ_mach_resource.o
 
-COM_OBJS +=\
-../../com/ltype.o \
-../../com/smempool.o \
-../../com/strbuf.o \
-../../com/diagnostic.o \
-../../com/bs.o \
-../../com/comf.o\
-../../com/byteop.o
+include ../../com/Makefile.inc
 
-gentminfo.exe: gen_objs com_objs
+gentminfo.exe: gen_objs $(COM_OUTPUT)
 ifeq ($(HOST_CC),)
-	$(error "Miss HOST_CC")
+	$(error "MISS HOST_CC")
 endif
 ifeq ($(TARGET),)
-	$(error "Miss TARGET")
+	$(error "MISS TARGET")
 endif
 ifeq ($(CFLAGS),) 
-	$(error "Miss CFLAGS") 
+	$(error "MISS CFLAGS") 
 endif
-	$(HOST_CC) -std=c++0x -D$(TARGET) $(GEN_OBJS) $(COM_OBJS) $(CFLAGS) -o $@ -lstdc++ -lm  #-lgcov -lgcc
-	@echo "success!!"
+	$(HOST_CC) -std=c++0x -D$(TARGET) $(GEN_OBJS) ../../com/$(COM_OUTPUT) $(CFLAGS) -o $@ -lstdc++ -lm  #-lgcov -lgcc
+	@echo "SUCCESS!!"
+
+$(COM_OUTPUT):
+	@echo "BUILD $(COM_OUTPUT)"
+	cd ../../com && make -f Makefile TARG=$(TARG) DEBUG=$(DEBUG)
 
 %.o:%.cpp
 ifeq ($(HOST_CC),)
-	$(error "Miss HOST_CC")
+	$(error "MISS HOST_CC")
 endif
 ifeq ($(TARGET),)
-	$(error "Miss TARGET") 
+	$(error "MISS TARGET") 
 endif
 ifeq ($(CFLAGS),)
-	$(error "Miss CFLAGS") 
+	$(error "MISS CFLAGS") 
 endif
 	$(info CFLAGS=$(CFLAGS),TARGET=$(TARGET))
 	@echo "CMD>>$(INFER) $(HOST_CC) -D$(TARGET) $(CFLAGS) -c $< -o $@"
 	$(INFER) $(HOST_CC) -D$(TARGET) $(CFLAGS) -c $< -o $@
 
 gen_objs: $(GEN_OBJS)
-com_objs: $(COM_OBJS)
 
 clean:
 	@rm -f ../../com/ltype.o

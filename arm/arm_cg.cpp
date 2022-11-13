@@ -477,7 +477,7 @@ void ARMCG::buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,
     }
 
     if (cont->getMemByteSize() <= 4) {
-        OR_CODE ort;
+        OR_CODE ort = OR_UNDEF;
         switch (cont->getMemByteSize()) {
         case 1: ort = is_signed ? OR_ldrsb : OR_ldrb; break;
         case 2: ort = is_signed ? OR_ldrsh : OR_ldrh; break;
@@ -2432,7 +2432,7 @@ bool ARMCG::isValidRegInSRVec(OR const*, SR const* sr,
                               UINT idx, bool is_result) const
 {
     DUMMYUSE(is_result);
-    CHECK0_DUMMYUSE(sr);
+    ASSERT0_DUMMYUSE(sr);
     ASSERT0(sr->getVec());
     if (idx == 0) {
         ASSERTN(isEvenReg(sr->getPhyReg()),
