@@ -26,7 +26,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @*/
-#include "../opt/cominc.h"
 #include "xoccinc.h"
 
 namespace xocc {
@@ -199,7 +198,7 @@ IR * Canon::handle_exp(IN IR * ir, OUT bool & change, CanonCtx * cc)
     SWITCH_CASE_READ_ARRAY:
         for (IR * k = ARR_sub_list(ir); k != NULL; k = k->get_next()) {
             IR * tmp = handle_exp(k, change, cc);
-            ASSERTN(tmp == k, ("need to be replaced from sublist"));
+            ASSERTN_DUMMYUSE(tmp == k, ("need to be replaced from sublist"));
         }
         ARR_base(ir) = handle_exp(ARR_base(ir), change, cc);
         return ir;

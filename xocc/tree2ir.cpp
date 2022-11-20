@@ -604,10 +604,9 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
         } else if (l->is_array()) {
             //Generate IR_STARRAY.
             //Normalize LHS.
-            ir = m_rg->getIRMgr()->buildStoreArray(ARR_base(l), ARR_sub_list(l),
-                                       l->getType(), ARR_elemtype(l),
-                                       ((CArray*)l)->getDimNum(),
-                                       ARR_elem_num_buf(l), r);
+            ir = m_rg->getIRMgr()->buildStoreArray(ARR_base(l),
+                ARR_sub_list(l), l->getType(), ARR_elemtype(l),
+                ((CArray*)l)->getDimNum(), ARR_elem_num_buf(l), r);
             ARR_base(l) = nullptr;
             ARR_sub_list(l) = nullptr;
             ir->setOffset(ARR_ofst(l));
@@ -678,9 +677,9 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
             //Generate IR_STARRAY.
             ir = m_rg->getIRMgr()->buildStoreArray(
                 m_rg->dupIRTree(ARR_base(l)),
-                m_rg->dupIRTree(ARR_sub_list(l)), l->getType(),
-                                ARR_elemtype(l), ((CArray*)l)->getDimNum(),
-                                ARR_elem_num_buf(l), r);
+                m_rg->dupIRTreeList(ARR_sub_list(l)),
+                l->getType(), ARR_elemtype(l), ((CArray*)l)->getDimNum(),
+                ARR_elem_num_buf(l), r);
             ir->setOffset(ARR_ofst(l));
         } else {
             ASSERTN(0, ("unsupport lhs IR code."));
@@ -705,9 +704,9 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
             //Generate IR_STARRAY.
             ir = m_rg->getIRMgr()->buildStoreArray(
                 m_rg->dupIRTree(ARR_base(l)),
-                m_rg->dupIRTree(ARR_sub_list(l)), l->getType(),
-                                ARR_elemtype(l), ((CArray*)l)->getDimNum(),
-                                ARR_elem_num_buf(l), r);
+                m_rg->dupIRTreeList(ARR_sub_list(l)),
+                l->getType(), ARR_elemtype(l), ((CArray*)l)->getDimNum(),
+                ARR_elem_num_buf(l), r);
             ir->setOffset(ARR_ofst(l));
         } else {
             ASSERTN(0, ("unsupport lhs IR code."));
@@ -732,9 +731,9 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
             //Generate IR_STARRAY.
             ir = m_rg->getIRMgr()->buildStoreArray(
                 m_rg->dupIRTree(ARR_base(l)),
-                m_rg->dupIRTree(ARR_sub_list(l)), l->getType(),
-                                ARR_elemtype(l), ((CArray*)l)->getDimNum(),
-                                ARR_elem_num_buf(l), r);
+                m_rg->dupIRTreeList(ARR_sub_list(l)),
+                l->getType(), ARR_elemtype(l), ((CArray*)l)->getDimNum(),
+                ARR_elem_num_buf(l), r);
             ir->setOffset(ARR_ofst(l));
         } else {
             ASSERTN(0, ("unsupport lhs IR code."));
@@ -759,9 +758,9 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
             //Generate IR_STARRAY.
             ir = m_rg->getIRMgr()->buildStoreArray(
                 m_rg->dupIRTree(ARR_base(l)),
-                m_rg->dupIRTree(ARR_sub_list(l)), l->getType(),
-                                ARR_elemtype(l), ((CArray*)l)->getDimNum(),
-                                ARR_elem_num_buf(l), r);
+                m_rg->dupIRTreeList(ARR_sub_list(l)),
+                l->getType(), ARR_elemtype(l), ((CArray*)l)->getDimNum(),
+                ARR_elem_num_buf(l), r);
             ir->setOffset(ARR_ofst(l));
         } else {
             ASSERTN(0, ("unsupport lhs IR code."));
@@ -786,9 +785,9 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
             //Generate IR_STARRAY.
             ir = m_rg->getIRMgr()->buildStoreArray(
                 m_rg->dupIRTree(ARR_base(l)),
-                m_rg->dupIRTree(ARR_sub_list(l)), l->getType(),
-                                ARR_elemtype(l), ((CArray*)l)->getDimNum(),
-                                ARR_elem_num_buf(l), r);
+                m_rg->dupIRTreeList(ARR_sub_list(l)),
+                l->getType(), ARR_elemtype(l), ((CArray*)l)->getDimNum(),
+                ARR_elem_num_buf(l), r);
             ir->setOffset(ARR_ofst(l));
         } else {
             ASSERTN(0, ("unsupport lhs IR code."));
@@ -822,11 +821,11 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
             ir->setOffset(ir->getOffset() + LD_ofst(l));
         } else if (l->is_array()) {
             //Generate IR_STARRAY.
-            ir = m_rg->getIRMgr()->buildStoreArray(m_rg->dupIRTree(ARR_base(l)),
-                                       m_rg->dupIRTree(ARR_sub_list(l)),
-                                       l->getType(), ARR_elemtype(l),
-                                       ((CArray*)l)->getDimNum(),
-                                       ARR_elem_num_buf(l), r);
+            ir = m_rg->getIRMgr()->buildStoreArray(
+                m_rg->dupIRTree(ARR_base(l)),
+                m_rg->dupIRTreeList(ARR_sub_list(l)),
+                l->getType(), ARR_elemtype(l), ((CArray*)l)->getDimNum(),
+                ARR_elem_num_buf(l), r);
             ir->setOffset(ARR_ofst(l));
         } else {
             ASSERTN(0, ("unsupport lhs IR code."));
@@ -849,12 +848,11 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
             ir->setOffset(ir->getOffset() + LD_ofst(l));
         } else if (l->is_array()) {
             //Generate IR_STARRAY.
-            ir = m_rg->getIRMgr()->buildStoreArray(m_rg->dupIRTree(ARR_base(l)),
-                                       m_rg->dupIRTree(ARR_sub_list(l)),
-                                       l->getType(),
-                                       ARR_elemtype(l),
-                                       ((CArray*)l)->getDimNum(),
-                                       ARR_elem_num_buf(l), r);
+            ir = m_rg->getIRMgr()->buildStoreArray(
+                m_rg->dupIRTree(ARR_base(l)),
+                m_rg->dupIRTreeList(ARR_sub_list(l)),
+                l->getType(), ARR_elemtype(l), ((CArray*)l)->getDimNum(),
+                ARR_elem_num_buf(l), r);
             ir->setOffset(ARR_ofst(l));
         } else {
             ASSERTN(0, ("unsupport lhs IR code."));
@@ -878,12 +876,11 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
             ir->setOffset(ir->getOffset() + LD_ofst(l));
         } else if (l->is_array()) {
             //Generate IR_STARRAY.
-            ir = m_rg->getIRMgr()->buildStoreArray(m_rg->dupIRTree(ARR_base(l)),
-                                       m_rg->dupIRTree(ARR_sub_list(l)),
-                                       l->getType(),
-                                       ARR_elemtype(l),
-                                       ((CArray*)l)->getDimNum(),
-                                       ARR_elem_num_buf(l), r);
+            ir = m_rg->getIRMgr()->buildStoreArray(
+                m_rg->dupIRTree(ARR_base(l)),
+                m_rg->dupIRTreeList(ARR_sub_list(l)),
+                l->getType(), ARR_elemtype(l), ((CArray*)l)->getDimNum(),
+                ARR_elem_num_buf(l), r);
             ir->setOffset(ARR_ofst(l));
         } else {
             ASSERTN(0, ("unsupport lhs IR code."));
@@ -1124,7 +1121,7 @@ IR * CTree2IR::convertArraySubExp(xfe::Tree * t, TMWORD * elem_nums,
 
     ASSERT0(n == 1);
     Decl * base_decl = base->getResultType();
-    ASSERT0(base_decl->isPointer());
+    ASSERT0_DUMMYUSE(base_decl->isPointer());
 
     //Note the outermost TR_ARRAY means the lowest dimension element of array
     //will be accessed.
@@ -1732,7 +1729,7 @@ IR * CTree2IR::convertPostIncDec(IN xfe::Tree * t, INT lineno,
             m_rg->dupIRTree(inc_exp));
         xincst = m_rg->getIRMgr()->buildStoreArray(
             m_rg->dupIRTree(ARR_base(inc_exp)),
-            m_rg->dupIRTree(ARR_sub_list(inc_exp)),
+            m_rg->dupIRTreeList(ARR_sub_list(inc_exp)),
             inc_exp->getType(),
             ARR_elemtype(inc_exp),
             ((CArray*)inc_exp)->getDimNum(),
@@ -2336,7 +2333,7 @@ IR * CTree2IR::convertId(xfe::Tree * t, INT lineno, T2IRCtx * cont)
 
     if (CONT_is_compute_addr(cont)) {
         //In this case, ancestors tree should include TR_LDA operator,
-        ASSERT0(isAncestorsIncludeLDA(t));
+        ASSERT0_DUMMYUSE(isAncestorsIncludeLDA(t));
         ir = buildLda(t);
         ASSERT0(ir->is_lda());
         //ir = buildId(t);

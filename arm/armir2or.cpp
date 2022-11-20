@@ -1619,8 +1619,8 @@ void ARMIR2OR::convertTruebr(IR const* ir, OUT RecycORList & ors, IOC * cont)
         return;
     }
     IR * opnd1 = BIN_opnd1(BR_det(ir));
-    ASSERTN(!opnd0->is_any() && !opnd1->is_any(),
-            ("operand of '%s' can not be ANY", IRNAME(ir)));
+    ASSERTN_DUMMYUSE(!opnd0->is_any() && !opnd1->is_any(),
+                     ("operand of '%s' can not be ANY", IRNAME(ir)));
 
     if (opnd0->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE) {
         IR2OR::convertTruebr(ir, ors, cont);

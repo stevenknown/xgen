@@ -5,16 +5,12 @@
 #OBJS=$(addprefix $(RESULT)/,$(OBJ))
 #CXXSRC+= 
 #OBJS=$(CSRC:%.c=%.o) $(CPPSRC:%.cpp=%.o) $(CXXSRC:%.cxx=%.o)
-
 ifeq ($(TARG),)
-  #Default target is ARM.
-  TARG=FOR_ARM
-  TARG_DIR=../arm
+  $(error "NEED TARG INFO:e.g:make TARG=FOR_ARM TARG_DIR=../arm")
 endif
 
-ifeq ($(DEBUG),)
-  #Default build mode is DEBUG mode.
-  DEBUG=true
+ifeq ($(TARG_DIR),)
+  $(error "NEED TARG INFO:e.g:make TARG=FOR_ARM TARG_DIR=../arm")
 endif
 
 CFLAGS+=-Wall
@@ -24,52 +20,12 @@ XOC_DIR=..
 CFE_DIR=../cfe
 XOCC_OUTPUT=xocc.exe
 
-ifeq ($(WIN), true)
-  $(info "On Windows")
-  #Add predefined macro if build host is Windows.
-  CFLAGS+=-D_ON_WINDOWS_
-
-  #Set CC compiler  
-  ifeq ($(WSL), true)
-    CFLAGS+=-D_USE_GCC_
-    ifndef CC
-      CC:=$(shell which clang++ > /dev/null)
-      ifndef CC
-        CC=$(if $(shell which clang),clang.exe,gcc.exe)
-      endif
-    endif
-  else
-    #There is no CC compiler avaiable without WSL environment.
-  endif 
-else
-  $(info "On Linux or Unix")
-  CFLAGS+=-D_USE_GCC_
-  ifndef CC
-    CC:=$(shell which clang++ > /dev/null)
-    ifndef CC
-      CC=$(if $(shell which clang),clang,gcc)
-    endif
-  else
-    $(info "CC is defined="$(CC))
-  endif
-endif
-$(info "CC=$(CC),TARGET=$(TARGET),CFLAGS=$(CFLAGS),WIN=$(WIN),WSL=$(WSL)")
-
 include Makefile.inc
 include $(CFE_DIR)/Makefile.inc
 include $(COM_DIR)/Makefile.inc
 include $(XOC_DIR)/Makefile.xoc.inc
 include $(XGEN_DIR)/Makefile.inc
-
-ifeq ($(DEBUG), true)
-  CFLAGS+=-D_DEBUG_
-  CFLAGS+=-O0 -g2
-endif
-
-ifdef WIN
-  #Add predefined macro if build host is Windows.
-  CFLAGS+=-D_ON_WINDOWS_
-endif
+include $(XOC_DIR)/Makefile.option
 
 CFLAGS+=\
   -D$(TARG) \
@@ -97,6 +53,17 @@ endif
 
 TMP_CFE_OBJS=$(foreach n,$(CFE_OBJS),$(CFE_DIR)/$(n))
 
+#Display internal variables.
+$(info "WIN=$(WIN),WSL=$(WSL)")
+$(info "COMBINED CFE OBJS:$(TMP_CFE_OBJS)")
+$(info "TARG:$(TARG)")
+$(info "TARG_DIR:$(TARG_DIR)")
+$(info "CC:$(CC)")
+$(info "INC:$(INC)")
+$(info "CFLAGS:$(CFLAGS)")
+$(info "DEBUG:$(DEBUG)")
+
+#Define rules.
 xocc.exe: xocc_objs tmp_cfe_objs $(XGEN_OUTPUT)
 	$(CC) $(XOCC_OBJS) $(TMP_CFE_OBJS) -Xlinker "-(" \
       $(XGEN_DIR)/$(XGEN_OUTPUT) \

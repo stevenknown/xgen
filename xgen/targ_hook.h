@@ -36,7 +36,7 @@ author: Su Zhenyu
 
 #include "../opt/targ_info.h"
 
-#ifdef FOR_X86
+#if defined(FOR_X86)
 #include "x86/x86.h"
 
 #elif defined(FOR_PAC)
@@ -46,10 +46,14 @@ author: Su Zhenyu
 #include "../arm/arm.h"
 
 #elif defined(FOR_DEX)
-#include "../dex/dex_const_info.h"
+#include "../dex/dex.h"
 #include "../dex/dex_util.h"
 
 #elif defined(FOR_JS)
-#include "../js/js_const_info.h"
+#include "../js/js.h"
+
+#else
+#error "No target hook info"
 #endif
+
 #endif

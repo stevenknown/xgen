@@ -1,42 +1,19 @@
-CC:=$(shell which clang++ > /dev/null)
-ifndef CC
-  CC=$(if $(shell which clang),clang,gcc)
-endif
-
 ifeq ($(TARG),)
-  #Default target is ARM.
-  TARG=FOR_ARM
-  TARG_DIR=../arm
-endif
-
-ifeq ($(DEBUG),)
-  #Default build mode is DEBUG mode.
-  DEBUG=true
+  $(error "NEED TARG INFO:e.g:make TARG=FOR_ARM TARG_DIR=../arm")
 endif
 
 CFLAGS+=-Wall
-
 XOC_SRC=..
 SRC=.
 
 include $(SRC)/Makefile.inc
 include $(TARG_DIR)/Makefile.inc
 include $(XOC_SRC)/Makefile.xoc.inc
+include $(XOC_SRC)/Makefile.option
 
-ifeq ($(DEBUG), true)
-  #Add predefined macro if build host is Windows.
-  CFLAGS+=-D_DEBUG_
-endif
-
-ifdef WIN
-  #Add predefined macro if build host is Windows.
-  CFLAGS+=-D_ON_WINDOWS_
-endif
-
+#SET DEFAULT CFLAGS.
 CFLAGS+=\
   -D$(TARG) \
-  -O2 \
-  -g2 \
   -Wno-unknown-pragmas \
   -Wno-write-strings \
   -Wsign-promo \
@@ -84,7 +61,7 @@ targ_objs: $(TARG_OBJS)
 
 targ_gen:
 	@echo "==---- GENERATE TARGET DEPENDENT FILES ----=="
-	make -C $(TARG_DIR)/precompile CFLAGS="$(CFLAGS)" TARGET=$(TARG) HOST_CC=$(CC)
+	make -C $(TARG_DIR)/precompile CFLAGS="$(CFLAGS)" TARGET=$(TARG) CC=$(CC) DEBUG=$(DEBUG)
 	cd $(TARG_DIR)/precompile; ./gentminfo.exe
 
 clean:

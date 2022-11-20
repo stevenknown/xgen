@@ -379,7 +379,7 @@ void OR::set_result(INT i, SR * sr, CG * cg)
 void OR::setLabel(SR * v, CG * cg)
 {
     ASSERT0(v && v->is_label());
-    ASSERT0(canOpndBeLabel(this, HAS_PREDICATE_REGISTER + 0));
+    ASSERT0_DUMMYUSE(canOpndBeLabel(this, HAS_PREDICATE_REGISTER + 0));
     set_opnd(HAS_PREDICATE_REGISTER + 0, v, cg);
 }
 
@@ -387,7 +387,7 @@ void OR::setLabel(SR * v, CG * cg)
 void OR::setLabelList(SR * v, CG * cg)
 {
     ASSERT0(v && v->is_label_list());
-    ASSERT0(canOpndBeLabelList(this, HAS_PREDICATE_REGISTER + 0));
+    ASSERT0_DUMMYUSE(canOpndBeLabelList(this, HAS_PREDICATE_REGISTER + 0));
     set_opnd(HAS_PREDICATE_REGISTER + 0, v, cg);
 }
 //END OR

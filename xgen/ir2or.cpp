@@ -524,8 +524,9 @@ void IR2OR::convertGeneralLoadPR(IR const* ir, OUT RecycORList & ors,
         return;
     }
 
-    if (ir->is_any() || ir->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE &&
-        m_cg->isGRAEnable()) {
+    if (ir->is_any() ||
+        (ir->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE &&
+         m_cg->isGRAEnable())) {
         m_cg->setMapPR2SR(PR_no(ir), m_cg->genReg());
     } else {
         Var * v = m_rg->mapPR2Var(PR_no(ir));

@@ -26,14 +26,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @*/
-
-#include "../opt/cominc.h"
 #include "xoccinc.h"
-#include "../xgen/xgeninc.h"
-#include "errno.h"
-#include "../opt/util.h"
-#include "../reader/grreader.h"
-#include "../opt/comopt.h"
 
 namespace xocc {
 

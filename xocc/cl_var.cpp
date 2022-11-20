@@ -28,8 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-#include "../xgen/xgeninc.h"
-#include "../xocc/xoccinc.h"
+#include "xoccinc.h"
 
 //
 //START CLVar

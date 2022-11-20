@@ -1,70 +1,34 @@
-ifeq ($(WIN), true)
-  $(info "On Windows")
-  #Add predefined macro if build host is Windows.
-  CFLAGS+=-D_ON_WINDOWS_
-
-  #Set HOST_CC compiler  
-  ifeq ($(WSL), true)
-    CFLAGS+=-D_USE_GCC_
-    ifndef HOST_CC
-      HOST_CC := $(shell which clang++ > /dev/null)
-      ifndef HOST_CC
-        HOST_CC=$(if $(shell which clang),clang,gcc.exe)
-      endif
-    endif
-  else
-    #There is no CC compiler avaiable without WSL environment.
-  endif 
-else
-  $(info "On Linux or Unix")
-  CFLAGS+=-D_USE_GCC_
-  ifndef HOST_CC
-    HOST_CC:=$(shell which clang++ > /dev/null)
-    ifndef HOST_CC
-      HOST_CC=$(if $(shell which clang),clang,gcc)
-    endif
-  else
-    $(info "HOST_CC is defined="$(HOST_CC))
-  endif
-endif
-$(info "HOST_CC=$(HOST_CC),TARGET=$(TARGET),CFLAGS=$(CFLAGS),WIN=$(WIN),WSL=$(WSL)")
-
 GEN_OBJS+=arm_gen_targ_mach_resource.o
 
 include ../../com/Makefile.inc
+include ../../Makefile.option
 
-gentminfo.exe: gen_objs $(COM_OUTPUT)
-ifeq ($(HOST_CC),)
-	$(error "MISS HOST_CC")
+$(info "CC=$(CC),TARG=$(TARG),CFLAGS=$(CFLAGS),WIN=$(WIN),WSL=$(WSL)")
+
+ifeq ($(CC),)
+	$(error "MISS CC")
 endif
-ifeq ($(TARGET),)
-	$(error "MISS TARGET")
+ifeq ($(TARG),)
+	$(error "MISS TARG")
 endif
 ifeq ($(CFLAGS),) 
 	$(error "MISS CFLAGS") 
 endif
-	$(HOST_CC) -std=c++0x -D$(TARGET) $(GEN_OBJS) ../../com/$(COM_OUTPUT) $(CFLAGS) -o $@ -lstdc++ -lm  #-lgcov -lgcc
+
+gentminfo.exe: gen_objs $(COM_OUTPUT)
+	$(CC) -std=c++0x -D$(TARG) $(GEN_OBJS) ../../com/$(COM_OUTPUT) $(CFLAGS) -o $@ -lstdc++ -lm  #-lgcov -lgcc
 	@echo "SUCCESS!!"
+
+gen_objs: $(GEN_OBJS)
 
 $(COM_OUTPUT):
 	@echo "BUILD $(COM_OUTPUT)"
 	cd ../../com && make -f Makefile TARG=$(TARG) DEBUG=$(DEBUG)
 
 %.o:%.cpp
-ifeq ($(HOST_CC),)
-	$(error "MISS HOST_CC")
-endif
-ifeq ($(TARGET),)
-	$(error "MISS TARGET") 
-endif
-ifeq ($(CFLAGS),)
-	$(error "MISS CFLAGS") 
-endif
-	$(info CFLAGS=$(CFLAGS),TARGET=$(TARGET))
-	@echo "CMD>>$(INFER) $(HOST_CC) -D$(TARGET) $(CFLAGS) -c $< -o $@"
-	$(INFER) $(HOST_CC) -D$(TARGET) $(CFLAGS) -c $< -o $@
-
-gen_objs: $(GEN_OBJS)
+	$(info CFLAGS=$(CFLAGS),TARG=$(TARG))
+	@echo "BUILD $(CC) -D$(TARG) $(CFLAGS) -c $< -o $@"
+	$(INFER) $(CC) -D$(TARG) $(CFLAGS) -c $< -o $@
 
 clean:
 	@rm -f ../../com/ltype.o
