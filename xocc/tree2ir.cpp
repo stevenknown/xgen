@@ -406,7 +406,7 @@ static bool scanProgramDeclList(Scope * s, OUT xoc::Region * rg)
             if (v != nullptr) {
                 //Note type-variable that defined by 'typedef'
                 //will not be mapped to xoc::Var.
-                v->setflag((VAR_FLAG)(VAR_IS_FUNC|VAR_IS_DECL));
+                v->setflag((VAR_FLAG)(VAR_IS_FUNC|VAR_IS_DECL|VAR_IS_REGION));
                 rg->addToVarTab(v);
             }
             continue;
@@ -617,7 +617,7 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
         break;
     case T_BITANDEQU:
         if (!l->is_ptr() && !r->is_ptr()) {
-            type = m_tm->hoistDtypeForBinop(l, r);
+            type = m_tm->hoistDTypeForBinOp(l, r);
         } else {
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
@@ -638,7 +638,7 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
         break;
     case T_BITOREQU:
         if (!l->is_ptr() && !r->is_ptr()) {
-            type = m_tm->hoistDtypeForBinop(l, r);
+            type = m_tm->hoistDTypeForBinOp(l, r);
         } else {
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
@@ -658,7 +658,7 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
         break;
     case T_ADDEQU:
         if (!l->is_ptr() && !r->is_ptr()) {
-            type = m_tm->hoistDtypeForBinop(l, r);
+            type = m_tm->hoistDTypeForBinOp(l, r);
         } else {
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
@@ -687,7 +687,7 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
         break;
     case T_SUBEQU:
         if (!l->is_ptr() && !r->is_ptr()) {
-            type = m_tm->hoistDtypeForBinop(l, r);
+            type = m_tm->hoistDTypeForBinOp(l, r);
         } else {
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
@@ -714,7 +714,7 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
         break;
     case T_MULEQU:
         if (!l->is_ptr() && !r->is_ptr()) {
-            type = m_tm->hoistDtypeForBinop(l, r);
+            type = m_tm->hoistDTypeForBinOp(l, r);
         } else {
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
@@ -741,7 +741,7 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
         break;
     case T_DIVEQU:
         if (!l->is_ptr() && !r->is_ptr()) {
-            type = m_tm->hoistDtypeForBinop(l, r);
+            type = m_tm->hoistDTypeForBinOp(l, r);
         } else {
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
@@ -768,7 +768,7 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
         break;
     case T_XOREQU:
         if (!l->is_ptr() && !r->is_ptr()) {
-            type = m_tm->hoistDtypeForBinop(l, r);
+            type = m_tm->hoistDTypeForBinOp(l, r);
         } else {
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
@@ -799,13 +799,13 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
         ASSERTN(r->is_int(), ("type of shift-right should be integer"));
         if (r->is_signed()) {
             IR_dt(r) = m_tm->getSimplexTypeEx(
-                m_tm->get_int_dtype(
+                m_tm->getIntDType(
                     m_tm->getDTypeBitSize(
                         TY_dtype(r->getType())), false));
         }
 
         if (!l->is_ptr() && !r->is_ptr()) {
-            type = m_tm->hoistDtypeForBinop(l, r);
+            type = m_tm->hoistDTypeForBinOp(l, r);
         } else {
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
@@ -833,7 +833,7 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
         break;
     case T_LSHIFTEQU:
         if (!l->is_ptr() && !r->is_ptr()) {
-            type = m_tm->hoistDtypeForBinop(l, r);
+            type = m_tm->hoistDTypeForBinOp(l, r);
         } else {
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
@@ -860,7 +860,7 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
         break;
     case T_REMEQU:
         if (!l->is_ptr() && !r->is_ptr()) {
-            type = m_tm->hoistDtypeForBinop(l, r);
+            type = m_tm->hoistDTypeForBinOp(l, r);
         } else {
             type = m_tm->getAny();
             //buildBinaryOp will inefer the type of result ir.
@@ -1691,7 +1691,7 @@ IR * CTree2IR::convertPostIncDec(IN xfe::Tree * t, INT lineno,
     if (is_ptr) {
         type = inc_exp->getType();
     } else {
-        type = m_tm->hoistDtypeForBinop(inc_exp, imm1);
+        type = m_tm->hoistDTypeForBinOp(inc_exp, imm1);
     }
 
     IR * addsub = m_rg->getIRMgr()->buildBinaryOp(irt, type, inc_exp, imm1);
@@ -1793,7 +1793,7 @@ IR * CTree2IR::convertSwitch(IN xfe::Tree * t, INT lineno, IN T2IRCtx *)
             #endif
             deflab = CASEV_lab(casev);
         } else {
-            xoc::DATA_TYPE dt = m_tm->getDType(WORD_LENGTH_OF_TARGET_MACHINE,
+            xoc::DATA_TYPE dt = m_tm->getAlignedDType(WORD_LENGTH_OF_TARGET_MACHINE,
                                                true);
             IR * imm = m_rg->getIRMgr()->buildImmInt(CASEV_constv(casev),
                                          m_tm->getSimplexTypeEx(dt));
@@ -2064,7 +2064,7 @@ IR * CTree2IR::convertSelect(xfe::Tree * t, INT lineno, T2IRCtx * cont)
             type = d0;
         }
     } else {
-        type = m_tm->hoistDtypeForBinop(texp, fexp);
+        type = m_tm->hoistDTypeForBinOp(texp, fexp);
         if (texp->getType() != type) {
             IR * cvt = m_rg->getIRMgr()->buildCvt(texp, type);
             texp = cvt;
@@ -2444,7 +2444,7 @@ IR * CTree2IR::convert(IN xfe::Tree * t, IN T2IRCtx * cont)
             //Default const type of enumerator is 'unsigned int'
             //of target machine
             ir = m_rg->getIRMgr()->buildImmInt(v, m_tm->getSimplexTypeEx(
-                m_tm->getDType(WORD_LENGTH_OF_TARGET_MACHINE, true)));
+                m_tm->getAlignedDType(WORD_LENGTH_OF_TARGET_MACHINE, true)));
             xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
@@ -2925,9 +2925,9 @@ xoc::DATA_TYPE CTree2IR::get_decl_dtype(Decl const* decl, UINT * size,
     ASSERTN(ty, ("Type-SPEC in DCRLARATION cannot be nullptr"));
     *size = ty->getSpecTypeSize();
     if (ty->is_void() || ty->is_integer()) {
-        dtype = tm->get_int_dtype(*size * BIT_PER_BYTE, is_signed);
+        dtype = tm->getIntDType(*size * BIT_PER_BYTE, is_signed);
     } else if (ty->is_fp()) {
-        dtype = tm->get_fp_dtype(*size * BIT_PER_BYTE);
+        dtype = tm->getFPDType(*size * BIT_PER_BYTE);
     } else if (ty->is_aggr()) {
         dtype = xoc::D_MC;
         ASSERT0(*size == decl->get_decl_size());

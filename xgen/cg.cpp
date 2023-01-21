@@ -931,7 +931,7 @@ void CG::computeAndUpdateGlobalVarLayout(xoc::Var const* var, OUT SR ** base,
     Section * section;
     if (var->is_readonly() || var->is_string()) {
         section = m_cgmgr->getRodataSection();
-    } else if (var->has_init_val()) {
+    } else if (var->hasInitVal()) {
         section = m_cgmgr->getDataSection();
     } else {
         section = m_cgmgr->getBssSection();
@@ -3491,7 +3491,7 @@ xoc::Var * CG::genSpillVar(SR * sr)
 
     xoc::Var * v;
     xoc::Type const* type = m_tm->getSimplexTypeEx(
-        m_tm->getDType(WORD_BITSIZE, false));
+        m_tm->getAlignedDType(WORD_BITSIZE, false));
 
     //Generate spill-loc for life time that belonged to whole func unit if v is
     //global variable, or else generate spill-loc for life time that only

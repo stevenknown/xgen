@@ -89,7 +89,7 @@ public:
                 UINT num_cycs,
                 UINT num_icc_vars,
                 UINT num_sr_vars,
-                INT rhs_idx);
+                INT cst_col);
 };
 
 
@@ -105,14 +105,14 @@ void InstructionPartition<Mat, T>::formulateTargetFunction(OUT Mat & tgtf,
     DUMMYUSE(num_ops);
 
     ASSERTN(num_cst == 1, ("multi-const terms are unsupport till now"));
-    INT rhs_idx = num_vars;
+    INT cst_col = num_vars;
     tgtf.reinit(1, num_vars + num_cst);
     for (INT c = 0; c < (INT)num_cycs; c++) {
         tgtf.set(0, vm.map_or_cyc2varidx(last_op->id(), c), c);
     }
 
     //tgtf.setAllElem(1);
-    tgtf.set(0, rhs_idx, 0);
+    tgtf.set(0, cst_col, 0);
 }
 
 
@@ -125,14 +125,14 @@ void InstructionPartition<Mat, T>::formulateMustScheduleConstraints(
 {
     DUMMYUSE(num_ops);
     ASSERTN(num_cst == 1, ("multi-const terms are unsupport till now"));
-    INT rhs_idx = num_vars;
+    INT cst_col = num_vars;
     for (OR * o = ORBB_first_or(m_bb);
          o != nullptr; o = ORBB_next_or(m_bb)) {
         Mat tmp_eq(1, num_vars + num_cst);
         for (INT c = 0; c < (INT)num_cycs; c++) {
             tmp_eq.set(0, vm.map_or_cyc2varidx(o->id(), c), 1);
         }
-        tmp_eq.set(0, rhs_idx, 1);
+        tmp_eq.set(0, cst_col, 1);
         if (eq.size() == 0) {
             eq = tmp_eq;
         } else {
@@ -149,16 +149,16 @@ void InstructionPartition<Mat, T>::formulateIssueConstraints(OUT Mat & leq,
                                                              UINT num_ops,
                                                              UINT num_vars)
 {
-    UINT rhs_idx = num_vars;
+    UINT cst_col = num_vars;
     Mat iss_cs(num_cycs, leq.getColSize());
     for (INT c = 0; c < (INT)num_cycs; c++) {
         for (UINT i = 0; i < num_ops; i++) {
             OR * o = vm.map_vecidx2or(i);
             UINT varidx = vm.map_or_cyc2varidx(o->id(), c);
-            ASSERT0(varidx < rhs_idx);
+            ASSERT0(varidx < cst_col);
             iss_cs.set(c, varidx, 1);
         }
-        iss_cs.set(c, rhs_idx, vm.get_issue_port_per_clust());
+        iss_cs.set(c, cst_col, vm.get_issue_port_per_clust());
     }
     if (leq.size() == 0) {
         leq = iss_cs;
@@ -179,7 +179,7 @@ void InstructionPartition<Mat, T>::formulateDependenceConstraints(
 {
     DUMMYUSE(num_ops);
     DUMMYUSE(sim);
-    INT rhs_idx = num_vars;
+    INT cst_col = num_vars;
     //Dependency restrictions.
     EdgeIter c;
     for (xcom::Edge * e = m_ddg->get_first_edge(c);
@@ -196,8 +196,8 @@ void InstructionPartition<Mat, T>::formulateDependenceConstraints(
         OR * o = m_cg->getOR(opi);
         ASSERT0_DUMMYUSE(o);
 
-        //tmp_leq.set(0, rhs_idx, -(sim.getMinLatency(o) + 1));
-        tmp_leq.set(0, rhs_idx, -1);
+        //tmp_leq.set(0, cst_col, -(sim.getMinLatency(o) + 1));
+        tmp_leq.set(0, cst_col, -1);
         if (leq.size() == 0) {
             leq = tmp_leq;
         } else {
@@ -217,7 +217,7 @@ void InstructionPartition<Mat, T>::formulateDependenceConstraints(
     //    for (INT c = 0; c < (INT)num_cycs; c++) {
     //        tmp_leq.set(0, vm.map_or_cyc2varidx(opi, c), -c);
     //    }
-    //    tmp_leq.set(0, rhs_idx, -estart);
+    //    tmp_leq.set(0, cst_col, -estart);
     //    if (leq.size() == 0) {
     //        leq = tmp_leq;
     //    } else {
@@ -229,7 +229,7 @@ void InstructionPartition<Mat, T>::formulateDependenceConstraints(
     //    for (INT c = 0; c < (INT)num_cycs; c++) {
     //        tmp_leq.set(0, vm.map_or_cyc2varidx(opi, c), c);
     //    }
-    //    tmp_leq.set(0, rhs_idx, lstart);
+    //    tmp_leq.set(0, cst_col, lstart);
     //    leq.growRow(tmp_leq);
     //}
 }
@@ -240,15 +240,15 @@ void InstructionPartition<Mat, T>::formulateInterClusterConstraints(
     OUT Mat & leq, OUT Mat & eq, OUT UINT & num_icc_vars,
     IN VarMap & vm, UINT num_cycs, UINT num_ops, UINT num_vars, UINT num_cst)
 {
-    INT rhs_idx = num_vars;
-    INT start_idx_of_new_cs = rhs_idx;
+    INT cst_col = num_vars;
+    INT start_idx_of_new_cs = cst_col;
     INT num_new_cs_of_each_edge = vm.get_clust_num() * vm.get_clust_num();
 
     num_icc_vars = m_ddg->getEdgeNum() * num_new_cs_of_each_edge;
-    leq.insertColumnsBefore(rhs_idx, num_icc_vars);
-    eq.insertColumnsBefore(rhs_idx, num_icc_vars);
+    leq.insertColumnsBefore(cst_col, num_icc_vars);
+    eq.insertColumnsBefore(cst_col, num_icc_vars);
 
-    INT new_rhs_idx = num_vars + num_icc_vars;
+    INT new_cst_col = num_vars + num_icc_vars;
     UINT ofst = start_idx_of_new_cs;
     for (UINT i = 0; i < m_ddg->getEdgeNum(); i++) {
         for (UINT j = 0; j < num_new_cs_of_each_edge; j++) {
@@ -260,7 +260,7 @@ void InstructionPartition<Mat, T>::formulateInterClusterConstraints(
         for (UINT j = 0; j < num_new_cs_of_each_edge; j++) {
             tmp_eq.set(0, ofst + j, 1);
         }
-        tmp_eq.set(0, new_rhs_idx, 1);
+        tmp_eq.set(0, new_cst_col, 1);
         eq.growRow(tmp_eq);
 
         ofst += num_new_cs_of_each_edge;
@@ -277,9 +277,9 @@ void InstructionPartition<Mat, T>::format(OUT INTMat & sched_form,
                                           UINT num_cycs,
                                           UINT num_icc_vars,
                                           UINT num_op_vars,
-                                          INT rhs_idx)
+                                          INT cst_col)
 {
-    DUMMYUSE(rhs_idx);
+    DUMMYUSE(cst_col);
 
     ASSERT0(sol.getRowSize() == 1);
     sched_form.reinit(num_cycs, ORBB_ornum(m_bb));
@@ -369,7 +369,7 @@ bool InstructionPartition<Mat, T>::partition()
         UINT num_ops = ORBB_ornum(m_bb);
         UINT num_vars = num_cycs * num_ops;
         UINT num_cst = 1;
-        UINT rhs_idx = num_vars;
+        UINT cst_col = num_vars;
         VarMap vm(m_bb);
 
         //Construct target function
@@ -396,13 +396,13 @@ bool InstructionPartition<Mat, T>::partition()
         //                                 num_cycs, num_ops, num_vars,
         //                                 num_cst);
         if (num_icc_vars != 0) {
-            tgtf.insertColumnsBefore(rhs_idx, num_icc_vars);
-            tgtf.setCols(rhs_idx, rhs_idx + num_icc_vars, 1);
+            tgtf.insertColumnsBefore(cst_col, num_icc_vars);
+            tgtf.setCols(cst_col, cst_col + num_icc_vars, 1);
         }
 
         //Construct variable constraints.
         Mat vc(num_vars + num_icc_vars, num_vars + num_icc_vars);
-        vc.eye(-1);
+        vc.initIden(-1);
         vc.growCol(1);
         //tgtf.dumpf();
         //vc.dumpf();
@@ -414,7 +414,7 @@ bool InstructionPartition<Mat, T>::partition()
         START_TIMER(t, "Instruction Partition");
         SIX<Mat, T> six;
         if (SIX_SUCC != six.minm(minv, res, tgtf, vc, eq, leq,
-                                 rhs_idx + num_icc_vars)) {
+                                 cst_col + num_icc_vars)) {
             //There is no optimal solution.
             break;
         }
@@ -424,7 +424,7 @@ bool InstructionPartition<Mat, T>::partition()
         //TODO: enable MIP partition OR into multi-parts.
         //MIP<Mat, T> ip;
         //if (IP_SUCC != ip.minm(minv, res, tgtf, vc, eq, leq,
-        //                       true, nullptr, rhs_idx + num_icc_vars)) {
+        //                       true, nullptr, cst_col + num_icc_vars)) {
         //    //There is no optimal solution.
         //    break;
         //}
@@ -439,7 +439,7 @@ bool InstructionPartition<Mat, T>::partition()
                num_cycs,
                num_icc_vars,
                num_vars,
-               rhs_idx + num_icc_vars);
+               cst_col + num_icc_vars);
         //sched_form.dumpf();
         //icc_form.dumpf();
     }

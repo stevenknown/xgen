@@ -80,7 +80,9 @@
     <ClCompile Include="..\..\com\diagnostic.cpp" />
     <ClCompile Include="..\..\com\ltype.cpp" />
     <ClCompile Include="..\..\com\smempool.cpp" />
+    <ClCompile Include="..\..\com\comf.cpp" />
     <ClCompile Include="..\..\com\strbuf.cpp" />
+    <ClCompile Include="..\..\com\byteop.cpp" />
     <ClCompile Include="arm_gen_targ_mach_resource.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -237,11 +237,9 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         if (f.have(DUOPT_SOL_REACH_DEF) && succ) {
             dumgr->computeMDDUChain(oc, false, f);
         }
-
         if (g_do_prssa) {
             ((PRSSAMgr*)getPassMgr()->registerPass(PASS_PRSSA_MGR))->
                 construction(oc);
-            xoc::destructClassicDUChain(this, oc);
         }
         if (g_do_mdssa) {
             ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MDSSA_MGR))->
@@ -310,15 +308,17 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
             //Compute PR's definition to improve AA precison.
             if (g_do_prssa) {
                 ASSERT0(getPassMgr());
-                PRSSAMgr * ssamgr = (PRSSAMgr*)getPassMgr()->registerPass(
+                PRSSAMgr * prssamgr = (PRSSAMgr*)getPassMgr()->registerPass(
                     PASS_PRSSA_MGR);
-                ASSERT0(ssamgr);
-                if (!ssamgr->is_valid()) {
-                    ssamgr->construction(oc);
+                ASSERT0(prssamgr);
+                if (!prssamgr->is_valid()) {
+                    prssamgr->construction(oc);
                 }
                 oc.setInvalidPRDU();
-                xoc::destructClassicDUChain(this, oc);
             } else if (getDUMgr() != nullptr) {
+                //Do not check options, because user may ask neither PRSSA nor
+                //ClassicPRDU. Apply ClassicPRDU analysis in silent mode.
+                //ASSERT0(g_compute_pr_du_chain);
                 getDUMgr()->perform(oc,
                                     DUOptFlag(DUOPT_COMPUTE_PR_REF|
                                               DUOPT_COMPUTE_NONPR_REF|

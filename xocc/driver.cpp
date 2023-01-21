@@ -202,7 +202,8 @@ static void scanAndInitVar(Scope * s, VarMgr * vm, TypeMgr * tm)
                         //v->setflag(VAR_IS_FAKE);
                         //Note type-variable that defined by 'typedef'
                         //will NOT be mapped to XOC Variable.
-                        v->setflag((VAR_FLAG)(VAR_IS_FUNC|VAR_IS_DECL));
+                        v->setflag((VAR_FLAG)(VAR_IS_FUNC|VAR_IS_DECL|
+                                   VAR_IS_REGION));
                     }
                     continue;
                 }

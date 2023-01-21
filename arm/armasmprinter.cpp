@@ -308,12 +308,11 @@ void ARMAsmPrinter::printData(FILE * asmh, Section & sect)
         CHAR const* name = SYM_name(v->get_name());
         if (v->is_string()) {
             CHAR const* p = nullptr;
-            if (VAR_string(v) != nullptr) {
-                p = SYM_name(VAR_string(v));
+            if (v->getString() != nullptr) {
+                p = v->getString()->getStr();
             } else {
                 p = "";
             }
-            ASSERT0(v->getByteSize(m_tm) == xstrlen(p) + 1);
             fprintf(asmh, "\n.align 0");
             fprintf(asmh, "\n#2^0 bit");
             fprintf(asmh, "\n%s:", name);

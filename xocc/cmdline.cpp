@@ -37,7 +37,7 @@ static bool is_c_source_file(CHAR const* fn)
 {
     UINT len = (UINT)strlen(fn) + 1;
     CHAR * buf = (CHAR*)ALLOCA(len);
-    upper(getfilesuffix(fn, buf, (UINT)len));
+    xcom::upper(xcom::getFileSuffix(fn, buf, (UINT)len));
     if (strcmp(buf, "C") == 0 || strcmp(buf, "I") == 0) {
         return true;
     }
@@ -49,7 +49,7 @@ static bool is_gr_source_file(CHAR const* fn)
 {
     UINT len = (UINT)strlen(fn) + 2;
     CHAR * buf = (CHAR*)ALLOCA(len);
-    upper(getfilesuffix(fn, buf, len));
+    xcom::upper(xcom::getFileSuffix(fn, buf, len));
     if (strcmp(buf, "GR") == 0 || strcmp(buf, "I") == 0) {
         return true;
     }
