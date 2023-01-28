@@ -50,7 +50,7 @@ protected:
     //Print graph structure description.
     void dump_head(FILE * h);
 
-    virtual void recomputeDomInfo(MOD OptCtx & oc) {}
+    virtual void recomputeDomInfo(MOD OptCtx & oc) { DUMMYUSE(oc); }
 public:
     ORCFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg);
     virtual ~ORCFG() {}
@@ -79,8 +79,7 @@ public:
 
     //The function do preprocess before CFG changed during RemoveBB.
     //Note the function have to be invoked before CFG change.
-    virtual void preprocessBeforeRemoveBB(ORBB * bb, MOD CfgOptCtx & ctx)
-    {}
+    virtual void preprocessBeforeRemoveBB(ORBB *, MOD CfgOptCtx &) {}
 
     virtual void removeDomInfo(C<ORBB*> * bbct, MOD CfgOptCtx & ctx)
     {
@@ -92,6 +91,7 @@ public:
     //Remove 'bb' from CFG, vector and bb-list.
     virtual void removeBB(C<ORBB*> * bbct, OUT CfgOptCtx & ctx)
     {
+        DUMMYUSE(ctx);
         ASSERT0(bbct && m_bb_list->in_list(bbct));
         ORBB * bb = bbct->val();
         m_bb_vec.set(bb->id(), nullptr);
@@ -111,6 +111,7 @@ public:
     virtual void removeBB(ORBB * bb, OUT CfgOptCtx & ctx)
     {
         ASSERTN(0, ("Use alternative removeBB(container)"));
+        DUMMYUSE((bb, ctx));
     }
     virtual void remove_xr(ORBB * bb, OR * o, CfgOptCtx const& ctx);
     virtual void removeMapBetweenLabelAndBB(ORBB * bb);

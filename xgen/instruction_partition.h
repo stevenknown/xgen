@@ -38,7 +38,6 @@ namespace xgen {
 //
 template <class Mat, class T> class InstructionPartition {
     COPY_CONSTRUCTOR(InstructionPartition);
-
     CG * m_cg;
     ORBB * m_bb;
     RegFileSet * m_is_regfile_unique;
@@ -46,7 +45,8 @@ template <class Mat, class T> class InstructionPartition {
 public:
     explicit InstructionPartition(CG * cg, ORBB * bb, DataDepGraph * ddg,
                                   RegFileSet * is_regfile_unique)
-    { m_cg = cg; m_ddg = ddg; m_is_regfile_unique = is_regfile_unique; }
+    { m_cg = cg; m_ddg = ddg; m_is_regfile_unique = is_regfile_unique;
+      m_bb = bb; }
 
     bool partition();
     void formulateTargetFunction(OUT Mat & tgtf,

@@ -154,7 +154,7 @@ static Var * addDecl(IN Decl * decl, MOD VarMgr * var_mgr, TypeMgr * tm)
     Var * v = var_mgr->registerVar(var_name, type, var_align, flag);
     if (v->is_global()) {
         //For conservative purpose.
-        v->setflag(VAR_ADDR_TAKEN);
+        v->setFlag(VAR_ADDR_TAKEN);
     }
     if (decl->is_formal_param()) {
         VAR_formal_param_pos(v) = g_formal_parameter_start +
@@ -187,7 +187,7 @@ static void scanAndInitVar(Scope * s, VarMgr * vm, TypeMgr * tm)
                     ASSERT0(DECL_decl_scope(decl) == s);
                     Var * v = addDecl(decl, vm, tm);
                     ASSERT0(v); //Function definition should not be fake.
-                    v->setflag(VAR_IS_FUNC);
+                    v->setFlag(VAR_IS_FUNC);
                     continue;
                 }
 
@@ -199,10 +199,10 @@ static void scanAndInitVar(Scope * s, VarMgr * vm, TypeMgr * tm)
                         //it might be taken address.
                         //e.g: extern void foo();
                         //  void * p = &foo;
-                        //v->setflag(VAR_IS_FAKE);
+                        //v->setFlag(VAR_IS_FAKE);
                         //Note type-variable that defined by 'typedef'
                         //will NOT be mapped to XOC Variable.
-                        v->setflag((VAR_FLAG)(VAR_IS_FUNC|VAR_IS_DECL|
+                        v->setFlag((VAR_FLAG)(VAR_IS_FUNC|VAR_IS_DECL|
                                    VAR_IS_REGION));
                     }
                     continue;

@@ -171,9 +171,9 @@ SR * ARMCG::genR3()
 
 
 //Scratch Register, the synonym is IP register.
-SR * ARMCG::genR12()
+SR * ARMCG::genTmp()
 {
-    SR * sr = genDedicatedReg(REG_R12);
+    SR * sr = genDedicatedReg(REG_TMP);
     SR_regfile(sr) = tmMapReg2RegFile(sr->getPhyReg());
     return sr;
 }
@@ -1295,7 +1295,7 @@ void ARMCG::buildAlloca(OUT ORList & ors, SR * bytesize, MOD IOC * cont)
     }
     ASSERT0(o->is_fake());
     o->set_result(0, getSP(), this);
-    o->set_result(1, genR12(), this);
+    o->set_result(1, genTmp(), this);
     o->set_opnd(HAS_PREDICATE_REGISTER + 0, getSP(), this);
     ASSERT0(cont);
     o->set_opnd(HAS_PREDICATE_REGISTER + 1, bytesize, this);
@@ -1310,7 +1310,7 @@ void ARMCG::buildSpadjust(OUT ORList & ors, MOD IOC * cont)
     OR * o = genOR(OR_spadjust_i);
     ASSERT0(o->is_fake());
     o->set_result(0, getSP(), this);
-    o->set_result(1, genR12(), this);
+    o->set_result(1, genTmp(), this);
     o->set_opnd(HAS_PREDICATE_REGISTER + 0, getSP(), this);
     ASSERT0(cont);
     o->set_opnd(HAS_PREDICATE_REGISTER + 1,
@@ -2191,6 +2191,7 @@ void ARMCG::buildMulRegReg(SR * src1,
 void ARMCG::buildAddRegReg(bool is_add, SR * src1, SR * src2, UINT sr_size,
                            bool is_sign, OUT ORList & ors, MOD IOC * cont)
 {
+    DUMMYUSE(is_sign);
     ASSERT0(src1->is_reg() && src2->is_reg());
     if (sr_size <= 4) { //< 4bytes
         OR_CODE orty = OR_UNDEF;
@@ -2331,6 +2332,7 @@ void ARMCG::buildCompare(OR_CODE br_cond,
                          OUT ORList & ors,
                          MOD IOC * cont)
 {
+    DUMMYUSE(is_truebr);
     ASSERT0(opnd0 && opnd1);
     buildARMCmp(br_cond, getTruePred(), opnd0, opnd1, ors, cont);
     ASSERT0(cont);
@@ -2380,8 +2382,8 @@ void ARMCG::buildStoreAndAssignRegister(SR * reg, UINT offset,
         ASSERT0(res && SR_phy_reg(res) == REG_UNDEF);
 
         //Use scratch physical register.
-        renameResult(add, res, genR12(), false);
-        renameOpnd(st, res, genR12(), false);
+        renameResult(add, res, genTmp(), false);
+        renameOpnd(st, res, genTmp(), false);
         break;
     }
     default: UNREACHABLE();
@@ -2480,7 +2482,7 @@ bool ARMCG::isIntRegSR(OR const* o, SR const* sr,
 }
 
 
-bool ARMCG::isBusCluster(CLUST clust) const
+bool ARMCG::isBusCluster(CLUST) const
 {
     return false;
 }
@@ -2491,7 +2493,7 @@ bool ARMCG::isBusCluster(CLUST clust) const
 //    rflags,
 //    system,
 //    cpointer,
-bool ARMCG::isBusSR(SR const* sr) const
+bool ARMCG::isBusSR(SR const*) const
 {
     return false;
 }
@@ -2570,7 +2572,7 @@ bool ARMCG::isSameLikeCluster(SLOT slot1, SLOT slot2) const
 
 //Return true if the data BUS operation processed that was
 //using by other general operations.
-bool ARMCG::isSameLikeCluster(OR const* or1, OR const* or2) const
+bool ARMCG::isSameLikeCluster(OR const*, OR const*) const
 {
     return true;
 }
@@ -2896,11 +2898,11 @@ void ARMCG::expandFakeStore(IN OR * o, OUT IssuePackageList * ipl)
     OR * last = ors.get_tail();
     ASSERT0(last && (OR_code(last) == OR_add ||
                      OR_code(last) == OR_add_i));
-    last->set_result(0, genR12(), this); //replace result-register with r12.
+    last->set_result(0, genTmp(), this); //replace result-register with r12.
     for (OR * o2 = ors.get_head(); o2 != nullptr; o2 = ors.get_next()) {
         o2->set_pred(o->get_pred(), this);
     }
-    renameOpnd(o, base, genR12(), false);
+    renameOpnd(o, base, genTmp(), false);
     renameOpnd(o, ofst, genIntImm(0, true), false);
 
     if (OR_is_fake(last)) {
@@ -3225,7 +3227,7 @@ void ARMCG::expandFakeShift(IN OR * o, OUT IssuePackageList * ipl)
         // rd = rs + r12;
         ORList ors;
         IOC cont;
-        buildMove(genR12(), imm, ors, &cont);
+        buildMove(genTmp(), imm, ors, &cont);
         OR * mv = ors.get_tail();
         ASSERT0(mv && ors.get_elem_count() == 1);
         mv->set_pred(o->get_pred(), this);
@@ -3239,7 +3241,7 @@ void ARMCG::expandFakeShift(IN OR * o, OUT IssuePackageList * ipl)
             ipl->append_tail(ip, getIssuePackageMgr());
         }
 
-        renameOpnd(o, imm, genR12(), false);
+        renameOpnd(o, imm, genTmp(), false);
 
         //Change OR code from OR_xxx_i to OR_xxx.
         OR_code(o) = newort;
@@ -3301,7 +3303,7 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
             // rd = rs + r12;
             ORList ors;
             IOC cont;
-            buildMove(genR12(), imm, ors, &cont);
+            buildMove(genTmp(), imm, ors, &cont);
             OR * mv = ors.get_tail();
             ASSERT0(mv && ors.get_elem_count() == 1);
             mv->set_pred(o->get_pred(), this);
@@ -3315,7 +3317,7 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
                 ipl->append_tail(ip, getIssuePackageMgr());
             }
 
-            renameOpnd(o, imm, genR12(), false);
+            renameOpnd(o, imm, genTmp(), false);
 
             //Change OR code from OR_xxx_i to OR_xxx.
             OR_CODE newort = OR_UNDEF;

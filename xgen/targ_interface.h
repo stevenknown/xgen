@@ -39,6 +39,7 @@ class SRDesc;
 struct EquORCodes;
 class TargMach;
 class CGMgr;
+typedef struct tagORScheInfo ORScheInfo;
 
 //Return name of cluster.
 CHAR const* tmGetClusterName(CLUST);
@@ -63,6 +64,10 @@ RegSet const* tmMapRegFile2RegSet(REGFILE);
 
 //Return register-file for given register.
 REGFILE tmMapReg2RegFile(Reg);
+
+//Return target-machine-word for given register.
+//The tmword is always used in assembly or machine code generation.
+TMWORD tmMapReg2TMWORD(Reg);
 
 //Return alloable register set for given register-file.
 RegSet const* tmMapRegFile2RegSetAllocable(REGFILE rf);

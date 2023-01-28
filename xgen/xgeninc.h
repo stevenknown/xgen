@@ -38,8 +38,6 @@ author: Su Zhenyu
 #include <string.h>
 #include "xgenoption.h"
 #include "../opt/cominc.h"
-#include "equorcode.h"
-#include "scheinfo.h"
 #include "reg.h"
 #include "regfile.h"
 #include "targ_interface.h"
@@ -47,6 +45,7 @@ author: Su Zhenyu
 #include "regfilegroup.h"
 #include "sr.h"
 #include "srdesc.h"
+#include "scheinfo.h"
 #include "or.h"
 #include "issue_package.h"
 #include "or_bb.h"
@@ -67,6 +66,7 @@ author: Su Zhenyu
 #include "ir2or.h"
 #include "argdesc.h"
 #include "cg.h"
+#include "equorcode.h"
 #include "parallel_part_mgr.h"
 #include "instruction_partition.h"
 

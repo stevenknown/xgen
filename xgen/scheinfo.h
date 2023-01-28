@@ -40,7 +40,7 @@ namespace xgen {
 #define ORSI_mem_result_avail_cyc(oi, i) ((oi)->mem_result_cyc_buf[(i)])
 #define ORSI_reg_result_cyc_buf(oi) ((oi)->reg_result_cyc_buf)
 #define ORSI_mem_result_cyc_buf(oi) ((oi)->mem_result_cyc_buf)
-typedef struct ORScheInfo {
+typedef struct tagORScheInfo {
 public:
     UINT * reg_result_cyc_buf; //record each of register result available cycle
     UINT * mem_result_cyc_buf; //record each of memory result available cycle

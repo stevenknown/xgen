@@ -45,8 +45,8 @@ public:
 
     virtual void reloadPredicateAtExit(REGFILE regfile, ORBB * exit,
                                        xgen::RegSet const used_callee_regs[],
-                                       OUT ORBBList & bblist,
-                                       Reg2Var const& reg2var) {}
+                                       OUT ORBBList &, Reg2Var const&)
+    { DUMMYUSE((regfile, exit, used_callee_regs)); }
     virtual void reloadRegFileAtExit(REGFILE regfile, ORBB * exit,
                                      xgen::RegSet const used_callee_regs[],
                                      OUT ORBBList & bblist,
@@ -58,8 +58,8 @@ public:
                                      OUT Reg2Var & reg2var);
     virtual void spillPredicateAtEntry(REGFILE regfile, ORBB * entry,
                                        xgen::RegSet const used_callee_regs[],
-                                       OUT ORBBList & bblist,
-                                       OUT Reg2Var & reg2var) {}
+                                       OUT ORBBList &, OUT Reg2Var &)
+    { DUMMYUSE((regfile, entry, used_callee_regs)); }
 };
 
 #endif

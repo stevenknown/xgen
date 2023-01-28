@@ -173,7 +173,7 @@ public:
     SR * genR1();
     SR * genR2();
     SR * genR3();
-    SR * genR12(); //Scratch Register, the synonym is IP register.
+    SR * genTmp(); //Scratch Register, the synonym is IP register.
     virtual SR * genReturnAddr();
     virtual SR * genRflag();
     virtual SR * genTruePred();

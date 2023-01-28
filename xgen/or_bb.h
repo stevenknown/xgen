@@ -177,7 +177,8 @@ public:
     OR * getLastOR() const { return ORBB_last_or(this); }
     xcom::Vertex * getVex() const { return ORBB_vex(this); }
 
-    bool hasMDPhi(CFG<ORBB, OR> const* cfg) const { return false; }
+    bool hasMDPhi(CFG<ORBB, OR> const* cfg) const
+    { DUMMYUSE(cfg); return false; }
     bool hasLabel(LabelInfo const* o) const;
     bool hasLabel() const
     { return const_cast<ORBB*>(this)->getLabelList().get_elem_count() != 0; }

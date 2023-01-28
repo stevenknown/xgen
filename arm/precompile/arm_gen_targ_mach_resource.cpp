@@ -323,7 +323,7 @@ FIN:
 }
 
 
-static void initAndPrtRegister(OUT xcom::BitSet & allocable)
+static void initAndPrtCallingConventionRegSet(OUT xcom::BitSet & allocable)
 {
     fprintf(g_output, "\n//Map regfile to allocable register set.\n");
     xcom::BitSet argument;
@@ -347,24 +347,21 @@ static void initAndPrtRegister(OUT xcom::BitSet & allocable)
     //Initialize dedicated regset
     //Initializing argument registers.
     ////////////////////////////////////////
-    argument.bunion(1); //r0
-    argument.bunion(2); //r1
-    argument.bunion(3); //r2
-    argument.bunion(4); //r3
+    for (Reg reg = ARG_REG_START; reg <= ARG_REG_END; reg++) {
+        argument.bunion(reg);
+    }
 
     ////////////////////////////////////////
     //Initializing function unit return value registers.
     ////////////////////////////////////////
-    return_value.bunion(1); //r0
-    return_value.bunion(2); //r1
-    return_value.bunion(3); //r2
-    return_value.bunion(4); //r3
+    for (Reg reg = RETVAL_REG_START; reg <= RETVAL_REG_END; reg++) {
+        return_value.bunion(reg);
+    }
 
     ////////////////////////////////////////
     //Initialize regset caller-saved.
     ////////////////////////////////////////
-    //R0~R3
-    for (Reg reg = 1; reg <= 4; reg++) {
+    for (Reg reg = CALLER_SAVED_REG_START; reg <= CALLER_SAVED_REG_END; reg++) {
         caller_saved.bunion(reg);
     }
 
@@ -372,9 +369,10 @@ static void initAndPrtRegister(OUT xcom::BitSet & allocable)
     //Initialize regset callee-saved.
     ////////////////////////////////////////
     //R4~R11
-    for (Reg reg = 5; reg <= 12; reg++) {
+    for (Reg reg = CALLEE_SAVED_REG_START; reg <= CALLEE_SAVED_REG_END; reg++) {
         callee_saved.bunion(reg);
     }
+
     //R14(LR)
     callee_saved.bunion(REG_RETURN_ADDRESS_REGISTER);
 
@@ -382,10 +380,10 @@ static void initAndPrtRegister(OUT xcom::BitSet & allocable)
     //Initialize regset allocable.
     ////////////////////////////////////////
     //R4~R11
-    for (Reg reg = 5; reg <= 12; reg++) {
-    //for (Reg reg = 5; reg <= 7; reg++) {
+    for (Reg reg = ALLOCABLE_REG_START; reg <= ALLOCABLE_REG_END; reg++) {
         allocable.bunion(reg);
     }
+
     //R14(LR), note R14 should be saved at prolog of current function.
     allocable.bunion(REG_RETURN_ADDRESS_REGISTER);
 
@@ -474,71 +472,47 @@ static void initAndPrtRegFile2Allocable(xcom::BitSet const& allocable,
 
 static void initAndPrtRegFile2RegSet(OUT xcom::BitSet regfile2regset[])
 {
+    //Register index begin at 1, because 0 is REG_UNDEF.
     //R0~R15
-    for (UINT reg = 1; reg <= 16; reg++) {
+    for (UINT reg = RF_R_REG_START; reg <= RF_R_REG_END; reg++) {
         regfile2regset[RF_R].bunion(reg);
     }
 
     //D0~D31
-    for (UINT reg = 17; reg <= 48; reg++) {
+    for (UINT reg = RF_D_REG_START; reg <= RF_D_REG_END; reg++) {
         regfile2regset[RF_D].bunion(reg);
     }
 
-    //Q0~D15
-    for (UINT reg = 49; reg <= 64; reg++) {
+    //Q0~Q15
+    for (UINT reg = RF_Q_REG_START; reg <= RF_Q_REG_END; reg++) {
         regfile2regset[RF_Q].bunion(reg);
     }
 
     //S0~S31
-    for (UINT reg = 65; reg <= 96; reg++) {
+    for (UINT reg = RF_S_REG_START; reg <= RF_S_REG_END; reg++) {
         regfile2regset[RF_S].bunion(reg);
     }
 
     //CPSR(rflag)
-    regfile2regset[RF_CPSR].bunion(97); //
+    regfile2regset[RF_CPSR].bunion(REG_RFLAG_REGISTER); //
 
-    regfile2regset[RF_P].bunion(98);  //EQ Equal
-    regfile2regset[RF_P].bunion(99);  //NE Not equal
-    regfile2regset[RF_P].bunion(100); //CS Carry set (identical to HS)
-    regfile2regset[RF_P].bunion(101); //HS Unsigned higher or same (identical to CS)
-    regfile2regset[RF_P].bunion(102); //CC Carry clear (identical to LO)
-    regfile2regset[RF_P].bunion(103); //LO Unsigned lower (identical to CC)
-    regfile2regset[RF_P].bunion(104); //MI Minus or negative result
-    regfile2regset[RF_P].bunion(105); //PL Positive or zero result
-    regfile2regset[RF_P].bunion(106); //VS Overflow
-    regfile2regset[RF_P].bunion(107); //VC No overflow
-    regfile2regset[RF_P].bunion(108); //HI Unsigned higher
-    regfile2regset[RF_P].bunion(109); //LS Unsigned lower or same
-    regfile2regset[RF_P].bunion(110); //GE Signed greater than or equal
-    regfile2regset[RF_P].bunion(111); //LT Signed less than
-    regfile2regset[RF_P].bunion(112); //GT Signed greater than
-    regfile2regset[RF_P].bunion(113); //LE Signed less than or equal
-    regfile2regset[RF_P].bunion(114); //AL Always (this is the default)
-    ASSERT0(REG_RFLAG_REGISTER == 97);
-    ASSERT0(REG_TRUE_PRED == 114);
-    ASSERT0(REG_RETURN_ADDRESS_REGISTER == 15);
-    ASSERT0(REG_R0 == 1);
-    ASSERT0(REG_R1 == 2);
-    ASSERT0(REG_R2 == 3);
-    ASSERT0(REG_R3 == 4);
-    ASSERT0(REG_SP == 14);
-    ASSERT0(REG_EQ_PRED == 98 &&
-            REG_NE_PRED == 99 &&
-            REG_CS_PRED == 100 &&
-            REG_HS_PRED == 101 &&
-            REG_CC_PRED == 102 &&
-            REG_LO_PRED == 103 &&
-            REG_MI_PRED == 104 &&
-            REG_PL_PRED == 105 &&
-            REG_VS_PRED == 106 &&
-            REG_VC_PRED == 107 &&
-            REG_HI_PRED == 108 &&
-            REG_LS_PRED == 109 &&
-            REG_GE_PRED == 110 &&
-            REG_LT_PRED == 111 &&
-            REG_GT_PRED == 112 &&
-            REG_LE_PRED == 113);
-    ASSERT0(REG_LAST == 114);
+    regfile2regset[RF_P].bunion(REG_EQ_PRED); //EQ Equal
+    regfile2regset[RF_P].bunion(REG_NE_PRED); //NE Not equal
+    regfile2regset[RF_P].bunion(REG_CS_PRED); //CS Carry set (identical to HS)
+    regfile2regset[RF_P].bunion(REG_HS_PRED); //HS Unsigned higher or same (identical to CS)
+    regfile2regset[RF_P].bunion(REG_CC_PRED); //CC Carry clear (identical to LO)
+    regfile2regset[RF_P].bunion(REG_LO_PRED); //LO Unsigned lower (identical to CC)
+    regfile2regset[RF_P].bunion(REG_MI_PRED); //MI Minus or negative result
+    regfile2regset[RF_P].bunion(REG_PL_PRED); //PL Positive or zero result
+    regfile2regset[RF_P].bunion(REG_VS_PRED); //VS Overflow
+    regfile2regset[RF_P].bunion(REG_VC_PRED); //VC No overflow
+    regfile2regset[RF_P].bunion(REG_HI_PRED); //HI Unsigned higher
+    regfile2regset[RF_P].bunion(REG_LS_PRED); //LS Unsigned lower or same
+    regfile2regset[RF_P].bunion(REG_GE_PRED); //GE Signed greater than or equal
+    regfile2regset[RF_P].bunion(REG_LT_PRED); //LT Signed less than
+    regfile2regset[RF_P].bunion(REG_GT_PRED); //GT Signed greater than
+    regfile2regset[RF_P].bunion(REG_LE_PRED); //LE Signed less than or equal
+    regfile2regset[RF_P].bunion(REG_TRUE_PRED); //AL Always (this is the default)
 
     fprintf(g_output, "\n//RegFile to RegisterSet.\n");
 
@@ -1280,18 +1254,18 @@ static void initAndPrtRegisterName()
         //whereas 0 indicates REG_UNDEF.
         if (reg == REG_UNDEF) {
             buf.sprint("REG_UNDEF");
-        } else if (reg >= 1 && reg <= 16) {
+        } else if (reg >= RF_R_REG_START && reg <= RF_R_REG_END) {
             //R0~R15
-            buf.sprint("r%d", reg-1);
-        } else if (reg >= 17 && reg <= 48) {
+            buf.sprint("r%d", reg - RF_R_REG_START);
+        } else if (reg >= RF_D_REG_START && reg <= RF_D_REG_END) {
             //D0~D31
-            buf.sprint("d%d", reg-17);
-        } else if (reg >= 49 && reg <= 64) {
+            buf.sprint("d%d", reg - RF_D_REG_START);
+        } else if (reg >= RF_Q_REG_START && reg <= RF_Q_REG_END) {
             //Q0~Q15
-            buf.sprint("q%d", reg-49);
-        } else if (reg >= 65 && reg <= 96) {
+            buf.sprint("q%d", reg - RF_Q_REG_START);
+        } else if (reg >= RF_S_REG_START && RF_S_REG_END <= 96) {
             //S0~S31
-            buf.sprint("s%d", reg-65);
+            buf.sprint("s%d", reg - RF_S_REG_START);
         } else if (reg == REG_RFLAG_REGISTER) {
             buf.sprint("cpsr");
         } else {
@@ -1861,7 +1835,7 @@ static void prtSlotName()
 //THIS FUNCTION.
 static bool isRflagRegister(OR_CODE ot, UINT idx, bool is_result)
 {
-    ORCodeDesc const* otd = &g_or_code_desc[ot];    
+    ORCodeDesc const* otd = &g_or_code_desc[ot];
     SRDescGroup<> const* sdg = OTD_srd_group(otd);
     RegFileSet cpsr;
     cpsr.bunion(RF_CPSR);
@@ -2185,7 +2159,7 @@ int main()
     initAndPrtRegisterName();
 
     xcom::BitSet allocable;
-    initAndPrtRegister(allocable);
+    initAndPrtCallingConventionRegSet(allocable);
 
     xcom::BitSet regfile2regset[RF_NUM];
     initAndPrtRegFile2RegSet(regfile2regset);

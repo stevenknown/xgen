@@ -169,6 +169,9 @@ void IR2OR::convertLoadConstInt(HOST_INT constval, UINT constbytesize,
     //Load low part.
     HOST_INT low = constval;
     if (constbytesize == 2 * GENERAL_REGISTER_SIZE) {
+        ASSERTN(sizeof(HOST_INT) >= 2 * GENERAL_REGISTER_SIZE,
+                ("host machine integer can not represent target machine"
+                 "integer type"));
         HOST_UINT v2 = (HOST_UINT)(((ULONGLONG)constval) <<
                                    WORD_LENGTH_OF_TARGET_MACHINE);
         low = v2 >> WORD_LENGTH_OF_TARGET_MACHINE;
@@ -176,6 +179,9 @@ void IR2OR::convertLoadConstInt(HOST_INT constval, UINT constbytesize,
     m_cg->buildMove(load_val, m_cg->genIntImm(low, is_signed),
                     tors.getList(), cont);
     if (constbytesize == 2 * GENERAL_REGISTER_SIZE) {
+        ASSERTN(sizeof(HOST_INT) >= 2 * GENERAL_REGISTER_SIZE,
+                ("host machine integer can not represent target machine"
+                 "integer type"));
         //Load high part.
         load_val2 = m_cg->genReg();
         HOST_INT high = 0;
@@ -661,7 +667,7 @@ Var * IR2OR::registerLocalVar(IR const* pr)
     ASSERT0(pr->is_pr() || pr->is_stpr() || pr->isCallStmt());
     Var * var = m_rg->genVarForPR(pr->getPrno(), pr->getType());
     //PR variable will be allocated on stack
-    var->removeflag(VAR_IS_UNALLOCABLE);
+    var->removeFlag(VAR_IS_UNALLOCABLE);
     return var;
 }
 

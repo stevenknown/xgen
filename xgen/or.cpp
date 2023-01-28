@@ -521,6 +521,9 @@ RecycORList::~RecycORList()
 //END RecycORList
 
 
+//
+//START RecycORListMgr
+//
 RecycORListMgr::~RecycORListMgr()
 {
     C<ORList*> * it;
@@ -528,5 +531,6 @@ RecycORListMgr::~RecycORListMgr()
         delete it->val();
     }
 }
+//END RecycORListMgr
 
 } //namespace xgen

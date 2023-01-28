@@ -191,6 +191,17 @@ OR * CG::buildOR(OR_CODE orty, ...)
 }
 
 
+//Return the alternative equivalent o-type of 'from'
+//that correspond with 'to_unit' and 'to_clust'.
+OR_CODE CG::computeEquivalentORCode(OR_CODE from, UNIT to_unit,
+                                    CLUST to_clust)
+{
+    DUMMYUSE(to_clust);
+    ASSERTN(tmGetEqualORCode(from), ("miss EquORCodes information"));
+    return EQUORC_unit2orcode(tmGetEqualORCode(from), to_unit);
+}
+
+
 //Generate OR with variant number of operands and results.
 //Note user should pass into the legal number of result and operand SRs
 //that corresponding to 'orty'.
@@ -3499,7 +3510,7 @@ xoc::Var * CG::genSpillVar(SR * sr)
     v = genTempVar(type, STACK_ALIGNMENT, sr->is_global());
     ASSERT0(v);
 
-    v->setflag(VAR_IS_SPILL);
+    v->setFlag(VAR_IS_SPILL);
     SR_spill_var(sr) = v;
     return v;
 }

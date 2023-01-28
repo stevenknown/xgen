@@ -116,9 +116,11 @@ public:
         clean_self();
     }
     virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const
-    { ASSERTN(0, ("internal used class")); return nullptr; }
+    { ASSERTN(0, ("internal used class")); DUMMYUSE((cg, buf));
+      return nullptr; }
     virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const
-    { ASSERTN(0, ("internal used class")); return nullptr; }
+    { ASSERTN(0, ("internal used class")); DUMMYUSE((cg, buf));
+      return nullptr; }
 };
 
 

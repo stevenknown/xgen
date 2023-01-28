@@ -407,21 +407,12 @@ public:
     }
     virtual void convertRegion(IR const* ir, OUT RecycORList & ors,
                                MOD IOC * cont);
-    virtual void convertSetElem(IR const* ir, OUT RecycORList & ors,
-                                MOD IOC * cont)
-    {
-        ASSERTN(0, ("Target Dependent Code"));
-    }
-    virtual void convertGetElem(IR const* ir, OUT RecycORList & ors,
-                                MOD IOC * cont)
-    {
-        ASSERTN(0, ("Target Dependent Code"));
-    }
-    virtual void convertExtStmt(IR const* ir, OUT RecycORList & ors,
-                                MOD IOC * cont)
-    {
-        ASSERTN(0, ("Target Dependent Code"));
-    }
+    virtual void convertSetElem(IR const*, OUT RecycORList &, MOD IOC *)
+    { ASSERTN(0, ("Target Dependent Code")); }
+    virtual void convertGetElem(IR const*, OUT RecycORList &, MOD IOC *)
+    { ASSERTN(0, ("Target Dependent Code")); }
+    virtual void convertExtStmt(IR const*, OUT RecycORList &, MOD IOC *)
+    { ASSERTN(0, ("Target Dependent Code")); }
     void copyDbx(OR * o, IR const* ir)
     {
         Dbx * d = ::getDbx(ir);

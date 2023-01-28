@@ -406,7 +406,7 @@ static bool scanProgramDeclList(Scope * s, OUT xoc::Region * rg)
             if (v != nullptr) {
                 //Note type-variable that defined by 'typedef'
                 //will not be mapped to xoc::Var.
-                v->setflag((VAR_FLAG)(VAR_IS_FUNC|VAR_IS_DECL|VAR_IS_REGION));
+                v->setFlag((VAR_FLAG)(VAR_IS_FUNC|VAR_IS_DECL|VAR_IS_REGION));
                 rg->addToVarTab(v);
             }
             continue;
@@ -1425,7 +1425,7 @@ IR * CTree2IR::convertCallItself(xfe::Tree * t, IR * arglist, IR * callee,
         xoc::Var * v = ID_info(callee);
         call = m_rg->getIRMgr()->buildCall(v, arglist, 0, m_tm->getAny());
         if (is_readonly(v)) {
-            CALL_idinfo(call)->setflag(VAR_READONLY);
+            CALL_idinfo(call)->setFlag(VAR_READONLY);
         }
         if (is_alloc_heap(v)) {
             CALL_is_alloc_heap(call) = true;

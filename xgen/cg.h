@@ -487,12 +487,7 @@ public:
     //Return the alternative equivalent o-type of 'from'
     //that correspond with 'to_unit' and 'to_clust'.
     virtual OR_CODE computeEquivalentORCode(OR_CODE from, UNIT to_unit,
-                                            CLUST to_clust)
-    {
-        DUMMYUSE(to_clust);
-        ASSERTN(tmGetEqualORCode(from), ("miss EquORCodes information"));
-        return EQUORC_unit2orcode(tmGetEqualORCode(from), to_unit);
-    }
+                                            CLUST to_clust);
 
     //Return the alternative equivalent o-type of 'o'
     //that correspond with 'to_unit' and 'to_clust'.

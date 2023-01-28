@@ -178,9 +178,9 @@ public:
 
     SR_CODE getCode() const { return SR_code(this); }
     virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const
-    { return nullptr; }
+    { DUMMYUSE((cg, buf)); return nullptr; }
     virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const
-    { return nullptr; }
+    { DUMMYUSE((cg, buf)); return nullptr; }
     virtual UINT getByteSize() const;
     inline REGFILE getRegFile() const;
     inline Reg getPhyReg() const;

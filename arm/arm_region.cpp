@@ -272,94 +272,79 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
     if (g_opt_level == OPT_LEVEL0) { return; }
 
     START_TIMER(t, "Middle Process Aggressive Analysis");
-
-    //START HACK CODE
-    //Test code, to force recomputing AA and DUChain.
-    //AA and DU Chain do NOT to be recomputed, because
-    //simplification have maintained them.
+    //Costly code, to force recomputing AA and DUChain.
+    //AA and DU Chain are dispensible to recompute, because
+    //simplification maintained them.
     bool org_compute_pr_du_chain = g_compute_pr_du_chain;
     bool org_compute_nonpr_du_chain = g_compute_nonpr_du_chain;
     OC_is_ref_valid(oc) = false;
     OC_is_pr_du_chain_valid(oc) = false;
     OC_is_nonpr_du_chain_valid(oc) = false;
-    //g_compute_pr_du_chain = true;
-    //g_compute_nonpr_du_chain = true;
-    //END HACK CODE
-
-    if (!oc.is_aa_valid() ||
-        !oc.is_ref_valid() ||
-        !oc.is_pr_du_chain_valid() ||
-        !oc.is_nonpr_du_chain_valid()) {
-        AliasAnalysis * aa = getAA();
-        if (g_do_aa && aa != nullptr &&
-            (!oc.is_aa_valid() || !oc.is_ref_valid())) {
-            //Recompute and set MD reference to avoid AA's complaint.
-            //Compute AA to build coarse-grained DU chain.
-            getMDMgr()->assignMD(true, true);
-            if (!aa->is_init()) {
-                aa->initAliasAnalysis();
-            }
-            aa->set_flow_sensitive(false);
-            aa->perform(oc);
+    AliasAnalysis * aa = getAA();
+    if (g_do_aa && aa != nullptr) {
+        //Recompute and set MD reference to avoid AA's complaint.
+        //Compute AA to build coarse-grained DU chain.
+        getMDMgr()->assignMD(true, true);
+        if (!aa->is_init()) {
+            aa->initAliasAnalysis();
         }
+        aa->set_flow_sensitive(false);
+        aa->perform(oc);
 
-        //Opt phase may cause AA invalid.
-        if (g_do_aa && aa != nullptr) {
-            //Compute PR's definition to improve AA precison.
-            if (g_do_prssa) {
-                ASSERT0(getPassMgr());
-                PRSSAMgr * prssamgr = (PRSSAMgr*)getPassMgr()->registerPass(
-                    PASS_PRSSA_MGR);
-                ASSERT0(prssamgr);
-                if (!prssamgr->is_valid()) {
-                    prssamgr->construction(oc);
-                }
-                oc.setInvalidPRDU();
-            } else if (getDUMgr() != nullptr) {
-                //Do not check options, because user may ask neither PRSSA nor
-                //ClassicPRDU. Apply ClassicPRDU analysis in silent mode.
-                //ASSERT0(g_compute_pr_du_chain);
-                getDUMgr()->perform(oc,
-                                    DUOptFlag(DUOPT_COMPUTE_PR_REF|
-                                              DUOPT_COMPUTE_NONPR_REF|
-                                              DUOPT_SOL_REACH_DEF|
-                                              DUOPT_COMPUTE_PR_DU));
-                getDUMgr()->computeMDDUChain(oc, false,
-                                             DUOptFlag(DUOPT_COMPUTE_PR_DU));
+        //Compute PR's definition to improve AA precison.
+        if (g_do_prssa) {
+            ASSERT0(getPassMgr());
+            PRSSAMgr * prssamgr = (PRSSAMgr*)getPassMgr()->registerPass(
+                PASS_PRSSA_MGR);
+            ASSERT0(prssamgr);
+            if (!prssamgr->is_valid()) {
+                prssamgr->construction(oc);
             }
-            //checkValidAndRecompute(&oc, PASS_LOOP_INFO, PASS_UNDEF);
-            //Recompute and set MD reference to avoid AA's complaint.
-            getMDMgr()->assignMD(true, true);
-
-            //Compute the threshold to perform AA.
-            UINT numir = 0;
-            for (IRBB * bb = getBBList()->get_head();
-                 bb != nullptr; bb = getBBList()->get_next()) {
-                numir += bb->getNumOfIR();
-            }
-            aa->set_flow_sensitive(numir < xoc::g_thres_opt_ir_num);
-            aa->perform(oc);
+            oc.setInvalidPRDU();
+        } else if (getDUMgr() != nullptr) {
+            //Do not check options, because user may ask neither PRSSA nor
+            //ClassicPRDU. Apply ClassicPRDU analysis in silent mode.
+            //ASSERT0(g_compute_pr_du_chain);
+            getDUMgr()->perform(oc,
+                                DUOptFlag(DUOPT_COMPUTE_PR_REF|
+                                          DUOPT_COMPUTE_NONPR_REF|
+                                          DUOPT_SOL_REACH_DEF|
+                                          DUOPT_COMPUTE_PR_DU));
+            getDUMgr()->computeMDDUChain(oc, false,
+                                         DUOptFlag(DUOPT_COMPUTE_PR_DU));
         }
+        //checkValidAndRecompute(&oc, PASS_LOOP_INFO, PASS_UNDEF);
+        //Recompute and set MD reference to avoid AA's complaint.
+        getMDMgr()->assignMD(true, true);
 
-        DUMgr * dumgr = getDUMgr();
-        if (g_do_md_du_analysis && dumgr != nullptr) {
-            DUOptFlag flag(DUOPT_COMPUTE_PR_REF|DUOPT_COMPUTE_NONPR_REF);
-            if (g_compute_pr_du_chain) {
-                flag.set(DUOPT_SOL_REACH_DEF|DUOPT_COMPUTE_PR_DU);
-            }
-            if (g_compute_nonpr_du_chain) {
-                flag.set(DUOPT_SOL_REACH_DEF|DUOPT_COMPUTE_NONPR_DU);
-            }
-            dumgr->perform(oc, flag);
-            if (oc.is_ref_valid() && OC_is_reach_def_valid(oc)) {
-                dumgr->computeMDDUChain(oc, false, flag);
-            }
-            if (g_do_mdssa) {
-                //MDSSA have to be recomputed when DURef and overlap set
-                //are available.
-                ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MDSSA_MGR))->
-                    construction(oc);
-            }
+        //Compute the threshold to perform AA.
+        UINT numir = 0;
+        for (IRBB * bb = getBBList()->get_head();
+             bb != nullptr; bb = getBBList()->get_next()) {
+            numir += bb->getNumOfIR();
+        }
+        aa->set_flow_sensitive(numir < xoc::g_thres_opt_ir_num);
+        aa->perform(oc);
+    }
+
+    DUMgr * dumgr = getDUMgr();
+    if (g_do_md_du_analysis && dumgr != nullptr) {
+        DUOptFlag flag(DUOPT_COMPUTE_PR_REF|DUOPT_COMPUTE_NONPR_REF);
+        if (g_compute_pr_du_chain) {
+            flag.set(DUOPT_SOL_REACH_DEF|DUOPT_COMPUTE_PR_DU);
+        }
+        if (g_compute_nonpr_du_chain) {
+            flag.set(DUOPT_SOL_REACH_DEF|DUOPT_COMPUTE_NONPR_DU);
+        }
+        dumgr->perform(oc, flag);
+        if (oc.is_ref_valid() && OC_is_reach_def_valid(oc)) {
+            dumgr->computeMDDUChain(oc, false, flag);
+        }
+        if (g_do_mdssa) {
+            //MDSSA have to be recomputed when DURef and overlap set
+            //are available.
+            ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MDSSA_MGR))->
+                construction(oc);
         }
     }
     g_compute_pr_du_chain = org_compute_pr_du_chain;
