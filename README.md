@@ -55,10 +55,10 @@ usage:
     It will show you all commandlines provided by run.pl,    
     Try and see the simplest test:    
 ```cmd
-    perl ./run.pl arm      
+    perl ./run.pl Targ = arm      
 ```
     You can see all C files under 'exec' will be compiled by xocc.exe and running on qemu-arm.    
     e.g2: Run single case in 'exec':    
 ```cmd
-    perl ./run.pl arm Case = shift.c    
+    perl ./run.pl Targ = arm Case = shift.c    
 ```
