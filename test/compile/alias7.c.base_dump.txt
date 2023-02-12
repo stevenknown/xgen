@@ -144,7 +144,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [8]    if (i) {
+    [8]    if (i) {
     
     falsebr label _$L1 attachinfo:Dbx        
         ne:bool attachinfo:Dbx            
@@ -177,7 +177,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [9]        p3 = &x;
+    [9]        p3 = &x;
     
     st:*<4> 'p3' attachinfo:Dbx        
         lda:*<8> 'x' attachinfo:Dbx
@@ -191,7 +191,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [10]        p = &i;
+    [10]        p = &i;
     
     st:*<1> 'p' attachinfo:Dbx        
         lda:*<4> 'i' attachinfo:Dbx
@@ -205,7 +205,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [8]    if (i) {
+    [8]    if (i) {
     
     goto label _$L2 attachinfo:Dbx
     
@@ -231,7 +231,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [12]        p3 = w; //*p3 may alias to p2.
+    [12]        p3 = w; //*p3 may alias to p2.
     
     st:*<4> 'p3' attachinfo:Dbx        
         ld:*<1> 'w' attachinfo:Dbx
@@ -284,7 +284,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [17]    p2 = 100;
+    [17]    p2 = 100;
     
     st:*<4> 'p2' attachinfo:Dbx        
         intconst:i32 100|0x64 attachinfo:Dbx
@@ -301,7 +301,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [18]    *p3 = 20;
+    [18]    *p3 = 20;
     
     ist:*<4> attachinfo:Dbx        
         ld:*<4> 'p3' base attachinfo:Dbx        
@@ -348,7 +348,7 @@
           
     ---------------------------------    
 
-    [19]    return *p3;
+    [19]    return *p3;
     
     return attachinfo:Dbx
         ild:*<4> attachinfo:Dbx            
@@ -502,7 +502,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [8]    if (i) {
+    [8]    if (i) {
     
     truebr label _$L1 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -541,7 +541,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [9]        p3 = &x;
+    [9]        p3 = &x;
     
     st:*<4> 'p3' attachinfo:Dbx,MDSSA        
         lda:*<8> 'x' attachinfo:Dbx
@@ -559,7 +559,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [10]        p = &i;
+    [10]        p = &i;
     
     st:*<1> 'p' attachinfo:Dbx,MDSSA        
         lda:*<4> 'i' attachinfo:Dbx
@@ -573,7 +573,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [8]    if (i) {
+    [8]    if (i) {
     
     goto label _$L2 attachinfo:Dbx
     
@@ -599,7 +599,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [12]        p3 = w; //*p3 may alias to p2.
+    [12]        p3 = w; //*p3 may alias to p2.
     
     st:*<4> 'p3' attachinfo:Dbx,MDSSA        
         ld:*<1> 'w' attachinfo:Dbx,MDSSA
@@ -655,7 +655,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [17]    p2 = 100;
+    [17]    p2 = 100;
     
     st:*<4> 'p2' attachinfo:Dbx,MDSSA        
         intconst:i32 100|0x64 attachinfo:Dbx
@@ -673,7 +673,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [18]    *p3 = 20;
+    [18]    *p3 = 20;
     
     ist:*<4> attachinfo:Dbx,MDSSA        
         ld:*<4> 'p3' base attachinfo:Dbx,MDSSA        
@@ -725,7 +725,7 @@
           
     ---------------------------------    
 
-    [19]    return *p3;
+    [19]    return *p3;
     
     return attachinfo:Dbx
         ild:*<4> attachinfo:Dbx,MDSSA            
@@ -953,7 +953,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [8]    if (i) {
+    [8]    if (i) {
     
     truebr label _$L1 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -986,7 +986,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [9]        p3 = &x;
+    [9]        p3 = &x;
     
     st:*<4> 'p3' attachinfo:Dbx,MDSSA        
         lda:*<8> 'x' attachinfo:Dbx
@@ -1000,7 +1000,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [10]        p = &i;
+    [10]        p = &i;
     
     st:*<1> 'p' attachinfo:Dbx,MDSSA        
         lda:*<4> 'i' attachinfo:Dbx
@@ -1014,7 +1014,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [8]    if (i) {
+    [8]    if (i) {
     
     goto label _$L2 attachinfo:Dbx
     
@@ -1040,7 +1040,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [12]        p3 = w; //*p3 may alias to p2.
+    [12]        p3 = w; //*p3 may alias to p2.
     
     st:*<4> 'p3' attachinfo:Dbx,MDSSA        
         ld:*<1> 'w' attachinfo:Dbx,MDSSA
@@ -1096,7 +1096,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [17]    p2 = 100;
+    [17]    p2 = 100;
     
     st:*<4> 'p2' attachinfo:Dbx,MDSSA        
         intconst:i32 100|0x64 attachinfo:Dbx
@@ -1114,7 +1114,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [18]    *p3 = 20;
+    [18]    *p3 = 20;
     
     ist:*<4> attachinfo:Dbx,MDSSA        
         ld:*<4> 'p3' base attachinfo:Dbx,MDSSA        
@@ -1166,7 +1166,7 @@
           
     ---------------------------------    
 
-    [19]    return *p3;
+    [19]    return *p3;
     
     return attachinfo:Dbx
         ild:*<4> attachinfo:Dbx,MDSSA            

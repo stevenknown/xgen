@@ -1,3 +1,5 @@
+$(info "====---- START Target Machine Info Generation Makefile ----====")
+
 GEN_OBJS+=arm_gen_targ_mach_resource.o
 
 include ../../com/Makefile.inc
@@ -16,18 +18,22 @@ ifeq ($(CFLAGS),)
 endif
 
 gentminfo.exe: gen_objs $(COM_OUTPUT)
+	@echo "BUILD gentminfo.exe"
+	@echo "EXEC:"
 	$(CC) -std=c++0x -D$(TARG) $(GEN_OBJS) ../../com/$(COM_OUTPUT) $(CFLAGS) -o $@ -lstdc++ -lm  #-lgcov -lgcc
-	@echo "SUCCESS!!"
+	@echo "SUCCESS TO GENERATE gentminfo.exe!!"
 
 gen_objs: $(GEN_OBJS)
+	@echo "EXEC:gen_objs: $(GEN_OBJS)"
 
 $(COM_OUTPUT):
 	@echo "BUILD $(COM_OUTPUT)"
-	cd ../../com && make -f Makefile TARG=$(TARG) DEBUG=$(DEBUG)
+	@echo "EXEC:"
+	cd ../../com && make -f Makefile TARG=$(TARG) DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)"
 
 %.o:%.cpp
-	$(info CFLAGS=$(CFLAGS),TARG=$(TARG))
-	@echo "BUILD $(CC) -D$(TARG) $(CFLAGS) -c $< -o $@"
+	@echo "BUILD $<"
+	@echo "EXEC:"
 	$(INFER) $(CC) -D$(TARG) $(CFLAGS) -c $< -o $@
 
 clean:
@@ -46,3 +52,5 @@ clean:
 	@find ./ -name "*.vcg" | xargs rm -f
 	@find ./ -name "*.cxx" | xargs rm -f
 	@find ./ -name "*.asm" | xargs rm -f
+
+$(info "====---- END Target Machine Info Generation Makefile ----====")

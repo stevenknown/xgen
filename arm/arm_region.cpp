@@ -237,14 +237,31 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         if (f.have(DUOPT_SOL_REACH_DEF) && succ) {
             dumgr->computeMDDUChain(oc, false, f);
         }
+        bool rmprdu = false;
+        bool rmnonprdu = false;
         if (g_do_prssa) {
             ((PRSSAMgr*)getPassMgr()->registerPass(PASS_PRSSA_MGR))->
                 construction(oc);
+            //If SSA is enabled, disable classic DU Chain.
+            //Since we do not maintain both them as some passes.
+            //e.g:In RCE, remove PHI's operand will not update the
+            //operand DEF's DUSet.
+            //CASE:compiler.gr/alias.loop.gr
+            oc.setInvalidPRDU();
+            rmprdu = true;            
         }
         if (g_do_mdssa) {
             ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MDSSA_MGR))->
                 construction(oc);
+            //If SSA is enabled, disable classic DU Chain.
+            //Since we do not maintain both them as some passes.
+            //e.g:In RCE, remove PHI's operand will not update the
+            //operand DEF's DUSet.
+            //CASE:compiler.gr/alias.loop.gr
+            oc.setInvalidNonPRDU();
+            rmnonprdu = true;
         }
+        xoc::removeClassicDUChain(this, rmprdu, rmnonprdu);
         if (g_do_refine_duchain) {
             RefineDUChain * refdu = (RefineDUChain*)getPassMgr()->
                 registerPass(PASS_REFINE_DUCHAIN);
@@ -300,6 +317,11 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
             if (!prssamgr->is_valid()) {
                 prssamgr->construction(oc);
             }
+            //If SSA is enabled, disable classic DU Chain.
+            //Since we do not maintain both them as some passes.
+            //e.g:In RCE, remove PHI's operand will not update the
+            //operand DEF's DUSet.
+            //CASE:compiler.gr/alias.loop.gr
             oc.setInvalidPRDU();
         } else if (getDUMgr() != nullptr) {
             //Do not check options, because user may ask neither PRSSA nor
@@ -340,12 +362,38 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
         if (oc.is_ref_valid() && OC_is_reach_def_valid(oc)) {
             dumgr->computeMDDUChain(oc, false, flag);
         }
+        bool rmprdu = false;
+        bool rmnonprdu = false;
+        if (g_do_prssa) {
+            ASSERT0(getPassMgr());
+            PRSSAMgr * prssamgr = (PRSSAMgr*)getPassMgr()->registerPass(
+                PASS_PRSSA_MGR);
+            ASSERT0(prssamgr);
+            if (!prssamgr->is_valid()) {
+                prssamgr->construction(oc);
+            }
+            //If SSA is enabled, disable classic DU Chain.
+            //Since we do not maintain both them as some passes.
+            //e.g:In RCE, remove PHI's operand will not update the
+            //operand DEF's DUSet.
+            //CASE:compiler.gr/alias.loop.gr
+            oc.setInvalidPRDU();
+            rmprdu = true;
+        }
         if (g_do_mdssa) {
             //MDSSA have to be recomputed when DURef and overlap set
             //are available.
             ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MDSSA_MGR))->
                 construction(oc);
+            //If SSA is enabled, disable classic DU Chain.
+            //Since we do not maintain both them as some passes.
+            //e.g:In RCE, remove PHI's operand will not update the
+            //operand DEF's DUSet.
+            //CASE:compiler.gr/alias.loop.gr
+            oc.setInvalidNonPRDU();
+            rmnonprdu = true;
         }
+        xoc::removeClassicDUChain(this, rmprdu, rmnonprdu);
     }
     g_compute_pr_du_chain = org_compute_pr_du_chain;
     g_compute_nonpr_du_chain = org_compute_nonpr_du_chain;

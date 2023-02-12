@@ -1,15 +1,20 @@
+$(info "====---- START Makefile.xgen ----====")
+
 ifeq ($(TARG),)
   $(error "NEED TARG INFO:e.g:make TARG=FOR_ARM TARG_DIR=../arm")
 endif
 
 CFLAGS+=-Wall
-XOC_SRC=..
-SRC=.
+ROOT_DIR=..
+XGEN_DIR=.
+COM_DIR=../com
+OPT_DIR=../opt
+READER_DIR=../reader
 
-include $(SRC)/Makefile.inc
+include $(XGEN_DIR)/Makefile.inc
 include $(TARG_DIR)/Makefile.inc
-include $(XOC_SRC)/Makefile.xoc.inc
-include $(XOC_SRC)/Makefile.option
+include $(ROOT_DIR)/Makefile.xoc.inc
+include $(ROOT_DIR)/Makefile.option
 
 #SET DEFAULT CFLAGS.
 CFLAGS+=\
@@ -36,38 +41,47 @@ ifeq ($(TARG), FOR_ARM)
   TARG_OBJS:=$(foreach n,$(ARM_OBJS),$(TARG_DIR)/$(n))
 else ifeq ($(TARG), FOR_X86)
   TARG_OBJS:=$(foreach n,$(X86_OBJS),$(TARG_DIR)/$(n))
+else ifeq ($(TARG), FOR_TECO)
+  TARG_OBJS:=$(foreach n,$(TECO_OBJS),$(TARG_DIR)/$(n))
 else
   $(error "UNKNOWN TARG:$(TARG)")
 endif
 
-$(XGEN_OUTPUT): targ_gen $(XOC_OUTPUT) xgen_objs targ_objs
+$(XGEN_OUTPUT): targmach_gen $(XOC_OUTPUT) xgen_objs targ_objs
 	@echo "BUILD $(XGEN_OUTPUT)!!"
-	ar rcs $(XGEN_OUTPUT) $(XOC_SRC)/$(XOC_OUTPUT) $(XGEN_OBJS) $(TARG_OBJS)
-	@echo "SUCCESS!!"
+	@echo "EXEC:"
+	ar rcs $(XGEN_OUTPUT) $(ROOT_DIR)/$(XOC_OUTPUT) $(XGEN_OBJS) $(TARG_OBJS)
+	@echo "SUCCESS TO GENERATE $(XGEN_OUTPUT)!!"
 
 INC=-I . -I com -I opt -I reader
 
 %.o:%.cpp
 	@echo "BUILD $<"
+	@echo "EXEC:"
 	$(CC) $(CFLAGS) $(INC) -c $< -o $@
 
 $(XOC_OUTPUT):
 	@echo "BUILD $(XOC_OUTPUT)"
-	cd $(XOC_SRC) && make -f Makefile.xoc TARG=$(TARG) DEBUG=$(DEBUG)
+	@echo "EXEC:"
+	cd $(ROOT_DIR) && make -f Makefile.xoc TARG=$(TARG) DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)"
 
 xgen_objs: $(XGEN_OBJS)
+	@echo "EXEC:xgen_objs:$(XGEN_OBJS)"
 
 targ_objs: $(TARG_OBJS)
+	@echo "EXEC:targ_objs:$(TARG_OBJS)"
 
-targ_gen:
-	@echo "==---- GENERATE TARGET DEPENDENT FILES ----=="
-	make -C $(TARG_DIR)/precompile CFLAGS="$(CFLAGS)" TARGET=$(TARG) CC=$(CC) DEBUG=$(DEBUG)
+targmach_gen:
+	@echo "====---- GENERATE TARGET MACHINE INFO AND RELATED FILES  ----===="
+	@echo "EXEC:"
+	make -C $(TARG_DIR)/precompile TARGET=$(TARG) CC=$(CC) DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)"
 	cd $(TARG_DIR)/precompile; ./gentminfo.exe
 
 clean:
 	@find ./ -name "*.gcda" | xargs rm -f
 	@find ./ -name "*.gcno" | xargs rm -f
 	@find ./ -name "*.o" | xargs rm -f
+	@find ./ -name "*.d" | xargs rm -f
 	@find ./ -name "*.a" | xargs rm -f
 	@find ./ -name "*.dot" | xargs rm -f
 	@find ./ -name "*.exe" | xargs rm -f
@@ -83,3 +97,10 @@ clean:
 	@find ./ -name "*.LOGLOG" | xargs rm -f
 	@find ./ -name "LOGLOG" | xargs rm -f
 
+-include $(READER_DIR)/*.d
+-include $(COM_DIR)/*.d
+-include $(OPT_DIR)/*.d
+-include $(XGEN_DIR)/*.d
+-include $(TARG_DIR)/*.d
+
+$(info "====---- END Makefile.xgen ----====")

@@ -6,11 +6,11 @@ region program ".program" () {
     region func main (undefined,var argc:i32:(align(4)),var argv:*<4>:(align(4))) {
         stpr $17 = lda c;
         ist = add $17, 10, 0xFF;
-        if (ne $16:u16, $15:u16) {
+        if (ne $16:u16, $15:u16) { //there are no VN for $16 and $15.
             st a = ild add $17, 10;
         } else {
             st b = ild add $17, 10;
         }
-        return add ld a, ld b;
+        return add ld a, ld b; //there are no VN for a and b.
     };
 }

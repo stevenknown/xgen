@@ -39,6 +39,7 @@ public:
     virtual Pass * allocDUMgr();
     virtual Pass * allocScalarOpt();
     virtual Pass * allocRefine();
+    virtual Pass * allocLinearScanRA();
 };
 
 #endif

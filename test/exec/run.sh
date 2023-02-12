@@ -1,5 +1,10 @@
-debug_xocc_path="/home/zhenyu/x/src/arm/xocc.exe"
-release_xocc_path="/home/zhenyu/x/src/arm/xocc.exe"
+xocc_path="../../src/xocc/xocc.exe"
 
-perl ./run.pl armhf Case = pi2.c XoccPath = $debug_xocc_path XoccFlag = "-O0" CompareResultIfExist
-#NotQuitEarly
+perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = ""
+perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-O3"
+perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-O3 -lowest_height"
+perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-no-cg"
+perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-O3 -no-cg"
+perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-O3 -lowest_height -no-cg"
+perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-O3 -nonprdu -prdu -mdssa -prssa "
+perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-O3 -lowest_height -nonprdu -prdu -mdssa -prssa "

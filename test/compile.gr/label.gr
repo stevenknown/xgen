@@ -1,11 +1,11 @@
 //Test how irparser parse the GR file.
 region program ")(*&^%$#@!~"() {
-    var bar:*<4>:(func_decl,align(4));
-    var foo:*<4>:(func_decl,align(4));
+    var bar:*<4>:(func,align(4));
+    var foo:*<4>:(func,align(4));
     var a:*<1>:(align(4));
     var b:*<1>:(align(4));
     var d:i32:(align(4));
-    var main:*<4>:(func_decl,align(4));
+    var main:*<4>:(func,align(4));
     region func main (undefined,var argc:i32:(align(4)),var argv:*<4>:(align(4))) {
         var c:i32:(align(4));
         st d = 1;

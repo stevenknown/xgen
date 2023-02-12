@@ -1,6 +1,6 @@
 region program mykernel () {
     var word:u32:(align(4));
-    var switch_key:any:(func_decl, align(4));
+    var switch_key:any:(func, align(4));
     region func switch_key(undefined, var in_key:*<1>:(align(4)), var n_bytes:u32:(align(4)),
                            var f:i32:(align(4)), var cx:*<524>:(align(4))) {
         var kf:*<4>:(align(4));
@@ -10,9 +10,9 @@ region program mykernel () {
         var b:any:(align(8));
         var c:i16:(align(8));
         var d:i16:(align(8));
-        var key:any:(func_decl, align(4));
+        var key:any:(func, align(4));
 
-        switch (ld cx) 
+        switch (ld cx)
         case 6, _L5, {
             label _L5;
             do {

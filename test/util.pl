@@ -18,6 +18,7 @@ our @EXPORT_OK = qw(
     getBaseResultDumpFilePath
     getOutputFilePath
     getBaseOutputFilePath
+    getFileNameFromPath
     generateGR
     findCurrent
     findFfileCurrent
@@ -286,7 +287,6 @@ sub generateGR
     my $cmdline;
     my $retval;
     my $fullpath = $_;
-    my $fname = peelFileName($fullpath);
     my $grname = $fullpath.".gr";
     my $asmname = $grname.".asm";
 
@@ -318,7 +318,6 @@ sub compileGR
     my $cmdline;
     my $retval;
     my $fullpath = $_;
-    my $fname = peelFileName($fullpath);
     my $grname = $fullpath.".gr";
     my $asmname = $grname.".asm";
     if (!-e $grname) {
@@ -397,7 +396,6 @@ sub runCPP
 {
     my $cmdline;
     my $src_fullpath = $_[0];
-    my $input_file_name = peelFileName($src_fullpath);
     my $preprocessed_name = $src_fullpath.".i";
     my $exename = computeExeName($src_fullpath);
     my $objname = $src_fullpath.".o";
@@ -421,18 +419,17 @@ sub runXOCC
 {
     my $cmdline;
     my $src_fullpath = $_[0];
-    my $input_file_name = peelFileName($src_fullpath);
     my $is_invoke_assembler = $_[1];
     my $is_invoke_linker = $_[2];
     my $asmname = $src_fullpath.".asm";
     my $exename = computeExeName($src_fullpath);
     my $objname = $src_fullpath.".o";
     if (!is_exist($g_xocc)) {
-        abortex(1);
+        abortex("\n$g_xocc IS NOT EXIST\n");
         return $g_fail; #No need execute the following code.
     }
     if (!is_exist($src_fullpath)) {
-        abortex(1);
+        abortex("\n$src_fullpath IS NOT EXIST\n");
         return $g_fail; #No need execute the following code.
     }
 
@@ -533,6 +530,24 @@ sub peelFileName
     return $path;
 }
 
+
+#Given file path, extract the filename, drop the prefix path.
+#e.g: given a/b.out, return b.out
+sub getFileNameFromPath
+{
+    my $filepath = $_[0];
+    my @segs = split(/\//, $filepath);
+    my $seg;
+    my $n = 0; #the number of seg
+    my $prev_seg = $seg;
+    while (defined($seg = $segs[$n])) {
+        $n++;
+        $prev_seg = $seg;
+    }
+    return $prev_seg;
+}
+
+
 #Given file path, drop the last postfix name.
 #e.g: given a/b.out, return a/b
 sub peelPostfixName
@@ -598,25 +613,26 @@ sub prolog
 {
     computeRelatedPathToXocRootDir();
     #computeAbsolutePathToXocRootDir();
-    $g_target = $ARGV[0];
-    if (!$g_target) {
-        usage();
-        abort();
-    }
+
+    #$g_target = $ARGV[0];
+    #if (!$g_target) {
+    #    usage();
+    #    abort();
+    #}
     parseCmdLine();
     readConfigFile();
     selectTarget();
     overrideOptions();
     printEnvVar();
 
-    #Tools may be in enviroment path.
+    #Tools may be in environment path.
     #checkExistence();
 }
 
 sub overrideOptions
 {
     if ($g_is_nocg) {
-        $g_cflags = $g_cflags." -nocg ";
+        $g_cflags = $g_cflags." -no-cg ";
     }
     if ($g_override_xocc_path ne "") {
         $g_xocc = $g_override_xocc_path;
@@ -665,7 +681,7 @@ sub is_exist
 sub parseCmdLine
 {
     #Skip ARGV[0], it should describe target machine.
-    for (my $i = 1; $ARGV[$i]; $i++) {
+    for (my $i = 0; $ARGV[$i]; $i++) {
         if ($ARGV[$i] eq "CreateBaseResult") {
             $g_is_create_base_result = 1;
             next;
@@ -693,6 +709,18 @@ sub parseCmdLine
                 abort();
             }
             $g_find_testcase = $ARGV[$i];
+        } elsif ($ARGV[$i] eq "Targ") {
+            $i++;
+            if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                usage();
+                abort();
+            }
+            $i++;
+            if (!$ARGV[$i]) {
+                usage();
+                abort();
+            }
+            $g_target = $ARGV[$i];
         } elsif ($ARGV[$i] eq "Case") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
@@ -840,7 +868,8 @@ sub parseCmdLine
 
 sub printEnvVar
 {
-    print "\n==---- ENVIROMENT VARIABLES ----==\n";
+    print "\n==---- ENVIRONMENT VARIABLES ----==\n";
+    print "\ng_target = $g_target";
     print "\ng_osname = $g_osname";
     print "\ng_simulator = $g_simulator";
     print "\ng_basecc = $g_basecc";
@@ -939,7 +968,7 @@ sub selectTarget
 sub usage
 {
     print "\n==-- NOTE: YOU HAVE TO ENSURE THE FILE NAME OF TESTCASE IS UNQIUE. --==",
-          "\n\nUSAGE: ./run.pl x64|arm|armhf [Option List ...]",
+          "\n\nUSAGE: ./run.pl Targ = x64|arm|armhf [Option List ...]",
           "\n       e.g: ./run.pl arm Case = hello.c XoccFlag = \"-O3\" NotQuitEarly",
           "\n\nOption List can be the following:",
           "\nMovePassed         move passed testcase to 'passed' directory",
@@ -951,6 +980,7 @@ sub usage
           "\nRecur              find testcases and perform testing recursively",
           "\nNotQuitEarly       perform test always even if there is failure",
           "\nCase = ...         run single case, e.g: Case = your_test_file_name",
+          "\nDir = ...          run cases under the given Directory, e.g: Dir = your_specific_directory",
           "\nCompareDump        only compile and compare the dump file",
           "\nCompareDumpIfExist only compile and compare the dump file if the base-dump-file exist",
           "\nBaseccPath = ...   refer to base cc.exe path, e.g: BaseccPath = gcc",

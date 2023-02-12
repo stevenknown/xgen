@@ -14,7 +14,7 @@ region program "myprogram" () {
         region func foo () {
             var p2:i32:(align(4));
             st p2 = 5;
-            region func bar (var dummy:any:(align(4))) {
+            region func bar (var dummy:i32:(align(4))) {
                 st p1 = 1;
                 st p2 = 1;
             };

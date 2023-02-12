@@ -1,19 +1,19 @@
 //This file demostrate qsort.
 region program ".program" () {
-    var strcmp:i32:(func_decl,align(4));
-    var printf:i8:(func_decl,align(4));
-    var hook_cmp:i32:(func_decl,align(4));
-    var hook_cmp2:i32:(func_decl,align(4));
-    var swap:i8:(func_decl,align(4));
-    var qsort:i8:(func_decl,align(4));
+    var strcmp:i32:(func,align(4));
+    var printf:i8:(func,align(4));
+    var hook_cmp:i32:(func,align(4));
+    var hook_cmp2:i32:(func,align(4));
+    var swap:i8:(func,align(4));
+    var qsort:i8:(func,align(4));
     var Node:mc<8>:(align(4));
-    var qsort:i8:(func_decl,align(4));
-    var test_qsort1:i8:(func_decl,align(4));
-    var test_qsort2:i8:(func_decl,align(4));
-    var main:i32:(func_decl,align(4));
-    var swap:i8:(func_decl,align(4));
-    var hook_cmp:i32:(func_decl,align(4));
-    var hook_cmp2:i32:(func_decl,align(4));
+    var qsort:i8:(func,align(4));
+    var test_qsort1:i8:(func,align(4));
+    var test_qsort2:i8:(func,align(4));
+    var main:i32:(func,align(4));
+    var swap:i8:(func,align(4));
+    var hook_cmp:i32:(func,align(4));
+    var hook_cmp2:i32:(func,align(4));
     var "#DedicatedStringVar":str:(unallocable,align(4),string("DedicatedVarBeRegardedAsString"));
     var _const_string_1:str:(align(4),string("%d "));
     var _const_string_2:str:(align(4),string("

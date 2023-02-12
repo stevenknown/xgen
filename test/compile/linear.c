@@ -1,3 +1,5 @@
+#include "stdlib.h"
+#define max(a,b) ((a)>=(b)?(a):(b))
 void matmul(float data[8192*8192], float weight[8192*8192], float temp[8192*8192]) {
     for(int i=0;i<8192*8192;i++) {
         temp[i]=0;

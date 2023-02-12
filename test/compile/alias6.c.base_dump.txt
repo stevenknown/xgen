@@ -95,7 +95,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [6]    p = &x;
+    [6]    p = &x;
     
     st:*<1> 'p' attachinfo:Dbx        
         lda:*<8> 'x' attachinfo:Dbx
@@ -109,7 +109,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [9]    p2 = &p;
+    [9]    p2 = &p;
     
     st:*<4> 'p2' attachinfo:Dbx        
         lda:*<4> 'p' attachinfo:Dbx
@@ -123,7 +123,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [12]    p3 = &p2;
+    [12]    p3 = &p2;
     
     st:*<4> 'p3' attachinfo:Dbx        
         lda:*<4> 'p2' attachinfo:Dbx
@@ -137,7 +137,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [14]    ***p3 = p; //equal to: x = p;
+    [14]    ***p3 = p; //equal to: x = p;
     
     ist:u8 attachinfo:Dbx        
         ild:*<1> base attachinfo:Dbx            
@@ -177,7 +177,7 @@
           
     ---------------------------------    
 
-    [15]    return ***p3; //equal to: return x;
+    [15]    return ***p3; //equal to: return x;
     
     return attachinfo:Dbx
         ild:u8 attachinfo:Dbx            
@@ -396,7 +396,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [14]    ***p3 = p; //equal to: x = p;
+    [14]    ***p3 = p; //equal to: x = p;
     
     st:u8 'x' attachinfo:Dbx,MDSSA        
         lda:*<8> 'x' attachinfo:Dbx
@@ -410,7 +410,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [15]    return ***p3; //equal to: return x;
+    [15]    return ***p3; //equal to: return x;
     
     return attachinfo:Dbx
         ld:u8 'x' attachinfo:Dbx,MDSSA
@@ -528,7 +528,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [14]    ***p3 = p; //equal to: x = p;
+    [14]    ***p3 = p; //equal to: x = p;
     
     st:u8 'x' attachinfo:Dbx,MDSSA        
         lda:*<8> 'x' attachinfo:Dbx
@@ -542,7 +542,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [15]    return ***p3; //equal to: return x;
+    [15]    return ***p3; //equal to: return x;
     
     return attachinfo:Dbx
         ld:u8 'x' attachinfo:Dbx,MDSSA

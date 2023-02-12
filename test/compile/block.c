@@ -1,6 +1,3 @@
-
-
-
 /*!
  ***********************************************************************
  *  \file
@@ -2471,10 +2468,6 @@ static const int A[4][4] = {
   { 20, 25, 20, 25}
 };
 
-
-
-
-
 void itrans_sp_chroma(struct img_par *img,int ll)
 {
   int i,j,i1,j2,ilev,n2,n1,j1,mb_y;
@@ -2563,19 +2556,6 @@ void itrans_sp_chroma(struct img_par *img,int ll)
   img->cof[0+ll][5][0][0]=(mp1[0]+mp1[1]-mp1[2]-mp1[3])>>1;
   img->cof[1+ll][5][0][0]=(mp1[0]-mp1[1]-mp1[2]+mp1[3])>>1;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // Notation for comments regarding prediction and predictors.
 // The pels of the 4x4 block are labelled a..p. The predictor pels above

@@ -254,7 +254,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [25]  fde = fde_table + fde_table_in_use - 1;
+    [25]  fde = fde_table + fde_table_in_use - 1;
     
     st:*<8> 'fde' attachinfo:Dbx        
         sub:*<8> attachinfo:Dbx            
@@ -284,7 +284,7 @@
               POINT TO:--
     ---------------------------------    
 
-    [27]  if (*label == 0) {
+    [27]  if (*label == 0) {
     
     falsebr label _$L1 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -337,7 +337,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [28]      label = dwarf2out_cfi_label ();
+    [28]      label = dwarf2out_cfi_label ();
     
     $1:*<1> = call 'dwarf2out_cfi_label'  attachinfo:Dbx
     LHS:
@@ -421,7 +421,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [31]  if (fde->dw_fde_current_label == ((void*)0)) {
+    [31]  if (fde->dw_fde_current_label == ((void*)0)) {
     
     falsebr label _$L2 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -474,7 +474,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [32]       fde->dw_fde_current_label = label = strdup (label);
+    [32]       fde->dw_fde_current_label = label = strdup (label);
     
     $2:*<1> = call 'strdup'  attachinfo:Dbx
         ld:*<1> 'label' param0 attachinfo:Dbx
@@ -586,7 +586,7 @@
           
     ---------------------------------    
 
-    [35]       xcfi = new_cfi();
+    [35]       xcfi = new_cfi();
     
     $3:*<8> = call 'new_cfi'  attachinfo:Dbx
     LHS:
@@ -646,7 +646,7 @@
           
     ---------------------------------    
 
-    [37]       xcfi->dw_cfi_addr = label;
+    [37]       xcfi->dw_cfi_addr = label;
     
     ist:*<1>:offset(4) attachinfo:Dbx        
         ld:*<8> 'xcfi' base attachinfo:Dbx        
@@ -685,7 +685,7 @@
           
     ---------------------------------    
 
-    [39]    u = xcfi->dw_cfi_addr;
+    [39]    u = xcfi->dw_cfi_addr;
     
     st:*<1> 'u' attachinfo:Dbx        
         ild:*<1>:offset(4) attachinfo:Dbx            
@@ -860,7 +860,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [25]  fde = fde_table + fde_table_in_use - 1;
+    [25]  fde = fde_table + fde_table_in_use - 1;
     
     st:*<8> 'fde' attachinfo:Dbx,MDSSA        
         sub:*<8> attachinfo:Dbx            
@@ -890,7 +890,7 @@
               POINT TO:--
     ---------------------------------    
 
-    [27]  if (*label == 0) {
+    [27]  if (*label == 0) {
     
     falsebr label _$L1 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -946,7 +946,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [28]      label = dwarf2out_cfi_label ();
+    [28]      label = dwarf2out_cfi_label ();
     
     $4:*<1> = call 'dwarf2out_cfi_label'  attachinfo:Dbx,MDSSA
         ild:any dummy0 attachinfo:MDSSA            
@@ -1063,7 +1063,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [31]  if (fde->dw_fde_current_label == ((void*)0)) {
+    [31]  if (fde->dw_fde_current_label == ((void*)0)) {
     
     falsebr label _$L2 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -1119,7 +1119,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [32]       fde->dw_fde_current_label = label = strdup (label);
+    [32]       fde->dw_fde_current_label = label = strdup (label);
     
     $5:*<1> = call 'strdup'  attachinfo:Dbx,MDSSA
         ld:*<1> 'label' param0 attachinfo:Dbx,MDSSA
@@ -1264,7 +1264,7 @@
           
     ---------------------------------    
 
-    [35]       xcfi = new_cfi();
+    [35]       xcfi = new_cfi();
     
     $6:*<8> = call 'new_cfi'  attachinfo:Dbx,MDSSA
         ild:any dummy0 attachinfo:MDSSA            
@@ -1354,7 +1354,7 @@
           
     ---------------------------------    
 
-    [37]       xcfi->dw_cfi_addr = label;
+    [37]       xcfi->dw_cfi_addr = label;
     
     ist:*<1>:offset(4) attachinfo:Dbx,MDSSA        
         ld:*<8> 'xcfi' base attachinfo:Dbx,MDSSA        
@@ -1393,7 +1393,7 @@
           
     ---------------------------------    
 
-    [39]    u = xcfi->dw_cfi_addr;
+    [39]    u = xcfi->dw_cfi_addr;
     
     st:*<1> 'u' attachinfo:Dbx,MDSSA        
         ild:*<1>:offset(4) attachinfo:Dbx,MDSSA            
@@ -1756,7 +1756,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [25]  fde = fde_table + fde_table_in_use - 1;
+    [25]  fde = fde_table + fde_table_in_use - 1;
     
     st:*<8> 'fde' attachinfo:Dbx,MDSSA        
         sub:*<8> attachinfo:Dbx            
@@ -1786,7 +1786,7 @@
               POINT TO:--
     ---------------------------------    
 
-    [27]  if (*label == 0) {
+    [27]  if (*label == 0) {
     
     falsebr label _$L1 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -1842,7 +1842,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [28]      label = dwarf2out_cfi_label ();
+    [28]      label = dwarf2out_cfi_label ();
     
     $4:*<1> = call 'dwarf2out_cfi_label'  attachinfo:Dbx,MDSSA
         ild:any dummy0 attachinfo:MDSSA            
@@ -1959,7 +1959,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [31]  if (fde->dw_fde_current_label == ((void*)0)) {
+    [31]  if (fde->dw_fde_current_label == ((void*)0)) {
     
     falsebr label _$L2 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -2015,7 +2015,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [32]       fde->dw_fde_current_label = label = strdup (label);
+    [32]       fde->dw_fde_current_label = label = strdup (label);
     
     $5:*<1> = call 'strdup'  attachinfo:Dbx,MDSSA
         ld:*<1> 'label' param0 attachinfo:Dbx,MDSSA
@@ -2155,7 +2155,7 @@
           
     ---------------------------------    
 
-    [35]       xcfi = new_cfi();
+    [35]       xcfi = new_cfi();
     
     $6:*<8> = call 'new_cfi'  attachinfo:Dbx,MDSSA
         ild:any dummy0 attachinfo:MDSSA            
@@ -2245,7 +2245,7 @@
           
     ---------------------------------    
 
-    [37]       xcfi->dw_cfi_addr = label;
+    [37]       xcfi->dw_cfi_addr = label;
     
     ist:*<1>:offset(4) attachinfo:Dbx,MDSSA        
         ld:*<8> 'xcfi' base attachinfo:Dbx,MDSSA        
@@ -2284,7 +2284,7 @@
           
     ---------------------------------    
 
-    [39]    u = xcfi->dw_cfi_addr;
+    [39]    u = xcfi->dw_cfi_addr;
     
     st:*<1> 'u' attachinfo:Dbx,MDSSA        
         ild:*<1>:offset(4) attachinfo:Dbx,MDSSA            

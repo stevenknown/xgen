@@ -1,3 +1,5 @@
+$(info "====---- START Makefile.xocc ----====")
+
 #CPPSRC+=$(notdir $(wildcard $(DIR_SRC)/*.cpp))
 #ASMSRC+=$(notdir $(wildcard $(DIR_SRC)/*.s))
 #ASMSRC+=$(notdir $(wildcard $(STARTUP_SRC)/*.s))
@@ -84,7 +86,7 @@ xocc_objs: $(XOCC_OBJS)
 
 $(XGEN_OUTPUT):
 	@echo "BUILD $(XGEN_OUTPUT)"
-	cd $(XGEN_DIR) && make $(XGEN_OUTPUT) -f Makefile.xgen TARG=$(TARG) TARG_DIR=$(TARG_DIR) DEBUG=$(DEBUG)
+	cd $(XGEN_DIR) && make $(XGEN_OUTPUT) -f Makefile.xgen TARG=$(TARG) TARG_DIR="$(TARG_DIR)" DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)"
 
 clean:
 	@find ./ -name "*.o" | xargs rm -f
@@ -99,3 +101,5 @@ clean:
 	@find ./ -name "*.log" | xargs rm -f
 	@find ./ -name "*.LOGLOG" | xargs rm -f
 	@find ./ -name "LOGLOG" | xargs rm -f
+
+$(info "====---- END Makefile.xocc ----====")

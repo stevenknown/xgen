@@ -16,7 +16,7 @@
   ATTR:fall_through branch_target 
   STMT NUM:1
 
-     [16]    i = 10;
+     [16]    i = 10;
      
      st:i32 'i' attachinfo:Dbx,MDSSA         
          intconst:i32 10|0xa attachinfo:Dbx
@@ -26,7 +26,7 @@
   ATTR:fall_through branch_target 
   STMT NUM:2
 
-     [18]        b[i] = c[i]; //b,c is outer pointer, should NOT be removed by DCE.
+     [18]        b[i] = c[i]; //b,c is outer pointer, should NOT be removed by DCE.
      
      starray (i32, ety:i32) attachinfo:Dbx,MDSSA
          elem_num[1]
@@ -37,7 +37,7 @@
              ld:i32 'i' dim0 attachinfo:Dbx,MDSSA             
              ld:*<4> 'c' array_base attachinfo:Dbx,MDSSA
 
-     [19]        i--;
+     [19]        i--;
      
      st:i32 'i' attachinfo:Dbx,MDSSA         
          sub:i32             
@@ -48,7 +48,7 @@
   ATTR:fall_through branch_target 
   STMT NUM:1
 
-     [17]    do {
+     [17]    do {
      
      truebr label _$L5 attachinfo:Dbx         
          ge:bool attachinfo:Dbx             
@@ -59,7 +59,7 @@
   ATTR:fall_through branch_target 
   STMT NUM:1
 
-     [21]    return 0;
+     [21]    return 0;
      
      return attachinfo:Dbx
          intconst:i32 0|0x0 attachinfo:Dbx
@@ -110,7 +110,7 @@
   --- BB9 ---
   
 
-  [16]    i = 10;
+  [16]    i = 10;
   
   st:i32 'i' decl:int  i  attachinfo:Dbx,MDSSA      
       intconst:i32 10|0xa attachinfo:Dbx
@@ -123,7 +123,7 @@
   MDPhi1: MD2V1 <- (ID id:69 MD2V0 BB9), (ID id:64 MD2V2 BB11)  |USESET:(array id:106) 
   
 
-  [18]        b[i] = c[i]; //b,c is outer pointer, should NOT be removed by DCE.
+  [18]        b[i] = c[i]; //b,c is outer pointer, should NOT be removed by DCE.
   
   starray (i32, ety:i32) attachinfo:Dbx,MDSSA
       elem_num[1]
@@ -149,7 +149,7 @@
     --USE:MD8V5
   
 
-  [19]        i--;
+  [19]        i--;
   
   st:i32 'i' decl:int  i  attachinfo:Dbx,MDSSA      
       sub:i32          
@@ -163,7 +163,7 @@
   --- BB11 ---
   
 
-  [17]    do {
+  [17]    do {
   
   truebr label _$L5 attachinfo:Dbx      
       ge:bool attachinfo:Dbx          
@@ -175,7 +175,7 @@
   --- BB13 ---
   
 
-  [21]    return 0;
+  [21]    return 0;
   
   return attachinfo:Dbx
       intconst:i32 0|0x0 attachinfo:Dbx
@@ -186,7 +186,7 @@
   --- BB9 ---
   ATTR:fall_through branch_target 
 
-  [16]    i = 10;
+  [16]    i = 10;
   
   st:i32 'i' decl:int  i  attachinfo:Dbx,MDSSA      
       intconst:i32 10|0xa attachinfo:Dbx
@@ -202,7 +202,7 @@
   MDPhi2: MD3V1 <- (ID id:25 MD3V0 BB9), (ID id:18 MD3V2 BB11)  |USESET:(array id:106) 
   MDPhi1: MD2V1 <- (ID id:69 MD2V0 BB9), (ID id:64 MD2V2 BB11)  |USESET:(array id:106) 
 
-  [18]        b[i] = c[i]; //b,c is outer pointer, should NOT be removed by DCE.
+  [18]        b[i] = c[i]; //b,c is outer pointer, should NOT be removed by DCE.
   
   starray (i32, ety:i32) attachinfo:Dbx,MDSSA
       elem_num[1]
@@ -230,7 +230,7 @@
     ----------------
     
 
-  [19]        i--;
+  [19]        i--;
   
   st:i32 'i' decl:int  i  attachinfo:Dbx,MDSSA      
       sub:i32          
@@ -246,7 +246,7 @@
   --- BB11 ---
   ATTR:fall_through branch_target 
 
-  [17]    do {
+  [17]    do {
   
   truebr label _$L5 attachinfo:Dbx      
       ge:bool attachinfo:Dbx          
@@ -260,7 +260,7 @@
   --- BB13 ---
   ATTR:fall_through branch_target 
 
-  [21]    return 0;
+  [21]    return 0;
   
   return attachinfo:Dbx
       intconst:i32 0|0x0 attachinfo:Dbx

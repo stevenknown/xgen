@@ -26,6 +26,7 @@ our $g_simulator;
 our $g_cflags;
 our $g_is_compare_dump;
 our $g_error_count;
+our $g_single_directory; #record the single directory
 require "../util.pl";
 prolog();
 main();
@@ -47,7 +48,9 @@ sub tryCompileAsmLinkRunCompare
     #the latest output with the base result.
     my $is_test_gr = $_[0];
     my $curdir = getcwd;
-
+    if ($g_single_directory ne "") {
+        $curdir .= "/".$g_single_directory;
+    }
     #Collect files that need to test.
     my @f; 
     if ($g_single_testcase ne "") {
@@ -55,6 +58,12 @@ sub tryCompileAsmLinkRunCompare
             @f = findFileRecursively($curdir, $g_single_testcase);
         } else {
             @f = findFileCurrent($curdir, $g_single_testcase); 
+        }
+    } elsif ($g_single_directory ne "") {
+    	if ($g_is_recur) {
+        	@f = findRecursively($g_single_directory, 'gr');
+        } else {
+        	@f = findCurrent($g_single_directory, 'gr');
         }
     } elsif ($g_is_recur) {
         @f = findRecursively($curdir, 'gr'); 
@@ -99,7 +108,8 @@ sub compileAsmLinkRunCompareMove
     foreach (@filelist) {
         $g_error_count = 0; #initialize error counter.
         chomp;
-        my $fullpath = $_; 
+        my $filename = getFileNameFromPath($_);
+        my $fullpath = $curdir."/".$filename; 
         print "\n-------------------------------------------";
         my $org_cflags = $g_cflags;
 

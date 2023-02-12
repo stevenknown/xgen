@@ -1,8 +1,7 @@
 region program program() {
     var g:i32:(align(4));
     var m:f64:(align(4));
-    var main:i32:(func_decl,align(4));
-
+    var main:i32:(func,align(4));
     region func main() {
         var i:i8:(align(4));
         st i = 0;

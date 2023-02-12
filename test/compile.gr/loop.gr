@@ -14,6 +14,6 @@ region program "program" () {
             }
             continue;
         } while (gt $3, $8);
-        return $ret;
+        return $ret:i8;
     };
 }

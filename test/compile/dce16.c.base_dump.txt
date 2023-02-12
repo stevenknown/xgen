@@ -20,7 +20,7 @@
   ATTR:fall_through 
   STMT NUM:6
 
-     [7]  pc[5] = blank_and_NUL;
+     [7]  pc[5] = blank_and_NUL;
      
      starray (*<1>, ety:*<1>) attachinfo:Dbx,MDSSA
          elem_num[6]
@@ -28,7 +28,7 @@
          lda:*<24> 'pc' array_base attachinfo:Dbx         
          lda:*<0> 'blank_and_NUL' rhs attachinfo:Dbx
 
-     [8]  for (j = 0; j < 6; j++)
+     [8]  for (j = 0; j < 6; j++)
      
      st:i32 'j' attachinfo:Dbx,MDSSA         
          intconst:i32 0|0x0 attachinfo:Dbx
@@ -46,7 +46,7 @@
                      lda:*<24> 'pc' array_base attachinfo:Dbx             
              intconst:u8 0|0x0
 
-     [7]  pc[5] = blank_and_NUL;
+     [7]  pc[5] = blank_and_NUL;
      
      stpr $16:i32 attachinfo:Dbx         
          ld:i32 'j' attachinfo:Dbx,MDSSA
@@ -64,7 +64,7 @@
          $16:i32
          $18:i32
 
-     [8]  for (j = 0; j < 6; j++)
+     [8]  for (j = 0; j < 6; j++)
      
      falsebr label _$L2 attachinfo:Dbx         
          lt:bool attachinfo:Dbx             
@@ -88,7 +88,7 @@
          $21:i32
          $22:i32
 
-     [9]    while (*pc[j])
+     [9]    while (*pc[j])
      
      falsebr label _$L4 attachinfo:Dbx         
          ne:bool             
@@ -99,7 +99,7 @@
   ATTR:fall_through 
   STMT NUM:2
 
-     [10]      if (*pc[j]++ < 0)
+     [10]      if (*pc[j]++ < 0)
      
      stpr $5:*<1> attachinfo:Dbx         
          $7:*<1>
@@ -114,7 +114,7 @@
   ATTR:
   STMT NUM:2
 
-     [11]        rc = 1;
+     [11]        rc = 1;
      
      stpr $22:i32 attachinfo:Dbx         
          intconst:i32 1|0x1 attachinfo:Dbx
@@ -125,7 +125,7 @@
   ATTR:branch_target 
   STMT NUM:2
 
-     [8]  for (j = 0; j < 6; j++)
+     [8]  for (j = 0; j < 6; j++)
      
      stpr $18:i32 attachinfo:Dbx         
          add:i32             
@@ -138,7 +138,7 @@
   ATTR:fall_through branch_target 
   STMT NUM:2
 
-     [12]  return rc;
+     [12]  return rc;
      
      st:i32 'rc' attachinfo:Dbx,MDSSA         
          $20:i32
@@ -228,7 +228,7 @@
   --- BB1 ---
   
 
-  [7]  pc[5] = blank_and_NUL;
+  [7]  pc[5] = blank_and_NUL;
   
   starray (*<1>, ety:*<1>) attachinfo:Dbx,MDSSA
       elem_num[6]
@@ -241,7 +241,7 @@
     --DEF:VMD9:MD16V1,-|USESET:array(id:23),array(id:3)
   
 
-  [8]  for (j = 0; j < 6; j++)
+  [8]  for (j = 0; j < 6; j++)
   
   st:i32 'j' decl:int  j  attachinfo:Dbx,MDSSA      
       intconst:i32 0|0x0 attachinfo:Dbx
@@ -277,7 +277,7 @@
     --USE:MD10V1
   
 
-  [7]  pc[5] = blank_and_NUL;
+  [7]  pc[5] = blank_and_NUL;
   
   stpr $16:i32 attachinfo:Dbx      
       ld:i32 'j' decl:int  j  attachinfo:Dbx,MDSSA
@@ -301,7 +301,7 @@
       $18:i32
   
 
-  [8]  for (j = 0; j < 6; j++)
+  [8]  for (j = 0; j < 6; j++)
   
   falsebr label _$L2 attachinfo:Dbx      
       lt:bool attachinfo:Dbx          
@@ -322,7 +322,7 @@
       $22:i32
   
 
-  [9]    while (*pc[j])
+  [9]    while (*pc[j])
   
   falsebr label _$L4 attachinfo:Dbx      
       ne:bool          
@@ -331,7 +331,7 @@
   --- BB5 ---
   
 
-  [10]      if (*pc[j]++ < 0)
+  [10]      if (*pc[j]++ < 0)
   
   stpr $5:*<1> attachinfo:Dbx      
       $7:*<1>
@@ -348,7 +348,7 @@
   --- BB6 ---
   
 
-  [11]        rc = 1;
+  [11]        rc = 1;
   
   stpr $22:i32 attachinfo:Dbx      
       intconst:i32 1|0x1 attachinfo:Dbx
@@ -357,7 +357,7 @@
   --- BB9 ---
   
 
-  [8]  for (j = 0; j < 6; j++)
+  [8]  for (j = 0; j < 6; j++)
   
   stpr $18:i32 attachinfo:Dbx      
       add:i32          
@@ -368,7 +368,7 @@
   --- BB11 ---
   
 
-  [12]  return rc;
+  [12]  return rc;
   
   st:i32 'rc' decl:int  rc  attachinfo:Dbx,MDSSA      
       $20:i32
@@ -388,7 +388,7 @@
   --- BB1 ---
   ATTR:fall_through 
 
-  [7]  pc[5] = blank_and_NUL;
+  [7]  pc[5] = blank_and_NUL;
   
   starray (*<1>, ety:*<1>) attachinfo:Dbx,MDSSA
       elem_num[6]
@@ -402,7 +402,7 @@
     ----------------
     
 
-  [8]  for (j = 0; j < 6; j++)
+  [8]  for (j = 0; j < 6; j++)
   
   st:i32 'j' decl:int  j  attachinfo:Dbx,MDSSA      
       intconst:i32 0|0x0 attachinfo:Dbx
@@ -446,7 +446,7 @@
     ----------------
     
 
-  [7]  pc[5] = blank_and_NUL;
+  [7]  pc[5] = blank_and_NUL;
   
   stpr $16:i32 attachinfo:Dbx      
       ld:i32 'j' decl:int  j  attachinfo:Dbx,MDSSA
@@ -472,7 +472,7 @@
       $16:i32
       $18:i32
 
-  [8]  for (j = 0; j < 6; j++)
+  [8]  for (j = 0; j < 6; j++)
   
   falsebr label _$L2 attachinfo:Dbx      
       lt:bool attachinfo:Dbx          
@@ -492,7 +492,7 @@
       $21:i32
       $22:i32
 
-  [9]    while (*pc[j])
+  [9]    while (*pc[j])
   
   falsebr label _$L4 attachinfo:Dbx      
       ne:bool          
@@ -501,7 +501,7 @@
   --- BB5 ---
   ATTR:fall_through 
 
-  [10]      if (*pc[j]++ < 0)
+  [10]      if (*pc[j]++ < 0)
   
   stpr $5:*<1> attachinfo:Dbx      
       $7:*<1>
@@ -520,7 +520,7 @@
   --- BB6 ---
   ATTR:
 
-  [11]        rc = 1;
+  [11]        rc = 1;
   
   stpr $22:i32 attachinfo:Dbx      
       intconst:i32 1|0x1 attachinfo:Dbx
@@ -529,7 +529,7 @@
   LABEL:_$L4 
   ATTR:branch_target 
 
-  [8]  for (j = 0; j < 6; j++)
+  [8]  for (j = 0; j < 6; j++)
   
   stpr $18:i32 attachinfo:Dbx      
       add:i32          
@@ -540,7 +540,7 @@
   LABEL:_$L2 
   ATTR:fall_through branch_target 
 
-  [12]  return rc;
+  [12]  return rc;
   
   st:i32 'rc' decl:int  rc  attachinfo:Dbx,MDSSA      
       $20:i32
@@ -576,7 +576,7 @@
   ATTR:fall_through 
   STMT NUM:5
 
-     [7]  pc[5] = blank_and_NUL;
+     [7]  pc[5] = blank_and_NUL;
      
      starray (*<1>, ety:*<1>) attachinfo:Dbx,MDSSA
          elem_num[6]
@@ -613,7 +613,7 @@
          intconst:i32 0|0x0 attachinfo:Dbx
          $18:i32
 
-     [8]  for (j = 0; j < 6; j++)
+     [8]  for (j = 0; j < 6; j++)
      
      falsebr label _$L2 attachinfo:Dbx         
          lt:bool attachinfo:Dbx             
@@ -629,7 +629,7 @@
          $21:i32
          intconst:i32 1|0x1 attachinfo:Dbx
 
-     [9]    while (*pc[j])
+     [9]    while (*pc[j])
      
      truebr label _$L4 attachinfo:Dbx         
          eq:bool             
@@ -640,7 +640,7 @@
   ATTR:fall_through 
   STMT NUM:1
 
-     [10]      if (*pc[j]++ < 0)
+     [10]      if (*pc[j]++ < 0)
      
      falsebr label _$L3 attachinfo:Dbx         
          lt:bool attachinfo:Dbx             
@@ -658,7 +658,7 @@
   ATTR:branch_target 
   STMT NUM:2
 
-     [8]  for (j = 0; j < 6; j++)
+     [8]  for (j = 0; j < 6; j++)
      
      stpr $18:i32 attachinfo:Dbx         
          add:i32             
@@ -671,7 +671,7 @@
   ATTR:fall_through branch_target 
   STMT NUM:1
 
-     [12]  return rc;
+     [12]  return rc;
      
      return attachinfo:Dbx
          $20:i32
@@ -754,7 +754,7 @@
   --- BB1 ---
   
 
-  [7]  pc[5] = blank_and_NUL;
+  [7]  pc[5] = blank_and_NUL;
   
   starray (*<1>, ety:*<1>) attachinfo:Dbx,MDSSA
       elem_num[6]
@@ -812,7 +812,7 @@
       $18:i32
   
 
-  [8]  for (j = 0; j < 6; j++)
+  [8]  for (j = 0; j < 6; j++)
   
   falsebr label _$L2 attachinfo:Dbx      
       lt:bool attachinfo:Dbx          
@@ -826,7 +826,7 @@
       intconst:i32 1|0x1 attachinfo:Dbx
   
 
-  [9]    while (*pc[j])
+  [9]    while (*pc[j])
   
   truebr label _$L4 attachinfo:Dbx      
       eq:bool          
@@ -835,7 +835,7 @@
   --- BB5 ---
   
 
-  [10]      if (*pc[j]++ < 0)
+  [10]      if (*pc[j]++ < 0)
   
   falsebr label _$L3 attachinfo:Dbx      
       lt:bool attachinfo:Dbx          
@@ -848,7 +848,7 @@
   --- BB9 ---
   
 
-  [8]  for (j = 0; j < 6; j++)
+  [8]  for (j = 0; j < 6; j++)
   
   stpr $18:i32 attachinfo:Dbx      
       add:i32          
@@ -859,7 +859,7 @@
   --- BB11 ---
   
 
-  [12]  return rc;
+  [12]  return rc;
   
   return attachinfo:Dbx
       $20:i32
@@ -870,7 +870,7 @@
   --- BB1 ---
   ATTR:fall_through 
 
-  [7]  pc[5] = blank_and_NUL;
+  [7]  pc[5] = blank_and_NUL;
   
   starray (*<1>, ety:*<1>) attachinfo:Dbx,MDSSA
       elem_num[6]
@@ -939,7 +939,7 @@
       intconst:i32 0|0x0 attachinfo:Dbx
       $18:i32
 
-  [8]  for (j = 0; j < 6; j++)
+  [8]  for (j = 0; j < 6; j++)
   
   falsebr label _$L2 attachinfo:Dbx      
       lt:bool attachinfo:Dbx          
@@ -953,7 +953,7 @@
       $21:i32
       intconst:i32 1|0x1 attachinfo:Dbx
 
-  [9]    while (*pc[j])
+  [9]    while (*pc[j])
   
   truebr label _$L4 attachinfo:Dbx      
       eq:bool          
@@ -962,7 +962,7 @@
   --- BB5 ---
   ATTR:fall_through 
 
-  [10]      if (*pc[j]++ < 0)
+  [10]      if (*pc[j]++ < 0)
   
   falsebr label _$L3 attachinfo:Dbx      
       lt:bool attachinfo:Dbx          
@@ -976,7 +976,7 @@
   LABEL:_$L4 
   ATTR:branch_target 
 
-  [8]  for (j = 0; j < 6; j++)
+  [8]  for (j = 0; j < 6; j++)
   
   stpr $18:i32 attachinfo:Dbx      
       add:i32          
@@ -987,7 +987,7 @@
   LABEL:_$L2 
   ATTR:fall_through branch_target 
 
-  [12]  return rc;
+  [12]  return rc;
   
   return attachinfo:Dbx
       $20:i32
@@ -1011,7 +1011,7 @@
   ATTR:fall_through 
   STMT NUM:6
 
-     [7]  pc[5] = blank_and_NUL;
+     [7]  pc[5] = blank_and_NUL;
      
      starray (*<1>, ety:*<1>) attachinfo:Dbx,MDSSA
          elem_num[6]
@@ -1053,7 +1053,7 @@
          intconst:i32 0|0x0 attachinfo:Dbx
          $18:i32
 
-     [8]  for (j = 0; j < 6; j++)
+     [8]  for (j = 0; j < 6; j++)
      
      falsebr label _$L2 attachinfo:Dbx         
          lt:bool attachinfo:Dbx             
@@ -1069,7 +1069,7 @@
          $21:i32
          intconst:i32 1|0x1 attachinfo:Dbx
 
-     [9]    while (*pc[j])
+     [9]    while (*pc[j])
      
      truebr label _$L4 attachinfo:Dbx         
          eq:bool             
@@ -1080,7 +1080,7 @@
   ATTR:fall_through 
   STMT NUM:1
 
-     [10]      if (*pc[j]++ < 0)
+     [10]      if (*pc[j]++ < 0)
      
      truebr label _$L3 attachinfo:Dbx         
          eq:bool             
@@ -1097,7 +1097,7 @@
   ATTR:branch_target 
   STMT NUM:2
 
-     [8]  for (j = 0; j < 6; j++)
+     [8]  for (j = 0; j < 6; j++)
      
      stpr $18:i32 attachinfo:Dbx         
          add:i32             
@@ -1110,7 +1110,7 @@
   ATTR:fall_through branch_target 
   STMT NUM:1
 
-     [12]  return rc;
+     [12]  return rc;
      
      return attachinfo:Dbx
          $20:i32
@@ -1196,7 +1196,7 @@
   --- BB1 ---
   
 
-  [7]  pc[5] = blank_and_NUL;
+  [7]  pc[5] = blank_and_NUL;
   
   starray (*<1>, ety:*<1>) attachinfo:Dbx,MDSSA
       elem_num[6]
@@ -1260,7 +1260,7 @@
       $18:i32
   
 
-  [8]  for (j = 0; j < 6; j++)
+  [8]  for (j = 0; j < 6; j++)
   
   falsebr label _$L2 attachinfo:Dbx      
       lt:bool attachinfo:Dbx          
@@ -1274,7 +1274,7 @@
       intconst:i32 1|0x1 attachinfo:Dbx
   
 
-  [9]    while (*pc[j])
+  [9]    while (*pc[j])
   
   truebr label _$L4 attachinfo:Dbx      
       eq:bool          
@@ -1283,7 +1283,7 @@
   --- BB5 ---
   
 
-  [10]      if (*pc[j]++ < 0)
+  [10]      if (*pc[j]++ < 0)
   
   truebr label _$L3 attachinfo:Dbx      
       eq:bool          
@@ -1295,7 +1295,7 @@
   --- BB9 ---
   
 
-  [8]  for (j = 0; j < 6; j++)
+  [8]  for (j = 0; j < 6; j++)
   
   stpr $18:i32 attachinfo:Dbx      
       add:i32          
@@ -1306,7 +1306,7 @@
   --- BB11 ---
   
 
-  [12]  return rc;
+  [12]  return rc;
   
   return attachinfo:Dbx
       $20:i32
@@ -1317,7 +1317,7 @@
   --- BB1 ---
   ATTR:fall_through 
 
-  [7]  pc[5] = blank_and_NUL;
+  [7]  pc[5] = blank_and_NUL;
   
   starray (*<1>, ety:*<1>) attachinfo:Dbx,MDSSA
       elem_num[6]
@@ -1391,7 +1391,7 @@
       intconst:i32 0|0x0 attachinfo:Dbx
       $18:i32
 
-  [8]  for (j = 0; j < 6; j++)
+  [8]  for (j = 0; j < 6; j++)
   
   falsebr label _$L2 attachinfo:Dbx      
       lt:bool attachinfo:Dbx          
@@ -1405,7 +1405,7 @@
       $21:i32
       intconst:i32 1|0x1 attachinfo:Dbx
 
-  [9]    while (*pc[j])
+  [9]    while (*pc[j])
   
   truebr label _$L4 attachinfo:Dbx      
       eq:bool          
@@ -1414,7 +1414,7 @@
   --- BB5 ---
   ATTR:fall_through 
 
-  [10]      if (*pc[j]++ < 0)
+  [10]      if (*pc[j]++ < 0)
   
   truebr label _$L3 attachinfo:Dbx      
       eq:bool          
@@ -1427,7 +1427,7 @@
   LABEL:_$L4 
   ATTR:branch_target 
 
-  [8]  for (j = 0; j < 6; j++)
+  [8]  for (j = 0; j < 6; j++)
   
   stpr $18:i32 attachinfo:Dbx      
       add:i32          
@@ -1438,7 +1438,7 @@
   LABEL:_$L2 
   ATTR:fall_through branch_target 
 
-  [12]  return rc;
+  [12]  return rc;
   
   return attachinfo:Dbx
       $20:i32

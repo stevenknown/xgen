@@ -31,6 +31,7 @@ our $g_ld_flag;
 our $g_simulator;
 our $g_cflags;
 our $g_error_count;
+our $g_single_directory; #record the single directory
 require "../util.pl";
 prolog();
 main();
@@ -52,6 +53,9 @@ sub tryCompileAsmLinkRunCompare
     #the latest output with the base result.
     my $is_test_gr = $_[0];
     my $curdir = getcwd;
+    if ($g_single_directory ne "") {
+        $curdir .= "/".$g_single_directory;
+    }
     #Collect files that need to test.
     my @f;
     if ($g_single_testcase ne "") {
@@ -110,7 +114,8 @@ sub compileLinkRunForFileList
     my $firstfile = $filelist[0];
     foreach (@filelist) {
         chomp;
-        my $fullpath = $_;
+        my $filename = getFileNameFromPath($_);
+        my $fullpath = $curdir."/".$filename; 
         print "\n-------------------------------------------";
         my $org_cflags = $g_cflags;
         extractAndSetCflag($fullpath);

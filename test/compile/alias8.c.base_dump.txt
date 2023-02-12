@@ -86,7 +86,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [7]    l = &i;
+    [7]    l = &i;
     
     st:*<4> 'l' attachinfo:Dbx        
         lda:*<4> 'i' attachinfo:Dbx
@@ -100,7 +100,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [10]    *p = 20;
+    [10]    *p = 20;
     
     ist:u8 attachinfo:Dbx        
         ld:*<1> 'p' base attachinfo:Dbx        
@@ -127,7 +127,7 @@
           
     ---------------------------------    
 
-    [11]    return x;
+    [11]    return x;
     
     return attachinfo:Dbx
         ld:i32 'x' attachinfo:Dbx
@@ -288,7 +288,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [10]    *p = 20;
+    [10]    *p = 20;
     
     ist:u8 attachinfo:Dbx,MDSSA        
         ld:*<1> 'p' base attachinfo:Dbx,MDSSA        
@@ -322,7 +322,7 @@
           
     ---------------------------------    
 
-    [11]    return x;
+    [11]    return x;
     
     return attachinfo:Dbx
         ld:i32 'x' attachinfo:Dbx,MDSSA
@@ -422,7 +422,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [10]    *p = 20;
+    [10]    *p = 20;
     
     ist:u8 attachinfo:Dbx,MDSSA        
         ld:*<1> 'p' base attachinfo:Dbx,MDSSA        
@@ -450,7 +450,7 @@
           
     ---------------------------------    
 
-    [11]    return x;
+    [11]    return x;
     
     return attachinfo:Dbx
         ld:i32 'x' attachinfo:Dbx,MDSSA

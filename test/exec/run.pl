@@ -31,6 +31,7 @@ our $g_ld_flag;
 our $g_simulator;
 our $g_cflags;
 our $g_error_count;
+our $g_single_directory; #record the single directory
 require "../util.pl";
 prolog();
 main();
@@ -51,6 +52,9 @@ sub createBaseResultOutputFile
 {
     my $curdir = $_[0];
     my @filelist = @{$_[1]};
+    if ($g_single_directory ne "") {
+        $curdir .= "/".$g_single_directory;
+    }
 
     #Generate base-output log.
     foreach (@filelist) {
@@ -137,7 +141,8 @@ sub compileLinkRunForFileList
     my $firstfile = $filelist[0];
     foreach (@filelist) {
         chomp;
-        my $fullpath = $_;
+        my $filename = getFileNameFromPath($_);
+        my $fullpath = $curdir."/".$filename; 
         print "\n-------------------------------------------";
 
         my $org_cflags = $g_cflags;

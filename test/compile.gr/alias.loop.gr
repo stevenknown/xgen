@@ -15,11 +15,11 @@ region program ".program" () {
         truebr ne:bool $6:u32, 5:u32, L2;
 
         //START BB3
-        label L1; 
+        label L1;
         stpr $8:*<1> = add:u64 $8, 4; //regard $8 as u64
         ist:u32 = $8:*<1>, $6:u32; //regard $8 as pointer
         stpr $6:u32 = add:u32 $6:u32, 1;
-        
+
         //START BB4
         label L2;
         stpr $9 = add:u64 $8:u64, 8;

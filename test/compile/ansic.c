@@ -156,7 +156,6 @@ void exit(int);
 extern void printf_init(int);
 extern void printf_end();
 extern int  printf (const char *, ...);
-
 struct defs
 {
   int cbits;			/* No. of bits per char           */

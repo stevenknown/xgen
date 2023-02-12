@@ -63,11 +63,9 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     ASSERT0(oc.is_cfg_valid());
     ASSERT0(m_rg && m_rg->getCFG()->verify());    
     List<Pass*> passlist; //A list of Optimization.
-    #ifdef FOR_IP
     if (g_do_lsra) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_LINEAR_SCAN_RA));
     }
-    #endif
     if (g_do_gvn) {
         m_pass_mgr->registerPass(PASS_GVN);
     }
@@ -114,6 +112,16 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     if (g_do_lftr) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_LFTR));
     }
+    ASSERT0(m_dumgr->verifyMDRef());
+    ASSERT0(xoc::verifyMDDUChain(m_rg, oc));
+    ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
+    ASSERT0(m_rg->getCFG()->verify());
+    ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg));
+    ASSERT0(MDSSAMgr::verifyMDSSAInfo(m_rg, oc));
+    ASSERT0(m_cfg->verifyRPO(oc));
+    ASSERT0(m_cfg->verifyLoopInfo(oc));
+    ASSERT0(m_cfg->verifyDomAndPdom(oc));
+    ASSERT0(!m_rg->getLogMgr()->isEnableBuffer());
     bool res = false;
     bool change;
     UINT count = 0;

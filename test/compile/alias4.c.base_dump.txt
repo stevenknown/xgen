@@ -74,7 +74,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [10]    s1.a = 10;
+    [10]    s1.a = 10;
     
     st:i32 's1' attachinfo:Dbx        
         intconst:i32 10|0xa attachinfo:Dbx
@@ -86,7 +86,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [11]    s1.b[i] = 100; //s.b[i] not alias with s.a
+    [11]    s1.b[i] = 100; //s.b[i] not alias with s.a
     
     starray (i32, ety:i32) attachinfo:Dbx
         elem_num[100]
@@ -104,7 +104,7 @@
         POINT TO:--
     ---------------------------------    
 
-    [12]    return s1.a; //after CP, equal to: return 10;
+    [12]    return s1.a; //after CP, equal to: return 10;
     
     return attachinfo:Dbx
         ld:i32 's1' attachinfo:Dbx
@@ -520,7 +520,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [29]    q->c.l = 0;
+    [29]    q->c.l = 0;
     
     ist:i64:offset(4) attachinfo:Dbx        
         ld:*<816> 'q' base attachinfo:Dbx        
@@ -541,7 +541,7 @@
           
     ---------------------------------    
 
-    [30]    q->c.b[i] = 90;
+    [30]    q->c.b[i] = 90;
     
     starray (i32, ety:i32) attachinfo:Dbx
         elem_num[100]
@@ -569,7 +569,7 @@
         POINT TO:--
     ---------------------------------    
 
-    [32]    p->b[i] = 40;
+    [32]    p->b[i] = 40;
     
     starray (i32, ety:i32) attachinfo:Dbx
         elem_num[100]
@@ -594,7 +594,7 @@
         POINT TO:--
     ---------------------------------    
 
-    [33]    s2.b[i] = 10;
+    [33]    s2.b[i] = 10;
     
     starray (i32, ety:i32) attachinfo:Dbx
         elem_num[100]
@@ -612,7 +612,7 @@
         POINT TO:--
     ---------------------------------    
 
-    [34]    if (i > 0) { //should be removed by DCE
+    [34]    if (i > 0) { //should be removed by DCE
     
     falsebr label _$L1 attachinfo:Dbx        
         gt:bool attachinfo:Dbx            
@@ -648,7 +648,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [35]        s2.b[i] = 10; //should be removed by DCE
+    [35]        s2.b[i] = 10; //should be removed by DCE
     
     starray (i32, ety:i32) attachinfo:Dbx
         elem_num[100]
@@ -666,7 +666,7 @@
         POINT TO:--
     ---------------------------------    
 
-    [34]    if (i > 0) { //should be removed by DCE
+    [34]    if (i > 0) { //should be removed by DCE
     
     goto label _$L2 attachinfo:Dbx
     
@@ -695,7 +695,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [37]        s2.b[i] = 20; //should be removed by DCE
+    [37]        s2.b[i] = 20; //should be removed by DCE
     
     starray (i32, ety:i32) attachinfo:Dbx
         elem_num[100]
@@ -736,7 +736,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [39]    return s2.a; //s2.a is not alias with s2.b.
+    [39]    return s2.a; //s2.a is not alias with s2.b.
     
     return attachinfo:Dbx
         ld:i32 's2' attachinfo:Dbx
@@ -990,7 +990,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [29]    q->c.l = 0;
+    [29]    q->c.l = 0;
     
     ist:i64:offset(4) attachinfo:Dbx,MDSSA        
         ld:*<816> 'q' base attachinfo:Dbx,MDSSA        
@@ -1017,7 +1017,7 @@
           
     ---------------------------------    
 
-    [30]    q->c.b[i] = 90;
+    [30]    q->c.b[i] = 90;
     
     starray (i32, ety:i32) attachinfo:Dbx,MDSSA
         elem_num[100]
@@ -1051,7 +1051,7 @@
         POINT TO:--
     ---------------------------------    
 
-    [32]    p->b[i] = 40;
+    [32]    p->b[i] = 40;
     
     starray (i32, ety:i32) attachinfo:Dbx,MDSSA
         elem_num[100]
@@ -1106,7 +1106,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [39]    return s2.a; //s2.a is not alias with s2.b.
+    [39]    return s2.a; //s2.a is not alias with s2.b.
     
     return attachinfo:Dbx
         ld:i32 's2' attachinfo:Dbx,MDSSA
@@ -1253,7 +1253,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [29]    q->c.l = 0;
+    [29]    q->c.l = 0;
     
     ist:i64:offset(4) attachinfo:Dbx,MDSSA        
         ld:*<816> 'q' base attachinfo:Dbx,MDSSA        
@@ -1274,7 +1274,7 @@
           
     ---------------------------------    
 
-    [30]    q->c.b[i] = 90;
+    [30]    q->c.b[i] = 90;
     
     starray (i32, ety:i32) attachinfo:Dbx,MDSSA
         elem_num[100]
@@ -1302,7 +1302,7 @@
         POINT TO:--
     ---------------------------------    
 
-    [32]    p->b[i] = 40;
+    [32]    p->b[i] = 40;
     
     starray (i32, ety:i32) attachinfo:Dbx,MDSSA
         elem_num[100]
@@ -1351,7 +1351,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [39]    return s2.a; //s2.a is not alias with s2.b.
+    [39]    return s2.a; //s2.a is not alias with s2.b.
     
     return attachinfo:Dbx
         ld:i32 's2' attachinfo:Dbx,MDSSA

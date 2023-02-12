@@ -11,12 +11,12 @@ LOOP1 HEAD:BB2, BODY:2,3,4,
    ld:i32 'n' attachinfo:Dbx,MDSSA
 -- Invariant Statement (num=2) -- :
 
-   [9]    i = 20; //should be hoisted.
+   [9]    i = 20; //should be hoisted.
    
    st:i32 'i' decl:int  i  attachinfo:Dbx,MDSSA       
        intconst:i32 20|0x14 attachinfo:Dbx
 
-   [11]    g = b; //b should be hoisted.
+   [11]    g = b; //b should be hoisted.
    
    st:i32 'g' decl:int  g  attachinfo:Dbx,MDSSA       
        ld:i32 'b' decl:int  b  attachinfo:Dbx,MDSSA

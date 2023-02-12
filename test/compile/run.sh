@@ -1,11 +1,10 @@
-#Run single case.
-#perl ./run.pl arm Case = block.c XoccPath = ~/xgen/arm/xocc.exe NoAsm XoccFlag = "-O3 -time" NoAsm
-#perl ./run.pl arm Case = zlib-5.c Dir = analyzer XoccPath = ~/xgen/arm/xocc.exe XoccFlag = "-O3" NoAsm
+xocc_path="../../src/xocc/xocc.exe"
 
-#Run all testcases.
-#perl ./run.pl arm XoccPath = ~/xgen/arm/xocc.exe XoccFlag = "-O3" NoAsm
-
-#Run testcases under given directory
-#perl ./run.pl arm Case = alias10.c Dir = analyzer XoccPath = ~/xgen/arm/xocc.exe XoccFlag = "-O3" NoAsm
-perl ./run.pl arm Case = alias10.c Dir = analyzer XoccPath = ../../src/xocc.for.arm/x64/Debug/xocc.for.arm.exe XoccFlag = "-O3" NoAsm
-
+perl run.pl Targ = arm XoccPath = $xocc_path XoccFlag = ""
+perl run.pl Targ = arm XoccPath = $xocc_path XoccFlag = "-O3"
+perl run.pl Targ = arm XoccPath = $xocc_path XoccFlag = "-O3 -lowest_height"
+perl run.pl Targ = arm Dir = nocg XoccPath = $xocc_path XoccFlag = "-no-cg"
+perl run.pl Targ = arm Dir = nocg XoccPath = $xocc_path XoccFlag = "-O3 -no-cg"
+perl run.pl Targ = arm Dir = nocg XoccPath = $xocc_path XoccFlag = "-O3 -lowest_height -no-cg"
+perl run.pl Targ = arm XoccPath = $xocc_path XoccFlag = "-O3 -nonprdu -prdu -mdssa -prssa "
+perl run.pl Targ = arm XoccPath = $xocc_path XoccFlag = "-O3 -lowest_height -nonprdu -prdu -mdssa -prssa "

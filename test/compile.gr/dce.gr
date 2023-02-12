@@ -13,26 +13,26 @@ region func s81 () {
         $1:i32,"(GR)_$L4"),(
         $3:i32,"(GR)_$L5");
     falsebr (
-        lt:bool 
+        lt:bool
             ld:i32 j, 50:i32), "(GR)_$L2";
     label "(GR)_$L5";
-    st:i32 nrint = 
+    st:i32 nrint =
         ld:i32 k;
-    stpr $3:i32 = 
+    stpr $3:i32 =
         ld:i32 j;
-    st:i32 j = 
-        add:i32 
+    st:i32 j =
+        add:i32
             ld:i32 j, 1:i32;
     goto "(GR)_$L1";
     label "(GR)_$L2";
     falsebr (
-        ne:bool 
+        ne:bool
             ld:i32 crc, 0:i32), "(GR)_$L3";
-    st:i32 rc = 
-        add:i32 
+    st:i32 rc =
+        add:i32
             ld:i32 rc, 1:i32;
     label "(GR)_$L3";
-    return 
+    return
         ld:i32 rc;
 }
 }

@@ -54,7 +54,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [4]    p->a = 20; //S1
+    [4]    p->a = 20; //S1
     
     ist:i32 attachinfo:Dbx        
         ld:*<8> 'p' base attachinfo:Dbx        
@@ -75,7 +75,7 @@
           
     ---------------------------------    
 
-    [6]    return p->b; //S2
+    [6]    return p->b; //S2
     
     return attachinfo:Dbx
         ild:i32:offset(4) attachinfo:Dbx            
@@ -206,7 +206,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [4]    p->a = 20; //S1
+    [4]    p->a = 20; //S1
     
     ist:i32 attachinfo:Dbx,MDSSA        
         ld:*<8> 'p' base attachinfo:Dbx,MDSSA        
@@ -233,7 +233,7 @@
           
     ---------------------------------    
 
-    [6]    return p->b; //S2
+    [6]    return p->b; //S2
     
     return attachinfo:Dbx
         ild:i32:offset(4) attachinfo:Dbx,MDSSA            
@@ -323,7 +323,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [4]    p->a = 20; //S1
+    [4]    p->a = 20; //S1
     
     ist:i32 attachinfo:Dbx,MDSSA        
         ld:*<8> 'p' base attachinfo:Dbx,MDSSA        
@@ -344,7 +344,7 @@
           
     ---------------------------------    
 
-    [6]    return p->b; //S2
+    [6]    return p->b; //S2
     
     return attachinfo:Dbx
         ild:i32:offset(4) attachinfo:Dbx,MDSSA            

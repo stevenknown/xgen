@@ -74,7 +74,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [3]    *p = *q + 20;
+    [3]    *p = *q + 20;
     
     ist:i32 attachinfo:Dbx        
         ld:*<4> 'p' base attachinfo:Dbx        
@@ -109,7 +109,7 @@
               
     ---------------------------------    
 
-    [4]    *m = *n - 64;
+    [4]    *m = *n - 64;
     
     ist:i32 attachinfo:Dbx        
         ld:*<4> 'm' base attachinfo:Dbx        
@@ -144,7 +144,7 @@
               
     ---------------------------------    
 
-    [5]    return 0;
+    [5]    return 0;
     
     return attachinfo:Dbx
         intconst:i32 0|0x0 attachinfo:Dbx
@@ -300,7 +300,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [3]    *p = *q + 20;
+    [3]    *p = *q + 20;
     
     ist:i32 attachinfo:Dbx,MDSSA        
         ld:*<4> 'p' base attachinfo:Dbx,MDSSA        
@@ -347,7 +347,7 @@
               
     ---------------------------------    
 
-    [4]    *m = *n - 64;
+    [4]    *m = *n - 64;
     
     ist:i32 attachinfo:Dbx,MDSSA        
         ld:*<4> 'm' base attachinfo:Dbx,MDSSA        
@@ -394,7 +394,7 @@
               
     ---------------------------------    
 
-    [5]    return 0;
+    [5]    return 0;
     
     return attachinfo:Dbx
         intconst:i32 0|0x0 attachinfo:Dbx
@@ -475,7 +475,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [3]    *p = *q + 20;
+    [3]    *p = *q + 20;
     
     ist:i32 attachinfo:Dbx,MDSSA        
         ld:*<4> 'p' base attachinfo:Dbx,MDSSA        
@@ -510,7 +510,7 @@
               
     ---------------------------------    
 
-    [4]    *m = *n - 64;
+    [4]    *m = *n - 64;
     
     ist:i32 attachinfo:Dbx,MDSSA        
         ld:*<4> 'm' base attachinfo:Dbx,MDSSA        
@@ -545,7 +545,7 @@
               
     ---------------------------------    
 
-    [5]    return 0;
+    [5]    return 0;
     
     return attachinfo:Dbx
         intconst:i32 0|0x0 attachinfo:Dbx
@@ -715,7 +715,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [11]    *p = *q + 20;
+    [11]    *p = *q + 20;
     
     ist:i32 attachinfo:Dbx        
         ld:*<4> 'p' base attachinfo:Dbx        
@@ -750,7 +750,7 @@
               
     ---------------------------------    
 
-    [12]    a[1] = a[m]; 
+    [12]    a[1] = a[m]; 
     
     starray (i32, ety:i32) attachinfo:Dbx
         elem_num[100]
@@ -777,7 +777,7 @@
           POINT TO:--
     ---------------------------------    
 
-    [13]    a[n] = a[m+1]; 
+    [13]    a[n] = a[m+1]; 
     
     starray (i32, ety:i32) attachinfo:Dbx
         elem_num[100]
@@ -809,7 +809,7 @@
         POINT TO:--
     ---------------------------------    
 
-    [14]    return 0;
+    [14]    return 0;
     
     return attachinfo:Dbx
         intconst:i32 0|0x0 attachinfo:Dbx
@@ -1043,7 +1043,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [11]    *p = *q + 20;
+    [11]    *p = *q + 20;
     
     ist:i32 attachinfo:Dbx,MDSSA        
         ld:*<4> 'p' base attachinfo:Dbx,MDSSA        
@@ -1090,7 +1090,7 @@
               
     ---------------------------------    
 
-    [14]    return 0;
+    [14]    return 0;
     
     return attachinfo:Dbx
         intconst:i32 0|0x0 attachinfo:Dbx
@@ -1221,7 +1221,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [11]    *p = *q + 20;
+    [11]    *p = *q + 20;
     
     ist:i32 attachinfo:Dbx,MDSSA        
         ld:*<4> 'p' base attachinfo:Dbx,MDSSA        
@@ -1256,7 +1256,7 @@
               
     ---------------------------------    
 
-    [14]    return 0;
+    [14]    return 0;
     
     return attachinfo:Dbx
         intconst:i32 0|0x0 attachinfo:Dbx

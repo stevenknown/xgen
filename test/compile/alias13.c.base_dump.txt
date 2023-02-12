@@ -173,7 +173,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [5]    int ** y = &b; //y->b
+    [5]    int ** y = &b; //y->b
     
     st:*<4> 'y' attachinfo:Dbx        
         lda:*<4> 'b' attachinfo:Dbx
@@ -187,7 +187,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [7]    int * z = &c; //y->b, z->c
+    [7]    int * z = &c; //y->b, z->c
     
     st:*<4> 'z' attachinfo:Dbx        
         lda:*<4> 'c' attachinfo:Dbx
@@ -201,7 +201,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [9]    int ** x = y; //y->b, z->c, x->b
+    [9]    int ** x = y; //y->b, z->c, x->b
     
     st:*<4> 'x' attachinfo:Dbx        
         ld:*<4> 'y' attachinfo:Dbx
@@ -246,7 +246,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [11]    *x = z; //y->b, z->c, x->b, b->c
+    [11]    *x = z; //y->b, z->c, x->b, b->c
     
     ist:*<4> attachinfo:Dbx        
         ld:*<4> 'x' base attachinfo:Dbx        
@@ -297,7 +297,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [13]    v = &e; //y->b, z->c, x->b, b->c, v->e
+    [13]    v = &e; //y->b, z->c, x->b, b->c, v->e
     
     st:*<4> 'v' attachinfo:Dbx        
         lda:*<4> 'e' attachinfo:Dbx
@@ -332,7 +332,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [15]    *y = v; //y->b, z->c, x->b, b->e, v->e
+    [15]    *y = v; //y->b, z->c, x->b, b->e, v->e
     
     ist:*<4> attachinfo:Dbx        
         ld:*<4> 'y' base attachinfo:Dbx        
@@ -383,7 +383,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [17]    return *y;
+    [17]    return *y;
     
     return attachinfo:Dbx
         ild:*<4> attachinfo:Dbx            
@@ -493,7 +493,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [5]    int ** y = &b; //y->b
+    [5]    int ** y = &b; //y->b
     
     st:*<4> 'y' attachinfo:Dbx,MDSSA        
         lda:*<4> 'b' attachinfo:Dbx
@@ -507,7 +507,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [7]    int * z = &c; //y->b, z->c
+    [7]    int * z = &c; //y->b, z->c
     
     st:*<4> 'z' attachinfo:Dbx,MDSSA        
         lda:*<4> 'c' attachinfo:Dbx
@@ -521,7 +521,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [9]    int ** x = y; //y->b, z->c, x->b
+    [9]    int ** x = y; //y->b, z->c, x->b
     
     st:*<4> 'x' attachinfo:Dbx,MDSSA        
         ld:*<4> 'y' attachinfo:Dbx,MDSSA
@@ -566,7 +566,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [11]    *x = z; //y->b, z->c, x->b, b->c
+    [11]    *x = z; //y->b, z->c, x->b, b->c
     
     ist:*<4> attachinfo:Dbx,MDSSA        
         ld:*<4> 'x' base attachinfo:Dbx,MDSSA        
@@ -618,7 +618,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [13]    v = &e; //y->b, z->c, x->b, b->c, v->e
+    [13]    v = &e; //y->b, z->c, x->b, b->c, v->e
     
     st:*<4> 'v' attachinfo:Dbx,MDSSA        
         lda:*<4> 'e' attachinfo:Dbx
@@ -653,7 +653,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [15]    *y = v; //y->b, z->c, x->b, b->e, v->e
+    [15]    *y = v; //y->b, z->c, x->b, b->e, v->e
     
     ist:*<4> attachinfo:Dbx,MDSSA        
         ld:*<4> 'y' base attachinfo:Dbx,MDSSA        
@@ -705,7 +705,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [17]    return *y;
+    [17]    return *y;
     
     return attachinfo:Dbx
         ild:*<4> attachinfo:Dbx,MDSSA            
@@ -903,7 +903,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [5]    int ** y = &b; //y->b
+    [5]    int ** y = &b; //y->b
     
     st:*<4> 'y' attachinfo:Dbx,MDSSA        
         lda:*<4> 'b' attachinfo:Dbx
@@ -917,7 +917,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [7]    int * z = &c; //y->b, z->c
+    [7]    int * z = &c; //y->b, z->c
     
     st:*<4> 'z' attachinfo:Dbx,MDSSA        
         lda:*<4> 'c' attachinfo:Dbx
@@ -931,7 +931,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [9]    int ** x = y; //y->b, z->c, x->b
+    [9]    int ** x = y; //y->b, z->c, x->b
     
     st:*<4> 'x' attachinfo:Dbx,MDSSA        
         ld:*<4> 'y' attachinfo:Dbx,MDSSA
@@ -976,7 +976,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [11]    *x = z; //y->b, z->c, x->b, b->c
+    [11]    *x = z; //y->b, z->c, x->b, b->c
     
     ist:*<4> attachinfo:Dbx,MDSSA        
         ld:*<4> 'x' base attachinfo:Dbx,MDSSA        
@@ -1027,7 +1027,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [13]    v = &e; //y->b, z->c, x->b, b->c, v->e
+    [13]    v = &e; //y->b, z->c, x->b, b->c, v->e
     
     st:*<4> 'v' attachinfo:Dbx,MDSSA        
         lda:*<4> 'e' attachinfo:Dbx
@@ -1062,7 +1062,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [15]    *y = v; //y->b, z->c, x->b, b->e, v->e
+    [15]    *y = v; //y->b, z->c, x->b, b->e, v->e
     
     ist:*<4> attachinfo:Dbx,MDSSA        
         ld:*<4> 'y' base attachinfo:Dbx,MDSSA        
@@ -1113,7 +1113,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [17]    return *y;
+    [17]    return *y;
     
     return attachinfo:Dbx
         ild:*<4> attachinfo:Dbx,MDSSA            

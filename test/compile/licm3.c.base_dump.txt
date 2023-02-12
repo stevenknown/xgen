@@ -15,7 +15,7 @@ LOOP2 HEAD:BB6, BODY:6,7,
        ld:*<4> 'gp' attachinfo:Dbx,MDSSA
 -- Invariant Statement (num=1) -- :
 
-   [9]        m = (gp + 10)[20]; //should be hoisted outside loop.
+   [9]        m = (gp + 10)[20]; //should be hoisted outside loop.
    
    st:i32 'm' decl:int  m  attachinfo:Dbx,MDSSA       
        ild:i32:offset(120) attachinfo:Dbx,MDSSA           
@@ -38,7 +38,7 @@ LOOP2 HEAD:BB6, BODY:6,7,
        ld:*<4> 'gp' attachinfo:Dbx,MDSSA
 -- Invariant Statement (num=1) -- :
 
-   [13]        m = (gp + 10)[20]; //can NOT be hoisted
+   [13]        m = (gp + 10)[20]; //can NOT be hoisted
    
    st:i32 'm' decl:int  m  attachinfo:Dbx,MDSSA       
        ild:i32:offset(120) attachinfo:Dbx,MDSSA           

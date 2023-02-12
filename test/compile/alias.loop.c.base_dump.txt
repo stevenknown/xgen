@@ -252,7 +252,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [4]    int r3 = *in1;
+    [4]    int r3 = *in1;
     
     st:i32 'r3' attachinfo:Dbx        
         cvt:i32 attachinfo:Dbx            
@@ -283,7 +283,7 @@
               
     ---------------------------------    
 
-    [5]    char * r1 = &in0; 
+    [5]    char * r1 = &in0; 
     
     st:*<1> 'r1' attachinfo:Dbx        
         lda:*<1> 'in0' attachinfo:Dbx
@@ -297,7 +297,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [6]    char * r2 = r1 + 4;
+    [6]    char * r2 = r1 + 4;
     
     st:*<1> 'r2' attachinfo:Dbx        
         add:*<1> attachinfo:Dbx            
@@ -318,7 +318,7 @@
             
     ---------------------------------    
 
-    [7]    char * r4 = 0;
+    [7]    char * r4 = 0;
     
     st:*<1> 'r4' attachinfo:Dbx        
         intconst:i32 0|0x0 attachinfo:Dbx
@@ -333,7 +333,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [8]    if (r3 != 5) {
+    [8]    if (r3 != 5) {
     
     falsebr label _$L1 attachinfo:Dbx        
         ne:bool attachinfo:Dbx            
@@ -367,7 +367,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [9]        goto USER_L3;
+    [9]        goto USER_L3;
     
     goto label USER_L3 attachinfo:Dbx
     
@@ -394,9 +394,9 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [11]    goto USER_L2;
+    [11]    goto USER_L2;
     
-    goto label _$L2 attachinfo:Dbx
+    goto label USER_L2 attachinfo:Dbx
     
 
    -- BB6 --
@@ -421,7 +421,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [14]    r2 = r2 + 4;
+    [14]    r2 = r2 + 4;
     
     st:*<1> 'r2' attachinfo:Dbx        
         add:*<1> attachinfo:Dbx            
@@ -442,7 +442,7 @@
             
     ---------------------------------    
 
-    [15]    *r2 = r3 + 4;
+    [15]    *r2 = r3 + 4;
     
     ist:u8 attachinfo:Dbx        
         ld:*<1> 'r2' base attachinfo:Dbx        
@@ -465,7 +465,7 @@
           POINT TO:--
     ---------------------------------    
 
-    [16]    r3++;
+    [16]    r3++;
     
     stpr $1:i32 attachinfo:Dbx        
         ld:i32 'r3'
@@ -497,7 +497,7 @@
           POINT TO:--
     ---------------------------------    
 
-    [17]    if (r3 == 5) {
+    [17]    if (r3 == 5) {
     
     falsebr label _$L2 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -531,7 +531,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [18]        goto USER_L3;
+    [18]        goto USER_L3;
     
     goto label USER_L3 attachinfo:Dbx
     
@@ -558,7 +558,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [22]    r4 = r2 + 8;
+    [22]    r4 = r2 + 8;
     
     st:*<1> 'r4' attachinfo:Dbx        
         add:*<1> attachinfo:Dbx            
@@ -580,7 +580,7 @@
             
     ---------------------------------    
 
-    [23]    *r4 = r3;
+    [23]    *r4 = r3;
     
     ist:u8 attachinfo:Dbx        
         ld:*<1> 'r4' base attachinfo:Dbx        
@@ -625,7 +625,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [26]    r4 = r2 + 8;
+    [26]    r4 = r2 + 8;
     
     st:*<1> 'r4' attachinfo:Dbx        
         add:*<1> attachinfo:Dbx            
@@ -647,7 +647,7 @@
             
     ---------------------------------    
 
-    [27]    *r4 = r3;
+    [27]    *r4 = r3;
     
     ist:u8 attachinfo:Dbx        
         ld:*<1> 'r4' base attachinfo:Dbx        
@@ -671,7 +671,7 @@
         POINT TO:--
     ---------------------------------    
 
-    [28]    if (r3 == 2) {
+    [28]    if (r3 == 2) {
     
     falsebr label _$L3 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -705,7 +705,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [29]        goto USER_L4;
+    [29]        goto USER_L4;
     
     goto label USER_L4 attachinfo:Dbx
     
@@ -732,7 +732,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [31]    goto USER_L1;
+    [31]    goto USER_L1;
     
     goto label USER_L1 attachinfo:Dbx
     
@@ -759,7 +759,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [34]    return 0;
+    [34]    return 0;
     
     return attachinfo:Dbx
         intconst:i32 0|0x0 attachinfo:Dbx
@@ -851,7 +851,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [4]    int r3 = *in1;
+    [4]    int r3 = *in1;
     
     st:i32 'r3' attachinfo:Dbx,MDSSA        
         cvt:i32 attachinfo:Dbx            
@@ -882,7 +882,7 @@
               
     ---------------------------------    
 
-    [5]    char * r1 = &in0; 
+    [5]    char * r1 = &in0; 
     
     st:*<1> 'r1' attachinfo:Dbx,MDSSA        
         lda:*<1> 'in0' attachinfo:Dbx
@@ -896,7 +896,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [6]    char * r2 = r1 + 4;
+    [6]    char * r2 = r1 + 4;
     
     st:*<1> 'r2' attachinfo:Dbx,MDSSA        
         add:*<1> attachinfo:Dbx            
@@ -918,7 +918,7 @@
             
     ---------------------------------    
 
-    [7]    char * r4 = 0;
+    [7]    char * r4 = 0;
     
     st:*<1> 'r4' attachinfo:Dbx,MDSSA        
         intconst:i32 0|0x0 attachinfo:Dbx
@@ -934,7 +934,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [8]    if (r3 != 5) {
+    [8]    if (r3 != 5) {
     
     truebr label _$L1 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -969,7 +969,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [9]        goto USER_L3;
+    [9]        goto USER_L3;
     
     goto label USER_L3 attachinfo:Dbx
     
@@ -997,9 +997,9 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [11]    goto USER_L2;
+    [11]    goto USER_L2;
     
-    goto label _$L2 attachinfo:Dbx
+    goto label USER_L2 attachinfo:Dbx
     
 
    -- BB6 --
@@ -1025,7 +1025,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [14]    r2 = r2 + 4;
+    [14]    r2 = r2 + 4;
     
     st:*<1> 'r2' attachinfo:Dbx,MDSSA        
         add:*<1> attachinfo:Dbx            
@@ -1048,7 +1048,7 @@
             
     ---------------------------------    
 
-    [15]    *r2 = r3 + 4;
+    [15]    *r2 = r3 + 4;
     
     ist:u8 attachinfo:Dbx,MDSSA        
         ld:*<1> 'r2' base attachinfo:Dbx,MDSSA        
@@ -1074,7 +1074,7 @@
           POINT TO:--
     ---------------------------------    
 
-    [16]    r3++;
+    [16]    r3++;
     
     stpr $2:i32 attachinfo:Dbx        
         ld:i32 'r3' attachinfo:MDSSA
@@ -1106,7 +1106,7 @@
           POINT TO:--
     ---------------------------------    
 
-    [17]    if (r3 == 5) {
+    [17]    if (r3 == 5) {
     
     falsebr label _$L2 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -1141,7 +1141,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [18]        goto USER_L3;
+    [18]        goto USER_L3;
     
     goto label USER_L3 attachinfo:Dbx
     
@@ -1169,7 +1169,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [22]    r4 = r2 + 8;
+    [22]    r4 = r2 + 8;
     
     st:*<1> 'r4' attachinfo:Dbx,MDSSA        
         add:*<1> attachinfo:Dbx            
@@ -1193,7 +1193,7 @@
             
     ---------------------------------    
 
-    [23]    *r4 = r3;
+    [23]    *r4 = r3;
     
     ist:u8 attachinfo:Dbx,MDSSA        
         ld:*<1> 'r4' base attachinfo:Dbx,MDSSA        
@@ -1251,7 +1251,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [26]    r4 = r2 + 8;
+    [26]    r4 = r2 + 8;
     
     st:*<1> 'r4' attachinfo:Dbx,MDSSA        
         add:*<1> attachinfo:Dbx            
@@ -1275,7 +1275,7 @@
             
     ---------------------------------    
 
-    [27]    *r4 = r3;
+    [27]    *r4 = r3;
     
     ist:u8 attachinfo:Dbx,MDSSA        
         ld:*<1> 'r4' base attachinfo:Dbx,MDSSA        
@@ -1311,7 +1311,7 @@
         POINT TO:--
     ---------------------------------    
 
-    [28]    if (r3 == 2) {
+    [28]    if (r3 == 2) {
     
     falsebr label _$L3 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -1346,7 +1346,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [29]        goto USER_L4;
+    [29]        goto USER_L4;
     
     goto label USER_L4 attachinfo:Dbx
     
@@ -1374,7 +1374,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [31]    goto USER_L1;
+    [31]    goto USER_L1;
     
     goto label USER_L1 attachinfo:Dbx
     
@@ -1402,7 +1402,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [34]    return 0;
+    [34]    return 0;
     
     return attachinfo:Dbx
         intconst:i32 0|0x0 attachinfo:Dbx
@@ -1675,7 +1675,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [4]    int r3 = *in1;
+    [4]    int r3 = *in1;
     
     st:i32 'r3' attachinfo:Dbx,MDSSA        
         cvt:i32 attachinfo:Dbx            
@@ -1706,7 +1706,7 @@
               
     ---------------------------------    
 
-    [5]    char * r1 = &in0; 
+    [5]    char * r1 = &in0; 
     
     st:*<1> 'r1' attachinfo:Dbx,MDSSA        
         lda:*<1> 'in0' attachinfo:Dbx
@@ -1720,7 +1720,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [6]    char * r2 = r1 + 4;
+    [6]    char * r2 = r1 + 4;
     
     st:*<1> 'r2' attachinfo:Dbx,MDSSA        
         add:*<1> attachinfo:Dbx            
@@ -1741,7 +1741,7 @@
             
     ---------------------------------    
 
-    [7]    char * r4 = 0;
+    [7]    char * r4 = 0;
     
     st:*<1> 'r4' attachinfo:Dbx,MDSSA        
         intconst:i32 0|0x0 attachinfo:Dbx
@@ -1756,7 +1756,7 @@
     >> MDSet DETAIL:
     ---------------------------------    
 
-    [8]    if (r3 != 5) {
+    [8]    if (r3 != 5) {
     
     truebr label _$L1 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -1791,7 +1791,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [9]        goto USER_L3;
+    [9]        goto USER_L3;
     
     goto label USER_L3 attachinfo:Dbx
     
@@ -1819,9 +1819,9 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [11]    goto USER_L2;
+    [11]    goto USER_L2;
     
-    goto label _$L2 attachinfo:Dbx
+    goto label USER_L2 attachinfo:Dbx
     
 
    -- BB6 --
@@ -1847,7 +1847,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [14]    r2 = r2 + 4;
+    [14]    r2 = r2 + 4;
     
     st:*<1> 'r2' attachinfo:Dbx,MDSSA        
         add:*<1> attachinfo:Dbx            
@@ -1868,7 +1868,7 @@
             
     ---------------------------------    
 
-    [15]    *r2 = r3 + 4;
+    [15]    *r2 = r3 + 4;
     
     ist:u8 attachinfo:Dbx,MDSSA        
         ld:*<1> 'r2' base attachinfo:Dbx,MDSSA        
@@ -1891,7 +1891,7 @@
           POINT TO:--
     ---------------------------------    
 
-    [16]    r3++;
+    [16]    r3++;
     
     stpr $2:i32 attachinfo:Dbx        
         ld:i32 'r3' attachinfo:MDSSA
@@ -1923,7 +1923,7 @@
           POINT TO:--
     ---------------------------------    
 
-    [17]    if (r3 == 5) {
+    [17]    if (r3 == 5) {
     
     falsebr label _$L2 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -1958,7 +1958,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [18]        goto USER_L3;
+    [18]        goto USER_L3;
     
     goto label USER_L3 attachinfo:Dbx
     
@@ -1986,7 +1986,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [22]    r4 = r2 + 8;
+    [22]    r4 = r2 + 8;
     
     st:*<1> 'r4' attachinfo:Dbx,MDSSA        
         add:*<1> attachinfo:Dbx            
@@ -2008,7 +2008,7 @@
             
     ---------------------------------    
 
-    [23]    *r4 = r3;
+    [23]    *r4 = r3;
     
     ist:u8 attachinfo:Dbx,MDSSA        
         ld:*<1> 'r4' base attachinfo:Dbx,MDSSA        
@@ -2054,7 +2054,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [26]    r4 = r2 + 8;
+    [26]    r4 = r2 + 8;
     
     st:*<1> 'r4' attachinfo:Dbx,MDSSA        
         add:*<1> attachinfo:Dbx            
@@ -2076,7 +2076,7 @@
             
     ---------------------------------    
 
-    [27]    *r4 = r3;
+    [27]    *r4 = r3;
     
     ist:u8 attachinfo:Dbx,MDSSA        
         ld:*<1> 'r4' base attachinfo:Dbx,MDSSA        
@@ -2100,7 +2100,7 @@
         POINT TO:--
     ---------------------------------    
 
-    [28]    if (r3 == 2) {
+    [28]    if (r3 == 2) {
     
     falsebr label _$L3 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -2135,7 +2135,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [29]        goto USER_L4;
+    [29]        goto USER_L4;
     
     goto label USER_L4 attachinfo:Dbx
     
@@ -2163,7 +2163,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [31]    goto USER_L1;
+    [31]    goto USER_L1;
     
     goto label USER_L1 attachinfo:Dbx
     
@@ -2191,7 +2191,7 @@
     -- IR POINT-TO: --
     ---------------------------------    
 
-    [34]    return 0;
+    [34]    return 0;
     
     return attachinfo:Dbx
         intconst:i32 0|0x0 attachinfo:Dbx

@@ -9,6 +9,6 @@ region program program () {
         label L1;
         goto L1; //a dead-cycle loop that have NO effect, can be removed.
         label L2;
-    	return $3;
+    	return $3:bool;
     };
 }

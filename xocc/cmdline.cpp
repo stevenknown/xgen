@@ -125,7 +125,7 @@ static bool process_opt(INT argc, CHAR const* argv[], INT & i)
         xoc::g_do_mdssa = true;
         xoc::g_infer_type = true;
         g_cfg_opt = true;
-        #ifdef FOR_IP
+        #ifdef REF_TARGMACH_INFO
         //xoc::g_do_lsra = true;
         #endif
         break;

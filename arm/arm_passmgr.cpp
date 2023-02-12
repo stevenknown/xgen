@@ -46,3 +46,9 @@ Pass * ARMPassMgr::allocRefine()
 {
     return new ARMRefine(m_rg);
 }
+
+
+Pass * ARMPassMgr::allocLinearScanRA()
+{
+    return new LinearScanRA(m_rg);
+}

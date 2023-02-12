@@ -46,7 +46,7 @@ sub main
 
 sub compileFile
 {
-    my $fullpath = $_;
+    my $fullpath = $_[0];
 
     #Save original flags.
     my $org_cflags = $g_cflags;
@@ -84,15 +84,15 @@ sub compileFile
 
 sub compileFileList
 {
-    my @filelist = @_;
+    my $curdir = $_[0];
+    my @filelist = @{$_[1]};
     foreach (@filelist) {
+        $g_error_count = 0; #initialize error counter.
         chomp;
-        my $fullpath = $_;
-
+        my $filename = getFileNameFromPath($_);
+        my $fullpath = $curdir."/".$filename; 
         print "\n-------------------------------------------";
-
         compileFile($fullpath);
-
         if ($g_is_create_base_result == 1) {
             #Copy current dumpfile to be the base-result dumpfile.
             my $base_dump_file = getBaseResultDumpFilePath($fullpath);
@@ -125,6 +125,10 @@ sub tryCompile
     #the latest output with the base result.
     my $is_test_gr = $_[0];
     my $curdir = getcwd;
+    if ($g_single_directory ne "") {
+        $curdir .= "/".$g_single_directory;
+    }
+    #Collect files that need to test.
     my @f;
     if ($g_single_testcase ne "") {
         if ($g_is_recur) {
@@ -143,5 +147,5 @@ sub tryCompile
     } else {
         @f = findCurrent($curdir, 'c');
     }
-    compileFileList(@f);
+    compileFileList($curdir, \@f);
 }
