@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace xgen {
 
 static CHAR const* g_intrin_name[] = {
-    "undef", 
+    "undef",
     "alloca",
     "default_last",
 };

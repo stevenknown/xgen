@@ -162,6 +162,7 @@ bool ARMRegion::ARMHighProcess(OptCtx & oc)
 
     initPassMgr();
     initIRMgr();
+    initIRBBMgr();
     HighProcessImpl(oc);
     return true;
 }
@@ -248,7 +249,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
             //operand DEF's DUSet.
             //CASE:compiler.gr/alias.loop.gr
             oc.setInvalidPRDU();
-            rmprdu = true;            
+            rmprdu = true;
         }
         if (g_do_mdssa) {
             ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MDSSA_MGR))->
@@ -457,6 +458,12 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     RC_insert_cvt(rf) = g_do_refine_auto_insert_cvt;
     Refine * refine = (Refine*)getPassMgr()->registerPass(PASS_REFINE);
     refine->refineBBlist(getBBList(), rf);
+    if (g_do_lsra) {
+        LinearScanRA * lsra = (LinearScanRA*)getPassMgr()->registerPass(
+            PASS_LINEAR_SCAN_RA);
+        lsra->setApplyToRegion(false);
+        lsra->perform(oc);
+    }
     return true;
 }
 

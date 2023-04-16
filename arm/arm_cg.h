@@ -117,6 +117,9 @@ private:
                             OUT ORList & ors,
                             MOD IOC * cont);
 
+    SR * computeOfst(OUT SR ** base, SR * ofst, bool is_signed,
+                     OUT ORList & ors, MOD IOC * cont);
+
     void expandFakeShift(IN OR * o, OUT IssuePackageList * ipl);
     void expandFakeStore(IN OR * o, OUT IssuePackageList * ipl);
     void expandFakeSpadjust(IN OR * o, OUT IssuePackageList * ipl);

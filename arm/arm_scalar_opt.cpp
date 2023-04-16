@@ -63,9 +63,6 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     ASSERT0(oc.is_cfg_valid());
     ASSERT0(m_rg && m_rg->getCFG()->verify());    
     List<Pass*> passlist; //A list of Optimization.
-    if (g_do_lsra) {
-        passlist.append_tail(m_pass_mgr->registerPass(PASS_LINEAR_SCAN_RA));
-    }
     if (g_do_gvn) {
         m_pass_mgr->registerPass(PASS_GVN);
     }
@@ -78,10 +75,20 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     CopyProp * cp = nullptr;
     if (g_do_cp || g_do_cp_aggressive) {
         cp = (CopyProp*)m_pass_mgr->registerPass(PASS_CP);
-        cp->setPropagationKind(g_do_cp_aggressive ?
-                               CP_PROP_UNARY_AND_SIMPLEX : CP_PROP_SIMPLEX);
+        if (g_do_cp_aggressive) {
+            cp->setPropagationKind(CP_PROP_UNARY|CP_PROP_NONPR|
+                                   CP_PROP_INEXACT_MEM);
+        }
         passlist.append_tail(cp);
     }
+    #ifdef FOR_IP
+    if (g_do_vect) {
+        Vectorization * pass = (Vectorization*)m_pass_mgr->
+            registerPass(PASS_VECT);
+        if (g_opt_level >= OPT_LEVEL3) { pass->setAggressive(true); }
+        passlist.append_tail(pass);
+    }
+    #endif
     if (g_do_rce) {
         passlist.append_tail(m_pass_mgr->registerPass(PASS_RCE));
     }

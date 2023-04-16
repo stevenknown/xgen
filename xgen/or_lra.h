@@ -1067,7 +1067,7 @@ public:
     bool splitTwoLTContained(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr);
     bool splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr);
     bool splitTwoLT(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr);
-    bool spillFirstDef(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr);
+    bool spillFirstDef(LifeTime * lt1, LifeTime const* lt2, LifeTimeMgr & mgr);
     void selectReasonableSplitPos(MOD BSIdx * pos1, MOD BSIdx * pos2,
                                   MOD bool * is_pos1_spill,
                                   MOD bool * is_pos2_spill,

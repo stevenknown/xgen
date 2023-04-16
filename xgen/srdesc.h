@@ -59,7 +59,7 @@ public:
     RegSet const* m_valid_regset; //7th printed
 public:
     SRDesc() {}
-    SRDesc(bool is_signed, bool is_imm, bool is_label, bool is_label_list, 
+    SRDesc(bool is_signed, bool is_imm, bool is_label, bool is_label_list,
            UINT bs, RegFileSet const* rfs, RegSet const* rs) :
         m_is_signed(is_signed), m_is_imm(is_imm), m_is_label(is_label),
         m_is_label_list(is_label_list), m_bitsize(bs), m_valid_regfile_set(rfs),
@@ -83,7 +83,7 @@ public:
     bool is_imm() const { return SRD_is_imm(this); }
     bool is_signed() const { return SRD_is_signed(this); }
     bool is_label() const { return SRD_is_label(this); }
-    bool is_label_list() const { return SRD_is_label_list(this); }    
+    bool is_label_list() const { return SRD_is_label_list(this); }
 };
 
 

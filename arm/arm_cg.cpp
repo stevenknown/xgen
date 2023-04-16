@@ -414,40 +414,10 @@ void ARMCG::buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,
 {
     ASSERT0(load_val && base && ofst && cont);
     ASSERT0(ofst->is_int_imm());
-    Var const* v = nullptr;
-    SR * sr_ofst = nullptr;
-    if (base->is_var()) {
-        SR * sr_base;
-        v = SR_var(base);
-        computeVarBaseAndOffset(SR_var(base), ofst->getInt(),
-                                &sr_base, &sr_ofst);
-        if (v->is_global() && !sr_base->is_reg()) {
-            //ARM does not support load value from memory label directly.
-            SR_var_ofst(base) += (UINT)ofst->getInt();
-
-            if (sr_ofst->is_int_imm()) {
-                SR_int_imm(sr_ofst) = SR_var_ofst(base);
-            } else {
-                ASSERT0(isComputeStackOffset());
-                ASSERT0(sr_ofst->is_var());
-            }
-
-            //Write address of memory symbol into base register, then
-            //build an indirect load from the base register.
-            SR * res = genReg();
-            buildMove(res, base, ors, cont);
-            base = res;
-        } else {
-            ASSERT0(sr_base->is_reg());
-            base = sr_base;
-        }
-    } else {
-        sr_ofst = ofst;
-    }
-
+    Var const* v = base->is_var() ? SR_var(base) : nullptr;
+    SR * sr_ofst = computeOfst(&base, ofst, is_signed, ors, cont);
     ASSERT0(sr_ofst);
     ASSERT0(cont);
-
     if (cont->getMemByteSize() == 3) {
         //Generate: ldr %rx = value;
         OR * ld = genOR(OR_ldr);
@@ -476,7 +446,7 @@ void ARMCG::buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,
         return;
     }
 
-    if (cont->getMemByteSize() <= 4) {
+    if (cont->getMemByteSize() <= GENERAL_REGISTER_SIZE) {
         OR_CODE ort = OR_UNDEF;
         switch (cont->getMemByteSize()) {
         case 1: ort = is_signed ? OR_ldrsb : OR_ldrb; break;
@@ -499,9 +469,9 @@ void ARMCG::buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,
         return;
     }
 
-    if (cont->getMemByteSize() <= 8) {
+    if (cont->getMemByteSize() <= GENERAL_REGISTER_SIZE * 2) {
         OR * o = genOR(OR_ldrd);
-        ASSERT0(load_val->getByteSize() == 8);
+        ASSERT0(load_val->getByteSize() == GENERAL_REGISTER_SIZE * 2);
         ASSERT0(load_val->is_vec());
         ASSERT0(load_val->getVec()->get(0) && load_val->getVec()->get(1));
         o->set_load_val(load_val->getVec()->get(0), this, 0);
@@ -547,7 +517,9 @@ void ARMCG::buildStoreFor3Byte(IN SR * store_val, IN SR * base,
     //If the bitsize of sr_ofst exceeded the capacity of operation,
     //use R12 the scatch register to record the offset.
     //Mapping from LD OR to correspond variable. Used by OR::dump()
-    setMapOR2Mem(st, v);
+    if (v != nullptr) {
+        setMapOR2Mem(st, v);
+    }
     st->set_store_ofst(sr_ofst, this);
     ors.append_tail(st);
 }
@@ -652,7 +624,7 @@ void ARMCG::buildStoreForLessThan4Byte(SR * store_val, IN SR * base,
                                        Var const* v, bool is_signed,
                                        OUT ORList & ors, MOD IOC * cont)
 {
-    ASSERT0(cont->getMemByteSize() <= 4);
+    ASSERT0(cont->getMemByteSize() <= GENERAL_REGISTER_SIZE);
     if (cont->getMemByteSize() == 3) {
         buildStoreFor3Byte(store_val, base, sr_ofst, v, ors, cont);
         return;
@@ -669,7 +641,9 @@ void ARMCG::buildStoreForLessThan4Byte(SR * store_val, IN SR * base,
     o->set_store_ofst(sr_ofst, this);
 
     //Mapping from LD OR to corresponnd variable. Used by OR::dump()
-    setMapOR2Mem(o, v);
+    if (v != nullptr) {
+        setMapOR2Mem(o, v);
+    }
     ors.append_tail(o);
 }
 
@@ -713,14 +687,15 @@ void ARMCG::buildStoreFor8Byte(SR const* store_val, SR * base, SR * sr_ofst,
                                Var const* v, bool is_signed,
                                OUT ORList & ors, MOD IOC * cont)
 {
-    ASSERT0(cont->getMemByteSize() > 4 && cont->getMemByteSize() <= 8);
+    ASSERT0(cont->getMemByteSize() > GENERAL_REGISTER_SIZE &&
+            cont->getMemByteSize() <= GENERAL_REGISTER_SIZE * 2);
     OR_CODE code = selectORCodeForStore8Byte(sr_ofst);
     ASSERT0(code != OR_UNDEF);
     genAddrCompFor8ByteStore(&base, &sr_ofst, ors);
 
     //Generate memory-store operation.
     OR * o = genOR(code);
-    ASSERT0(store_val->getByteSize() == 8);
+    ASSERT0(store_val->getByteSize() == GENERAL_REGISTER_SIZE * 2);
     ASSERT0(store_val->is_vec());
     ASSERT0(store_val->getVec()->get(0) &&
             store_val->getVec()->get(1));
@@ -731,8 +706,9 @@ void ARMCG::buildStoreFor8Byte(SR const* store_val, SR * base, SR * sr_ofst,
     //If the bitsize of sr_ofst exceeded the capacity of operation,
     //use R12 the scatch register to record the offset.
     o->set_store_ofst(sr_ofst, this);
-
-    setMapOR2Mem(o, v);
+    if (v != nullptr) {
+        setMapOR2Mem(o, v);
+    }
     ors.append_tail(o);
 }
 
@@ -854,6 +830,43 @@ OR_CODE ARMCG::mapIRCode2ORCode(IR_CODE ir_code, UINT ir_opnd_size,
 }
 
 
+SR * ARMCG::computeOfst(OUT SR ** base, SR * ofst, bool is_signed,
+                        OUT ORList & ors, MOD IOC * cont)
+{
+    if (!(*base)->is_var()) { return ofst; }
+    SR * sr_ofst = nullptr;
+    SR * sr_base = nullptr;
+    computeVarBaseAndOffset(SR_var(*base), ofst->getInt(), &sr_base, &sr_ofst);
+    if (SR_var(*base)->is_global() && !sr_base->is_reg()) {
+        ASSERT0(sr_ofst->is_int_imm() || sr_ofst->is_var());
+
+        //ARM does not support loading value from a variable or
+        //label directly.
+        SR_var_ofst(*base) += (UINT)ofst->getInt();
+
+       if (sr_ofst->is_int_imm()) {
+            SR_int_imm(sr_ofst) = SR_var_ofst(*base);
+        } else {
+            //Offset still be identifier that in order to facitlitate
+            //develop.
+            ASSERT0(isComputeStackOffset());
+        }
+
+        //Move the address of variable or label into a register as the
+        //base register.
+        //Write address of memory symbol into base register, then
+        //build an indirect load from the base register.
+        SR * res = genReg();
+        buildMove(res, *base, ors, cont);
+        *base = res;
+    } else {
+        ASSERT0(sr_base->is_reg());
+        *base = sr_base;
+    }
+    return sr_ofst;
+}
+
+
 //[base + ofst] = store_val
 void ARMCG::buildStore(IN SR * store_val, IN SR * base, IN SR * ofst,
                        bool is_signed, OUT ORList & ors, MOD IOC * cont)
@@ -862,43 +875,40 @@ void ARMCG::buildStore(IN SR * store_val, IN SR * base, IN SR * ofst,
     ASSERT0(ofst->is_int_imm() && (base->is_reg() || base->is_var()));
     ASSERTN(store_val->is_reg(), ("store_val can only be register on ARM"));
     ASSERT0(ofst->is_int_imm());
-    Var const* v = nullptr;
-    SR * sr_ofst = nullptr;
-    if (base->is_var()) {
-        SR * sr_base;
-        v = SR_var(base);
-        computeVarBaseAndOffset(SR_var(base), ofst->getInt(),
-                                &sr_base, &sr_ofst);
-        if (v->is_global() && !sr_base->is_reg()) {
-            //ARM does not support load value from memory label directly.
-            SR_var_ofst(base) += (UINT)ofst->getInt();
-            SR * res = genReg();
-            buildMove(res, base, ors, cont);
-
-            if (sr_ofst->is_int_imm()) {
-                SR_int_imm(sr_ofst) = SR_var_ofst(base);
-            } else {
-                ASSERT0(isComputeStackOffset());
-                ASSERT0(sr_ofst->is_var());
-            }
-
-            base = res;
-        } else {
-            ASSERT0(sr_base->is_reg());
-            base = sr_base;
-        }
-    } else {
-        sr_ofst = ofst;
-    }
-
+    Var const* v = base->is_var() ? SR_var(base) : nullptr;
+    SR * sr_ofst = computeOfst(&base, ofst, is_signed, ors, cont);
     ASSERT0(sr_ofst);
     ASSERT0(cont != nullptr);
-    if (cont->getMemByteSize() <= 4) {
+    if (cont->getMemByteSize() <= GENERAL_REGISTER_SIZE) {
         buildStoreForLessThan4Byte(store_val, base, sr_ofst, v,
                                    is_signed, ors, cont);
         return;
     }
-    if (cont->getMemByteSize() <= 8) {
+    if (cont->getMemByteSize() <= GENERAL_REGISTER_SIZE * 2) {
+        ASSERT0(store_val->getByteSize() == GENERAL_REGISTER_SIZE * 2);
+        ASSERT0(store_val->is_vec());
+        ASSERT0(store_val->getVec()->get(0) && store_val->getVec()->get(1));
+        if (!CG::isValidRegInSRVec(store_val->getVec(), true)) {
+            //One of SR has assigned physical-register that is not obey the
+            //vector register set rule. Thus store the SR one by one with
+            //the size of GENERAL_REGISTER_SIZE.
+            //Store the low part.
+            IOC tc(*cont);
+            IOC_mem_byte_size(&tc) = GENERAL_REGISTER_SIZE;
+            buildStoreForLessThan4Byte(
+                store_val->getVec()->get(0), base, sr_ofst, v,
+                is_signed, ors, &tc);
+
+            //Store the high part.
+            IOC tc_h(*cont);
+            SR * high_sr_ofst = dupSR(sr_ofst);
+            calcOfstByImm(high_sr_ofst, GENERAL_REGISTER_SIZE);
+            IOC_mem_byte_size(&tc_h) = GENERAL_REGISTER_SIZE;
+            buildStoreForLessThan4Byte(
+                store_val->getVec()->get(1), base, high_sr_ofst, v,
+                is_signed, ors, &tc_h);
+            return;
+        }
         buildStoreFor8Byte(store_val, base, sr_ofst, v, is_signed,
                            ors, cont);
         return;
@@ -1740,7 +1750,7 @@ void ARMCG::buildShiftLeftImm(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
 void ARMCG::buildShiftLeft(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
                            OUT ORList & ors, MOD IOC * cont)
 {
-    if (sr_size <= 4) {
+    if (sr_size <= GENERAL_REGISTER_SIZE) {
         //There is no different between signed and unsigned left shift.
         SR * res = genReg();
         OR_CODE ort = OR_UNDEF;
@@ -1758,7 +1768,7 @@ void ARMCG::buildShiftLeft(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
         return;
     }
 
-    ASSERTN(sr_size <= 8, ("TODO"));
+    ASSERTN(sr_size <= GENERAL_REGISTER_SIZE * 2, ("TODO"));
     if (shift_ofst->is_reg()) {
         buildShiftLeftReg(src, sr_size, shift_ofst, ors, cont);
         return;
@@ -1905,9 +1915,9 @@ void ARMCG::buildShiftRightCase3_1(IN SR * src,
     OR * o = buildOR(OR_lsr_i, 1, 3, lo, getTruePred(), lo, shift_ofst);
     ors.append_tail(o);
 
+    //ARM is 32bit width.
     //lo = lo | (hi <<(lsl) (32 - shift_ofst))
-    o = buildOR(OR_orr_lsl_i, 1, 4, lo,
-                getTruePred(),
+    o = buildOR(OR_orr_lsl_i, 1, 4, lo, getTruePred(),
                 lo, hi, genIntImm(32 - shift_ofst->getInt(), false));
     ors.append_tail(o);
 
@@ -1963,11 +1973,11 @@ void ARMCG::buildShiftRightCase3_2(IN SR * src,
     OR * set_high = nullptr;
     if (is_signed) {
         //DO WE NEED ASR_I HERE ??
-        //    hi <- hi asr shift_ofst
+        //  hi <- hi asr shift_ofst
         set_high = buildOR(OR_asr_i, 1, 3, hi,
                            getTruePred(), hi, genIntImm(31, true));
     } else {
-        //    hi <- 0
+        //  hi <- 0
         set_high = buildOR(OR_mov_i, 1, 2, hi,
                            getTruePred(), genIntImm(0, true));
     }
@@ -2041,12 +2051,12 @@ void ARMCG::buildShiftRight(IN SR * src,
                             OUT ORList & ors,
                             MOD IOC * cont)
 {
-    if (sr_size <= 4) {
+    if (sr_size <= GENERAL_REGISTER_SIZE) {
         buildShiftRightCase1(src, sr_size, shift_ofst, is_signed, ors, cont);
         return;
     }
 
-    ASSERTN(sr_size <= 8, ("TODO"));
+    ASSERTN(sr_size <= GENERAL_REGISTER_SIZE * 2, ("TODO"));
     if (shift_ofst->is_reg()) {
         buildShiftRightCase2(src, sr_size, shift_ofst, is_signed, ors, cont);
         return;
@@ -2081,7 +2091,7 @@ void ARMCG::buildAddRegImm(SR * src, SR * imm,  UINT sr_size,
     ASSERT0(src->is_reg());
     ASSERT0(imm->is_int_imm() ||
             (!isComputeStackOffset() || imm->is_var()));
-    if (sr_size <= 4) { //< 4bytes
+    if (sr_size <= GENERAL_REGISTER_SIZE) { //< 4bytes
         if (isValidImmOpnd(OR_add_i, imm->is_int_imm())) {
             SR * res = genReg();
             OR * o = buildOR(OR_add_i, 1, 3, res,
@@ -2102,7 +2112,7 @@ void ARMCG::buildAddRegImm(SR * src, SR * imm,  UINT sr_size,
         return;
     }
 
-    if (sr_size <= 8) {
+    if (sr_size <= GENERAL_REGISTER_SIZE * 2) {
         SRVec * sv = src->getVec();
         ASSERT0(sv != nullptr && src->getVecIdx() == 0);
 
@@ -2174,7 +2184,7 @@ void ARMCG::buildMulRegReg(SR * src1,
                            MOD IOC * cont)
 {
     ASSERT0(src1->is_reg() && src2->is_reg());
-    if (sr_size <= 4) { //< 4bytes
+    if (sr_size <= GENERAL_REGISTER_SIZE) { //< 4bytes
         DUMMYUSE(is_sign);
         SR * res = genReg();
         //Both signed and unsigned uses the opcode.
@@ -2193,7 +2203,7 @@ void ARMCG::buildAddRegReg(bool is_add, SR * src1, SR * src2, UINT sr_size,
 {
     DUMMYUSE(is_sign);
     ASSERT0(src1->is_reg() && src2->is_reg());
-    if (sr_size <= 4) { //< 4bytes
+    if (sr_size <= GENERAL_REGISTER_SIZE) { //< 4bytes
         OR_CODE orty = OR_UNDEF;
         if (is_add) {
             orty = OR_add;
@@ -2207,7 +2217,7 @@ void ARMCG::buildAddRegReg(bool is_add, SR * src1, SR * src2, UINT sr_size,
         return;
     }
 
-    if (sr_size <= 8) {
+    if (sr_size <= GENERAL_REGISTER_SIZE * 2) {
         SRVec * sv1 = src1->getVec();
         ASSERT0(sv1 && SR_vec_idx(src1) == 0);
         SR * src1_2 = sv1->get(1);
@@ -2392,8 +2402,7 @@ void ARMCG::buildStoreAndAssignRegister(SR * reg, UINT offset,
 }
 
 
-bool ARMCG::isValidResultRegfile(OR_CODE orcode,
-                                 INT resnum,
+bool ARMCG::isValidResultRegfile(OR_CODE orcode, INT resnum,
                                  REGFILE regfile) const
 {
     if (!CG::isValidResultRegfile(orcode, resnum, regfile)) {
@@ -2409,8 +2418,7 @@ bool ARMCG::isValidResultRegfile(OR_CODE orcode,
 
 //Check 'regfile' to determine whether it is correct relatived to the 'opndnum'
 //operand of 'opcode'.
-bool ARMCG::isValidOpndRegfile(OR_CODE orcode,
-                               INT opndnum,
+bool ARMCG::isValidOpndRegfile(OR_CODE orcode, INT opndnum,
                                REGFILE regfile) const
 {
     if (!CG::isValidOpndRegfile(orcode, opndnum, regfile)) {
@@ -2425,24 +2433,23 @@ bool ARMCG::isValidOpndRegfile(OR_CODE orcode,
 
 
 //Check if 'sr' has allocated valid physical register corresponding to
-//SR-VEC of 'o'.
-//'o':
-//'sr':
+//SRVec of 'o'.
 //'idx': opnd/result index of 'sr'.
 //'is_result': it is true if 'sr' being the result of 'o'.
 bool ARMCG::isValidRegInSRVec(OR const*, SR const* sr,
                               UINT idx, bool is_result) const
 {
     DUMMYUSE(is_result);
-    ASSERT0_DUMMYUSE(sr);
-    ASSERT0(sr->getVec());
-    if (idx == 0) {
-        ASSERTN(isEvenReg(sr->getPhyReg()),
-                ("Must be even number register."));
-    } else if (idx == 1) {
-        ASSERTN(!isEvenReg(sr->getPhyReg()),
-                ("Must NOT be even number register."));
-    } else {
+    ASSERT0(sr && sr->is_vec());
+    if (sr->getPhyReg() == REG_UNDEF) { return true; }
+    switch (idx) {
+    case 0:
+        //Must be even number register.
+        return isEvenReg(sr->getPhyReg());
+    case 1:
+        //Must NOT be even number register.
+        return !isEvenReg(sr->getPhyReg());
+    default:
         ASSERTN(0, ("unsupported"));
     }
     return true;
@@ -2790,7 +2797,7 @@ INT ARMCG::computeMemByteSize(OR * o)
                 SR_is_dedicated(sr)) {
                 continue;
             }
-            sz += 4;
+            sz += GENERAL_REGISTER_SIZE;
         }
         return sz;
     }
@@ -2803,7 +2810,7 @@ INT ARMCG::computeMemByteSize(OR * o)
                 SR_is_dedicated(sr)) {
                 continue;
             }
-            sz += 4;
+            sz += GENERAL_REGISTER_SIZE;
         }
         return sz;
     }
@@ -2825,11 +2832,11 @@ INT ARMCG::computeMemByteSize(OR * o)
     case OR_ldr_i12:
     case OR_str:
     case OR_str_i12:
-        return 4;
+        return GENERAL_REGISTER_SIZE * 2;
     case OR_ldrd:
     case OR_strd:
     case OR_strd_i8:
-        return 8;
+        return GENERAL_REGISTER_SIZE * 2;
     default: ASSERTN(0, ("Not memory opcode"));
     }
     return -1;
@@ -3345,8 +3352,7 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
 }
 
 
-bool ARMCG::skipArgRegister(Var const* param,
-                            xgen::RegSet const* regset,
+bool ARMCG::skipArgRegister(Var const* param, xgen::RegSet const* regset,
                             Reg reg) const
 {
     #ifdef TO_BE_COMPATIBLE_WITH_ARM_LINUX_GNUEABI
@@ -3365,7 +3371,7 @@ bool ARMCG::skipArgRegister(Var const* param,
             //Passed the odd number register to facilitate the use
             //of value in paired-register.
             ASSERTN(isEvenReg((Reg)regset->get_next(reg)),
-                ("not continuous"));
+                    ("not continuous"));
             return true;
         }
     }

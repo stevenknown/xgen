@@ -303,13 +303,13 @@ static bool convertTreeStmtList(xfe::Tree * stmts, Region * rg,
 
     rg->initPassMgr(); //Optimizations needs PassMgr.
     rg->initIRMgr();
+    rg->initIRBBMgr();
     Refine * rf = (Refine*)rg->getPassMgr()->registerPass(PASS_REFINE);
     bool change2 = false;
     irs = rf->refineIRlist(irs, change2, rc);
     ASSERT0(xoc::verifyIRList(irs, nullptr, rg));
     ASSERT0(irs);
     rg->addToIRList(irs);
-
     return true;
 }
 
@@ -339,6 +339,7 @@ static bool generateFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
     r->initAttachInfoMgr();
     r->initPassMgr();
     r->initIRMgr();
+    r->initIRBBMgr();
     REGION_is_expect_inline(r) = dcl->is_inline();
 
     //To faciliate RegionMgr to manage the resource of each Region, you have to
@@ -426,7 +427,6 @@ static bool scanProgramDeclList(Scope * s, OUT xoc::Region * rg)
 //
 //START CTree2IR
 //
-
 //Generate IR for field-access if the base-region is a structure that returned
 //by a function call.
 IR * CTree2IR::convertFieldAccessForReturnValAggr(xfe::Tree const* t,
@@ -1633,7 +1633,7 @@ IR * CTree2IR::convertFP(IN xfe::Tree * t, INT lineno, IN T2IRCtx * cont)
     Sym const* fp = TREE_fp_str_val(t);
 
     //Default float point type is 64bit.
-    IR * ir = m_rg->getIRMgr()->buildImmFp(::atof(SYM_name(fp)),
+    IR * ir = m_rg->getIRMgr()->buildImmFP(::atof(SYM_name(fp)),
                                m_tm->getSimplexTypeEx(
                                    t->getCode() == TR_FPF ? D_F32 : D_F64));
     BYTE mantissa_num = getMantissaNum(SYM_name(fp));
@@ -1685,7 +1685,7 @@ IR * CTree2IR::convertPostIncDec(IN xfe::Tree * t, INT lineno,
         imm1 = m_rg->getIRMgr()->buildImmInt(1, type);
     } else {
         ASSERT0(type->is_fp());
-        imm1 = m_rg->getIRMgr()->buildImmFp(1, type);
+        imm1 = m_rg->getIRMgr()->buildImmFP(1, type);
     }
 
     if (is_ptr) {
@@ -2127,7 +2127,7 @@ IR * CTree2IR::genReturnValBuf(IR * ir)
 
 
 //Generate CVT if type conversion from src to tgt is indispensable.
-xoc::Type const* CTree2IR::checkAndGenCVTType(Decl const* tgt, 
+xoc::Type const* CTree2IR::checkAndGenCVTType(Decl const* tgt,
                                               Decl const* src)
 {
     ASSERT0(tgt && src);
@@ -2958,6 +2958,7 @@ bool CTree2IR::generateRegion(RegionMgr * rm)
     program->initAttachInfoMgr();
     program->initPassMgr();
     program->initIRMgr();
+    program->initIRBBMgr();
     rm->addToRegionTab(program);
 
     //Record the program region in RegionMgr.

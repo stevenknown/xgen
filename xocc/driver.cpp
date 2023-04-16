@@ -556,7 +556,7 @@ FIN:
     show_warn();
     fprintf(stdout, "\n%s - (%d) error(s), (%d) warnging(s)\n",
             fn, g_err_msg_list.get_elem_count(),
-            g_warn_msg_list.get_elem_count());    
+            g_warn_msg_list.get_elem_count());
     g_err_msg_list.clean();
     g_warn_msg_list.clean();
     return res;
@@ -623,7 +623,7 @@ FIN:
     show_warn();
     fprintf(stdout, "\n%s - (%d) error(s), (%d) warnging(s)\n",
             fn, g_err_msg_list.get_elem_count(),
-            g_warn_msg_list.get_elem_count());    
+            g_warn_msg_list.get_elem_count());
     g_err_msg_list.clean();
     g_warn_msg_list.clean();
     return succ;

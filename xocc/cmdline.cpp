@@ -61,6 +61,8 @@ static void disable_opt(INT opt_level)
 {
     switch (opt_level) {
     case OPT_LEVEL0:
+        xoc::g_do_lsra = false;
+        //Fall through.
     case OPT_LEVEL1:
     case OPT_LEVEL2:
     case OPT_LEVEL3:
@@ -74,8 +76,8 @@ static void disable_opt(INT opt_level)
         xoc::g_do_lftr = false;
         xoc::g_infer_type = false;
         xoc::g_do_rce = false;
+        xoc::g_do_vect = false;
         xoc::g_do_gvn = false;
-        xoc::g_do_lsra = false;
         g_cfg_opt = false;
         break;
     default: UNREACHABLE();
@@ -124,10 +126,8 @@ static bool process_opt(INT argc, CHAR const* argv[], INT & i)
         xoc::g_do_prssa = true;
         xoc::g_do_mdssa = true;
         xoc::g_infer_type = true;
+        xoc::g_do_vect = true;
         g_cfg_opt = true;
-        #ifdef REF_TARGMACH_INFO
-        //xoc::g_do_lsra = true;
-        #endif
         break;
     case 's':
     case 'S':
@@ -286,6 +286,8 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "enable aggressive copy-propagation optimization", },
     { "rce", &xoc::g_do_rce,
       "enable redundant-code-elimination optimization", },
+    { "vect", &xoc::g_do_vect,
+      "enable auto vectorization", },
     { "dce", &xoc::g_do_dce,
       "enable dead-code-elimination optimization", },
     { "infer_type", &xoc::g_infer_type,
@@ -298,6 +300,8 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "enable linear-function-test-replacement optimization", },
     { "ivr", &xoc::g_do_ivr,
       "enable induction-variable-recognization", },
+    { "gvn", &xoc::g_do_gvn,
+      "enable global-value-numbering", },
     { "mdssa", &xoc::g_do_mdssa,
       "enable md-ssa analysis", },
     { "prssa", &xoc::g_do_prssa,
@@ -352,6 +356,8 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump invert-branch-target", },
     { "lftr", &xoc::g_dump_opt.is_dump_lftr,
       "dump linear-function-test-replacement optimization", },
+    { "vect", &xoc::g_dump_opt.is_dump_vectorization,
+      "dump loop vectorization", },
     { "ivr", &xoc::g_dump_opt.is_dump_ivr,
       "dump induction-variable-recognization", },
     { "rp", &xoc::g_dump_opt.is_dump_rp,
@@ -603,7 +609,7 @@ static bool dispatchByPrefix(CHAR const* cmdstr, INT argc, CHAR const* argv[],
                                     boption);
     }
 
-    //No prefix.    
+    //No prefix.
     return recog_option(cmdstr, argc, argv, i, boption);
 }
 

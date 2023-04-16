@@ -428,6 +428,9 @@ public:
     //Decrease 'reg' by 'val'.
     virtual void buildDecReg(SR * reg, UINT val, OUT ORList & ors, IOC * cont);
 
+    //The function update offset of a Load or Store operation with an given
+    //immediate.
+    void calcOfstByImm(SR * ofst, HOST_INT imm);
     void constructORBBList(IN ORList  & or_list);
     void computeEntryAndExit(IN ORCFG & cfg, OUT List<ORBB*> & entry_lst,
                              OUT List<ORBB*> & exit_lst);
@@ -839,8 +842,23 @@ public:
                                     REGFILE regfile) const;
     virtual bool isValidResultRegfile(OR_CODE opcode, INT resnum,
                                       REGFILE regfile) const;
+
+    //Return true of 'sr' has assigned physical-register that obey the target
+    //machine vector register rule, or not assign any physical-register.
+    //Return false if 'sr' assigned incorrect phyiscal-register that violate the
+    //target machine vector register layout rule.
+    //idx: opnd/result index of 'sr'.
+    //is_result: it is true if 'sr' being the result of 'o'.
     virtual bool isValidRegInSRVec(OR  const* o, SR  const* sr,
                                    UINT idx, bool is_result) const;
+
+    //Return true of all SR in 'srvec' have assigned physical-register that
+    //obey the target machine vector register rule, or not assign any
+    //physical-register.
+    //Return false if SR assigned incorrect phyiscal-register that violate the
+    //target machine vector register layout rule.
+    //is_result: it is true if 'sr' being the result of some OR.
+    bool isValidRegInSRVec(SRVec const* srvec, bool is_result) const;
 
     //Return true if the runtime value of base1 is equal to base2.
     //Some target might use mulitple stack pointers.
@@ -988,6 +1006,8 @@ public:
                                                   List<ORBB*> & exit_lst);
     virtual void reviseFormalParamAccess(UINT lv_size);
 
+    //Generate code to store SR on top of stack.
+    //argdescmgr: record the parameter which tend to store on the stack.
     void storeArgToStack(ArgDescMgr * argdesc, OUT ORList & ors, IN IOC *);
     void setMapPR2SR(PRNO prno, SR * sr) { m_pr2sr_map.set(prno, sr); }
     void setMapSymbolReg2SR(UINT regid, SR * sr)
@@ -1042,8 +1062,15 @@ public:
                         UINT num, ...);
 
     //This function try to pass all arguments through registers.
-    //Otherwise pass remaingin arguments through stack memory.
-    //'ir': the first parameter of CALL.
+    //Otherwise pass remaining arguments through stack memory.
+    //ir: the first parameter of CALL.
+    //argval: if it is not emtpy, the current argument is value.
+    //        Note only one of argval and argaddr is available.
+    //argaddr: if it is not emtpy, the current argument is address.
+    //         Note only one of argval and argaddr is available.
+    //argsz: argument byte size.
+    //ors: record the generated ORs.
+    //cont: context.
     void passArg(SR * argval, SR * argaddr, UINT argsz,
                  OUT ArgDescMgr * argdescmgr, OUT ORList & ors, MOD IOC * cont);
     bool passArgInRegister(SR * argval, UINT * sz, ArgDescMgr * argdescmgr,

@@ -98,7 +98,7 @@ protected:
                                           OUT RecycORList & ors,
                                           OUT RecycORList & tors,
                                           IN IOC * cont);
-    void convertRelationOpDWORDForLTGELEGT(IR const* ir, 
+    void convertRelationOpDWORDForLTGELEGT(IR const* ir,
                                            SR * sr0_l, SR * sr0_h,
                                            SR * sr1_l, SR * sr1_h,
                                            bool is_signed,

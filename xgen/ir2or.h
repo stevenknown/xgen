@@ -430,8 +430,9 @@ public:
     //Register local variable that will be allocated in memory.
     Var * registerLocalVar(IR const* pr);
 
-    //Return true if whole ir has been passed through registers, otherwise
-    //return false.
+    //This function try to pass all arguments through registers.
+    //Otherwise pass remaining arguments through stack memory.
+    //ir: the first parameter of CALL.
     void processRealParamsThroughRegister(IR const* ir, ArgDescMgr * argdesc,
                                           OUT RecycORList & ors,
                                           MOD IOC * cont);

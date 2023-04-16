@@ -37,8 +37,6 @@ void ARMIR2OR::convertBinaryOp(IR const* ir, OUT RecycORList & ors,
 {
     ASSERTN(ir->isBinaryOp() && BIN_opnd0(ir) && BIN_opnd1(ir),
             ("missing operand"));
-    ASSERTN(!ir->is_vec(), ("TODO"));
-
     //TBD:Inequal byte size loading should be handled.
     //ASSERT0((BIN_opnd0(ir)->getTypeSize(m_tm) ==
     //         BIN_opnd1(ir)->getTypeSize(m_tm)) ||
@@ -59,7 +57,7 @@ void ARMIR2OR::convertBinaryOp(IR const* ir, OUT RecycORList & ors,
     if (BIN_opnd0(ir)->getTypeSize(m_tm) > DWORD_LENGTH_OF_TARGET_MACHINE ||
         BIN_opnd1(ir)->getTypeSize(m_tm) > DWORD_LENGTH_OF_TARGET_MACHINE) {
         //ADD may be vector-add or simulated-add-call.
-        ASSERTN(0, ("TODO"));
+        //ASSERTN(0, ("TODO"));
     }
 
     //Load Operand0

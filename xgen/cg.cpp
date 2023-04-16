@@ -323,7 +323,7 @@ void CG::buildSpill(IN SR * store_val, IN xoc::Var * spill_var,
     SR * mem_base_addr = genVAR(spill_var);
     IOC tc;
     IOC_mem_byte_size(&tc) = store_val->getByteSize();
-    //Spill location is the same length as register.
+    //Spill location should be the same size as 'store_val'.
     buildStore(store_val, mem_base_addr, genZero(), false, ors, &tc);
     for (OR * o = ors.get_head(); o != nullptr; o = ors.get_next()) {
         if (o->is_store()) {
@@ -1343,6 +1343,24 @@ OR * CG::dupOR(OR const* o)
 }
 
 
+void CG::calcOfstByImm(SR * ofst, HOST_INT imm)
+{
+    if (ofst->is_int_imm()) {
+        SR_int_imm(ofst) += imm;
+        return;
+    }
+    if (ofst->is_var()) {
+        HOST_INT org_ofst = SR_var_ofst(ofst);
+        ASSERT0(ofst >= 0);
+        org_ofst += imm;
+        ASSERTN(org_ofst, ("variable offset should be positive"));
+        SR_var_ofst(ofst) = (TMWORD)org_ofst;
+        return;
+    }
+    UNREACHABLE();
+}
+
+
 SR * CG::dupSR(SR const* sr)
 {
     SR * n = getSRMgr()->genSR(sr->getCode());
@@ -1943,9 +1961,7 @@ bool CG::isSameCluster(OR const* or1, OR const* or2) const
 
 //Check 'regfile' to determine whether it is correct relatived to the 'opndnum'
 //operand of 'opcode'.
-bool CG::isValidOpndRegfile(OR_CODE orcode,
-                            INT opndnum,
-                            REGFILE regfile) const
+bool CG::isValidOpndRegfile(OR_CODE orcode, INT opndnum, REGFILE regfile) const
 {
     if (regfile == RF_UNDEF || opndnum < 0) {
         return false;
@@ -1956,6 +1972,21 @@ bool CG::isValidOpndRegfile(OR_CODE orcode,
         return true;
     }
     return false;
+}
+
+
+bool CG::isValidRegInSRVec(SRVec const* srvec, bool is_result) const
+{
+    ASSERT0(srvec);
+    DUMMYUSE(is_result);
+    for (UINT i = 0; i < srvec->getElemNum(); i++) {
+        SR const* sr = srvec->get(i);
+        ASSERT0(sr);
+        if (!isValidRegInSRVec(nullptr, sr, i, is_result)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 
@@ -1971,10 +2002,14 @@ bool CG::isValidRegInSRVec(OR const*, SR const* sr,
     DUMMYUSE(is_result);
     DUMMYUSE(idx);
     ASSERTN(0, ("Target Dependent Code"));
-    if (sr->getVec() != nullptr) {
-        //Do some verification.
+    ASSERTN(sr->is_vec(), ("sr have to be vector"));
+    ASSERT0(sr->getVec());
+    ASSERT0(sr->getVec()->get(idx));
+    ASSERT0(sr->getVec()->get(idx)->is_reg());
+    if (sr->getVec()->get(idx)->getPhyReg() == REG_UNDEF) {
         return true;
     }
+    //Do more verifications.
     return true;
 }
 
@@ -2441,7 +2476,14 @@ void CG::passArgVariant(ArgDescMgr * argdescmgr, OUT ORList & ors, UINT num,
 
 //This function try to pass all arguments through registers.
 //Otherwise pass remaining arguments through stack memory.
-//'ir': the first parameter of CALL.
+//ir: the first parameter of CALL.
+//argval: if it is not emtpy, the current argument is value.
+//        Note only one of argval and argaddr is available.
+//argaddr: if it is not emtpy, the current argument is address.
+//         Note only one of argval and argaddr is available.
+//argsz: argument byte size.
+//ors: record the generated ORs.
+//cont: context.
 void CG::passArg(SR * argval, SR * argaddr, UINT argsz,
                  OUT ArgDescMgr * argdescmgr, OUT ORList & ors,
                  MOD IOC * cont)

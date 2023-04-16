@@ -48,7 +48,7 @@ public:
     };
 
     xoc::Dbx const* arg_dbx; //describes Dbx to argument.
-    UINT is_record_addr:1; //true if 
+    UINT is_record_addr:1; //true if
     UINT arg_size:30; //stack byte size to be passed.
 
     //byte offset to the base SR record in

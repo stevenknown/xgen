@@ -433,7 +433,8 @@ void RegFileAffinityGraph::dump()
         fprintf(h,
                 "\nedge: { sourcename:\"%d\" targetname:\"%d\" %s label:\"%d\"}",
                 VERTEX_id(EDGE_from(e)), VERTEX_id(EDGE_to(e)),
-                m_is_direction?"":"arrowstyle:none", RDGEI_exp_val(EDGE_info(e)));
+                m_is_direction? "" : "arrowstyle:none",
+                RDGEI_exp_val(EDGE_info(e)));
     }
 
     fprintf(h, "\n}\n");
@@ -1736,7 +1737,6 @@ INT LifeTimeMgr::create()
         pos = m_max_lt_len - 1;
         processFuncExitBB(liveout_exitbb_lts, live_lt_list, pos);
     }
-
     //Bottom up scanning each sides of OR to build life time.
     OR * o;
     ORCt * ct;
@@ -1832,7 +1832,6 @@ INT LifeTimeMgr::create()
              lt != nullptr; lt = live_lt_list.get_next(cc)) {
             LT_pos(lt)->bunion(pos);
         }
-
         //Handle sibling life time's preference register.
         handlePreferredReg(o);
     }
@@ -2958,15 +2957,14 @@ void LRA::genSpill(LifeTime * lt, SR * oldsr, BSIdx pos,
         SR * newsr = nullptr;
         INT opndnum, resnum;
         if (m_cg->isOpndSameWithResult(oldsr, o, &opndnum, &resnum)) {
-            //Cannot do renaming. Consequently0
-            //result-sr must same as operand-sr.
+            //Cannot do renaming. The result-sr must same as operand-sr.
             newsr = oldsr;
         } else {
-            newsr = m_cg->genReg(); //like oldsr
+            newsr = m_cg->genReg();
             SR_phy_reg(newsr) = REG_UNDEF;
             SR_regfile(newsr) = SR_regfile(oldsr);
 
-            //Record new spill location in newsr
+            //Record new spill location in newsr.
             SR_spill_var(newsr) = spill_var;
             m_cg->renameResult(o, oldsr, newsr, false);
         }
@@ -3275,10 +3273,11 @@ void LRA::spillLSR(LifeTime * lt, LifeTimeMgr & mgr)
                     //    The sr belong to 'lt' is SR10841, after the reloading,
                     //    rhs of this o will be replaced by newsr SR10845,
                     //SR10845 :- fmacuu_i SR97(p0) SR4452(d12) GSR445(d13) SR10845
-                    //    Because the lhs of the o has same register with the USE-SR
-                    //    that replaced, the same goes for the result sr also.
-                    //    And more important is that followed spill operation for
-                    //    next position of DEF should use this 'newsr',
+                    //    Because the lhs of the o has same register with the
+                    //    USE-SR that replaced, the same goes for the result SR
+                    //    also.
+                    //    And more important is that followed spill operation
+                    //    for next position of DEF should use this 'newsr',
                     //    since the original sr upon 'lt' has not over there.
                     same_with_result_sr = newsr;
                 }
@@ -3294,8 +3293,7 @@ void LRA::spillLSR(LifeTime * lt, LifeTimeMgr & mgr)
 }
 
 
-bool LRA::processORSpill(OR * sw,
-                         LifeTimeMgr & mgr,
+bool LRA::processORSpill(OR * sw, LifeTimeMgr & mgr,
                          List<LifeTime*> & uncolored_list)
 {
     ASSERTN(OR_is_store(sw), ("need store"));
@@ -3352,7 +3350,6 @@ bool LRA::processORSpill(OR * sw,
 
 //If stack variables can not access via SP+IMM, one need insert
 //instruction like 'sp = sp + ofst' to extend stack space.
-//
 //e.g:
 //    We are going to spill GSR1, and generating memory store operation like:
 //        SW GSR1, [SP + ofst].
@@ -3422,7 +3419,6 @@ bool LRA::canBeSpilled(LifeTime * lt, LifeTimeMgr & mgr)
             return false;
         }
     }
-
     return true;
 }
 
@@ -3518,17 +3514,18 @@ void LRA::reallocateLifeTime(List<LifeTime*> & prio_list,
     //Need to update mgr, ig, ddg, prio_list.
     prio_list.clean();
     uncolored_list.clean();
-
     if (ORBB_ornum(m_bb) <= 0) {
         mgr.destroy();
         ddg.destroy();
         ig.destroy();
         return;
     }
-
     show_phase("---At Split():ReAllocate_LifeTime():mgr.recreate");
     mgr.recreate(m_bb, true, true);
     ASSERT0(mgr.verifyLifeTime());
+
+    //After splitting or spilling, new OR and lifetime occurrences generated,
+    //thus lifetime SR's usable-register-set should be recomputed.
     mgr.computeUsableRegs();
     ig.destroy();
     ig.init(m_bb);
@@ -3539,13 +3536,12 @@ void LRA::reallocateLifeTime(List<LifeTime*> & prio_list,
     ddg.init(m_bb);
     ddg.setParallelPartMgr(m_ppm);
     ddg.build();
-
     if (rfg != nullptr) {
         //Regfile of each new srs should be allocated right now.
         rfg->recomputeGroup(m_bb);
     }
-
     reassignRegFileForNewSR(cri, mgr, ddg);
+
     //Calculate the prioirtys.
     buildPriorityList(prio_list, ig, mgr, ddg);
     computePrioList(prio_list, uncolored_list, ig, mgr, rfg);
@@ -3907,7 +3903,7 @@ bool LRA::splitTwoLTCross(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
 
 
 //Spill the closest DEF to lt2.
-bool LRA::spillFirstDef(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
+bool LRA::spillFirstDef(LifeTime * lt1, LifeTime const* lt2, LifeTimeMgr & mgr)
 {
     //Spill
     BSIdx defpos = LT_pos(lt1)->get_first();
@@ -3922,18 +3918,17 @@ bool LRA::spillFirstDef(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
         }
     } while (defpos > LT_pos(lt2)->get_first());
     ASSERTN(defpos >= LT_FIRST_POS && defpos < LT_LAST_POS,
-        ("Illegal start position"));
+            ("Illegal start position"));
 
-    //Op on 'pos' must be DEF of 'sr'
+    //OR on 'pos' must be DEF of 'lt1'
     if (defpos != LT_FIRST_POS) {
         OR * o = mgr.getOR(defpos);
         ASSERT0_DUMMYUSE(o);
         ASSERTN(m_cg->mayDef(o, LT_sr(lt1)), ("Illegal o mapping."));
     }
-    //spill var is gra_spill_var if sr is global reg.
+    //spill_var is gra_spill_var if SR is global reg.
     xoc::Var * spill_var = m_cg->genSpillVar(LT_sr(lt1));
     ASSERTN(spill_var, ("Not any spill loc."));
-
     genSpill(lt1, LT_sr(lt1), defpos, spill_var, mgr, false, nullptr);
     return true;
 }
@@ -3953,19 +3948,18 @@ bool LRA::splitTwoLT(LifeTime * lt1, LifeTime * lt2, LifeTimeMgr & mgr)
         lt1 = lt2;
         lt2 = tmp;
     }
-
     ASSERTN(!(LT_has_allocated(lt1) && LT_has_allocated(lt2)),
-        ("Both have allocated"));
+            ("Both have allocated"));
 
-    //Spilling is necessary here!!
+    //Spilling is necessary here.
     //CASE: param.c:BB1
-    //    sr12 =
-    //    ...
-    //      sr13 =
-    //      ...
-    //           = sr12
-    //      ...
-    //           = sr13
+    //  sr12 =
+    //  ...
+    //  sr13 =
+    //  ...
+    //  ... = sr12
+    //  ...
+    //  ... = sr13
     //  Spill sr12 is necessary.
     spillFirstDef(lt1, lt2, mgr);
 
@@ -4269,7 +4263,8 @@ bool LRA::removeRedundantStoreLoadAfterLoad(OR * o,
     bool has_store = false; //record memory DU info.
     bool is_resch = false;
     SR * op_ld_res = o->get_result(0);
-    for (OR * succ = succs.get_head(); succ != nullptr; succ = succs.get_next()) {
+    for (OR * succ = succs.get_head();
+         succ != nullptr; succ = succs.get_next()) {
         if (OR_is_asm(succ) || OR_is_br(succ)) {
             has_use = has_def = true;
             break;
@@ -4663,6 +4658,7 @@ bool LRA::split(LifeTime * lt, List<LifeTime*> & prio_list,
     } else {
         splitTwoLT(lt, cand, mgr);
     }
+
     show_phase("---Split,before ReAllocate_LifeTime");
     reallocateLifeTime(prio_list, uncolored_list, mgr, ddg, rfg, ig, cri);
     for (LifeTime * tmplt = uncolored_list.get_head();
@@ -7243,9 +7239,10 @@ void LRA::verifyRegFileForOpnd(OR * o, INT opnd, bool is_result)
     if (!sr->is_reg()) {
         return;
     }
-    ASSERTN(m_cg->isValidRegFile(o->getCode(), opnd, sr->getRegFile(), is_result),
-           ("illegal regfile for No.%d %s of OR(%s)",
-           opnd, is_result ? "result" : "operand", o->getCodeName()));
+    ASSERTN(m_cg->isValidRegFile(o->getCode(), opnd, sr->getRegFile(),
+                                 is_result),
+            ("illegal regfile for No.%d %s of OR(%s)",
+            opnd, is_result ? "result" : "operand", o->getCodeName()));
 }
 
 
