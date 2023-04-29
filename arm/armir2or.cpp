@@ -1782,7 +1782,7 @@ void ARMIR2OR::convertCvtIntAndStr(IR const* ir, SR * opnd,
         cont->set_reg(RESULT_REGISTER_INDEX, opnd);
         return;
     }
-    
+
     ASSERT0(ir->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE * 2);
     if (opnd->is_vec()) {
         SR * opnd2 = opnd->getVec()->get(1);

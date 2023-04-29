@@ -178,7 +178,8 @@ protected:
 
     virtual void finiFuncUnit();
 
-    //The function inserts code to initialize and finialize frame pointer register.
+    //The function inserts code to initialize and finialize frame pointer
+    //register.
     //e.g: foo() { int x; x = 20; }
     //    --- frame start ---
     //    sp <- sp - 4 #spadjust operation.
@@ -304,7 +305,8 @@ public:
     //Implement the target dependent version if needed.
     //'sr_size': The number of integral multiple of byte-size of single SR.
     virtual void buildBinaryOR(IR_CODE code, SR * src1, SR * src2,
-                               bool is_signed, OUT ORList & ors, MOD IOC * cont);
+                               bool is_signed, OUT ORList & ors,
+                               MOD IOC * cont);
 
     //'sr_size': The number of integral multiple of byte-size of single SR.
     virtual void buildAdd(SR * src1, SR * src2, UINT sr_size,

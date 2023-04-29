@@ -1022,7 +1022,8 @@ void CG::computeAndUpdateStackVarLayout(xoc::Var const* var,
         VD_ofst(vd) = (ULONG)xcom::ceil_align(section->getSize(), align);
 
         if (needAllocateMemorySpace(var)) {
-            //Compute the byte size of variable and padding stack with alignment.
+            //Compute the byte size of variable and padding stack with
+            //alignment.
             //Prepare the start address for next variable.
             ASSERTN(!var->is_any(),
                     ("defined variable '%s' can not be ANY type",
@@ -1581,7 +1582,9 @@ bool CG::changeORUnit(OR * o, UNIT to_unit, CLUST to_clust,
                 //but some of them still have chance to change to other
                 //function unit when the new function unit could also
                 //use the regfile of 'sr'.
-                ASSERTN(sr->getRegFile() != RF_UNDEF, ("illegal unique regfile"));
+                ASSERTN(sr->getRegFile() != RF_UNDEF,
+                        ("illegal unique regfile"));
+
                 //First handle the specical case.
                 if (sr == getSP()) {
                     if (!isSPUnit(to_unit))  {
@@ -3025,7 +3028,8 @@ void CG::setORListWithSamePredicate(MOD ORList & ops, IN OR * o)
     if (pd == nullptr) {
         pd = getTruePred();
     }
-    for (OR * tmpor = ops.get_head(); tmpor != nullptr; tmpor = ops.get_next()) {
+    for (OR * tmpor = ops.get_head(); tmpor != nullptr;
+         tmpor = ops.get_next()) {
         tmpor->set_pred(pd, this);
     }
 }
@@ -3829,7 +3833,8 @@ void CG::reviseFormalParameterAndSpadjust(List<ORBB*> & entry_lst,
         setSpadjustOffset(spadj, framesize);
     }
 
-    if (g_dump_opt.isDumpAfterPass() && g_xgen_dump_opt.isDumpReviseSpadjust()) {
+    if (g_dump_opt.isDumpAfterPass() &&
+        g_xgen_dump_opt.isDumpReviseSpadjust()) {
         xoc::note(getRegion(),
                   "\n==---- DUMP AFTER REVISE SPADJUST '%s' ----==",
                   getRegion()->getRegionName());

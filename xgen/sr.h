@@ -195,7 +195,7 @@ public:
     INT getVecIdx() const { return SR_vec_idx(this); }
     inline Var const* getVar() const;
     inline Var const* getSpillVar() const;
-    inline UINT getVarOfst() const;
+    inline TMWORD getVarOfst() const;
     inline LabelInfo const* getLabel() const;
     inline LabelInfoList const* getLabelList() const;
     inline IR const* getVarIR() const;
@@ -264,7 +264,7 @@ Var const* SR::getSpillVar() const
 }
 
 
-UINT SR::getVarOfst() const
+TMWORD SR::getVarOfst() const
 {
     return SR_var_ofst(this);
 }

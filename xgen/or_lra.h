@@ -514,7 +514,8 @@ public:
     virtual void recomputeLTUsableRegs(LifeTime const* lt, RegSet * usable_rs);
     void reviseLifeTime(List<LifeTime*> & lts);
     INT recreate(ORBB * bb, bool is_verify = false,
-                 bool clustering = true); //Only avaible for multi-cluster machine
+                 //Only avaible for multi-cluster machine
+                 bool clustering = true);
 
     //Pick out registers which should not be used as allocable register
     //This is always depend on individual target machine.
@@ -718,7 +719,8 @@ public:
                                              IN List<REGFILE> & regfile_cand);
     void assignDesignatedRegFile(IN LifeTime * lt, REGFILE regfile,
                                  MOD ClustRegInfo cri[CLUST_NUM]);
-    void assignPreferAnticipation(MOD LifeTime * lt, IN RegFileAffinityGraph & rdg,
+    void assignPreferAnticipation(MOD LifeTime * lt,
+                                  IN RegFileAffinityGraph & rdg,
                                   IN ClustRegInfo expvalue[CLUST_NUM],
                                   MOD ClustRegInfo cri[CLUST_NUM],
                                   REGFILE best_rf, REGFILE better_rf);

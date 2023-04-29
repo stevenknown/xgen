@@ -270,7 +270,8 @@ public:
                             bool is_signed, OUT ORList & ors, MOD IOC * cont);
     virtual void buildCopy(CLUST clust, UNIT unit, SR * to, SR * from,
                            OUT ORList & ors);
-    virtual void buildMove(SR * to, SR * from, OUT ORList & ors, MOD IOC * cont);
+    virtual void buildMove(SR * to, SR * from, OUT ORList & ors,
+                           MOD IOC * cont);
     virtual void buildCopyPred(CLUST clust, UNIT unit, IN SR * to,
                                IN SR * from, IN SR * pd, OUT ORList & ors);
     virtual void buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,

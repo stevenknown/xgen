@@ -431,10 +431,10 @@ void RegFileAffinityGraph::dump()
         e = get_next_edge(ite)){
         ASSERTN(EDGE_info(e) != nullptr, ("Lost edge information"));
         fprintf(h,
-                "\nedge: { sourcename:\"%d\" targetname:\"%d\" %s label:\"%d\"}",
-                VERTEX_id(EDGE_from(e)), VERTEX_id(EDGE_to(e)),
-                m_is_direction? "" : "arrowstyle:none",
-                RDGEI_exp_val(EDGE_info(e)));
+            "\nedge: { sourcename:\"%d\" targetname:\"%d\" %s label:\"%d\"}",
+            VERTEX_id(EDGE_from(e)), VERTEX_id(EDGE_to(e)),
+            m_is_direction? "" : "arrowstyle:none",
+            RDGEI_exp_val(EDGE_info(e)));
     }
 
     fprintf(h, "\n}\n");
@@ -3054,7 +3054,8 @@ SR * LRA::genReload(IN LifeTime * lt, IN SR * oldsr,
         //Append a reload to bottom of bb.
         m_cg->buildReload(oldsr, spill_var, m_bb,    *ors);
         OR * ld_op = nullptr;
-        for (OR * tmp = ors->get_head(); tmp != nullptr; tmp = ors->get_next()) {
+        for (OR * tmp = ors->get_head();
+             tmp != nullptr; tmp = ors->get_next()) {
             if (OR_is_load(tmp)) {
                 ASSERTN(ld_op == nullptr, ("multi loads in reload?"));
                 ld_op = tmp;
@@ -3187,10 +3188,10 @@ void LRA::spillGSR(LifeTime * lt, LifeTimeMgr & mgr)
                 if (m_cg->isOpndSameWithResult(newsr, mgr.getOR(i),
                                                nullptr, nullptr)) {
                     //CASE: same operand with the result sr
-                    //sr10841 :- fmacuu_i sr97(p0) sr4452(d12) gsr445(d13) sr10841
-                    //    The sr belong to 'lt' is sr10841, after the reloading,
-                    //    rhs of this o will be replaced by newsr sr10845,
-                    //sr10845 :- fmacuu_i sr97(p0) sr4452(d12) gsr445(d13) sr10845
+                    //sr108 :- fmacuu sr97(p0) sr4452(d12) gsr445(d13) sr108
+                    //    The sr belong to 'lt' is sr108, after the reloading,
+                    //    rhs of this o will be replaced by newsr sr145,
+                    //sr145 :- fmacuu sr97(p0) sr4452(d12) gsr445(d13) sr145
                     //    Because the lhs of the o has same register with
                     //    the USE-SR that replaced, the same goes for the
                     //    result sr also.
@@ -3269,10 +3270,10 @@ void LRA::spillLSR(LifeTime * lt, LifeTimeMgr & mgr)
                 if (m_cg->isOpndSameWithResult(newsr, mgr.getOR(i),
                                                nullptr, nullptr)) {
                     //CASE: same operand with the result sr
-                    //SR10841 :- fmacuu_i SR97(p0) SR4452(d12) GSR445(d13) SR10841
+                    //SR10841 :- fmacuu SR97(p0) SR4452(d12) GSR445(d13) SR10841
                     //    The sr belong to 'lt' is SR10841, after the reloading,
-                    //    rhs of this o will be replaced by newsr SR10845,
-                    //SR10845 :- fmacuu_i SR97(p0) SR4452(d12) GSR445(d13) SR10845
+                    //    rhs of this o will be replaced by newsr SR145,
+                    //SR145 :- fmacuu SR97(p0) SR4452(d12) GSR445(d13) SR145
                     //    Because the lhs of the o has same register with the
                     //    USE-SR that replaced, the same goes for the result SR
                     //    also.
@@ -4077,24 +4078,26 @@ void LRA::selectReasonableSplitPos(MOD BSIdx * pos1, MOD BSIdx * pos2,
                     //    first pos:0
                     //    last pos:12, cond def
                     //
-                    //    sr268[A1] :- lw_m sr97(p0)[P1] gsr263(a4)[A1] (0x0)
-                    //    sr266(d10)[D2] :- lw_m sr97(p0)[P1] sr268[A1] (0x8)
-                    //    sr267(d2)[D1] :- lw_m sr97(p0)[P1] sr268[A1] (0xc)
+                    //    sr268[A1] :- lw_mem sr97(p0)[P1] gsr263(a4)[A1] (0x0)
+                    //    sr266(d10)[D2] :- lw_mem sr97(p0)[P1] sr268[A1] (0x8)
+                    //    sr267(d2)[D1] :- lw_mem sr97(p0)[P1] sr268[A1] (0xc)
                     //    ...
-                    //    gsr275(a3)[A1] gsr271(p7)[P1] gsr272(p6)[P1] :- sgtu_m sr270(p1)[P1] ...
+                    //    gsr275(a3)[A1] gsr271(p7)[P1] gsr272(p6)[P1] :-
+                    //        gtu_mem sr270(p1)[P1] ...
                     //
                     //The spliting candidate is GSR275.
                     //Although the operator at postition p2 is a DEF,
                     //but it was a conditional DEF! So we regard position p2 as
-                    //an USE in order to insert a reloading before the cond DEF and
-                    //add a spilling followed the FIRST position to supply the spill
-                    //temp memory location.
+                    //an USE in order to insert a reloading before the cond
+                    //DEF and add a spilling followed the FIRST position to
+                    //supply the spill temp memory location.
                     //result code can be:
                     //    FIRST position
                     //    sw_m gsr275(a3)[A1], gra_spill_temp
                     //    ...
-                    //    gsr275(a3)[A1] = lw_m gra_spill_temp
-                    //    gsr275(a3)[A1] gsr271(p7)[P1] gsr272(p6)[P1] :- sgtu_m sr270(p1)[P1] ...
+                    //    gsr275(a3)[A1] = lw_mem gra_spill_temp
+                    //    gsr275(a3)[A1] gsr271(p7)[P1] gsr272(p6)[P1] :-
+                    //        gtu_mem sr270(p1)[P1] ...
                     is_p2_def = false;
                 } else {
                     is_p2_def = true;
@@ -7536,7 +7539,8 @@ void LRA::findFollowedLoad(OUT ORList & followed_lds, IN OR * o,
 
     ORList succs;
     ddg.getSuccsByOrder(succs, o);
-    for (OR * succ = succs.get_head(); succ != nullptr; succ = succs.get_next()) {
+    for (OR * succ = succs.get_head();
+         succ != nullptr; succ = succs.get_next()) {
         //Reloading does not can be replaced by copy.
         if (hasMemSideEffect(succ)) {
             spill_can_be_removed = false;
@@ -8349,10 +8353,10 @@ bool LRA::perform()
     //e.g:
     //  orig code: usable registers of SR1008 is empty!
     //      [11] SR1008[D1] :- copy_i SR1093[D1]
-    //      [ 1] SR844[A1] :- lw_m SR1008[D1] (0x4)
+    //      [ 1] SR844[A1] :- lw_mem SR1008[D1] (0x4)
     //  after cyc-estimate: usable registers of SR1008 need to be recomputed.
     //      [11] SR1008[A1] :- copy_m SR1093[D1]
-    //      [ 1] SR844[A1] :- lw_m SR1008[A1] (0x4)
+    //      [ 1] SR844[A1] :- lw_mem SR1008[A1] (0x4)
     mgr->computeUsableRegs();
     ASSERT0(verifyUsableRegSet(*mgr));
 
