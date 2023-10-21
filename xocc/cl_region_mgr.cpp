@@ -44,10 +44,9 @@ Region * CLRegionMgr::allocRegion(REGION_TYPE rt)
 }
 
 
-bool CLRegionMgr::compileFuncRegion(xoc::Region * func, xgen::CGMgr * cgmgr,
-                                    xoc::OptCtx * oc)
+bool CLRegionMgr::compileFuncRegion(xoc::Region * func, xoc::OptCtx * oc)
 {
-    ASSERT0(func && cgmgr && oc);
+    ASSERT0(func && m_cgmgr && oc);
     ASSERT0(func->is_function() || func->is_program() || func->is_inner());
     START_TIMER_FMT(t, ("compileFuncRegion '%s'", func->getRegionName()));
     //Note we regard INNER region as FUNCTION region.
@@ -55,7 +54,7 @@ bool CLRegionMgr::compileFuncRegion(xoc::Region * func, xgen::CGMgr * cgmgr,
         return false;
     }
     if (xgen::g_do_cg) {
-        cgmgr->generate(func);
+        m_cgmgr->generate(func);
         if (g_dump_opt.isDumpMemUsage()) {
             func->dumpMemUsage();
         }
@@ -65,9 +64,116 @@ bool CLRegionMgr::compileFuncRegion(xoc::Region * func, xgen::CGMgr * cgmgr,
 }
 
 
-CLRegionMgr * allocCLRegionMgr()
+void CLRegionMgr::compileProgramRegion(CHAR const* fn, Region * rg)
 {
-    return new CLRegionMgr();
+    m_cgmgr->genAndPrtGlobalVariable(rg);
+
+    //Output GR.
+    if (!g_is_dumpgr) { return; }
+    ASSERT0(fn);
+    xcom::StrBuf b(64);
+    b.strcat(fn);
+    b.strcat(".hir.gr");
+    UNLINK(b.buf);
+    FILE * gr = ::fopen(b.buf, "a");
+    ASSERT0(gr);
+    rg->getLogMgr()->push(gr, "");
+    GRDump gd(rg);
+    gd.dumpRegion(true);
+    rg->getLogMgr()->pop();
+    ::fclose(gr);
+}
+
+
+void CLRegionMgr::compileFuncRegion(Region * rg)
+{
+    OptCtx * oc = getAndGenOptCtx(rg);
+    bool s = compileFuncRegion(rg, oc);
+    ASSERT0(s);
+    DUMMYUSE(s);
+    //rm->deleteRegion(rg); //Local region can be deleted if processed.
+}
+
+
+//Processing function unit one by one.
+//1. Construct Region.
+//2. Generate IR of Region.
+//3. Perform IR optimizaions
+//4. Generate assembly code.
+void CLRegionMgr::compileRegionSet(CHAR const* fn)
+{
+    ASSERT0(fn && m_cgmgr);
+    //Test mem leak.
+    //test_ru(this, m_cgmgr);
+    registerGlobalMD();
+    Region * program = nullptr; //There could be multiple program regions.
+    for (UINT i = 0; i < getNumOfRegion(); i++) {
+        Region * rg = getRegion(i);
+        if (rg == nullptr) { continue; }
+        if (rg->is_program()) {
+            program = rg;
+            compileProgramRegion(fn, rg);
+            continue;
+        }
+        if (rg->is_blackbox()) {
+            continue;
+        }
+        if (g_show_time) {
+            xoc::prt2C("\n\n==== Start Process Region(id:%d)'%s' ====\n",
+                       rg->id(), rg->getRegionName());
+        }
+        compileFuncRegion(rg);
+    }
+    ASSERT0(program);
+
+    OptCtx * oc = getAndGenOptCtx(program);
+    bool s = processProgramRegion(program, oc);
+    ASSERT0(s);
+    DUMMYUSE(s);
+    if (g_dump_opt.isDumpAll()) {
+        dumpPoolUsage();
+    }
+}
+
+
+void CLRegionMgr::dumpPoolUsage()
+{
+    #ifdef _DEBUG_
+    #define KB 1024
+    note(this, "\n== Situation of pool used==");
+    note(this, "\n ****** gerenal pool %lu KB ********",
+         (ULONG)smpoolGetPoolSize(g_pool_general_used)/KB);
+    note(this, "\n ****** tree pool %lu KB ********",
+         (ULONG)smpoolGetPoolSize(g_pool_tree_used)/KB);
+    note(this, "\n ****** st pool %lu KB ********",
+         (ULONG)smpoolGetPoolSize(g_pool_st_used)/KB);
+    note(this, "\n ****** total mem query size : %lu KB\n",
+         (ULONG)g_stat_mem_size/KB);
+    note(this, "\n===========================\n");
+    #endif
+}
+
+
+void CLRegionMgr::dumpProgramRegionGR(CHAR const* srcname)
+{
+    for (UINT i = 0; i < getNumOfRegion(); i++) {
+        Region * rg = getRegion(i);
+        if (rg == nullptr) { continue; }
+        if (!rg->is_program()) { continue; }
+        //r->dump(true);
+        ASSERT0(srcname);
+        xcom::StrBuf b(64);
+        b.strcat(srcname);
+        b.strcat(".gr");
+        UNLINK(b.buf);
+        FILE * gr = ::fopen(b.buf, "a");
+        ASSERT0(gr);
+        rg->getLogMgr()->push(gr, b.buf);
+        GRDump gd(rg);
+        gd.dumpRegion(true);
+        rg->getLogMgr()->pop();
+        ::fclose(gr);
+    }
 }
 
 } //namespace xocc

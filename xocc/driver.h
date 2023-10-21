@@ -32,6 +32,33 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace xocc {
 
+class DeclAndVarMap {
+    COPY_CONSTRUCTOR(DeclAndVarMap);
+protected:
+    xoc::RegionMgr * m_rm;
+    xoc::TypeMgr * m_tm;
+    xoc::VarMgr * m_vm;
+    xcom::TMap<xfe::Decl const*, xoc::Var*> m_decl2var_map;
+    xcom::TMap<xoc::Var*, xfe::Decl const*> m_var2decl_map;
+protected:
+    //Transforming Decl into Var.
+    //decl: variable declaration in front end.
+    xoc::Var * addDecl(Decl const* decl);
+    xoc::Type const* makeType(xfe::Decl const* decl);
+    void scanDeclList(Scope const* s, Decl * decllist);
+public:
+    DeclAndVarMap(xoc::RegionMgr * rm) : m_rm(rm)
+    { m_tm = m_rm->getTypeMgr(); m_vm = m_rm->getVarMgr(); }
+
+    xoc::Var * mapDecl2Var(xfe::Decl const* decl) const
+    { return m_decl2var_map.get(decl); }
+    xfe::Decl const* mapVar2Decl(Var * var) const
+    { return m_var2decl_map.get(var); }
+
+    //Scan frontend score info and initialize XOC variable.
+    void scanAndInitVar(xfe::Scope const* s);
+};
+
 //Exported Variables, only used in FE.
 //If one requires to export variables, or types to other
 //module, please put them in fexp.h.
@@ -45,14 +72,34 @@ extern CHAR const* g_output_file_name; //record the ASM file name.
 extern CHAR const* g_xocc_version; //recod the xocc.exe version.
 extern CHAR const* g_dump_file_name;
 extern bool g_is_dumpgr;
+extern bool g_is_dump_option;
 
-bool compileCFile(CHAR const* fn);
-bool compileGRFile(CHAR const* fn);
-bool compileGRFileList();
-bool compileCFileList();
-xoc::Var * mapDecl2VAR(xfe::Decl * decl);
-xfe::Decl * mapVAR2Decl(xoc::Var * var);
-void resetMapBetweenVARandDecl(xoc::Var * var);
+class Compiler {
+    COPY_CONSTRUCTOR(Compiler);
+protected:
+    CLRegionMgr * allocCLRegionMgr();
+
+    bool compileCFile(CHAR const* fn);
+    bool compileGRFile(CHAR const* fn);
+    FILE * createAsmFileHandler(CHAR const* fn);
+
+    void destructPRSSAForAllRegion(RegionMgr * rm);
+
+    CLRegionMgr * initRegionMgr();
+    void initCompile(CHAR const* fn, OUT CLRegionMgr ** rm,
+                     OUT FILE ** asmh, OUT CGMgr ** cgmgr,
+                     OUT TargInfo ** ti);
+
+    void finiCompile(CLRegionMgr * rm, FILE * asmh, CGMgr * cgmgr,
+                     TargInfo * ti);
+
+    UINT runFrontEnd(RegionMgr * rm, CParser & parser);
+public:
+    Compiler() {}
+    bool compileGRFileList();
+    bool compileCFileList();
+    bool compile();
+};
 
 } //namespace xocc
 #endif

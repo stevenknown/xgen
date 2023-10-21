@@ -85,7 +85,7 @@ protected:
         ASSERTN(m_pool != 0,("need graph pool!!"));
         void * p = smpoolMalloc(size, m_pool);
         ASSERT0(p);
-        ::memset(p,0,size);
+        ::memset((void*)p,0,size);
         return p;
     }
     virtual OR * selectBestOR(ORTab & cand_tab, SLOT slot);
@@ -150,9 +150,8 @@ public:
     //Return true if there are ORs issued, and ready-list should
     //be recomputed.
     //stepddg: computing ready instructions step by step during scheduling.
-    //visited: bitset that used to update ready-or-list. It can be nullptr if you
-    //         are not going to update ready-list.
-    //
+    //visited: bitset that used to update ready-or-list. It can be nullptr
+    //         if you are not going to update ready-list.
     //About fill branch shadow:
     //    When GIS is calling it, don't try to schedule the operation
     //    that has moved from a different block that do not

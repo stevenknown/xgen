@@ -38,10 +38,9 @@ namespace xgen {
 void Section::dump(CG const* cg)
 {
     if (!cg->getRegion()->isLogMgrInit()) { return; }
-    xoc::TypeMgr const* tm = cg->getTypeMgr();
     xcom::StrBuf buf(64);
     note(cg->getRegion(), "\nSection:size:%d,", (UINT)SECT_size(this));
-    note(cg->getRegion(), "%s", sect_var->dump(buf, tm));
+    note(cg->getRegion(), "%s", sect_var->dump(buf, cg->getVarMgr()));
     note(cg->getRegion(), "\n  VarLayOut:");
     List<xoc::Var const*> layout;
     for (xoc::Var const* v = var_list.get_head();
@@ -72,7 +71,7 @@ void Section::dump(CG const* cg)
         buf.clean();
         ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
         note(cg->getRegion(), "\n  (%u)%s",
-             (UINT)vd->getOfst(), v->dump(buf, tm));
+             (UINT)vd->getOfst(), v->dump(buf, cg->getVarMgr()));
     }
 }
 //END Section
@@ -84,12 +83,12 @@ void Section::dump(CG const* cg)
 void StackSection::dump(CG const* cg)
 {
     if (!cg->getRegion()->isLogMgrInit()) { return; }
-    xoc::TypeMgr const* tm = cg->getTypeMgr();
+    xoc::VarMgr const* vm = cg->getVarMgr();
     xcom::StrBuf buf(64);
     FILE * h = cg->getRegion()->getLogMgr()->getFileHandler();
     fprintf(h, "\nSection:size:%d,",
             (UINT)SECT_size(this) + cg->getMaxArgSectionSize());
-    fprintf(h, "%s", sect_var->dump(buf, tm));
+    fprintf(h, "%s", sect_var->dump(buf, vm));
 
     fprintf(h, "\n  VarLayOut:");
     List<xoc::Var const*> layout;
@@ -122,7 +121,7 @@ void StackSection::dump(CG const* cg)
         buf.clean();
         fprintf(h, "\n  (%u)%s",
                 (UINT)vd->getOfst() + cg->getMaxArgSectionSize(),
-                v->dump(buf, tm));
+                v->dump(buf, vm));
     }
 
     if (cg->getMaxArgSectionSize() > 0) {

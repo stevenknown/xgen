@@ -25,31 +25,30 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-author: Su Zhenyu
 @*/
-#ifndef __ARM_H__
-#define __ARM_H__
+#ifndef _ARM_ELF_MGR_H_
+#define _ARM_ELF_MGR_H_
 
-#include "../arm/arm_targinfo.h"
-#include "../arm/arm_sr.h"
-#include "../arm/arm_or.h"
-#include "../arm/arm_ramgr.h"
-#include "../arm/arm_lra.h"
-#include "../arm/arm_sim.h"
-#include "../arm/arm_lis.h"
-#include "../arm/arm_passmgr.h"
-#include "../arm/arm_region.h"
-#include "../arm/arm_region_mgr.h"
-#include "../arm/armir2or.h"
-#include "../arm/armasmprinter.h"
-#include "../arm/arm_cg.h"
-#include "../arm/arm_cgmgr.h"
-#include "../arm/arm_var.h"
-#include "../arm/arm_dumgr.h"
-#include "../arm/arm_scalar_opt.h"
-#include "../arm/arm_simp.h"
-#include "../arm/arm_refine.h"
-#include "../arm/arm_ddg.h"
+class ARMELFMgr : public elf::ELFMgr {
+    COPY_CONSTRUCTOR(ARMELFMgr);
+public:
+    xoc::Region * m_rg;
+public:
+    ARMELFMgr(xoc::Region * rg) { m_rg = rg; }
+    virtual ~ARMELFMgr();
+protected:
+    virtual void allocTargInfo();
+
+    //Get region of ARM architecture.
+    virtual Region * getRegion() { return m_rg; }
+
+    //Get relocation addend value of relocation type for ARM arch.
+    //Where param "index" is the index number of the current relocation entry
+    //in m_func_relocation.
+    virtual UINT getRelocAddend(UINT index);
+public:
+    //Set region using given region pointer.
+    void setRegion(Region * rg) { m_rg = rg; }
+};
 
 #endif

@@ -39,12 +39,9 @@ INT main(INT argc, CHAR const* argv[])
         fflush(stdout);
         return 4;
     }
-    bool compile_failed = false;
-    if (!xocc::compileGRFileList()) {
-        compile_failed = true;
-    }
-    if (!xocc::compileCFileList()) {
-        compile_failed = true;
-    }
-    return compile_failed ? 3 : 0;
+    xocc::Compiler compiler;
+    bool succ = compiler.compile();
+    return succ ? 0 : 3;
 }
+
+

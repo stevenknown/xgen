@@ -90,8 +90,8 @@ public:
 public:
     IOC()
     {
-        ::memset(&u1, 0, sizeof(u1));;
-        ::memset(&u2, 0, sizeof(u2));;
+        ::memset((void*)&u1, 0, sizeof(u1));;
+        ::memset((void*)&u2, 0, sizeof(u2));;
         pred = nullptr;
         addr = nullptr;
         orcode = OR_UNDEF;
@@ -103,8 +103,8 @@ public:
 
     virtual void clean()
     {
-        ::memset(&u1, 0, sizeof(u1));;
-        ::memset(&u2, 0, sizeof(u2));;
+        ::memset((void*)&u1, 0, sizeof(u1));;
+        ::memset((void*)&u2, 0, sizeof(u2));;
         pred = nullptr;
         addr = nullptr;
         orcode = OR_UNDEF;
@@ -194,6 +194,10 @@ protected:
     //Load constant string address into register.
     void convertLoadConstStr(IR const* ir, OUT RecycORList & ors,
                              MOD IOC * cont);
+
+    //Load constant MC type value into register.
+    virtual void convertLoadConstMC(IR const* ir, OUT RecycORList & ors,
+                                    MOD IOC * cont);
 
     //Load constant value into register.
     void convertLoadConst(IR const* ir, OUT RecycORList & ors, MOD IOC * cont);

@@ -30,57 +30,63 @@ author: Su Zhenyu
 @*/
 #include "../xgen/xgeninc.h"
 
-//
-//START ARMSR
-//
-//Return SR name during print assembly file.
-CHAR const* ARMSR::getAsmName(StrBuf & buf, CG const* cg) const
+CHAR const* ARMIntSR::getAsmName(StrBuf & buf, CG const* cg) const
 {
-    switch (SR_code(this)) {
-    case SR_INT_IMM:
-        buf.strcat("#");
-        return SR::getAsmName(buf, cg);
-    case SR_VAR:
-        if (SR_var_ofst(this) != 0) {
-            buf.strcat("%s+%d", SYM_name(SR_var(this)->get_name()),
-                       SR_var_ofst(this));
-            return buf.buf;
-        } else {
-            buf.strcat("%s", SYM_name(SR_var(this)->get_name()));
-            return buf.buf;
-        }
-    case SR_REG:
-        if (is_sp()) {
-            buf.strcat("sp");
-            return buf.buf;
-        }
-        //fall through
-    default:
-        return SR::getAsmName(buf, cg);
+    ASSERT0(getCode()== SR_INT_IMM);
+    buf.strcat("#");
+    return SR::getAsmName(buf, cg);
+}
+
+
+CHAR const* ARMVarSR::getAsmName(StrBuf & buf, CG const* cg) const
+{
+    ASSERT0(getCode()== SR_VAR);
+    if (SR_var_ofst(this) != 0) {
+        buf.strcat("%s+%d", SYM_name(SR_var(this)->get_name()),
+                   SR_var_ofst(this));
+        return buf.buf;
+    }
+    buf.strcat("%s", SYM_name(SR_var(this)->get_name()));
+    return buf.buf;
+}
+
+
+CHAR const* ARMRegSR::getAsmName(StrBuf & buf, CG const* cg) const
+{
+    ASSERT0(getCode()== SR_REG);
+    if (is_sp()) {
+        buf.strcat("sp");
+        return buf.buf;
+    }
+    return SR::getAsmName(buf, cg);
+}
+
+
+CHAR const* ARMRegSR::get_name(StrBuf & buf, CG const* cg) const
+{
+    ASSERT0(getCode() == SR_REG);
+    ////Print physical register id and register file.
+    //if (getPhyReg() != REG_UNDEF) {
+    //    buf.strcat("(%s)", tmGetRegName(getPhyReg()));
+    //}
+    //if (getRegFile() != RF_UNDEF) {
+    //    buf.strcat("(%s)", tmGetRegFileName(SR_regfile(this)));
+    //}
+    return SR::get_name(buf, cg);
+}
+
+
+//
+//START ARMSRMgr
+//
+SR * ARMSRMgr::allocSR(SR_CODE c)
+{
+    switch (c) {
+    case SR_REG: return new ARMRegSR();
+    case SR_INT_IMM: return new ARMIntSR();
+    case SR_VAR: return new ARMVarSR();
+    default: return SRMgr::allocSR(c);
     }
     return nullptr;
 }
-
-
-//Return symbol register name and info, used by tracing routines.
-//'buf': output string buffer.
-CHAR const* ARMSR::get_name(StrBuf & buf, CG const* cg) const
-{
-    switch (SR_code(this)) {
-    case SR_REG: {
-        return SR::get_name(buf, cg);
-
-        //Print physical register id and register file.
-        if (getPhyReg() != REG_UNDEF) {
-            buf.strcat("(%s)", tmGetRegName(getPhyReg()));
-        }
-        if (getRegFile() != RF_UNDEF) {
-            buf.strcat("(%s)", tmGetRegFileName(SR_regfile(this)));
-        }
-        break;
-    }
-    default: return SR::get_name(buf, cg);
-    }
-    return buf.buf;
-}
-//END ARMSR
+//END ARMSRMgr

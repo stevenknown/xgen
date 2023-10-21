@@ -123,7 +123,7 @@ bool ARMScalarOpt::perform(OptCtx & oc)
     ASSERT0(xoc::verifyMDDUChain(m_rg, oc));
     ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
     ASSERT0(m_rg->getCFG()->verify());
-    ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg));
+    ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg, oc));
     ASSERT0(MDSSAMgr::verifyMDSSAInfo(m_rg, oc));
     ASSERT0(m_cfg->verifyRPO(oc));
     ASSERT0(m_cfg->verifyLoopInfo(oc));
@@ -157,7 +157,7 @@ bool ARMScalarOpt::perform(OptCtx & oc)
             ASSERT0(xoc::verifyMDDUChain(m_rg, oc));
             ASSERT0(verifyIRandBB(m_rg->getBBList(), m_rg));
             ASSERT0(m_rg->getCFG()->verify());
-            ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg));
+            ASSERT0(PRSSAMgr::verifyPRSSAInfo(m_rg, oc));
             ASSERT0(MDSSAMgr::verifyMDSSAInfo(m_rg, oc));
             ASSERT0(m_cfg->verifyRPO(oc));
             ASSERT0(m_cfg->verifyLoopInfo(oc));

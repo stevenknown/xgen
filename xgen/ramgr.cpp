@@ -93,7 +93,7 @@ void * RaMgr::xmalloc(INT size)
     ASSERTN(m_pool != nullptr, ("need graph pool!!"));
     void * p = smpoolMalloc(size, m_pool);
     if (p == nullptr) { return nullptr; }
-    ::memset(p, 0, size);
+    ::memset((void*)p, 0, size);
     return p;
 }
 
@@ -198,7 +198,7 @@ void RaMgr::dumpGlobalVAR2OR()
     for (xoc::Var const* var = m_var2or_map.get_first(iter, &ref_bb_list);
          var != nullptr; var = m_var2or_map.get_next(iter, &ref_bb_list)) {
         fprintf(h, "\n\tVAR%d", i++);
-        fprintf(h, "\n\t\t%s", var->dump(buf, m_rg->getTypeMgr()));
+        fprintf(h, "\n\t\t%s", var->dump(buf, m_rg->getVarMgr()));
 
         ASSERTN(ref_bb_list, ("Miss info"));
         for (ORBBUnit * bu = ref_bb_list->get_head(); bu;

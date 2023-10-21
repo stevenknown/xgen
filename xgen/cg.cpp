@@ -88,6 +88,7 @@ CG::CG(xoc::Region * rg, CGMgr * cgmgr): m_ip_mgr(self())
     m_rg = rg;
     m_cgmgr = cgmgr;
     m_tm = rg->getTypeMgr();
+    m_vm = rg->getVarMgr();
     m_or_bb_idx = ORBBID_UNDEF + 1; //initialize to be the id of first BB.
     m_or_bb_mgr = nullptr;
     m_or_mgr = cgmgr->getORMgr();
@@ -370,7 +371,7 @@ void CG::buildBinaryOR(IR_CODE code, SR * opnd0, SR * opnd1, bool is_signed,
                        OUT ORList & ors, MOD IOC * cont)
 {
     //Result's type-size might be not same as opnd. e,g: a < b,
-    //result type is BOOL, opnd type is INT.
+    //result type is bool, opnd type is INT.
     OR_CODE orty = mapIRCode2ORCode(code, opnd0->getByteSize(),
                                     opnd0, opnd1, is_signed);
     ASSERTN(orty != OR_UNDEF, ("mapIRCode2ORCode() should be overloaded"));
@@ -793,7 +794,6 @@ void CG::buildGeneralLoad(IN SR * val, HOST_INT ofst, bool is_signed,
         cont->set_reg(0, res);
         return;
     }
-
     ASSERT0(val->is_var() || val->is_reg());
     ASSERTN(cont->getMemByteSize() > 0, ("illegal/redundant mem size"));
     if (cont->getMemByteSize() > GENERAL_REGISTER_SIZE * 2) {
@@ -1352,7 +1352,7 @@ void CG::calcOfstByImm(SR * ofst, HOST_INT imm)
     }
     if (ofst->is_var()) {
         HOST_INT org_ofst = SR_var_ofst(ofst);
-        ASSERT0(ofst >= 0);
+        ASSERT0(ofst);
         org_ofst += imm;
         ASSERTN(org_ofst, ("variable offset should be positive"));
         SR_var_ofst(ofst) = (TMWORD)org_ofst;
@@ -1478,7 +1478,7 @@ void CG::dumpVar() const
         for (m_bb_level_internal_var_list.get_head(&it); it != nullptr;
              m_bb_level_internal_var_list.get_next(&it)) {
             Var * v = it->val();
-            v->dump(m_tm);
+            v->dump(m_vm);
         }
     }
 
@@ -1489,7 +1489,7 @@ void CG::dumpVar() const
         for (m_func_level_internal_var_list.get_head(&it2); it2 != nullptr;
              m_func_level_internal_var_list.get_next(&it2)) {
             Var * v = it2->val();
-            v->dump(m_tm);
+            v->dump(m_vm);
         }
     }
 }
@@ -2332,7 +2332,7 @@ bool CG::passArgInMemory(SR * argaddr, UINT * argsz,
     UINT total_size = *argsz;
     IOC tc;
 
-    //CG compute the ADDR for data rather than generate load operation.
+    //CG compute the ADDR for data rather than generating load operation.
     //Get the address of LoadValue.
     ASSERT0(argaddr);
 
@@ -2801,7 +2801,6 @@ SR * CG::genReg(UINT bytes_size)
         first = getSRVecMgr()->genSRVec(ls);
         return first;
     }
-
     first = getSRMgr()->genSR(SR_REG);
     SR_sym_reg(first) = ++m_reg_count;
     setMapSymbolReg2SR(SR_sym_reg(first), first);
@@ -2922,7 +2921,7 @@ SR * CG::genIntImm(HOST_INT val, bool is_signed)
 
 
 //Generate SR that indicates float point.
-SR * CG::genFpImm(HOST_FP val)
+SR * CG::genFPImm(HOST_FP val)
 {
     SR * sr = getSRMgr()->genSR(SR_FP_IMM);
     SR_fp_imm(sr) = val;

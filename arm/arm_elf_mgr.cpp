@@ -25,31 +25,34 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-author: Su Zhenyu
 @*/
-#ifndef __ARM_H__
-#define __ARM_H__
+#include "../elf/elfinc.h"
+#include "../opt/cominc.h"
+#include "arm_elf_targinfo.h"
+#include "arm_elf_mgr.h"
 
-#include "../arm/arm_targinfo.h"
-#include "../arm/arm_sr.h"
-#include "../arm/arm_or.h"
-#include "../arm/arm_ramgr.h"
-#include "../arm/arm_lra.h"
-#include "../arm/arm_sim.h"
-#include "../arm/arm_lis.h"
-#include "../arm/arm_passmgr.h"
-#include "../arm/arm_region.h"
-#include "../arm/arm_region_mgr.h"
-#include "../arm/armir2or.h"
-#include "../arm/armasmprinter.h"
-#include "../arm/arm_cg.h"
-#include "../arm/arm_cgmgr.h"
-#include "../arm/arm_var.h"
-#include "../arm/arm_dumgr.h"
-#include "../arm/arm_scalar_opt.h"
-#include "../arm/arm_simp.h"
-#include "../arm/arm_refine.h"
-#include "../arm/arm_ddg.h"
+ARMELFMgr::~ARMELFMgr()
+{
+    m_rg = nullptr;
+    m_func_size.clean();
+    m_func_code.clean();
+    m_func_relocation.clean();
+}
 
-#endif
+
+void ARMELFMgr::allocTargInfo()
+{
+    ASSERT0(m_elf_hdr.e_machine == EM_ARM || m_elf_hdr.e_machine == EM_AARCH64);
+    m_ti = new ARMELFTargInfo(this);
+}
+
+
+UINT ARMELFMgr::getRelocAddend(UINT index)
+{
+    switch (m_func_relocation[index].reloc_type) {
+    case R_ARM_THM_CALL:
+    case R_ARM_CALL: return elf::RELOC_ADDEND_GPDISP;
+    default: ASSERTN(0, ("TODO"));
+    }
+    return elf::RELOC_ADDEND_DEFAULT;
+}

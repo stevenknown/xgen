@@ -39,7 +39,7 @@ void * RegFileGroup::xmalloc(INT size)
     ASSERTN(m_pool,("need graph pool!!"));
     void * p = smpoolMalloc(size, m_pool);
     ASSERT0(p);
-    ::memset(p,0,size);
+    ::memset((void*)p,0,size);
     return p;
 }
 

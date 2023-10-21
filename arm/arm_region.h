@@ -42,7 +42,6 @@ protected:
 public:
     ARMRegion(REGION_TYPE rt, RegionMgr * rm) : Region(rt, rm) {}
     virtual PassMgr * allocPassMgr();
-    bool simplifyToPRmode(OptCtx & oc);
     virtual bool HighProcess(OptCtx & oc);
     virtual bool MiddleProcess(OptCtx & oc);
     virtual bool process(OptCtx * oc)

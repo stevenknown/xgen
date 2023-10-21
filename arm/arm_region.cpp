@@ -95,49 +95,6 @@ void ARMRegion::simplify(OptCtx & oc)
 }
 
 
-//Test code, to force generating as many IR stmts as possible.
-//g_is_lower_to_pr_mode = true;
-bool ARMRegion::simplifyToPRmode(OptCtx & oc)
-{
-    ASSERT0(getCFG()->verifyRPO(oc));
-    ASSERT0(getPassMgr());
-    BBList * bbl = getBBList();
-    if (bbl->get_elem_count() == 0) {
-        return true;
-    }
-    SimpCtx simp(&oc);
-    simp.setSimpCFS();
-    simp.setSimpArray();
-    simp.setSimpSelect();
-    simp.setSimpLandLor();
-    simp.setSimpLnot();
-    simp.setSimpILdISt();
-    simp.setSimpToLowestHeight();
-    ASSERT0(verifyIRandBB(getBBList(), this));
-    ASSERT0(verifyMDDUChain(this, oc));
-    getIRSimp()->simplifyBBlist(bbl, &simp);
-    if (SIMP_need_recon_bblist(&simp) && g_cst_bb_list &&
-        reconstructBBList(oc)) {
-        ASSERTN(g_do_cfg, ("construct BB list requires CFG"));
-        IRCFG * cfg = getCFG();
-        ASSERT0(cfg);
-        cfg->rebuild(oc);
-
-        //Remove empty bb when cfg rebuilt because
-        //rebuilding cfg may generate redundant empty bb.
-        //It disturbs the computation of entry and exit.
-        CfgOptCtx ctx(oc);
-        cfg->removeEmptyBB(ctx);
-
-        //Compute entry bb, exit bb while cfg rebuilt.
-        cfg->computeExitList();
-        ASSERT0(cfg->verify());
-        cfg->performMiscOpt(oc);
-    }
-    return true;
-}
-
-
 bool ARMRegion::ARMHighProcess(OptCtx & oc)
 {
     SimpCtx simp(&oc);
@@ -405,13 +362,10 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
 bool ARMRegion::MiddleProcess(OptCtx & oc)
 {
     //Must and May MD reference should be available now.
-    if (g_is_lower_to_pr_mode) {
-        simplifyToPRmode(oc);
-    } else {
-        Region::MiddleProcess(oc);
-        if (g_do_cp) {
-            getPassMgr()->registerPass(PASS_CP)->perform(oc);
-        }
+    //First prefer to perform higher level analysis and optization.
+    Region::MiddleProcess(oc);
+    if (g_do_cp) {
+        getPassMgr()->registerPass(PASS_CP)->perform(oc);
     }
     if (g_do_cfg_dom && !oc.is_dom_valid()) {
         getCFG()->computeDomAndIdom(oc);
@@ -420,6 +374,9 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         getCFG()->computePdomAndIpdom(oc);
     }
     MiddleProcessAggressiveAnalysis(oc);
+
+    //May be generated new code that is not satified lowest or PR mode.
+    //Gurrantee IR has been simplified as user demand.
     performSimplify(oc);
     if (g_opt_level > OPT_LEVEL0) {
         //Do scalar optimizations after simplification.
@@ -430,6 +387,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     ASSERT0(verifyIRandBB(getBBList(), this));
     ASSERT0(verifyMDDUChain(this, oc));
 
+    //Destruct SSA mode and resource.
     PRSSAMgr * ssamgr = (PRSSAMgr*)getPRSSAMgr();
     if (ssamgr != nullptr && ssamgr->is_valid()) {
         //NOTE: ssa destruction might violate classic DU chain.
@@ -447,9 +405,9 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     }
     ASSERT0(verifyMDDUChain(this, oc));
 
-    ///////////////////////////////////////////////////
-    //DO NOT DO OPTIMIZATION ANY MORE AFTER THIS LINE//
-    ///////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    //DO NOT DO OPTIMIZATION ANY MORE AFTER THIS LINE                         //
+    ////////////////////////////////////////////////////////////////////////////
 
     //Finial refine to insert CVT if necessary when compile C/C++.
     //Insert int32->int64, int32<->f32, int32<->f64, int64<->f32, int64<->f64
@@ -458,12 +416,14 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     RC_insert_cvt(rf) = g_do_refine_auto_insert_cvt;
     Refine * refine = (Refine*)getPassMgr()->registerPass(PASS_REFINE);
     refine->refineBBlist(getBBList(), rf);
+    #ifdef REF_TARGMACH_INFO
     if (g_do_lsra) {
         LinearScanRA * lsra = (LinearScanRA*)getPassMgr()->registerPass(
             PASS_LINEAR_SCAN_RA);
         lsra->setApplyToRegion(false);
         lsra->perform(oc);
     }
+    #endif
     return true;
 }
 

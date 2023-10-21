@@ -116,7 +116,7 @@ public:
         opnd_num = opndnum;
         res_num = resnum;
         if (opndnum + resnum > 0) {
-            ::memset(&sd_group, 0, (resnum + opndnum) * sizeof(SRDesc*));
+            ::memset((void*)&sd_group, 0, (resnum + opndnum) * sizeof(SRDesc*));
         }
     }
 

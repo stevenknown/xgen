@@ -27,6 +27,12 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @*/
 #include "xoccinc.h"
+#include "../xgen/xgeninc.h"
+#include "errno.h"
+#include "../opt/util.h"
+#include "../reader/grreader.h"
+#include "../opt/comopt.h"
+#include "../mach/machinc.h"
 
 namespace xocc {
 
@@ -72,6 +78,7 @@ static void disable_opt(INT opt_level)
         xoc::g_do_dce = false;
         xoc::g_do_dce_aggressive = false;
         xoc::g_do_licm = false;
+        xoc::g_do_gcse = false;
         xoc::g_do_rp = false;
         xoc::g_do_lftr = false;
         xoc::g_infer_type = false;
@@ -106,6 +113,7 @@ static bool process_opt(INT argc, CHAR const* argv[], INT & i)
         xoc::g_do_cp = true;
         xoc::g_do_dce = true;
         xoc::g_do_licm = true;
+        xoc::g_do_gcse = true;
         xoc::g_do_rce = true;
         xoc::g_do_rp = true;
         xoc::g_do_prssa = true;
@@ -120,6 +128,7 @@ static bool process_opt(INT argc, CHAR const* argv[], INT & i)
         xoc::g_do_dce = true;
         xoc::g_do_dce_aggressive = true;
         xoc::g_do_licm = true;
+        xoc::g_do_gcse = true;
         xoc::g_do_rce = true;
         xoc::g_do_rp = true;
         xoc::g_do_lftr = true;
@@ -134,6 +143,7 @@ static bool process_opt(INT argc, CHAR const* argv[], INT & i)
         xoc::g_opt_level = SIZE_OPT;
         xoc::g_do_dce = true;
         xoc::g_do_licm = true;
+        xoc::g_do_gcse = true;
         xoc::g_do_rce = true;
         xoc::g_do_rp = true;
         xoc::g_do_prssa = true;
@@ -278,6 +288,11 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "show compilation time", },
     { "licm", &xoc::g_do_licm,
       "enable loop-invariant-code-motion optimization", },
+    { "licm_no_guard", &xoc::g_do_licm_no_guard,
+      "enable loop-invariant-code-motion optimization "
+      "without inserting loop guard", },
+    { "gcse", &xoc::g_do_gcse,
+      "enable global-common-subexpression-elimination optimization", },
     { "rp", &xoc::g_do_rp,
       "enable register-promotion optimization", },
     { "cp", &xoc::g_do_cp,
@@ -333,7 +348,11 @@ BoolOption::Desc const BoolOption::option_desc[] = {
     { "refine_duchain", &xoc::g_do_refine_duchain,
       "enable refine-duchain optimization", },
     { "lsra", &xoc::g_do_lsra,
-       "enable linear-scan-register-allocation", },
+      "enable linear-scan-register-allocation", },
+    #ifdef REF_TARGMACH_INFO
+    { "migen", &mach::g_do_migen,
+      "enable machine-instruction generation", },
+    #endif
 };
 
 
@@ -364,6 +383,8 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump register-promotion", },
     { "licm", &xoc::g_dump_opt.is_dump_licm,
       "dump loop-invariant-code-motion", },
+    { "gcse", &xoc::g_dump_opt.is_dump_gcse,
+      "dump global-common-subexpression-elimination", },
     { "dumgr", &xoc::g_dump_opt.is_dump_dumgr,
       "dump classic def-use information", },
     { "prssa", &xoc::g_dump_opt.is_dump_prssamgr,
@@ -398,12 +419,14 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump all compiler information", },
     { "nothing", &xoc::g_dump_opt.is_dump_nothing,
       "disable dump", },
-    { "gr", &g_is_dumpgr,
+    { "gr", &xocc::g_is_dumpgr,
       "output GR language according region information", },
     { "irid", &xoc::g_dump_opt.is_dump_ir_id,
       "dump IR's id", },
     { "lsra", &xoc::g_dump_opt.is_dump_lsra,
       "dump linear-scan-register-allocation", },
+    { "option", &xocc::g_is_dump_option,
+      "dump all compiling options", },
 };
 
 
@@ -686,6 +709,7 @@ static void inferOption()
     xgen::g_xgen_dump_opt.is_dump_nothing = xoc::g_dump_opt.isDumpNothing();
 
     if (xoc::g_dump_opt.isDumpAll()) {
+        xocc::g_is_dump_option = true;
         xoc::g_dump_opt.is_dump_before_pass = true;
 
         //IR's id may changed in different compilation.

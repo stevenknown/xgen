@@ -40,8 +40,6 @@ class CLRegion : public ARMRegion {
 public:
     CLRegion(REGION_TYPE rt, RegionMgr * rm) : ARMRegion(rt, rm) {}
     virtual ~CLRegion() { destroy(); }
-
-    virtual void destroy();
 };
 
 } //namespace xocc

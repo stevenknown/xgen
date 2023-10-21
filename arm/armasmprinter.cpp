@@ -275,7 +275,7 @@ void ARMAsmPrinter::printBss(FILE * asmh, Section & sect)
 
         CHAR const* p = SYM_name(v->get_name());
         buf.clean();
-        fprintf(asmh, "\n#%s", v->dump(buf, m_tm));
+        fprintf(asmh, "\n#%s", v->dump(buf, getVarMgr()));
         fprintf(asmh, "\n.common %s, %u, %u",
                 p, v->getByteSize(m_tm), VAR_align(v));
     }
@@ -340,7 +340,7 @@ void ARMAsmPrinter::printData(FILE * asmh, Section & sect)
         } else {
             buf.clean();
             fprintf(asmh, "\n.align %d", computeAlignIsPowerOf2(v));
-            fprintf(asmh, "\n#%s", v->dump(buf, m_tm));
+            fprintf(asmh, "\n#%s", v->dump(buf, getVarMgr()));
             fprintf(asmh, "\n%s:", name);
             fprintf(asmh, "\n.byte ");
             for (UINT i = 0; i < v->getByteSize(m_tm); i++) {

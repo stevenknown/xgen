@@ -84,7 +84,7 @@ static void * xmalloc(IssuePackageMgr * ipmgr, size_t size)
     ASSERT0(ipmgr);
     void * p = smpoolMalloc(size, ipmgr->get_pool());
     ASSERT0(p);
-    ::memset(p, 0, size);
+    ::memset((void*)p, 0, size);
     return p;
 }
 

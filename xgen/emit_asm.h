@@ -41,15 +41,18 @@ class AsmPrinter {
     COPY_CONSTRUCTOR(AsmPrinter);
 protected:
     CG const* m_cg;
+    Region const* m_rg;
     CGMgr * m_cgmgr;
     xoc::TypeMgr const* m_tm;
+    xoc::VarMgr const* m_vm;
     AsmPrinterMgr * m_asmprtmgr;
-
 public:
     AsmPrinter(CG const* cg, AsmPrinterMgr * apmgr);
     virtual ~AsmPrinter() {}
 
-    Region * getRegion() const;
+    Region const* getRegion() const { return m_rg; }
+    VarMgr const* getVarMgr() const { return m_vm; }
+    CG const* getCG() const { return m_cg; }
 
     virtual CHAR * printOR(OR * o, xcom::StrBuf & buf)
     {

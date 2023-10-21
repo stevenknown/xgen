@@ -35,6 +35,7 @@ class ARMTargInfo : public TargInfo {
 public:
     virtual UINT getNumOfAllocableIntegerRegister() const { return 16; }
     virtual UINT getNumOfAllocableFloatRegister() const { return 16; }
+    virtual UINT getNumOfGroup() const { return 1; }
     virtual UINT getNumOfThread() const { return 1; }
 
     //Return byte size of data cache.

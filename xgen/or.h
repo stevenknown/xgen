@@ -576,7 +576,7 @@ public:
 
 //This class defined ORList that often used as shared object during functions.
 //If an preemptive object is set as 'occupied', it can not be used for new
-//propuse until it released.
+//propuse until it is released.
 class PreemptiveORList : public ORList {
     COPY_CONSTRUCTOR(PreemptiveORList);
     BYTE m_is_occupied:1;
@@ -603,12 +603,10 @@ protected:
     CG * m_cg;
     SRMgr * m_sr_mgr;
     SMemPool * m_pool;
-    List<OR*> m_free_or_list;
-
+    xcom::List<OR*> m_free_or_list;
 protected:
     //Alllocate memory of OR.
     virtual OR * allocOR();
-
 public:
     ORMgr(SRMgr * srmgr);
     virtual ~ORMgr() { clean(); }

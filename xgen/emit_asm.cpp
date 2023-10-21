@@ -37,15 +37,11 @@ AsmPrinter::AsmPrinter(CG const* cg, AsmPrinterMgr * apmgr)
 {
     ASSERT0(cg && apmgr);
     m_cg = cg;
+    m_rg = cg->getRegion();
     m_cgmgr = cg->getCGMgr();
     m_tm = m_cg->getTypeMgr();
+    m_vm = m_rg->getVarMgr();
     m_asmprtmgr = apmgr;
-}
-
-
-Region * AsmPrinter::getRegion() const
-{
-    return m_cg->getRegion();
 }
 
 

@@ -31,18 +31,4 @@ author: Su Zhenyu
 #include "xoccinc.h"
 
 namespace xocc {
-
-void CLRegion::destroy()
-{
-    #ifdef _DEBUG_
-    //This map info only used in dump().
-    VarTabIter c;
-    VarTab * vartab = getVarTab();
-    for (Var * v = vartab->get_first(c);
-         v != nullptr; v = vartab->get_next(c)) {
-        xocc::resetMapBetweenVARandDecl(v);
-    }
-    #endif
-}
-
 } //namespace xocc

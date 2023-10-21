@@ -31,12 +31,14 @@ author: Su Zhenyu
 #ifndef _ARM_REGION_MGR_H_
 #define _ARM_REGION_MGR_H_
 
+class ARMELFMgr;
+
 class ARMRegionMgr : public RegionMgr {
     COPY_CONSTRUCTOR(ARMRegionMgr);
 protected:
     AsmPrinterMgr m_asmprtmgr;
     FILE * m_asmfile; //assembly file handler.
-
+    ARMELFMgr * m_em;
 public:
     ARMRegionMgr() { m_asmfile = nullptr; }
     virtual ~ARMRegionMgr() {}

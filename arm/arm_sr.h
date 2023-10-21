@@ -31,25 +31,34 @@ author: Su Zhenyu
 #ifndef _ARM_SR_H_
 #define _ARM_SR_H_
 
-//
-//START ARMSR
-//
-class ARMSR : public SR {
+class ARMIntSR : public IntSR {
 public:
-    ARMSR() {}
-    COPY_CONSTRUCTOR(ARMSR);
-
-    virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const;
+    ARMIntSR() {}
+    //Return SR name during print assembly file.
     virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const;
 };
-//END ARMSR
 
+class ARMRegSR : public RegSR {
+public:
+    ARMRegSR() {}
+    virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const;
+    //Return SR name during print assembly file.
+    virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const;
+};
+
+class ARMVarSR : public VarSR {
+public:
+    ARMVarSR() {}
+    //Return SR name during print assembly file.
+    virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const;
+};
 
 //
 //START ARMSRMgr
 //
 class ARMSRMgr : public SRMgr {
-    virtual SR * allocSR() { return new ARMSR(); }
+protected:
+    virtual SR * allocSR(SR_CODE c);
 };
 //END ARMSRMgr
 

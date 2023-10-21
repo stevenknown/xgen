@@ -100,7 +100,7 @@ void ORList::dump(CG * cg)
 //
 void OR::clean()
 {
-    //DO NOT MODIFY 'id'. It is the marker in or_vector.
+    //DO NOT MODIFY 'id'. It is the marker in OR vector in ORMgr.
     code = OR_UNDEF;
     clust = CLUST_UNDEF; //cluster
     container = nullptr;
@@ -322,14 +322,14 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
         xoc::Var const* var = cg->mapOR2Var(pthis);
         if (var != nullptr) {
             buf.strcat("  //store to '");
-            var->dump(buf, cg->getRegion()->getTypeMgr());
+            var->dump(buf, cg->getVarMgr());
             buf.strcat("'");
         }
     } else if (OR_is_load(this)) {
         xoc::Var const* var = cg->mapOR2Var(pthis);
         if (var != nullptr) {
             buf.strcat("  //load from '");
-            var->dump(buf, cg->getRegion()->getTypeMgr());
+            var->dump(buf, cg->getVarMgr());
             buf.strcat("'");
         }
     }
@@ -437,8 +437,12 @@ OR * ORMgr::genOR(OR_CODE ort, CG * cg)
         o = allocOR();
         ASSERT0(ORID_UNDEF == 0);
         //Do not use ORID_UNDEF as index.
-        VecIdx idx = get_last_idx();
-        OR_id(o) = idx < 0 ? ORID_UNDEF + 1 : idx + 1;
+        UINT c = get_elem_count();
+        if (c == 0) {
+            OR_id(o) = ORID_UNDEF + 1;
+        } else {
+            OR_id(o) = c;
+        }
         set(o->id(), o);
     }
     OR_code(o) = ort;
@@ -463,7 +467,6 @@ void ORMgr::freeSR(OR * o)
             m_sr_mgr->freeSR(sr);
         }
     }
-
     for (UINT i = 0; i < o->opnd_num(); i++) {
         SR * sr = o->get_opnd(i);
         ASSERT0(sr != nullptr);

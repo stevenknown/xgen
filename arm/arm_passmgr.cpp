@@ -48,6 +48,12 @@ Pass * ARMPassMgr::allocRefine()
 }
 
 
+Pass * ARMPassMgr::allocIRSimp()
+{
+    return (IRSimp*)new ARMIRSimp(m_rg);
+}
+
+
 Pass * ARMPassMgr::allocLinearScanRA()
 {
     #if defined REF_TARGMACH_INFO || defined FOR_IP

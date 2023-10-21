@@ -169,7 +169,7 @@ SR * SRMgr::allocSR(SR_CODE c)
 SR * SRMgr::genSR(SR_CODE c)
 {
     SR * sr = allocSR(c);
-    ASSERT0(sr && SRID_UNDEF == 0);
+    ASSERT0(sr && sr->getCode() != SR_UNDEF);
     //DO NOT USE SRID_UNDEF AS INDEX.
     m_sr_count++;
     SR_id(sr) = m_sr_count;
@@ -201,7 +201,7 @@ void SRVecMgr::init()
 SRVec * SRVecMgr::allocSRVec()
 {
     SRVec * vec = (SRVec*)smpoolMalloc(sizeof(SRVec), m_pool);
-    ::memset(vec, 0, sizeof(SRVec));
+    ::memset((void*)vec, 0, sizeof(SRVec));
     vec->init();
     return vec;
 }

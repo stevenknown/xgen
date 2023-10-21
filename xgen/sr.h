@@ -132,9 +132,8 @@ SR const* checkSRIMM(SR const* ir);
 //Specific-Representation of the resource of target machine.
 class SR {
     COPY_CONSTRUCTOR(SR);
-protected:
-    SR_CODE m_code;
 public:
+    SR_CODE m_code;
     UINT m_id; //unique identifier within a region
     union {
         UINT bitflags;
@@ -166,6 +165,7 @@ public:
     virtual void copy(SR const* sr);
     virtual void clean()
     {
+        m_code = SR_UNDEF;
         u2.bitflags = 0;
         m_sr_vec = nullptr; //vec will be dropped to pool. TODO: recycle it.
         m_sr_vec_idx = SRVEC_IDX_UNDEF;

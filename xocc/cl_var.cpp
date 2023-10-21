@@ -30,12 +30,16 @@ author: Su Zhenyu
 @*/
 #include "xoccinc.h"
 
+namespace xocc {
+
 //
 //START CLVar
 //
-CHAR const* CLVar::dumpVARDecl(StrBuf & buf) const
+CHAR const* CLVar::dumpVARDecl(OUT StrBuf & buf, VarMgr const* vm) const
 {
-    xfe::Decl * decl = xocc::mapVAR2Decl(const_cast<CLVar*>(this));
+    xocc::DeclAndVarMap const* dvmap = ((CLVarMgr*)vm)->getDVMap();
+    if (dvmap == nullptr) { return nullptr; }
+    xfe::Decl const* decl = dvmap->mapVar2Decl(const_cast<CLVar*>(this));
     if (decl != nullptr) {
         ASSERT0(DECL_dt(decl) == xfe::DCL_DECLARATION);
         xfe::format_declaration(buf, decl, true);
@@ -54,3 +58,5 @@ Var * CLVarMgr::allocVAR()
     return new CLVar();
 }
 //END CLVarMgr
+
+} //namespace xocc

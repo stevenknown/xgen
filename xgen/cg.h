@@ -132,6 +132,7 @@ protected:
     xoc::Region * m_rg;
     ORMgr * m_or_mgr;
     xoc::TypeMgr * m_tm;
+    xoc::VarMgr * m_vm;
     CGMgr * m_cgmgr;
     ORCFG * m_or_cfg; //CFG of region
     ORBBMgr * m_or_bb_mgr; //manage BB of IR.
@@ -218,7 +219,7 @@ protected:
         ASSERTN(m_pool != nullptr, ("requires graph pool"));
         void * p = smpoolMalloc(size, m_pool);
         if (p == nullptr) return nullptr;
-        ::memset(p, 0, size);
+        ::memset((void*)p, 0, size);
         return p;
     }
 
@@ -620,7 +621,7 @@ public:
 
     //Generate SR that indicates const value.
     SR * genIntImm(HOST_INT val, bool is_signed);
-    SR * genFpImm(HOST_FP val);
+    SR * genFPImm(HOST_FP val);
     SR * genZero() { return genIntImm((HOST_INT)0, false); }
     SR * genOne() { return genIntImm((HOST_INT)1, false); }
 
@@ -661,6 +662,7 @@ public:
     void generateFuncUnitDedicatedCode();
     ORCFG * getORCFG() const { return m_or_cfg; }
     xoc::TypeMgr * getTypeMgr() const { return m_tm; }
+    xoc::VarMgr * getVarMgr() const { return m_vm; }
     List<ORBB*> * getORBBList() { return &m_or_bb_list; }
 
     BBVarList * getBBLevelVarList() { return &m_bb_level_internal_var_list; }

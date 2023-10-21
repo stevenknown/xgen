@@ -126,6 +126,21 @@ RegSet const* tmGetRegSetOfCallerSaved();
 //Get callee-saved register set.
 RegSet const* tmGetRegSetOfCalleeSaved();
 
+//Get allocable vector register set.
+RegSet const* tmGetVectorRegSetAllocable();
+
+//Get return-value used vector register set.
+RegSet const* tmGetVectorRegSetOfReturnValue();
+
+//Get argument passing used vector register set.
+RegSet const* tmGetVectorRegSetOfArgument();
+
+//Get caller-saved vector register set.
+RegSet const* tmGetVectorRegSetOfCallerSaved();
+
+//Get callee-saved vector register set.
+RegSet const* tmGetVectorRegSetOfCalleeSaved();
+
 //Get the Read and Write available cycle.
 ORScheInfo const* tmGetORScheInfo(OR_CODE ot);
 

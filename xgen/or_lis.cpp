@@ -54,7 +54,7 @@ void LIS::init(ORBB * bb, DataDepGraph & ddg, BBSimulator * sim, UINT sch_mode)
         ORDESC_or(m_br_ord) = br;
         ORDESC_start_cyc(m_br_ord) = -1;
         //Note 'sim' can NOT be destructed by caller of schedulor until
-        //packaging finished because sim preserved the cycle-accurated
+        //packaging is finished because sim preserved the cycle-accurated
         //scheduling information.
         ORDESC_sche_info(m_br_ord) = tmGetORScheInfo(OR_code(br));
         ASSERT0(ORDESC_sche_info(m_br_ord));

@@ -29,14 +29,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 author: Su Zhenyu
 @*/
 
+namespace xocc {
+
+class DeclAndVarMap;
+class CLRegionMgr;
+
 class CLVar : public ARMVar {
 public:
-    virtual CHAR const* dumpVARDecl(OUT StrBuf & buf) const;
+    virtual CHAR const* dumpVARDecl(OUT StrBuf & buf, VarMgr const* vm) const;
 };
 
 
 class CLVarMgr : public ARMVarMgr {
 public:
-    CLVarMgr(RegionMgr * rm) : ARMVarMgr(rm) {}
+    xocc::DeclAndVarMap const* m_dvmap;
+public:
+    CLVarMgr(RegionMgr * rm) : ARMVarMgr(rm) { m_dvmap = nullptr; }
+
     virtual Var * allocVAR();
+
+    xocc::DeclAndVarMap const* getDVMap() const { return m_dvmap; }
+    void setDVMap(xocc::DeclAndVarMap const* dvmap) { m_dvmap = dvmap; }
 };
+
+} //namespace xocc

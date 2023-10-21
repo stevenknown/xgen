@@ -20,7 +20,8 @@ endif
 gentminfo.exe: gen_objs $(COM_OUTPUT)
 	@echo "BUILD gentminfo.exe"
 	@echo "EXEC:"
-	$(CC) -std=c++0x -D$(TARG) $(GEN_OBJS) ../../com/$(COM_OUTPUT) $(CFLAGS) -o $@ -lstdc++ -lm  #-lgcov -lgcc
+	$(CC) -std=c++0x -D$(TARG) $(GEN_OBJS) ../../com/$(COM_OUTPUT) \
+      $(CFLAGS) -o $@ -lstdc++ -lm  #-lgcov -lgcc
 	@echo "SUCCESS TO GENERATE gentminfo.exe!!"
 
 gen_objs: $(GEN_OBJS)
@@ -29,7 +30,8 @@ gen_objs: $(GEN_OBJS)
 $(COM_OUTPUT):
 	@echo "BUILD $(COM_OUTPUT)"
 	@echo "EXEC:"
-	cd ../../com && make -f Makefile TARG=$(TARG) DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)"
+	cd ../../com && make -f Makefile TARG=$(TARG) DEBUG=$(DEBUG) \
+      CFLAGS="$(CFLAGS)"
 
 %.o:%.cpp
 	@echo "BUILD $<"

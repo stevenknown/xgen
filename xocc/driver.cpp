@@ -45,49 +45,86 @@ CHAR const* g_output_file_name = nullptr; //record the ASM file name.
 CHAR const* g_xocc_version = "1.2.3"; //recod the xocc.exe version.
 CHAR const* g_dump_file_name = nullptr;
 bool g_is_dumpgr = false;
+bool g_is_dump_option = false;
 
 xcom::List<CHAR const*> g_cfile_list;
 xcom::List<CHAR const*> g_grfile_list;
 
-static TMap<xfe::Decl*, Var*> g_decl2var_map;
-static TMap<Var*, xfe::Decl*> g_var2decl_map;
-
-void resetMapBetweenVARandDecl(xoc::Var * var)
+//
+//START DeclAndVarMap
+//
+void DeclAndVarMap::scanDeclList(Scope const* s, Decl * decllist)
 {
-    xfe::Decl * decl = g_var2decl_map.get(var);
-    if (decl != nullptr) {
-        g_decl2var_map.setAlways(decl, nullptr);
+    for (Decl * decl = decllist; decl != nullptr; decl = DECL_next(decl)) {
+        ASSERT0(DECL_decl_scope(decl) == s);
+        if (decl->is_fun_decl()) {
+            if (DECL_is_fun_def(decl)) {
+                //Function definition.
+                ASSERT0(DECL_decl_scope(decl) == s);
+                Var * v = addDecl(decl);
+                ASSERT0(v); //Function definition should not be fake.
+                v->setFlag(VAR_IS_FUNC);
+                continue;
+            }
+            if (mapDecl2Var(decl) == nullptr) {
+                //Function forward declaration.
+                Var * v = addDecl(decl);
+                if (v != nullptr) {
+                    //Function declaration should not be fake, since
+                    //it might be taken address.
+                    //e.g: extern void foo();
+                    //  void * p = &foo;
+                    //v->setFlag(VAR_IS_FAKE);
+                    //Note type-variable that defined by 'typedef'
+                    //will NOT be mapped to XOC Variable.
+                    v->setFlag((VAR_FLAG)(VAR_IS_FUNC|VAR_IS_DECL|
+                               VAR_IS_REGION));
+                }
+                continue;
+            }
+            //Function/variable declaration, can not
+            //override real function define.
+            continue;
+        }
+        //General variable declaration decl.
+        if (mapDecl2Var(decl) == nullptr &&
+            !(decl->is_formal_param() &&
+              decl->get_decl_sym() == nullptr)) {
+            //No need to generate Var for parameter that does not
+            //have a name.
+            //e.g: parameter of foo(CHAR*)
+            addDecl(decl);
+        }
     }
-    g_var2decl_map.setAlways(var, nullptr);
 }
 
 
-INT report_location(CHAR const* file, INT line)
+//Constructing a variable table to map each of DECLARATIONs to an unique Var.
+//Scanning Scope trees to construct such table.
+//e.g: Scope tree
+//    SCOPE0
+//      --SCOPE1
+//          --SCOPE2
+//          --SCOPE3
+//      --SCOPE4
+void DeclAndVarMap::scanAndInitVar(Scope const* s)
 {
-    printf("\n\n\n%s : %d", file, line);
-    return 0;
+    if (s == nullptr) { return; }
+    do {
+        scanDeclList(s, s->getDeclList());
+        scanAndInitVar(SCOPE_sub(s));
+        s = SCOPE_nsibling(s);
+    } while (s != nullptr);
 }
 
-Var * mapDecl2VAR(xfe::Decl * decl)
+
+xoc::Type const* DeclAndVarMap::makeType(xfe::Decl const* decl)
 {
-    return g_decl2var_map.get(decl);
-}
-
-
-xfe::Decl * mapVAR2Decl(Var * var)
-{
-    return g_var2decl_map.get(var);
-}
-
-
-static xoc::Type const* makeType(xfe::Decl const* decl, TypeMgr * tm)
-{
-    ASSERT0(tm);
     if (decl->is_fun_def() || decl->is_fun_decl()) {
-        return tm->getSimplexTypeEx(xoc::D_ANY);
+        return m_tm->getSimplexTypeEx(xoc::D_ANY);
     }
     UINT data_size = 0;
-    DATA_TYPE data_type = CTree2IR::get_decl_dtype(decl, &data_size, tm);
+    DATA_TYPE data_type = CTree2IR::get_decl_dtype(decl, &data_size, m_tm);
     if (IS_PTR(data_type)) {
         ASSERT0(decl->regardAsPointer());
         UINT basesize = decl->get_pointer_base_size();
@@ -96,21 +133,21 @@ static xoc::Type const* makeType(xfe::Decl const* decl, TypeMgr * tm)
         //do any operation, such as pointer arithmetic.
         //ASSERTN(basesize > 0, ("meet incomplete type."));
 
-        return tm->getPointerType(basesize);
+        return m_tm->getPointerType(basesize);
     }
     if (IS_MC(data_type)) {
         //Is data_size likely to be 0?
-        return tm->getMCType(data_size);
+        return m_tm->getMCType(data_size);
     }
     //data_size must definitly equal to corresponding size.
-    ASSERT0(data_size == tm->getDTypeByteSize(data_type));
-    return tm->getSimplexTypeEx(data_type);
+    ASSERT0(data_size == m_tm->getDTypeByteSize(data_type));
+    return m_tm->getSimplexTypeEx(data_type);
 }
 
 
 //Transforming Decl into Var.
 //decl: variable declaration in front end.
-static Var * addDecl(IN Decl * decl, MOD VarMgr * var_mgr, TypeMgr * tm)
+xoc::Var * DeclAndVarMap::addDecl(Decl const* decl)
 {
     ASSERTN(decl->is_dt_declaration(), ("unsupported"));
     if (decl->is_user_type_decl()) { return nullptr; }
@@ -139,7 +176,7 @@ static Var * addDecl(IN Decl * decl, MOD VarMgr * var_mgr, TypeMgr * tm)
         //TODO: record initial value in Var at CTree2IR.
         //SET_FLAG(flag, VAR_HAS_INIT_VAL);
     }
-    xoc::Type const* type = makeType(decl, tm);
+    xoc::Type const* type = makeType(decl);
     ASSERT0(type);
     if (decl->is_formal_param()) {
         //Declaration is formal parameter.
@@ -151,7 +188,7 @@ static Var * addDecl(IN Decl * decl, MOD VarMgr * var_mgr, TypeMgr * tm)
     CHAR const* var_name = decl->get_decl_sym()->getStr();
     UINT var_align = (UINT)xcom::ceil_align(
         MAX(DECL_align(decl), STACK_ALIGNMENT), STACK_ALIGNMENT);
-    Var * v = var_mgr->registerVar(var_name, type, var_align, flag);
+    Var * v = m_vm->registerVar(var_name, type, var_align, flag);
     if (v->is_global()) {
         //For conservative purpose.
         v->setFlag(VAR_ADDR_TAKEN);
@@ -160,81 +197,20 @@ static Var * addDecl(IN Decl * decl, MOD VarMgr * var_mgr, TypeMgr * tm)
         VAR_formal_param_pos(v) = g_formal_parameter_start +
                                   DECL_formal_param_pos(decl);
     }
-    g_decl2var_map.setAlways(decl, v);
-    g_var2decl_map.setAlways(v, decl);
+    m_decl2var_map.setAlways(decl, v);
+    m_var2decl_map.setAlways(v, decl);
     return v;
 }
+//END DeclAndVarMap
 
 
-//Constructing a variable table to map each of DECLARATIONs to an unique Var.
-//Scanning Scope trees to construct such table.
-//e.g: Scope tree
-//    SCOPE0
-//      --SCOPE1
-//          --SCOPE2
-//          --SCOPE3
-//      --SCOPE4
-static void scanAndInitVar(Scope * s, VarMgr * vm, TypeMgr * tm)
+//
+//START Compiler
+//
+UINT Compiler::runFrontEnd(RegionMgr * rm, CParser & parser)
 {
-    if (s == nullptr) { return; }
-    do {
-        for (Decl * decl = s->getDeclList();
-             decl != nullptr; decl = DECL_next(decl)) {
-            ASSERT0(DECL_decl_scope(decl) == s);
-            if (decl->is_fun_decl()) {
-                if (DECL_is_fun_def(decl)) {
-                    //Function definition.
-                    ASSERT0(DECL_decl_scope(decl) == s);
-                    Var * v = addDecl(decl, vm, tm);
-                    ASSERT0(v); //Function definition should not be fake.
-                    v->setFlag(VAR_IS_FUNC);
-                    continue;
-                }
-
-                if (mapDecl2VAR(decl) == nullptr) {
-                    //Function forward declaration.
-                    Var * v = addDecl(decl, vm, tm);
-                    if (v != nullptr) {
-                        //Function declaration should not be fake, since
-                        //it might be taken address.
-                        //e.g: extern void foo();
-                        //  void * p = &foo;
-                        //v->setFlag(VAR_IS_FAKE);
-                        //Note type-variable that defined by 'typedef'
-                        //will NOT be mapped to XOC Variable.
-                        v->setFlag((VAR_FLAG)(VAR_IS_FUNC|VAR_IS_DECL|
-                                   VAR_IS_REGION));
-                    }
-                    continue;
-                }
-
-                //Function/variable declaration, can not
-                //override real function define.
-                continue;
-            }
-
-            //General variable declaration decl.
-            if (mapDecl2VAR(decl) == nullptr &&
-                !(decl->is_formal_param() &&
-                  decl->get_decl_sym() == nullptr)) {
-                //No need to generate Var for parameter that does not
-                //have a name.
-                //e.g: parameter of foo(CHAR*)
-                addDecl(decl, vm, tm);
-            }
-        }
-
-        scanAndInitVar(SCOPE_sub(s), vm, tm);
-        s = SCOPE_nsibling(s);
-    } while (s != nullptr);
-}
-
-
-UINT FrontEnd(RegionMgr * rm, CParser & parser)
-{
-    START_TIMER(t, "CFE");
+    START_TIMER(t, "C Front End");
     initTypeTran();
-
     STATUS s = ST_SUCC;
 #ifdef LR0_FE
     init_rule_info();
@@ -251,31 +227,27 @@ UINT FrontEnd(RegionMgr * rm, CParser & parser)
         END_TIMER(t, "CFE");
         return s;
     }
-
     s = TypeTransform();
     if (s != ST_SUCC) {
         END_TIMER(t, "CFE");
         return s;
     }
-
     s = TypeCheck();
     if (s != ST_SUCC) {
         END_TIMER(t, "CFE");
         return s;
     }
-
     s = TreeCanonicalize();
     if (s != ST_SUCC) {
         END_TIMER(t, "CFE");
         return s;
     }
-
     END_TIMER(t, "CFE");
     return ST_SUCC;
 }
 
 
-static FILE * createAsmFileHandler(CHAR const* fn)
+FILE * Compiler::createAsmFileHandler(CHAR const* fn)
 {
     FILE * asmh = nullptr;
     if (g_output_file_name != nullptr) {
@@ -300,141 +272,15 @@ static FILE * createAsmFileHandler(CHAR const* fn)
 }
 
 
-static void dumpPoolUsage(RegionMgr * rm)
+CLRegionMgr * Compiler::allocCLRegionMgr()
 {
-    #ifdef _DEBUG_
-    #define KB 1024
-    note(rm, "\n== Situation of pool used==");
-    note(rm, "\n ****** gerenal pool %lu KB ********",
-             (ULONG)smpoolGetPoolSize(g_pool_general_used)/KB);
-    note(rm, "\n ****** tree pool %lu KB ********",
-             (ULONG)smpoolGetPoolSize(g_pool_tree_used)/KB);
-    note(rm, "\n ****** st pool %lu KB ********",
-             (ULONG)smpoolGetPoolSize(g_pool_st_used)/KB);
-    note(rm, "\n ****** total mem query size : %lu KB\n",
-             (ULONG)g_stat_mem_size/KB);
-    note(rm, "\n===========================\n");
-    #endif
+    return new CLRegionMgr();
 }
 
 
-//#define MEMLEAKTEST
-#ifdef MEMLEAKTEST
-static void test_ru(RegionMgr * rm, CGMgr * cgmgr)
+CLRegionMgr * Compiler::initRegionMgr()
 {
-    Region * func = nullptr;
-    for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
-        Region * rg = rm->getRegion(i);
-        if (rg == nullptr || rg->is_program()) {
-            continue;
-        }
-        func = rg;
-        break;
-    }
-
-    ASSERT0(func);
-
-    INT i = 0;
-    Var * v = func->getRegionVar();
-    Region * x = rm->newRegion(REGION_FUNC);
-    x->initAttachInfoMgr();
-    //Note Local Vars and MDs will be freed and collected by Mgr.
-    //The test region should not have global var.
-    while (i < 10000) {
-        OptCtx oc;
-        x->init(REGION_FUNC, rm);
-        x->setRegionVar(v);
-        IR * irs = func->getIRList();
-        x->setIRList(x->dupIRTreeList(irs));
-        bool succ = x->process(&oc);
-        ASSERT0(succ);
-        //VarMgr * vm = x->getVarMgr();
-        //vm->dump();
-        //MDSystem * ms = x->getMDSystem();
-        //ms->dump();
-        x->destroy();
-        i++;
-    }
-    return;
-}
-#endif
-
-
-static void compileProgramRegion(CHAR const* fn, Region * rg, CGMgr * cgmgr)
-{
-    cgmgr->genAndPrtGlobalVariable(rg);
-    if (!g_is_dumpgr) { return; }
-
-    ASSERT0(fn);
-    xcom::StrBuf b(64);
-    b.strcat(fn);
-    b.strcat(".hir.gr");
-    UNLINK(b.buf);
-
-    FILE * gr = ::fopen(b.buf, "a");
-    ASSERT0(gr);
-    rg->getLogMgr()->push(gr, "");
-    GRDump gd(rg);
-    gd.dumpRegion(true);
-    rg->getLogMgr()->pop();
-    ::fclose(gr);
-}
-
-
-static void compileFuncRegion(Region * rg, CLRegionMgr * rm, CGMgr * cgmgr)
-{
-    OptCtx * oc = rm->getAndGenOptCtx(rg);
-    bool s = rm->compileFuncRegion(rg, cgmgr, oc);
-    ASSERT0(s);
-    DUMMYUSE(s);
-    //rm->deleteRegion(rg); //Local region can be deleted if processed.
-}
-
-
-//Processing function unit one by one.
-//1. Construct Region.
-//2. Generate IR of Region.
-//3. Perform IR optimizaions
-//4. Generate assembly code.
-static void compileRegionSet(CHAR const* fn, CLRegionMgr * rm, CGMgr * cgmgr)
-{
-    ASSERT0(fn && rm && cgmgr);
-    //Test mem leak.
-    //test_ru(rm, cgmgr);
-    rm->registerGlobalMD();
-    Region * program = nullptr; //There could be multiple program regions.
-    for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
-        Region * rg = rm->getRegion(i);
-        if (rg == nullptr) { continue; }
-        if (rg->is_program()) {
-            program = rg;
-            compileProgramRegion(fn, rg, cgmgr);
-            continue;
-        }
-        if (rg->is_blackbox()) {
-            continue;
-        }
-        if (g_show_time) {
-            xoc::prt2C("\n\n==== Start Process Region(id:%d)'%s' ====\n",
-                       rg->id(), rg->getRegionName());
-        }
-        compileFuncRegion(rg, rm, cgmgr);
-    }
-    ASSERT0(program);
-
-    OptCtx * oc = rm->getAndGenOptCtx(program);
-    bool s = rm->processProgramRegion(program, oc);
-    ASSERT0(s);
-    DUMMYUSE(s);
-    if (g_dump_opt.isDumpAll()) {
-        dumpPoolUsage(rm);
-    }
-}
-
-
-static CLRegionMgr * initRegionMgr()
-{
-    CLRegionMgr * rm = xocc::allocCLRegionMgr();
+    CLRegionMgr * rm = allocCLRegionMgr();
     rm->initVarMgr();
     rm->initTargInfo();
 
@@ -458,45 +304,22 @@ static CLRegionMgr * initRegionMgr()
 }
 
 
-static void dumpRegionMgrGR(RegionMgr * rm, CHAR const* srcname)
-{
-    ASSERT0(rm);
-    for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
-        Region * rg = rm->getRegion(i);
-        if (rg == nullptr) { continue; }
-        if (rg->is_program()) {
-            //r->dump(true);
-            ASSERT0(srcname);
-            xcom::StrBuf b(64);
-            b.strcat(srcname);
-            b.strcat(".gr");
-            UNLINK(b.buf);
-            FILE * gr = ::fopen(b.buf, "a");
-            ASSERT0(gr);
-            rg->getLogMgr()->push(gr, b.buf);
-            GRDump gd(rg);
-            gd.dumpRegion(true);
-            rg->getLogMgr()->pop();
-            ::fclose(gr);
-        }
-    }
-}
-
-
-static void initCompile(CHAR const* fn, OUT CLRegionMgr ** rm, OUT FILE ** asmh,
-                        OUT CGMgr ** cgmgr, OUT TargInfo ** ti)
+void Compiler::initCompile(CHAR const* fn, OUT CLRegionMgr ** rm,
+                           OUT FILE ** asmh, OUT CGMgr ** cgmgr,
+                           OUT TargInfo ** ti)
 {
     *rm = initRegionMgr();
     *cgmgr = xgen::allocCGMgr(*rm);
     *asmh = createAsmFileHandler(fn);
     *ti = (*rm)->getTargInfo();
     (*cgmgr)->setAsmFileHandler(*asmh);
+    (*rm)->setCGMgr(*cgmgr);
     ASSERT0(*asmh);
 }
 
 
-static void finiCompile(CLRegionMgr * rm, FILE * asmh, CGMgr * cgmgr,
-                        TargInfo * ti)
+void Compiler::finiCompile(CLRegionMgr * rm, FILE * asmh, CGMgr * cgmgr,
+                           TargInfo * ti)
 {
     if (cgmgr != nullptr) {
         delete cgmgr;
@@ -513,32 +336,8 @@ static void finiCompile(CLRegionMgr * rm, FILE * asmh, CGMgr * cgmgr,
 }
 
 
-bool compileGRFile(CHAR const* fn)
+void Compiler::destructPRSSAForAllRegion(RegionMgr * rm)
 {
-    ASSERT0(fn);
-    bool res = true;
-    xoc::TargInfo * ti = nullptr;
-    xocc::CLRegionMgr * rm = nullptr;
-    xgen::CGMgr * cgmgr = nullptr;
-    FILE * asmh = nullptr;
-    START_TIMER_FMT(t, ("Compile GR File '%s'", fn));
-    initCompile(fn, &rm, &asmh, &cgmgr, &ti);
-    if (g_dump_file_name != nullptr) {
-        rm->getLogMgr()->init(g_dump_file_name, true);
-    }
-    bool succ = xoc::readGRAndConstructRegion(rm, fn);
-    if (!succ) {
-        xoc::prt2C("\nFail read and parse '%s'", fn);
-        res = false;
-        goto FIN;
-    }
-
-    if (g_is_dumpgr) {
-        dumpRegionMgrGR(rm, fn);
-    }
-
-    //Dump and clean.
-    compileRegionSet(fn, rm, cgmgr);
     for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
         Region * r = rm->getRegion(i);
         if (r == nullptr || r->is_blackbox()) { continue; }
@@ -549,7 +348,44 @@ bool compileGRFile(CHAR const* fn)
             }
         }
     }
+}
+
+
+bool Compiler::compileGRFile(CHAR const* fn)
+{
+    START_TIMER_FMT(t, ("Compile GR File '%s'", fn));
+    ASSERT0(fn);
+    bool res = true;
+    xoc::TargInfo * ti = nullptr;
+    xocc::CLRegionMgr * rm = nullptr;
+    FILE * asmh = nullptr;
+    xgen::CGMgr * cgmgr = nullptr;
+    initCompile(fn, &rm, &asmh, &cgmgr, &ti);
+    if (g_dump_file_name != nullptr) {
+        rm->getLogMgr()->init(g_dump_file_name, true);
+    }
+    if (g_is_dump_option) {
+        xoc::Option::dump(rm);
+    }
+    bool succ = xoc::readGRAndConstructRegion(rm, fn);
+    if (!succ) {
+        xoc::prt2C("\nerror: fail read and parse '%s'", fn);
+        res = false;
+        goto FIN;
+    }
+    if (rm->getProgramRegion() == nullptr) {
+        xoc::prt2C("\nerror: miss program region '%s'", fn);
+        res = false;
+        goto FIN;
+    }
+    if (g_is_dumpgr) {
+        rm->dumpProgramRegionGR(fn);
+    }
+
+    //Dump and clean.
+    rm->compileRegionSet(fn);
 FIN:
+    destructPRSSAForAllRegion(rm);
     END_TIMER_FMT(t, ("Total Time To Compile '%s'", fn));
     finiCompile(rm, asmh, cgmgr, ti);
     show_err();
@@ -563,35 +399,36 @@ FIN:
 }
 
 
-bool compileCFile(CHAR const* fn)
+bool Compiler::compileCFile(CHAR const* fn)
 {
     START_TIMER_FMT(t, ("Compile C File '%s'", fn));
     bool succ = true;
     xoc::TargInfo * ti = nullptr;
     xocc::CLRegionMgr * rm = nullptr;
-    xgen::CGMgr * cgmgr = nullptr;
     FILE * asmh = nullptr;
+    xgen::CGMgr * cgmgr = nullptr;
     initCompile(fn, &rm, &asmh, &cgmgr, &ti);
-
+    if (g_dump_file_name != nullptr) {
+        rm->getLogMgr()->init(g_dump_file_name, true);
+    }
+    if (g_is_dump_option) {
+        xoc::Option::dump(rm);
+    }
+    DeclAndVarMap dvmap(rm);
     CParser parser(rm->getLogMgr(), fn);
     if (g_err_msg_list.get_elem_count() > 0) {
         succ = false;
         goto FIN;
     }
-
-    if (g_dump_file_name != nullptr) {
-        rm->getLogMgr()->init(g_dump_file_name, true);
-    }
-
     if (g_redirect_stdout_to_dump_file) {
         g_unique_dumpfile = rm->getLogMgr()->getFileHandler();
         ASSERT0(g_unique_dumpfile);
+        g_unique_dumpfile_name = g_dump_file_name;
+        ASSERT0(g_unique_dumpfile_name);
     }
-
     g_fe_sym_tab = rm->getSymTab();
     g_dbx_mgr = new CLDbxMgr();
-
-    if (FrontEnd(rm, parser) != ST_SUCC) {
+    if (runFrontEnd(rm, parser) != ST_SUCC) {
         succ = false;
         ASSERTN(g_err_msg_list.has_msg(), ("miss error msg"));
         goto FIN;
@@ -599,23 +436,24 @@ bool compileCFile(CHAR const* fn)
 
     //In the file scope, generate function region.
     if (g_dump_opt.isDumpAll()) {
-        get_global_scope()->dump();
+        xfe::get_global_scope()->dump();
     }
-    scanAndInitVar(get_global_scope(), rm->getVarMgr(), rm->getTypeMgr());
-    if (CTree2IR::generateRegion(rm)) {
-        compileRegionSet(fn, rm, cgmgr);
+    {
+        dvmap.scanAndInitVar(xfe::get_global_scope());
+        ((CLVarMgr*)rm->getVarMgr())->setDVMap(&dvmap);
+        CScope2IR s2ir(rm, dvmap);
+        if (s2ir.generateScope(xfe::get_global_scope())) {
+            rm->compileRegionSet(fn);
+        }
     }
     if (g_is_dumpgr) {
-        dumpRegionMgrGR(rm, fn);
+        rm->dumpProgramRegionGR(fn);
     }
 FIN:
     if (g_dbx_mgr != nullptr) {
         delete g_dbx_mgr;
         g_dbx_mgr = nullptr;
     }
-    g_decl2var_map.clean();
-    g_var2decl_map.clean();
-
     //Timer use prt2C.
     END_TIMER_FMT(t, ("Total Time To Compile '%s'", fn));
     finiCompile(rm, asmh, cgmgr, ti);
@@ -630,7 +468,7 @@ FIN:
 }
 
 
-bool compileCFileList()
+bool Compiler::compileCFileList()
 {
     for (CHAR const* fn = g_cfile_list.get_head(); fn != nullptr;
          fn = g_cfile_list.get_next()) {
@@ -642,7 +480,7 @@ bool compileCFileList()
 }
 
 
-bool compileGRFileList()
+bool Compiler::compileGRFileList()
 {
     for (CHAR const* fn = g_grfile_list.get_head(); fn != nullptr;
          fn = g_grfile_list.get_next()) {
@@ -652,5 +490,19 @@ bool compileGRFileList()
     }
     return true;
 }
+
+
+bool Compiler::compile()
+{
+    bool succ = true;
+    if (!compileGRFileList()) {
+        succ = false;
+    }
+    if (!compileCFileList()) {
+        succ = false;
+    }
+    return succ;
+}
+//END Compiler
 
 } //namespace xocc

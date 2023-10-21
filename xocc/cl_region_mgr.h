@@ -37,24 +37,29 @@ namespace xocc {
 //A computing languare always consist of concepts of function and program.
 class CLRegionMgr : public ARMRegionMgr {
     COPY_CONSTRUCTOR(CLRegionMgr);
-    xoc::Region * m_program;
+protected:
+    xgen::CGMgr * m_cgmgr;
+protected:
+    void compileProgramRegion(CHAR const* fn, Region * rg);
+    bool compileFuncRegion(xoc::Region * func, xoc::OptCtx * oc);
+    void compileFuncRegion(Region * rg);
+
+    void dumpPoolUsage();
 public:
-    CLRegionMgr() { m_program = nullptr; }
+    CLRegionMgr() {}
     virtual ~CLRegionMgr() {}
 
+    virtual Region * allocRegion(REGION_TYPE rt);
     virtual VarMgr * allocVarMgr();
 
-    //Allocate Region.
-    virtual Region * allocRegion(REGION_TYPE rt);
+    void compileRegionSet(CHAR const* fn);
 
-    xoc::Region * get_program() { return m_program; }
-    void set_program(xoc::Region * r) { m_program = r; }
+    void dumpProgramRegionGR(CHAR const* srcname);
 
-    virtual bool compileFuncRegion(xoc::Region * func, xgen::CGMgr * cgmgr,
-                                   xoc::OptCtx * oc);
+    xgen::CGMgr * getCGMgr() const { return m_cgmgr; }
+
+    void setCGMgr(CGMgr * cgmgr) { m_cgmgr = cgmgr; }
 };
-
-CLRegionMgr * allocCLRegionMgr();
 
 } //namespace xocc
 #endif

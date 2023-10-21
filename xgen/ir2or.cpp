@@ -81,14 +81,14 @@ void IR2OR::convertStoreDecompose(IN SR * src, IN SR * tgtvar,
 {
     ASSERT0(src && tgtvar && tgtvar->is_var() && SR_var(tgtvar));
 
-    //ONLY register operand is permited to process.
+    //ONLY support process register operand.
     if (!src->is_reg()) {
         if (src->is_int_imm()) {
             SR * t = m_cg->genReg();
             m_cg->buildMove(t, src, ors.getList(), cont);
             src = t;
         } else {
-            ASSERTN(0, ("Unsupport"));
+            ASSERTN(0, ("need to support more kind of operand to store"));
         }
     }
     m_cg->buildStore(src, tgtvar, m_cg->genIntImm(ofst, true), false,
@@ -227,6 +227,13 @@ void IR2OR::convertLoadConstBool(IR const* ir, OUT RecycORList & ors,
 }
 
 
+void IR2OR::convertLoadConstMC(IR const* ir, OUT RecycORList & ors,
+                               MOD IOC * cont)
+{
+    ASSERTN(0, ("Target Dependent Code"));
+}
+
+
 //Load constant string address into register.
 void IR2OR::convertLoadConstStr(IR const* ir, OUT RecycORList & ors,
                                 MOD IOC * cont)
@@ -282,6 +289,10 @@ void IR2OR::convertLoadConst(IR const* ir, OUT RecycORList & ors,
     }
     if (ir->is_str()) {
         convertLoadConstStr(ir, ors, cont);
+        return;
+    }
+    if (ir->is_mc()) {
+        convertLoadConstMC(ir, ors, cont);
         return;
     }
     ASSERTN(0, ("unsupport immediate value DATA_TYPE:%s",
@@ -709,7 +720,7 @@ void IR2OR::convertUnaryOp(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     //Choose an or-type.
 
     //Result's type-size might be not same as opnd. e.g: a < b,
-    //result type is BOOL, opnd type is INT.
+    //result type is bool, opnd type is INT.
     OR_CODE orty = m_cg->mapIRCode2ORCode(ir->getCode(),
                                           UNA_opnd(ir)->getTypeSize(m_tm),
                                           opnd, nullptr, ir->is_signed());
@@ -762,7 +773,7 @@ void IR2OR::convertBinaryOp(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     SR * res = m_cg->genReg(orsize);
 
     //Result's type-size might be not same as opnd. e,g: a < b,
-    //result type is BOOL, opnd type is INT.
+    //result type is bool, opnd type is INT.
     OR_CODE orty = m_cg->mapIRCode2ORCode(ir->getCode(), orsize,
                                           opnd0, opnd1, ir->is_signed());
     ASSERTN(orty != OR_UNDEF, ("mapIRCode2ORCode() should be overloaded"));
@@ -1042,9 +1053,7 @@ void IR2OR::convertTruebr(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     IR * br_det = BR_det(ir);
     ASSERT0(br_det->is_lt() || br_det->is_le() || br_det->is_gt() ||
             br_det->is_ge() || br_det->is_eq() || br_det->is_ne());
-
     convertRelationOp(br_det, ors, cont);
-
     RecycORList tors(this);
     m_cg->buildCondBr(m_cg->genLabel(BR_lab(ir)), ors.getList(), cont);
     tors.copyDbx(ir);
@@ -1069,7 +1078,6 @@ void IR2OR::convertFalsebr(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     IR_code(newir) = IR_TRUEBR;
     convertTruebr(newir, ors, cont);
     m_rg->freeIRTree(newir);
-
 }
 
 

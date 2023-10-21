@@ -49,7 +49,7 @@ void ARMIR2OR::convertBinaryOp(IR const* ir, OUT RecycORList & ors,
 
     //Add, sub are more complex opertions.
     if (ir->is_fp()) {
-        convertAddSubFp(ir, ors, cont);
+        convertAddSubFP(ir, ors, cont);
         return;
     }
     ASSERTN(!BIN_opnd0(ir)->is_any() && !BIN_opnd1(ir)->is_any(),
@@ -111,24 +111,23 @@ void ARMIR2OR::convertStoreVar(IR const* ir, OUT RecycORList & ors,
         IR2OR::convertStoreVar(ir, ors, cont);
         return;
     }
-
     SR * src = nullptr; //record source address reg.
     IR const* rhs = ST_rhs(ir);
     ASSERT0(((HOST_INT)rhs->getTypeSize(m_tm)) == resbytesize);
     if (rhs->is_ld()) {
-        //CASE: st(x)(200) = ld(x):mc(200)
+        //CASE: st x:mc<200> = ld y:mc<200>
         //Load the address of source Var into register.
         cont->clean_bottomup();
         convertLda(LD_idinfo(rhs), LD_ofst(rhs), ::getDbx(rhs), ors, cont);
         src = cont->get_reg(0);
     } else if (rhs->is_ild()) {
-        //CASE: st(x)(200) = ild(ld(p)):mc(200)
+        //CASE: st x:mc<200> = ild(ld(p)):mc<200>
         //Load the address of source via pointer.
         cont->clean_bottomup();
         convertGeneralLoad(ILD_base(rhs), ors, cont);
         src = cont->get_reg(0);
     } else {
-        ASSERTN(0, ("support more kind of mc to mc copy"));
+        ASSERTN(0, ("support more kind of MC to MC copy"));
     }
     ASSERT0(src && src->is_reg());
 
@@ -251,7 +250,7 @@ void ARMIR2OR::convertRem(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 }
 
 
-void ARMIR2OR::convertAddSubFp(IR const* ir, OUT RecycORList & ors,
+void ARMIR2OR::convertAddSubFP(IR const* ir, OUT RecycORList & ors,
                                IN IOC * cont)
 {
     ASSERTN((ir->is_add() || ir->is_sub()) && ir->is_fp(), ("illegal ir"));
@@ -991,7 +990,7 @@ void ARMIR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
     }
 
     if (opnd0->is_fp()) {
-        convertRelationOpFp(ir, ors, cont);
+        convertRelationOpFP(ir, ors, cont);
         return;
     }
 
@@ -1349,7 +1348,7 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors, IOC * cont)
 //The output registers in IOC are ResultSR,
 //TruePredicatedSR, FalsePredicatedSR.
 //The ResultSR record the boolean value of comparison of relation operation.
-void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
+void ARMIR2OR::convertRelationOpFP(IR const* ir, OUT RecycORList & ors,
                                    IN IOC * cont)
 {
     ASSERT0(ir && ir->is_relation());
@@ -1584,11 +1583,11 @@ void ARMIR2OR::convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
 }
 
 
-void ARMIR2OR::convertTruebrFp(IR const* ir, OUT RecycORList & ors,
+void ARMIR2OR::convertTruebrFP(IR const* ir, OUT RecycORList & ors,
                                IN IOC * cont)
 {
     ASSERT0(cont->get_pred() == nullptr);
-    convertRelationOpFp(BR_det(ir), ors, cont);
+    convertRelationOpFP(BR_det(ir), ors, cont);
     ASSERT0(cont->get_pred());
 
     SR * retv = cont->get_reg(0);
@@ -1613,7 +1612,7 @@ void ARMIR2OR::convertTruebr(IR const* ir, OUT RecycORList & ors, IOC * cont)
     ASSERT0(ir && ir->is_truebr());
     IR * opnd0 = BIN_opnd0(BR_det(ir));
     if (opnd0->is_fp()) {
-        convertTruebrFp(ir, ors, cont);
+        convertTruebrFP(ir, ors, cont);
         return;
     }
     IR * opnd1 = BIN_opnd1(BR_det(ir));

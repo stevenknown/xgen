@@ -11,10 +11,10 @@ usage:
 ```cmd
     git clone https://github.com/stevenknown/xoc.git
 ```
- 2. copy com, reader, and opt into xgen directory     
+ 2. copy mach, com, reader, and opt into xgen directory     
 ```cmd
     cd xgen    
-    cp -rf ../xoc/com ../xoc/opt ../xoc/reader ../xoc/Makefile.xoc ../xoc/Makefile.xoc.inc .    
+    cp -rf ../xoc/elf ../xoc/mach ../xoc/com ../xoc/opt ../xoc/reader ../xoc/Makefile.xoc ../xoc/Makefile.xoc.inc .    
 ```
  3. clone xocfe project    
 ```cmd
@@ -27,8 +27,8 @@ usage:
 ```
  5. Build xocc
 ```cmd
-    cd xgen/arm
-    make -f Makefile.xocc    
+    cd xgen/xocc
+    make -f Makefile.xocc TARG=FOR_ARM TARG_DIR=../arm DEBUG=true    
 ```
  6. Install arm-assembler, arm-linker:    
 ```cmd

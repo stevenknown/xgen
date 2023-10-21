@@ -36,14 +36,14 @@ class ARMCGMgr;
 
 class ARMIR2OR : public IR2OR {
 protected:
-    void convertAddSubFp(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    void convertAddSubFP(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     void convertMulofFloat(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     void convertMulofLongLong(IR const* ir, OUT RecycORList & ors,
                               IN IOC * cont);
     void convertMulofInt(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertReturnValue(IR const* ir, OUT RecycORList & ors,
                                     IN IOC * cont);
-    void convertTruebrFp(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    void convertTruebrFP(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertStoreVar(IR const* ir, OUT RecycORList & ors,
                                  IN IOC * cont);
     //CASE: integer and pointer convertion.
@@ -136,7 +136,7 @@ public:
     virtual void convertRem(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertMul(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    void convertRelationOpFp(IR const* ir, OUT RecycORList & ors,
+    void convertRelationOpFP(IR const* ir, OUT RecycORList & ors,
                              IN IOC * cont);
     //Generate compare operations and return the comparation result registers.
     // e.g:
@@ -151,7 +151,8 @@ public:
     //Generate compare operations and return the comparation result registers.
     //The output registers in IOC are ResultSR, TruePredicatedSR, and
     //FalsePredicatedSR.
-    //The ResultSR records the boolean value of comparison of relation operation.
+    //The ResultSR records the boolean value of comparison of
+    //relation operation.
     // e.g:
     //     a - 1 > b + 2
     // =>

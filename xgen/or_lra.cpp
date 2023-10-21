@@ -99,7 +99,7 @@ void * ORMap::xmalloc(INT size)
     ASSERTN(m_pool != nullptr,("need graph pool!!"));
     void * p = smpoolMalloc(size, m_pool);
     if (p == nullptr) { return nullptr; }
-    ::memset(p,0,size);
+    ::memset((void*)p,0,size);
     return p;
 }
 
@@ -2214,7 +2214,7 @@ void LifeTimeMgr::dump(UINT flag)
             fprintf(h, "\n    LT(%3d):", lt1->id());
             //Collects position info
             CHAR * pos_marker = (CHAR*)malloc(maxlen);
-            ::memset(pos_marker, 0, sizeof(CHAR) * maxlen);
+            ::memset((void*)pos_marker, 0, sizeof(CHAR) * maxlen);
             BSIdx elt;
             for (elt = LT_pos(lt1)->get_first();
                  elt != BS_UNDEF; elt = LT_pos(lt1)->get_next(elt)) {
@@ -2335,7 +2335,7 @@ void LifeTimeMgr::dump(UINT flag)
         fprintf(h, "\n    LT(%3d):", lt1->id());
         //Collects position info
         CHAR * pos_marker = (CHAR*)malloc(maxlen);
-        ::memset(pos_marker, 0, sizeof(CHAR) * maxlen);
+        ::memset((void*)pos_marker, 0, sizeof(CHAR) * maxlen);
         BSIdx elt;
         for (elt = LT_pos(lt1)->get_first();
              elt != BS_UNDEF; elt = LT_pos(lt1)->get_next(elt)) {
@@ -2443,7 +2443,7 @@ void * GroupMgr::xmalloc(INT size)
     ASSERTN(m_pool != 0,("need graph pool!!"));
     void * p = smpoolMalloc(size, m_pool);
     if (p == nullptr) { return nullptr; }
-    ::memset(p,0,size);
+    ::memset((void*)p,0,size);
     return p;
 }
 
@@ -3064,7 +3064,7 @@ SR * LRA::genReload(IN LifeTime * lt, IN SR * oldsr,
         m_cg->appendReload(m_bb, *ors);
 
         //Sometimes reload operation is dispensible.
-        //Substitute memory operation for recalclate the value.
+        //Substitute memory operation to recalclate the value.
         //That is so called 'rematerializing'.
         if (ld_op) {
             mgr.setGRALiveoutReload(ld_op, LT_sr(lt));

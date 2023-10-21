@@ -213,6 +213,41 @@ xgen::RegSet const* xgen::tmGetRegSetOfCalleeSaved()
 }
 
 
+xgen::RegSet const* xgen::tmGetVectorRegSetAllocable()
+{
+    //TODO
+    return nullptr;
+}
+
+
+xgen::RegSet const* xgen::tmGetVectorRegSetOfArgument()
+{
+    //TODO
+    return nullptr;
+}
+
+
+xgen::RegSet const* xgen::tmGetVectorRegSetOfReturnValue()
+{
+    //TODO
+    return nullptr;
+}
+
+
+xgen::RegSet const* xgen::tmGetVectorRegSetOfCallerSaved()
+{
+    //TODO
+    return nullptr;
+}
+
+
+xgen::RegSet const* xgen::tmGetVectorRegSetOfCalleeSaved()
+{
+    //TODO
+    return nullptr;
+}
+
+
 //Get the Read and Write available cycle.
 ORScheInfo const* xgen::tmGetORScheInfo(OR_CODE ot)
 {
