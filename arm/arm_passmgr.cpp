@@ -57,7 +57,7 @@ Pass * ARMPassMgr::allocIRSimp()
 Pass * ARMPassMgr::allocLinearScanRA()
 {
     #if defined REF_TARGMACH_INFO || defined FOR_IP
-    return new LinearScanRA(m_rg);
+    return new ARMLinearScanRA(m_rg);
     #else
     ASSERTN(0, ("Target Dependent Code"));
     return nullptr;

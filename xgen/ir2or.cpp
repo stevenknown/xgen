@@ -170,10 +170,18 @@ void IR2OR::convertLoadConstInt(HOST_INT constval, UINT constbytesize,
     RecycORList tors(this);
     //Load low part.
     HOST_INT low = constval;
-    if (constbytesize == 2 * GENERAL_REGISTER_SIZE) {
+    if (constbytesize == 2 * GENERAL_REGISTER_SIZE &&
+
+        //Note if WORD_LENGTH_OF_TARGET_MACHINE is equal to the bitsize of
+        //HOST_UINT, the shift operation will generate zero. That means the
+        //maximum host immediate type can not represent twice size of
+        //GENERAL_REGISTER_SIZE.
+        WORD_LENGTH_OF_TARGET_MACHINE <
+            sizeof(HOST_UINT) * HOST_BIT_PER_BYTE) {
         ASSERTN(sizeof(HOST_INT) >= 2 * GENERAL_REGISTER_SIZE,
                 ("host machine integer can not represent target machine"
                  "integer type"));
+        //Compiler may give a complaint warning about the shift size.
         HOST_UINT v2 = (HOST_UINT)(((ULONGLONG)constval) <<
                                    WORD_LENGTH_OF_TARGET_MACHINE);
         low = v2 >> WORD_LENGTH_OF_TARGET_MACHINE;
@@ -189,10 +197,10 @@ void IR2OR::convertLoadConstInt(HOST_INT constval, UINT constbytesize,
         HOST_INT high = 0;
         if (is_signed) {
             high = (HOST_INT)(((LONGLONG)constval) >>
-                            WORD_LENGTH_OF_TARGET_MACHINE);
+                              WORD_LENGTH_OF_TARGET_MACHINE);
         } else {
             high = (HOST_INT)(((ULONGLONG)(HOST_UINT)constval) >>
-                            WORD_LENGTH_OF_TARGET_MACHINE);
+                              WORD_LENGTH_OF_TARGET_MACHINE);
         }
         m_cg->buildMove(load_val2, m_cg->genIntImm(high, is_signed),
                         tors.getList(), cont);

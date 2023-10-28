@@ -28,37 +28,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-#include "../xgen/xgeninc.h"
+#ifndef _ARM_LINEAR_SCAN_H_
+#define _ARM_LINEAR_SCAN_H_
 
-IR * ARMIRSimp::simplifyToPR(IR * ir, SimpCtx * ctx)
-{
-    if (SIMP_to_pr_mode(ctx)) {
-        if (!xgen::g_do_cg || !ir->is_mc()) { goto NEXT; }
-        ASSERT0(ir->is_exp());
-        IR * stmt = ir->getStmt();
-        ASSERT0(stmt);
-        if (!stmt->hasRHS()) { goto NEXT; }
-        IR * rhs = stmt->getRHS();
-        if (rhs != ir) { goto NEXT; }
-        if (ir->is_mc() && stmt->is_mc()) {
-            //ARM cg does not handle the code generation to MC typed PR->Mem.
-            return ir;
-        }
-    }
-NEXT:
-    return IRSimp::simplifyToPR(ir, ctx);
-}
+class ARMRegSetImpl : public RegSetImpl {
+    COPY_CONSTRUCTOR(ARMRegSetImpl);
+protected:
+    void initRegSet();
+public:
+    ARMRegSetImpl(LinearScanRA & ra): RegSetImpl(ra) { initRegSet(); }
+};
 
+class ARMLinearScanRA : public LinearScanRA {
+    COPY_CONSTRUCTOR(ARMLinearScanRA);
+protected:
+    virtual RegSetImpl * allocRegSetImpl() { return new ARMRegSetImpl(*this); }
+public:
+    ARMLinearScanRA(Region * rg) : LinearScanRA(rg) {}
+    virtual ~ARMLinearScanRA() {}
+};
 
-IR * ARMIRSimp::simplifyRHSInPRMode(IR * ir, SimpCtx * ctx)
-{
-    if (SIMP_to_pr_mode(ctx)) {
-        ASSERT0(ir->is_stmt());
-        ASSERT0(ir->hasRHS());
-        if (ir->is_mc() && ir->getRHS()->is_mc() && xgen::g_do_cg) {
-            //ARM cg does not handle the code generation to MC typed PR->Mem.
-            return nullptr;
-        }
-    }
-    return IRSimp::simplifyRHSInPRMode(ir, ctx);
-}
+#endif

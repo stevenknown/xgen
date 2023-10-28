@@ -4,6 +4,10 @@ ifeq ($(TARG),)
   $(error "NEED TARG INFO:e.g:make TARG=FOR_ARM TARG_DIR=../arm")
 endif
 
+ifeq ($(THREAD_NUM),)
+  THREAD_NUM=1
+endif
+
 CFLAGS+=-Wall
 ROOT_DIR=..
 XGEN_DIR=.
@@ -63,7 +67,8 @@ INC=-I . -I com -I opt -I reader
 $(XOC_OUTPUT):
 	@echo "BUILD $(XOC_OUTPUT)"
 	@echo "EXEC:"
-	cd $(ROOT_DIR) && make -f Makefile.xoc TARG=$(TARG) DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)"
+	cd $(ROOT_DIR) && make -j$(THREAD_NUM) -f Makefile.xoc TARG=$(TARG) \
+	  DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)" THREAD_NUM=$(THREAD_NUM)
 
 xgen_objs: $(XGEN_OBJS)
 	@echo "EXEC:xgen_objs:$(XGEN_OBJS)"
@@ -74,7 +79,8 @@ targ_objs: $(TARG_OBJS)
 targmach_gen:
 	@echo "====---- GENERATE TARGET MACHINE INFO AND RELATED FILES  ----===="
 	@echo "EXEC:"
-	make -C $(TARG_DIR)/precompile TARGET=$(TARG) CC=$(CC) DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)"
+	make -j$(THREAD_NUM) -C $(TARG_DIR)/precompile TARGET=$(TARG) CC=$(CC) \
+	  DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)" THREAD_NUM=$(THREAD_NUM)
 	cd $(TARG_DIR)/precompile; ./gentminfo.exe
 
 clean:

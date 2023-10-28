@@ -51,5 +51,8 @@ author: Su Zhenyu
 #include "../arm/arm_simp.h"
 #include "../arm/arm_refine.h"
 #include "../arm/arm_ddg.h"
+#if defined REF_TARGMACH_INFO || defined FOR_IP
+  #include "../arm/arm_linear_scan.h"
+#endif
 
 #endif

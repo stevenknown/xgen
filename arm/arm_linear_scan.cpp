@@ -28,37 +28,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
+
 #include "../xgen/xgeninc.h"
 
-IR * ARMIRSimp::simplifyToPR(IR * ir, SimpCtx * ctx)
+void ARMRegSetImpl::initRegSet()
 {
-    if (SIMP_to_pr_mode(ctx)) {
-        if (!xgen::g_do_cg || !ir->is_mc()) { goto NEXT; }
-        ASSERT0(ir->is_exp());
-        IR * stmt = ir->getStmt();
-        ASSERT0(stmt);
-        if (!stmt->hasRHS()) { goto NEXT; }
-        IR * rhs = stmt->getRHS();
-        if (rhs != ir) { goto NEXT; }
-        if (ir->is_mc() && stmt->is_mc()) {
-            //ARM cg does not handle the code generation to MC typed PR->Mem.
-            return ir;
-        }
+    //Do more initializations for ARM targinfo.
+    if (getTIMgr().getCallee() != nullptr) {
+        m_avail_allocable.bunion(*getTIMgr().getCallee());
     }
-NEXT:
-    return IRSimp::simplifyToPR(ir, ctx);
+    if (getTIMgr().getVectorCallee() != nullptr) {
+        m_avail_allocable.bunion(*getTIMgr().getVectorCallee());
+    }
+    if (getTIMgr().getCaller() != nullptr) {
+        m_avail_allocable.bunion(*getTIMgr().getCaller());
+    }
+    if (getTIMgr().getVectorCaller() != nullptr) {
+        m_avail_allocable.bunion(*getTIMgr().getVectorCaller());
+    }
 }
 
-
-IR * ARMIRSimp::simplifyRHSInPRMode(IR * ir, SimpCtx * ctx)
-{
-    if (SIMP_to_pr_mode(ctx)) {
-        ASSERT0(ir->is_stmt());
-        ASSERT0(ir->hasRHS());
-        if (ir->is_mc() && ir->getRHS()->is_mc() && xgen::g_do_cg) {
-            //ARM cg does not handle the code generation to MC typed PR->Mem.
-            return nullptr;
-        }
-    }
-    return IRSimp::simplifyRHSInPRMode(ir, ctx);
-}
