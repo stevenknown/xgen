@@ -51,13 +51,24 @@ else
   $(error "UNKNOWN TARG:$(TARG)")
 endif
 
+INC=-I . -I com -I opt -I reader
+
+#Display internal variables.
+$(info "WIN=$(WIN),WSL=$(WSL)")
+$(info "TARG:$(TARG)")
+$(info "TARG_DIR:$(TARG_DIR)")
+$(info "CC:$(CC)")
+$(info "INC:$(INC)")
+$(info "CFLAGS:$(CFLAGS)")
+$(info "DEBUG:$(DEBUG)")
+$(info "THREAD_NUM:$(THREAD_NUM)")
+
 $(XGEN_OUTPUT): targmach_gen $(XOC_OUTPUT) xgen_objs targ_objs
-	@echo "BUILD $(XGEN_OUTPUT)!!"
+	@echo "START BUILD $(XGEN_OUTPUT)"
 	@echo "EXEC:"
 	ar rcs $(XGEN_OUTPUT) $(ROOT_DIR)/$(XOC_OUTPUT) $(XGEN_OBJS) $(TARG_OBJS)
+	@echo "END BUILD $(XGEN_OUTPUT)"
 	@echo "SUCCESS TO GENERATE $(XGEN_OUTPUT)!!"
-
-INC=-I . -I com -I opt -I reader
 
 %.o:%.cpp
 	@echo "BUILD $<"
@@ -65,10 +76,11 @@ INC=-I . -I com -I opt -I reader
 	$(CC) $(CFLAGS) $(INC) -c $< -o $@
 
 $(XOC_OUTPUT):
-	@echo "BUILD $(XOC_OUTPUT)"
+	@echo "START BUILD $(XOC_OUTPUT)"
 	@echo "EXEC:"
 	cd $(ROOT_DIR) && make -j$(THREAD_NUM) -f Makefile.xoc TARG=$(TARG) \
 	  DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)" THREAD_NUM=$(THREAD_NUM)
+	@echo "END BUILD $(XOC_OUTPUT)"
 
 xgen_objs: $(XGEN_OBJS)
 	@echo "EXEC:xgen_objs:$(XGEN_OBJS)"
@@ -77,11 +89,12 @@ targ_objs: $(TARG_OBJS)
 	@echo "EXEC:targ_objs:$(TARG_OBJS)"
 
 targmach_gen:
-	@echo "====---- GENERATE TARGET MACHINE INFO AND RELATED FILES  ----===="
+	@echo "==-- START GENERATE TARGET MACHINE INFO AND RELATED FILES  --=="
 	@echo "EXEC:"
 	make -j$(THREAD_NUM) -C $(TARG_DIR)/precompile TARGET=$(TARG) CC=$(CC) \
 	  DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)" THREAD_NUM=$(THREAD_NUM)
 	cd $(TARG_DIR)/precompile; ./gentminfo.exe
+	@echo "==-- END GENERATE TARGET MACHINE INFO AND RELATED FILES  --=="
 
 clean:
 	@find ./ -name "*.gcda" | xargs rm -f

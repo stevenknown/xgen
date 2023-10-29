@@ -1,18 +1,15 @@
 $(info "====---- START Makefile.xocc ----====")
 
-#CPPSRC+=$(notdir $(wildcard $(DIR_SRC)/*.cpp))
-#ASMSRC+=$(notdir $(wildcard $(DIR_SRC)/*.s))
-#ASMSRC+=$(notdir $(wildcard $(STARTUP_SRC)/*.s))
-#OBJ=$(ASMSRC:%.s=%.o) $(CSRC:%.c=%.o) $(CPPSRC:%.cpp=%.o)
-#OBJS=$(addprefix $(RESULT)/,$(OBJ))
-#CXXSRC+= 
-#OBJS=$(CSRC:%.c=%.o) $(CPPSRC:%.cpp=%.o) $(CXXSRC:%.cxx=%.o)
 ifeq ($(TARG),)
   $(error "NEED TARG INFO:e.g:make TARG=FOR_ARM TARG_DIR=../arm")
 endif
 
 ifeq ($(TARG_DIR),)
   $(error "NEED TARG INFO:e.g:make TARG=FOR_ARM TARG_DIR=../arm")
+endif
+
+ifeq ($(THREAD_NUM),)
+  THREAD_NUM=1
 endif
 
 CFLAGS+=-Wall
@@ -56,17 +53,19 @@ endif
 TMP_CFE_OBJS=$(foreach n,$(CFE_OBJS),$(CFE_DIR)/$(n))
 
 #Display internal variables.
-$(info "WIN=$(WIN),WSL=$(WSL)")
 $(info "COMBINED CFE OBJS:$(TMP_CFE_OBJS)")
+$(info "WIN=$(WIN),WSL=$(WSL)")
 $(info "TARG:$(TARG)")
 $(info "TARG_DIR:$(TARG_DIR)")
 $(info "CC:$(CC)")
 $(info "INC:$(INC)")
 $(info "CFLAGS:$(CFLAGS)")
 $(info "DEBUG:$(DEBUG)")
+$(info "THREAD_NUM:$(THREAD_NUM)")
 
 #Define rules.
-xocc.exe: xocc_objs tmp_cfe_objs $(XGEN_OUTPUT)
+$(XOCC_OUTPUT): xocc_objs tmp_cfe_objs $(XGEN_OUTPUT)
+	@echo "START BUILD $(XOCC_OUTPUT)"
 	$(CC) $(XOCC_OBJS) $(TMP_CFE_OBJS) -Xlinker "-(" \
       $(XGEN_DIR)/$(XGEN_OUTPUT) \
       $(COM_DIR)/$(COM_OUTPUT) \
@@ -74,7 +73,8 @@ xocc.exe: xocc_objs tmp_cfe_objs $(XGEN_OUTPUT)
       -Xlinker "-)" \
       $(CFLAGS) \
       -o $@ -lstdc++ -lm  #-lgcov -lgcc
-	@echo "SUCCESS!!"
+	@echo "END BUILD $(XOCC_OUTPUT)"
+	@echo "SUCCESS TO GENERATE $(XOCC_OUTPUT)!!"
 
 %.o:%.cpp
 	@echo "BUILD $<"
@@ -85,8 +85,11 @@ tmp_cfe_objs: $(TMP_CFE_OBJS)
 xocc_objs: $(XOCC_OBJS)
 
 $(XGEN_OUTPUT):
-	@echo "BUILD $(XGEN_OUTPUT)"
-	cd $(XGEN_DIR) && make $(XGEN_OUTPUT) -f Makefile.xgen TARG=$(TARG) TARG_DIR="$(TARG_DIR)" DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)"
+	@echo "START BUILD $(XGEN_OUTPUT)"
+	cd $(XGEN_DIR) && make -j$(THREAD_NUM) $(XGEN_OUTPUT) -f Makefile.xgen \
+      TARG=$(TARG) TARG_DIR="$(TARG_DIR)" DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)" \
+      THREAD_NUM=$(THREAD_NUM)
+	@echo "END BUILD $(XGEN_OUTPUT)"
 
 clean:
 	@find ./ -name "*.o" | xargs rm -f
