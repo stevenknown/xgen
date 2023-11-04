@@ -39,7 +39,6 @@ protected:
     virtual SRMgr * allocSRMgr() { return new ARMSRMgr(); }
     virtual ORMgr * allocORMgr(SRMgr * srmgr) { return new ARMORMgr(srmgr); }
     void initBuiltin();
-
 public:
     ARMCGMgr(RegionMgr * rg) : CGMgr(rg) { initBuiltin(); }
     COPY_CONSTRUCTOR(ARMCGMgr);

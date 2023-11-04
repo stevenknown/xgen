@@ -53,8 +53,8 @@ protected:
     Section * m_data_sect;
     Section * m_rodata_sect;
     Section * m_bss_sect;
-    Section * m_param_sect;
-    Section * m_stack_sect;
+    ParamSection * m_param_sect;
+    StackSection * m_stack_sect;
     RegionMgr * m_rm;
     FILE * m_asm_file_handler;
     IntrinsicMgr * m_intrin_mgr;
@@ -63,7 +63,6 @@ protected:
 
     //Builtin function should be initialized in initBuiltin().
     Bltin2Var m_builtin_var;
-
 protected:
     virtual SRMgr * allocSRMgr() { return new SRMgr(); }
     virtual ORMgr * allocORMgr(SRMgr * srmgr) { return new ORMgr(srmgr); }
@@ -142,6 +141,9 @@ public:
     virtual AsmPrinter * allocAsmPrinter(CG const* cg);
     size_t count_mem() const;
 
+    //The function dumps variables in each sections according to their layout.
+    void dumpSectionVarLayOut(CG const* cg) const;
+
     //Generate code and perform target machine dependent operations.
     //region: this function is the main entry to generate code for given
     //        region.
@@ -163,6 +165,7 @@ public:
     //  6. LRA.
     //  7. Peephole.
     virtual bool generate(Region * rg);
+
     //Print global variable to asmfile.
     virtual bool genAndPrtGlobalVariable(Region * rg);
     SRMgr * getSRMgr() const { return m_sr_mgr; }
@@ -174,8 +177,8 @@ public:
     Section * getCodeSection() { return m_code_sect; }
     Section * getDataSection() { return m_data_sect; }
     Section * getBssSection() { return m_bss_sect; }
-    Section * getStackSection() { return m_stack_sect; }
-    Section * getParamSection() { return m_param_sect; }
+    StackSection * getStackSection() { return m_stack_sect; }
+    ParamSection * getParamSection() { return m_param_sect; }
     Var * getBuiltinVar(BUILTIN_TYPE bt) const
     { return m_builtin_var.get(bt); }
     FILE * getAsmFileHandler() const { return m_asm_file_handler; }

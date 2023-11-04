@@ -86,12 +86,11 @@ void CGMgr::initSectionMgrAndSections()
 {
     ASSERT0(m_sect_mgr == nullptr);
     m_sect_mgr = allocSectionMgr();
-
     m_code_sect = m_sect_mgr->genSection(".code", false, 0);
     m_data_sect = m_sect_mgr->genSection(".data", false, 0);
     m_rodata_sect = m_sect_mgr->genSection(".rodata", false, 0);
     m_bss_sect = m_sect_mgr->genSection(".bss", false, 0);
-    m_param_sect = m_sect_mgr->genSection(".param", false, 0);
+    m_param_sect = m_sect_mgr->genParamSection();
     m_stack_sect = m_sect_mgr->genStackSection();
 }
 
@@ -141,7 +140,7 @@ void CGMgr::destroyVAR()
 //Allocate VarMgr.
 AsmPrinter * CGMgr::allocAsmPrinter(CG const* cg)
 {
-    return new AsmPrinter(cg, getAsmPrtMgr());
+    return new AsmPrinter(cg, getAsmPrtMgr(), getAsmFileHandler());
 }
 
 
@@ -150,8 +149,8 @@ void CGMgr::prtCGResult(CG const* cg)
 {
     if (getAsmFileHandler() == nullptr) { return; }
     AsmPrinter * ap = allocAsmPrinter(cg);
-    ap->printData(getAsmFileHandler());
-    ap->printCode(getAsmFileHandler());
+    ap->printData();
+    ap->printCode();
     delete ap;
 }
 
@@ -186,7 +185,6 @@ static void generateORAndOutput(Region * rg, CGMgr * cgmgr)
     CG * cg = cgmgr->allocCG(rg);
     cg->initFuncUnit();
     cg->initDedicatedSR();
-    //cg->initGlobalVar(m_rg->getVarMgr());
     cg->perform();
     if (rg->is_function()) {
         cgmgr->prtCGResult(cg);
@@ -222,4 +220,22 @@ bool CGMgr::generate(Region * rg)
     return true;
 }
 
+
+void CGMgr::dumpSectionVarLayOut(CG const* cg) const
+{
+    ASSERT0(cg && cg->getRegion());
+    if (!cg->getRegion()->getLogMgr()->is_init()) { return; }
+    xoc::note(cg->getRegion(),
+              "\n==-- DUMP ALL SECTIONS OF CGMGR, Region:'%s' --==",
+              cg->getRegion()->getRegionName());
+    cg->getRegion()->getLogMgr()->incIndent(2);
+    CGMgr * pthis = const_cast<CGMgr*>(this);
+    pthis->getRodataSection()->dump(cg);
+    pthis->getCodeSection()->dump(cg);
+    pthis->getDataSection()->dump(cg);
+    pthis->getBssSection()->dump(cg);
+    pthis->getStackSection()->dump(cg);
+    pthis->getParamSection()->dump(cg);
+    cg->getRegion()->getLogMgr()->decIndent(2);
+}
 } //namespace xgen

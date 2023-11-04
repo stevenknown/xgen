@@ -1,4 +1,3 @@
-void printf(char const*,...);
 typedef struct _S {
   int i,j,k;
 } S;

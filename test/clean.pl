@@ -19,7 +19,10 @@ sub main
         'compile', 
         'compile.gr', 
         'exec', 
-        'exec.gr'
+        'exec.gr',
+        'xcom',
+        'api',
+        'tutorial_input',
     ); 
     foreach my $subdir (@subdirlist) {
         print "\nENTER DIRECTORY>>$subdir\n";

@@ -99,7 +99,7 @@ CG * ARMCGMgr::allocCG(Region * rg)
 //Allocate VarMgr.
 AsmPrinter * ARMCGMgr::allocAsmPrinter(CG const* cg)
 {
-    return new ARMAsmPrinter(cg, getAsmPrtMgr());
+    return new ARMAsmPrinter(cg, getAsmPrtMgr(), getAsmFileHandler());
 }
 
 

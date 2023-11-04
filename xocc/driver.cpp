@@ -441,6 +441,7 @@ bool Compiler::compileCFile(CHAR const* fn)
     {
         dvmap.scanAndInitVar(xfe::get_global_scope());
         ((CLVarMgr*)rm->getVarMgr())->setDVMap(&dvmap);
+        ASSERT0(rm->getVarMgr()->verifyAllVar());
         CScope2IR s2ir(rm, dvmap);
         if (s2ir.generateScope(xfe::get_global_scope())) {
             rm->compileRegionSet(fn);

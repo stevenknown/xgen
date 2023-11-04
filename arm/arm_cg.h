@@ -397,7 +397,7 @@ public:
     virtual void setSpadjustOffset(OR * spadj, INT size);
 
     //True if current argument register should be bypassed.
-    virtual bool skipArgRegister(Var const* param, xgen::RegSet const* regset,
+    virtual bool skipArgRegister(Var const* param, xgen::RegSet const& regset,
                                  Reg reg) const;
 
     //Interface to generate ORs to store physical register on top of stack.

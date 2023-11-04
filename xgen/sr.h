@@ -174,13 +174,25 @@ public:
     //Do not count m_sr_vec into size because it is allocated in outside pool.
     virtual size_t count_mem() const { return sizeof(*this); }
 
-    virtual void dump(CG * cg) const;
+    virtual void dump(CG const* cg) const;
 
     SR_CODE getCode() const { return SR_code(this); }
+
+    //Get the name of SR that is used in assembly file print.
     virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const
-    { DUMMYUSE((cg, buf)); return nullptr; }
+    {
+        DUMMYUSE((cg, buf));
+        ASSERTN(0, ("Target Dependent Code"));
+        return nullptr;
+    }
+
+    //Get the a formatted name of SR that is used to dump or print.
     virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const
-    { DUMMYUSE((cg, buf)); return nullptr; }
+    {
+        DUMMYUSE((cg, buf));
+        ASSERTN(0, ("Target Dependent Code"));
+        return nullptr;
+    }
     virtual UINT getByteSize() const;
     inline REGFILE getRegFile() const;
     inline Reg getPhyReg() const;

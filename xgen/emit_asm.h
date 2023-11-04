@@ -46,8 +46,11 @@ protected:
     xoc::TypeMgr const* m_tm;
     xoc::VarMgr const* m_vm;
     AsmPrinterMgr * m_asmprtmgr;
+    FILE * m_asmh;
+protected:
+    FILE * getFile() const { return m_asmh; }
 public:
-    AsmPrinter(CG const* cg, AsmPrinterMgr * apmgr);
+    AsmPrinter(CG const* cg, AsmPrinterMgr * apmgr, FILE * asmh);
     virtual ~AsmPrinter() {}
 
     Region const* getRegion() const { return m_rg; }
@@ -61,15 +64,10 @@ public:
         DUMMYUSE(buf);
         return nullptr;
     }
-
-    virtual void printData(FILE * h)
-    {
-        ASSERTN(0, ("Target Dependent Code"));
-        DUMMYUSE(h);
-    }
+    virtual void printData() { ASSERTN(0, ("Target Dependent Code")); }
 
     //Print instructions to assembly file.
-    virtual void printCode(FILE * asmfile);
+    virtual void printCode();
 };
 
 

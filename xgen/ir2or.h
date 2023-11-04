@@ -86,7 +86,7 @@ public:
     SR * addr;
 
     //Propagate info bottom up.
-    Vector<SR*> reg_vec;
+    xcom::Vector<SR*> reg_vec;
 public:
     IOC()
     {

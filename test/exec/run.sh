@@ -1,10 +1,2 @@
 xocc_path="../../src/xocc/xocc.exe"
-
-perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = ""
-perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-O3"
-perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-O3 -lowest_height"
-perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-no-cg"
-perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-O3 -no-cg"
-perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-O3 -lowest_height -no-cg"
-perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-O3 -nonprdu -prdu -mdssa -prssa "
-perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-O3 -lowest_height -nonprdu -prdu -mdssa -prssa "
+perl run.pl Targ = armhf XoccPath = $xocc_path XoccFlag = "-O0" CompareDumpIfExist LinkerFlag = "-lc -lm -lgcc -lm -lc"

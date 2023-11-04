@@ -1,10 +1,21 @@
 #!/usr/bin/perl -w
 use strict;
+use Cwd;
+use File::Find;
+use File::Copy;
+use File::Path;
+use File::Compare;
+#use File::Copy::Recursive; #ActivePerl report error: Can't locate File/Copy/Recursive.pm in @INC
+#use File::Copy::Recursive qw(fcopy rcopy dircopy fmove rmove dirmove);
+use File::Copy::Recursive qw(fcopy dircopy);
+use Data::Dump qw(dump);
 
 # These functions are exported.
 our @EXPORT_OK = qw(
     abort
     abortex
+    copyDir
+    copyFile
     computeDirFromFilePath
     computeExeName
     computeSourceFileNameByExeName
@@ -23,13 +34,17 @@ our @EXPORT_OK = qw(
     findCurrent
     findFfileCurrent
     findRecursively
+    findAnyFileRecursively
     findFileRecursively
+    findDirRecursively
     is_exist
     moveToPassed
     invokeSimulator
     peelPostfixName
     peelFileName
     pauseAndInput
+    removeFile
+    removeDir
     runSimulator
     runHostExe
     runBaseccToolChainToComputeBaseResult
@@ -74,6 +89,8 @@ our $g_is_baseresultfile_must_exist = 0;
 our $g_error_count = 0;
 our $g_fail = -1;
 our $g_succ = 0;
+our $g_true = 1;
+our $g_false = 0;
 
 #Local variables that are used in current file scope.
 my $g_override_simulator = "";
@@ -124,6 +141,8 @@ sub findCurrent {
     return @filelist;
 }
 
+#dir: the directory that you are going to find.
+#suffix: the file suffix that you are going to find.
 my $suffix; #used inside this file scope.
 my @g_filelist = (); #used inside this file scope.
 sub findRecursively {
@@ -131,6 +150,13 @@ sub findRecursively {
     $suffix = $_[1];
     @g_filelist = ();
     &find(\&findCore, $dir);
+    return @g_filelist;
+}
+
+sub findAnyFileRecursively {
+    my $dir = $_[0];
+    @g_filelist = ();
+    &find(\&findCore3, $dir);
     return @g_filelist;
 }
 
@@ -150,6 +176,10 @@ sub findFileRecursively {
 
 sub findCore2 {
     push(@g_filelist, $File::Find::name) if ($_ =~ m/$g_testcase$/);
+}
+
+sub findCore3 {
+    push(@g_filelist, $File::Find::name);
 }
 
 # Remove one line from start of the given file.
@@ -402,7 +432,7 @@ sub runCPP
 
     #preprcessing
     unlink($preprocessed_name);
-    $cmdline = "$g_cpp $src_fullpath -o $preprocessed_name -C -Iinc";
+    $cmdline = "$g_cpp $src_fullpath -o $preprocessed_name -C -E -P -Iinc";
     print("\nCMD>>", $cmdline, "\n");
     my $retval = systemx($cmdline);
     if ($retval != 0) {
@@ -417,13 +447,13 @@ sub runCPP
 #Use xocc to compile, assembly and link.
 sub runXOCC
 {
-    my $cmdline;
     my $src_fullpath = $_[0];
     my $is_invoke_assembler = $_[1];
     my $is_invoke_linker = $_[2];
     my $asmname = $src_fullpath.".asm";
     my $exename = computeExeName($src_fullpath);
     my $objname = $src_fullpath.".o";
+    my $cmdline;
     if (!is_exist($g_xocc)) {
         abortex("\n$g_xocc IS NOT EXIST\n");
         return $g_fail; #No need execute the following code.
@@ -466,7 +496,7 @@ sub abortex
     if (!$g_is_quit_early) {
         return;
     }
-    exit(1);
+    exit(1); #exit value set to 1 will affect the env-value.
 }
 
 sub abort
@@ -475,7 +505,7 @@ sub abort
     if ($msg) {
         print "\n$msg\n";
     }
-    exit(1);
+    exit(1); #exit value set to 1 will affect the env-value.
 }
 
 #Compute the executable binary file name.
@@ -924,6 +954,13 @@ sub selectTarget
            $g_ld = "arm-linux-gnueabihf-gcc";
            $g_basecc_cflags = "-std=c99 -O0";
            $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
+        } elsif ($g_target eq "teco") {
+           $g_xocc = "$g_xoc_root_path/src/teco/pcxac.exe";
+           $g_basecc = "teco-linux-gnueabihf-gcc";
+           $g_as = "teco-linux-gnueabihf-as";
+           $g_ld = "teco-linux-gnueabihf-gcc";
+           $g_basecc_cflags = "-std=c99 -O0";
+           $g_simulator = "qemu-teco -L /usr/teco-linux-gnueabihf";
         } elsif ($g_target eq "x86") {
            $g_xocc = "$g_xoc_root_path/src/x86/xocc.exe";
         } elsif ($g_config_file_path ne "" &&
@@ -946,6 +983,13 @@ sub selectTarget
             $g_as = "arm-linux-gnueabihf-as";
             $g_ld = "arm-linux-gnueabihf-gcc";
             $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
+        } elsif ($g_target eq "teco") {
+           $g_xocc = "$g_xoc_root_path/src/teco/pcxac.exe";
+           $g_basecc = "teco-linux-gnueabihf-gcc";
+           $g_as = "teco-linux-gnueabihf-as";
+           $g_ld = "teco-linux-gnueabihf-gcc";
+           $g_basecc_cflags = "-std=c99 -O0";
+           $g_simulator = "qemu-teco -L /usr/teco-linux-gnueabihf";
         } elsif ($g_target eq "x86") {
             $g_xocc = "$g_xoc_root_path/src/x86/xocc.exe";
         } elsif ($g_config_file_path ne "" &&
@@ -1242,7 +1286,8 @@ sub systemx
     #value, with the exit code in the higher 8 bits. It's often the same,
     #but not always.
     my $cmdline = $_[0];
-    my $retval = system($cmdline)/256;
+    my $retval = system($cmdline);
+    $retval = $retval/256;
     return $retval;
 }
 
@@ -1253,8 +1298,68 @@ sub perlSyntax
     perlSyntax($param0, \@param1);
 }
 
+sub removeFile
+{
+    my $filename = $_[0];
+    if (!-e $filename) {
+        print "\n$filename DOES NOT EXIST! NOTHING TO DO!\n";
+        return $g_succ;
+    }
+    #unlink($filename) or abortex();
+    my $retval = unlink($filename);
+    if ($retval != $g_succ) { return $retval; }
+    return $g_succ;
+}
+
+sub isDir
+{
+    my $dirname = $_[0];
+    if (!-e $dirname) {
+        return $g_false;
+    }
+    if (-d $dirname) {
+        return $g_true;
+    }
+    return $g_false;
+}
+
+sub findDirRecursively {
+    my $dir = $_[0];
+    my @filelist = findAnyFileRecursively($dir);
+    @g_filelist = ();
+    foreach (@filelist) {
+        chomp;
+        if (isDir($_)) {
+            push(@g_filelist, $_);
+        } 
+    }
+    return @g_filelist;
+}
+
+sub removeDir
+{
+    my $dirname = $_[0];
+    if (!-e $dirname) {
+        print "\n$dirname DOES NOT EXIST! NOTHING TO DO!\n";
+        return $g_succ;
+    }
+    my $retval = rmtree($dirname);
+    return $g_succ;
+}
+
+#Return succ if files copied.
+sub copyFile
+{
+    my $old = $_[0]; #old file path
+    my $new = $_[1]; #new file path
+    my $num_of_files = fcopy($old, $new) or abortex();
+    return $g_succ;
+}
+
+#Return the number of (files, dirs, depth) copied.
 sub copyDir
 {
+    $File::Copy::Recursive::CPRFComp = 1;
     my $old = $_[0]; #old directory
     my $new = $_[1]; #new directory
     my($num_of_files_and_dirs, $num_of_dirs, $depth_traversed) =

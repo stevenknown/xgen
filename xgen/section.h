@@ -33,31 +33,33 @@ author: Su Zhenyu
 
 namespace xgen {
 
-#define SECT_ID_UNDEF -1
+#define SECT_ID_UNDEF ((UINT)-1)
+#define TMWORD_UNDEF ((TMWORD)-1)
 
-//Describing program section.e.g. code section, data section.
-#define SECT_id(s) (s)->uid //unique section id
-#define SECT_var(s) (s)->sect_var //variable of section
-#define SECT_size(s) (s)->size //byte size of section
-#define SECT_var_list(s) (s)->var_list //list of variables in section
-#define SECT_var2vdesc_map(s) (s)->var2vdesc  //map between variable and
-                                              //VarDesc
+//Describing program section.
+//e.g. code section, data section.
+#define SECT_id(s) ((s)->uid) //unique section id
+#define SECT_var(s) ((s)->sect_var) //variable of section
+#define SECT_size(s) ((s)->size) //byte size of section
+#define SECT_var_list(s) ((s)->var_list) //list of variables in section
+
+//Map between variable and VarDesc
+#define SECT_var2vdesc_map(s) (s)->var2vdesc
 
 typedef TMap<xoc::Var const*, VarDesc*> Var2Desc;
 class Section {
 public:
-    INT uid;
+    UINT uid;
     xoc::Var * sect_var;
-    ULONGLONG size;
+    TMWORD size;
     VarElist var_list;
     Var2Desc var2vdesc;
-
 public:
     Section()
     {
-        uid = SECT_ID_UNDEF;
-        sect_var = nullptr;
-        size = 0;
+        SECT_id(this) = SECT_ID_UNDEF;
+        SECT_var(this) = nullptr;
+        SECT_size(this) = 0;
     }
     virtual ~Section() {}
 
@@ -77,25 +79,69 @@ public:
     Var * getVar() const { return SECT_var(this); }
     Var2Desc * getVar2Desc() { return &SECT_var2vdesc_map(this); }
 
-    INT id() const { return uid; }
+    UINT id() const { return uid; }
 };
 
 
+//The class represents the local stack frame of a function.
+//Usually, a function stack frame may contain:
+// * original SP register value
+// * return-address saving location
+// * local variable
+// * temporary variable
+// * spill location.
+// * dynamic extended memory region, which produced by SPADJUST.
 class StackSection : public Section {
 public:
     virtual ~StackSection() {}
     virtual void dump(CG const* cg);
 };
 
+
+//The class represents the parameter region in stack a function.
+//Usually, a parameter region includes:
+// * caller parameter layout.
+// e.g:call foo(a,b);
+//     def foo(a,b) { int c,d; }
+// the stack layout will be:
+// --------- <-- PARAM_SECTION_START
+// a
+// b
+// --------- <-- PARAM_SECTION_END
+// c
+// d
+// --------- <-- STACK_TOP
+#define PARAMSECT_offset(s) ((s)->offset_to_stack_pointer)
+class ParamSection : public Section {
+public:
+    //Record the parameter start byte offset related to stack pointer register.
+    //As mentioned above paradigm, the offset is equal to
+    //abs(PARAM_SECTION_END - STACK_TOP).
+    TMWORD offset_to_stack_pointer;
+public:
+    ParamSection() : offset_to_stack_pointer(TMWORD_UNDEF) {}
+    virtual ~ParamSection() {}
+    virtual void dump(CG const* cg);
+
+    TMWORD getOffset() const { return PARAMSECT_offset(this); }
+
+    //Return true if the start offset of section is available.
+    bool isOffsetValid() const
+    { return PARAMSECT_offset(this) != TMWORD_UNDEF; }
+};
+
+
 class SectionMgr {
     COPY_CONSTRUCTOR(SectionMgr);
-    xcom::Vector<Section*> m_sect_vec;
+protected:
     CGMgr * m_cgmgr;
     TypeMgr * m_tm;
     VarMgr * m_vm;
     MDSystem * m_mdsys;
-
+    xcom::Vector<Section*> m_sect_vec;
+protected:
     Section * allocStackSection();
+    Section * allocParamSection();
 
     //Assign variable to section.
     void assignSectVar(Section * sect, CHAR const* sect_name,
@@ -110,7 +156,8 @@ public:
     { return sizeof(*this) + m_sect_vec.count_mem() - sizeof(m_sect_vec); }
 
     Section * genSection(CHAR const* sect_name, bool allocable, UINT size);
-    Section * genStackSection();
+    StackSection * genStackSection();
+    ParamSection * genParamSection();
     UINT getSectNum() const { return m_sect_vec.get_elem_count(); }
 };
 

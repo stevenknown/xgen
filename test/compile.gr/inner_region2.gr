@@ -20,7 +20,7 @@ region program program() {
             return;
         }
         call $101:bool = inner_region();
-        doloop (id i, (add $4, 20), (le ld i, ld N), (add ld i, 1)) {
+        doloop (id i, (add $4:u32, 20), (le ld i, ld N), (add ld i, 1)) {
             doloop (id j, (add $4, 40), (le (ld j), ld N), (add ld j, 1)) {
                 st:mc<256> x = 0;
                 region inner codeblock(var len:i32:(align(4))) {

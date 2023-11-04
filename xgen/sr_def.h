@@ -68,7 +68,10 @@ public:
         SR::clean();
         clean_self();
     }
+    //Get the a formatted name of SR that is used to dump or print.
     virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const;
+
+    //Get the name of SR that is used in assembly file print.
     virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const;
 };
 
@@ -93,7 +96,10 @@ public:
         SR::clean();
         clean_self();
     }
+    //Get the a formatted name of SR that is used to dump or print.
     virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const;
+
+    //Get the name of SR that is used in assembly file print.
     virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const;
 };
 
@@ -115,12 +121,21 @@ public:
         SR::clean();
         clean_self();
     }
+    //Get the a formatted name of SR that is used to dump or print.
     virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const
-    { ASSERTN(0, ("internal used class")); DUMMYUSE((cg, buf));
-      return nullptr; }
+    {
+        ASSERTN(0, ("internal used class"));
+        DUMMYUSE((cg, buf));
+        return nullptr;
+    }
+
+    //Get the name of SR that is used in assembly file print.
     virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const
-    { ASSERTN(0, ("internal used class")); DUMMYUSE((cg, buf));
-      return nullptr; }
+    {
+        ASSERTN(0, ("internal used class"));
+        DUMMYUSE((cg, buf));
+        return nullptr;
+    }
 };
 
 
@@ -144,7 +159,10 @@ public:
         ImmSR::clean();
         clean_self();
     }
+    //Get the a formatted name of SR that is used to dump or print.
     virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const;
+
+    //Get the name of SR that is used in assembly file print.
     virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const;
 };
 
@@ -175,7 +193,10 @@ public:
         ImmSR::clean();
         clean_self();
     }
+    //Get the a formatted name of SR that is used to dump or print.
     virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const;
+
+    //Get the name of SR that is used in assembly file print.
     virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const;
 };
 
@@ -214,7 +235,10 @@ public:
         SR::clean();
         clean_self();
     }
+    //Get the a formatted name of SR that is used to dump or print.
     virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const;
+
+    //Get the name of SR that is used in assembly file print.
     virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const;
 };
 
@@ -239,7 +263,10 @@ public:
         SR::clean();
         clean_self();
     }
+    //Get the a formatted name of SR that is used to dump or print.
     virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const;
+
+    //Get the name of SR that is used in assembly file print.
     virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const;
 };
 
@@ -264,7 +291,10 @@ public:
         SR::clean();
         clean_self();
     }
+    //Get the a formatted name of SR that is used to dump or print.
     virtual CHAR const* get_name(StrBuf & buf, CG const* cg) const;
+
+    //Get the name of SR that is used in assembly file print.
     virtual CHAR const* getAsmName(StrBuf & buf, CG const* cg) const;
 };
 

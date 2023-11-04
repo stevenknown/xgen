@@ -640,8 +640,8 @@ void ARMCG::buildStoreForLessThan4Byte(SR * store_val, IN SR * base,
     //use R12 the scatch register to record the offset.
     o->set_store_ofst(sr_ofst, this);
 
-    //Mapping from LD OR to corresponnd variable. Used by OR::dump()
     if (v != nullptr) {
+        //Mapping from memory OR to related variable. Used by OR::dump()
         setMapOR2Mem(o, v);
     }
     ors.append_tail(o);
@@ -3352,7 +3352,7 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
 }
 
 
-bool ARMCG::skipArgRegister(Var const* param, xgen::RegSet const* regset,
+bool ARMCG::skipArgRegister(Var const* param, xgen::RegSet const& regset,
                             Reg reg) const
 {
     #ifdef TO_BE_COMPATIBLE_WITH_ARM_LINUX_GNUEABI
@@ -3367,10 +3367,10 @@ bool ARMCG::skipArgRegister(Var const* param, xgen::RegSet const* regset,
         if (!isEvenReg(reg) || //paired register start at even.
 
             //at least two registers available
-            regset->get_next(reg) == BS_UNDEF) {
+            regset.get_next(reg) == BS_UNDEF) {
             //Passed the odd number register to facilitate the use
             //of value in paired-register.
-            ASSERTN(isEvenReg((Reg)regset->get_next(reg)),
+            ASSERTN(isEvenReg((Reg)regset.get_next(reg)),
                     ("not continuous"));
             return true;
         }

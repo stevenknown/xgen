@@ -82,10 +82,11 @@ void ORList::move_tail(MOD ORList & ors)
 }
 
 
-void ORList::dump(CG * cg)
+void ORList::dump(CG const* cg) const
 {
     xcom::StrBuf buf(128);
-    for (OR * o = get_head(); o != nullptr; o = get_next()) {
+    ORListIter it;
+    for (OR const* o = get_head(&it); o != nullptr; o = get_next(&it)) {
         buf.clean();
         o->dump(buf, cg);
         note(cg->getRegion(), "\n%s", buf.buf);
@@ -167,7 +168,7 @@ bool OR::is_equal(OR const* o) const
 }
 
 
-void OR::dump(CG * cg) const
+void OR::dump(CG const* cg) const
 {
     xcom::StrBuf buf(128);
     dump(buf, cg);
@@ -175,7 +176,7 @@ void OR::dump(CG * cg) const
 }
 
 
-CHAR const* OR::dump(xcom::StrBuf & buf, CG * cg) const
+CHAR const* OR::dump(xcom::StrBuf & buf, CG const* cg) const
 {
     if (xoc::g_dbx_mgr != nullptr && g_cg_dump_src_line) {
         DbxMgr::PrtCtx prtctx;

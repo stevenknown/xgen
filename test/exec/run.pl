@@ -32,10 +32,11 @@ our $g_simulator;
 our $g_cflags;
 our $g_error_count;
 our $g_single_directory; #record the single directory
+our $g_succ;
+our $g_fail;
 require "../util.pl";
 prolog();
 main();
-
 #############################################################
 sub main
 {
@@ -44,8 +45,10 @@ sub main
     tryCompileAsmLinkRunCompare($g_is_test_gr);
     if ($g_error_count != 0) {
         print "\nThere are $g_error_count error occurred!\n";
+        abort(); #always quit immediately.
     }
     print "\nTEST FINISH!\n";
+    return $g_succ;
 }
 
 sub createBaseResultOutputFile

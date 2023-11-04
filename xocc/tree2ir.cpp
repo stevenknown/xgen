@@ -190,8 +190,8 @@ static xoc::Type const* convertCallReturnType(xfe::Tree const* t,
 //
 //START CTree2IR
 //
-//Generate IR for field-access if the base-region is a structure that returned
-//by a function call.
+//Generate IR for field-access if the base-region of Aggr Operation is a
+//structure that returned by a function call.
 IR * CTree2IR::convertFieldAccessForReturnValAggr(xfe::Tree const* t,
                                                   IR * retval, T2IRCtx * cont)
 {
@@ -962,19 +962,21 @@ xoc::Var * CTree2IR::convertReturnValBufVar(xoc::Type const* rettype,
     //transfering its address as the first implict parameter to
     //the call.
     xcom::StrBuf tmp(64);
-
-    tmp.sprint("$retval_buf_of_%d_bytes", *return_val_size);
+    tmp.sprint("$local_retvalbuf_of_%d_bytes", *return_val_size);
     Sym const* name = m_rg->getRegionMgr()->addToSymbolTab(tmp.buf);
+
+    //Note all function-calls share the same local-return-value-buffer with
+    //same byte size even if they are different function call-site.
+    //e.g:given 12 byte size struct S {...}.
+    //the call to struct S1 foo() and struct S1 bar() both use the variable
+    //'local_retvalbuf_of_12_bytes'.
     xoc::Var * retval_buf = m_rg->getVarMgr()->findVarByName(name);
     if (retval_buf == nullptr) {
+        //The return-value-buffer is a local var of current region, whose
+        //address will be the first argument to callee function.
         //The Var retval_buf only used in current region.
         retval_buf = genLocalVar(name, rettype);
-        retval_buf->setToFormalParam();
-        //Always set the Var retval_buf to be the first parameter.
-        VAR_formal_param_pos(retval_buf) = g_formal_parameter_start - 1;
     }
-    ASSERT0(VAR_formal_param_pos(retval_buf) ==
-            g_formal_parameter_start - 1);
     return retval_buf;
 }
 
@@ -1399,8 +1401,8 @@ IR * CTree2IR::convertSwitch(IN xfe::Tree * t, UINT lineno, T2IRCtx *)
 
 xoc::Var * CTree2IR::genLocalVar(xoc::Sym const* sym, xoc::Type const* ty)
 {
-    xoc::Var * v =  m_rg->getVarMgr()->registerVar(sym, ty, STACK_ALIGNMENT,
-                                                   VAR_LOCAL);
+    xoc::Var * v = m_rg->getVarMgr()->registerVar(sym, ty, STACK_ALIGNMENT,
+                                                  VAR_LOCAL);
     m_rg->addToVarTab(v);
     return v;
 }
@@ -1696,13 +1698,16 @@ IR * CTree2IR::genReturnValBuf(IR * ir)
         CHAR const* rname = m_rg->getRegionName();
         ASSERT0(rname);
         xcom::StrBuf tmp((UINT)(::strlen(rname) + 32));
-        tmp.sprint("#retval_buf_of_%s", rname);
+        tmp.sprint("#param_retvalbuf_of_%sbyte", rname);
         xoc::Type const* ptr = m_rg->getTypeMgr()->getPointerType(
             retval->getTypeSize(m_rg->getTypeMgr()));
         //retval_buf only used in current region.
         m_retval_buf = genLocalVar(tmp.buf, ptr);
+        m_retval_buf->setToFormalParam();
+        VAR_formal_param_pos(m_retval_buf) = g_formal_parameter_start - 1;
     }
-
+    ASSERT0(VAR_formal_param_pos(m_retval_buf) ==
+            g_formal_parameter_start - 1);
     IR * ist = m_rg->getIRMgr()->buildIStore(
         m_rg->getIRMgr()->buildLoad(m_retval_buf), retval, retval->getType());
     RET_exp(ir) = nullptr;

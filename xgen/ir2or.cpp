@@ -971,9 +971,6 @@ void IR2OR::convertLSR(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     ASSERT0(!BIN_opnd0(ir)->is_vec() && !BIN_opnd1(ir)->is_vec());
     IR * opnd0 = BIN_opnd0(ir);
     IR * opnd1 = BIN_opnd1(ir);
-
-    ASSERT0(!opnd0->is_signed());
-
     IOC tc;
     convertGeneralLoad(opnd0, ors, &tc);
     SR * sr1 = tc.get_reg(0);

@@ -841,13 +841,6 @@ void CG::buildAccumulate(OR * red_or, SR * red_var, SR * restore_val,
 }
 
 
-//Build memory store operation that store 'reg' into stack.
-//NOTE: user have to assign physical register manually if there is
-//new OR generated and requires register allocation.
-//reg: register to be stored.
-//offset: bytesize offset related to SP.
-//ors: record output.
-//cont: context.
 void CG::buildStoreAndAssignRegister(SR * reg, UINT offset, ORList & ors,
                                      IOC * cont)
 {
@@ -948,11 +941,12 @@ void CG::computeAndUpdateGlobalVarLayout(xoc::Var const* var, OUT SR ** base,
         section = m_cgmgr->getBssSection();
     }
     ASSERT0(section);
-    VarDesc * vd;
+    VarDesc * vd = nullptr;
     if (!SECT_var_list(section).find(var)) {
         //Add Var into var-list of 'section'.
         vd = (VarDesc*)xmalloc(sizeof(VarDesc));
-        SECT_size(section) = ceil_align(SECT_size(section), VAR_align(var));
+        SECT_size(section) = (TMWORD)xcom::ceil_align(
+            SECT_size(section), VAR_align(var));
         VD_ofst(vd) = (ULONG)SECT_size(section);
         if (needAllocateMemorySpace(var)) {
             ASSERTN(!var->is_any(),
@@ -1028,8 +1022,8 @@ void CG::computeAndUpdateStackVarLayout(xoc::Var const* var,
             ASSERTN(!var->is_any(),
                     ("defined variable '%s' can not be ANY type",
                      var->get_name()->getStr()));
-            SECT_size(section) += xcom::ceil_align(var->getByteSize(m_tm),
-                                                   STACK_ALIGNMENT);
+            SECT_size(section) += (TMWORD)xcom::ceil_align(
+                var->getByteSize(m_tm), STACK_ALIGNMENT);
         }
         section->getVar2Desc()->set(var, vd);
         section->getVarList()->append_tail(var);
@@ -1089,7 +1083,8 @@ void CG::computeParamLayout(xoc::Var const* var, OUT SR ** base, OUT SR ** ofst)
         UINT align = STACK_ALIGNMENT;
 
         ASSERT0(!var->is_any());
-        SECT_size(section) += xcom::ceil_align(var->getByteSize(m_tm), align);
+        SECT_size(section) += (TMWORD)xcom::ceil_align(
+            var->getByteSize(m_tm), align);
         section->getVar2Desc()->set(var, vd);
         section->getVarList()->append_tail(var);
     } else {
@@ -1121,12 +1116,13 @@ SR * CG::computeAndUpdateOffset(SR * sr)
     ASSERT0(sr);
     xoc::Var const* var = SR_var(sr);
     if (var->is_formal_param()) {
-        ASSERTN(m_param_sect_start_offset != -1,
+        ASSERTN(m_cgmgr->getParamSection()->isOffsetValid(),
                 ("should have been computed at"
                  " reviseFormalParameterAndSpadjust"));
         VarDesc const* vd = SECT_var2vdesc_map(
             m_cgmgr->getParamSection()).get(var);
-        HOST_UINT l = m_param_sect_start_offset + (HOST_UINT)vd->getOfst();
+        HOST_UINT l = m_cgmgr->getParamSection()->getOffset() +
+                      (HOST_UINT)vd->getOfst();
         //Recompute the alignment of variable.
         //>Do not perform aligning for stack-variables.
         //>Because stack variable's address is computed by SP + OFFSET, we
@@ -1163,14 +1159,13 @@ SR * CG::computeAndUpdateOffset(SR * sr)
 
 //Compute the offset for stack variable and
 //supersede the symbol variable with the offset.
-void CG::relocateStackVarOffset()
+void CG::relocateStackVar()
 {
     START_TIMER(t0, "Relocate Stack Variable Offset");
     List<ORBB*> * bblist = getORBBList();
     for (ORBB * bb = bblist->get_head();
          bb != nullptr; bb = bblist->get_next()) {
         if (ORBB_ornum(bb) == 0) { continue; }
-
         ORCt * ct;
         for (OR * o = ORBB_orlist(bb)->get_head(&ct);
              o != nullptr; o = ORBB_orlist(bb)->get_next(&ct)) {
@@ -1178,43 +1173,41 @@ void CG::relocateStackVarOffset()
                 SR * ofst = o->get_load_ofst();
                 ASSERT0(ofst);
                 if (!ofst->is_var()) { continue; }
-
                 o->set_load_ofst(computeAndUpdateOffset(ofst), this);
                 OR_is_need_compute_var_ofst(o) = false;
-            } else if (o->is_store()) {
+                continue;
+            }
+            if (o->is_store()) {
                 SR * ofst = o->get_store_ofst();
                 ASSERT0(ofst);
                 if (!ofst->is_var()) { continue; }
-
                 o->set_store_ofst(computeAndUpdateOffset(ofst), this);
                 OR_is_need_compute_var_ofst(o) = false;
-            } else if (o->needComputeVAROfst()) {
+                continue;
+            }
+            if (o->needComputeVAROfst()) {
                 for (UINT i = 0; i < o->result_num(); i++) {
                     SR * res = o->get_result(i);
                     if (!res->is_var()) { continue; }
-
                     o->set_result(i, computeAndUpdateOffset(res), this);
                 }
-
                 for (UINT i = 0; i < o->opnd_num(); i++) {
                     SR * opnd = o->get_opnd(i);
                     if (!opnd->is_var()) { continue; }
-
                     o->set_opnd(i, computeAndUpdateOffset(opnd), this);
                 }
-
                 OR_is_need_compute_var_ofst(o) = false;
+                continue;
             }
+            ASSERTN(!o->is_mem(), ("TODO"));
         }
     }
     END_TIMER(t0, "Relocate Stack Variable Offset");
-
     if (g_dump_opt.isDumpAfterPass() && g_xgen_dump_opt.isDumpRelocateStack()) {
         xoc::note(getRegion(),
-                  "\n==---- DUMP AFTER RELOCATE STACK OFFSET '%s' ----==",
+                  "\n==---- DUMP AFTER RELOCATE STACK VAR '%s' ----==",
                   getRegion()->getRegionName());
-        m_cgmgr->getParamSection()->dump(this);
-        m_cgmgr->getStackSection()->dump(this);
+        m_cgmgr->dumpSectionVarLayOut(this);
         dumpORBBList();
     }
 }
@@ -1289,36 +1282,14 @@ void CG::initFuncUnit()
 
     //Initializing formal parameter section.
     ASSERT0(m_rg->getRegionVar());
-
     List<xoc::Var const*> param_list;
     m_rg->findFormalParam(param_list, true);
-
     UINT i = 0;
     for (xoc::Var const* v = param_list.get_head();
          v != nullptr; v = param_list.get_next()) {
          //Append parameter into PARAM-Section in turn.
          computeParamLayout(v, nullptr, nullptr);
          m_params.set(i, v);
-    }
-
-    m_param_sect_start_offset = -1;
-}
-
-
-void CG::initGlobalVar(VarMgr * vm)
-{
-    //Record global Var in .data section.
-    VarVec * varvec = vm->getVarVec();
-    SR * base, * ofst;
-    for (VecIdx i = 0; i <= varvec->get_last_idx(); i++) {
-        xoc::Var * v = varvec->get(i);
-        if (v == nullptr) { continue; }
-        if (v->is_global() && !v->is_unallocable() && !v->is_fake() &&
-            //Do not add file-region-private-var
-            //into DATA section ahead of time.
-            !v->is_private()) {
-            computeVarBaseAndOffset(v, 0, &base, &ofst);
-        }
     }
 }
 
@@ -1329,7 +1300,6 @@ void CG::finiFuncUnit()
     m_dedicate_sr_tab.clean();
     m_param_pointer = nullptr;
     m_reg_count = 0;
-    m_param_sect_start_offset = -1;
     freePackage();
 }
 
@@ -1370,7 +1340,7 @@ SR * CG::dupSR(SR const* sr)
 }
 
 
-UINT CG::compute_pad()
+UINT CG::compute_pad() const
 {
     UINT maxpad = 0;
     for (VecIdx bbid = 0; bbid <= m_ipl_vec.get_last_idx(); bbid++) {
@@ -1384,7 +1354,7 @@ UINT CG::compute_pad()
             for (SLOT s = FIRST_SLOT; s <= LAST_SLOT; s = (SLOT)(s + 1)) {
                 OR * o = ip->get(s);
                 if (o == nullptr) { continue; }
-                maxpad = MAX(maxpad, (UINT)strlen(o->getCodeName()));
+                maxpad = MAX(maxpad, (UINT)::strlen(o->getCodeName()));
             }
         }
     }
@@ -1392,7 +1362,7 @@ UINT CG::compute_pad()
 }
 
 
-void CG::dumpPackage()
+void CG::dumpPackage() const
 {
     if (!getRegion()->isLogMgrInit()) { return; }
     INT org = getRegion()->getLogMgr()->getIndent();
@@ -1447,16 +1417,9 @@ void CG::dumpPackage()
 }
 
 
-void CG::dumpSection()
+void CG::dumpSection() const
 {
-    if (!getRegion()->isLogMgrInit()) { return; }
-    note(getRegion(), "\n==---- DUMP Section Var info ----==\n");
-    m_cgmgr->getCodeSection()->dump(this);
-    m_cgmgr->getDataSection()->dump(this);
-    m_cgmgr->getRodataSection()->dump(this);
-    m_cgmgr->getBssSection()->dump(this);
-    m_cgmgr->getStackSection()->dump(this);
-    m_cgmgr->getParamSection()->dump(this);
+    m_cgmgr->dumpSectionVarLayOut(this);
 }
 
 
@@ -1467,9 +1430,9 @@ void CG::dumpORBBList() const
 }
 
 
-void CG::dumpVar() const
+void CG::dumpGeneratedVar() const
 {
-    note(getRegion(), "\n==---- DUMP Variables in CG '%s' ----==",
+    note(getRegion(), "\n==---- DUMP Variables generated by CG '%s' ----==",
          m_rg->getRegionName());
     xcom::C<Var*> * it;
     if (m_bb_level_internal_var_list.get_elem_count() != 0) {
@@ -1481,7 +1444,6 @@ void CG::dumpVar() const
             v->dump(m_vm);
         }
     }
-
     xcom::C<Var*> * it2;
     if (m_func_level_internal_var_list.get_elem_count() != 0) {
         note(getRegion(), "\n==-- FUNC LEVEL VAR, NUM%d --==",
@@ -2637,7 +2599,7 @@ void CG::expandFakeOR(OR * o, OUT IssuePackageList * ipl)
 
 
 //Perform package if target machine is multi-issue architecture.
-void CG::package(Vector<BBSimulator*> & simvec)
+void CG::package(xcom::Vector<BBSimulator*> & simvec)
 {
     List<ORBB*> * bblst = getORBBList();
     if (bblst->get_elem_count() == 0) { return; }
@@ -2677,7 +2639,6 @@ void CG::package(Vector<BBSimulator*> & simvec)
         ipl_ptr++;
     }
     END_TIMER(t0, "Perform Packaging");
-
     if (g_dump_opt.isDumpAfterPass() && g_xgen_dump_opt.isDumpPackage()) {
         /////////////////////////////////////
         //DO NOT DUMP BB LIST AFTER PACKAGE//
@@ -3544,17 +3505,14 @@ xoc::Var * CG::genSpillVar(SR * sr)
     if (SR_spill_var(sr) != nullptr) {
         return SR_spill_var(sr);
     }
-
-    xoc::Var * v;
     xoc::Type const* type = m_tm->getSimplexTypeEx(
         m_tm->getAlignedDType(WORD_BITSIZE, false));
 
     //Generate spill-loc for life time that belonged to whole func unit if v is
     //global variable, or else generate spill-loc for life time that only
     //lived in a single BB.
-    v = genTempVar(type, STACK_ALIGNMENT, sr->is_global());
+    xoc::Var * v = genTempVar(type, STACK_ALIGNMENT, sr->is_global());
     ASSERT0(v);
-
     v->setFlag(VAR_IS_SPILL);
     SR_spill_var(sr) = v;
     return v;
@@ -3612,7 +3570,7 @@ UINT CG::calcSizeOfParameterPassedViaRegister(
          phyreg = phyregset->get_next(phyreg)) {
         if (passed_paramsz == 0 && //only check if whole
                                    //value can be passed via reg
-            skipArgRegister(ct->val(), phyregset, phyreg)) {
+            skipArgRegister(ct->val(), *phyregset, phyreg)) {
             continue;
         }
         ASSERT0(phyreg >= 0);
@@ -3627,68 +3585,100 @@ UINT CG::calcSizeOfParameterPassedViaRegister(
 }
 
 
-//Insert store of register value of parameters
-//after spadjust at each entry BB.
-//param_start: bytesize offset of total parameter section, related to SP.
-//entry_lst: list of entry BB
-//param_lst: parameter variable which sorted in declaration order
+//Check all Reg type SR have assigned a physical register.
+static bool verifySRHasAssignReg(ORList const& ors)
+{
+    ORListIter it;
+    for (ors.get_head(&it); it != ors.end(); ors.get_next(&it)) {
+        OR * o = it->val();
+        for (UINT i = 0; i < o->result_num(); i++) {
+            SR const* sr = o->get_result(i);
+            if (sr->is_reg()) {
+                ASSERT0(sr->getPhyReg() != REG_UNDEF);
+            }
+        }
+        for (UINT j = 0; j < o->opnd_num(); j++) {
+            SR const* sr = o->get_opnd(j);
+            if (sr->is_reg()) {
+                ASSERT0(sr->getPhyReg() != REG_UNDEF);
+            }
+        }
+    }
+    return true;
+}
+
+
+//The function stores all physical register in given regset to stack.
+//Note the store operation will based on SP register by default.
+//stack_offset_start: byte offset of the first register in 'regset'.
+//                    The offset is related to SP register.
+//regset: a physical register set.
+void CG::storeRegSetToStack(UINT stack_offset_start, RegSet const& regset,
+                            xcom::List<Var const*> const& varlst,
+                            OUT ORList & ors, MOD IOC & tc)
+{
+    //Record the byte size that has been stored in stack.
+    UINT stored_byte_size = 0;
+
+    //Record bytesize of total parameters that has been passed.
+    UINT passed_total_byte_size = 0;
+    xcom::List<Var const*>::Iter varit;
+    Var const* var = varlst.get_head(&varit);
+    ASSERT0(var);
+    for (BSIdx phyreg = regset.get_first();
+         phyreg != BS_UNDEF && var != nullptr;
+         phyreg = regset.get_next(phyreg)) {
+        if (stored_byte_size == 0 && //only check if whole
+                                     //value can be passed via reg
+            skipArgRegister(var, regset, phyreg)) {
+            //This physical register does not need to
+            //store into stack.
+            continue;
+        }
+        ASSERT0(phyreg >= 0);
+        SR * sr_phyreg = genDedicatedReg(phyreg);
+        ASSERT0(sr_phyreg);
+        IOC_mem_byte_size(&tc) = GENERAL_REGISTER_SIZE;
+        buildStoreAndAssignRegister(sr_phyreg,
+                                    stack_offset_start + passed_total_byte_size,
+                                    ors, &tc);
+        passed_total_byte_size += GENERAL_REGISTER_SIZE;
+        stored_byte_size += GENERAL_REGISTER_SIZE;
+        if (stored_byte_size == var->getByteSize(m_tm)) {
+            var = varlst.get_next(&varit);
+            stored_byte_size = 0;
+        }
+    }
+}
+
+
 void CG::storeRegisterParameterBackToStack(List<ORBB*> * entry_lst,
                                            UINT param_start)
 {
     if (SECT_size(m_cgmgr->getParamSection()) == 0) {
         return;
     }
+    ASSERT0(entry_lst);
     ASSERT0(tmGetRegSetOfArgument());
+    //param_lst: parameter variable which sorted in declaration order.
     List<Var const*> param_lst;
     m_rg->findFormalParam(param_lst, true);
-
-    ASSERT0(entry_lst);
     RegSet const* phyregset = tmGetRegSetOfArgument();
     ASSERT0(phyregset);
     ORList ors;
     IOC tc;
-    for (ORBB * bb = entry_lst->get_head();
-         bb != nullptr; bb = entry_lst->get_next()) {
+    List<ORBB*>::Iter bbit;
+    for (ORBB * bb = entry_lst->get_head(&bbit);
+         bb != nullptr; bb = entry_lst->get_next(&bbit)) {
         OR * spadj = ORBB_entry_spadjust(bb);
         if (spadj == nullptr) { continue; }
         ORCt * orct = nullptr;
         ORBB_orlist(bb)->find(spadj, &orct);
         ASSERTN(orct, ("not find spadjust in BB"));
-        Var const* param = param_lst.get_head();
-        ASSERT0(param);
-
         ors.clean();
         tc.clean();
-        //Record the bytesize that has been passed for each parameter.
-        UINT passed_paramsz = 0;
-
-        //Record bytesize of total parameters that has been passed.
-        UINT passed_total_paramsz = 0;
-        for (BSIdx phyreg = phyregset->get_first();
-             phyreg != BS_UNDEF && param != nullptr;
-             phyreg = phyregset->get_next(phyreg)) {
-            if (passed_paramsz == 0 && //only check if whole
-                                       //value can be passed via reg
-                skipArgRegister(param, phyregset, phyreg)) {
-                //This physical register does not need to
-                //store into stack.
-                continue;
-            }
-            ASSERT0(phyreg >= 0);
-            SR * sr_phyreg = genDedicatedReg(phyreg);
-            ASSERT0(sr_phyreg);
-            IOC_mem_byte_size(&tc) = GENERAL_REGISTER_SIZE;
-            buildStoreAndAssignRegister(sr_phyreg,
-                                        param_start + passed_total_paramsz,
-                                        ors, &tc);
-            passed_total_paramsz += GENERAL_REGISTER_SIZE;
-            passed_paramsz += GENERAL_REGISTER_SIZE;
-            if (passed_paramsz == param->getByteSize(m_tm)) {
-                param = param_lst.get_next();
-                passed_paramsz = 0;
-            }
-        }
-
+        storeRegSetToStack(param_start, *phyregset, param_lst, ors, tc);
+        ASSERTN(verifySRHasAssignReg(ors), ("found SR without phy-reg"));
         ORBB_orlist(bb)->insert_after(ors, orct);
     }
 }
@@ -3758,8 +3748,8 @@ void CG::reviseFormalParameterAndSpadjust(List<ORBB*> & entry_lst,
 {
     //framesize = (register caller parameter size + local variable +
     //             temporary variable + callee parameter size).
-    INT framesize = (INT)SECT_size(m_cgmgr->getStackSection()) +
-                    getMaxArgSectionSize();
+    INT framesize = (INT)(m_cgmgr->getStackSection()->getSize() +
+                          getMaxArgSectionSize());
 
     //Adjust size by stack alignment.
     ASSERTN(xcom::isPowerOf2(STACK_ALIGNMENT),
@@ -3769,7 +3759,6 @@ void CG::reviseFormalParameterAndSpadjust(List<ORBB*> & entry_lst,
     ASSERTN(SPADJUST_ALIGNMENT - 1 <= 0xFFFF, ("Stack alignment is too big"));
 
     framesize = (INT)xcom::ceil_align(framesize, SPADJUST_ALIGNMENT);
-
     if (!isUseFP() &&
         (getMaxArgSectionSize() > 0 &&
          SECT_size(m_cgmgr->getParamSection()) > 0)) {
@@ -3777,8 +3766,7 @@ void CG::reviseFormalParameterAndSpadjust(List<ORBB*> & entry_lst,
     }
 
     //Update the parameter section start.
-    ASSERTN(m_param_sect_start_offset == -1, ("already set"));
-    m_param_sect_start_offset = framesize;
+    TMWORD param_sect_start_offset = framesize;
 
     if (isPassArgumentThroughRegister()) {
         ASSERT0(tmGetRegSetOfArgument()); //phy regset should exist.
@@ -3794,16 +3782,16 @@ void CG::reviseFormalParameterAndSpadjust(List<ORBB*> & entry_lst,
         }
 
         //Update the parameter section start.
-        m_param_sect_start_offset = framesize;
+        param_sect_start_offset = framesize;
         storeRegisterParameterBackToStack(&entry_lst, framesize);
 
         //Amend framesize.
         framesize += bytesize_of_arg_passed_via_reg;
     }
+    PARAMSECT_offset(m_cgmgr->getParamSection()) = param_sect_start_offset;
 
     //size must align in SPADJUST_ALIGNMENT.
     ASSERT0(framesize == xcom::ceil_align(framesize, SPADJUST_ALIGNMENT));
-
     for (ORBB * bb = entry_lst.get_head();
          bb != nullptr; bb = entry_lst.get_next()) {
         OR * spadj = ORBB_entry_spadjust(bb);
@@ -3814,7 +3802,6 @@ void CG::reviseFormalParameterAndSpadjust(List<ORBB*> & entry_lst,
             ORBB_orlist(bb)->remove(spadj);
             continue;
         }
-
         setSpadjustOffset(spadj, -framesize);
     }
 
@@ -3828,7 +3815,6 @@ void CG::reviseFormalParameterAndSpadjust(List<ORBB*> & entry_lst,
             ORBB_orlist(bb)->remove(spadj);
             continue;
         }
-
         setSpadjustOffset(spadj, framesize);
     }
 
@@ -3897,7 +3883,6 @@ xoc::Var * CG::genTempVar(xoc::Type const* type, UINT align, bool func_level)
     if (func_level) {
         return addFuncLevelVar(type, align);
     }
-
     xoc::Var * v = getBBLevelVarList()->getFreeVar();
     if (v == nullptr) {
         v = addBBLevelVar(type, align);
@@ -3996,7 +3981,6 @@ RaMgr * CG::performRA()
                   m_rg->getRegionName());
         dumpORBBList();
     }
-
     START_TIMER(t, "Register Allocation");
     RaMgr * rm = allocRaMgr(getORBBList(), m_rg->is_function());
     rm->setParallelPartMgrVec(getParallelPartMgrVec());
@@ -4010,13 +3994,11 @@ RaMgr * CG::performRA()
     if (isGRAEnable()) {
         rm->performGRA();
     }
-
     rm->performLRA();
     END_TIMER(t, "Register Allocation");
-
-    if (g_dump_opt.isDumpAfterPass() && g_xgen_dump_opt.isDumpRA()) {
+    if (xoc::g_dump_opt.isDumpAfterPass() && g_xgen_dump_opt.isDumpRA()) {
         xoc::note(getRegion(),
-                  "\n==---- DUMP AFTER REGISTER ALLOCATION %s ----==",
+                  "\n==---- DUMP AFTER REGISTER ALLOCATION of %s ----==",
                   m_rg->getRegionName());
         dumpORBBList();
     }
@@ -4537,20 +4519,17 @@ bool CG::perform()
 {
     ASSERTN(xcom::isPowerOf2(STACK_ALIGNMENT),
             ("Stack alignment should be power of 2"));
-
     if ((xoc::g_dump_opt.isDumpAfterPass() ||
          xoc::g_dump_opt.isDumpBeforePass()) &&
         g_xgen_dump_opt.isDumpCG()) {
         xoc::note(getRegion(),
-                  "\n==---- DUMP START CODE GENERATION (%d)'%s' ----==\n",
-                  m_rg->id(), m_rg->getRegionName());
+                  "\n==---- DUMP START CODE GENERATION '%s'(id:%d) ----==\n",
+                  m_rg->getRegionName(), m_rg->id());
         m_rg->dump(false);
     }
-
     if (m_rg->getBBList()->get_elem_count() == 0) {
         addReturnForEmptyRegion();
     }
-
     START_TIMER_FMT(tcg, ("Code Generation Perform '%s'",
                           m_rg->getRegionName()));
     //Estimate and reserve stack memory space for real parameters.
@@ -4558,11 +4537,11 @@ bool CG::perform()
     //the using of FP register.
     computeMaxRealParamSpace();
 
-    //Generate OR.
+    //Generate OR and SR.
     convertORBBList(this);
 
     //Build CFG.
-    OptCtx oc(m_rg);
+    xoc::OptCtx oc(m_rg);
     createORCFG(oc);
     if (m_rg->is_function()) {
         //Generate SP adjustment operation, and the code protecting the
@@ -4580,9 +4559,8 @@ bool CG::perform()
     //Perform global and local register allocation.
     RaMgr * ra_mgr = performRA();
     performCFGOptimization(this, oc);
-
-    List<ORBB*> entry_lst;
-    List<ORBB*> exit_lst;
+    xcom::List<ORBB*> entry_lst;
+    xcom::List<ORBB*> exit_lst;
     computeEntryAndExit(*m_or_cfg, entry_lst, exit_lst);
 
     if (m_rg->is_function()) {
@@ -4596,25 +4574,24 @@ bool CG::perform()
     }
 
     //Perform Local instruction scheduling.
-    SimVec * simvec = new SimVec();
+    SimVec * simvec = allocSimVec();
     performIS(*simvec, ra_mgr);
 
     //Compute the offset for stack variable and
     //supersede the symbol variable with the offset.
-    relocateStackVarOffset();
+    relocateStackVar();
 
+    //Make sure all SRs has assigned physical register.
     delete ra_mgr;
 
-    //Packaging instruction bundle if target machine is
-    //multi-issue architecture.
+    //Package instruction bundles if target machine is multi-issue architecture.
     package(*simvec);
 
     delete simvec;
 
-    /////////////////////////////////////////
-    //DO NOT DUMP ORBB LIST AFTER THIS LINE//
-    /////////////////////////////////////////
-
+    ////////////////////////////////////////////////////////////////////////////
+    //DO NOT DUMP ORBB LIST AFTER THIS LINE                                   //
+    ////////////////////////////////////////////////////////////////////////////
     END_TIMER_FMT(tcg, ("Code Generation Perform '%s'", m_rg->getRegionName()));
     return true;
 }

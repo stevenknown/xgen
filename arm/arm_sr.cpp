@@ -34,7 +34,7 @@ CHAR const* ARMIntSR::getAsmName(StrBuf & buf, CG const* cg) const
 {
     ASSERT0(getCode()== SR_INT_IMM);
     buf.strcat("#");
-    return SR::getAsmName(buf, cg);
+    return IntSR::getAsmName(buf, cg);
 }
 
 
@@ -58,7 +58,7 @@ CHAR const* ARMRegSR::getAsmName(StrBuf & buf, CG const* cg) const
         buf.strcat("sp");
         return buf.buf;
     }
-    return SR::getAsmName(buf, cg);
+    return RegSR::getAsmName(buf, cg);
 }
 
 
@@ -72,7 +72,7 @@ CHAR const* ARMRegSR::get_name(StrBuf & buf, CG const* cg) const
     //if (getRegFile() != RF_UNDEF) {
     //    buf.strcat("(%s)", tmGetRegFileName(SR_regfile(this)));
     //}
-    return SR::get_name(buf, cg);
+    return RegSR::get_name(buf, cg);
 }
 
 

@@ -230,8 +230,8 @@ public:
         m_opnd.destroy();
         m_result.destroy();
     }
-    virtual CHAR const* dump(StrBuf & buf, CG * cg) const;
-    virtual void dump(CG * cg) const;
+    virtual CHAR const* dump(StrBuf & buf, CG const* cg) const;
+    virtual void dump(CG const* cg) const;
 
     OR_CODE getCode() const { return code; }
     CHAR const* getCodeName() const { return OR_code_name(this); }
@@ -534,6 +534,7 @@ public:
 };
 
 typedef List<OR const*> ConstORList;
+typedef List<OR const*>::Iter ConstORListIter;
 
 class ORList : public List<OR*> {
     COPY_CONSTRUCTOR(ORList);
@@ -563,7 +564,7 @@ public:
         }
     }
 
-    void dump(CG * cg);
+    void dump(CG const* cg) const;
 
     void set_pred(IN SR * pred, CG * cg)
     {
@@ -573,6 +574,7 @@ public:
         }
     }
 };
+typedef ORList::Iter ORListIter;
 
 //This class defined ORList that often used as shared object during functions.
 //If an preemptive object is set as 'occupied', it can not be used for new
@@ -656,7 +658,7 @@ public:
     void copyDbx(Dbx const* dbx) { m_entity->copyDbx(dbx); }
     void clean() { m_entity->clean(); }
 
-    void dump(CG * cg) { m_entity->dump(cg); }
+    void dump(CG const* cg) const { m_entity->dump(cg); }
 
     ORList & getList() const { return *m_entity; }
     UINT get_elem_count() const { return m_entity->get_elem_count(); }

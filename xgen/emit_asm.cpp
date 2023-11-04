@@ -33,7 +33,7 @@ author: Su Zhenyu
 
 namespace xgen {
 
-AsmPrinter::AsmPrinter(CG const* cg, AsmPrinterMgr * apmgr)
+AsmPrinter::AsmPrinter(CG const* cg, AsmPrinterMgr * apmgr, FILE * asmh)
 {
     ASSERT0(cg && apmgr);
     m_cg = cg;
@@ -42,19 +42,20 @@ AsmPrinter::AsmPrinter(CG const* cg, AsmPrinterMgr * apmgr)
     m_tm = m_cg->getTypeMgr();
     m_vm = m_rg->getVarMgr();
     m_asmprtmgr = apmgr;
+    m_asmh = asmh;
 }
 
 
 //Print instructions to assembly file.
-void AsmPrinter::printCode(FILE * asmfile)
+void AsmPrinter::printCode()
 {
     ASSERTN(FIRST_SLOT == LAST_SLOT, ("Target Dependent Code"));
     CHAR const* code_indent = "      ";
     Vector<IssuePackageList*> * ipcvec =
         const_cast<CG*>(m_cg)->getIssuePackageListVec();
     List<ORBB*> * bblst = const_cast<CG*>(m_cg)->getORBBList();
-
     StrBuf buf(128);
+    FILE * asmh = getFile();
     for (ORBB * bb = bblst->get_head();
         bb != nullptr; bb = bblst->get_next()) {
         IssuePackageList * ipl = ipcvec->get(bb->id());
@@ -62,20 +63,20 @@ void AsmPrinter::printCode(FILE * asmfile)
         for (IssuePackageListIter it = ipl->get_head();
              it != ipl->end(); it = ipl->get_next(it)) {
             IssuePackage * ip = it->val();
-            fprintf(asmfile, "\n { ");
+            fprintf(asmh, "\n { ");
             OR * o = ip->get(FIRST_SLOT);
             if (o != nullptr) {
                 buf.clean();
-                fprintf(asmfile, "%s%s\n", code_indent, printOR(o, buf));
+                fprintf(asmh, "%s%s\n", code_indent, printOR(o, buf));
             }
             else {
-                fprintf(asmfile, "%s%s\n", code_indent, "nop");
+                fprintf(asmh, "%s%s\n", code_indent, "nop");
             }
-            fprintf(asmfile, "}");
-            fflush(asmfile);
+            fprintf(asmh, "}");
+            fflush(asmh);
         }
     }
-    fflush(asmfile);
+    fflush(asmh);
 }
 
 } //namespace xgen

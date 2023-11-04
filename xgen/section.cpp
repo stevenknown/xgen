@@ -41,30 +41,29 @@ void Section::dump(CG const* cg)
     xcom::StrBuf buf(64);
     note(cg->getRegion(), "\nSection:size:%d,", (UINT)SECT_size(this));
     note(cg->getRegion(), "%s", sect_var->dump(buf, cg->getVarMgr()));
-    note(cg->getRegion(), "\n  VarLayOut:");
-    List<xoc::Var const*> layout;
-    for (xoc::Var const* v = var_list.get_head();
-         v != nullptr; v = var_list.get_next()) {
-        VarDesc * vd = getVar2Desc()->get(v);
-        ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
+    xcom::List<xoc::Var const*> layout;
+    if (var_list.get_elem_count() != 0) {
+        note(cg->getRegion(), "\n  VarLayOut(byte):");
+        for (xoc::Var const* v = var_list.get_head();
+             v != nullptr; v = var_list.get_next()) {
+            VarDesc * vd = getVar2Desc()->get(v);
+            ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
+            xcom::C<xoc::Var const*> * ct;
+            bool find = false;
+            for (xoc::Var const* v2 = layout.get_head(&ct);
+                 v2 != nullptr; v2 = layout.get_next(&ct)) {
+                VarDesc * vd2 = getVar2Desc()->get(v2);
+                ASSERTN(vd2, ("No VarDesc correspond to xoc::Var"));
 
-        xcom::C<xoc::Var const*> * ct;
-        bool find = false;
-        for (xoc::Var const* v2 = layout.get_head(&ct);
-             v2 != nullptr; v2 = layout.get_next(&ct)) {
-            VarDesc * vd2 = getVar2Desc()->get(v2);
-            ASSERTN(vd2, ("No VarDesc correspond to xoc::Var"));
-
-            if (vd->getOfst() < vd2->getOfst()) {
-                layout.insert_before(v, ct);
-                find = true;
-                break;
+                if (vd->getOfst() < vd2->getOfst()) {
+                    layout.insert_before(v, ct);
+                    find = true;
+                    break;
+                }
             }
+            if (!find) { layout.append_tail(v); }
         }
-
-        if (!find) { layout.append_tail(v); }
     }
-
     for (xoc::Var const* v = layout.get_tail();
          v != nullptr; v = layout.get_prev()) {
         VarDesc * vd = getVar2Desc()->get(v);
@@ -78,6 +77,23 @@ void Section::dump(CG const* cg)
 
 
 //
+//START ParamSection
+//
+void ParamSection::dump(CG const* cg)
+{
+    if (!cg->getRegion()->isLogMgrInit()) { return; }
+    Section::dump(cg);
+    if (offset_to_stack_pointer != TMWORD_UNDEF) {
+        cg->getRegion()->getLogMgr()->incIndent(2);
+        note(cg->getRegion(), "\noffset_to_stack_pointer=%ubyte",
+             offset_to_stack_pointer);
+        cg->getRegion()->getLogMgr()->decIndent(2);
+    }
+}
+//END ParamSection
+
+
+//
 //START StackSection
 //
 void StackSection::dump(CG const* cg)
@@ -85,50 +101,44 @@ void StackSection::dump(CG const* cg)
     if (!cg->getRegion()->isLogMgrInit()) { return; }
     xoc::VarMgr const* vm = cg->getVarMgr();
     xcom::StrBuf buf(64);
-    FILE * h = cg->getRegion()->getLogMgr()->getFileHandler();
-    fprintf(h, "\nSection:size:%d,",
-            (UINT)SECT_size(this) + cg->getMaxArgSectionSize());
-    fprintf(h, "%s", sect_var->dump(buf, vm));
-
-    fprintf(h, "\n  VarLayOut:");
+    Region * rg = cg->getRegion();
+    note(rg, "\nSection:size:%d,",
+         (UINT)SECT_size(this) + cg->getMaxArgSectionSize());
+    note(rg, "%s", sect_var->dump(buf, vm));
     List<xoc::Var const*> layout;
-    for (xoc::Var const* v = var_list.get_head();
-         v != nullptr; v = var_list.get_next()) {
-        VarDesc * vd = getVar2Desc()->get(v);
-        ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
-
-        xcom::C<xoc::Var const*> * ct;
-        bool find = false;
-        for (xoc::Var const* v2 = layout.get_head(&ct);
-             v2 != nullptr; v2 = layout.get_next(&ct)) {
-            VarDesc * vd2 = getVar2Desc()->get(v2);
-            ASSERTN(vd2, ("No VarDesc correspond to xoc::Var"));
-
-            if (vd->getOfst() < vd2->getOfst()) {
-                layout.insert_before(v, ct);
-                find = true;
-                break;
+    if (var_list.get_elem_count() != 0) {
+        note(rg, "\n  VarLayOut(byte):");
+        for (xoc::Var const* v = var_list.get_head();
+             v != nullptr; v = var_list.get_next()) {
+            VarDesc * vd = getVar2Desc()->get(v);
+            ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
+            xcom::C<xoc::Var const*> * ct;
+            bool find = false;
+            for (xoc::Var const* v2 = layout.get_head(&ct);
+                 v2 != nullptr; v2 = layout.get_next(&ct)) {
+                VarDesc * vd2 = getVar2Desc()->get(v2);
+                ASSERTN(vd2, ("No VarDesc correspond to xoc::Var"));
+                if (vd->getOfst() < vd2->getOfst()) {
+                    layout.insert_before(v, ct);
+                    find = true;
+                    break;
+                }
             }
+            if (!find) { layout.append_tail(v); }
         }
-
-        if (!find) { layout.append_tail(v); }
     }
-
     for (xoc::Var const* v = layout.get_tail();
          v != nullptr; v = layout.get_prev()) {
         VarDesc * vd = getVar2Desc()->get(v);
         ASSERTN(vd, ("No VarDesc correspond to xoc::Var"));
         buf.clean();
-        fprintf(h, "\n  (%u)%s",
-                (UINT)vd->getOfst() + cg->getMaxArgSectionSize(),
-                v->dump(buf, vm));
+        note(rg, "\n  (%u)%s",
+             (UINT)vd->getOfst() + cg->getMaxArgSectionSize(),
+             v->dump(buf, vm));
     }
-
     if (cg->getMaxArgSectionSize() > 0) {
-        fprintf(h, "\n  (%u)%s", 0, "real-param");
+        note(rg, "\n  (%u)%s", 0, "arg-section of all callees");
     }
-
-    fflush(h);
 }
 //END StackSection
 
@@ -173,9 +183,15 @@ Section * SectionMgr::allocSection()
 }
 
 
+Section * SectionMgr::allocParamSection()
+{
+    return (Section*)new ParamSection();
+}
+
+
 Section * SectionMgr::allocStackSection()
 {
-    return new StackSection();
+    return (Section*)new StackSection();
 }
 
 
@@ -183,20 +199,27 @@ Section * SectionMgr::allocStackSection()
 void SectionMgr::assignSectVar(Section * sect, CHAR const* sect_name,
                                bool allocable, UINT size)
 {
-    UINT id = getSectNum();
     xoc::Type const* type = m_tm->getMCType(4);
     SECT_var(sect) = m_vm->registerVar(sect_name, type, 1, VAR_GLOBAL|VAR_FAKE);
     allocable ? SECT_var(sect)->removeFlag(VAR_IS_UNALLOCABLE) :
                 SECT_var(sect)->setFlag(VAR_IS_UNALLOCABLE);
     SECT_size(sect) = size;
-    SECT_id(sect) = id;
-    m_sect_vec.set(id, sect);
+    SECT_id(sect) = getSectNum();
+    m_sect_vec.set(SECT_id(sect), sect);
 }
 
 
-Section * SectionMgr::genStackSection()
+ParamSection * SectionMgr::genParamSection()
 {
-    Section * sect = allocStackSection();
+    ParamSection * sect = (ParamSection*)allocParamSection();
+    assignSectVar(sect, ".param", false, 0);
+    return sect;
+}
+
+
+StackSection * SectionMgr::genStackSection()
+{
+    StackSection * sect = (StackSection*)allocStackSection();
     assignSectVar(sect, ".stack", false, 0);
     return sect;
 }

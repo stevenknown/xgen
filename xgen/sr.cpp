@@ -103,7 +103,7 @@ void SR::copy(SR const* sr, bool is_clone_vec, IN CG * cg)
 }
 
 
-void SR::dump(CG * cg) const
+void SR::dump(CG const* cg) const
 {
     StrBuf buf(64);
     note(cg->getRegion(), "%s:", get_name(buf, cg));

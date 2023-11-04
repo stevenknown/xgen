@@ -41,16 +41,17 @@ class ORAsmInfo;
 //Map Symbol Register Id to specifical SR.
 typedef xcom::HMap<UINT, SR*> SRegid2SR;
 
-class PRNO2SR : public xcom::HMap<PRNO, SR*, xcom::HashFuncBase2<PRNO> > {
+class PRNO2SR : public xcom::HMap<
+    xoc::PRNO, SR*, xcom::HashFuncBase2<xoc::PRNO> > {
 public:
-    PRNO2SR() : xcom::HMap<PRNO, SR*, xcom::HashFuncBase2<PRNO> >(0) {}
+    PRNO2SR() : xcom::HMap<xoc::PRNO, SR*, xcom::HashFuncBase2<xoc::PRNO> >(0)
+    {}
 };
 
+typedef xcom::C<xoc::Var*> * BBVarListIter;
 
-typedef xcom::C<Var*> * BBVarListIter;
-
-class BBVarList : public List<xoc::Var*> {
-    List<xoc::Var*> m_free_list;
+class BBVarList : public xcom::List<xoc::Var*> {
+    xcom::List<xoc::Var*> m_free_list;
 public:
     xoc::Var * getFreeVar() { return m_free_list.remove_tail(); }
 
@@ -65,10 +66,23 @@ public:
     }
 };
 
-typedef List<xoc::Var*> FuncVarList;
-typedef xcom::C<Var*> * FuncVarListIter;
+typedef xcom::List<xoc::Var*> FuncVarList;
+typedef xcom::C<xoc::Var*> * FuncVarListIter;
 
-//The module will do the follows works:
+class SimVec : public xcom::Vector<BBSimulator*> {
+public:
+   ~SimVec()
+   {
+       for (xcom::VecIdx i = 0; i <= get_last_idx(); i++) {
+           BBSimulator * sim = get(i);
+           if (sim != nullptr) {
+                delete sim;
+           }
+       }
+   }
+};
+
+//Code Generator will do the following works:
 // Instruction selection,
 // Calling conventions lowering,
 // Control flow (dominators, loop nesting) analyzes,
@@ -92,26 +106,12 @@ typedef xcom::C<Var*> * FuncVarListIter;
 // management of register tuples and complex software pipelining
 // in case of clustered architectures tricks to reduce code size
 // or enhance code compressibility.
-
 class CG {
     COPY_CONSTRUCTOR(CG);
 public:
     friend class OR;
     friend class SR;
 protected:
-    class SimVec : public xcom::Vector<BBSimulator*> {
-    public:
-        ~SimVec()
-        {
-            for (VecIdx i = 0; i <= get_last_idx(); i++) {
-                BBSimulator * sim = get(i);
-                if (sim != nullptr) {
-                    delete sim;
-                }
-            }
-        }
-    };
-
     //True if accessing local variable via [FP pointer - Offst].
     UINT m_is_use_fp:1;
 
@@ -126,7 +126,6 @@ protected:
     UINT m_max_real_arg_size:29;
     UINT m_sect_count;
     UINT m_reg_count;
-    INT m_param_sect_start_offset; //record the parameter start offset.
     UINT m_mmd_count;
     UINT m_or_bb_idx; //take count of ORBB.
     xoc::Region * m_rg;
@@ -136,9 +135,9 @@ protected:
     CGMgr * m_cgmgr;
     ORCFG * m_or_cfg; //CFG of region
     ORBBMgr * m_or_bb_mgr; //manage BB of IR.
-    Vector<ParallelPartMgr*> * m_ppm_vec; //Record parallel part for CG.
+    xcom::Vector<ParallelPartMgr*> * m_ppm_vec; //Record parallel part for CG.
     SR * m_param_pointer;
-    SMemPool * m_pool;
+    xcom::SMemPool * m_pool;
 
     //Mapping from STORE/LOAD operation to the target address.
     List<ORBB*> m_or_bb_list; //descripting all basic blocks of the region.
@@ -156,14 +155,15 @@ protected:
     xcom::TMap<OR*, xoc::Var const*> m_or2memaddr_map;
     BBVarList m_bb_level_internal_var_list; //record BB local var.
     FuncVarList m_func_level_internal_var_list; //record func var.
-
 protected:
+    SimVec * allocSimVec() { return new SimVec(); }
+
     //Guarantee IR_RETURN at the end of function.
     void addReturnForEmptyRegion();
     void addSerialDependence(ORBB * bb, DataDepGraph * ddg);
 
     void createORCFG(OptCtx & oc);
-    UINT compute_pad();
+    UINT compute_pad() const;
     SR * computeAndUpdateOffset(SR * sr);
     UINT calcSizeOfParameterPassedViaRegister(
         List<Var const*> const* param_lst) const;
@@ -222,7 +222,6 @@ protected:
         ::memset((void*)p, 0, size);
         return p;
     }
-
 public:
     CG(xoc::Region * rg, CGMgr * cgmgr);
     virtual ~CG();
@@ -550,10 +549,16 @@ public:
 
     virtual SR * dupSR(SR const* sr);
     virtual OR * dupOR(OR const* o);
-    virtual void dumpSection();
-    void dumpPackage();
+
+    //The function will dump all sections may changed during CG.
+    virtual void dumpSection() const;
+
+    //The function will dump instruction-bundle after packaging.
+    void dumpPackage() const;
     void dumpORBBList() const;
-    void dumpVar() const;
+
+    //The function will dump variables that generated during CG.
+    void dumpGeneratedVar() const;
 
     //Expand pseudo SpAdjust operation to real target AddInteger instruction.
     //Note this function is target dependent.
@@ -710,7 +715,6 @@ public:
     //Generate dedicated SR for subsequent use.
     virtual void initDedicatedSR();
     virtual bool isPassArgumentThroughRegister() = 0;
-    void initGlobalVar(VarMgr * vm);
     bool isComputeStackOffset() const { return m_is_compute_sect_offset; }
     bool isGRAEnable() const;
     bool isEvenReg(Reg reg) const
@@ -993,7 +997,9 @@ public:
     virtual bool needAllocateMemorySpace(Var const* var) const
     { return !var->is_decl() && !var->is_func(); }
 
-    void relocateStackVarOffset();
+    //Compute the offset for stack variable and
+    //supersede the symbol variable with the offset.
+    void relocateStackVar();
     void renameResult(OR * o, SR * oldsr, SR * newsr, bool match_phy_reg);
     void renameOpnd(OR * o, SR * oldsr, SR * newsr, bool match_phy_reg);
     void renameOpndAndResultFollowed(SR * oldsr, SR * newsr,
@@ -1023,6 +1029,20 @@ public:
     void setCluster(ORList & ors, CLUST clust);
     void setDumpORId(bool doit) { m_is_dump_or_id = doit; }
     void setComputeSectOffset(bool doit) { m_is_compute_sect_offset = doit; }
+
+    //The function stores all physical register in given regset to stack.
+    //Note the store operation will based on SP register by default.
+    //stack_offset_start: byte offset of the first register in 'regset'.
+    //                    The offset is related to SP register.
+    //regset: a physical register set.
+    void storeRegSetToStack(UINT stack_offset_start, RegSet const& regset,
+                            xcom::List<Var const*> const& varlst,
+                            OUT ORList & ors, MOD IOC & tc);
+
+    //Insert register store operation to save value of parameters.
+    //after spadjust at each entry BB.
+    //param_start: byte offset of total parameter section, related to SP.
+    //entry_lst: list of entry BB
     void storeRegisterParameterBackToStack(List<ORBB*> * entry_lst,
                                            UINT param_start);
 
@@ -1035,15 +1055,18 @@ public:
     { ASSERTN(0, ("Target Dependent Code")); }
 
     //True if current argument register should be bypassed.
-    virtual bool skipArgRegister(Var const* param, RegSet const* regset,
+    virtual bool skipArgRegister(Var const* param, RegSet const& regset,
                                  Reg reg) const
     {
-        DUMMYUSE(param && regset && reg);
-        ASSERTN(0, ("Target Dependent Code")); return false;
+        DUMMYUSE(param && reg);
+        DUMMYUSE(regset);
+        ASSERTN(0, ("Target Dependent Code"));
+        return false;
     }
     bool skipArgRegister(UINT sz, OUT ArgDescMgr * argdescmgr);
 
-    virtual void package(Vector<BBSimulator*> & simvec);
+    //Perform package if target machine is multi-issue architecture.
+    virtual void package(xcom::Vector<BBSimulator*> & simvec);
 
     virtual void setORListWithSamePredicate(ORList & ops, OR * o);
     virtual void setSpadjustOffset(OR * spadj, INT size);

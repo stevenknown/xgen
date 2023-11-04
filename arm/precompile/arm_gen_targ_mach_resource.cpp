@@ -438,11 +438,10 @@ static void prtRegSetArrayDeclaration(CHAR const* array_var_name,
     for (UINT i = 0; i < bound_start; i++) {
         fprintf(g_output, "(xgen::RegSet const*)&%s,", g_robs_empty_name);
     }
-
     for (UINT i = bound_start; i < bound_end; i++) {
-        fprintf(g_output, "(xgen::RegSet const*)&robs_%s_%d,", byte_vec_name, i);
+        fprintf(g_output, "(xgen::RegSet const*)&robs_%s_%d,",
+                byte_vec_name, i);
     }
-
     fprintf(g_output, "};\n");
 }
 
@@ -499,9 +498,13 @@ static void initAndPrtRegFile2RegSet(OUT xcom::BitSet regfile2regset[])
     regfile2regset[RF_P].bunion(REG_EQ_PRED); //EQ Equal
     regfile2regset[RF_P].bunion(REG_NE_PRED); //NE Not equal
     regfile2regset[RF_P].bunion(REG_CS_PRED); //CS Carry set (identical to HS)
-    regfile2regset[RF_P].bunion(REG_HS_PRED); //HS Unsigned higher or same (identical to CS)
+
+    //HS Unsigned higher or same (identical to CS)
+    regfile2regset[RF_P].bunion(REG_HS_PRED);
     regfile2regset[RF_P].bunion(REG_CC_PRED); //CC Carry clear (identical to LO)
-    regfile2regset[RF_P].bunion(REG_LO_PRED); //LO Unsigned lower (identical to CC)
+
+    //LO Unsigned lower (identical to CC)
+    regfile2regset[RF_P].bunion(REG_LO_PRED);
     regfile2regset[RF_P].bunion(REG_MI_PRED); //MI Minus or negative result
     regfile2regset[RF_P].bunion(REG_PL_PRED); //PL Positive or zero result
     regfile2regset[RF_P].bunion(REG_VS_PRED); //VS Overflow
@@ -512,7 +515,9 @@ static void initAndPrtRegFile2RegSet(OUT xcom::BitSet regfile2regset[])
     regfile2regset[RF_P].bunion(REG_LT_PRED); //LT Signed less than
     regfile2regset[RF_P].bunion(REG_GT_PRED); //GT Signed greater than
     regfile2regset[RF_P].bunion(REG_LE_PRED); //LE Signed less than or equal
-    regfile2regset[RF_P].bunion(REG_TRUE_PRED); //AL Always (this is the default)
+
+    //AL Always (this is the default)
+    regfile2regset[RF_P].bunion(REG_TRUE_PRED);
 
     fprintf(g_output, "\n//RegFile to RegisterSet.\n");
 
@@ -1263,7 +1268,7 @@ static void initAndPrtRegisterName()
         } else if (reg >= RF_Q_REG_START && reg <= RF_Q_REG_END) {
             //Q0~Q15
             buf.sprint("q%d", reg - RF_Q_REG_START);
-        } else if (reg >= RF_S_REG_START && RF_S_REG_END <= 96) {
+        } else if (reg >= RF_S_REG_START && reg <= RF_S_REG_END) {
             //S0~S31
             buf.sprint("s%d", reg - RF_S_REG_START);
         } else if (reg == REG_RFLAG_REGISTER) {

@@ -1,5 +1,6 @@
 xocc_path="../../src/xocc/xocc.exe"
 
+
 perl run.pl Targ = arm XoccPath = $xocc_path CompareDumpIfExist NotQuitEarly NoAsm XoccFlag = ""
 perl run.pl Targ = arm XoccPath = $xocc_path CompareDumpIfExist NotQuitEarly NoAsm XoccFlag = "-O3"
 perl run.pl Targ = arm XoccPath = $xocc_path CompareDumpIfExist NotQuitEarly NoAsm XoccFlag = "-O3 -lowest_height"

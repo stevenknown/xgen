@@ -150,10 +150,11 @@ void ARMIR2OR::convertStoreVar(IR const* ir, OUT RecycORList & ors,
 void ARMIR2OR::convertLda(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     ASSERT0(ir->is_lda());
-    Var * v = LDA_idinfo(ir);
+    xoc::Var * v = LDA_idinfo(ir);
     ASSERT0(v);
-    ASSERTN(!v->is_unallocable(), ("var must be allocable during CG"));
-    convertLda(v, LDA_ofst(ir), ::getDbx(ir), ors, cont);
+    ASSERTN(!v->is_unallocable(),
+            ("LDA's operand variable must be allocable"));
+    convertLda(v, LDA_ofst(ir), xoc::getDbx(ir), ors, cont);
 }
 
 
@@ -213,8 +214,8 @@ void ARMIR2OR::convertRem(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
     m_cg->passArgVariant(&argdescmgr, ors.getList(), 2,
-                         opnd0, nullptr, opnd0->getByteSize(), ::getDbx(op0),
-                         opnd1, nullptr, opnd1->getByteSize(), ::getDbx(op1));
+        opnd0, nullptr, opnd0->getByteSize(), xoc::getDbx(op0),
+        opnd1, nullptr, opnd1->getByteSize(), xoc::getDbx(op1));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-djust operation afterwards.

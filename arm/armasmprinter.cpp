@@ -67,14 +67,15 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
         break;
     }
 
+    //Truncate operation name's suffix.
     UINT i = 0;
-    for (; buf.buf[i] != '_' && buf.buf[i] != 0; i++) {
-    }
+    for (; buf.buf[i] != '_' && buf.buf[i] != 0; i++) {}
     if (buf.buf[i] == '_') {
         buf.buf[i] = 0;
     }
 
     //Print predicated register
+    ASSERTN(HAS_PREDICATE_REGISTER, ("Target does not have predicate reg"));
     if (o->get_pred() != m_cg->getTruePred()) {
         buf.strcat("%s", o->get_pred()->getAsmName(tbuf, m_cg));
     }
@@ -260,10 +261,9 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
 }
 
 
-void ARMAsmPrinter::printBss(FILE * asmh, Section & sect)
+void ARMAsmPrinter::printBss(Section & sect)
 {
     if (SECT_var_list(&sect).get_elem_count() == 0) { return; }
-
     StrBuf buf(64);
     ASSERT0(SECT_var(&sect));
     for (Var const* v = SECT_var_list(&sect).get_head();
@@ -275,36 +275,32 @@ void ARMAsmPrinter::printBss(FILE * asmh, Section & sect)
 
         CHAR const* p = SYM_name(v->get_name());
         buf.clean();
-        fprintf(asmh, "\n#%s", v->dump(buf, getVarMgr()));
-        fprintf(asmh, "\n.common %s, %u, %u",
+        fprintf(getFile(), "\n#%s", v->dump(buf, getVarMgr()));
+        fprintf(getFile(), "\n.common %s, %u, %u",
                 p, v->getByteSize(m_tm), VAR_align(v));
     }
-
-    fflush(asmh);
+    fflush(getFile());
 }
 
 
-void ARMAsmPrinter::printData(FILE * asmh, Section & sect)
+void ARMAsmPrinter::printData(Section & sect)
 {
     if (SECT_var_list(&sect).get_elem_count() == 0) { return; }
-
     Var * sect_var = SECT_var(&sect);
     ASSERT0(sect_var);
-
     StrBuf buf(128);
     bool first = true;
+    FILE * asmh = getFile();
     for (Var const* v = SECT_var_list(&sect).get_head();
          v != nullptr; v = SECT_var_list(&sect).get_next()) {
         if (m_asmprtmgr->getPrintedVARTab().find(v)) {
             continue;
         }
         m_asmprtmgr->getPrintedVARTab().append(v);
-
         if (first) {
             first = false;
             fprintf(asmh, "\n\n.section %s\n", SYM_name(sect_var->get_name()));
         }
-
         CHAR const* name = SYM_name(v->get_name());
         if (v->is_string()) {
             CHAR const* p = nullptr;
@@ -337,51 +333,48 @@ void ARMAsmPrinter::printData(FILE * asmh, Section & sect)
             }
             fprintf(asmh, "0");
             fprintf(asmh, "\n");
-        } else {
-            buf.clean();
-            fprintf(asmh, "\n.align %d", computeAlignIsPowerOf2(v));
-            fprintf(asmh, "\n#%s", v->dump(buf, getVarMgr()));
-            fprintf(asmh, "\n%s:", name);
-            fprintf(asmh, "\n.byte ");
-            for (UINT i = 0; i < v->getByteSize(m_tm); i++) {
-                fprintf(asmh, "0 ");
-                if (i + 1 < v->getByteSize(m_tm)) {
-                    fprintf(asmh, ", ");
-                }
-            }
-            fprintf(asmh, "\n");
+            continue;
         }
+        buf.clean();
+        fprintf(asmh, "\n.align %d", computeAlignIsPowerOf2(v));
+        fprintf(asmh, "\n#%s", v->dump(buf, getVarMgr()));
+        fprintf(asmh, "\n%s:", name);
+        fprintf(asmh, "\n.byte ");
+        for (UINT i = 0; i < v->getByteSize(m_tm); i++) {
+            fprintf(asmh, "0 ");
+            if (i + 1 < v->getByteSize(m_tm)) {
+               fprintf(asmh, ", ");
+            }
+        }
+        fprintf(asmh, "\n");        
     }
-
     fprintf(asmh, "\n");
     fflush(asmh);
 }
 
 
-void ARMAsmPrinter::printData(FILE * asmh)
+void ARMAsmPrinter::printData()
 {
     if (m_cgmgr->getBssSection() != nullptr) {
-        printBss(asmh, *m_cgmgr->getBssSection());
+        printBss(*m_cgmgr->getBssSection());
     }
     if (m_cgmgr->getDataSection() != nullptr) {
-        printData(asmh, *m_cgmgr->getDataSection());
+        printData(*m_cgmgr->getDataSection());
     }
     if (m_cgmgr->getRodataSection()) {
-        printData(asmh, *m_cgmgr->getRodataSection());
+        printData(*m_cgmgr->getRodataSection());
     }
 }
 
 
-void ARMAsmPrinter::printCodeSequentially(IssuePackageList * ipl,
-                                          StrBuf & buf,
-                                          FILE * asmh)
+void ARMAsmPrinter::printCodeSequentially(IssuePackageList * ipl, StrBuf & buf)
 {
     ASSERT0(ipl);
-    CHAR const* format = "%s%19s";
+    CHAR const* format = "%s%-20s";
     CHAR const* code_indent = "";
     DbxMgr::PrtCtx prtctx;
-
     LogMgr asm_lm;
+    FILE * asmh = getFile();
     asm_lm.push(asmh, "");
     prtctx.prefix = "#";
     prtctx.logmgr = &asm_lm;
@@ -407,13 +400,14 @@ void ARMAsmPrinter::printCodeSequentially(IssuePackageList * ipl,
 }
 
 
-void ARMAsmPrinter::printCode(FILE * asmh)
+void ARMAsmPrinter::printCode()
 {
     StrBuf buf(128);
     //Print function name, type, global property.
     CHAR const* func_name = m_cg->getRegion()->getRegionVar()->
                                 get_name()->getStr();
     ASSERT0(func_name);
+    FILE * asmh = getFile();
     fprintf(asmh, "\n.align 2");
     fprintf(asmh, "\n\n\n\n.section .text, \"ax\", \"progbits\"");
     fprintf(asmh, "\n.type %s, %%function", func_name);
@@ -421,10 +415,9 @@ void ARMAsmPrinter::printCode(FILE * asmh)
     fprintf(asmh, "\n%s:", func_name);
     fprintf(asmh, "\n");
     fflush(asmh);
-
-    Vector<IssuePackageList*> const* iplvec =
+    xcom::Vector<IssuePackageList*> const* iplvec =
         const_cast<CG*>(m_cg)->getIssuePackageListVec();
-    List<ORBB*> * bblst = const_cast<CG*>(m_cg)->getORBBList();
+    xcom::List<ORBB*> * bblst = const_cast<CG*>(m_cg)->getORBBList();
     ASSERT0(bblst);
     for (ORBB * bb = bblst->get_head(); bb != nullptr; bb = bblst->get_next()) {
         //Print BB info
@@ -435,7 +428,6 @@ void ARMAsmPrinter::printCode(FILE * asmh)
         if (ORBB_is_exit(bb)) {
             fprintf(asmh, ", exit");
         }
-
         fprintf(asmh, "\n");
 
         //Print label
@@ -448,9 +440,8 @@ void ARMAsmPrinter::printCode(FILE * asmh)
 
         //Print instructions
         if (bb->getORNum() == 0) { continue; }
-
         buf.clean();
-        printCodeSequentially(iplvec->get(bb->id()), buf, asmh);
+        printCodeSequentially(iplvec->get(bb->id()), buf);
     }
     fprintf(asmh, "\n.size %s, .-%s\n", func_name, func_name);
     ::fflush(asmh);
