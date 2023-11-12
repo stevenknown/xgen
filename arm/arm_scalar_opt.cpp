@@ -60,6 +60,7 @@ static void updateCounter(Pass const* pass, UINT & cp_count,
 
 bool ARMScalarOpt::perform(OptCtx & oc)
 {
+    if (!isParticipateInOpt()) { return false; }
     ASSERT0(oc.is_cfg_valid());
     ASSERT0(m_rg && m_rg->getCFG()->verify());
     List<Pass*> passlist; //A list of Optimization.

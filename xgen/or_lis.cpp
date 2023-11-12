@@ -187,7 +187,6 @@ bool LIS::makeIssued(OR * o,
         //'o' required function unit has been occupied.
         need_change_slot = true;
     }
-
     if (need_change_slot) {
         if (!is_change_slot) {
             return false;
@@ -196,7 +195,6 @@ bool LIS::makeIssued(OR * o,
             return false;
         }
     }
-
     return isValidResourceUsage(o, to_slot, issue_ors, conflict_ors);
 }
 
@@ -206,7 +204,6 @@ bool LIS::makeIssued(OR * o,
 OR * LIS::selectBestOR(ORTab & cand_tab, SLOT slot)
 {
     DUMMYUSE(slot);
-
     ASSERT0(cand_tab.get_elem_count() > 0);
     ORTab br_preds_cand;
     ORTab * cand_hash_ptr = &cand_tab;
@@ -253,11 +250,9 @@ bool LIS::selectIssueOR(IN PreemptiveORList & cand_list, //OR may be changed
             valid_cands.append(o);
         }
     }
-
     if (valid_cands.get_elem_count() == 0) {
         return false;
     }
-
     OR * best_issue_or = selectBestOR(valid_cands, slot);
     ASSERT0(best_issue_or);
     updateIssueORs(cand_list, slot, best_issue_or, issue_ors);
@@ -328,11 +323,12 @@ bool LIS::selectIssueORs(IN PreemptiveORList & cand_list,
         if (cand_list.get_elem_count() == 0) {
             break;
         }
-
         SLOT slot = (SLOT)(((INT)FIRST_SLOT) + i);
         if (selectIssueOR(cand_list, slot, issue_ors, allowChangeSlot())) {
             find = true;
-        } else if (allowChangeSlot()) {
+            continue;
+        }
+        if (allowChangeSlot()) {
             next_slot = rollBackORs(be_changed, issue_ors, slot);
         }
     }
@@ -483,8 +479,7 @@ OR * LIS::selectBestORByPriority(ORTab const& cand_tab) const
 void LIS::dump(bool need_exec_detail) const
 {
     if (!m_cg->getRegion()->isLogMgrInit()) { return; }
-    m_sim->dump(m_cg->getRegion()->getLogMgr()->getFileHandler(),
-                need_exec_detail);
+    m_sim->dump(m_cg->getRegion()->getLogMgr(), need_exec_detail);
 }
 
 
@@ -564,13 +559,11 @@ bool LIS::schedule()
         m_br_all_preds.append(m_br_ord->getOR());
         br_latency = ORSI_last_result_avail_cyc(m_br_ord->getScheInfo());
     }
-
 RESCH:
     computeReadyList(*stepddg, visited, true);
     while (stepddg->getVertexNum() > 0 || !m_sim->done()) {
         fillIssueSlot(stepddg, &visited);
     }
-
     if (left != nullptr) {
         ASSERT0(!m_tmp_orlist.is_occupied());
         m_tmp_orlist.occupy();
@@ -579,7 +572,6 @@ RESCH:
         tryIssueCandList(m_tmp_orlist, nullptr, nullptr);
         m_tmp_orlist.release();
     }
-
     if (isScheduleDelaySlot() && allowReschedule()) {
         //Select an issue cycle for branch operation according last scheduling
         //result.
@@ -607,7 +599,6 @@ RESCH:
 
     delete stepddg;
     //END_TIMER_FMT(t, ("LIS: Schedule: BB%d", getBB()->id()));
-
     if (g_dump_opt.isDumpAfterPass() && g_xgen_dump_opt.isDumpLIS()) {
         dump(true);
     }

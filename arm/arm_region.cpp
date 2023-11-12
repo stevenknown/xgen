@@ -36,6 +36,14 @@ PassMgr * ARMRegion::allocPassMgr()
 }
 
 
+bool ARMRegion::isParticipateInOpt() const
+{
+    if (g_exclude_region.find(getRegionName())) { return false; }
+    if (g_include_region.isEmpty()) { return true; }
+    return g_include_region.find(getRegionName());
+}
+
+
 //Simply IR to lower level IR, and insert CVT if needed.
 void ARMRegion::simplify(OptCtx & oc)
 {
@@ -87,11 +95,12 @@ void ARMRegion::simplify(OptCtx & oc)
 
     //Insert int32->int64, int32<->f32, int32<->f64, int64<->f32, int64<->f64
     //for generated code.
-    ASSERTN(g_do_refine, ("inserting CVT is expected"));
-    RefineCtx rf(&oc);
-    RC_insert_cvt(rf) = g_do_refine_auto_insert_cvt;
+    //Thus ignore the switch-option given by user and do refinement always.
+    //ASSERTN(g_do_refine, ("inserting CVT is expected"));
+    RefineCtx rc(&oc);
+    RC_insert_cvt(rc) = g_do_refine_auto_insert_cvt;
     Refine * refine = (Refine*)getPassMgr()->registerPass(PASS_REFINE);
-    refine->refineBBlist(getBBList(), rf);
+    refine->perform(oc, rc);
 }
 
 
@@ -244,7 +253,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
 //4. Perform both classic DU chain and MDSSA DU chain.
 void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
 {
-    if (g_opt_level == OPT_LEVEL0) { return; }
+    if (g_opt_level == OPT_LEVEL0 || !isParticipateInOpt()) { return; }
 
     START_TIMER(t, "Middle Process Aggressive Analysis");
     //Costly code, to force recomputing AA and DUChain.
@@ -359,14 +368,35 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
 }
 
 
+//The function will check BB or IR list and insert a RETURN if the region
+//is empty.
+bool ARMRegion::addReturnIfNeed()
+{
+    if (getIRList() != nullptr) {
+        ASSERT0(getBBList()->get_elem_count() == 0);
+        return true;
+    }
+    BBList * bblst = getBBList();
+    ASSERT0(bblst);
+    BBListIter it;
+    for (IRBB * bb = bblst->get_head(&it);
+         bb != nullptr; bb = getBBList()->get_next(&it)) {
+        if (bb->getIRList().get_elem_count() != 0) {
+            return true;
+        }
+    }
+    //The BB list of region is empty.
+    IR * ret = getIRMgr()->buildReturn(nullptr);
+    bblst->get_tail()->getIRList().append_tail(ret);
+    return true;
+}
+
+
 bool ARMRegion::MiddleProcess(OptCtx & oc)
 {
     //Must and May MD reference should be available now.
     //First prefer to perform higher level analysis and optization.
     Region::MiddleProcess(oc);
-    if (g_do_cp) {
-        getPassMgr()->registerPass(PASS_CP)->perform(oc);
-    }
     if (g_do_cfg_dom && !oc.is_dom_valid()) {
         getCFG()->computeDomAndIdom(oc);
     }
@@ -408,14 +438,17 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     ////////////////////////////////////////////////////////////////////////////
     //DO NOT DO OPTIMIZATION ANY MORE AFTER THIS LINE                         //
     ////////////////////////////////////////////////////////////////////////////
+    addReturnIfNeed();
 
     //Finial refine to insert CVT if necessary when compile C/C++.
     //Insert int32->int64, int32<->f32, int32<->f64, int64<->f32, int64<->f64
-    ASSERTN(g_do_refine, ("inserting CVT is expected"));
-    RefineCtx rf(&oc);
-    RC_insert_cvt(rf) = g_do_refine_auto_insert_cvt;
+    //Thus ignore the switch-option given by user and do refinement always.
+    //ASSERTN(g_do_refine, ("inserting CVT is expected"));
+    RefineCtx rc(&oc);
+    RC_insert_cvt(rc) = g_do_refine_auto_insert_cvt;
     Refine * refine = (Refine*)getPassMgr()->registerPass(PASS_REFINE);
-    refine->refineBBlist(getBBList(), rf);
+    refine->perform(oc, rc);
+
     #ifdef REF_TARGMACH_INFO
     if (g_do_lsra) {
         LinearScanRA * lsra = (LinearScanRA*)getPassMgr()->registerPass(

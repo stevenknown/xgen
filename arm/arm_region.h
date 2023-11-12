@@ -34,11 +34,22 @@ author: Su Zhenyu
 typedef TMap<xoc::Var*, MD*> Var2XX;
 class ARMRegion : public Region {
 protected:
+    bool addReturnIfNeed();
+
+    //ARM related higher level optimizations.
+    bool ARMHighProcess(OptCtx & oc);
+
+    //Perform higher level IR optimization.
+    void HighProcessImpl(OptCtx & oc);
+
+    //Return true if current region should participate in optimizaitons.
+    bool isParticipateInOpt() const;
+
+    //Peform more aggressive analysis.
+    void MiddleProcessAggressiveAnalysis(OptCtx & oc);
+
     //Simply IR to lower level IR, and insert CVT if needed.
     void simplify(OptCtx & oc);
-    void HighProcessImpl(OptCtx & oc);
-    void MiddleProcessAggressiveAnalysis(OptCtx & oc);
-    bool ARMHighProcess(OptCtx & oc);
 public:
     ARMRegion(REGION_TYPE rt, RegionMgr * rm) : Region(rt, rm) {}
     virtual PassMgr * allocPassMgr();

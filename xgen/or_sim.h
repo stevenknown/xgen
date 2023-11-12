@@ -107,10 +107,7 @@ public:
 
     void destroy();
     bool done();
-    void dump(FILE * h, bool dump_exec_detail) const;
-    void dump(CHAR const* name = nullptr,
-              bool is_del = true,
-              bool dump_exec_detail = true) const;
+    void dump(LogMgr * lm, bool dump_exec_detail) const;
 
     //Return the simmulation of OR execution.
     ORVec const* getExecSnapshot() const { return m_exec_tab; }

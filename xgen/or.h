@@ -590,10 +590,21 @@ public:
 };
 
 
-typedef xcom::Hash<OR*> ORHash;
-typedef xcom::TTab<OR*> ORTab;
-typedef xcom::TTab<UINT> ORIdTab;
+class CompareORTab {
+    COPY_CONSTRUCTOR(CompareORTab);
+public:
+    CompareORTab() {}
+    OR* createKey(OR * t) { return t; }
+    bool is_less(OR * t1, OR * t2) const { return t1->id() < t2->id(); }
+    bool is_equ(OR * t1, OR * t2) const { return t1->id() == t2->id(); }
+};
+
+//Use customized comparing function to guarrantee the access order keeping
+//unchanged.
+typedef xcom::TTab<OR*, CompareORTab> ORTab;
 typedef xcom::TTabIter<OR*> ORTabIter;
+typedef xcom::TTab<UINT> ORIdTab;
+typedef xcom::Hash<OR*> ORHash;
 
 //
 //START ORMgr

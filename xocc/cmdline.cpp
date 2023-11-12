@@ -38,13 +38,15 @@ namespace xocc {
 
 static bool g_cfg_opt = true;
 static bool g_ask_for_help = false;
+static CHAR const* g_include_string = nullptr;
+static CHAR const* g_exclude_string = nullptr;
 
 static bool is_c_source_file(CHAR const* fn)
 {
-    UINT len = (UINT)strlen(fn) + 1;
+    UINT len = (UINT)::strlen(fn) + 1;
     CHAR * buf = (CHAR*)ALLOCA(len);
     xcom::upper(xcom::getFileSuffix(fn, buf, (UINT)len));
-    if (strcmp(buf, "C") == 0 || strcmp(buf, "I") == 0) {
+    if (::strcmp(buf, "C") == 0 || ::strcmp(buf, "I") == 0) {
         return true;
     }
     return false;
@@ -53,10 +55,10 @@ static bool is_c_source_file(CHAR const* fn)
 
 static bool is_gr_source_file(CHAR const* fn)
 {
-    UINT len = (UINT)strlen(fn) + 2;
+    UINT len = (UINT)::strlen(fn) + 2;
     CHAR * buf = (CHAR*)ALLOCA(len);
     xcom::upper(xcom::getFileSuffix(fn, buf, len));
-    if (strcmp(buf, "GR") == 0 || strcmp(buf, "I") == 0) {
+    if (::strcmp(buf, "GR") == 0 || ::strcmp(buf, "I") == 0) {
         return true;
     }
     return false;
@@ -207,7 +209,7 @@ public:
     {
         ASSERT0(option);
         for (UINT i = 0; i < BoolOption::getNumOfOption(); i++) {
-            if (strcmp(BoolOption::option_desc[i].name, str) == 0) {
+            if (::strcmp(BoolOption::option_desc[i].name, str) == 0) {
                 *option = BoolOption::option_desc[i].option;
                 return true;
             }
@@ -219,7 +221,7 @@ public:
     {
         ASSERT0(option);
         for (UINT i = 0; i < BoolOption::getNumOfDumpOption(); i++) {
-            if (strcmp(BoolOption::dump_option_desc[i].name, str) == 0) {
+            if (::strcmp(BoolOption::dump_option_desc[i].name, str) == 0) {
                 *option = BoolOption::dump_option_desc[i].option;
                 return true;
             }
@@ -231,7 +233,7 @@ public:
     {
         UINT max_name_len = 0;
         for (UINT i = 0; i < BoolOption::getNumOfOption(); i++) {
-            max_name_len = MAX((UINT)strlen(BoolOption::option_desc[i].name),
+            max_name_len = MAX((UINT)::strlen(BoolOption::option_desc[i].name),
                                max_name_len);
         }
         UINT alignbuflen = max_name_len + 2;
@@ -239,7 +241,7 @@ public:
         CHAR * alignbuf = (CHAR*)ALLOCA(alignbuflen);
         for (UINT i = 0; i < BoolOption::getNumOfOption(); i++) {
             UINT j = 0;
-            for (; j < strlen(BoolOption::option_desc[i].name); j++) {
+            for (; j < ::strlen(BoolOption::option_desc[i].name); j++) {
                 alignbuf[j] = BoolOption::option_desc[i].name[j];
             }
             for (; j < alignbuflen - 1; j++) {
@@ -257,7 +259,7 @@ public:
         UINT max_name_len = 0;
         for (UINT i = 0; i < BoolOption::getNumOfDumpOption(); i++) {
             max_name_len =
-                MAX((UINT)strlen(BoolOption::dump_option_desc[i].name),
+                MAX((UINT)::strlen(BoolOption::dump_option_desc[i].name),
                     max_name_len);
         }
         UINT alignbuflen = max_name_len + 2;
@@ -265,7 +267,7 @@ public:
         CHAR * alignbuf = (CHAR*)ALLOCA(alignbuflen);
         for (UINT i = 0; i < BoolOption::getNumOfOption(); i++) {
             UINT j = 0;
-            for (; j < strlen(BoolOption::dump_option_desc[i].name); j++) {
+            for (; j < ::strlen(BoolOption::dump_option_desc[i].name); j++) {
                 alignbuf[j] = BoolOption::dump_option_desc[i].name[j];
             }
             for (; j < alignbuflen - 1; j++) {
@@ -345,6 +347,8 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "enable instruction-scheduling", },
     { "cg_for_inner_region", &xgen::g_is_generate_code_for_inner_region,
       "enable code generation for inner region", },
+    { "refine", &xoc::g_do_refine,
+      "enable refinement optimization", },
     { "refine_duchain", &xoc::g_do_refine_duchain,
       "enable refine-duchain optimization", },
     { "lsra", &xoc::g_do_lsra,
@@ -458,7 +462,7 @@ public:
     {
         ASSERT0(option);
         for (UINT i = 0; i < IntOption::getNumOfOption(); i++) {
-            if (strcmp(IntOption::option_desc[i].name, str) == 0) {
+            if (::strcmp(IntOption::option_desc[i].name, str) == 0) {
                 *option = IntOption::option_desc[i].option;
                 return true;
             }
@@ -470,7 +474,7 @@ public:
     {
         UINT max_name_len = 0;
         for (UINT i = 0; i < IntOption::getNumOfOption(); i++) {
-            max_name_len = MAX((UINT)strlen(IntOption::option_desc[i].name),
+            max_name_len = MAX((UINT)::strlen(IntOption::option_desc[i].name),
                                max_name_len);
         }
         UINT alignbuflen = max_name_len + 2;
@@ -478,7 +482,7 @@ public:
         CHAR * alignbuf = (CHAR*)ALLOCA(alignbuflen);
         for (UINT i = 0; i < IntOption::getNumOfOption(); i++) {
             UINT j = 0;
-            for (; j < strlen(IntOption::option_desc[i].name); j++) {
+            for (; j < ::strlen(IntOption::option_desc[i].name); j++) {
                 alignbuf[j] = IntOption::option_desc[i].name[j];
             }
             for (; j < alignbuflen - 1; j++) {
@@ -490,7 +494,6 @@ public:
                           IntOption::option_desc[i].intro);
         }
     }
-
 };
 
 
@@ -502,10 +505,75 @@ IntOption::Desc const IntOption::option_desc[] = {
 };
 
 
+class StringOption {
+public:
+    class Desc {
+    public:
+        CHAR const* name;
+        CHAR * option;
+        CHAR const* intro;
+    };
+    static Desc const option_desc[];
+    static UINT getNumOfOption();
+
+    static bool is_option(CHAR const* str, CHAR const** option)
+    {
+        ASSERT0(option);
+        for (UINT i = 0; i < StringOption::getNumOfOption(); i++) {
+            if (::strcmp(StringOption::option_desc[i].name, str) == 0) {
+                *option = StringOption::option_desc[i].option;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static void dump_usage(StrBuf & output)
+    {
+        UINT max_name_len = 0;
+        for (UINT i = 0; i < StringOption::getNumOfOption(); i++) {
+            max_name_len = MAX((UINT)::strlen(
+                StringOption::option_desc[i].name), max_name_len);
+        }
+        UINT alignbuflen = max_name_len + 2;
+
+        CHAR * alignbuf = (CHAR*)ALLOCA(alignbuflen);
+        for (UINT i = 0; i < StringOption::getNumOfOption(); i++) {
+            UINT j = 0;
+            for (; j < ::strlen(StringOption::option_desc[i].name); j++) {
+                alignbuf[j] = StringOption::option_desc[i].name[j];
+            }
+            for (; j < alignbuflen - 1; j++) {
+                alignbuf[j] = ' '; //pad the rest with blank
+            }
+            alignbuf[j] = 0;
+
+            output.strcat("\n -%s = \"string1,string2,string3\" %s", alignbuf,
+                          StringOption::option_desc[i].intro);
+        }
+    }
+};
+
+
+StringOption::Desc const StringOption::option_desc[] = {
+    { "include_region", (CHAR*)&xocc::g_include_string,
+       "the list of region that participate in compilation", },
+    { "exclude_region", (CHAR*)&xocc::g_exclude_string,
+       "the list of region that will be excluded from compilation", },
+};
+
+
 UINT IntOption::getNumOfOption()
 {
     return sizeof(IntOption::option_desc) /
            sizeof(IntOption::option_desc[0]);
+}
+
+
+UINT StringOption::getNumOfOption()
+{
+    return sizeof(StringOption::option_desc) /
+           sizeof(StringOption::option_desc[0]);
 }
 
 
@@ -558,8 +626,31 @@ static bool recog_option(CHAR const* cmdstr, INT argc, CHAR const* argv[],
             n = argv[i + 1];
         }
         if (n == nullptr) { return false; }
+        if (::strcmp(n, "=") != 0) { return false; }
+        if (i + 2 < argc && argv[i + 2] != nullptr) {
+            n = argv[i + 2];
+        }
+        if (n == nullptr) { return false; }
         *int_option = (INT)xcom::xatoll(n, false);
-        i += 2;
+        i += 3;
+        return true;
+    }
+
+    CHAR const* str_option = nullptr;
+    if (StringOption::is_option(cmdstr, &str_option)) {
+        ASSERT0(str_option);
+        CHAR const* n = nullptr;
+        if (i + 1 < argc && argv[i + 1] != nullptr) {
+            n = argv[i + 1];
+        }
+        if (n == nullptr) { return false; }
+        if (::strcmp(n, "=") != 0) { return false; }
+        if (i + 2 < argc && argv[i + 2] != nullptr) {
+            n = argv[i + 2];
+        }
+        if (n == nullptr) { return false; }
+        *(CHAR const**)str_option = n;
+        i += 3;
         return true;
     }
 
@@ -612,8 +703,8 @@ static bool dispatchByPrefix(CHAR const* cmdstr, INT argc, CHAR const* argv[],
     ASSERT0(boption);
 
     CHAR const* prefix = BoolOption::disable_option_prefix;
-    if (xcom::xstrcmp(cmdstr, prefix, (INT)strlen(prefix))) {
-        bool res = dispatchByPrefix(cmdstr + strlen(prefix), argc, argv,
+    if (xcom::xstrcmp(cmdstr, prefix, (INT)::strlen(prefix))) {
+        bool res = dispatchByPrefix(cmdstr + ::strlen(prefix), argc, argv,
                                     i, boption);
         if (!res) { return res; }
         ASSERT0(*boption);
@@ -622,13 +713,13 @@ static bool dispatchByPrefix(CHAR const* cmdstr, INT argc, CHAR const* argv[],
     }
 
     prefix = BoolOption::dump_option_prefix;
-    if (xcom::xstrcmp(cmdstr, prefix, (INT)strlen(prefix))) {
-        return dispatchByPrefixDump(cmdstr + strlen(prefix), argc, argv, i);
+    if (xcom::xstrcmp(cmdstr, prefix, (INT)::strlen(prefix))) {
+        return dispatchByPrefixDump(cmdstr + ::strlen(prefix), argc, argv, i);
     }
 
     prefix = BoolOption::only_option_prefix;
-    if (xcom::xstrcmp(cmdstr, prefix, (INT)strlen(prefix))) {
-        return dispatchByPrefixOnly(cmdstr + strlen(prefix), argc, argv, i,
+    if (xcom::xstrcmp(cmdstr, prefix, (INT)::strlen(prefix))) {
+        return dispatchByPrefixOnly(cmdstr + ::strlen(prefix), argc, argv, i,
                                     boption);
     }
 
@@ -639,12 +730,14 @@ static bool dispatchByPrefix(CHAR const* cmdstr, INT argc, CHAR const* argv[],
 
 static void usage()
 {
-    StrBuf buf(128);
+    StrBuf buf1(128);
     StrBuf buf2(128);
     StrBuf buf3(128);
-    BoolOption::dump_usage(buf);
+    StrBuf buf4(128);
+    BoolOption::dump_usage(buf1);
     IntOption::dump_usage(buf2);
-    BoolOption::dump_dump_option(buf3);
+    StringOption::dump_usage(buf3);
+    BoolOption::dump_dump_option(buf4);
 
     fprintf(stdout,
     "\nXOCC Version %s"
@@ -660,10 +753,15 @@ static void usage()
     "\n -no-<option>   disable option, e.g:-no-dce"
     "\n -dump-<option> dump information about option, e.g:-dump-dce"
     "\n"
-    "\noption: %s%s"
+    "\noption: %s%s%s"
     "\n"
     "\navailable dump option: %s"
-    "\n", g_xocc_version, buf.buf, buf2.buf, buf3.buf);
+    "\n",
+    g_xocc_version,
+    buf1.getBuf(),
+    buf2.getBuf(),
+    buf3.getBuf(),
+    buf4.getBuf());
 }
 
 
@@ -704,6 +802,14 @@ static void inferOption()
         xoc::g_do_cfg_remove_redundant_label = false;
     }
 
+    if (g_include_string != nullptr) {
+        xoc::g_include_region.addString(g_include_string);
+    }
+
+    if (g_exclude_string != nullptr) {
+        xoc::g_exclude_region.addString(g_exclude_string);
+    }
+
     //CG option is conform to XOCC's option.
     xgen::g_xgen_dump_opt.is_dump_all = xoc::g_dump_opt.isDumpAll();
     xgen::g_xgen_dump_opt.is_dump_nothing = xoc::g_dump_opt.isDumpNothing();
@@ -732,6 +838,22 @@ static void report_unknown_option(UINT pos, CHAR const* argv[])
 bool processCmdLine(INT argc, CHAR const* argv[])
 {
     if (argc <= 1) { usage(); return false; }
+
+    //For C language, inserting CVT is expected.
+    xoc::g_do_refine_auto_insert_cvt = true;
+    xoc::g_do_refine = true;
+
+    //Retain CFG, DU info for IPA used.
+    xoc::g_compute_region_imported_defuse_md = true;
+
+    //Post-simplification need IRMgr and PassMgr.
+    //g_retain_pass_mgr_for_region = false;
+    //g_compute_pr_du_chain = false;
+    //g_compute_nonpr_du_chain = false;
+    //g_do_call_graph = true;
+    //g_do_ipa = true;
+    xoc::g_is_support_dynamic_type = true;
+    xoc::g_is_opt_float = true;
     for (INT i = 1; i < argc;) {
         if (argv[i][0] == '-') {
             bool * boption = nullptr;

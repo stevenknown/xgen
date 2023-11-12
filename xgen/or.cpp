@@ -182,7 +182,6 @@ CHAR const* OR::dump(xcom::StrBuf & buf, CG const* cg) const
         DbxMgr::PrtCtx prtctx;
         xoc::g_dbx_mgr->printSrcLine(buf, &OR_dbx(this), &prtctx);
     }
-
     OR * pthis = const_cast<OR*>(this);
     if (cg->isDumpORId()) {
         //Order in BB.

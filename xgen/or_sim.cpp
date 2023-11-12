@@ -304,8 +304,8 @@ bool BBSimulator::canBeIssued(OR const* o, SLOT slot,
     DUMMYUSE(slot);
     ASSERTN(m_pool, ("not yet initialized."));
     ASSERTN(slot >= FIRST_SLOT && slot <= LAST_SLOT, ("Unknown slot"));
-    ASSERTN(m_exec_tab[slot].get(m_cyc_counter) == nullptr, ("slot has issued o"));
-
+    ASSERTN(m_exec_tab[slot].get(m_cyc_counter) == nullptr,
+            ("slot has issued o"));
     for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {
         C<ORDesc*> * ct;
         for (ORDesc * ord = m_slot_lst[i].get_head(&ct); ord != nullptr;
@@ -339,7 +339,8 @@ void BBSimulator::runOneCycle(MOD ORList * finished_ors)
     m_cyc_counter++;
     for (UINT i = FIRST_SLOT; i < SLOT_NUM; i++) {
         ORDesc * next = nullptr;
-        for (ORDesc * ord = m_slot_lst[i].get_head(); ord != nullptr; ord = next) {
+        for (ORDesc * ord = m_slot_lst[i].get_head();
+             ord != nullptr; ord = next) {
             next = m_slot_lst[i].get_next();
             //Because cyc_counter start from cycle '0', if simm run
             //to cycle 1, namely, cyc_counter is '1', it has executed 1
@@ -361,46 +362,22 @@ void BBSimulator::runOneCycle(MOD ORList * finished_ors)
 }
 
 
-void BBSimulator::dump(CHAR const* name, bool is_del,
-                       bool dump_exec_detail) const
+void BBSimulator::dump(xoc::LogMgr * lm, bool dump_exec_detail) const
 {
-    ASSERT0(m_pool);
-    #define SIMM_DUMP_NAME "zsim.tmp"
-
-    if (name == nullptr) {
-        name = SIMM_DUMP_NAME;
-    }
-
-    if (is_del) {
-        UNLINK(name);
-    }
-
-    FILE * h = fopen(name,"a+");
-    ASSERTN(h, ("%s create failed!!!", name));
-    dump(h, dump_exec_detail);
-    fclose(h);
-}
-
-
-void BBSimulator::dump(FILE * h, bool dump_exec_detail) const
-{
-    ASSERT0(h);
+    ASSERT0(lm);
+    if (!lm->is_init()) { return; }
     //cyc may be zero
     INT cyc_counter = getCurCycle();
 
     //Because execution of simm to be more one cycle than in acutally.
     cyc_counter--;
-
     INT bbid = -1;
-
     if (m_bb != nullptr) {
         bbid = m_bb->id();
     }
-
     ORVec const* ors_vec = getExecSnapshot();
-
-    fprintf(h, "\n==---- DUMP SIM '%s' BB%d ----==",
-            m_rg->getRegionName(), bbid);
+    xoc::note(lm, "\n==-- DUMP SIM OF BB%d '%s' --==",
+              bbid, m_rg->getRegionName());
 
     //Preparing slot name buffer
     CHAR slot_name[SLOT_NUM][SLOT_NAME_MAX_LEN];
@@ -413,19 +390,21 @@ void BBSimulator::dump(FILE * h, bool dump_exec_detail) const
     if (dump_exec_detail) {
         StrBuf buf(64);
         for (INT i = 0; i <= cyc_counter; i++) {
-            fprintf(h, "\n\tCYC%d:", i);
+            xoc::note(lm, "\nCYC%d:", i);
+            lm->incIndent(2);
             for (UINT slot = FIRST_SLOT; slot < SLOT_NUM; slot++) {
-                fprintf(h, "\n\t\t%s: ", slot_name[slot]);
+                xoc::note(lm, "\n%s:", slot_name[slot]);
                 OR * o = ors_vec[slot].get(i);
                 if (o != nullptr) {
                     buf.clean();
-                    fprintf(h, "%s", o->dump(buf, m_cg));
+                    xoc::note(lm, "%s", o->dump(buf, m_cg));
                 } else {
-                    fprintf(h, "\n\t\t");
+                    xoc::note(lm, "\n");
                 }
             }
+            lm->decIndent(2);
         }
-        fprintf(h, "\n");
+        xoc::note(lm, "\n");
     }
 
     //Print coarse grain looks.
@@ -434,18 +413,17 @@ void BBSimulator::dump(FILE * h, bool dump_exec_detail) const
     StrBuf bundle(256);
 
     //Print slot name.
-    fprintf(h, "\n-- CoarseView, BB%d --", bbid);
-
-    fprintf(h, "\n%-10s", " ");
+    xoc::note(lm, "\n-- CoarseView, BB%d --", bbid);
+    xoc::note(lm, "\n%-10s", " ");
     for (UINT slot2 = FIRST_SLOT; slot2 < SLOT_NUM; slot2++) {
-        fprintf(h, "%-19s   ", slot_name[slot2]);
+        xoc::note(lm, "%-19s   ", slot_name[slot2]);
     }
-    fprintf(h, "\n");
+    xoc::note(lm, "\n");
 
     //Print abbreviated o name with its map-idx.
     for (INT i = 0; i <= cyc_counter; i++) {
-        fprintf(h, "\nCYC%-4d:", i);
-        fprintf(h, "{");
+        xoc::note(lm, "\nCYC%-4d:", i);
+        xoc::note(lm, "{");
         bundle.clean();
         for (UINT s = FIRST_SLOT; s < SLOT_NUM; s++) {
             OR * o = ors_vec[s].get(i);
@@ -454,22 +432,16 @@ void BBSimulator::dump(FILE * h, bool dump_exec_detail) const
             } else {
                 ornamebuf1.sprint(" ");
             }
-
             ornamebuf2.sprint("%-19s", ornamebuf1.buf);
-
             bundle.strcat(ornamebuf2.buf);
-
             if (s < SLOT_NUM - 1) {
                 bundle.strcat(" | ");
             }
         }
-
-        fprintf(h, "%s", bundle.buf);
-        fprintf(h, "}");
+        xoc::note(lm, "%s", bundle.buf);
+        xoc::note(lm, "}");
     }
-
-    fprintf(h, "\n");
-    fflush(h);
+    xoc::note(lm, "\n");
 }
 
 } //namespace xgen

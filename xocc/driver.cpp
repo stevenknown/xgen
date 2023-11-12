@@ -37,10 +37,6 @@ namespace xocc {
 //The position 0 is reserved for hidden parameter which used for
 //structure return value in C/C++.
 UINT const g_formal_parameter_start = 1;
-
-//Print assembly in horizontal manner.
-bool g_prt_asm_horizontal = true;
-
 CHAR const* g_output_file_name = nullptr; //record the ASM file name.
 CHAR const* g_xocc_version = "1.2.3"; //recod the xocc.exe version.
 CHAR const* g_dump_file_name = nullptr;
@@ -283,23 +279,6 @@ CLRegionMgr * Compiler::initRegionMgr()
     CLRegionMgr * rm = allocCLRegionMgr();
     rm->initVarMgr();
     rm->initTargInfo();
-
-    //For C language, inserting CVT is expected.
-    g_do_refine_auto_insert_cvt = true;
-    g_do_refine = true;
-
-    //Retain CFG, DU info for IPA used.
-    g_compute_region_imported_defuse_md = true;
-
-    //Post-simplification need IRMgr and PassMgr.
-    //g_retain_pass_mgr_for_region = false;
-    //g_compute_pr_du_chain = false;
-    //g_compute_nonpr_du_chain = false;
-    //g_do_call_graph = true;
-    //g_do_ipa = true;
-    g_is_support_dynamic_type = true;
-    g_is_opt_float = true;
-    g_prt_asm_horizontal = true;
     return rm;
 }
 

@@ -4018,16 +4018,12 @@ void CG::performIS(MOD Vector<BBSimulator*> & simvec, IN RaMgr * ra_mgr)
     for (ORBB * bb = bblist->get_head(&it);
          bb != nullptr; bb = bblist->get_next(&it)) {
         if (bb->getORNum() == 0) { continue; }
-
         DataDepGraph * ddg = nullptr;
         BBSimulator * sim = nullptr;
         LIS * lis = nullptr;
         preLS(bb, ra_mgr, &ddg, &sim, &lis);
-
         ASSERT0(ddg && sim && lis);
-
         simvec.set(bb->id(), sim); //record sim that required by package().
-
         if (g_do_lis) {
             ddg->build();
             lis->schedule();
@@ -4042,7 +4038,6 @@ void CG::performIS(MOD Vector<BBSimulator*> & simvec, IN RaMgr * ra_mgr)
             }
             lis->serialize();
         }
-
         postLS(lis, ddg);
     }
     END_TIMER(t, "Instruction Schedule");
@@ -4196,7 +4191,6 @@ void CG::localizeBB(SR * sr, ORBB * bb)
          ORBB_orlist(bb)->get_next(&orct)) {
         OR * o = orct->val();
         ASSERT0(o);
-
         if (first_usestmt_ct == nullptr && first_defstmt_ct == nullptr) {
             for (UINT i = 0; i < o->opnd_num(); i++) {
                 SR const* tsr = o->get_opnd(i);
@@ -4205,7 +4199,6 @@ void CG::localizeBB(SR * sr, ORBB * bb)
                 break;
             }
         }
-
         for (UINT i = 0; i < o->result_num(); i++) {
             SR const* tsr = o->get_result(i);
             if (tsr != sr) { continue; }
@@ -4231,13 +4224,11 @@ void CG::localizeBB(SR * sr, ORBB * bb)
         buildLoad(newsr, SR_spill_var(sr), 0, false, ors, &tc);
         ASSERT0(first_usestmt_ct != ORBB_orlist(bb)->end());
         ORBB_orlist(bb)->insert_before(ors, first_usestmt_ct);
-
         if (first_defstmt_ct != nullptr) {
             ASSERT0(first_usestmt_ct == first_defstmt_ct ||
                     ORBB_orlist(bb)->is_or_precedes(first_usestmt_ct->val(),
                                                     first_defstmt_ct->val()));
         }
-
         if (first_usestmt_ct == first_defstmt_ct) {
             renameOpnd(first_usestmt_ct->val(), sr, newsr, false);
         } else if (first_defstmt_ct != nullptr &&
@@ -4259,7 +4250,6 @@ void CG::localizeBB(SR * sr, ORBB * bb)
         //Handle downward exposed use.
         tc.clean_bottomup();
         ors.clean();
-
         SR * newsr = genReg();
         buildStore(newsr, SR_spill_var(sr), 0, false, ors, &tc);
         if (HAS_PREDICATE_REGISTER) {
@@ -4268,7 +4258,6 @@ void CG::localizeBB(SR * sr, ORBB * bb)
                 ors.set_pred(pd, this);
             }
         }
-
         ORBB_orlist(bb)->append_tail_ex(ors);
         renameOpndAndResultFollowed(sr, newsr, last_defstmt_ct,
                                     ORBB_orlist(bb));
