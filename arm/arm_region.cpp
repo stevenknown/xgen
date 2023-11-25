@@ -92,15 +92,12 @@ void ARMRegion::simplify(OptCtx & oc)
     } else if (g_do_md_du_analysis || g_do_mdssa) {
         ASSERT0(verifyIRandBB(getBBList(), this));
     }
-
-    //Insert int32->int64, int32<->f32, int32<->f64, int64<->f32, int64<->f64
-    //for generated code.
-    //Thus ignore the switch-option given by user and do refinement always.
-    //ASSERTN(g_do_refine, ("inserting CVT is expected"));
-    RefineCtx rc(&oc);
-    RC_insert_cvt(rc) = g_do_refine_auto_insert_cvt;
-    Refine * refine = (Refine*)getPassMgr()->registerPass(PASS_REFINE);
-    refine->perform(oc, rc);
+    if (g_insert_cvt) {
+        //Finial refine to insert CVT if necessary.
+        InsertCvt * iv = (InsertCvt*)getPassMgr()->registerPass(
+            PASS_INSERT_CVT);
+        iv->perform(oc);
+    }
 }
 
 
@@ -439,16 +436,12 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     //DO NOT DO OPTIMIZATION ANY MORE AFTER THIS LINE                         //
     ////////////////////////////////////////////////////////////////////////////
     addReturnIfNeed();
-
-    //Finial refine to insert CVT if necessary when compile C/C++.
-    //Insert int32->int64, int32<->f32, int32<->f64, int64<->f32, int64<->f64
-    //Thus ignore the switch-option given by user and do refinement always.
-    //ASSERTN(g_do_refine, ("inserting CVT is expected"));
-    RefineCtx rc(&oc);
-    RC_insert_cvt(rc) = g_do_refine_auto_insert_cvt;
-    Refine * refine = (Refine*)getPassMgr()->registerPass(PASS_REFINE);
-    refine->perform(oc, rc);
-
+    if (g_insert_cvt) {
+        //Finial refine to insert CVT if necessary.
+        InsertCvt * iv = (InsertCvt*)getPassMgr()->registerPass(
+            PASS_INSERT_CVT);
+        iv->perform(oc);
+    }
     #ifdef REF_TARGMACH_INFO
     if (g_do_lsra) {
         LinearScanRA * lsra = (LinearScanRA*)getPassMgr()->registerPass(

@@ -54,7 +54,8 @@ static bool isReturnValueNeedBuffer(xoc::Type const* rettype, xoc::TypeMgr * tm)
 {
     ASSERT0(rettype && tm);
     UINT retvalsize = rettype->is_any() ? 0 : tm->getByteSize(rettype);
-    return retvalsize > NUM_OF_RETURN_VAL_REGISTERS * GENERAL_REGISTER_SIZE;
+    return retvalsize > tm->getRegionMgr()->getTargInfo()->
+        getNumOfReturnValueRegister() * GENERAL_REGISTER_SIZE;
 }
 
 
@@ -953,8 +954,9 @@ xoc::Var * CTree2IR::convertReturnValBufVar(xoc::Type const* rettype,
                                             OUT UINT * return_val_size)
 {
     *return_val_size = rettype->is_any() ? 0 : m_tm->getByteSize(rettype);
-    if (*return_val_size <= NUM_OF_RETURN_VAL_REGISTERS *
-                            GENERAL_REGISTER_SIZE) {
+    if (*return_val_size <=
+        m_rg->getTargInfo()->getNumOfReturnValueRegister() *
+            GENERAL_REGISTER_SIZE) {
         return nullptr;
     }
     //If memory byte size of return-value is too big to store in
@@ -1035,8 +1037,9 @@ IR * CTree2IR::convertCallReturnVal(IR * call, UINT return_val_size,
                                     UINT lineno)
 {
     IR * ret_exp = nullptr;
-    if (return_val_size > NUM_OF_RETURN_VAL_REGISTERS *
-                          GENERAL_REGISTER_SIZE) {
+    if (return_val_size >
+        m_rg->getTargInfo()->getNumOfReturnValueRegister() *
+            GENERAL_REGISTER_SIZE) {
         ASSERT0(retval_buf);
         ret_exp = m_rg->getIRMgr()->buildLoad(retval_buf);
     } else if (return_val_size >= 0) {
@@ -1690,8 +1693,9 @@ IR * CTree2IR::genReturnValBuf(IR * ir)
     //transfering its address as the first implict parameter to
     //the call.
     UINT return_val_bytesize = m_tm->getByteSize(retval->getType());
-    if (return_val_bytesize <= NUM_OF_RETURN_VAL_REGISTERS *
-                               GENERAL_REGISTER_SIZE) {
+    if (return_val_bytesize <=
+        m_rg->getTargInfo()->getNumOfReturnValueRegister() *
+            GENERAL_REGISTER_SIZE) {
         return ir;
     }
     if (m_retval_buf == nullptr) {
@@ -2613,7 +2617,7 @@ bool CScope2IR::convertTreeStmtList(xfe::Tree * stmts, Region * rg,
     }
 
     //Convertion is successful.
-    RegionMgr * rm = rg->getRegionMgr();
+    xoc::RegionMgr * rm = rg->getRegionMgr();
     if (xoc::g_dump_opt.isDumpAll()) {
         xoc::note(rm, "\n==---- AFTER TREE2IR CONVERT '%s' -----==",
                   rg->getRegionName());
@@ -2637,7 +2641,7 @@ bool CScope2IR::convertTreeStmtList(xfe::Tree * stmts, Region * rg,
 
     //Reshape IR tree to well formed outlook.
     if (xoc::g_dump_opt.isDumpAll()) {
-        xoc::note(rm, "\n==---- AFTER CANONICALE IR -----==",
+        xoc::note(rm, "\n==---- TREE2IR: AFTER CANONICALE IR '%s' -----==",
                   rg->getRegionName());
         rg->getLogMgr()->incIndent(2);
         xoc::dumpIRListH(irs, rg);
@@ -2656,12 +2660,19 @@ bool CScope2IR::convertTreeStmtList(xfe::Tree * stmts, Region * rg,
     rg->initPassMgr(); //Optimizations needs PassMgr.
     rg->initIRMgr();
     rg->initIRBBMgr();
-    Refine * rf = (Refine*)rg->getPassMgr()->registerPass(PASS_REFINE);
-    bool change2 = false;
-    irs = rf->refineIRlist(irs, change2, rc);
+    xoc::Refine * rf = (Refine*)rg->getPassMgr()->registerPass(PASS_REFINE);
+    bool change_refine = false;
+    irs = rf->refineIRlist(irs, change_refine, rc);
     ASSERT0(xoc::verifyIRList(irs, nullptr, rg));
     ASSERT0(irs);
     rg->addToIRList(irs);
+    if (xoc::g_dump_opt.isDumpAll()) {
+        xoc::note(rm, "\n==---- TREE2IR: AFTER REFINE IR '%s' -----==",
+                  rg->getRegionName());
+        rg->getLogMgr()->incIndent(2);
+        xoc::dumpIRListH(rg->getIRList(), rg);
+        rg->getLogMgr()->decIndent(2);
+    }
     return true;
 }
 
@@ -2713,24 +2724,13 @@ bool CScope2IR::generateFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
     //Itertive scanning scope to collect and append
     //all local-variable into VarTab of current region.
     scanDeclList(DECL_fun_body(dcl), r, false);
-
     if (xoc::g_dump_opt.isDumpAll()) {
         DECL_fun_body(dcl)->dump();
     }
-
     if (!convertTreeStmtList(DECL_fun_body(dcl)->getStmtList(), r,
                              dcl->get_return_type())) {
         return false;
     }
-
-    if (xoc::g_dump_opt.isDumpAll()) {
-        xoc::note(rm, "\n==---- AFTER REFINE IR -----==",
-                  dcl->get_decl_name());
-        r->getLogMgr()->incIndent(2);
-        xoc::dumpIRListH(r->getIRList(), r);
-        r->getLogMgr()->decIndent(2);
-    }
-
     END_TIMER_FMT(t, ("GenerateFuncRegion '%s'",
                       r->getRegionVar()->get_name()->getStr()));
     return true;

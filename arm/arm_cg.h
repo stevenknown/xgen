@@ -278,8 +278,8 @@ public:
                            bool is_signed, ORList & ors, MOD IOC * cont);
     virtual void buildMul(SR * src1, SR * src2, UINT sr_size,
                           bool is_sign, OUT ORList & ors, MOD IOC * cont);
-    virtual OR * buildBusCopy(IN SR * src, IN SR * tgt, IN SR * pd,
-                              CLUST src_clust, CLUST tgt_clust);
+    virtual OR * buildClusterCopy(IN SR * src, IN SR * tgt, IN SR * pd,
+                                  CLUST src_clust, CLUST tgt_clust);
     virtual void buildAddRegImm(SR * src, SR * imm, UINT sr_size,
                                 bool is_sign, OUT ORList & ors, MOD IOC * cont);
     virtual void buildAddRegReg(bool is_add, SR * src1, SR * src2, UINT sr_size,
@@ -322,9 +322,8 @@ public:
     virtual UINT computeArgAlign(UINT argsz) const
     {
         #ifdef TO_BE_COMPATIBLE_WITH_ARM_LINUX_GNUEABI
-        UINT align = argsz >= GENERAL_REGISTER_SIZE * 2 ?
-            GENERAL_REGISTER_SIZE * 2 : STACK_ALIGNMENT;
-
+        UINT align = argsz >= BYTESIZE_OF_DWORD ?
+            BYTESIZE_OF_DWORD : STACK_ALIGNMENT;
         return align;
         #else
         return STACK_ALIGNMENT;
@@ -370,6 +369,7 @@ public:
     }
 
     virtual OR_CODE mapIRCode2ORCode(IR_CODE ir_code, UINT ir_opnd_size,
+                                     xoc::Type const* ir_type,
                                      IN SR * opnd0, IN SR * opnd1,
                                      bool is_signed);
     virtual UnitSet & mapRegFile2UnitSet(REGFILE regfile, SR const* sr,

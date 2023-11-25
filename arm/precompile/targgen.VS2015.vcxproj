@@ -82,10 +82,8 @@
     <ClCompile Include="..\..\com\comf.cpp" />
     <ClCompile Include="..\..\com\strbuf.cpp" />
     <ClCompile Include="..\..\com\byteop.cpp" />
+    <ClCompile Include="..\..\com\fileobj.cpp" />
     <ClCompile Include="arm_gen_targ_mach_resource.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\com\diagnostic.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

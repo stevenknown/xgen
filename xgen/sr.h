@@ -324,9 +324,13 @@ HOST_INT SR::getInt() const
 }
 //END SR
 
-
-typedef List<SR*> SRList;
 typedef xcom::Hash<SR*> SRHash; //SR hash table
+
+typedef xcom::List<SR*>::Iter SRListIter;
+class SRList : public xcom::List<SR*> {
+public:
+    void appendTailFromSRVec(SRVec const& srvec);
+};
 
 //This class defined SR manager that used to manange the
 //allocation and recycling.
@@ -391,8 +395,8 @@ public:
 //Note whole SRVec and its growable buffer are allocated in mempool.
 class SRVec : public SimpleVector<SR*, 1, MAX_SRVEC_NUM> {
 public:
-    UINT get_elem_count() { return getElemNum(); }
-
+    //Return the number of elements in the vector.
+    UINT get_elem_count() const { return getElemNum(); }
     void set(UINT i, SR * elem, SRVecMgr * mgr)
     { SimpleVector<SR*, 1, MAX_SRVEC_NUM>::set(i, elem, mgr->get_pool()); }
 };

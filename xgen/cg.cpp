@@ -364,15 +364,48 @@ void CG::buildLabel(LabelInfo const* li, OUT ORList & ors, IN IOC *)
 }
 
 
-//This function build OR according to given 'code'.
-//Implement the target dependent version if needed.
-//'sr_size': The number of integral multiple of byte-size of single SR.
-void CG::buildBinaryOR(IR_CODE code, SR * opnd0, SR * opnd1, bool is_signed,
+void CG::buildMultiBinaryORByRegSize(OR_CODE code, SR * opnd0, SR * opnd1,
+                                     OUT ORList & ors, MOD IOC * cont)
+{
+    UINT bytesize = opnd0->getByteSize();
+    ASSERTN(bytesize == opnd1->getByteSize(),
+            ("opnd0 and opnd1 are different size"));
+    ASSERTN(bytesize % GENERAL_REGISTER_SIZE == 0, ("Target Dependent Code"));
+
+    //Generate multiple OR operation to compose the IR's operation.
+    SRList res_list;
+    for (UINT i = 0; i < bytesize / GENERAL_REGISTER_SIZE; i++) {
+        SR * op0 = opnd0->getVec()->get(i);
+        SR * op1 = opnd1->getVec()->get(i);
+        SR * res = genReg((UINT)GENERAL_REGISTER_SIZE);
+        res_list.append_tail(res);
+
+        //Build OR.
+        OR * o = nullptr;
+        if (HAS_PREDICATE_REGISTER) {
+            o = buildOR(code, 1, 3, res, getTruePred(), op0, op1);
+        } else {
+            o = buildOR(code, 1, 2, res, op0, op1);
+        }
+        ors.append_tail(o);
+    }
+    if (res_list.get_elem_count() > 1) {
+        getSRVecMgr()->genSRVec(res_list);
+    }
+
+    //Set returned result-SR.
+    ASSERT0(cont);
+    cont->set_reg(0, res_list.get_head());
+}
+
+
+void CG::buildBinaryOR(IR_CODE code, xoc::Type const* type,
+                       SR * opnd0, SR * opnd1, bool is_signed,
                        OUT ORList & ors, MOD IOC * cont)
 {
     //Result's type-size might be not same as opnd. e,g: a < b,
     //result type is bool, opnd type is INT.
-    OR_CODE orty = mapIRCode2ORCode(code, opnd0->getByteSize(),
+    OR_CODE orty = mapIRCode2ORCode(code, opnd0->getByteSize(), type,
                                     opnd0, opnd1, is_signed);
     ASSERTN(orty != OR_UNDEF, ("mapIRCode2ORCode() should be overloaded"));
     SR * res = genReg();
@@ -388,11 +421,10 @@ void CG::buildBinaryOR(IR_CODE code, SR * opnd0, SR * opnd1, bool is_signed,
         opnd0 = cont->getResult();
         ASSERT0(opnd0);
 
-        orty = mapIRCode2ORCode(code, opnd0->getByteSize(),
+        orty = mapIRCode2ORCode(code, opnd0->getByteSize(), type,
                                 opnd0, opnd1, is_signed);
         ASSERTN(orty != OR_UNDEF, ("mapIRCode2ORCode() should be overloaded"));
     }
-
     if (opnd1->is_int_imm() &&
         !isValidImmOpnd(orty, opnd1_idx, opnd1->getInt())) {
         //Bit width is not big enough to hold operand value, load it
@@ -400,8 +432,7 @@ void CG::buildBinaryOR(IR_CODE code, SR * opnd0, SR * opnd1, bool is_signed,
         buildGeneralLoad(opnd1, 0, is_signed, ors, cont);
         opnd1 = cont->getResult();
         ASSERT0(opnd1);
-
-        orty = mapIRCode2ORCode(code, opnd0->getByteSize(),
+        orty = mapIRCode2ORCode(code, opnd0->getByteSize(), type,
                                 opnd0, opnd1, is_signed);
         ASSERTN(orty != OR_UNDEF, ("mapIRCode2ORCode() should be overloaded"));
     }
@@ -429,7 +460,7 @@ void CG::buildBinaryOR(IR_CODE code, SR * opnd0, SR * opnd1, bool is_signed,
 }
 
 
-//'sr_size': The number of byte-size of SR.
+//sr_size: The number of byte-size of SR.
 void CG::buildAdd(SR * src1, SR * src2, UINT sr_size, bool is_sign,
                   OUT ORList & ors, MOD IOC * cont)
 {
@@ -585,7 +616,7 @@ void CG::buildTypeCvt(SR * src, UINT tgt_size, UINT src_size, bool is_signed,
     }
     ORList tors;
     if (tgt_size > 2 * GENERAL_REGISTER_SIZE) {
-        ASSERTN(0, ("TODO"));
+        ASSERTN(0, ("Target Dependent Code"));
         return;
     }
     if (src_size <= GENERAL_REGISTER_SIZE) {
@@ -625,11 +656,15 @@ void CG::buildTypeCvt(SR * src, UINT tgt_size, UINT src_size, bool is_signed,
 void CG::buildTypeCvt(xoc::IR const* tgt, xoc::IR const* src,
                       OUT ORList & ors, MOD IOC * cont)
 {
-    ASSERTN(!tgt->is_vec() && !src->is_vec(), ("TODO"));
+    ASSERTN(!tgt->is_vec() && !src->is_vec(), ("Target Dependent Code"));
     UINT tgt_size = tgt->getTypeSize(m_tm);
     UINT src_size = src->getTypeSize(m_tm);
-    buildTypeCvt(cont->get_reg(0), tgt_size, src_size, src->is_signed(),
-                 xoc::getDbx(tgt), ors, cont);
+    if (regardAsIntType(tgt->getType()) && regardAsIntType(src->getType())) {
+        buildTypeCvt(cont->get_reg(0), tgt_size, src_size, src->is_signed(),
+                     xoc::getDbx(tgt), ors, cont);
+        return;
+    }
+    ASSERTN(0, ("Target Dependent Code"));
 }
 
 
@@ -4400,7 +4435,6 @@ bool CG::verifyOR(OR const* o)
             ASSERT0(isValidImmOpnd(o->getCode(), sr->getInt()));
         }
     }
-
     for (UINT i = 0; i < o->opnd_num(); i++) {
         SR * sr = o->get_opnd(i);
         ASSERT0(sr);
@@ -4414,7 +4448,6 @@ bool CG::verifyOR(OR const* o)
             ASSERT0(isValidImmOpnd(o->getCode(), i, sr->getInt()));
         }
     }
-
     ASSERT0(isValidImmOpnd(o));
     return true;
 }

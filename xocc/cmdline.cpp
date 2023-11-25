@@ -783,7 +783,7 @@ static void inferOption()
         xoc::g_compute_pr_du_chain = false;
         xoc::g_compute_nonpr_du_chain = false;
         xoc::g_do_refine = false;
-        xoc::g_do_refine_auto_insert_cvt = true;
+        xoc::g_insert_cvt = true;
         xoc::g_do_call_graph = false;
         xoc::g_do_ipa = false;
         xgen::g_do_lis = false;
@@ -840,7 +840,7 @@ bool processCmdLine(INT argc, CHAR const* argv[])
     if (argc <= 1) { usage(); return false; }
 
     //For C language, inserting CVT is expected.
-    xoc::g_do_refine_auto_insert_cvt = true;
+    xoc::g_insert_cvt = true;
     xoc::g_do_refine = true;
 
     //Retain CFG, DU info for IPA used.

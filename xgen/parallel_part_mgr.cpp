@@ -110,7 +110,8 @@ void ParallelPartMgr::destroy()
             or_lst->destroy();
         }
         for (xcom::BitSet * oridx_lst = m_para_part_oridx_lst.get_head();
-             oridx_lst != nullptr; oridx_lst = m_para_part_oridx_lst.get_next()) {
+             oridx_lst != nullptr;
+             oridx_lst = m_para_part_oridx_lst.get_next()) {
             oridx_lst->destroy();
         }
         for (SR2SR_DMAP * map = m_sr2sr_dmap_lst.get_head(); map != nullptr;
@@ -223,7 +224,7 @@ void ParallelPartMgr::genBusCopy(IN ORBB * bb,
                                  CLUST from_clust,
                                  IN List<CLUST> & to_clust_lst,
                                  IN SR * from_sr,
-                                 IN List<SR*> & to_sr_lst)
+                                 IN SRList & to_sr_lst)
 {
     DUMMYUSE(bb);
     ASSERTN(m_pool, ("not yet initialize."));
@@ -232,8 +233,8 @@ void ParallelPartMgr::genBusCopy(IN ORBB * bb,
     //copy to scalar o cluster-2 unit
     CLUST to_clust = to_clust_lst.get_head();
     SR * to_tn = to_sr_lst.get_head();
-    OR * cp = m_cg->buildBusCopy(from_sr, to_tn, m_cg->getTruePred(),
-                                 from_clust, to_clust);
+    OR * cp = m_cg->buildClusterCopy(from_sr, to_tn, m_cg->getTruePred(),
+                                     from_clust, to_clust);
     ORBB_orlist(m_bb)->append_tail(cp);
 }
 
@@ -280,7 +281,7 @@ bool ParallelPartMgr::hasPDomOcc(ORBB * bb, SR * gsr)
 
 void ParallelPartMgr::genReductionRestore(SR * red_var)
 {
-    List<SR*> dest_tn;
+    SRList dest_tn;
     List<CLUST>    dest_clust;
     //The value of 0 indicates cluster-1 as default.
     for (UINT i = 0; i < m_num_cluster; i++) {

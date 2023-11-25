@@ -98,12 +98,8 @@ public:
     List<OR*> * getClusterReductionOR(UINT n);
     SR2SR_DMAP * getClusterDMap(UINT n);
     CLUST getCluster(UINT n) const;
-    virtual void genBusCopy(
-                    ORBB * bb,
-                    CLUST from_clust,
-                    List<CLUST> & to_clust_lst,
-                    SR * from_sr,
-                    SRList & to_sr_lst);
+    virtual void genBusCopy(ORBB * bb, CLUST from_clust,
+        List<CLUST> & to_clust_lst, SR * from_sr, SRList & to_sr_lst);
     virtual void genPrologAndEpilog();
     virtual INT getClusterIdx(CLUST clt) const;
     virtual UINT getFirstClusterIdx() const;

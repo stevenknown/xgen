@@ -32,16 +32,9 @@ author: Su Zhenyu
 #define _ARM_REFINE_H_
 
 class ARMRefine : public Refine {
-    //Kid is float.
-    IR * insertCvtForFloatCase2(IR * parent, IR * kid, bool & change);
-    //Parent is float.
-    IR * insertCvtForFloatCase1(IR * parent, IR * kid, bool & change);
 public:
     ARMRefine(Region * rg) : Refine(rg) {}
     virtual ~ARMRefine() {}
-
-    //Insert CVT for float if necessary.
-    virtual IR * insertCvtForFloat(IR * parent, IR * kid, bool & change);
 };
 
 #endif

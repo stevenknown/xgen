@@ -343,31 +343,31 @@ static void initAndPrtCallingConventionRegSet(OUT xcom::BitSet & allocable)
     //  r4 to r11: used to hold local variables.
     //  r0 to r3: used to hold argument values passed to a subroutine,
     //  and also hold results returned from a subroutine.
-    ////////////////////////////////////////
-    //Initialize dedicated regset
-    //Initializing argument registers.
-    ////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    //Initialize dedicated regset.                                            //
+    //Initializing argument registers.                                        //
+    ////////////////////////////////////////////////////////////////////////////
     for (Reg reg = ARG_REG_START; reg <= ARG_REG_END; reg++) {
         argument.bunion(reg);
     }
 
-    ////////////////////////////////////////
-    //Initializing function unit return value registers.
-    ////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    //Initializing function unit return value registers.                      //
+    ////////////////////////////////////////////////////////////////////////////
     for (Reg reg = RETVAL_REG_START; reg <= RETVAL_REG_END; reg++) {
         return_value.bunion(reg);
     }
 
-    ////////////////////////////////////////
-    //Initialize regset caller-saved.
-    ////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    //Initialize regset caller-saved.                                         //
+    ////////////////////////////////////////////////////////////////////////////
     for (Reg reg = CALLER_SAVED_REG_START; reg <= CALLER_SAVED_REG_END; reg++) {
         caller_saved.bunion(reg);
     }
 
-    ////////////////////////////////////////
-    //Initialize regset callee-saved.
-    ////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    //Initialize regset callee-saved.                                         //
+    ////////////////////////////////////////////////////////////////////////////
     //R4~R11
     for (Reg reg = CALLEE_SAVED_REG_START; reg <= CALLEE_SAVED_REG_END; reg++) {
         callee_saved.bunion(reg);
@@ -376,10 +376,10 @@ static void initAndPrtCallingConventionRegSet(OUT xcom::BitSet & allocable)
     //R14(LR)
     callee_saved.bunion(REG_RETURN_ADDRESS_REGISTER);
 
-    ////////////////////////////////////////
-    //Initialize regset allocable.
-    ////////////////////////////////////////
-    //R4~R11
+    ////////////////////////////////////////////////////////////////////////////
+    //Initialize regset allocable.                                            //
+    ////////////////////////////////////////////////////////////////////////////
+    //R0~R11
     for (Reg reg = ALLOCABLE_REG_START; reg <= ALLOCABLE_REG_END; reg++) {
         allocable.bunion(reg);
     }

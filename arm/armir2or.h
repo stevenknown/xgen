@@ -36,6 +36,7 @@ class ARMCGMgr;
 
 class ARMIR2OR : public IR2OR {
 protected:
+    void convertNegImm(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     void convertAddSubFP(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     void convertMulofFloat(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     void convertMulofLongLong(IR const* ir, OUT RecycORList & ors,
@@ -46,13 +47,18 @@ protected:
     void convertTruebrFP(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertStoreVar(IR const* ir, OUT RecycORList & ors,
                                  IN IOC * cont);
+
     //CASE: integer and pointer convertion.
-    void convertCvtIntAndPtr(IR const* ir, OUT RecycORList & ors,
-                             MOD IOC * cont);
+    void convertCvtBetweenIntType(IR const* ir, OUT RecycORList & ors,
+                                  MOD IOC * cont);
+
     //CASE: Load constant-string address into register.
     void convertCvtIntAndStr(IR const* ir, SR * opnd,
                              OUT RecycORList & ors,
                              MOD IOC * cont);
+    void convertCvtByBuiltIn(IR * newir, IR const* orgir,
+                             SR * opnd_of_cvt_exp,
+                             OUT RecycORList & ors, IN IOC * cont);
     void convertCvt(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
 
     //Convert Bitwise NOT into OR list. bnot is unary operation.
@@ -110,11 +116,10 @@ protected:
                                bool is_signed);
     ARMCG * getCG() { return (ARMCG*)m_cg; }
     ARMCGMgr * getCGMgr() { return (ARMCGMgr*)m_cg->getCGMgr(); }
+    Var const* genBuiltinVarFP2FP(IR const* tgt, IR const* src);
+    Var const* genBuiltinVarFP2Int(IR const* tgt, IR const* src);
+    Var const* genBuiltinVarInt2FP(IR const* tgt, IR const* src);
 
-    Var const* fp2fp(IR const* tgt, IR const* src);
-    Var const* fp2int(IR const* tgt, IR const* src);
-
-    Var const* int2fp(IR const* tgt, IR const* src);
     void invertBoolValue(Dbx * dbx, SR * val, OUT RecycORList & ors);
     IR * insertCvt(IR const* ir);
 public:

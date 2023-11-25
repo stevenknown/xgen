@@ -469,9 +469,9 @@ void ARMCG::buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,
         return;
     }
 
-    if (cont->getMemByteSize() <= GENERAL_REGISTER_SIZE * 2) {
+    if (cont->getMemByteSize() <= BYTESIZE_OF_DWORD) {
         OR * o = genOR(OR_ldrd);
-        ASSERT0(load_val->getByteSize() == GENERAL_REGISTER_SIZE * 2);
+        ASSERT0(load_val->getByteSize() == BYTESIZE_OF_DWORD);
         ASSERT0(load_val->is_vec());
         ASSERT0(load_val->getVec()->get(0) && load_val->getVec()->get(1));
         o->set_load_val(load_val->getVec()->get(0), this, 0);
@@ -688,14 +688,14 @@ void ARMCG::buildStoreFor8Byte(SR const* store_val, SR * base, SR * sr_ofst,
                                OUT ORList & ors, MOD IOC * cont)
 {
     ASSERT0(cont->getMemByteSize() > GENERAL_REGISTER_SIZE &&
-            cont->getMemByteSize() <= GENERAL_REGISTER_SIZE * 2);
+            cont->getMemByteSize() <= BYTESIZE_OF_DWORD);
     OR_CODE code = selectORCodeForStore8Byte(sr_ofst);
     ASSERT0(code != OR_UNDEF);
     genAddrCompFor8ByteStore(&base, &sr_ofst, ors);
 
     //Generate memory-store operation.
     OR * o = genOR(code);
-    ASSERT0(store_val->getByteSize() == GENERAL_REGISTER_SIZE * 2);
+    ASSERT0(store_val->getByteSize() == BYTESIZE_OF_DWORD);
     ASSERT0(store_val->is_vec());
     ASSERT0(store_val->getVec()->get(0) &&
             store_val->getVec()->get(1));
@@ -719,6 +719,7 @@ void ARMCG::buildStoreFor8Byte(SR const* store_val, SR * base, SR * sr_ofst,
 //    r2 = 0x2,
 //    r0 = eq, r1, r2 ;then r0 is 1.
 OR_CODE ARMCG::mapIRCode2ORCode(IR_CODE ir_code, UINT ir_opnd_size,
+                                xoc::Type const* ir_type,
                                 IN SR * opnd0, IN SR * opnd1, bool is_signed)
 {
     DUMMYUSE(opnd0);
@@ -801,6 +802,12 @@ OR_CODE ARMCG::mapIRCode2ORCode(IR_CODE ir_code, UINT ir_opnd_size,
     case IR_BNOT:
         break;
     case IR_NEG:
+        if (ir_type != nullptr && ir_type->is_fp()) {
+            return OR_UNDEF;
+        }
+        if (ir_opnd_size > GENERAL_REGISTER_SIZE) {
+            return OR_UNDEF;
+        }
         if (opnd0->is_reg()) {
             orty = OR_neg;
         }
@@ -884,8 +891,8 @@ void ARMCG::buildStore(IN SR * store_val, IN SR * base, IN SR * ofst,
                                    is_signed, ors, cont);
         return;
     }
-    if (cont->getMemByteSize() <= GENERAL_REGISTER_SIZE * 2) {
-        ASSERT0(store_val->getByteSize() == GENERAL_REGISTER_SIZE * 2);
+    if (cont->getMemByteSize() <= BYTESIZE_OF_DWORD) {
+        ASSERT0(store_val->getByteSize() == BYTESIZE_OF_DWORD);
         ASSERT0(store_val->is_vec());
         ASSERT0(store_val->getVec()->get(0) && store_val->getVec()->get(1));
         if (!CG::isValidRegInSRVec(store_val->getVec(), true)) {
@@ -957,7 +964,7 @@ void ARMCG::buildMemAssignBySize(SR * tgt,
         ASSERT0(loadval && loadval->is_reg());
 
         tc.clean_bottomup();
-        buildBinaryOR(IR_BAND, loadval,
+        buildBinaryOR(IR_BAND, nullptr, loadval,
                       genIntImm(getMaskByByte(bytesize), false),
                       false, ors, &tc);
         loadval = tc.getResult();
@@ -1154,7 +1161,7 @@ void ARMCG::buildMemcpyInternal(SR * tgt,
 
     if (bytesize == 0) { return; }
 
-    if (bytesize <= GENERAL_REGISTER_SIZE * 2) {
+    if (bytesize <= BYTESIZE_OF_DWORD) {
         //Use SR move instead of block copy.
         ASSERT0(bytesize % GENERAL_REGISTER_SIZE == 0);
         buildMemAssignUnroll(tgt, src, bytesize / GENERAL_REGISTER_SIZE,
@@ -1344,7 +1351,7 @@ void ARMCG::buildICall(SR * callee, UINT ret_val_size,
         cont->set_reg(RESULT_REGISTER_INDEX, genR0());
         return;
     }
-    if (ret_val_size <= GENERAL_REGISTER_SIZE * 2) {
+    if (ret_val_size <= BYTESIZE_OF_DWORD) {
         SR * sr = getSRVecMgr()->genSRVec(2,
             genRegWithPhyReg(REG_R0, RF_R),
             genRegWithPhyReg(REG_R1, RF_R));
@@ -1369,7 +1376,7 @@ void ARMCG::buildCall(Var const* callee, UINT ret_val_size, OUT ORList & ors,
         cont->set_reg(RESULT_REGISTER_INDEX, genR0());
         return;
     }
-    if (ret_val_size <= GENERAL_REGISTER_SIZE * 2) {
+    if (ret_val_size <= BYTESIZE_OF_DWORD) {
         SR * sr = getSRVecMgr()->genSRVec(2,
             genRegWithPhyReg(REG_R0, RF_R),
             genRegWithPhyReg(REG_R1, RF_R));
@@ -1768,7 +1775,7 @@ void ARMCG::buildShiftLeft(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
         return;
     }
 
-    ASSERTN(sr_size <= GENERAL_REGISTER_SIZE * 2, ("TODO"));
+    ASSERTN(sr_size <= BYTESIZE_OF_DWORD, ("TODO"));
     if (shift_ofst->is_reg()) {
         buildShiftLeftReg(src, sr_size, shift_ofst, ors, cont);
         return;
@@ -1892,12 +1899,9 @@ void ARMCG::buildShiftRightCase2(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
 }
 
 
-void ARMCG::buildShiftRightCase3_1(IN SR * src,
-                                   ULONG sr_size,
-                                   IN SR * shift_ofst,
-                                   bool is_signed,
-                                   OUT ORList & ors,
-                                   MOD IOC * cont)
+void ARMCG::buildShiftRightCase3_1(IN SR * src, ULONG sr_size,
+                                   IN SR * shift_ofst, bool is_signed,
+                                   OUT ORList & ors, MOD IOC * cont)
 {
     //Algo:
     //lo = lo >>(lsr) shift_ofst
@@ -2044,25 +2048,21 @@ void ARMCG::buildShiftRightCase3(IN SR * src,
 }
 
 
-void ARMCG::buildShiftRight(IN SR * src,
-                            ULONG sr_size,
-                            IN SR * shift_ofst,
-                            bool is_signed,
-                            OUT ORList & ors,
-                            MOD IOC * cont)
+void ARMCG::buildShiftRight(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
+                            bool is_signed, OUT ORList & ors, MOD IOC * cont)
 {
     if (sr_size <= GENERAL_REGISTER_SIZE) {
         buildShiftRightCase1(src, sr_size, shift_ofst, is_signed, ors, cont);
         return;
     }
-
-    ASSERTN(sr_size <= GENERAL_REGISTER_SIZE * 2, ("TODO"));
+    ASSERTN(sr_size <= BYTESIZE_OF_DWORD, ("TODO"));
     if (shift_ofst->is_reg()) {
         buildShiftRightCase2(src, sr_size, shift_ofst, is_signed, ors, cont);
         return;
     }
     if (shift_ofst->is_imm()) {
-        ASSERTN(shift_ofst->getInt() != 0, ("a >> 0, redundant operation"));
+        //CASE:It is possible under -O0.
+        //ASSERTN(shift_ofst->getInt() != 0, ("a >> 0, redundant operation"));
         buildShiftRightCase3(src, sr_size, shift_ofst, is_signed, ors, cont);
         return;
     }
@@ -2070,13 +2070,11 @@ void ARMCG::buildShiftRight(IN SR * src,
 }
 
 
-//Generate inter-cluster copy operation.
+//Generate inter-cluster/core/thread copy operation.
 //Copy from 'src' in 'src_clust' to 'tgt' of in 'tgt_clust'.
-OR * ARMCG::buildBusCopy(IN SR * src,
-                         IN SR * tgt,
-                         IN SR *, //predicate register.
-                         CLUST src_clust,
-                         CLUST tgt_clust)
+OR * ARMCG::buildClusterCopy(IN SR * src, IN SR * tgt,
+                             IN SR *, //predicate register.
+                             CLUST src_clust, CLUST tgt_clust)
 {
     ASSERTN(0, ("Unsupport"));
     return nullptr;
@@ -2112,7 +2110,7 @@ void ARMCG::buildAddRegImm(SR * src, SR * imm,  UINT sr_size,
         return;
     }
 
-    if (sr_size <= GENERAL_REGISTER_SIZE * 2) {
+    if (sr_size <= BYTESIZE_OF_DWORD) {
         SRVec * sv = src->getVec();
         ASSERT0(sv != nullptr && src->getVecIdx() == 0);
 
@@ -2142,6 +2140,7 @@ void ARMCG::buildAddRegImm(SR * src, SR * imm,  UINT sr_size,
 
         ASSERT0(cont);
         cont->set_reg(0, res);
+        //TBD:Do we need store high part to context?
         //cont->set_reg(1, res2);
         return;
     }
@@ -2193,7 +2192,6 @@ void ARMCG::buildMulRegReg(SR * src1,
         ors.append_tail(o);
         return;
     }
-
     UNREACHABLE();
 }
 
@@ -2217,7 +2215,7 @@ void ARMCG::buildAddRegReg(bool is_add, SR * src1, SR * src2, UINT sr_size,
         return;
     }
 
-    if (sr_size <= GENERAL_REGISTER_SIZE * 2) {
+    if (sr_size <= BYTESIZE_OF_DWORD) {
         SRVec * sv1 = src1->getVec();
         ASSERT0(sv1 && SR_vec_idx(src1) == 0);
         SR * src1_2 = sv1->get(1);
@@ -2233,8 +2231,8 @@ void ARMCG::buildAddRegReg(bool is_add, SR * src1, SR * src2, UINT sr_size,
 
         OR_CODE orty = OR_UNDEF;
         OR_CODE orty2 = OR_UNDEF;
-        List<SR*> reslst;
-        List<SR*> opndlst;
+        SRList reslst;
+        SRList opndlst;
         if (is_add) {
             orty = OR_adds;
             orty2 = OR_adc;
@@ -2832,11 +2830,11 @@ INT ARMCG::computeMemByteSize(OR * o)
     case OR_ldr_i12:
     case OR_str:
     case OR_str_i12:
-        return GENERAL_REGISTER_SIZE * 2;
+        return BYTESIZE_OF_DWORD;
     case OR_ldrd:
     case OR_strd:
     case OR_strd_i8:
-        return GENERAL_REGISTER_SIZE * 2;
+        return BYTESIZE_OF_DWORD;
     default: ASSERTN(0, ("Not memory opcode"));
     }
     return -1;

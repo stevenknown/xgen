@@ -337,11 +337,7 @@ public:
 
     //Bitwise AND
     virtual void convertBitAnd(IR const* ir, OUT RecycORList & ors,
-                               MOD IOC * cont)
-    {
-        ASSERTN(ir->is_band(), ("illegal ir"));
-        convertBinaryOp(ir, ors, cont);
-    }
+                               MOD IOC * cont);
 
     //Bitwise OR
     virtual void convertBitOr(IR const* ir, OUT RecycORList & ors,
@@ -371,12 +367,12 @@ public:
                                    MOD IOC * cont)
     {
         ASSERTN(ir->is_lnot(), ("illegal ir"));
-        convertBinaryOp(ir, ors, cont);
+        convertUnaryOp(ir, ors, cont);
     }
     virtual void convertNeg(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     {
         ASSERTN(ir->is_neg(), ("illegal ir"));
-        convertBinaryOp(ir, ors, cont);
+        convertUnaryOp(ir, ors, cont);
     }
     virtual void convertLT(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     {
@@ -403,7 +399,6 @@ public:
         ASSERTN(ir->is_eq(), ("illegal ir"));
         convertRelationOp(ir, ors, cont);
     }
-
     virtual void convertNE(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     {
         ASSERTN(ir && ir->is_ne(), ("illegal ir"));
@@ -422,7 +417,6 @@ public:
         Dbx * d = ::getDbx(ir);
         if (d != nullptr) { OR_dbx(o).copy(*d); }
     }
-
     void convertToORList(OUT RecycORList & or_list);
     virtual void convert(IR const* ir, OUT RecycORList & ors, MOD IOC * cont);
 

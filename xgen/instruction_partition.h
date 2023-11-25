@@ -240,15 +240,15 @@ void InstructionPartition<Mat, T>::formulateInterClusterConstraints(
     OUT Mat & leq, OUT Mat & eq, OUT UINT & num_icc_vars,
     IN VarMap & vm, UINT num_cycs, UINT num_ops, UINT num_vars, UINT num_cst)
 {
-    INT cst_col = num_vars;
-    INT start_idx_of_new_cs = cst_col;
-    INT num_new_cs_of_each_edge = vm.get_clust_num() * vm.get_clust_num();
+    UINT cst_col = num_vars;
+    UINT start_idx_of_new_cs = cst_col;
+    UINT num_new_cs_of_each_edge = vm.get_clust_num() * vm.get_clust_num();
 
     num_icc_vars = m_ddg->getEdgeNum() * num_new_cs_of_each_edge;
     leq.insertColumnsBefore(cst_col, num_icc_vars);
     eq.insertColumnsBefore(cst_col, num_icc_vars);
 
-    INT new_cst_col = num_vars + num_icc_vars;
+    UINT new_cst_col = num_vars + num_icc_vars;
     UINT ofst = start_idx_of_new_cs;
     for (UINT i = 0; i < m_ddg->getEdgeNum(); i++) {
         for (UINT j = 0; j < num_new_cs_of_each_edge; j++) {

@@ -33,8 +33,9 @@ author: Su Zhenyu
 
 class ARMTargInfo : public TargInfo {
 public:
-    virtual UINT getNumOfAllocableIntegerRegister() const { return 16; }
-    virtual UINT getNumOfAllocableFloatRegister() const { return 16; }
+    virtual UINT getNumOfReturnValueRegister() const;
+    virtual UINT getNumOfAllocableIntegerRegister() const;
+    virtual UINT getNumOfAllocableFloatRegister() const;
     virtual UINT getNumOfGroup() const { return 1; }
     virtual UINT getNumOfThread() const { return 1; }
 

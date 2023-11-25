@@ -111,6 +111,7 @@ class CG {
 public:
     friend class OR;
     friend class SR;
+    friend class IR2OR;
 protected:
     //True if accessing local variable via [FP pointer - Offst].
     UINT m_is_use_fp:1;
@@ -260,6 +261,10 @@ public:
     //Generate OR with variant number of operands and results.
     //Note user should pass into the legal number of result and operand SRs
     //that corresponding to 'orty'.
+    //Note the function does NOT add all elements in SRVec except the
+    //first element when user passed a SR with SRVec.
+    //e.g:Given buildOR(OR_add, 0, 1, reg), where reg is combined with reg2 and
+    //composed a SRVec. The function only set reg as operand.
     virtual OR * buildOR(OR_CODE orty, UINT resnum, UINT opndnum, ...);
     virtual OR * buildOR(OR_CODE orty, IN SRList & result, IN SRList & opnd);
 
@@ -301,12 +306,22 @@ public:
         ASSERTN(0, ("Target Dependent Code"));
     }
 
-    //This function build OR according to given 'code'.
+    //This function builds OR according to given 'code'.
     //Implement the target dependent version if needed.
-    //'sr_size': The number of integral multiple of byte-size of single SR.
-    virtual void buildBinaryOR(IR_CODE code, SR * src1, SR * src2,
+    //type: the data type of operand of 'code'.
+    virtual void buildBinaryOR(IR_CODE code, xoc::Type const* type,
+                               SR * src1, SR * src2,
                                bool is_signed, OUT ORList & ors,
                                MOD IOC * cont);
+
+    //The function builds OR binary operations according to given code.
+    //The function will generate mutiple OR operations if opnd0 is an integer
+    //multiple of GENERAL_REGISTER_SIZE.
+    //Note the function does NOT differentiate the legality of code in code
+    //generation, it make the assumption that each OR operations to different
+    //part of opnd0 and opnd1 is legal to use 'code'.
+    virtual void buildMultiBinaryORByRegSize(OR_CODE code,
+        SR * opnd0, SR * opnd1, OUT ORList & ors, MOD IOC * cont);
 
     //'sr_size': The number of integral multiple of byte-size of single SR.
     virtual void buildAdd(SR * src1, SR * src2, UINT sr_size,
@@ -356,6 +371,8 @@ public:
     }
     virtual void buildGeneralLoad(IN SR * val, HOST_INT ofst, bool is_signed,
                                   OUT ORList & ors, MOD IOC * cont);
+
+    //src: register that record the value need to convert.
     virtual void buildTypeCvt(SR * src, UINT tgt_size, UINT src_size,
                               bool is_signed, Dbx const* dbx, OUT ORList & ors,
                               MOD IOC * cont);
@@ -408,14 +425,26 @@ public:
                               MOD IOC * cont) = 0;
 
     //Generate inter-cluster copy operation.
+    //Usually, cluster copy spends more cycles than copy between reigster to
+    //register.
     //Copy from 'src' in 'src_clust' to 'tgt' of in 'tgt_clust'.
-    virtual OR * buildBusCopy(IN SR * src, IN SR * tgt, IN SR * pd,
-                              CLUST src_clust, CLUST tgt_clust) = 0;
+    //src: source register.
+    //tgt: target register.
+    //pd: predidate register, optional.
+    //src_clust: source cluster.
+    //tgt_clust: target cluster.
+    virtual OR * buildClusterCopy(IN SR * src, IN SR * tgt, IN SR * pd,
+                                  CLUST src_clust, CLUST tgt_clust) = 0;
+
+    //Generate left shift operation.
     virtual void buildShiftLeft(IN SR * src, ULONG sr_size, IN SR * shift_ofst,
                                 OUT ORList & ors, MOD IOC * cont) = 0;
+
+    //Generate right shift operation.
     virtual void buildShiftRight(IN SR * src, ULONG sr_size,
                                  IN SR * shift_ofst, bool is_signed,
                                  OUT ORList & ors, MOD IOC * cont) = 0;
+
     //Build memory store operation that store 'reg' into stack.
     //NOTE: user have to assign physical register manually if there is
     //new OR generated and requires register allocation.
@@ -895,6 +924,7 @@ public:
     //     r2 <- 0x2,
     //     r0 <- eq, r1, r2 ;then r0 is 0
     virtual OR_CODE mapIRCode2ORCode(IR_CODE ir_code, UINT ir_opnd_size,
+                                     xoc::Type const* ir_type,
                                      IN SR * opnd0, IN SR * opnd1,
                                      bool is_signed) = 0;
     SR * mapPR2SR(PRNO prno) const
@@ -1105,6 +1135,10 @@ public:
     bool passArgInMemory(SR * argaddr, UINT * argsz,
                          OUT ArgDescMgr * argdescmgr, OUT ORList & ors,
                          IOC * cont);
+
+    //Return true if ty indicates integer type of CG.
+    bool regardAsIntType(xoc::Type const* ty) const
+    { return ty->is_int() || ty->is_pointer(); }
 
     bool tryPassArgThroughRegister(SR * regval, SR * start_addr,
                                    UINT * argsz, OUT ArgDescMgr * argdescmgr,

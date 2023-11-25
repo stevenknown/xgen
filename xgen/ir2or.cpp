@@ -140,6 +140,8 @@ void IR2OR::convertLoadConstFP(IR const* ir, OUT RecycORList & ors,
     tors.copyDbx(ir);
     ors.move_tail(tors);
     cont->set_reg(0, load_val);
+
+    //TBD:Do we need store high-part to context.
     //if (load_val2 != nullptr) {
     //    cont->set_reg(1, load_val2);
     //}
@@ -164,14 +166,14 @@ void IR2OR::convertLoadConstInt(HOST_INT constval, UINT constbytesize,
 {
     //For convenient purpose, the function implemented 2x machine word
     //immediate load.
-    ASSERTN(constbytesize <= 2 * GENERAL_REGISTER_SIZE, ("TODO"));
+    ASSERTN(constbytesize <= 2 * GENERAL_REGISTER_SIZE,
+            ("Target Dependent Code"));
     SR * load_val = m_cg->genReg();
     SR * load_val2 = nullptr;
     RecycORList tors(this);
     //Load low part.
     HOST_INT low = constval;
     if (constbytesize == 2 * GENERAL_REGISTER_SIZE &&
-
         //Note if WORD_LENGTH_OF_TARGET_MACHINE is equal to the bitsize of
         //HOST_UINT, the shift operation will generate zero. That means the
         //maximum host immediate type can not represent twice size of
@@ -209,9 +211,9 @@ void IR2OR::convertLoadConstInt(HOST_INT constval, UINT constbytesize,
     tors.copyDbx(dbx);
     ors.move_tail(tors);
     cont->set_reg(0, load_val);
-    //if (load_val2 != nullptr) {
-    //    cont->set_reg(1, load_val2);
-    //}
+
+    //TBD:Do we need store the high-part to context.
+    //if (load_val2 != nullptr) { cont->set_reg(1, load_val2); }
 }
 
 
@@ -730,20 +732,38 @@ void IR2OR::convertUnaryOp(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     //Result's type-size might be not same as opnd. e.g: a < b,
     //result type is bool, opnd type is INT.
     OR_CODE orty = m_cg->mapIRCode2ORCode(ir->getCode(),
-                                          UNA_opnd(ir)->getTypeSize(m_tm),
-                                          opnd, nullptr, ir->is_signed());
+        UNA_opnd(ir)->getTypeSize(m_tm), UNA_opnd(ir)->getType(),
+        opnd, nullptr, ir->is_signed());
     ASSERTN(orty != OR_UNDEF, ("mapIRCode2ORCode() should be overloaded"));
+    UINT resnum = res->getVec() != nullptr ?
+        res->getVec()->get_elem_count() : 1;
+    UINT opndnum = opnd->getVec() != nullptr ?
+        opnd->getVec()->get_elem_count() : 1;
+    if (HAS_PREDICATE_REGISTER) { opndnum++; }
+    ASSERTN(tmGetResultNum(orty) == resnum && tmGetOpndNum(orty) == opndnum,
+            ("not valid target supported unary operation"));
 
-    OR * o;
-    if (HAS_PREDICATE_REGISTER) {
-        ASSERTN(tmGetResultNum(orty) == 1 && tmGetOpndNum(orty) == 2,
-                ("not an unary op"));
-        o = m_cg->buildOR(orty, 1, 2, res, m_cg->getTruePred(), opnd);
+    //Prepare result operand.
+    SRList reslst;
+    if (res->getVec() != nullptr) {
+        reslst.appendTailFromSRVec(*res->getVec());
     } else {
-        ASSERTN(tmGetResultNum(orty) == 1 && tmGetOpndNum(orty) == 1,
-                ("not an unary op"));
-        o = m_cg->buildOR(orty, 1, 2, res, opnd);
+        reslst.append_tail(res);
     }
+
+    //Prepare source operand.
+    SRList opndlst;
+    if (HAS_PREDICATE_REGISTER) {
+        //Always set the predicate register at the first position in
+        //source operand list.
+        opndlst.append_tail(m_cg->getTruePred());
+    }
+    if (opnd->getVec() != nullptr) {
+        opndlst.appendTailFromSRVec(*opnd->getVec());
+    } else {
+        opndlst.append_tail(opnd);
+    }
+    OR * o = m_cg->buildOR(orty, reslst, opndlst);
     copyDbx(o, ir);
 
     //Set result SR.
@@ -753,11 +773,56 @@ void IR2OR::convertUnaryOp(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
 }
 
 
+void IR2OR::convertBitAnd(IR const* ir, OUT RecycORList & ors,
+                          MOD IOC * cont)
+{
+    ASSERTN(ir->is_band(), ("illegal ir"));
+    if (ir->getTypeSize(m_tm) <= GENERAL_REGISTER_SIZE) {
+        //The common implementation should be able to handle the case.
+        convertBinaryOp(ir, ors, cont);
+        return;
+    }
+    UINT bytesize = ir->getTypeSize(m_tm);
+    ASSERTN(bytesize % GENERAL_REGISTER_SIZE == 0, ("Target Dependent Code"));
+
+    //Operand0
+    IOC tmp;
+    convert(BIN_opnd0(ir), ors, &tmp);
+    SR * opnd0 = tmp.get_reg(0);
+    ASSERT0(opnd0 != nullptr && opnd0->is_reg() &&
+            opnd0->getByteSize() == bytesize);
+    ASSERT0(opnd0->getVec());
+
+    //Operand1
+    tmp.clean();
+    convert(BIN_opnd1(ir), ors, &tmp);
+    SR * opnd1 = tmp.get_reg(0);
+    ASSERT0(opnd1 != nullptr && opnd1->is_reg() &&
+            opnd1->getByteSize() == bytesize);
+    ASSERT0(opnd1->getVec());
+
+    //Choose an OR-type.
+    ASSERTN(!BIN_opnd0(ir)->is_any() && !BIN_opnd1(ir)->is_any(),
+            ("data type of operand of '%s' can not be ANY", IRNAME(ir)));
+    ASSERTN(BIN_opnd0(ir)->getTypeSize(m_tm) ==
+            BIN_opnd1(ir)->getTypeSize(m_tm), ("must be same bitsize"));
+
+    //Query OR code for general register operation.
+    OR_CODE orty = m_cg->mapIRCode2ORCode(IR_BAND, GENERAL_REGISTER_SIZE,
+        nullptr, opnd0, opnd1, false);
+    ASSERTN(orty != OR_UNDEF, ("Target Dependent Code"));
+    RecycORList tors(this);
+    m_cg->buildMultiBinaryORByRegSize(orty, opnd0, opnd1,
+                                      tors.getList(), cont);
+    tors.copyDbx(ir);
+    ors.move_tail(tors);
+}
+
+
 //Process binary operation.
 void IR2OR::convertBinaryOp(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
 {
     ASSERTN(BIN_opnd0(ir) && BIN_opnd1(ir), ("missing operand"));
-
     //Operand0
     IOC tmp;
     convert(BIN_opnd0(ir), ors, &tmp);
@@ -783,19 +848,45 @@ void IR2OR::convertBinaryOp(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     //Result's type-size might be not same as opnd. e,g: a < b,
     //result type is bool, opnd type is INT.
     OR_CODE orty = m_cg->mapIRCode2ORCode(ir->getCode(), orsize,
-                                          opnd0, opnd1, ir->is_signed());
+        BIN_opnd0(ir)->getType(), opnd0, opnd1, ir->is_signed());
     ASSERTN(orty != OR_UNDEF, ("mapIRCode2ORCode() should be overloaded"));
+    UINT resnum = res->getVec() != nullptr ?
+        res->getVec()->get_elem_count() : 1;
+    UINT opndnum = opnd0->getVec() != nullptr ?
+        opnd0->getVec()->get_elem_count() : 1;
+    opndnum += opnd1->getVec() != nullptr ?
+        opnd1->getVec()->get_elem_count() : 1;
 
-    OR * o;
-    if (HAS_PREDICATE_REGISTER) {
-        ASSERTN(tmGetResultNum(orty) == 1 && tmGetOpndNum(orty) == 3,
-                ("not a binary op"));
-        o = m_cg->buildOR(orty, 1, 3, res, m_cg->getTruePred(), opnd0, opnd1);
+    if (HAS_PREDICATE_REGISTER) { opndnum++; }
+    ASSERTN(tmGetResultNum(orty) == resnum && tmGetOpndNum(orty) == opndnum,
+            ("not valid target supported binary operation"));
+
+    //Prepare result operand.
+    SRList reslst;
+    if (res->getVec() != nullptr) {
+        reslst.appendTailFromSRVec(*res->getVec());
     } else {
-        ASSERTN(tmGetResultNum(orty) == 1 && tmGetOpndNum(orty) == 2,
-                ("not a binary op"));
-        o = m_cg->buildOR(orty, 1, 2, res, opnd0, opnd1);
+        reslst.append_tail(res);
     }
+
+    //Prepare source operand.
+    SRList opndlst;
+    if (HAS_PREDICATE_REGISTER) {
+        //Always set the predicate register at the first position in
+        //source operand list.
+        opndlst.append_tail(m_cg->getTruePred());
+    }
+    if (opnd0->getVec() != nullptr) {
+        opndlst.appendTailFromSRVec(*opnd0->getVec());
+    } else {
+        opndlst.append_tail(opnd0);
+    }
+    if (opnd1->getVec() != nullptr) {
+        opndlst.appendTailFromSRVec(*opnd1->getVec());
+    } else {
+        opndlst.append_tail(opnd1);
+    }
+    OR * o = m_cg->buildOR(orty, reslst, opndlst);
     copyDbx(o, ir);
 
     //Set result SR.
@@ -938,16 +1029,20 @@ void IR2OR::convertASR(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     ASSERT0(!BIN_opnd0(ir)->is_vec() && !BIN_opnd1(ir)->is_vec());
     IR * opnd0 = BIN_opnd0(ir);
     IR * opnd1 = BIN_opnd1(ir);
-
     ASSERTN(opnd0->is_signed(), ("shift should be arithmetical"));
-
     cont->clean_bottomup();
     convertGeneralLoad(opnd0, ors, cont);
     SR * sr1 = cont->get_reg(0);
+    ASSERT0(sr1 && sr1->is_reg());
 
     SR * sh_ofst;
     if (opnd1->is_const()) {
         ASSERT0(opnd1->is_int());
+        if (CONST_int_val(opnd1) == 0) {
+            //CASE:Skip x>>0, return the latest register in context as result.
+            ASSERT0(cont->get_reg(0) && cont->get_reg(0)->is_reg());
+            return;
+        }
         sh_ofst = m_cg->genIntImm(CONST_int_val(opnd1), false);
     } else {
         cont->clean_bottomup();
@@ -978,7 +1073,8 @@ void IR2OR::convertLSR(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     SR * sh_ofst;
     if (opnd1->is_const() && opnd1->is_int()) {
         if (CONST_int_val(opnd1) == 0) {
-            //Redundant operation, do nothing.
+            //CASE:Skip x>>0, return the latest register in context as result.
+            ASSERT0(sr1->is_reg());
             cont->set_reg(RESULT_REGISTER_INDEX, sr1);
             return;
         }
@@ -1004,13 +1100,19 @@ void IR2OR::convertLSL(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     ASSERT0(!BIN_opnd0(ir)->is_vec() && !BIN_opnd1(ir)->is_vec());
     IR * opnd0 = BIN_opnd0(ir);
     IR * opnd1 = BIN_opnd1(ir);
-
     IOC tc;
     convertGeneralLoad(opnd0, ors, &tc);
     SR * sr1 = tc.get_reg(0);
 
     SR * sh_ofst;
     if (opnd1->is_const() && opnd1->is_int()) {
+        ASSERT0(opnd1->is_int());
+        if (CONST_int_val(opnd1) == 0) {
+            //CASE:Skip x<<0, return the latest register in context as result.
+            ASSERT0(sr1->is_reg());
+            cont->set_reg(RESULT_REGISTER_INDEX, sr1);
+            return;
+        }
         sh_ofst = m_cg->genIntImm(CONST_int_val(opnd1), false);
     } else {
         tc.clean();
@@ -1126,7 +1228,7 @@ void IR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
 
     bool is_signed = opnd0->is_signed() || opnd0->is_signed() ? true : false;
     OR_CODE t = m_cg->mapIRCode2ORCode(ir->getCode(), maxbytesize,
-                                       sr0, sr1, is_signed);
+        opnd0->getType(), sr0, sr1, is_signed);
 
     //Generate compare operations.
     tmp.clean();
@@ -1134,7 +1236,8 @@ void IR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
     if (t == OR_UNDEF) {
         //Query the converse or-type.
         IR_CODE rev_t = IR::invertIRCode(ir->getCode());
-        t = m_cg->mapIRCode2ORCode(rev_t, maxbytesize, sr0, sr1, is_signed);
+        t = m_cg->mapIRCode2ORCode(rev_t, maxbytesize,
+            opnd0->getType(), sr0, sr1, is_signed);
         ASSERTN(t != OR_UNDEF, ("miss comparsion or-type for branch"));
         is_truebr = false;
     }

@@ -77,6 +77,19 @@ SR const* checkSRIMM(SR const* sr)
 
 
 //
+//START SRList
+//
+void SRList::appendTailFromSRVec(SRVec const& srvec)
+{
+    for (VecIdx i = 0; i < (VecIdx)srvec.get_elem_count(); i++) {
+         SR * sr = srvec.get(i);
+         append_tail(sr);
+    }
+}
+//END SRList
+
+
+//
 //START SR
 //
 void SR::copy(SR const* sr)
