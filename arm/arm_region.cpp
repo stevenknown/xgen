@@ -94,9 +94,7 @@ void ARMRegion::simplify(OptCtx & oc)
     }
     if (g_insert_cvt) {
         //Finial refine to insert CVT if necessary.
-        InsertCvt * iv = (InsertCvt*)getPassMgr()->registerPass(
-            PASS_INSERT_CVT);
-        iv->perform(oc);
+        getPassMgr()->registerPass(PASS_INSERT_CVT)->perform(oc);
     }
 }
 
@@ -438,9 +436,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     addReturnIfNeed();
     if (g_insert_cvt) {
         //Finial refine to insert CVT if necessary.
-        InsertCvt * iv = (InsertCvt*)getPassMgr()->registerPass(
-            PASS_INSERT_CVT);
-        iv->perform(oc);
+        getPassMgr()->registerPass(PASS_INSERT_CVT)->perform(oc);
     }
     #ifdef REF_TARGMACH_INFO
     if (g_do_lsra) {
