@@ -1,5 +1,6 @@
 int s61()
 {
+  //j, rc can be promoted.
   int rc;
   char pc[6];
   for (int j = 0; j < 6; j++)

@@ -63,7 +63,7 @@ our $g_cflags = "-O0";
 our $g_simulator = "";
 our $g_as = "";
 our $g_ld = "";
-our $g_ld_flag = "";
+our $g_ldflags = "";
 our $g_is_quit_early = 1; #finish test if error occurred.
 our $g_target; #indicate target machine.
 our $g_is_create_base_result = 0;
@@ -79,7 +79,6 @@ our $g_osname = $^O;
 our $g_xoc_root_path = "";
 our $g_single_testcase = ""; #record the single testcase
 our $g_single_directory = ""; #record the single directory
-our $g_find_testcase = ""; #record the testcase pattern to be find
 our $g_config_file_path = "";
 our $g_is_compare_dump = 0;
 our $g_is_compare_result = 0;
@@ -390,7 +389,7 @@ sub runLinker
 {
     my $output = $_[0];
     my $inputasmname = $_[1];
-    my $cmdline = "$g_ld $inputasmname -o $output $g_ld_flag";
+    my $cmdline = "$g_ld $inputasmname -o $output $g_ldflags";
 
     print("\nCMD>>", $cmdline, "\n");
     my $retval = systemx($cmdline);
@@ -727,18 +726,6 @@ sub parseCmdLine
             $g_is_recur = 1;
         } elsif ($ARGV[$i] eq "NotQuitEarly") {
             $g_is_quit_early = 0;
-        } elsif ($ARGV[$i] eq "FindCase") {
-            $i++;
-            if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
-                usage();
-                abort();
-            }
-            $i++;
-            if (!$ARGV[$i]) {
-                usage();
-                abort();
-            }
-            $g_find_testcase = $ARGV[$i];
         } elsif ($ARGV[$i] eq "Targ") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
@@ -889,7 +876,7 @@ sub parseCmdLine
                 usage();
                 abortex();
             }
-            $g_ld_flag = $ARGV[$i];
+            $g_ldflags = $ARGV[$i];
         } else {
             abort("UNSUPPORT COMMAND LINE:'$ARGV[$i]'");
         }
@@ -907,12 +894,9 @@ sub printEnvVar
     print "\ng_cflags = $g_cflags";
     print "\ng_as = $g_as";
     print "\ng_ld = $g_ld";
-    print "\ng_ld_flag = $g_ld_flag";
+    print "\ng_ldflags = $g_ldflags";
     print "\ng_is_test_gr = $g_is_test_gr";
     print "\ng_xoc_root_path = $g_xoc_root_path";
-    if ($g_find_testcase ne "") {
-        print "\ng_find_testcase = $g_find_testcase";
-    }
     if ($g_single_testcase ne "") {
         print "\ng_single_testcase = $g_single_testcase";
     }
@@ -1146,6 +1130,29 @@ sub generateGRandCompile
         my $exefile = computeExeName($fullpath);
         runLinker($exefile);
     }
+}
+
+#Extract LinkerFLAG from *.ldconf if exist and append it to g_ldflags.
+sub extractAndSetLDflag
+{
+    #Record the configure file.
+    my $configure_file_path = $_[0].".ldconf";
+    if (!-e $configure_file_path) {
+        return;
+    }
+    my $pattern = qr/^#/;
+    # read file content
+    open my $file, '<', $configure_file_path or
+        abortex("FAILED! -- ERROR OPENNING FILE: $!\n");
+    while (defined(my $line = <$file>)) {
+        chomp $line;
+        #Match the pattern with the content in each line of file
+        if ($line =~ /$pattern/) {
+           next;
+        }
+        $g_ldflags = $g_ldflags." ".$line;
+    }
+    close ($file);
 }
 
 #Extract CFLAG from *.conf if exist and append it to g_cflags.

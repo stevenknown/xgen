@@ -222,7 +222,15 @@ public:
     void mergeLabeInfoList(ORBB * from);
 
     //Return true if one of bb's successor has a phi.
-    bool successorHasPhi(CFG<ORBB, OR> * cfg) { DUMMYUSE(cfg); return false; }
+    bool hasPhiInSuccBB(CFG<ORBB, OR> const* cfg) const
+    { DUMMYUSE(cfg); return false; }
+
+    //Return true if current bb has Phi with all same operand.
+    //e.g: phi $1 = ($2, $2, $2), return true.
+    //     phi $1 = (0x3, $2, $2), return false.
+    bool hasPhiWithAllSameOperand(CFG<ORBB, OR> const* cfg) const
+    { DUMMYUSE(cfg); return false; }
+
     void setLiveOut(SR * sr);
     void setLiveIn(SR * sr);
 

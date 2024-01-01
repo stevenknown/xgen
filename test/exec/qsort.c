@@ -43,19 +43,7 @@ void qsort(void* base,int nleft,int nright,int width,int (*fhook_cmp)(void*,void
 void test_qsort1()
 {
     int a[10] = {1,2,3,4,5,6,7,8,9,10};
-    a[0] = 1;
-    a[1] = 2;
-    a[2] = 3;
-    a[3] = 4;
-    a[4] = 5;
-    a[5] = 6;
-    a[6] = 7;
-    a[7] = 8;
-    a[8] = 9;
-    a[9] = 10;
-
     qsort(a, 0, 9, sizeof(int), hook_cmp);
-
     int i;
     for(i = 0; i < 10 ; i++) {
       printf("%d ", a[i]);

@@ -4483,9 +4483,11 @@ void CG::createORCFG(OptCtx & oc)
     //Build CFG.
     START_TIMER(t0, "OR Control Flow Optimizations");
     xoc::CfgOptCtx ctx(oc);
-    m_or_cfg->removeEmptyBB(ctx);
+    RemoveEmptyBBCtx rmctx(ctx);
+    m_or_cfg->removeEmptyBB(rmctx);
     m_or_cfg->build(oc);
-    m_or_cfg->removeEmptyBB(ctx);
+    RemoveEmptyBBCtx rmctx2(ctx);
+    m_or_cfg->removeEmptyBB(rmctx2);
     m_or_cfg->computeExitList();
     if (m_or_cfg->removeUnreachBB(ctx, nullptr)) {
         m_or_cfg->computeExitList();
@@ -4501,9 +4503,10 @@ static void performCFGOptimization(CG * cg, OptCtx & oc)
     bool change;
     ORCFG * cfg = cg->getORCFG();
     xoc::CfgOptCtx ctx(oc);
+    RemoveEmptyBBCtx rmctx(ctx);
     do {
         change = false;
-        if (cfg->removeEmptyBB(ctx)) {
+        if (cfg->removeEmptyBB(rmctx)) {
             cfg->computeExitList();
             change = true;
         }

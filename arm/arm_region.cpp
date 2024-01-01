@@ -74,7 +74,8 @@ void ARMRegion::simplify(OptCtx & oc)
 
         //Before CFG building.
         CfgOptCtx ctx(oc);
-        getCFG()->removeEmptyBB(ctx);
+        RemoveEmptyBBCtx rmctx(ctx);
+        getCFG()->removeEmptyBB(rmctx);
 
         getCFG()->rebuild(oc);
 
@@ -82,7 +83,8 @@ void ARMRegion::simplify(OptCtx & oc)
         //Remove empty bb when cfg rebuilted because
         //rebuilding cfg may generate redundant empty bb.
         //It disturbs the computation of entry and exit.
-        getCFG()->removeEmptyBB(ctx);
+        RemoveEmptyBBCtx rmctx2(ctx);
+        getCFG()->removeEmptyBB(rmctx2);
 
         //Compute exit bb while cfg rebuilt.
         getCFG()->computeExitList();
@@ -139,7 +141,8 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         //rebuilding cfg may generate redundant empty bb.
         //It disturbs the computation of entry and exit.
         CfgOptCtx ctx(oc);
-        getCFG()->removeEmptyBB(ctx);
+        RemoveEmptyBBCtx rmctx(ctx);
+        getCFG()->removeEmptyBB(rmctx);
 
         //Compute exit bb while cfg rebuilt.
         getCFG()->computeExitList();
@@ -164,12 +167,15 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
                                                  PASS_UNDEF);
         }
     }
-
     if (g_infer_type) {
         //Infer type for more precision type.
         getPassMgr()->registerPass(PASS_INFER_TYPE)->perform(oc);
     }
-
+    if (g_insert_cvt) {
+        //Finial refine to insert CVT if necessary.
+        getPassMgr()->registerPass(PASS_INSERT_CVT)->perform(oc);
+    }
+ 
     //Assign PR and NonPR Var and MD sperately to make MD id more
     //grouped together.
     getMDMgr()->assignMD(false, true);
@@ -434,10 +440,6 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     //DO NOT DO OPTIMIZATION ANY MORE AFTER THIS LINE                         //
     ////////////////////////////////////////////////////////////////////////////
     addReturnIfNeed();
-    if (g_insert_cvt) {
-        //Finial refine to insert CVT if necessary.
-        getPassMgr()->registerPass(PASS_INSERT_CVT)->perform(oc);
-    }
     #ifdef REF_TARGMACH_INFO
     if (g_do_lsra) {
         LinearScanRA * lsra = (LinearScanRA*)getPassMgr()->registerPass(

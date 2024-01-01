@@ -22,6 +22,7 @@ sub main
 sub removeFile
 {
     my @f;
+    push(@f, findRecursively($curdir, '.*\.out$'));
     push(@f, findRecursively($curdir, 'LOGLOG$'));
     push(@f, findRecursively($curdir, 'succ$'));
     push(@f, findRecursively($curdir, 'fail$'));

@@ -198,6 +198,8 @@ CHAR * ARMAsmPrinter::printOR(OR * o, StrBuf & buf)
             if (o->result_num() != 0) {
                 buf.strcat(", ");
             }
+            //upper16 is the ARM assembler key-word to get higher 16bit value
+            //of a symbol.
             buf.strcat("#:upper16:%s", SYM_name(SR_var(v)->get_name()));
             return buf.buf;
         }

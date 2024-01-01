@@ -12,7 +12,7 @@ int main(int b)
   case 3:
     b = 13; break;
   }
-  n = 10; 
+  n = 10;
   //Should insert guard BB to control preheader.
   while (z > 20) {
     i = 20; //should be hoisted.

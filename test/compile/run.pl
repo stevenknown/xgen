@@ -39,7 +39,9 @@ sub main
 {
     # mkpath(["log"]);
     # clean();
-    tryCompile($g_is_test_gr);
+    #Set $g_is_test_gr to true to generate GR and compile GR to asm, then
+    #compare the latest output with the base result.
+    tryCompile();
     if ($g_error_count != 0) {
         print "\nThere are $g_error_count error occurred!\n";
         abort(); #always quit immediately.
@@ -125,9 +127,6 @@ sub compileFileList
 
 sub tryCompile
 {
-    #Set $is_test_gr to true to generate GR and compile GR to asm, then compare
-    #the latest output with the base result.
-    my $is_test_gr = $_[0];
     my $curdir = getcwd;
     if ($g_single_directory ne "") {
         $curdir .= "/".$g_single_directory;

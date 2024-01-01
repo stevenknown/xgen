@@ -39,7 +39,7 @@ typedef xcom::TMap<xoc::LabelInfo const*, ORBB*> Lab2ORBB;
 //1. For accelerating perform operation of each vertex, e.g
 //   compute dominator, please try best to add vertex with
 //   topological order.
-class ORCFG : public CFG<ORBB, OR> {
+class ORCFG : public OptimizedCFG<ORBB, OR> {
 protected:
     Vector<ORBB*> m_bb_vec;
     Lab2ORBB m_lab2bb;

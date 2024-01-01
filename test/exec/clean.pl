@@ -39,6 +39,7 @@ sub removeFile
     push(@f, findRecursively($curdir, '.*\.o$'));
     push(@f, findRecursively($curdir, '.*\.gr$'));
     push(@f, findRecursively($curdir, '.*xocc_output\.txt$'));
+    push(@f, findRecursively($curdir, '.*xocc_dump\.txt$'));
 
     #push(@f, `find -maxdepth 1 -name "LOGLOG"`);
     #push(@f, `find -maxdepth 1 -name "succ"`);

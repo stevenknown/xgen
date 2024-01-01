@@ -7,6 +7,7 @@ void foo(int p[10][20])
 
 int main()
 {
+    //CP and DCE are illegal to perform because the alias.
     int ga[10][20];
     int x;
     ga[2][1]=5678;

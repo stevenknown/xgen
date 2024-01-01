@@ -34,7 +34,7 @@ namespace xgen {
 
 //ORCFG
 ORCFG::ORCFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
-    : xoc::CFG<ORBB, OR>(bbl)
+    : xoc::OptimizedCFG<ORBB, OR>(bbl)
 {
     m_cg = cg;
     setBitSetMgr(cg->getBitSetMgr());
@@ -252,7 +252,6 @@ void ORCFG::dump_node(FILE * h, bool detail)
             scale = 2;
             color = "cyan";
         }
-
         fprintf(h,
             "\nnode: {title:\"%d\" vertical_order:%d shape:%s color:%s "
             "fontname:\"%s\" scaling:%d label:\"",
@@ -260,14 +259,13 @@ void ORCFG::dump_node(FILE * h, bool detail)
         fprintf(h, "   BB%d", bb->id());
         fprintf(h, " rpo:%d", bb->rpo());
         fprintf(h, "\n");
-
         if (detail) {
-            for (OR * o = ORBB_first_or(bb); o != nullptr; o = ORBB_next_or(bb)) {
+            for (OR * o = ORBB_first_or(bb);
+                 o != nullptr; o = ORBB_next_or(bb)) {
                 buf.clean();
                 fprintf(h, "%s\n", o->dump(buf, m_cg));
             }
         }
-
         fprintf(h, "\"}");
     }
 }
