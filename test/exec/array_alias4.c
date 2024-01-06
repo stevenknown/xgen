@@ -3,7 +3,9 @@ int printf(char const*,...);
 void foo(int ** q)
 {
     int * p = *q;
-    p[9][1] = 30;
+    int (*bb)[10][20];
+    bb = p;
+    (*bb)[9][1] = 30;
 }
 
 int main()

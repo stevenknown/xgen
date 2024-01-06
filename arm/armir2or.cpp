@@ -210,6 +210,9 @@ void ARMIR2OR::convertRem(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     convert(op1, ors, &tmp);
     SR * opnd1 = tmp.get_reg(0);
     ASSERT0(opnd1 != nullptr && opnd1->is_reg());
+    tmp.clean();
+    opnd0 = saveToNewRegIfAssignedPhyReg(opnd0, op0, ors, &tmp);
+    opnd1 = saveToNewRegIfAssignedPhyReg(opnd1, op1, ors, &tmp);
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
@@ -275,6 +278,9 @@ void ARMIR2OR::convertAddSubFP(IR const* ir, OUT RecycORList & ors,
     SR * opnd1 = tmp.get_reg(0);
     ASSERT0(opnd1 != nullptr && opnd1->is_reg());
     ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
+    tmp.clean();
+    opnd0 = saveToNewRegIfAssignedPhyReg(opnd0, op0, ors, &tmp);
+    opnd1 = saveToNewRegIfAssignedPhyReg(opnd1, op1, ors, &tmp);
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
@@ -331,18 +337,21 @@ void ARMIR2OR::convertDiv(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     convert(op1, ors, &tmp);
     SR * opnd1 = tmp.get_reg(0);
     ASSERT0(opnd1 != nullptr && opnd1->is_reg());
+    tmp.clean();
+    opnd0 = saveToNewRegIfAssignedPhyReg(opnd0, op0, ors, &tmp);
+    opnd1 = saveToNewRegIfAssignedPhyReg(opnd1, op1, ors, &tmp);
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
     m_cg->passArgVariant(&argdescmgr, ors.getList(), 2,
-                         opnd0, nullptr, opnd0->getByteSize(), ::getDbx(op0),
-                         opnd1, nullptr, opnd1->getByteSize(), ::getDbx(op1));
+        opnd0, nullptr, opnd0->getByteSize(), ::getDbx(op0),
+        opnd1, nullptr, opnd1->getByteSize(), ::getDbx(op1));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-adjust operation afterwards.
     m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
-    //Intrinsic Call.
+    //Build intrinsic call.
     UINT retv_sz = ir->getTypeSize(m_tm);
     Var const* builtin = nullptr;
     if (retv_sz <= BYTESIZE_OF_WORD) {
@@ -362,7 +371,6 @@ void ARMIR2OR::convertDiv(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
             builtin = getBuiltinVar(BUILTIN_DIVDF3);
         } else { UNREACHABLE(); }
     } else { UNREACHABLE(); }
-
     RecycORList tors(this);
     getCG()->buildCall(builtin, retv_sz, tors.getList(), cont);
     tors.copyDbx(ir);
@@ -419,6 +427,9 @@ void ARMIR2OR::convertMulofLongLong(IR const* ir, OUT RecycORList & ors,
     ASSERT0(tmp.get_addr() == nullptr);
     SR * opnd1 = tmp.get_reg(0);
     ASSERT0(opnd1 != nullptr && opnd1->is_reg() && opnd1->is_vec());
+    tmp.clean();
+    opnd0 = saveToNewRegIfAssignedPhyReg(opnd0, op0, ors, &tmp);
+    opnd1 = saveToNewRegIfAssignedPhyReg(opnd1, op1, ors, &tmp);
 
     ASSERT0(opnd0->getByteSize() == opnd1->getByteSize());
     //TO BE DETERMINED:Inequal byte size loading should be handled.
@@ -481,6 +492,9 @@ void ARMIR2OR::convertMulofFloat(IR const* ir, OUT RecycORList & ors,
         ASSERT0(opnd1->is_vec());
     }
     #endif
+    tmp.clean();
+    opnd0 = saveToNewRegIfAssignedPhyReg(opnd0, op0, ors, &tmp);
+    opnd1 = saveToNewRegIfAssignedPhyReg(opnd1, op1, ors, &tmp);
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
@@ -1377,6 +1391,9 @@ void ARMIR2OR::convertRelationOpFP(IR const* ir, OUT RecycORList & ors,
     SR * opnd1 = tmp.get_reg(0);
     ASSERT0(opnd1 != nullptr && opnd1->is_reg());
     ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
+    tmp.clean();
+    opnd0 = saveToNewRegIfAssignedPhyReg(opnd0, op0, ors, &tmp);
+    opnd1 = saveToNewRegIfAssignedPhyReg(opnd1, op1, ors, &tmp);
 
     //Prepare argdesc.
     ArgDescMgr argdescmgr;

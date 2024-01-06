@@ -30,6 +30,7 @@ sub removeFile
     push(@f, findRecursively($curdir, '.*\.tmp$'));
     push(@f, findRecursively($curdir, '.*\.log$'));
     push(@f, findRecursively($curdir, '.*\.vcg$'));
+    push(@f, findRecursively($curdir, '.*\.dot$'));
     push(@f, findRecursively($curdir, '.*\.B$'));
     push(@f, findRecursively($curdir, '.*\.i$'));
     push(@f, findRecursively($curdir, '.*\.s$'));

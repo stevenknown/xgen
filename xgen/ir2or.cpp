@@ -376,6 +376,7 @@ void IR2OR::convertGeneralLoad(IR const* ir, OUT RecycORList & ors,
         IOC tmp;
         for (UINT i = 0; i < srvec->get_elem_count(); i++) {
             SR * r = m_cg->genReg();
+            regvlst.append_tail(r);
             tmp.clean();
             m_cg->buildMove(r, srvec->get(i), tors.getList(), &tmp);
             cont->set_reg(i, r);
@@ -1020,6 +1021,56 @@ void IR2OR::processRealParams(IR const* ir, OUT RecycORList & ors,
 
     //Record the size as return-value.
     IOC_param_size(cont) = argdescmgr.getArgSectionSize();
+}
+
+
+SR * IR2OR::saveToNewRegIfAssignedPhyReg(
+    SR * src, IR const* ir, OUT RecycORList & ors, IN IOC * cont)
+{
+    ASSERT0(src && src->is_reg());
+    if (src->is_vec()) {
+        ASSERTN(src->getVecIdx() == 0, ("expect first element"));
+        bool find_phy_reg = false;
+        for (UINT j = 0; j <= src->getVec()->get_elem_count(); j++) {
+            if (src->getPhyReg() != REG_UNDEF) {
+                find_phy_reg = true;
+                break;
+            }
+        }
+        if (!find_phy_reg) { return src; }
+        List<SR*> regvlst;
+        IOC tmp(*cont);
+        SRVec * srcvec = src->getVec();
+        ASSERT0(srcvec);
+        RecycORList tors(this);
+        for (UINT i = 0; i < srcvec->get_elem_count(); i++) {
+            tmp.clean();
+            SR * srcv = srcvec->get(i);
+            SR * newv = getCG()->genReg();
+            regvlst.append_tail(newv);
+            getCG()->buildMove(newv, srcv, tors.getList(), &tmp);
+            if (i == srcvec->get_elem_count() - 1) {
+                //Only copy the last context information to avoid redundant
+                //copies.
+                cont->copy_bottomup(tmp);
+            }
+        }
+        SR * newsrc = m_cg->getSRVecMgr()->genSRVec(regvlst);
+        tors.copyDbx(ir);
+        ors.move_tail(tors);
+        return newsrc;
+    }
+    if (src->getPhyReg() == REG_UNDEF) { return src; }
+    IOC tmp(*cont);
+    SR * newsrc = src;
+    RecycORList tors(this);
+    tmp.clean();
+    newsrc = getCG()->genReg();
+    getCG()->buildMove(newsrc, src, tors.getList(), &tmp);
+    tors.copyDbx(ir);
+    ors.move_tail(tors);
+    cont->copy_bottomup(tmp);
+    return newsrc;
 }
 
 
