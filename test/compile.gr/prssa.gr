@@ -5,7 +5,7 @@ region program ".program" () {
                      var to:*<2>:(align(4)),
                      var from:*<2>:(align(4))) {
         label "_GR__$L6";
-        //empty BB
+        stpr $p = 0;
 
         label "_GR__$L1";
         phi $2:*<2> = ($1:*<2>,"_GR__$L6"),($3:*<2>,"_GR__$L7");

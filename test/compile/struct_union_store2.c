@@ -23,7 +23,7 @@ int foo()
     s.u1.c=2;
     {
         int  a = 0;
-         a = a/0;
+         a = a/0; //optimization may encounter div 0.
          if (a==0) {
              return 0;
         }

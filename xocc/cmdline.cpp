@@ -101,6 +101,7 @@ static bool process_opt(INT argc, CHAR const* argv[], INT & i)
     switch (cmdstr[1]) {
     case '0':
         xoc::g_opt_level = OPT_LEVEL0;
+        xoc::g_infer_type = true;
         //Note the essential options will be set at the end.
         break;
     case '1':
@@ -809,6 +810,9 @@ static void inferOption()
     if (g_exclude_string != nullptr) {
         xoc::g_exclude_region.addString(g_exclude_string);
     }
+
+    //Enable infer-type even if it is disabled by cmdline when CG is enabled.
+    xoc::g_infer_type = true;
 
     //CG option is conform to XOCC's option.
     xgen::g_xgen_dump_opt.is_dump_all = xoc::g_dump_opt.isDumpAll();
