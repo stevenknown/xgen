@@ -329,8 +329,8 @@ void ORCFG::dumpVCG(CHAR const* name, bool detail)
     if (name == nullptr) {
         name = "graph_cfg.vcg";
     }
-    UNLINK(name);
-    FILE * h = fopen(name, "a+");
+    FileObj fo(name, true, false);
+    FILE * h = fo.getFileHandler();
     ASSERTN(h != nullptr, ("%s create failed!!!",name));
 
     //Print comment
@@ -360,7 +360,6 @@ void ORCFG::dumpVCG(CHAR const* name, bool detail)
     dump_edge(h);
     fprintf(h, "\n}\n");
     m_cg->getRegion()->getLogMgr()->pop();
-    fclose(h);
 }
 
 } //namespace xgen

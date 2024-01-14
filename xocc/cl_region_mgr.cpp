@@ -74,14 +74,13 @@ void CLRegionMgr::compileProgramRegion(CHAR const* fn, Region * rg)
     xcom::StrBuf b(64);
     b.strcat(fn);
     b.strcat(".hir.gr");
-    UNLINK(b.buf);
-    FILE * gr = ::fopen(b.buf, "a");
+    FileObj fo(b.buf, true, false);
+    FILE * gr = fo.getFileHandler();
     ASSERT0(gr);
     rg->getLogMgr()->push(gr, "");
     GRDump gd(rg);
     gd.dumpRegion(true);
     rg->getLogMgr()->pop();
-    ::fclose(gr);
 }
 
 
@@ -165,14 +164,13 @@ void CLRegionMgr::dumpProgramRegionGR(CHAR const* srcname)
         xcom::StrBuf b(64);
         b.strcat(srcname);
         b.strcat(".gr");
-        UNLINK(b.buf);
-        FILE * gr = ::fopen(b.buf, "a");
+        FileObj fo(b.buf, true, false);
+        FILE * gr = fo.getFileHandler();
         ASSERT0(gr);
         rg->getLogMgr()->push(gr, b.buf);
         GRDump gd(rg);
         gd.dumpRegion(true);
         rg->getLogMgr()->pop();
-        ::fclose(gr);
     }
 }
 

@@ -364,11 +364,10 @@ void RegFileAffinityGraph::dump()
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     #undef INF_RF_NAME
     #define INF_RF_NAME "zRF_AFFINI_GRAPH.vcg"
-    UNLINK(INF_RF_NAME);
-    FILE * h = fopen(INF_RF_NAME,"a+");
+    FileObj fo(INF_RF_NAME, true, false);
+    FILE * h = fo.getFileHandler();
     ASSERTN(h, ("%s create failed!!!", INF_RF_NAME));
     fprintf(h, "\n/*\n");
-
     StrBuf tmp(64);
     for (VecIdx i = 0; i <= m_id2lt.get_last_idx(); i++) {
         LifeTime * lt = m_id2lt[i];
@@ -379,7 +378,6 @@ void RegFileAffinityGraph::dump()
         tmp.clean();
         fprintf(h, "[%s]", LT_sr(lt)->get_name(tmp, m_cg));
     }
-
     fprintf(h, "\n*/\n");
     fprintf(h, "graph: {"
           "title: \"xcom::Graph\"\n"
@@ -436,9 +434,7 @@ void RegFileAffinityGraph::dump()
             m_is_direction? "" : "arrowstyle:none",
             RDGEI_exp_val(EDGE_info(e)));
     }
-
     fprintf(h, "\n}\n");
-    fclose(h);
 }
 
 
@@ -7117,12 +7113,11 @@ bool LRA::optimal_partition(DataDepGraph & ddg,
         return true;
     }
     CHAR const* name = "zsimpddg.vcg";
-    FILE * h = fopen(name, "a+");
+    FileObj fo(name, true, false);
+    FILE * h = fo.getFileHandler();
     ASSERTN(h, ("%s create failed!!!", name));
     fprintf(h, "\nPU:%s,ORBB:%d,len:%d\n",
             m_rg->getRegionName(), m_bb->id(), ORBB_ornum(m_bb));
-    fclose(h);
-
     ddg.simplifyGraph();
     //ddg.dump_graph(DDG_DUMP_OP_INFO, -1, name);
     InstructionPartition<xcom::RMat, xcom::Rational> ip(m_cg, m_bb, &ddg,

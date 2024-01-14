@@ -12,6 +12,6 @@ region program program() {
     	st g = $8:f32;
         label L2;
     	stpr $7:f64 = xor $7:bool, $3:f32;
-        return neg eq ld g, 0;
+        return lnot eq ld g, 0;
     };
 }

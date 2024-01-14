@@ -1583,13 +1583,10 @@ void DataDepGraph::dump(INT flag, INT rootoridx, CHAR const* name) const
     if (name == nullptr) {
         name = INF_DDG_NAME;
     }
-    if (HAVE_FLAG(flag, DDG_DELETE)) {
-        UNLINK(name);
-    }
-    FILE * h = fopen(name, "a+");
+    FileObj fo(name, HAVE_FLAG(flag, DDG_DELETE), false);
+    FILE * h = fo.getFileHandler();
     ASSERTN(h, ("%s create failed!!!",name));
     fprintf(h, "\n/*\n");
-
     StrBuf misc(64);
     if (HAVE_FLAG(flag, DDG_DUMP_OP_INFO)) {
         //Print issure interval.
@@ -1606,7 +1603,6 @@ void DataDepGraph::dump(INT flag, INT rootoridx, CHAR const* name) const
                     m_lstart.get(o->id()));
         }
     }
-
     if (HAVE_FLAG(flag, DDG_DUMP_EDGE_INFO)) {
         //Print edge info
         fprintf(h, "\n\nEDGE INFO:\n");
@@ -1765,9 +1761,7 @@ void DataDepGraph::dump(INT flag, INT rootoridx, CHAR const* name) const
         fprintf(h, "\nedge: { sourcename:\"%d\" targetname:\"%d\"}",
                 VERTEX_id(EDGE_from(e)), VERTEX_id(EDGE_to(e)));
     }
-
     fprintf(h, "\n}\n");
-    fclose(h);
 }
 
 

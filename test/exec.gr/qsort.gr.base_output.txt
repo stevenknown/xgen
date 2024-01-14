@@ -9,4 +9,3 @@ color, 3
 After qsort 2
 
 Main returned
-0

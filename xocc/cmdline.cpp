@@ -354,6 +354,8 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "enable refine-duchain optimization", },
     { "lsra", &xoc::g_do_lsra,
       "enable linear-scan-register-allocation", },
+    { "opt_float", &xoc::g_is_opt_float,
+      "enable float optimization", },
     #ifdef REF_TARGMACH_INFO
     { "migen", &mach::g_do_migen,
       "enable machine-instruction generation", },
@@ -857,7 +859,7 @@ bool processCmdLine(INT argc, CHAR const* argv[])
     //g_do_call_graph = true;
     //g_do_ipa = true;
     xoc::g_is_support_dynamic_type = true;
-    xoc::g_is_opt_float = true;
+    xoc::g_is_opt_float = false;
     for (INT i = 1; i < argc;) {
         if (argv[i][0] == '-') {
             bool * boption = nullptr;

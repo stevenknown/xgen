@@ -81,16 +81,16 @@ protected:
 
     bool compileCFile(CHAR const* fn);
     bool compileGRFile(CHAR const* fn);
-    FILE * createAsmFileHandler(CHAR const* fn);
+    void createAsmFileHandler(OUT FileObj & asmfo, CHAR const* fn);
 
     void destructPRSSAForAllRegion(RegionMgr * rm);
 
     CLRegionMgr * initRegionMgr();
     void initCompile(CHAR const* fn, OUT CLRegionMgr ** rm,
-                     OUT FILE ** asmh, OUT CGMgr ** cgmgr,
+                     OUT FileObj & asmfo, OUT CGMgr ** cgmgr,
                      OUT TargInfo ** ti);
 
-    void finiCompile(CLRegionMgr * rm, FILE * asmh, CGMgr * cgmgr,
+    void finiCompile(CLRegionMgr * rm, FileObj & asmfo, CGMgr * cgmgr,
                      TargInfo * ti);
 
     UINT runFrontEnd(RegionMgr * rm, CParser & parser);

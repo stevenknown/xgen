@@ -411,8 +411,8 @@ void GInterfGraph::dump(CHAR const* name) const
     if (name == nullptr) {
         name = "zgif_graph.vcg";
     }
-    UNLINK(name);
-    FILE * h = fopen(name, "a+");
+    FileObj fo(name, true, false);
+    FILE * h = fo.getFileHandler();
     ASSERTN(h, ("%s create failed!!!",name));
     fprintf(h, "graph: {"
               "title: \"Graph\"\n"
@@ -471,7 +471,6 @@ void GInterfGraph::dump(CHAR const* name) const
             m_is_direction ? "" : "arrowstyle:none" );
     }
     fprintf(h, "\n}\n");
-    fclose(h);
 }
 
 
