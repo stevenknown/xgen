@@ -718,9 +718,9 @@ void ARMCG::buildStoreFor8Byte(SR const* store_val, SR * base, SR * sr_ofst,
 //    r1 = 0x2,
 //    r2 = 0x2,
 //    r0 = eq, r1, r2 ;then r0 is 1.
-OR_CODE ARMCG::mapIRCode2ORCode(IR_CODE ir_code, UINT ir_opnd_size,
-                                xoc::Type const* ir_type,
-                                IN SR * opnd0, IN SR * opnd1, bool is_signed)
+OR_CODE ARMCG::mapIRCode2ORCode(
+    IR_CODE ir_code, UINT ir_opnd_size, xoc::Type const* ir_type,
+    IN SR * opnd0, IN SR * opnd1, bool is_signed)
 {
     DUMMYUSE(opnd0);
     OR_CODE orty = OR_UNDEF;

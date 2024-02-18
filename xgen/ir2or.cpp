@@ -456,7 +456,6 @@ void IR2OR::convertILoad(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
 {
     ASSERT0(ir != nullptr && ir->is_ild());
     IOC tc;
-
     //Load mem_address into a register
     ASSERT0(ILD_base(ir)->is_ptr() || ILD_base(ir)->is_any());
     convertGeneralLoad(ILD_base(ir), ors, &tc);

@@ -54,6 +54,11 @@ bool CLRegionMgr::compileFuncRegion(xoc::Region * func, xoc::OptCtx * oc)
         return false;
     }
     if (xgen::g_do_cg) {
+        if (xgen::g_is_generate_code_for_inner_region) {
+            if (!func->processInnerRegion(oc)) {
+                return false;
+            }
+        }
         m_cgmgr->generate(func);
         if (g_dump_opt.isDumpMemUsage()) {
             func->dumpMemUsage();

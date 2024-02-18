@@ -3,10 +3,8 @@ int sum = 0;
 void foo()
 {
     for (int i = 0; i < 10; i += 2) {
-        sum += arr[i];
-        //Dependence between store of 'arr' and load of 'arr' prevents
-        //vectorization.
-        //Report the actions.
-        arr[i+1] += sum;
+        sum = sum + arr[i];
+        //reduce dep, can not vectorized.
+        arr[i+1] = arr[i+1] + sum;
     }
 } 

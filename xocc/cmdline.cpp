@@ -26,6 +26,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @*/
+#include "../opt/cominc.h"
 #include "xoccinc.h"
 #include "../xgen/xgeninc.h"
 #include "errno.h"
@@ -33,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../reader/grreader.h"
 #include "../opt/comopt.h"
 #include "../mach/machinc.h"
+#include "../elf/elfinc.h"
 
 namespace xocc {
 
@@ -59,6 +61,30 @@ static bool is_gr_source_file(CHAR const* fn)
     CHAR * buf = (CHAR*)ALLOCA(len);
     xcom::upper(xcom::getFileSuffix(fn, buf, len));
     if (::strcmp(buf, "GR") == 0 || ::strcmp(buf, "I") == 0) {
+        return true;
+    }
+    return false;
+}
+
+
+static bool is_obj_file(CHAR const* fn)
+{
+    UINT len = (UINT)strlen(fn) + 1;
+    CHAR * buf = (CHAR*)ALLOCA(len);
+    upper(xcom::getFileSuffix(fn, buf, len));
+    if (strcmp(buf, "O") == 0) {
+        return true;
+    }
+    return false;
+}
+
+
+static bool is_static_lib_file(CHAR const* fn)
+{
+    UINT len = (UINT)strlen(fn) + 1;
+    CHAR * buf = (CHAR*)ALLOCA(len);
+    upper(xcom::getFileSuffix(fn, buf, len));
+    if (strcmp(buf, "A") == 0) {
         return true;
     }
     return false;
@@ -158,7 +184,6 @@ static bool process_opt(INT argc, CHAR const* argv[], INT & i)
         xoc::g_do_prssa = true;
         xoc::g_do_mdssa = true;
     }
-
     i++;
     return true;
 }
@@ -193,18 +218,18 @@ protected:
         bool * option;
         CHAR const* intro;
     };
-
     static Desc const option_desc[];
     static Desc const dump_option_desc[];
-
+    static Desc const elf_option_desc[];
 public:
     static CHAR const* dump_option_prefix;
     static CHAR const* disable_option_prefix;
     static CHAR const* only_option_prefix;
-
+    static CHAR const* elf_option_prefix;
 public:
     static UINT getNumOfOption();
     static UINT getNumOfDumpOption();
+    static UINT getNumOfELFOption();
 
     static bool is_option(CHAR const* str, bool ** option)
     {
@@ -224,6 +249,18 @@ public:
         for (UINT i = 0; i < BoolOption::getNumOfDumpOption(); i++) {
             if (::strcmp(BoolOption::dump_option_desc[i].name, str) == 0) {
                 *option = BoolOption::dump_option_desc[i].option;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static bool is_elf_option(CHAR const* str, bool ** option)
+    {
+        ASSERT0(option);
+        for (UINT i = 0; i < BoolOption::getNumOfELFOption(); i++) {
+            if (::strcmp(BoolOption::elf_option_desc[i].name, str) == 0) {
+                *option = BoolOption::elf_option_desc[i].option;
                 return true;
             }
         }
@@ -266,7 +303,7 @@ public:
         UINT alignbuflen = max_name_len + 2;
 
         CHAR * alignbuf = (CHAR*)ALLOCA(alignbuflen);
-        for (UINT i = 0; i < BoolOption::getNumOfOption(); i++) {
+        for (UINT i = 0; i < BoolOption::getNumOfDumpOption(); i++) {
             UINT j = 0;
             for (; j < ::strlen(BoolOption::dump_option_desc[i].name); j++) {
                 alignbuf[j] = BoolOption::dump_option_desc[i].name[j];
@@ -285,6 +322,7 @@ public:
 CHAR const* BoolOption::dump_option_prefix = "dump-";
 CHAR const* BoolOption::disable_option_prefix = "no-";
 CHAR const* BoolOption::only_option_prefix = "only-";
+CHAR const* BoolOption::elf_option_prefix = "elf-";
 
 BoolOption::Desc const BoolOption::option_desc[] = {
     { "time", &xoc::g_show_time,
@@ -336,7 +374,7 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "redirect internal compiler output information to given dump file", },
     { "ipa", &xoc::g_do_ipa,
       "enable interprocedual analysis", },
-    { "cfgopt", &g_cfg_opt,
+    { "cfgopt", &xocc::g_cfg_opt,
       "enable control-flow-graph optimization", },
     { "schedule_delay_slot", &xgen::g_enable_schedule_delay_slot,
       "enable scheduling branch-delay-slot", },
@@ -436,6 +474,13 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump all compiling options", },
 };
 
+BoolOption::Desc const BoolOption::elf_option_desc[] = {
+    { "device", &elf::g_elf_opt.is_device_elf,
+      "generate device elf", },
+    { "fatbin", &elf::g_elf_opt.is_fatbin_elf,
+      "generate fatbin elf", },
+};
+
 
 UINT BoolOption::getNumOfOption()
 {
@@ -448,6 +493,13 @@ UINT BoolOption::getNumOfDumpOption()
 {
     return sizeof(BoolOption::dump_option_desc) /
            sizeof(BoolOption::dump_option_desc[0]);
+}
+
+
+UINT BoolOption::getNumOfELFOption()
+{
+    return sizeof(BoolOption::elf_option_desc) /
+           sizeof(BoolOption::elf_option_desc[0]);
 }
 
 class IntOption {
@@ -595,6 +647,21 @@ static bool dispatchByPrefixDump(CHAR const* cmdstr, INT argc,
 }
 
 
+static bool dispatchByPrefixELF(CHAR const* cmdstr, INT argc,
+                                CHAR const* argv[],
+                                INT & i)
+{
+    bool * boption = nullptr;
+    if (BoolOption::is_elf_option(cmdstr, &boption)) {
+        ASSERT0(boption);
+        *boption = true;
+        i++;
+        return true;
+    }
+    return false;
+}
+
+
 //Note ONLY will not disable analysis passes, such as AA, DU.
 static bool dispatchByPrefixOnly(CHAR const* cmdstr, INT argc,
                                  CHAR const* argv[],
@@ -724,6 +791,11 @@ static bool dispatchByPrefix(CHAR const* cmdstr, INT argc, CHAR const* argv[],
     if (xcom::xstrcmp(cmdstr, prefix, (INT)::strlen(prefix))) {
         return dispatchByPrefixOnly(cmdstr + ::strlen(prefix), argc, argv, i,
                                     boption);
+    }
+
+    prefix = BoolOption::elf_option_prefix;
+    if (xcom::xstrcmp(cmdstr, prefix, (INT)strlen(prefix))) {
+        return dispatchByPrefixELF(cmdstr + strlen(prefix), argc, argv, i);
     }
 
     //No prefix.
@@ -884,6 +956,18 @@ bool processCmdLine(INT argc, CHAR const* argv[])
             g_grfile_list.append_tail(argv[i]);
             i++;
             continue;
+        }
+
+        if (is_obj_file(argv[i])) {
+            g_objfile_list.append_tail(argv[i]);
+            i++;
+            continue;
+        }
+
+        if (is_static_lib_file(argv[i])) {
+           g_static_lib_list.append_tail(argv[i]);
+           i++;
+           continue;
         }
 
         report_unknown_option(i, argv);

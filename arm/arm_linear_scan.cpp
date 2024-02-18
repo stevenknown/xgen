@@ -31,6 +31,40 @@ author: Su Zhenyu
 
 #include "../xgen/xgeninc.h"
 
+void ARMRegSetImpl::initDebugRegSet()
+{
+    //Target Dependent Code.
+    #define SCALAR_CALLEE_SAVED_REG_START REG_R4
+    #define SCALAR_CALLEE_SAVED_REG_END REG_R5
+    m_target_callee_scalar = nullptr;
+    m_target_caller_scalar = nullptr;
+    m_target_param_scalar = nullptr;
+    m_target_return_value_scalar = nullptr;
+    m_target_callee_vector = nullptr;
+    m_target_caller_vector = nullptr;
+    m_target_param_vector = nullptr;
+    m_target_return_value_vector = nullptr;
+    m_target_allocable_scalar = nullptr;
+    m_target_allocable_vector = nullptr;
+
+    //User can customize the number of register by the option '-debug_lsra'
+    //and '-debug_reg_num', the first one the switch for debug mode, and the
+    //later option is the number for the physical register.
+    m_target_caller_scalar = new RegSet();
+    m_target_allocable_scalar = new RegSet();
+    UINT caller_start = SCALAR_CALLEE_SAVED_REG_START;
+    UINT caller_end = (caller_start + g_debug_reg_num - 1);
+    caller_end = MIN(caller_end, SCALAR_CALLEE_SAVED_REG_END);
+    for (UINT i = caller_start; i <= caller_end; i++) {
+        const_cast<RegSet*>(m_target_caller_scalar)->bunion(i);
+    }
+
+    //Set the allocable registers for scalar.
+    const_cast<RegSet*>(m_target_allocable_scalar)->bunion(
+        *m_target_caller_scalar);
+}
+
+
 void ARMRegSetImpl::initRegSet()
 {
     //Do more initializations for ARM targinfo.

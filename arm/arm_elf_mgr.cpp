@@ -34,9 +34,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ARMELFMgr::~ARMELFMgr()
 {
     m_rg = nullptr;
-    m_func_size.clean();
-    m_func_code.clean();
-    m_func_relocation.clean();
 }
 
 
@@ -47,9 +44,9 @@ void ARMELFMgr::allocTargInfo()
 }
 
 
-UINT ARMELFMgr::getRelocAddend(UINT index)
+UINT ARMELFMgr::getRelocAddend(elf::Word reloc_type)
 {
-    switch (m_func_relocation[index].reloc_type) {
+    switch (reloc_type) {
     case R_ARM_THM_CALL:
     case R_ARM_CALL: return elf::RELOC_ADDEND_GPDISP;
     default: ASSERTN(0, ("TODO"));

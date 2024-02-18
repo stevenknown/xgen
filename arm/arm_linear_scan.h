@@ -35,6 +35,7 @@ class ARMRegSetImpl : public RegSetImpl {
     COPY_CONSTRUCTOR(ARMRegSetImpl);
 protected:
     void initRegSet();
+    virtual void initDebugRegSet();
 public:
     ARMRegSetImpl(LinearScanRA & ra): RegSetImpl(ra) { initRegSet(); }
 };

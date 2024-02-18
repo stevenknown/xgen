@@ -29,16 +29,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 author: Su Zhenyu
 @*/
 #include "../xgen/xgeninc.h"
+
 UINT ARMTargInfo::getNumOfAllocableIntegerRegister() const
 {
-    RegSet const* rs = tmGetRegSetAllocable();
+    RegSet const* rs = xgen::tmGetRegSetAllocable();
     return rs == nullptr ? 0 : rs->get_elem_count();
 }
 
 
 UINT ARMTargInfo::getNumOfReturnValueRegister() const
 {
-    RegSet const* rs = tmGetRegSetOfReturnValue();
+    RegSet const* rs = xgen::tmGetRegSetOfReturnValue();
     return rs == nullptr ? 0 : rs->get_elem_count();
 }
 
@@ -48,4 +49,4 @@ UINT ARMTargInfo::getNumOfAllocableFloatRegister() const
     ASSERTN(0, ("TODO"));
     return 16;
 }
- 
+

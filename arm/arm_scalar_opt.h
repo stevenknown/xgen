@@ -35,7 +35,6 @@ class ARMScalarOpt : public ScalarOpt {
 public:
     ARMScalarOpt(Region * rg) : ScalarOpt(rg) {}
     virtual ~ARMScalarOpt() {}
-    virtual bool perform(OptCtx &);
 };
 
 #endif

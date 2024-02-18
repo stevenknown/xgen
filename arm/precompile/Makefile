@@ -13,13 +13,13 @@ $(info "CC=$(CC),TARG=$(TARG),CFLAGS=$(CFLAGS),WIN=$(WIN),WSL=$(WSL)")
 $(info "THREAD_NUM=$(THREAD_NUM)")
 
 ifeq ($(CC),)
-	$(error "MISS CC")
+  $(error "MISS CC")
 endif
 ifeq ($(TARG),)
-	$(error "MISS TARG")
+  $(error "MISS TARG")
 endif
-ifeq ($(CFLAGS),) 
-	$(error "MISS CFLAGS") 
+ifeq ($(CFLAGS),)
+  $(error "MISS CFLAGS")
 endif
 
 #Display internal variables.

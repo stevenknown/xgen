@@ -172,12 +172,14 @@ void OR_DF_MGR::computeGlobalLiveness()
                 change = true;
             }
 
-            //Compute live-out set of bb by unifing of live-in set of all succs of bb.
+            //Compute live-out set of bb by unifing of live-in set of all
+            //succs of bb.
             //    live_out = ¡È (live_in of each of succ)
             cfg->get_succs(succs, bb);
             xcom::BitSet * out = &ORBB_liveout(bb);
             out->clean();
-            for (ORBB * p = succs.get_head(); p != nullptr; p = succs.get_next()) {
+            for (ORBB * p = succs.get_head();
+                 p != nullptr; p = succs.get_next()) {
                 out->bunion(ORBB_livein(p));
             }
         }

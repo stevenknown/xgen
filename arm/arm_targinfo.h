@@ -33,6 +33,15 @@ author: Su Zhenyu
 
 class ARMTargInfo : public TargInfo {
 public:
+    // Return the alignment parameter in memory.
+    virtual UINT getAlignMem() const { return STACK_ALIGNMENT; }
+
+    //Return the alignment parameter for matrix.
+    virtual UINT getMemAlginOfMatrix() const
+    {
+        ASSERTN(0, ("ARM does not support matrix operations"));
+        return 0;
+    }
     virtual UINT getNumOfReturnValueRegister() const;
     virtual UINT getNumOfAllocableIntegerRegister() const;
     virtual UINT getNumOfAllocableFloatRegister() const;

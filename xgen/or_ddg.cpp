@@ -779,7 +779,8 @@ void DataDepGraph::getORListWhichAccessSameMem(OUT ORList & mem_ors,
     for (OR * succ = tmplst.get_head();
          succ != nullptr; succ = tmplst.get_next()) {
         OR * tmp = nullptr;
-        for (tmp = mem_ors.get_head(); tmp != nullptr; tmp = mem_ors.get_next()) {
+        for (tmp = mem_ors.get_head();
+             tmp != nullptr; tmp = mem_ors.get_next()) {
             if (ORBB_orlist(m_bb)->is_or_precedes(succ, tmp)) {
                 break;
             }

@@ -45,6 +45,8 @@ bool g_is_dump_option = false;
 
 xcom::List<CHAR const*> g_cfile_list;
 xcom::List<CHAR const*> g_grfile_list;
+xcom::List<CHAR const*> g_objfile_list;
+xcom::List<CHAR const*> g_static_lib_list;
 
 //
 //START DeclAndVarMap

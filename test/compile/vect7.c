@@ -8,6 +8,7 @@ void foo()
     int x,y;
     int *p;
     p = &x;
+    //Can be vectorized.
     for (i=1;i<80;i++,j++) {
         x = b[i];
         y = c[i];

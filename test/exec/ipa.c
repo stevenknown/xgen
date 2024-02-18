@@ -7,12 +7,12 @@ int run2(int c, int d)
 
 double get1(int a)
 {
-    return (double)(a + 345);
+    return a + 345;
 }
 
 float get2(int a)
 {
-    return (float)(a + 13);
+    return a * 13;
 }
 
 int run1()
@@ -31,6 +31,6 @@ int run1()
 int main()
 {
     g = 20;
-    run1();
-    return 0;
+	run1();
+    return !(g == -441572903);
 }

@@ -57,6 +57,7 @@ public:
     VarMgr const* getVarMgr() const { return m_vm; }
     CG const* getCG() const { return m_cg; }
 
+    //Print OR to string buffer.
     virtual CHAR * printOR(OR * o, xcom::StrBuf & buf)
     {
         ASSERTN(0, ("Target Dependent Code"));
@@ -64,10 +65,14 @@ public:
         DUMMYUSE(buf);
         return nullptr;
     }
-    virtual void printData() { ASSERTN(0, ("Target Dependent Code")); }
+
+    //Print data to assembly file.
+    void printData() { printData(getFile()); }
+    virtual void printData(FILE *) { ASSERTN(0, ("Target Dependent Code")); }
 
     //Print instructions to assembly file.
-    virtual void printCode();
+    void printCode() { printCode(getFile()); }
+    virtual void printCode(FILE * asmh);
 };
 
 

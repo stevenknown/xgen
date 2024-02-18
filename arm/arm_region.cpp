@@ -175,7 +175,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         //Finial refine to insert CVT if necessary.
         getPassMgr()->registerPass(PASS_INSERT_CVT)->perform(oc);
     }
- 
+
     //Assign PR and NonPR Var and MD sperately to make MD id more
     //grouped together.
     getMDMgr()->assignMD(false, true);
@@ -436,9 +436,9 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     }
     ASSERT0(verifyMDDUChain(this, oc));
 
-    ////////////////////////////////////////////////////////////////////////////
-    //DO NOT DO OPTIMIZATION ANY MORE AFTER THIS LINE                         //
-    ////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+    //DO NOT DO OPTIMIZATION ANY MORE AFTER THIS LINE                        //
+    ///////////////////////////////////////////////////////////////////////////
     addReturnIfNeed();
     #ifdef REF_TARGMACH_INFO
     if (g_do_lsra) {

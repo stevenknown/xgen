@@ -43,9 +43,7 @@ protected:
     virtual Region * getRegion() { return m_rg; }
 
     //Get relocation addend value of relocation type for ARM arch.
-    //Where param "index" is the index number of the current relocation entry
-    //in m_func_relocation.
-    virtual UINT getRelocAddend(UINT index);
+    virtual UINT getRelocAddend(elf::Word reloc_type);
 public:
     //Set region using given region pointer.
     void setRegion(Region * rg) { m_rg = rg; }

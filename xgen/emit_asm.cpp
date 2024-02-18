@@ -47,7 +47,7 @@ AsmPrinter::AsmPrinter(CG const* cg, AsmPrinterMgr * apmgr, FILE * asmh)
 
 
 //Print instructions to assembly file.
-void AsmPrinter::printCode()
+void AsmPrinter::printCode(FILE * asmh)
 {
     ASSERTN(FIRST_SLOT == LAST_SLOT, ("Target Dependent Code"));
     CHAR const* code_indent = "      ";
@@ -55,7 +55,6 @@ void AsmPrinter::printCode()
         const_cast<CG*>(m_cg)->getIssuePackageListVec();
     List<ORBB*> * bblst = const_cast<CG*>(m_cg)->getORBBList();
     StrBuf buf(128);
-    FILE * asmh = getFile();
     for (ORBB * bb = bblst->get_head();
         bb != nullptr; bb = bblst->get_next()) {
         IssuePackageList * ipl = ipcvec->get(bb->id());

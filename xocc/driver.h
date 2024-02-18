@@ -66,6 +66,12 @@ extern UINT const g_formal_parameter_start;
 extern xcom::List<CHAR const*> g_cfile_list; //record list of C source files.
 extern xcom::List<CHAR const*> g_grfile_list; //record list of GR source files.
 
+//Record list of OBJ source files.
+extern xcom::List<CHAR const*> g_objfile_list;
+
+//Record list of static library files.
+extern xcom::List<CHAR const*> g_static_lib_list;
+
 //If one requires to export variables, or types to other
 //module, please put them in fexp.h.
 extern CHAR const* g_output_file_name; //record the ASM file name.

@@ -5,10 +5,11 @@ void foo()
 {
     int i = 1;
     int j = 1;
-    int x,y;
-    for (i=1;i<80;i++,j++) {
-        x = b[i];
-        y = 10;
-        a[i]=x+y;
+    int xxx,yyy;
+    for (i=1;i<80;i++) {
+    //for (i=1;i<80;i++,j++) {
+        xxx = b[i];
+        yyy = 10;
+        a[i]=xxx+yyy;
     }
 }

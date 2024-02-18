@@ -34,15 +34,16 @@ author: Su Zhenyu
 class ARMAsmPrinter : public AsmPrinter {
     COPY_CONSTRUCTOR(ARMAsmPrinter);
 protected:
-    void printBss(Section & sect);
-    void printData(Section & sect);
-    void printCodeSequentially(IssuePackageList * ipl, StrBuf & buf);
+    void printBss(FILE * asmh, Section & sect);
+    void printData(FILE * asmh, Section & sect);
+    void printCodeSequentially(
+        IssuePackageList * ipl, StrBuf & buf, FILE * asmh);
 public:
     ARMAsmPrinter(CG const* cg, AsmPrinterMgr * asmprtmgr, FILE * h) :
         AsmPrinter(cg, asmprtmgr, h) {}
     virtual ~ARMAsmPrinter() {}
     virtual CHAR * printOR(OR * o, StrBuf & buf);
-    virtual void printData();
-    virtual void printCode();
+    virtual void printData(FILE * asmh);
+    virtual void printCode(FILE * asmh);
 };
 #endif

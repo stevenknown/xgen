@@ -2149,9 +2149,14 @@ static bool verifyORCodeDesc()
 
 int main()
 {
-    UNLINK(TARG_MACH_RESOURCE_FILE_NAME);
-    g_output = ::fopen(TARG_MACH_RESOURCE_FILE_NAME, "a+");
-
+    xcom::FO_STATUS st;
+    xcom::FileObj output(TARG_MACH_RESOURCE_FILE_NAME, true, false, &st);
+    if (st != xcom::FO_SUCC) {
+        ASSERTN(0, ("can not open %s", TARG_MACH_RESOURCE_FILE_NAME));
+        return -1;
+    }
+    g_output = output.getFileHandler();
+    ASSERT0(g_output);
     ASSERT0(verifyORCodeDesc());
     prtHeaderFile();
     prtEmptyROBitSet();
@@ -2184,8 +2189,6 @@ int main()
     prtSRDescList();
     prtSRDescGroupList();
     prtORCodeDescTab();
-
-    ::fclose(g_output);
     fini();
     return 0;
 }

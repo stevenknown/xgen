@@ -615,8 +615,8 @@ void ARMIR2OR::invertBoolValue(Dbx * dbx, SR * val, OUT RecycORList & ors)
 {
     ASSERT0(val);
     SR * one = getCG()->genIntImm(1, false);
-    OR_CODE orty = m_cg->mapIRCode2ORCode(IR_XOR, m_tm->getDTypeByteSize(D_B),
-        m_tm->getBool(), val, one, false);
+    OR_CODE orty = m_cg->mapIRCode2ORCode(
+        IR_XOR, m_tm->getDTypeByteSize(D_B), m_tm->getBool(), val, one, false);
     ASSERTN(orty != OR_UNDEF,
             ("mapIRCode2ORCode() can not find proper operation"));
 

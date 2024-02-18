@@ -14,6 +14,7 @@ endif
 
 CFLAGS+=-Wall
 XGEN_DIR=../xgen
+ELF_DIR=../elf
 COM_DIR=../com
 XOC_DIR=..
 CFE_DIR=../cfe
@@ -24,6 +25,7 @@ include $(CFE_DIR)/Makefile.inc
 include $(COM_DIR)/Makefile.inc
 include $(XOC_DIR)/Makefile.xoc.inc
 include $(XGEN_DIR)/Makefile.inc
+include $(ELF_DIR)/Makefile.inc
 include $(XOC_DIR)/Makefile.option
 
 CFLAGS+=\
@@ -50,10 +52,13 @@ ifneq (,$(filter $(CC),g++ gcc))
   CFLAGS+=-Wno-strict-aliasing -finline-limit=10000000
 endif
 
+#Use tmp-objs-name to compose multiple level path.
 TMP_CFE_OBJS=$(foreach n,$(CFE_OBJS),$(CFE_DIR)/$(n))
+TMP_ELF_OBJS=$(foreach n,$(ELF_OBJS),$(ELF_DIR)/$(n))
 
 #Display internal variables.
 $(info "COMBINED CFE OBJS:$(TMP_CFE_OBJS)")
+$(info "COMBINED ELF OBJS:$(TMP_ELF_OBJS)")
 $(info "WIN=$(WIN),WSL=$(WSL)")
 $(info "TARG:$(TARG)")
 $(info "TARG_DIR:$(TARG_DIR)")
@@ -63,10 +68,13 @@ $(info "CFLAGS:$(CFLAGS)")
 $(info "DEBUG:$(DEBUG)")
 $(info "THREAD_NUM:$(THREAD_NUM)")
 
-#Define rules.
-$(XOCC_OUTPUT): xocc_objs tmp_cfe_objs $(XGEN_OUTPUT)
+#Define dependencies and link-rules of xocc.exe.
+$(XOCC_OUTPUT): xocc_objs tmp_cfe_objs tmp_elf_objs $(XGEN_OUTPUT)
 	@echo "START BUILD $(XOCC_OUTPUT)"
-	$(CC) $(XOCC_OBJS) $(TMP_CFE_OBJS) -Xlinker "-(" \
+	$(CC) $(XOCC_OBJS) \
+      $(TMP_CFE_OBJS) \
+      $(TMP_ELF_OBJS) \
+      -Xlinker "-(" \
       $(XGEN_DIR)/$(XGEN_OUTPUT) \
       $(COM_DIR)/$(COM_OUTPUT) \
       $(XOC_DIR)/$(XOC_OUTPUT) \
@@ -81,7 +89,7 @@ $(XOCC_OUTPUT): xocc_objs tmp_cfe_objs $(XGEN_OUTPUT)
 	$(INFER) $(CC) $(CFLAGS) -c $< -o $@
 
 tmp_cfe_objs: $(TMP_CFE_OBJS)
-
+tmp_elf_objs: $(TMP_ELF_OBJS)
 xocc_objs: $(XOCC_OBJS)
 
 $(XGEN_OUTPUT):
