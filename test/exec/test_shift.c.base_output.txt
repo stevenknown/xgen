@@ -640,7 +640,6 @@ i=4,j=124,res[124]=0x0,x[4]=0x8000
 i=4,j=125,res[125]=0x0,x[4]=0x8000
 i=4,j=126,res[126]=0x0,x[4]=0x8000
 i=4,j=127,res[127]=0x0,x[4]=0x8000
-3.0
  --- test_16bit_lsr ()
 i=0,j=0,res[0]=0xffffffff,x[0]=0xffffffff
 i=0,j=1,res[1]=0x7fffffff,x[0]=0xffffffff
@@ -6535,7 +6534,6 @@ i=5,j=124,res[124]=0x0,x[5]=0x80000000
 i=5,j=125,res[125]=0x0,x[5]=0x80000000
 i=5,j=126,res[126]=0x0,x[5]=0x80000000
 i=5,j=127,res[127]=0x0,x[5]=0x80000000
-4.0
  --- test_32bit_asr ()
 i=0,j=0,res[0]=0xffffffff,x[0]=0xffffffff
 i=0,j=1,res[1]=0xffffffff,x[0]=0xffffffff
@@ -7305,7 +7303,6 @@ i=5,j=124,res[124]=0xffffffff,x[5]=0x80000000
 i=5,j=125,res[125]=0xffffffff,x[5]=0x80000000
 i=5,j=126,res[126]=0xffffffff,x[5]=0x80000000
 i=5,j=127,res[127]=0xffffffff,x[5]=0x80000000
-5.0
  --- test_32bit_lsl ()
 i=0,j=0,res[0]=0xffffffff,x[0]=0xffffffff
 i=0,j=1,res[1]=0xfffffffe,x[0]=0xffffffff

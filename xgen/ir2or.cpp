@@ -140,11 +140,6 @@ void IR2OR::convertLoadConstFP(IR const* ir, OUT RecycORList & ors,
     tors.copyDbx(ir);
     ors.move_tail(tors);
     cont->set_reg(0, load_val);
-
-    //TBD:Do we need store high-part to context.
-    //if (load_val2 != nullptr) {
-    //    cont->set_reg(1, load_val2);
-    //}
 }
 
 
@@ -211,9 +206,6 @@ void IR2OR::convertLoadConstInt(HOST_INT constval, UINT constbytesize,
     tors.copyDbx(dbx);
     ors.move_tail(tors);
     cont->set_reg(0, load_val);
-
-    //TBD:Do we need store the high-part to context.
-    //if (load_val2 != nullptr) { cont->set_reg(1, load_val2); }
 }
 
 
@@ -231,9 +223,6 @@ void IR2OR::convertLoadConstBool(IR const* ir, OUT RecycORList & ors,
     tors.copyDbx(ir);
     ors.move_tail(tors);
     cont->set_reg(0, load_val);
-    //if (load_val2 != nullptr) {
-    //    cont->set_reg(1, load_val2);
-    //}
 }
 
 
@@ -271,9 +260,6 @@ void IR2OR::convertLoadConstStr(IR const* ir, OUT RecycORList & ors,
     tors.copyDbx(ir);
     ors.move_tail(tors);
     cont->set_reg(0, load_val);
-    //if (load_val2 != nullptr) {
-    //    cont->set_reg(1, load_val2);
-    //}
 }
 
 

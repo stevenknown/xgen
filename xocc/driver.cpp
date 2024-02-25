@@ -87,7 +87,7 @@ void DeclAndVarMap::scanDeclList(Scope const* s, Decl * decllist)
         //General variable declaration decl.
         if (mapDecl2Var(decl) == nullptr &&
             !(decl->is_formal_param() &&
-              decl->get_decl_sym() == nullptr)) {
+              decl->getDeclSym() == nullptr)) {
             //No need to generate Var for parameter that does not
             //have a name.
             //e.g: parameter of foo(CHAR*)
@@ -125,7 +125,7 @@ xoc::Type const* DeclAndVarMap::makeType(xfe::Decl const* decl)
     DATA_TYPE data_type = CTree2IR::get_decl_dtype(decl, &data_size, m_tm);
     if (IS_PTR(data_type)) {
         ASSERT0(decl->regardAsPointer());
-        UINT basesize = decl->get_pointer_base_size();
+        UINT basesize = decl->getPointerBaseSize();
 
         //Note: If pointer_base_size is 0, then the pointer can not
         //do any operation, such as pointer arithmetic.
@@ -183,7 +183,7 @@ xoc::Var * DeclAndVarMap::addDecl(Decl const* decl)
     if (decl->is_array()) {
         SET_FLAG(flag, VAR_IS_ARRAY);
     }
-    CHAR const* var_name = decl->get_decl_sym()->getStr();
+    CHAR const* var_name = decl->getDeclSym()->getStr();
     UINT var_align = (UINT)xcom::ceil_align(
         MAX(DECL_align(decl), STACK_ALIGNMENT), STACK_ALIGNMENT);
     Var * v = m_vm->registerVar(var_name, type, var_align, flag);

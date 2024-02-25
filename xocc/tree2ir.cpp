@@ -38,7 +38,7 @@ static void reviseResultTypeViaFieldType(IR * ir, xoc::DATA_TYPE dt, UINT sz,
                                          xoc::TypeMgr * tm)
 {
     if (dt == D_PTR) {
-        ir->setPointerType(field_decl->get_pointer_base_size(), tm);
+        ir->setPointerType(field_decl->getPointerBaseSize(), tm);
     } else if (dt == D_MC) {
         //DMEM is accessing a memory block. It may be lead a memopy-copy or
         //vector-operation.
@@ -72,7 +72,7 @@ static xoc::Type const* determineIRCode(xfe::Tree const* t, MOD TypeMgr * tm)
 {
     if (t->getResultType()->regardAsPointer()) {
         return tm->getPointerType(t->getResultType()->
-            get_pointer_base_size());
+            getPointerBaseSize());
     }
 
     UINT s;
@@ -125,7 +125,7 @@ static xoc::Type const* computeArrayElementType(xfe::Tree const* t,
     xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(), &size, tm);
     if (dt == D_PTR) {
         return tm->getPointerType(t->getResultType()->
-            get_pointer_base_size());
+            getPointerBaseSize());
     }
 
     if (dt == D_MC) {
@@ -154,7 +154,7 @@ static IR * computeArrayAddr(xfe::Tree * t, IR * ir, Region * rg,
         //Revise pointer-base size according to
         //the pointed array dimension.
         TY_ptr_base_size(ir->getType()) = t->getResultType()->
-            get_array_elem_bytesize();
+            getArrayElemByteSize();
     }
 
     if (SIMP_stmtlist(&tc) != nullptr) {
@@ -170,7 +170,7 @@ static xoc::Type const* convertCallReturnType(xfe::Tree const* t,
     ASSERT0(t->getCode() == TR_CALL);
     if (t->getResultType()->regardAsPointer()) {
         return tm->getPointerType(t->getResultType()->
-                                  get_pointer_base_size());
+                                  getPointerBaseSize());
     }
     if (t->getResultType()->is_any()) {
         //The function does NOT have return value.
@@ -401,7 +401,7 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont)
     xoc::Type const* rtype = nullptr;
     if (t->getResultType()->regardAsPointer()) {
         rtype = m_tm->getPointerType(t->getResultType()->
-            get_pointer_base_size());
+            getPointerBaseSize());
     } else {
         UINT s;
         xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(),
@@ -478,7 +478,7 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont)
     }
     ASSERT0(ir->is_st() || ir->is_starray() || ir->is_ist());
     if (t->getResultType()->regardAsPointer()) {
-        ir->setPointerType(t->getResultType()->get_pointer_base_size(), m_tm);
+        ir->setPointerType(t->getResultType()->getPointerBaseSize(), m_tm);
     }
 
     CONT_is_record_epilog(cont) = false;
@@ -621,7 +621,7 @@ IR * CTree2IR::convertPointerDeref(xfe::Tree * t, UINT lineno,
     xoc::Type const* type = nullptr;
     if (t->getResultType()->regardAsPointer()) {
         type = m_tm->getPointerType(t->getResultType()->
-            get_pointer_base_size());
+            getPointerBaseSize());
     } else {
         UINT s;
         xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(),
@@ -1006,6 +1006,7 @@ IR * CTree2IR::convertCallItself(xfe::Tree * t, IR * arglist, IR * callee,
                                  bool is_direct, UINT lineno, T2IRCtx * cont)
 {
     ASSERT0(t->getCode() == TR_CALL);
+
     //Convert the real parameter-expression.
     xcom::add_next(&arglist, convert(TREE_para_list(t), cont));
 
@@ -1564,7 +1565,7 @@ IR * CTree2IR::convertIndirectMemAccess(xfe::Tree const* t, UINT lineno,
     xoc::Type const* type = nullptr;
     if (dt == D_PTR) {
         //e.g: struct { ... char * b ... } * p; then p->b will generate:
-        type = m_tm->getPointerType(field_decl->get_pointer_base_size());
+        type = m_tm->getPointerType(field_decl->getPointerBaseSize());
         ASSERT0(type->verify(m_rg->getTypeMgr()));
     } else {
         //e.g: struct { ... int b ... } * p; then p->b will generate:
@@ -1757,7 +1758,7 @@ xoc::Type const* CTree2IR::checkAndGenCVTType(Decl const* tgt,
     if (IS_SIMPLEX(tgt_dt)) {
         type = m_tm->getSimplexTypeEx(tgt_dt);
     } else if (IS_PTR(tgt_dt)) {
-        type = m_tm->getPointerType(tgt->get_pointer_base_size());
+        type = m_tm->getPointerType(tgt->getPointerBaseSize());
     } else {
         UNREACHABLE();
     }
@@ -1801,7 +1802,7 @@ IR * CTree2IR::convertLDA(xfe::Tree * t, UINT lineno, T2IRCtx * cont)
         //  The result type of LDA is int*.
         CONT_is_compute_addr(&tc) = false;
         base = convert(TREE_lchild(kid), &tc);
-        base->setPointerType(kid->getResultType()->get_decl_size(), m_tm);
+        base->setPointerType(kid->getResultType()->getDeclByteSize(), m_tm);
         xoc::setLineNum(base, lineno, m_rg);
         return base;
     }
@@ -1819,7 +1820,7 @@ IR * CTree2IR::convertLDA(xfe::Tree * t, UINT lineno, T2IRCtx * cont)
     ASSERT0(t->getResultType()->regardAsPointer());
     //Use t's pointer type as the output ir's type. Because the pointer
     //base size that computed by 'kid' may be not same with 't'.
-    base->setPointerType(t->getResultType()->get_pointer_base_size(), m_tm);
+    base->setPointerType(t->getResultType()->getPointerBaseSize(), m_tm);
 
     if (base->is_ld()) {
         xoc::setLineNum(base, lineno, m_rg);
@@ -1867,7 +1868,7 @@ IR * CTree2IR::convertCVT(xfe::Tree * t, UINT lineno, T2IRCtx * cont)
     if (cvtype->regardAsPointer()) {
         //decl is pointer variable
         ir = m_rg->getIRMgr()->buildCvt(convert(TREE_cvt_exp(t), cont),
-            m_tm->getPointerType(cvtype->get_pointer_base_size()));
+            m_tm->getPointerType(cvtype->getPointerBaseSize()));
     } else {
         UINT size = 0;
         xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(cvtype, &size, m_tm);
@@ -2062,7 +2063,7 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
             xoc::Type const* type = nullptr;
             if (t->getResultType()->regardAsPointer()) {
                 type = m_tm->getPointerType(t->getResultType()->
-                    get_pointer_base_size());
+                    getPointerBaseSize());
             } else {
                 UINT s = 0;
                 xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(),
@@ -2083,7 +2084,7 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
             xoc::Type const* type = nullptr;
             if (t->getResultType()->regardAsPointer()) {
                 type = m_tm->getPointerType(t->getResultType()->
-                    get_pointer_base_size());
+                    getPointerBaseSize());
             } else {
                 UINT s = 0;
                 xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(),
@@ -2104,7 +2105,7 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
             xoc::Type const* type = nullptr;
             if (t->getResultType()->regardAsPointer()) {
                 type = m_tm->getPointerType(t->getResultType()->
-                    get_pointer_base_size());
+                    getPointerBaseSize());
             } else {
                 UINT s = 0;
                 xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(),
@@ -2154,7 +2155,7 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
             xoc::Type const* type = nullptr;
             if (t->getResultType()->regardAsPointer()) {
                 type = m_tm->getPointerType(t->getResultType()->
-                    get_pointer_base_size());
+                    getPointerBaseSize());
             } else {
                 UINT s = 0;
                 xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(),
@@ -2180,7 +2181,7 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
             xoc::Type const* type = nullptr;
             if (t->getResultType()->regardAsPointer()) {
                 type = m_tm->getPointerType(t->getResultType()->
-                    get_pointer_base_size());
+                    getPointerBaseSize());
             } else {
                 UINT s = 0;
                 xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
@@ -2206,7 +2207,7 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
             xoc::Type const* type = nullptr;
             if (t->getResultType()->regardAsPointer()) {
                 type = m_tm->getPointerType(t->getResultType()->
-                    get_pointer_base_size());
+                    getPointerBaseSize());
             } else {
                 UINT s = 0;
                 xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(),
@@ -2504,7 +2505,7 @@ xoc::DATA_TYPE CTree2IR::get_decl_dtype(Decl const* decl, UINT * size,
     }
     if (decl->is_array()) {
         dtype = xoc::D_MC;
-        *size = decl->get_decl_size();
+        *size = decl->getDeclByteSize();
         return dtype;
     }
     TypeAttr * ty = decl->getTypeAttr();
@@ -2523,7 +2524,7 @@ xoc::DATA_TYPE CTree2IR::get_decl_dtype(Decl const* decl, UINT * size,
         dtype = tm->getFPDType(*size * BIT_PER_BYTE, false);
     } else if (ty->is_aggr()) {
         dtype = xoc::D_MC;
-        ASSERT0(*size == decl->get_decl_size());
+        ASSERT0(*size == decl->getDeclByteSize());
     } else if (ty->is_user_type_ref()) {
         ty = ty->getPureTypeAttr();
 
@@ -2551,7 +2552,7 @@ void CScope2IR::scanDeclList(Scope const* s, OUT xoc::Region * rg,
 
     for (Decl * decl = s->getDeclList();
          decl != nullptr; decl = DECL_next(decl)) {
-        if (decl->is_formal_param() && decl->get_decl_sym() == nullptr) {
+        if (decl->is_formal_param() && decl->getDeclSym() == nullptr) {
             //void function(void*), parameter does not have name.
             continue;
         }
@@ -2728,7 +2729,7 @@ bool CScope2IR::generateFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
         DECL_fun_body(dcl)->dump();
     }
     if (!convertTreeStmtList(DECL_fun_body(dcl)->getStmtList(), r,
-                             dcl->get_return_type())) {
+                             dcl->getReturnType())) {
         return false;
     }
     END_TIMER_FMT(t, ("GenerateFuncRegion '%s'",

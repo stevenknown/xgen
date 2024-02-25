@@ -2394,9 +2394,8 @@ bool CG::passArgInRegister(SR * argval, UINT * sz, ArgDescMgr * argdescmgr,
         }
         SR * arg_val = vec.get(i);
         //ASSERT0(arg_val && arg_val->getByteSize() == GENERAL_REGISTER_SIZE);
-        //Only move register size data for each time.
+        //Only move data with register-size each time.
         ASSERT0(arg_val);
-
         tc.clean();
         buildMove(argreg, arg_val, ors, &tc);
 

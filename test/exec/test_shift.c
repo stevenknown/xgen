@@ -1430,31 +1430,17 @@ int test_64bit_lsl ()
 int main()
 {
     int errors = 0;
-    errors=0;
     errors += test_16bit_lsl ();
-    printf("\n3.%d", errors);
     errors += test_16bit_lsr ();
- // printf("\n1.%d", errors);
     errors += test_16bit_asr ();
- // printf("\n2.%d", errors);
     errors += test_64bit_lsr ();
-    //printf("\n7.%d", errors);
     errors += test_64bit_asr ();
-    //printf("\n8.%d", errors);
     errors += test_64bit_lsl ();
-    //printf("\n9.%d", errors);
     errors += test_32bit_lsr ();
-    printf("\n4.%d", errors);
     errors += test_32bit_asr ();
-    printf("\n5.%d", errors);
     errors += test_32bit_lsl ();
-    //printf("\n6.%d", errors);
-
     if (errors != 0) {
-        printf("\n%d\n", errors);
-        abort ();
-    } else {
-        exit (0);
+        return 255;
     }
     return 0;
 }

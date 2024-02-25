@@ -600,10 +600,6 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
         ASSERT0(cont && tc.get_reg(0)->getByteSize() == BYTESIZE_OF_DWORD);
         res = tc.get_reg(0);
         cont->set_reg(RESULT_REGISTER_INDEX, res);
-
-        //TBD:Do we need store high-part to context.
-        //SR * res2 = res->getVec()->get(1); //get result2
-        //cont->set_reg(1, res2);
         return;
     }
     UNREACHABLE();
@@ -1871,8 +1867,6 @@ void ARMIR2OR::convertCvtByBuiltIn(IR * newir, IR const* orgir,
             getCG()->genRegWithPhyReg(REG_R0, RF_R),
             getCG()->genRegWithPhyReg(REG_R1, RF_R));
         cont->set_reg(RESULT_REGISTER_INDEX, res0);
-        //TBD:Is it indispensable?
-        //cont->set_reg(RESULT_REGISTER_INDEX + 1, res1);
     }
     tors.copyDbx(orgir); //copy dbx from origin ir.
     ors.move_tail(tors);
