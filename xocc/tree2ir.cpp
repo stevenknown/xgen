@@ -1619,15 +1619,14 @@ IR * CTree2IR::convertSelect(xfe::Tree * t, UINT lineno, T2IRCtx * cont)
     IR * texp = convert(TREE_true_part(t), cont);
     IR * fexp = convert(TREE_false_part(t), cont);
     ASSERT0(texp && fexp);
-
     while (IR_next(texp) != nullptr) {
         m_rg->freeIRTree(xcom::removehead(&texp));
     }
-
     while (IR_next(fexp) != nullptr) {
         m_rg->freeIRTree(xcom::removehead(&fexp));
     }
 
+    //Determine the IR data type.
     xoc::Type const* d0 = texp->getType();
     xoc::Type const* d1 = fexp->getType();
     ASSERT0(d0 && d1);
@@ -1641,7 +1640,12 @@ IR * CTree2IR::convertSelect(xfe::Tree * t, UINT lineno, T2IRCtx * cont)
             type = texp->getType();
         } else {
             type = d0;
-            ASSERT0(d0 == d1);
+            //Pointer base size may be differnt.
+            //e.g: char * xx;
+            //     cond ? xx : "abcdef"; #S1
+            // Data type of xx in #s1 is *<1>, data type of constant string
+            // "abcdef" is *<4>.
+            //ASSERT0(d0 == d1);
         }
     } else if (d0->is_mc() || d1->is_mc()) {
         //Should be same MC type.
@@ -1665,7 +1669,6 @@ IR * CTree2IR::convertSelect(xfe::Tree * t, UINT lineno, T2IRCtx * cont)
             fexp = cvt;
         }
     }
-
     if (!det->is_bool()) {
         IR * old = det;
         det = m_rg->getIRMgr()->buildJudge(det);
