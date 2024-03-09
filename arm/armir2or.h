@@ -37,28 +37,28 @@ class ARMCGMgr;
 class ARMIR2OR : public IR2OR {
 protected:
     void convertNegImm(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    void convertAddSubInt(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     void convertAddSubFP(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     void convertMulofFloat(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    void convertMulofLongLong(IR const* ir, OUT RecycORList & ors,
-                              IN IOC * cont);
+    void convertMulofLongLong(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     void convertMulofInt(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertReturnValue(IR const* ir, OUT RecycORList & ors,
-                                    IN IOC * cont);
+    virtual void convertReturnValue(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     void convertTruebrFP(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertStoreVar(IR const* ir, OUT RecycORList & ors,
-                                 IN IOC * cont);
+    virtual void convertStoreVar(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
 
     //CASE: integer and pointer convertion.
-    void convertCvtBetweenIntType(IR const* ir, OUT RecycORList & ors,
-                                  MOD IOC * cont);
+    void convertCvtBetweenIntType(
+        IR const* ir, OUT RecycORList & ors, MOD IOC * cont);
 
     //CASE: Load constant-string address into register.
-    void convertCvtIntAndStr(IR const* ir, SR * opnd,
-                             OUT RecycORList & ors,
-                             MOD IOC * cont);
-    void convertCvtByBuiltIn(IR * newir, IR const* orgir,
-                             SR * opnd_of_cvt_exp,
-                             OUT RecycORList & ors, IN IOC * cont);
+    void convertCvtIntAndStr(
+        IR const* ir, SR * opnd, OUT RecycORList & ors, MOD IOC * cont);
+    void convertCvtByBuiltIn(
+        IR * newir, IR const* orgir, SR * opnd_of_cvt_exp,
+        OUT RecycORList & ors, IN IOC * cont);
     void convertCvt(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
 
     //Convert Bitwise NOT into OR list. bnot is unary operation.
@@ -66,13 +66,11 @@ protected:
     //Note ONLY thumb supports ORN logical OR NOT operation.
     //This implementation is just used to verify the function of BNOT,
     //in the sake of excessive redundant operations has been generated.
-    void convertBitNotLowPerformance(IR const* ir, OUT RecycORList & ors,
-                                     IN IOC * cont);
-    void convertRelationOpDWORDForEquality(IR const* ir, SR * sr0, SR * sr1,
-                                           bool is_signed,
-                                           OUT RecycORList & ors,
-                                           OUT RecycORList & tors,
-                                           IN IOC * cont);
+    void convertBitNotLowPerformance(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    void convertRelationOpDWORDForEquality(
+        IR const* ir, SR * sr0, SR * sr1, bool is_signed,
+        OUT RecycORList & ors, OUT RecycORList & tors, IN IOC * cont);
 
     //Info about ARM Conditions Flag that need to know.
     //Note LT and GE do not have the completely consistent inverse-behaviors
@@ -94,26 +92,21 @@ protected:
     //  sbcs ip, a_hi, a_hi
     //  ble FalseBody
     //  TrueBody:
-    void convertRelationOpDWORDForLTandGE(IR const* ir, SR * sr0, SR * sr1,
-                                          bool is_signed,
-                                          OUT RecycORList & ors,
-                                          OUT RecycORList & tors,
-                                          IN IOC * cont);
-    void convertRelationOpDWORDForLEandGT(IR const* ir, SR * sr0, SR * sr1,
-                                          bool is_signed,
-                                          OUT RecycORList & ors,
-                                          OUT RecycORList & tors,
-                                          IN IOC * cont);
-    void convertRelationOpDWORDForLTGELEGT(IR const* ir,
-                                           SR * sr0_l, SR * sr0_h,
-                                           SR * sr1_l, SR * sr1_h,
-                                           bool is_signed,
-                                           OUT RecycORList & ors,
-                                           OUT RecycORList & tors,
-                                           IN IOC * cont);
+    void convertRelationOpDWORDForLTandGE(
+        IR const* ir, SR * sr0, SR * sr1, bool is_signed,
+        OUT RecycORList & ors, OUT RecycORList & tors, IN IOC * cont);
+    void convertRelationOpDWORDForLEandGT(
+        IR const* ir, SR * sr0, SR * sr1, bool is_signed,
+        OUT RecycORList & ors, OUT RecycORList & tors, IN IOC * cont);
+    void convertRelationOpDWORDForLTGELEGT(
+        IR const* ir, SR * sr0_l, SR * sr0_h, SR * sr1_l, SR * sr1_h,
+        bool is_signed, OUT RecycORList & ors, OUT RecycORList & tors,
+        IN IOC * cont);
+    void convertBinaryOpMoreThanWORD(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
 
-    void getResultPredByIRCode(IR_CODE code, SR ** truepd, SR ** falsepd,
-                               bool is_signed);
+    void getResultPredByIRCode(
+        IR_CODE code, SR ** truepd, SR ** falsepd, bool is_signed);
     ARMCG * getCG() { return (ARMCG*)m_cg; }
     ARMCGMgr * getCGMgr() { return (ARMCGMgr*)m_cg->getCGMgr(); }
     Var const* genBuiltinVarFP2FP(IR const* tgt, IR const* src);
@@ -128,21 +121,22 @@ public:
     virtual ~ARMIR2OR() {}
 
     //Interface function.
-    virtual void convertBinaryOp(IR const* ir, OUT RecycORList & ors,
-                                 IN IOC * cont);
-    virtual void convertLda(Var const* var, HOST_INT lda_ofst,
-                            Dbx const* dbx, OUT RecycORList & ors,
-                            IN IOC * cont);
+    virtual void convertBinaryOp(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    virtual void convertLda(
+        Var const* var, HOST_INT lda_ofst, Dbx const* dbx,
+        OUT RecycORList & ors, IN IOC * cont);
     virtual void convertLda(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertICall(IR const* ir, OUT RecycORList & ors,
-                              IN IOC * cont)
+    virtual void convertICall(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     { convertCall(ir, ors, cont); }
     virtual void convertDiv(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertRem(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertMul(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    void convertRelationOpFP(IR const* ir, OUT RecycORList & ors,
-                             IN IOC * cont);
+    void convertRelationOpFP(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+
     //Generate compare operations and return the comparation result registers.
     // e.g:
     //     a - 1 > b + 2
@@ -151,8 +145,9 @@ public:
     //     sr1 = b + 2
     //     res, truepd, falsepd <- cmp sr0, sr1
     //     return res, truepd, falsepd
-    void convertRelationOpDWORD(IR const* ir, OUT RecycORList & ors,
-                                IN IOC * cont);
+    void convertRelationOpDWORD(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+
     //Generate compare operations and return the comparation result registers.
     //The output registers in IOC are ResultSR, TruePredicatedSR, and
     //FalsePredicatedSR.
@@ -165,32 +160,29 @@ public:
     //     sr1 = b + 2
     //     res, truepd, falsepd <- cmp sr0, sr1
     //     return res, truepd, falsepd
-    virtual void convertRelationOp(IR const* ir, OUT RecycORList & ors,
-                                   IN IOC * cont);
+    virtual void convertRelationOp(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
 
     //Bitwise NOT.
     //e.g BNOT(0x0001) = 0xFFFE
     //Note ONLY thumb supports ORN logical OR NOT operation.
-    virtual void convertBitNot(IR const* ir, OUT RecycORList & ors,
-                               IN IOC * cont);
+    virtual void convertBitNot(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertIgoto(IR const* ir, OUT RecycORList & ors, IN IOC *);
-    virtual void convertSelect(IR const* ir, OUT RecycORList & ors,
-                               IN IOC * cont);
-    virtual void convertReturn(IR const* ir, OUT RecycORList & ors,
-                               IN IOC * cont);
-    virtual void convertTruebr(IR const* ir, OUT RecycORList & ors,
-                               IN IOC * cont);
-    virtual void convertSetElem(IR const* ir, OUT RecycORList & ors,
-                                MOD IOC * cont);
-    virtual void convertGetElem(IR const* ir, OUT RecycORList & ors,
-                                MOD IOC * cont);
+    virtual void convertSelect(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    virtual void convertReturn(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    virtual void convertTruebr(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    virtual void convertSetElem(
+        IR const* ir, OUT RecycORList & ors, MOD IOC * cont);
+    virtual void convertGetElem(
+        IR const* ir, OUT RecycORList & ors, MOD IOC * cont);
     virtual void convert(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
 
-    void recordRelationOpResult(IR const* ir,
-                                SR * truepd,
-                                SR * falsepd,
-                                SR * result_pred,
-                                OUT RecycORList & ors,
-                                MOD IOC * cont);
+    void recordRelationOpResult(
+        IR const* ir, SR * truepd, SR * falsepd, SR * result_pred,
+        OUT RecycORList & ors, MOD IOC * cont);
 };
 #endif

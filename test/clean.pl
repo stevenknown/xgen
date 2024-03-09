@@ -23,6 +23,8 @@ sub main
         'xcom',
         'api',
         'tutorial_input',
+        'chibicc-main',
+        'builtin',
     ); 
     foreach my $subdir (@subdirlist) {
         print "\nENTER DIRECTORY>>$subdir\n";

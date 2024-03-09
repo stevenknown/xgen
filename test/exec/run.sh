@@ -12,11 +12,9 @@ xocc_path="~/xocc/xocc.exe"
 #    builtin/sqrtf.c.i.o builtin/fabsf.c.i.o " CompareDumpIfExist
 #    builtin/sqrt.c.i.o builtin/fabs.c.i.o " CompareDumpIfExist
 
-#perl run.pl Case = test_sqrt.c Targ = armhf XoccPath = $xocc_path \
-#XoccFlag = "-O3 -only-rp -rp -gvn -no-vect -no-lsra -dump-all -dump tmp.log -include_region = "sort"" \
-#perl run.pl Case = insertion_sort.c Targ = armhf XoccPath = $xocc_path \
-#  XoccFlag = "-O3 -no-vect -no-lsra -dump-all -dump tmp.log" \
-#  LinkerFlag = "builtin/sqrt.c.i.o builtin/fabs.c.i.o " CompareDumpIfExist CompareResultIfExist
+#XoccFlag = "-O3 -only-rp -rp -gvn -no-vect -no-lsra -dump-all -dump tmp.log -include_region = "sort""
+#perl run.pl Case = sign_shift2.c Targ = armhf XoccPath = $xocc_path XoccFlag = "-O0 -no-vect -no-lsra" LinkerFlag = "builtin/sqrt.c.i.o builtin/fabs.c.i.o " CompareDumpIfExist CompareResultIfExist
+#perl run.pl Case = test_shift.c Targ = armhf XoccPath = $xocc_path XoccFlag = "-O0 -no-vect -no-lsra" LinkerFlag = "builtin/sqrt.c.i.o builtin/fabs.c.i.o " CompareDumpIfExist CompareResultIfExist
   
 
 ### BUILD ALL CASES ###

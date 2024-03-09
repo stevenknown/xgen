@@ -1,1 +1,1 @@
-builtin/divmod.c.i.o builtin/udivmodsi4.c.i.o builtin/_umoddi3.c.i.o builtin/_clz32.c.i.o builtin/_clz64.c.i.o builtin/_divdi3.c.i.o builtin/_moddi3.c.i.o  builtin/_udivdi3.c.i.o
+../builtin/divmod.c.i.o ../builtin/udivmodsi4.c.i.o ../builtin/_umoddi3.c.i.o ../builtin/_clz32.c.i.o ../builtin/_clz64.c.i.o ../builtin/_divdi3.c.i.o ../builtin/_moddi3.c.i.o  ../builtin/_udivdi3.c.i.o

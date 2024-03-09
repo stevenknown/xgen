@@ -1505,7 +1505,7 @@ void IR2OR::convert(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
         ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_XOR: //exclusive or
-        convertXOR(ir, tors, cont);
+        convertXor(ir, tors, cont);
         ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_BNOT:  //bitwise not
@@ -1518,6 +1518,10 @@ void IR2OR::convert(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
         break;
     case IR_NEG:  // -123
         convertNeg(ir, tors, cont);
+        ASSERT0(cont->get_reg(0) != nullptr);
+        break;
+    case IR_ALLOCA:  // alloca(n)
+        convertAlloca(ir, tors, cont);
         ASSERT0(cont->get_reg(0) != nullptr);
         break;
     case IR_LT:

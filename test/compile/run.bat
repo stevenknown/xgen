@@ -25,3 +25,4 @@ perl run.pl Targ = arm XoccPath = %xocc_path% XoccFlag = "-O3 -lowest_height -no
 @if %errorlevel% neq 0 (@exit /b 2)
 perl run.pl Targ = arm XoccPath = %xocc_path% XoccFlag = "-O3 -lowest_height -prmode -nonprdu -prdu -no-mdssa -no-prssa -no-vect -no-lsra -no-cg"
 @if %errorlevel% neq 0 (@exit /b 2)
+@exit /b 0

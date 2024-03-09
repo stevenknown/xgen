@@ -13,6 +13,8 @@ extern int stdout;
 
 void printf(char const*,...);
 void fprintf(FILE *, char const*, ...);
+int vfprintf(FILE *stream, const char *format, va_list args);
+int sprintf(char *str, const char *format, ...);
 FILE * fopen(char const*, char const*);
 void fflush(FILE *);
 void fclose(FILE *);
