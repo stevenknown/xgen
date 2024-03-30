@@ -90,6 +90,7 @@ protected:
     void createAsmFileHandler(OUT FileObj & asmfo, CHAR const* fn);
 
     void destructPRSSAForAllRegion(RegionMgr * rm);
+    void dumpPoolUsage();
 
     CLRegionMgr * initRegionMgr();
     void initCompile(CHAR const* fn, OUT CLRegionMgr ** rm,

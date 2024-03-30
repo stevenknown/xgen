@@ -11,7 +11,7 @@ usage:
 ```cmd
     git clone https://github.com/stevenknown/xoc.git
 ```
- 2. copy mach, com, reader, and opt into xgen directory     
+ 2. copy mach, com, reader, elf and opt into xgen directory     
 ```cmd
     cd xgen    
     cp -rf ../xoc/elf ../xoc/mach ../xoc/com ../xoc/opt ../xoc/reader ../xoc/Makefile.xoc ../xoc/Makefile.option ../xoc/Makefile.xoc.inc .    

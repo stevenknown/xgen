@@ -67,6 +67,8 @@ REGFILE tmMapReg2RegFile(Reg);
 
 //Return target-machine-word for given register.
 //The tmword is always used in assembly or machine code generation.
+//e.g:For ARM, the register r1's machine word is 0x1, and the value will be
+//write into a 32bits binary during machine code generation.
 TMWORD tmMapReg2TMWORD(Reg);
 
 //Return alloable register set for given register-file.

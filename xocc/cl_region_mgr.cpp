@@ -46,7 +46,7 @@ Region * CLRegionMgr::allocRegion(REGION_TYPE rt)
 
 bool CLRegionMgr::compileFuncRegion(xoc::Region * func, xoc::OptCtx * oc)
 {
-    ASSERT0(func && m_cgmgr && oc);
+    ASSERT0(func && oc);
     ASSERT0(func->is_function() || func->is_program() || func->is_inner());
     START_TIMER_FMT(t, ("compileFuncRegion '%s'", func->getRegionName()));
     //Note we regard INNER region as FUNCTION region.
@@ -59,8 +59,9 @@ bool CLRegionMgr::compileFuncRegion(xoc::Region * func, xoc::OptCtx * oc)
                 return false;
             }
         }
+        ASSERT0(m_cgmgr);
         m_cgmgr->generate(func);
-        if (g_dump_opt.isDumpMemUsage()) {
+        if (xoc::g_dump_opt.isDumpMemUsage()) {
             func->dumpMemUsage();
         }
     }
@@ -71,19 +72,20 @@ bool CLRegionMgr::compileFuncRegion(xoc::Region * func, xoc::OptCtx * oc)
 
 void CLRegionMgr::compileProgramRegion(CHAR const* fn, Region * rg)
 {
+    ASSERT0(m_cgmgr);
     m_cgmgr->genAndPrtGlobalVariable(rg);
 
     //Output GR.
-    if (!g_is_dumpgr) { return; }
+    if (!xocc::g_is_dumpgr) { return; }
     ASSERT0(fn);
     xcom::StrBuf b(64);
     b.strcat(fn);
     b.strcat(".hir.gr");
-    FileObj fo(b.buf, true, false);
+    xcom::FileObj fo(b.buf, true, false);
     FILE * gr = fo.getFileHandler();
     ASSERT0(gr);
     rg->getLogMgr()->push(gr, "");
-    GRDump gd(rg);
+    xoc::GRDump gd(rg);
     gd.dumpRegion(true);
     rg->getLogMgr()->pop();
 }
@@ -91,7 +93,7 @@ void CLRegionMgr::compileProgramRegion(CHAR const* fn, Region * rg)
 
 void CLRegionMgr::compileFuncRegion(Region * rg)
 {
-    OptCtx * oc = getAndGenOptCtx(rg);
+    xoc::OptCtx * oc = getAndGenOptCtx(rg);
     bool s = compileFuncRegion(rg, oc);
     ASSERT0(s);
     DUMMYUSE(s);
@@ -106,7 +108,6 @@ void CLRegionMgr::compileFuncRegion(Region * rg)
 //4. Generate assembly code.
 void CLRegionMgr::compileRegionSet(CHAR const* fn)
 {
-    ASSERT0(fn && m_cgmgr);
     //Test mem leak.
     //test_ru(this, m_cgmgr);
     registerGlobalMD();
@@ -116,45 +117,24 @@ void CLRegionMgr::compileRegionSet(CHAR const* fn)
         if (rg == nullptr) { continue; }
         if (rg->is_program()) {
             program = rg;
+            ASSERT0(fn);
             compileProgramRegion(fn, rg);
             continue;
         }
         if (rg->is_blackbox()) {
             continue;
         }
-        if (g_show_time) {
+        if (xoc::g_show_time) {
             xoc::prt2C("\n\n==== Start Process Region(id:%d)'%s' ====\n",
                        rg->id(), rg->getRegionName());
         }
         compileFuncRegion(rg);
     }
     ASSERT0(program);
-
-    OptCtx * oc = getAndGenOptCtx(program);
+    xoc::OptCtx * oc = getAndGenOptCtx(program);
     bool s = processProgramRegion(program, oc);
     ASSERT0(s);
     DUMMYUSE(s);
-    if (g_dump_opt.isDumpAll()) {
-        dumpPoolUsage();
-    }
-}
-
-
-void CLRegionMgr::dumpPoolUsage()
-{
-    #ifdef _DEBUG_
-    #define KB 1024
-    note(this, "\n== Situation of pool used==");
-    note(this, "\n ****** gerenal pool %lu KB ********",
-         (ULONG)smpoolGetPoolSize(g_pool_general_used)/KB);
-    note(this, "\n ****** tree pool %lu KB ********",
-         (ULONG)smpoolGetPoolSize(g_pool_tree_used)/KB);
-    note(this, "\n ****** st pool %lu KB ********",
-         (ULONG)smpoolGetPoolSize(g_pool_st_used)/KB);
-    note(this, "\n ****** total mem query size : %lu KB\n",
-         (ULONG)g_stat_mem_size/KB);
-    note(this, "\n===========================\n");
-    #endif
 }
 
 
@@ -169,11 +149,11 @@ void CLRegionMgr::dumpProgramRegionGR(CHAR const* srcname)
         xcom::StrBuf b(64);
         b.strcat(srcname);
         b.strcat(".gr");
-        FileObj fo(b.buf, true, false);
+        xcom::FileObj fo(b.buf, true, false);
         FILE * gr = fo.getFileHandler();
         ASSERT0(gr);
         rg->getLogMgr()->push(gr, b.buf);
-        GRDump gd(rg);
+        xoc::GRDump gd(rg);
         gd.dumpRegion(true);
         rg->getLogMgr()->pop();
     }

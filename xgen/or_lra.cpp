@@ -6912,7 +6912,7 @@ bool LRA::partitionGroup(DataDepGraph & ddg,
         }
     }
 
-    //Thirdly, assign group accroding to resource pressure.
+    //Thirdly, assign group according to resource pressure.
     List<List<OR*>*> tgroups;
     List<INT> tgroups_idx;
     List<List<OR*>*> ordered_groups;

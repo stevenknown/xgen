@@ -990,7 +990,7 @@ void ARMCG::buildMemAssign(
 
 
 //This is an util function.
-//Build several [tgt] <- [src] operations accroding unrolling factor.
+//Build several [tgt] <- [src] operations according unrolling factor.
 //e.g: given unrolling factor is 2, two memory assignments will be generated:
 //     [tgt] <- [src];
 //     src <- src + GENERAL_REGISTER_SIZE;
@@ -1029,7 +1029,7 @@ void ARMCG::buildMemAssignUnroll(
 
 
 //This is an util function.
-//Build several [tgt] <- [src] operations accroding unrolling factor.
+//Build several [tgt] <- [src] operations according unrolling factor.
 //Generate loop to copy from src to tgt.
 //e.g: given tgt address register, src address register, bytesize:
 //  1. iv = bytesize

@@ -38,6 +38,8 @@ our @EXPORT_OK = qw(
     findFileRecursively
     findDirRecursively
     is_exist
+    isExistInEnvPath
+    isInEnv
     moveToPassed
     invokeSimulator
     peelPostfixName
@@ -61,6 +63,7 @@ our $g_xocc = "";
 our $g_cpp = "cpp";
 our $g_cflags = "-O0";
 our $g_simulator = "";
+our $g_simulator_flags = "";
 our $g_as = "";
 our $g_ld = "";
 our $g_ldflags = "";
@@ -293,7 +296,7 @@ sub runSimulator
         return $g_fail;
     }
 
-    $cmdline = "$g_simulator $exefile";
+    $cmdline = "$g_simulator $g_simulator_flags $exefile";
     print("\nCMD>>", $cmdline, "\n");
 
     open(my $OLDVALUE, '>&', STDOUT); #save stdout to oldvalue
@@ -454,11 +457,11 @@ sub runXOCC
     my $objname = $src_fullpath.".o";
     my $cmdline;
     if (!is_exist($g_xocc)) {
-        abortex("\n$g_xocc IS NOT EXIST\n");
+        abortex("\n$g_xocc DOES NOT EXIST\n");
         return $g_fail; #No need execute the following code.
     }
     if (!is_exist($src_fullpath)) {
-        abortex("\n$src_fullpath IS NOT EXIST\n");
+        abortex("\n$src_fullpath DOES NOT EXIST\n");
         return $g_fail; #No need execute the following code.
     }
 
@@ -642,20 +645,12 @@ sub prolog
 {
     computeRelatedPathToXocRootDir();
     #computeAbsolutePathToXocRootDir();
-
-    #$g_target = $ARGV[0];
-    #if (!$g_target) {
-    #    usage();
-    #    abort();
-    #}
     parseCmdLine();
     readConfigFile();
     selectTarget();
     overrideOptions();
     printEnvVar();
-
-    #Tools may be in environment path.
-    #checkExistence();
+    checkEnvValid();
 }
 
 sub overrideOptions
@@ -671,13 +666,25 @@ sub overrideOptions
     }
     if ($g_override_simulator ne "") {
         $g_simulator = $g_override_simulator;
+        $g_simulator_flags = "";
     }
 }
 
-sub checkExistence
+sub checkEnvValid
 {
+    if (!$g_xocc) {
+        usage();
+        print "\nNOT DESIGNATE xocc.exe FOR $g_target!\n";
+        abort();
+    }
+    if (!is_exist($g_xocc)) {
+        abortex("\n$g_xocc DOES NOT EXIST\n");
+        return $g_fail;
+    }
     my @filelist = ();
     push(@filelist, $g_xocc);
+
+    #NOTE: tools may be in environment path.
     if ($g_is_invoke_assembler) {
         push(@filelist, $g_as);
     }
@@ -688,23 +695,47 @@ sub checkExistence
         push(@filelist, $g_simulator);
     }
     foreach (@filelist) {
-       if (!-e $_) {
-           print "\n$_ DOES NOT EXIST!\n";
-           if ($g_is_quit_early) {
-               abort();
-           }
-       }
+        if (!is_exist($_) && !isExistInEnvPath($_)) {
+            print "\n$_ DOES NOT EXIST!\n";
+            if ($g_is_quit_early) {
+                abort();
+            }
+        }
     }
+}
+
+sub isInEnv
+{
+    my $cmd = $_[0];
+    my $path = $ENV{'PATH'} || '';
+    #Check whether software is in the environment.
+    if ($path =~ m/(?=.*\/?$cmd)/) {
+        return $g_true;
+    }
+    return $g_false;
+}
+
+sub isExistInEnvPath
+{
+    my $software = $_[0];
+    my @path_dirs = split /:/, $ENV{'PATH'};
+    foreach my $dir (@path_dirs) {
+        #my $exec_path = File::Spec->catfile($dir, $software);
+        my $exec_path = "$dir/$software";
+        if (is_exist($exec_path)) {
+            return $g_true;
+        }
+    }
+    return $g_false;
 }
 
 sub is_exist
 {
     my $filepath = $_[0];
     if (!-e $filepath) {
-        print "\n$filepath DOES NOT EXIST!!\n";
-        return 0;
+        return $g_false;
     }
-    return 1;
+    return $g_true;
 }
 
 sub parseCmdLine
@@ -889,6 +920,7 @@ sub printEnvVar
     print "\ng_target = $g_target";
     print "\ng_osname = $g_osname";
     print "\ng_simulator = $g_simulator";
+    print "\ng_simulator_flags = $g_simulator_flags";
     print "\ng_basecc = $g_basecc";
     print "\ng_xocc = $g_xocc";
     print "\ng_cflags = $g_cflags";
@@ -897,6 +929,9 @@ sub printEnvVar
     print "\ng_ldflags = $g_ldflags";
     print "\ng_is_test_gr = $g_is_test_gr";
     print "\ng_xoc_root_path = $g_xoc_root_path";
+    print "\ng_is_invoke_assembler = $g_is_invoke_assembler";
+    print "\ng_is_invoke_linker = $g_is_invoke_linker";
+    print "\ng_is_invoke_simulator = $g_is_invoke_simulator";
     if ($g_single_testcase ne "") {
         print "\ng_single_testcase = $g_single_testcase";
     }
@@ -915,6 +950,7 @@ sub printEnvVar
     print "\n";
 }
 
+
 sub selectTarget
 {
     if (!$g_target) {
@@ -925,28 +961,37 @@ sub selectTarget
 
     if ($g_osname eq 'MSWin32') {
         if ($g_target eq "arm") {
-           $g_xocc = "$g_xoc_root_path/src/arm/xocc.exe";
-           $g_basecc = "arm-linux-gnueabi-gcc";
-           $g_as = "arm-linux-gnueabi-as";
-           $g_ld = "arm-linux-gnueabi-gcc";
-           $g_basecc_cflags = "-std=c99 -O0";
-           $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
+            $g_xocc = "$g_xoc_root_path/src/arm/xocc.exe";
+            $g_basecc = "arm-linux-gnueabi-gcc";
+            $g_as = "arm-linux-gnueabi-as";
+            $g_ld = "arm-linux-gnueabi-gcc";
+            $g_basecc_cflags = "-std=c99 -O0";
+            $g_simulator = "qemu-arm";
+            $g_simulator_flags = "-L /usr/arm-linux-gnueabihf";
         } elsif ($g_target eq "armhf") {
-           $g_xocc = "$g_xoc_root_path/src/arm/xocc.exe";
-           $g_basecc = "arm-linux-gnueabihf-gcc";
-           $g_as = "arm-linux-gnueabihf-as";
-           $g_ld = "arm-linux-gnueabihf-gcc";
-           $g_basecc_cflags = "-std=c99 -O0";
-           $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
-        } elsif ($g_target eq "teco") {
-           $g_xocc = "$g_xoc_root_path/src/teco/pcxac.exe";
-           $g_basecc = "teco-linux-gnueabihf-gcc";
-           $g_as = "teco-linux-gnueabihf-as";
-           $g_ld = "teco-linux-gnueabihf-gcc";
-           $g_basecc_cflags = "-std=c99 -O0";
-           $g_simulator = "qemu-teco -L /usr/teco-linux-gnueabihf";
+            $g_xocc = "$g_xoc_root_path/src/arm/xocc.exe";
+            $g_basecc = "arm-linux-gnueabihf-gcc";
+            $g_as = "arm-linux-gnueabihf-as";
+            $g_ld = "arm-linux-gnueabihf-gcc";
+            $g_basecc_cflags = "-std=c99 -O0";
+            $g_simulator = "qemu-arm";
+            $g_simulator_flags = "-L /usr/arm-linux-gnueabihf";
+        } elsif ($g_target eq "pac") {
+            $g_xocc = "$g_xoc_root_path/src/pac/xocc.exe";
+            $g_basecc = "pacc.exe";
+            $g_as = "pac-linux-gnueabi-as";
+            $g_ld = "pac-linux-gnueabi-gcc";
+            $g_basecc_cflags = "-std=c99 -O0";
+            $g_simulator = "pacsim";
+            $g_simulator_flags = "";
         } elsif ($g_target eq "x86") {
-           $g_xocc = "$g_xoc_root_path/src/x86/xocc.exe";
+            $g_xocc = "$g_xoc_root_path/src/x86/xocc.exe";
+            $g_basecc = "gcc";
+            $g_as = "as";
+            $g_ld = "gcc";
+            $g_basecc_cflags = "-std=c99 -O0";
+            $g_simulator = "qemu-x86";
+            $g_simulator_flags = "";
         } elsif ($g_config_file_path ne "" &&
                  selectTargetFromConfigFile() == 1) {
             ; ## Has already selected target info from config file.
@@ -960,20 +1005,23 @@ sub selectTarget
             $g_basecc = "arm-linux-gnueabi-gcc";
             $g_as = "arm-linux-gnueabi-as";
             $g_ld = "arm-linux-gnueabi-gcc";
-            $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
+            $g_simulator = "qemu-arm";
+            $g_simulator_flags = "-L /usr/arm-linux-gnueabihf";
         } elsif ($g_target eq "armhf") {
             $g_xocc = "$g_xoc_root_path/src/arm/xocc.exe";
             $g_basecc = "arm-linux-gnueabihf-gcc";
             $g_as = "arm-linux-gnueabihf-as";
             $g_ld = "arm-linux-gnueabihf-gcc";
-            $g_simulator = "qemu-arm -L /usr/arm-linux-gnueabihf";
-        } elsif ($g_target eq "teco") {
-           $g_xocc = "$g_xoc_root_path/src/teco/pcxac.exe";
-           $g_basecc = "teco-linux-gnueabihf-gcc";
-           $g_as = "teco-linux-gnueabihf-as";
-           $g_ld = "teco-linux-gnueabihf-gcc";
+            $g_simulator = "qemu-arm";
+            $g_simulator_flags = "-L /usr/arm-linux-gnueabihf";
+        } elsif ($g_target eq "pac") {
+           $g_xocc = "$g_xoc_root_path/src/pac/xocc.exe";
+           $g_basecc = "pacc";
+           $g_as = "pac-linux-gnueabihf-as";
+           $g_ld = "pac-linux-gnueabihf-gcc";
            $g_basecc_cflags = "-std=c99 -O0";
-           $g_simulator = "qemu-teco -L /usr/teco-linux-gnueabihf";
+           $g_simulator = "pacsim";
+           $g_simulator_flags = "";
         } elsif ($g_target eq "x86") {
             $g_xocc = "$g_xoc_root_path/src/x86/xocc.exe";
         } elsif ($g_config_file_path ne "" &&
@@ -984,14 +1032,8 @@ sub selectTarget
             abort();
         }
     }
-
-    #$g_xocc = "/home/zhenyu/x/src.passed_all_execute_test_in_test_exec/xocc/xocc.exe";
-    if (!$g_xocc) {
-        usage();
-        print "\nNOT FIND xocc.exe FOR $g_target!\n";
-        abort();
-    }
 }
+
 
 sub usage
 {

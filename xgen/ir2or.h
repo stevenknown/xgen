@@ -338,6 +338,35 @@ public:
         ASSERTN(ir->is_div(), ("illegal ir"));
         convertBinaryOp(ir, ors, cont);
     }
+    virtual void convertPow(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
+    {
+        ASSERTN(ir->is_pow(), ("illegal ir"));
+        convertBinaryOp(ir, ors, cont);
+    }
+    virtual void convertNRoot(
+        IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
+    {
+        ASSERTN(ir->is_nroot(), ("illegal ir"));
+        convertBinaryOp(ir, ors, cont);
+    }
+    virtual void convertLog(
+        IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
+    {
+        ASSERTN(ir->is_log(), ("illegal ir"));
+        convertBinaryOp(ir, ors, cont);
+    }
+    virtual void convertExponent(
+        IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
+    {
+        ASSERTN(ir->is_exponent(), ("illegal ir"));
+        convertUnaryOp(ir, ors, cont);
+    }
+    virtual void convertTrigonometric(
+        IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
+    {
+        ASSERTN(ir->isTrig(), ("illegal ir"));
+        convertUnaryOp(ir, ors, cont);
+    }
     virtual void convertMul(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     {
         ASSERTN(ir->is_mul(), ("illegal ir"));

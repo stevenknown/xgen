@@ -1,4 +1,5 @@
 #include "../include/io.h"
+#include "../include/stdarg.h"
 #include "../include/stdio.h"
 #include "../include/memory.h"
 #include "../include/string.h"

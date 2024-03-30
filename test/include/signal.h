@@ -1,3 +1,6 @@
+#ifndef _SIGNAL_H_
+#define _SIGNAL_H_
+
 typedef int sig_atomic_t;
 typedef void (*_crt_signal_t)(int);
 
@@ -22,3 +25,5 @@ typedef void (*_crt_signal_t)(int);
 #define SIG_ACK ((_crt_signal_t)4)     // acknowledge
 
 void signal(int, void(*f)(int));
+
+#endif

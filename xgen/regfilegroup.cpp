@@ -171,7 +171,7 @@ void RegFileGroup::computeGroup()
     ASSERT0(m_bb);
     if (ORBB_ornum(m_bb) == 0) { return; }
 
-    //Partitioning OR into different layers accroding to REGFILE they belong.
+    //Partitioning OR into different layers according to REGFILE they belong.
     //e.g:1. t1[A] =
     //       ...
     //    2.        = t1[A]

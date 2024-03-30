@@ -2,7 +2,8 @@ int a,b,c,d,x,y;
 int w;
 void foo()
 {
-    a = b > 0 ? c+d, c-d:x+y, x-y;
+    //a = b > 0 ? c+d, c-d:x+y, x-y;
+    a = b > 0 ? c+d:x+y, x-y;
     //c = d > 0 ? a = c+d, b = c-d: w=x+y, w=x-y;
 }
 

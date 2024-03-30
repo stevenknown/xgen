@@ -282,9 +282,9 @@ CLRegionMgr * Compiler::initRegionMgr()
 }
 
 
-void Compiler::initCompile(CHAR const* fn, OUT CLRegionMgr ** rm,
-                           OUT FileObj & asmfo, OUT CGMgr ** cgmgr,
-                           OUT TargInfo ** ti)
+void Compiler::initCompile(
+    CHAR const* fn, OUT CLRegionMgr ** rm, OUT FileObj & asmfo,
+    OUT CGMgr ** cgmgr, OUT TargInfo ** ti)
 {
     *rm = initRegionMgr();
     *cgmgr = xgen::allocCGMgr(*rm);
@@ -295,8 +295,8 @@ void Compiler::initCompile(CHAR const* fn, OUT CLRegionMgr ** rm,
 }
 
 
-void Compiler::finiCompile(CLRegionMgr * rm, FileObj & asmfo, CGMgr * cgmgr,
-                           TargInfo * ti)
+void Compiler::finiCompile(
+    CLRegionMgr * rm, FileObj & asmfo, CGMgr * cgmgr, TargInfo * ti)
 {
     if (cgmgr != nullptr) {
         delete cgmgr;
@@ -316,13 +316,30 @@ void Compiler::destructPRSSAForAllRegion(RegionMgr * rm)
     for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
         Region * r = rm->getRegion(i);
         if (r == nullptr || r->is_blackbox()) { continue; }
-        if (r->getPassMgr() != nullptr) {
-            xoc::PRSSAMgr * ssamgr = r->getPRSSAMgr();
-            if (ssamgr != nullptr && ssamgr->is_valid()) {
-                ssamgr->destruction(*rm->getAndGenOptCtx(r));
-            }
+        if (r->getPassMgr() == nullptr) { continue; }
+        xoc::PRSSAMgr * ssamgr = r->getPRSSAMgr();
+        if (ssamgr != nullptr && ssamgr->is_valid()) {
+            ssamgr->destruction(*rm->getAndGenOptCtx(r));
         }
     }
+}
+
+
+void Compiler::dumpPoolUsage()
+{
+    #ifdef _DEBUG_
+    #define KB 1024
+    xoc::prt2C("\n== Situation of pool used==");
+    xoc::prt2C("\n ****** gerenal pool %lu KB ********",
+               (ULONG)xcom::smpoolGetPoolSize(g_pool_general_used)/KB);
+    xoc::prt2C("\n ****** tree pool %lu KB ********",
+               (ULONG)xcom::smpoolGetPoolSize(g_pool_tree_used)/KB);
+    xoc::prt2C("\n ****** st pool %lu KB ********",
+               (ULONG)xcom::smpoolGetPoolSize(g_pool_st_used)/KB);
+    xoc::prt2C("\n ****** total mem query size : %lu KB\n",
+               (ULONG)g_stat_mem_size/KB);
+    xoc::prt2C("\n===========================\n");
+    #endif
 }
 
 
@@ -356,18 +373,19 @@ bool Compiler::compileGRFile(CHAR const* fn)
     if (g_is_dumpgr) {
         rm->dumpProgramRegionGR(fn);
     }
-
-    //Dump and clean.
     rm->compileRegionSet(fn);
+    if (g_dump_opt.isDumpAll()) {
+        dumpPoolUsage();
+    }
 FIN:
     destructPRSSAForAllRegion(rm);
     END_TIMER_FMT(t, ("Total Time To Compile '%s'", fn));
     finiCompile(rm, asmfo, cgmgr, ti);
     show_err();
     show_warn();
-    fprintf(stdout, "\n%s - (%d) error(s), (%d) warnging(s)\n",
-            fn, g_err_msg_list.get_elem_count(),
-            g_warn_msg_list.get_elem_count());
+    xoc::prt2C("\n%s - (%d) error(s), (%d) warnging(s)\n",
+               fn, g_err_msg_list.get_elem_count(),
+               g_warn_msg_list.get_elem_count());
     g_err_msg_list.clean();
     g_warn_msg_list.clean();
     return res;
@@ -420,6 +438,9 @@ bool Compiler::compileCFile(CHAR const* fn)
         CScope2IR s2ir(rm, dvmap);
         if (s2ir.generateScope(xfe::get_global_scope())) {
             rm->compileRegionSet(fn);
+            if (g_dump_opt.isDumpAll()) {
+                dumpPoolUsage();
+            }
         }
     }
     if (g_is_dumpgr) {
@@ -435,9 +456,9 @@ FIN:
     finiCompile(rm, asmfo, cgmgr, ti);
     show_err();
     show_warn();
-    fprintf(stdout, "\n%s - (%d) error(s), (%d) warnging(s)\n",
-            fn, g_err_msg_list.get_elem_count(),
-            g_warn_msg_list.get_elem_count());
+    xoc::prt2C("\n%s - (%d) error(s), (%d) warnging(s)\n",
+               fn, g_err_msg_list.get_elem_count(),
+               g_warn_msg_list.get_elem_count());
     g_err_msg_list.clean();
     g_warn_msg_list.clean();
     return succ;

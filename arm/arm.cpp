@@ -91,6 +91,13 @@ REGFILE xgen::tmMapReg2RegFile(Reg reg)
 }
 
 
+TMWORD xgen::tmMapReg2TMWORD(Reg reg)
+{
+    ASSERTN(0, ("TODO"));
+    return 0;
+}
+
+
 //Return a set of registers for given register-file.
 xgen::RegSet const* xgen::tmMapRegFile2RegSet(REGFILE rf)
 {

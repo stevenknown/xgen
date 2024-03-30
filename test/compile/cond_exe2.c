@@ -10,5 +10,5 @@ short f()
     unsigned long a;
     char b;
     unsigned long c;
-    return (a ? b &= ~0x03, 0 : (short)c);
+    return (a ? b &= ~0x03 : (short)c);
 }

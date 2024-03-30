@@ -41,10 +41,6 @@ protected:
     xgen::CGMgr * m_cgmgr;
 protected:
     void compileProgramRegion(CHAR const* fn, Region * rg);
-    bool compileFuncRegion(xoc::Region * func, xoc::OptCtx * oc);
-    void compileFuncRegion(Region * rg);
-
-    void dumpPoolUsage();
 public:
     CLRegionMgr() {}
     virtual ~CLRegionMgr() {}
@@ -52,6 +48,8 @@ public:
     virtual Region * allocRegion(REGION_TYPE rt);
     virtual VarMgr * allocVarMgr();
 
+    bool compileFuncRegion(xoc::Region * func, xoc::OptCtx * oc);
+    void compileFuncRegion(Region * rg);
     void compileRegionSet(CHAR const* fn);
 
     void dumpProgramRegionGR(CHAR const* srcname);

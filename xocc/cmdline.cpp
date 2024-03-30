@@ -472,6 +472,8 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump linear-scan-register-allocation", },
     { "option", &xocc::g_is_dump_option,
       "dump all compiling options", },
+    { "to_buffer", &xoc::g_dump_opt.is_dump_to_buffer,
+      "perfer to dump informations to buffer", },
 };
 
 BoolOption::Desc const BoolOption::elf_option_desc[] = {

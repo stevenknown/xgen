@@ -1,4 +1,4 @@
-xocc_path="../../src/xocc/xocc.exe"
+xocc_path="../xocc/xocc.exe"
 
 perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = ""
 perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3"

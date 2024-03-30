@@ -1,5 +1,5 @@
-#ifndef _STDBOOL_H
-#define _STDBOOL_H
+#ifndef _STDBOOL_H_
+#define _STDBOOL_H_
 
 /* All the definitions below are implementation-specific.  */
 

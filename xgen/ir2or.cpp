@@ -1478,6 +1478,26 @@ void IR2OR::convert(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
         convertDiv(ir, tors, cont);
         ASSERT0(cont->get_reg(0) != nullptr);
         break;
+    case IR_POW:
+        convertPow(ir, tors, cont);
+        ASSERT0(cont->get_reg(0) != nullptr);
+        break;
+    case IR_NROOT:
+        convertNRoot(ir, tors, cont);
+        ASSERT0(cont->get_reg(0) != nullptr);
+        break;
+    case IR_LOG:
+        convertLog(ir, tors, cont);
+        ASSERT0(cont->get_reg(0) != nullptr);
+        break;
+    case IR_EXPONENT:
+        convertExponent(ir, tors, cont);
+        ASSERT0(cont->get_reg(0) != nullptr);
+        break;
+    SWITCH_CASE_UNA_TRIGONOMETRIC:
+        convertTrigonometric(ir, tors, cont);
+        ASSERT0(cont->get_reg(0) != nullptr);
+        break;
     case IR_MUL:
         convertMul(ir, tors, cont);
         ASSERT0(cont->get_reg(0) != nullptr);

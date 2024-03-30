@@ -1,3 +1,6 @@
+#ifndef _SETJMP_H_
+#define _SETJMP_H_
+
 #define _INC_SETJMP
 
 // Definitions specific to particular setjmp implementations.
@@ -150,3 +153,5 @@ int setjmp(jmp_buf _Buf);
 void longjmp(jmp_buf _Buf, int _Value);
 int sigsetjmp(sigjmp_buf env, int savesigs);
 void siglongjmp(sigjmp_buf env, int val);
+
+#endif

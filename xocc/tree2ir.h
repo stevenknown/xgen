@@ -119,6 +119,7 @@ protected:
     Region * m_rg;
     RegionMgr * m_rm;
     TypeMgr * m_tm;
+    IRMgr * m_irmgr;
     xoc::Var * m_retval_buf;
     List<CaseValue*> * m_case_list; //for switch/case used only
     Stack<List<CaseValue*>*> m_case_list_stack; //for switch/case used only
@@ -129,29 +130,31 @@ protected:
     IR * convertFP(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convertLogicalAND(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convertLogicalOR(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
-    IR * convertCallee(xfe::Tree const* t, bool * is_direct,
-                       T2IRCtx const* cont);
-    xoc::Var * convertReturnValBufVar(xoc::Type const* rettype,
-                                      OUT UINT * return_val_size);
+    IR * convertCallee(
+        xfe::Tree const* t, bool * is_direct, T2IRCtx const* cont);
+    xoc::Var * convertReturnValBufVar(
+        xoc::Type const* rettype, OUT UINT * return_val_size, T2IRCtx * cont);
+
     //Handle return value buffer.
-    IR * convertCallReturnBuf(xoc::Type const* rettype, IR const* callee,
-                              OUT UINT * return_val_size,
-                              OUT xoc::Var ** retval_buf);
-    IR * convertCallReturnVal(IR * call, UINT return_val_size,
-                              xoc::Var * retval_buf,
-                              xoc::Type const* rettype,
-                              UINT lineno);
-    IR * convertCallItself(xfe::Tree * t, IR * arglist,
-                           IR * callee, bool is_direct, UINT lineno,
-                           T2IRCtx * cont);
+    IR * convertCallReturnBuf(
+        xoc::Type const* rettype, IR const* callee, OUT UINT * return_val_size,
+        OUT xoc::Var ** retval_buf, T2IRCtx * cont);
+    IR * convertCallReturnVal(
+        IR * call, UINT return_val_size, xoc::Var * retval_buf,
+        xoc::Type const* rettype, UINT lineno, T2IRCtx * cont);
+    IR * convertCallItself(
+        xfe::Tree * t, IR * arglist, IR * callee,
+        bool is_direct, UINT lineno, T2IRCtx * cont);
 
     //Generate IR for field-access if the base-region is a structure that
     //returned by a function call.
-    IR * convertFieldAccessForReturnValAggr(xfe::Tree const* t, IR * retval,
-                                            T2IRCtx * cont);
+    IR * convertFieldAccessForReturnValAggr(
+        xfe::Tree const* t, IR * retval, T2IRCtx * cont);
 
     xoc::Var * genLocalVar(xoc::Sym const* sym, xoc::Type const* ty);
     xoc::Var * genLocalVar(CHAR const* name, xoc::Type const* ty);
+    xoc::Var * genReturnValBufVar(
+        xoc::Type const* rettype, OUT UINT * return_val_size);
 
     IR * only_left_last(IR * head);
 
@@ -174,6 +177,7 @@ public:
         m_rg = rg;
         m_rm = rg->getRegionMgr();
         m_tm = rg->getTypeMgr();
+        m_irmgr = rg->getIRMgr();
         m_case_list = nullptr;
         m_retval_buf = nullptr;
         m_pool = smpoolCreate(16, MEM_COMM);
@@ -205,8 +209,8 @@ public:
     //If 'decl' presents a pointer type, convert pointer-type to D_PTR.
     //If 'decl' presents an array, convert type to D_M descriptor.
     //size: return byte size of decl.
-    static xoc::DATA_TYPE get_decl_dtype(xfe::Decl const* decl, UINT * size,
-                                         TypeMgr * tm);
+    static xoc::DATA_TYPE get_decl_dtype(
+        xfe::Decl const* decl, UINT * size, TypeMgr * tm);
 
     //Construct XOC Region and convert C-Language-Ast to XOC IR.
     static bool generateRegion(RegionMgr * rm, DeclAndVarMap const& dvmap);
@@ -221,17 +225,20 @@ public:
     bool is_alloc_heap(xoc::Var const* v) const;
     bool is_align(Sym const* sym) const;
 
-    xoc::Type const* checkAndGenCVTType(xfe::Decl const* tgt,
-                                        xfe::Decl const* src);
+    xoc::Type const* checkAndGenCVTType(
+        xfe::Decl const* tgt, xfe::Decl const* src);
     IR * convertLDA(xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convertCVT(xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convertId(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convertReturn(xfe::Tree * t, UINT lineno, T2IRCtx * cont);
+    IR * convertTakenAddrOfCallRetVal(IR * retvalexp, T2IRCtx * cont);
+    IR * convertTakenAddrOfTree(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convertAssign(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convertIncDec(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convertPostIncDec(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convertCall(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convertPointerDeref(xfe::Tree * t, UINT lineno, T2IRCtx * cont);
+
     //The function handles the array accessing for real array type declaration.
     //e.g: int a[10][20];
     //     ..= a[i][j], where a is real array.
@@ -240,16 +247,17 @@ public:
     //  namely, ..= ((int*)0x1234)[i][j] is illegal.
     IR * convertArraySubExpForArray(xfe::Tree * t, xfe::Tree * base, UINT n,
                                     TMWORD * elem_nums, T2IRCtx * cont);
+
     //base: base xfe::Tree node of ARRAY.
-    IR * convertArraySubExp(xfe::Tree * base, TMWORD * elem_nums,
-                            T2IRCtx * cont);
+    IR * convertArraySubExp(
+        xfe::Tree * base, TMWORD * elem_nums, T2IRCtx * cont);
     IR * convertArray(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convertSelect(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convertSwitch(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
-    IR * convertIndirectMemAccess(xfe::Tree const* t, UINT lineno,
-                                  T2IRCtx * cont);
-    IR * convertDirectMemAccess(xfe::Tree const* t, UINT lineno,
-                                T2IRCtx * cont);
+    IR * convertIndirectMemAccess(
+        xfe::Tree const* t, UINT lineno, T2IRCtx * cont);
+    IR * convertDirectMemAccess(
+        xfe::Tree const* t, UINT lineno, T2IRCtx * cont);
     IR * convertDeref(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convertPragma(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convert(IN xfe::Tree * t, T2IRCtx * cont);
