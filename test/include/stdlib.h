@@ -1,4 +1,5 @@
 #include "stddef.h"
+#include "cstdlib.h"
 
 #ifndef _STDLIB_H_
 #define _STDLIB_H_
@@ -15,5 +16,9 @@ int mkstemp(char *template);
 void _exit(int status);
 int atexit(void (*func)(void));
 void *calloc(size_t num, size_t size);
+void qsort(void *base, size_t num, size_t size,
+           int (*compar)(const void *, const void *));
+int mkstemps(char *template, int suffixlen);
+void perror(const char *s);
 
 #endif

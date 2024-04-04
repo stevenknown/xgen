@@ -1,4 +1,5 @@
-xocc_path="../../src/xocc/xocc.exe"
+@rem SET XOCC.EXE PATH HERE.
+set xocc_path=../xocc/xocc.exe
 
 ### ONLY COMPILE ALL CASE ###
 perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-no-vect -no-lsra"
@@ -17,7 +18,6 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-O3 -lowest_height -prmode -no-vect -no-lsra"
-if [ $? -ne 0 ]; thenperl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-no-vect -no-lsra"
 if [ $? -ne 0 ]; then
   echo "EXECUTE PERL FAILED, ERROR CODE = $?"
   exit 1
@@ -32,9 +32,8 @@ if [ $? -ne 0 ]; then
   echo "EXECUTE PERL FAILED, ERROR CODE = $?"
   exit 1
 fi
-perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-O3 -lowest_height -prmode -no-vect -no-lsra"
+perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-O3 -prmode -no-vect -no-lsra"
 if [ $? -ne 0 ]; then
-
   echo "EXECUTE PERL FAILED, ERROR CODE = $?"
   exit 1
 fi

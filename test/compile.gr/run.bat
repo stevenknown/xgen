@@ -1,3 +1,4 @@
+@rem SET XOCC.EXE PATH HERE.
 set xocc_path=../xocc/xocc.exe
 
 perl run.pl Targ = arm XoccPath = %xocc_path% NoAsm NoLink NoRun XoccFlag = "-O3 -no-migen -no-lsra -no-vect -no-lsra"

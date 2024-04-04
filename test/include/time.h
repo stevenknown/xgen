@@ -18,5 +18,8 @@ typedef __time_t time_t;
 char *ctime_r(const time_t *timer, char *buf);
 time_t time(time_t *t);
 struct tm *localtime(const time_t *timer);
+size_t strftime(char *s, size_t maxsize, const char *format,
+                const struct tm *timeptr);
+struct tm *localtime_r(const time_t *timep, struct tm *result);
 
 #endif

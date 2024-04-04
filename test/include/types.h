@@ -1,6 +1,9 @@
 #ifndef _TYPES_H_
 #define _TYPES_H_
 
+#include "stddef.h"
+
+typedef unsigned int pid_t;
 typedef unsigned long __dev_t;
 typedef __dev_t dev_t;
 typedef unsigned long __ino_t;

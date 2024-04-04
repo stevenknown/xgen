@@ -1,6 +1,9 @@
 #ifndef _STAT_H_
 #define _STAT_H_
 
+#include "types.h"
+#include "time.h"
+
 struct stat {
     dev_t     st_dev;     /* ID of device containing file */
     ino_t     st_ino;     /* inode number */
@@ -41,5 +44,8 @@ struct stat {
 //};
 
 int stat(const char * path, struct stat * buf);
+int fstat(int fd, struct stat *buf);
+int lstat(const char *path, struct stat *buf);
+int fstatat(int filedes, const char *path, struct stat *buf, int flag);
 
 #endif

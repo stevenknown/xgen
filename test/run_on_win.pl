@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+
 use Cwd;
 use File::Find;
 use File::Copy;
@@ -40,7 +41,7 @@ sub main
 {
     my $debug = $ARGV[0];
     $g_is_debug = $g_true;
-    if ($debug and $debug eq "release") {
+    if ($debug eq "release") {
         $g_is_debug = $g_false;
     }
     $g_is_quit_early = 0;
@@ -54,21 +55,19 @@ sub main
     foreach my $subdir (@subdirlist) {
         print "\nENTER DIRECTORY>>$subdir\n";
         chdir $subdir;
-        if (execPerl() ne $g_succ) {
-            return 1;    
-        }
+        execBat();
         chdir ".."; #back to parent directory
 	}
     print "\n\n\nALL TESTCASES FINISH!!!\n";
     return 0;
 }
 
-sub execPerl
+sub execBat
 {
     my $curdir = getCurDir();
-    my $cmdline = "sh run.sh";
+    my $cmdline = "run.bat";
     if (!$g_is_debug) {
-        $cmdline = "sh run_release.sh";
+        $cmdline = "run_release.bat";
     }
     my $retval = systemx($cmdline);
     if ($retval != 0) {

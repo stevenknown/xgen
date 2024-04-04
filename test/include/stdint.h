@@ -16,6 +16,8 @@ typedef unsigned int        uint32_t;
 typedef signed long long   int64_t;
 typedef unsigned long long uint64_t;
 
+typedef signed int intptr_t;
+
 /* Minimum and maximum values for these types.  */
 #define INT8_MIN  (-128)
 #define INT8_MAX   (127)

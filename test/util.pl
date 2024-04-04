@@ -96,6 +96,7 @@ our $g_false = 0;
 
 #Local variables that are used in current file scope.
 my $g_override_simulator = "";
+my $g_override_cpp_path = "";
 my $g_override_xocc_path = "";
 my $g_override_basecc_path = "";
 my $g_override_xocc_flag = "";
@@ -658,6 +659,9 @@ sub overrideOptions
     if ($g_is_nocg) {
         $g_cflags = $g_cflags." -no-cg ";
     }
+    if ($g_override_cpp_path ne "") {
+        $g_cpp = $g_override_cpp_path;
+    }
     if ($g_override_xocc_path ne "") {
         $g_xocc = $g_override_xocc_path;
     }
@@ -828,6 +832,18 @@ sub parseCmdLine
                 abort();
             }
             $g_override_xocc_path = $ARGV[$i];
+        } elsif ($ARGV[$i] eq "CppPath") {
+            $i++;
+            if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                usage();
+                abort();
+            }
+            $i++;
+            if (!$ARGV[$i]) {
+                usage();
+                abort();
+            }
+            $g_override_cpp_path = $ARGV[$i];
         } elsif ($ARGV[$i] eq "BaseccPath") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
@@ -937,6 +953,9 @@ sub printEnvVar
     }
     if ($g_single_directory ne "") {
         print "\ng_single_directory = $g_single_directory";
+    }
+    if ($g_override_cpp_path ne "") {
+        print "\ng_override_cpp_path = $g_override_cpp_path";
     }
     if ($g_override_xocc_path ne "") {
         print "\ng_override_xocc_path = $g_override_xocc_path";
@@ -1055,6 +1074,7 @@ sub usage
           "\nCompareDumpIfExist only compile and compare the dump file if the base-dump-file exist",
           "\nBaseccPath = ...   refer to base cc.exe path, e.g: BaseccPath = gcc",
           "\nBaseccFlag = ...   base cc.exe command line option, e.g: BaseccFlag = \"-std=c++0x\"",
+          "\nCppPath = ...      refer to cpp.exe path, e.g: CppPath = your_cpp_file_path",
           "\nXoccPath = ...     refer to xocc.exe path, e.g: XoccPath = your_xocc_file_path",
           "\nXoccFlag = ...     xocc.exe command line option, e.g: XoccFlag = \"-O3 -time\"",
           "\nConfigFilePath = ...",
