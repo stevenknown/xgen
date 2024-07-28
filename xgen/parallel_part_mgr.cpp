@@ -254,7 +254,7 @@ bool ParallelPartMgr::hasParallelPart(CLUST clust) const
 }
 
 
-//Return ture if 'gsr' has been referred in else ORBB, which is
+//Return true if 'gsr' has been referred in else ORBB, which is
 //post-dominate 'bb'.
 bool ParallelPartMgr::hasPDomOcc(ORBB * bb, SR * gsr)
 {

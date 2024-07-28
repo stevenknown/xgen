@@ -50,6 +50,9 @@ CHAR const* tmGetUnitName(UNIT);
 //Return name of register.
 CHAR const* tmGetRegName(Reg reg);
 
+//Return the number of registers.
+UINT const tmGetRegNum();
+
 //Return name of given register-file.
 CHAR const* tmGetRegFileName(REGFILE);
 

@@ -47,6 +47,12 @@ CHAR const* xgen::tmGetUnitName(UNIT u)
 }
 
 
+UINT const xgen::tmGetRegNum()
+{
+    return REG_NUM;
+}
+
+
 //Return name of cluster.
 CHAR const* xgen::tmGetClusterName(CLUST clust)
 {

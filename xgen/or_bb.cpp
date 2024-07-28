@@ -600,10 +600,9 @@ void dumpORBBList(List<ORBB*> & bbl, CG * cg)
 {
     if (!cg->getRegion()->getLogMgr()->is_init()) { return; }
     note(cg->getRegion(), "\n==---- DUMP ORBB List ----==");
-    if (g_dbx_mgr != nullptr) {
-        g_dbx_mgr->doPrepareWorkBeforePrint();
+    if (cg->getRegion()->getDbxMgr() != nullptr) {
+        cg->getRegion()->getDbxMgr()->doPrepareWorkBeforePrint();
     }
-
     for (ORBB * bb = bbl.get_head(); bb != nullptr; bb = bbl.get_next()) {
         bb->dump();
     }

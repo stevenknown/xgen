@@ -52,3 +52,10 @@ ARMRegionMgr * allocARMRegionMgr()
 {
     return new ARMRegionMgr();
 }
+
+
+bool ARMRegionMgr::checkIRSwitchCaseInterface(IR_CODE c) const
+{
+    ASSERTN(0, ("TODO"));
+    return true;
+}

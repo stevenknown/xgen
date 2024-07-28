@@ -217,13 +217,13 @@ public:
     } u1;
     Dbx dbx;
 public:
-    OR() { init(); }
+    OR(DbxMgr * dbx_mgr) { init(dbx_mgr); }
     virtual ~OR() { destroy(); }
 
     void clean();
     virtual void clone(OR const* o, CG * cg);
-    void copyDbx(IR const* ir);
-    void copyDbx(Dbx const* dbx);
+    void copyDbx(IR const* ir, DbxMgr * dbx_mgr);
+    void copyDbx(Dbx const* dbx, DbxMgr * dbx_mgr);
 
     void destroy()
     {
@@ -376,7 +376,7 @@ public:
     bool hasSideEffect(bool) const { return OR_is_side_effect(this); }
 
     UINT id() const { return OR_id(this); }
-    void init()
+    void init(DbxMgr * dbx_mgr)
     {
         code = OR_UNDEF;
         container = nullptr;
@@ -387,7 +387,8 @@ public:
         OR_flag(this) = 0;
         m_opnd.init();
         m_result.init();
-        dbx.clean();
+        ASSERT0(dbx_mgr);
+        dbx.init(dbx_mgr);
     }
     virtual bool is_equal(OR const* o) const;
     //Return true if 'o' depicted a label.
@@ -546,21 +547,21 @@ public:
     //Move elements in 'ors' to tail of current list.
     void move_tail(MOD ORList & ors);
 
-    void copyDbx(IR const* ir)
+    void copyDbx(IR const* ir, DbxMgr * dbx_mgr)
     {
         ASSERT0(ir);
         if (IR_ai(ir) == nullptr) { return; }
         DbxAttachInfo * da = (DbxAttachInfo*)IR_ai(ir)->get(AI_DBX);
         if (da == nullptr) { return; }
         for (OR * o = get_head(); o != nullptr; o = get_next()) {
-            OR_dbx(o).copy(da->dbx);
+            OR_dbx(o).copy(da->dbx, dbx_mgr);
         }
     }
-    void copyDbx(Dbx const* dbx)
+    void copyDbx(Dbx const* dbx, DbxMgr * dbx_mgr)
     {
         if (dbx == nullptr) { return; }
         for (OR * o = get_head(); o != nullptr; o = get_next()) {
-            OR_dbx(o).copy(*dbx);
+            OR_dbx(o).copy(*dbx, dbx_mgr);
         }
     }
 
@@ -613,18 +614,16 @@ class ORMgr : public Vector<OR*> {
     COPY_CONSTRUCTOR(ORMgr);
     friend class OR;
 protected:
-    CG * m_cg;
     SRMgr * m_sr_mgr;
     SMemPool * m_pool;
     xcom::List<OR*> m_free_or_list;
 protected:
     //Alllocate memory of OR.
-    virtual OR * allocOR();
+    virtual OR * allocOR(CG * cg);
 public:
-    ORMgr(SRMgr * srmgr);
-    virtual ~ORMgr() { clean(); }
+    ORMgr(SRMgr * srmgr) { m_pool = nullptr; init(srmgr); }
+    virtual ~ORMgr() { destroy(); }
 
-    void clean();
     virtual size_t count_mem() const
     {
         size_t count = sizeof(*this);
@@ -633,12 +632,17 @@ public:
         return count;
     }
 
-    SMemPool * get_pool() const { return m_pool; }
-    OR * getOR(UINT id);
-    //Generate OR object.
-    OR * genOR(OR_CODE ort, CG * cg);
+    void destroy();
+
     virtual void freeOR(IN OR * o);
     void freeSR(OR * o);
+
+    //Generate OR object.
+    OR * genOR(OR_CODE ort, CG * cg);
+    SMemPool * get_pool() const { return m_pool; }
+    OR * getOR(UINT id);
+
+    void init(SRMgr * srmgr);
 };
 //END ORMgr
 
@@ -665,8 +669,12 @@ public:
     void move_tail(ORList & ors) { m_entity->move_tail(ors); }
     void move_tail(RecycORList & ors) { m_entity->move_tail(ors.getList()); }
 
-    void copyDbx(IR const* ir) { m_entity->copyDbx(ir); }
-    void copyDbx(Dbx const* dbx) { m_entity->copyDbx(dbx); }
+    void copyDbx(IR const* ir, DbxMgr * dbx_mgr)
+    { m_entity->copyDbx(ir, dbx_mgr); }
+
+    void copyDbx(Dbx const* dbx, DbxMgr * dbx_mgr)
+    { m_entity->copyDbx(dbx, dbx_mgr); }
+
     void clean() { m_entity->clean(); }
 
     void dump(CG const* cg) const { m_entity->dump(cg); }

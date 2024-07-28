@@ -4,6 +4,10 @@ ifeq ($(TARG),)
   $(error "NEED TARG INFO:e.g:make TARG=FOR_ARM TARG_DIR=../arm")
 endif
 
+ifeq ($(TARG_DIR),)
+  $(error "NEED TARG_DIR INFO:e.g:make TARG=FOR_ARM TARG_DIR=../arm")
+endif
+
 ifeq ($(THREAD_NUM),)
   THREAD_NUM=1
 endif

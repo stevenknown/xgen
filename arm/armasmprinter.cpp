@@ -374,7 +374,7 @@ void ARMAsmPrinter::printCodeSequentially(
     ASSERT0(ipl);
     CHAR const* format = "%s%-20s";
     CHAR const* code_indent = "";
-    DbxMgr::PrtCtx prtctx;
+    DbxMgr::PrtCtx prtctx(LangInfo::LANG_CPP);
     LogMgr asm_lm;
     asm_lm.push(asmh, "");
     prtctx.prefix = "#";
@@ -384,8 +384,8 @@ void ARMAsmPrinter::printCodeSequentially(
         IssuePackage const* ip = it->val();
         fprintf(asmh, "\n");
         OR * o = ip->get(SLOT_G);
-        if (xoc::g_dbx_mgr != nullptr && g_cg_dump_src_line) {
-            xoc::g_dbx_mgr->printSrcLine(&OR_dbx(o), &prtctx);
+        if (getRegion()->getDbxMgr() != nullptr && g_cg_dump_src_line) {
+            getRegion()->getDbxMgr()->printSrcLine(&OR_dbx(o), &prtctx);
         }
         if (o != nullptr) {
             buf.clean();

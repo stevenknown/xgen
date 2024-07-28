@@ -37,6 +37,8 @@ IR2OR::IR2OR(CG * cg)
     m_cgmgr = cg->getCGMgr();
     m_rg = cg->getRegion();
     ASSERT0(m_rg);
+    m_dbx_mgr = m_rg->getDbxMgr();
+    ASSERT0(m_dbx_mgr);
     m_tm = m_rg->getTypeMgr();
     m_irmgr = m_rg->getIRMgr();
     ASSERT0(m_irmgr);
@@ -126,18 +128,21 @@ void IR2OR::convertLoadConstFP(IR const* ir, OUT RecycORList & ors,
         ASSERTN(sizeof(ULONGLONG) == 8,
                 ("use suitably macro to take low part"));
 
-        m_cg->buildMove(load_val,
-            m_cg->genIntImm((HOST_INT)GET_LOW_32BIT(*pb), false),
+        UINT64 const val_0 = (UINT64)*pb;
+        UINT const bitnum = 32;
+        m_cg->buildMove(load_val, m_cg->genIntImm(
+            (HOST_INT)(xcom::get64BitValueLowNBit(val_0, bitnum)), false),
             tors.getList(), cont);
 
+        UINT64 const val_1 = (UINT64)*pb;
         load_val2 = m_cg->genReg();
-        m_cg->buildMove(load_val2,
-            m_cg->genIntImm((HOST_INT)GET_HIGH_32BIT(*pb), false),
+        m_cg->buildMove(load_val2, m_cg->genIntImm(
+            (HOST_INT)(xcom::get64BitValueHighNBit(val_1, bitnum)), false),
             tors.getList(), cont);
 
         m_cg->getSRVecMgr()->genSRVec(2, load_val, load_val2);
     }
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
     cont->set_reg(0, load_val);
 }
@@ -203,7 +208,7 @@ void IR2OR::convertLoadConstInt(HOST_INT constval, UINT constbytesize,
                         tors.getList(), cont);
         m_cg->getSRVecMgr()->genSRVec(2, load_val, load_val2);
     }
-    tors.copyDbx(dbx);
+    tors.copyDbx(dbx, getDbxMgr());
     ors.move_tail(tors);
     cont->set_reg(0, load_val);
 }
@@ -220,7 +225,7 @@ void IR2OR::convertLoadConstBool(IR const* ir, OUT RecycORList & ors,
     RecycORList tors(this);
     m_cg->buildMove(load_val, m_cg->genIntImm(CONST_int_val(ir), false),
                     tors.getList(), cont);
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
     cont->set_reg(0, load_val);
 }
@@ -257,7 +262,7 @@ void IR2OR::convertLoadConstStr(IR const* ir, OUT RecycORList & ors,
     SR * load_val = cont->get_reg(0);
     ASSERT0(load_val && load_val->is_reg());
     cont->clean_bottomup();
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
     cont->set_reg(0, load_val);
 }
@@ -369,7 +374,7 @@ void IR2OR::convertGeneralLoad(IR const* ir, OUT RecycORList & ors,
         }
         m_cg->getSRVecMgr()->genSRVec(regvlst);
     }
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
     ASSERT0(cont->get_reg(0) && cont->get_reg(0)->is_reg());
 }
@@ -387,7 +392,7 @@ void IR2OR::convertIStore(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     SR * addr = cont->get_reg(0);
     ASSERTN(addr && addr->is_reg(),
             ("address should be recorded in a register"));
-    tors.copyDbx(IST_base(ir));
+    tors.copyDbx(IST_base(ir), getDbxMgr());
     ors.move_tail(tors);
 
     //Load RHS into registers or get the address of memory block.
@@ -395,7 +400,7 @@ void IR2OR::convertIStore(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     tors.clean();
     convertGeneralLoad(IST_rhs(ir), tors, cont);
     ASSERT0(cont->get_reg(0) || cont->get_addr());
-    tors.copyDbx(IST_rhs(ir));
+    tors.copyDbx(IST_rhs(ir), getDbxMgr());
     ors.move_tail(tors);
 
     tors.clean();
@@ -433,7 +438,7 @@ void IR2OR::convertIStore(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
         m_cg->buildMemcpy(addr, srcaddr, ir->getTypeSize(m_tm),
                           tors.getList(), cont);
     }
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
 }
 
@@ -460,7 +465,7 @@ void IR2OR::convertILoad(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     RecycORList tors(this);
     m_cg->buildGeneralLoad(addr, ILD_ofst(ir), ir->is_signed(),
                            tors.getList(), &tc);
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
 
     ASSERT0(cont);
@@ -487,7 +492,7 @@ void IR2OR::convertLoadVar(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     m_cg->buildGeneralLoad(m_cg->genVAR(LD_idinfo(ir)),
                            LD_ofst(ir), ir->is_signed(), tors.getList(), &tc);
     cont->copy_bottomup(tc);
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
 }
 
@@ -505,7 +510,7 @@ void IR2OR::convertId(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     IOC_mem_byte_size(&tc) = ir->is_any() ? 0 : ir->getTypeSize(m_tm);
     m_cg->buildLda(ID_info(ir), 0, xoc::getDbx(ir), tmp_ors.getList(), &tc);
     SR * loaded_val = tc.get_reg(0); //get target memory address.
-    tmp_ors.copyDbx(ir);
+    tmp_ors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tmp_ors);
 
     //Set result SR.
@@ -530,7 +535,7 @@ void IR2OR::convertGeneralLoadPR(IR const* ir, OUT RecycORList & ors,
             RecycORList tors(this);
             IOC_mem_byte_size(&tc) = ir->getTypeSize(m_tm);
             m_cg->buildGeneralLoad(mm, 0, ir->is_signed(), tors.getList(), &tc);
-            tors.copyDbx(ir);
+            tors.copyDbx(ir, getDbxMgr());
             ors.move_tail(tors);
             cont->copy_bottomup(tc);
             return;
@@ -578,7 +583,7 @@ void IR2OR::convertCopyPR(IR const* tgt, IN SR * src,
         } else {
             UNREACHABLE();
         }
-        tors.copyDbx(tgt);
+        tors.copyDbx(tgt, getDbxMgr());
         ors.move_tail(tors);
         return;
     }
@@ -640,7 +645,7 @@ void IR2OR::convertStorePR(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
                 UNREACHABLE();
             }
         }
-        tors.copyDbx(ir);
+        tors.copyDbx(ir, getDbxMgr());
         ors.move_tail(tors);
         return;
     }
@@ -694,7 +699,7 @@ void IR2OR::convertStoreVar(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     ASSERT0(tc.getMemByteSize() > 0);
     convertStoreDecompose(store_val, m_cg->genVAR(ST_idinfo(ir)),
                           ST_ofst(ir), tors, &tc);
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
 }
 
@@ -750,7 +755,7 @@ void IR2OR::convertUnaryOp(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
         opndlst.append_tail(opnd);
     }
     OR * o = m_cg->buildOR(orty, reslst, opndlst);
-    copyDbx(o, ir);
+    copyDbx(o, ir, getDbxMgr());
 
     //Set result SR.
     ASSERT0(cont != nullptr);
@@ -800,7 +805,7 @@ void IR2OR::convertBitAnd(IR const* ir, OUT RecycORList & ors,
     RecycORList tors(this);
     m_cg->buildMultiBinaryORByRegSize(orty, opnd0, opnd1,
                                       tors.getList(), cont);
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
 }
 
@@ -873,7 +878,7 @@ void IR2OR::convertBinaryOp(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
         opndlst.append_tail(opnd1);
     }
     OR * o = m_cg->buildOR(orty, reslst, opndlst);
-    copyDbx(o, ir);
+    copyDbx(o, ir, getDbxMgr());
 
     //Set result SR.
     ASSERT0(cont != nullptr);
@@ -932,7 +937,7 @@ void IR2OR::processRealParamsThroughRegister(IR const* ir,
         tors.clean();
         m_cg->passArg(argval, argaddr, irsize, argdescmgr,
                       tors.getList(), &tc);
-        tors.copyDbx(ir);
+        tors.copyDbx(ir, getDbxMgr());
         ors.move_tail(tors);
     }
 }
@@ -1013,6 +1018,8 @@ SR * IR2OR::saveToNewRegIfAssignedPhyReg(
     SR * src, IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     ASSERT0(src && src->is_reg());
+    DbxMgr * dbx_mgr = getDbxMgr();
+    ASSERT0(dbx_mgr);
     if (src->is_vec()) {
         ASSERTN(src->getVecIdx() == 0, ("expect first element"));
         bool find_phy_reg = false;
@@ -1041,7 +1048,7 @@ SR * IR2OR::saveToNewRegIfAssignedPhyReg(
             }
         }
         SR * newsrc = m_cg->getSRVecMgr()->genSRVec(regvlst);
-        tors.copyDbx(ir);
+        tors.copyDbx(ir, dbx_mgr);
         ors.move_tail(tors);
         return newsrc;
     }
@@ -1052,7 +1059,7 @@ SR * IR2OR::saveToNewRegIfAssignedPhyReg(
     tmp.clean();
     newsrc = getCG()->genReg();
     getCG()->buildMove(newsrc, src, tors.getList(), &tmp);
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, dbx_mgr);
     ors.move_tail(tors);
     cont->copy_bottomup(tmp);
     return newsrc;
@@ -1091,7 +1098,7 @@ void IR2OR::convertASR(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     m_cg->buildShiftRight(sr1, opnd0->getTypeSize(m_tm),
                           sh_ofst, opnd0->is_signed(), tors.getList(), cont);
     ASSERT0(cont->get_reg(0));
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
 }
 
@@ -1125,7 +1132,7 @@ void IR2OR::convertLSR(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     m_cg->buildShiftRight(sr1, opnd0->getTypeSize(m_tm),
                           sh_ofst, opnd0->is_signed(), tors.getList(), cont);
     ASSERT0(cont->get_reg(0));
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
 }
 
@@ -1160,7 +1167,7 @@ void IR2OR::convertLSL(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     m_cg->buildShiftLeft(sr1, opnd0->getTypeSize(m_tm), sh_ofst,
                          tors.getList(), cont);
     ASSERT0(cont->get_reg(0));
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
 }
 
@@ -1172,7 +1179,7 @@ void IR2OR::convertCvt(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     RecycORList tors(this);
     convertGeneralLoad(CVT_exp(ir), tors, cont);
     m_cg->buildTypeCvt(ir, CVT_exp(ir), tors.getList(), cont);
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
 }
 
@@ -1185,7 +1192,7 @@ void IR2OR::convertGoto(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     SR * tgt_lab = m_cg->genLabel(GOTO_lab(ir));
     RecycORList tors(this);
     m_cg->buildUncondBr(tgt_lab, tors.getList(), cont);
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
 }
 
@@ -1199,7 +1206,7 @@ void IR2OR::convertTruebr(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     convertRelationOp(br_det, ors, cont);
     RecycORList tors(this);
     m_cg->buildCondBr(m_cg->genLabel(BR_lab(ir)), ors.getList(), cont);
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
 }
 
@@ -1279,7 +1286,7 @@ void IR2OR::convertRelationOp(IR const* ir, OUT RecycORList & ors,
     }
 
     m_cg->buildCompare(t, is_truebr, sr0, sr1, tors.getList(), cont);
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
 
     cont->set_orcode(t); //record the orcode.
@@ -1329,7 +1336,7 @@ void IR2OR::convertIntrinsic(IR const* ir, OUT RecycORList & ors,
     }
     default: ASSERTN(0, ("Target Dependent Intrinsic Code"));
     }
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
 }
 
@@ -1372,7 +1379,7 @@ void IR2OR::convertCall(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
         ASSERT0(addr);
         getCG()->buildICall(addr, retv_sz, tors.getList(), cont);
     }
-    tors.copyDbx(ir);
+    tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
     convertReturnValue(ir, ors, cont);
 }
@@ -1396,6 +1403,7 @@ void IR2OR::convertRegion(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     SimpCtx simp(&oc);
     simp.setSimpCFS();
     rg->initPassMgr();
+    rg->initDbxMgr();
     rg->initIRMgr();
     rg->initIRBBMgr();
     rg->getIRSimp()->simplifyIRList(&simp);

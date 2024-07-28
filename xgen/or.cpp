@@ -108,24 +108,26 @@ void OR::clean()
     order = OR_ORDER_UNDEF;
     ubb = nullptr;
     OR_flag(this) = 0;
-    dbx.clean();
+    DbxMgr * dbx_mgr = ORBB_cg(OR_bb(this))->getDbxMgr();
+    ASSERT0(dbx_mgr);
+    dbx.clean(dbx_mgr);
     m_opnd.clean();
     m_result.clean();
 }
 
 
-void OR::copyDbx(Dbx const* dbx)
+void OR::copyDbx(Dbx const* dbx, DbxMgr * dbx_mgr)
 {
     if (dbx != nullptr) {
-        OR_dbx(this).copy(*dbx);
+        OR_dbx(this).copy(*dbx, dbx_mgr);
     }
 }
 
 
-void OR::copyDbx(IR const* ir)
+void OR::copyDbx(IR const* ir, DbxMgr * dbx_mgr)
 {
     ASSERT0(ir);
-    copyDbx(::getDbx(ir));
+    copyDbx(::getDbx(ir), dbx_mgr);
 }
 
 
@@ -134,7 +136,9 @@ void OR::clone(OR const* o, CG * cg)
     //DO NOT MODIFY 'id'.
     m_opnd.copy(o->m_opnd, cg->getORMgr()->get_pool());
     m_result.copy(o->m_result, cg->getORMgr()->get_pool());
-    dbx.copy(o->dbx);
+    DbxMgr * dbx_mgr = cg->getDbxMgr();
+    ASSERT0(dbx_mgr);
+    dbx.copy(o->dbx, dbx_mgr);
     code = o->code;
     order = OR_ORDER_UNDEF; //order in BB need to recompute.
     ubb = o->ubb;
@@ -178,9 +182,10 @@ void OR::dump(CG const* cg) const
 
 CHAR const* OR::dump(xcom::StrBuf & buf, CG const* cg) const
 {
-    if (xoc::g_dbx_mgr != nullptr && g_cg_dump_src_line) {
-        DbxMgr::PrtCtx prtctx;
-        xoc::g_dbx_mgr->printSrcLine(buf, &OR_dbx(this), &prtctx);
+    if (cg->getRegion()->getDbxMgr() != nullptr && g_cg_dump_src_line) {
+        DbxMgr::PrtCtx prtctx(LangInfo::LANG_CPP);
+        cg->getRegion()->getDbxMgr()->printSrcLine(
+            buf, &OR_dbx(this), &prtctx);
     }
     OR * pthis = const_cast<OR*>(this);
     if (cg->isDumpORId()) {
@@ -396,16 +401,18 @@ void OR::setLabelList(SR * v, CG * cg)
 //
 //START ORMgr
 //
-ORMgr::ORMgr(SRMgr * srmgr)
+void ORMgr::init(SRMgr * srmgr)
 {
+    if (m_pool != nullptr) { return; }
     ASSERT0(srmgr);
     m_sr_mgr = srmgr;
     m_pool = smpoolCreate(64, MEM_COMM);
 }
 
 
-void ORMgr::clean()
+void ORMgr::destroy()
 {
+    if (m_pool == nullptr) { return; }
     for (VecIdx i = ORID_UNDEF + 1; i <= get_last_idx(); i++) {
         OR * o = get(i);
         ASSERT0(o);
@@ -418,9 +425,10 @@ void ORMgr::clean()
 }
 
 
-OR * ORMgr::allocOR()
+OR * ORMgr::allocOR(CG * cg)
 {
-    return new OR();
+    ASSERT0(cg);
+    return new OR(cg->getDbxMgr());
 }
 
 
@@ -434,7 +442,7 @@ OR * ORMgr::genOR(OR_CODE ort, CG * cg)
 {
     OR * o = m_free_or_list.remove_head();
     if (o == nullptr) {
-        o = allocOR();
+        o = allocOR(cg);
         ASSERT0(ORID_UNDEF == 0);
         //Do not use ORID_UNDEF as index.
         UINT c = get_elem_count();

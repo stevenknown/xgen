@@ -35,14 +35,14 @@ void CLDbxMgr::printSrcLine(xoc::Dbx const* dbx, PrtCtx * ctx)
     ASSERT0(ctx && dbx);
     if (ctx->logmgr == nullptr) { return; }
 
-    UINT lineno = getLineNum(dbx);
+    UINT lineno = xoc::getLineNum(dbx, LangInfo::LANG_CPP, this);
     if (lineno == m_cur_lineno) {
         //It is dispensable that print the same souce file multiple times.
         return;
     }
 
     m_cur_lineno = lineno;
-    if (lineno == 0) {
+    if (lineno == DBX_UNDEF) {
         //No line number info recorded.
         if (ctx != nullptr && ctx->prefix != nullptr) {
             note(ctx->logmgr, "\n%s[0]\n", ctx->prefix);
@@ -54,7 +54,7 @@ void CLDbxMgr::printSrcLine(xoc::Dbx const* dbx, PrtCtx * ctx)
 
     if (g_hsrc != nullptr) {
         UINT srcline = CParser::mapRealLineToSrcLine(m_cur_lineno);
-        if (srcline == 0) {
+        if (srcline == DBX_UNDEF) {
             srcline = m_cur_lineno;
         }
         ASSERTN(srcline < OFST_TAB_LINE_SIZE, ("unexpected src line"));
@@ -74,13 +74,13 @@ void CLDbxMgr::printSrcLine(xoc::Dbx const* dbx, PrtCtx * ctx)
 void CLDbxMgr::printSrcLine(xcom::StrBuf & output, Dbx const* dbx, PrtCtx * ctx)
 {
     ASSERT0(ctx && dbx);
-    UINT lineno = getLineNum(dbx);
+    UINT lineno = xoc::getLineNum(dbx, LangInfo::LANG_CPP, this);
     if (lineno == m_cur_lineno) {
         //It is dispensable that print the same souce file multiple times.
         return;
     }
     m_cur_lineno = lineno;
-    if (lineno == 0) {
+    if (lineno == DBX_UNDEF) {
         //No line number info recorded.
         if (ctx != nullptr && ctx->prefix != nullptr) {
             output.strcat("\n%s[0]\n", ctx->prefix);
@@ -92,7 +92,7 @@ void CLDbxMgr::printSrcLine(xcom::StrBuf & output, Dbx const* dbx, PrtCtx * ctx)
 
     if (g_hsrc != nullptr) {
         UINT srcline = CParser::mapRealLineToSrcLine(m_cur_lineno);
-        if (srcline == 0) {
+        if (srcline == DBX_UNDEF) {
             srcline = m_cur_lineno;
         }
         ASSERTN(srcline < OFST_TAB_LINE_SIZE, ("unexpected src line"));

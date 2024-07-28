@@ -33,20 +33,26 @@ author: Su Zhenyu
 
 namespace xgen {
 
+#define SIX_PARTITION
+
 //
 //Instructions Partition
 //
 template <class Mat, class T> class InstructionPartition {
     COPY_CONSTRUCTOR(InstructionPartition);
+protected:
     CG * m_cg;
     ORBB * m_bb;
     RegFileSet * m_is_regfile_unique;
     DataDepGraph * m_ddg;
+    RMatMgr m_rmmgr;
 public:
     explicit InstructionPartition(CG * cg, ORBB * bb, DataDepGraph * ddg,
                                   RegFileSet * is_regfile_unique)
     { m_cg = cg; m_ddg = ddg; m_is_regfile_unique = is_regfile_unique;
       m_bb = bb; }
+
+    RMatMgr & getRMatMgr() { return m_rmmgr; }
 
     bool partition();
     void formulateTargetFunction(OUT Mat & tgtf,
@@ -82,8 +88,8 @@ public:
                                          UINT num_ors,
                                          UINT num_vars,
                                          UINT num_cst);
-    void format(OUT INTMat & sched_form,
-                OUT INTMat & icc_form,
+    void format(OUT IMat & sched_form,
+                OUT IMat & icc_form,
                 IN VarMap & vm,
                 IN Mat & sol,
                 UINT num_cycs,
@@ -133,7 +139,7 @@ void InstructionPartition<Mat, T>::formulateMustScheduleConstraints(
             tmp_eq.set(0, vm.map_or_cyc2varidx(o->id(), c), 1);
         }
         tmp_eq.set(0, cst_col, 1);
-        if (eq.size() == 0) {
+        if (eq.getSize() == 0) {
             eq = tmp_eq;
         } else {
             eq.growRow(tmp_eq);
@@ -160,7 +166,7 @@ void InstructionPartition<Mat, T>::formulateIssueConstraints(OUT Mat & leq,
         }
         iss_cs.set(c, cst_col, vm.get_issue_port_per_clust());
     }
-    if (leq.size() == 0) {
+    if (leq.getSize() == 0) {
         leq = iss_cs;
     } else {
         leq.growRow(iss_cs, 0, iss_cs.getRowSize() - 1);
@@ -198,7 +204,7 @@ void InstructionPartition<Mat, T>::formulateDependenceConstraints(
 
         //tmp_leq.set(0, cst_col, -(sim.getMinLatency(o) + 1));
         tmp_leq.set(0, cst_col, -1);
-        if (leq.size() == 0) {
+        if (leq.getSize() == 0) {
             leq = tmp_leq;
         } else {
             leq.growRow(tmp_leq);
@@ -218,7 +224,7 @@ void InstructionPartition<Mat, T>::formulateDependenceConstraints(
     //        tmp_leq.set(0, vm.map_or_cyc2varidx(opi, c), -c);
     //    }
     //    tmp_leq.set(0, cst_col, -estart);
-    //    if (leq.size() == 0) {
+    //    if (leq.getSize() == 0) {
     //        leq = tmp_leq;
     //    } else {
     //        leq.growRow(tmp_leq);
@@ -270,8 +276,8 @@ void InstructionPartition<Mat, T>::formulateInterClusterConstraints(
 
 
 template <class Mat, class T>
-void InstructionPartition<Mat, T>::format(OUT INTMat & sched_form,
-                                          OUT INTMat & icc_form,
+void InstructionPartition<Mat, T>::format(OUT IMat & sched_form,
+                                          OUT IMat & icc_form,
                                           IN VarMap & vm,
                                           IN Mat & sol,
                                           UINT num_cycs,
@@ -396,7 +402,7 @@ bool InstructionPartition<Mat, T>::partition()
         //                                 num_cycs, num_ops, num_vars,
         //                                 num_cst);
         if (num_icc_vars != 0) {
-            tgtf.insertColumnsBefore(cst_col, num_icc_vars);
+            tgtf.insertColumnsBefore(cst_col, num_icc_vars, getRMatMgr());
             tgtf.setCols(cst_col, cst_col + num_icc_vars, 1);
         }
 
@@ -410,7 +416,7 @@ bool InstructionPartition<Mat, T>::partition()
         //leq.dumpf();
         T minv;
         Mat res;
-#if 1
+#ifdef SIX_PARTITION
         START_TIMER(t, "Instruction Partition");
         SIX<Mat, T> six;
         if (SIX_SUCC != six.minm(minv, res, tgtf, vc, eq, leq,
@@ -422,16 +428,16 @@ bool InstructionPartition<Mat, T>::partition()
         res.dumpf();
 #else
         //TODO: enable MIP partition OR into multi-parts.
-        //MIP<Mat, T> ip;
-        //if (IP_SUCC != ip.minm(minv, res, tgtf, vc, eq, leq,
-        //                       true, nullptr, cst_col + num_icc_vars)) {
-        //    //There is no optimal solution.
-        //    break;
-        //}
-        //res.dumpf();
+        MIP<Mat, T> ip;
+        if (IP_SUCC != ip.minm(minv, res, tgtf, vc, eq, leq,
+                               true, nullptr, cst_col + num_icc_vars)) {
+            //There is no optimal solution.
+            break;
+        }
+        res.dumpf();
 #endif
-        INTMat sched_form;
-        INTMat icc_form;
+        IMat sched_form;
+        IMat icc_form;
         format(sched_form,
                icc_form,
                vm,

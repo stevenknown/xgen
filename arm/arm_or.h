@@ -36,8 +36,10 @@ author: Su Zhenyu
 //
 class ARMOR : public OR {
 public:
-    virtual LabelInfo const* getLabel() const;
-    virtual void set_pred(SR * v, CG * cg);
+    virtual LabelInfo const* getLabel() const override;
+    virtual void set_pred(SR * v, CG * cg) override;
+  public:
+    ARMOR(DbxMgr * dbx_mgr) : OR(dbx_mgr) {}
 };
 //END ARMOR
 
@@ -48,7 +50,7 @@ public:
 class ARMORMgr : public ORMgr {
     COPY_CONSTRUCTOR(ARMORMgr);
 protected:
-    virtual OR * allocOR();
+    virtual OR * allocOR(CG * cg) override;
 public:
     ARMORMgr(SRMgr * srmgr) : ORMgr(srmgr) {}
 };

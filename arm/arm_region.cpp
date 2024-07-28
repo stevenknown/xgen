@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 author: Su Zhenyu
 @*/
 #include "../xgen/xgeninc.h"
+#include "../xocc/cl_dbg.h"
 
 PassMgr * ARMRegion::allocPassMgr()
 {
@@ -124,6 +125,7 @@ bool ARMRegion::ARMHighProcess(OptCtx & oc)
     }
 
     initPassMgr();
+    initDbxMgr();
     initIRMgr();
     initIRBBMgr();
     HighProcessImpl(oc);
@@ -366,6 +368,12 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
     g_compute_pr_du_chain = org_compute_pr_du_chain;
     g_compute_nonpr_du_chain = org_compute_nonpr_du_chain;
     END_TIMER(t, "Middle Process Aggressive Analysis");
+}
+
+
+DbxMgr * ARMRegion::allocDbxMgr()
+{
+    return new xocc::CLDbxMgr();
 }
 
 

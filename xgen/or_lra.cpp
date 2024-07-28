@@ -6004,7 +6004,7 @@ bool LRA::coalescing(DataDepGraph & ddg, bool cp_any)
 }
 
 
-//Return ture if changed.
+//Return true if changed.
 //'handled': add OR to table if it has been handled.
 bool LRA::cse(MOD DataDepGraph & ddg, MOD ORIdTab & handled)
 {
@@ -6182,7 +6182,7 @@ bool LRA::cse(MOD DataDepGraph & ddg, MOD ORIdTab & handled)
 }
 
 
-//Return ture if there are ors removed.
+//Return true if there are ors removed.
 bool LRA::elimRedundantCopy(bool gra_enable)
 {
     bool removed = false;
@@ -7104,7 +7104,7 @@ bool LRA::preOpt(MOD DataDepGraph & ddg)
 }
 
 
-//Return ture if the optimal schedules were found.
+//Return true if the optimal schedules were found.
 bool LRA::optimal_partition(DataDepGraph & ddg,
                             RegFileSet & is_regfile_unique)
 {
@@ -7122,7 +7122,7 @@ bool LRA::optimal_partition(DataDepGraph & ddg,
     //ddg.dump_graph(DDG_DUMP_OP_INFO, -1, name);
     InstructionPartition<xcom::RMat, xcom::Rational> ip(m_cg, m_bb, &ddg,
                                                         &is_regfile_unique);
-    //InstructionPartition<xcom::FloatMat, xcom::Float> ip;
+    //InstructionPartition<xcom::FMat, xcom::Float> ip;
     return ip.partition();
 }
 

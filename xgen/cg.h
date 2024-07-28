@@ -130,6 +130,7 @@ protected:
     UINT m_mmd_count;
     UINT m_or_bb_idx; //take count of ORBB.
     xoc::Region * m_rg;
+    xoc::DbxMgr * m_dbx_mgr;
     ORMgr * m_or_mgr;
     xoc::TypeMgr * m_tm;
     xoc::VarMgr * m_vm;
@@ -660,6 +661,9 @@ public:
     SR * genOne() { return genIntImm((HOST_INT)1, false); }
 
     Region * getRegion() const { return m_rg; }
+    TargInfoMgr * getTargInfoMgr() const
+    { return m_rg->getRegionMgr()->getTargInfoMgr(); }
+
     //Generate dedicated register by specified physical register.
     SR * genDedicatedReg(Reg phy_reg);
     //Get dedicated register by specified physical register.
@@ -694,6 +698,8 @@ public:
                                                 bool has_call,
                                                 OUT ORList & ors);
     void generateFuncUnitDedicatedCode();
+
+    DbxMgr * getDbxMgr() { ASSERT0(m_dbx_mgr); return m_dbx_mgr; }
     ORCFG * getORCFG() const { return m_or_cfg; }
     xoc::TypeMgr * getTypeMgr() const { return m_tm; }
     xoc::VarMgr * getVarMgr() const { return m_vm; }

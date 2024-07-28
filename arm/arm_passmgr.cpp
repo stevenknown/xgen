@@ -63,3 +63,25 @@ Pass * ARMPassMgr::allocLinearScanRA()
     return nullptr;
     #endif
 }
+
+
+Pass * ARMPassMgr::allocCalcDerivative()
+{
+    #if defined REF_TARGMACH_INFO || defined FOR_IP
+    return new ARMDerivative(m_rg);
+    #else
+    ASSERTN(0, ("Target Dependent Code"));
+    return nullptr;
+    #endif
+}
+
+
+Pass * ARMPassMgr::allocIRMgr()
+{
+    #if defined REF_TARGMACH_INFO || defined FOR_IP
+    return new ARMIRMgr(m_rg);
+    #else
+    ASSERTN(0, ("Target Dependent Code"));
+    return nullptr;
+    #endif
+}

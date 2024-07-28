@@ -1513,7 +1513,8 @@ UINT DataDepGraph::computeEstartAndLstart(BBSimulator const& sim,
 void DataDepGraph::simplifyGraph()
 {
     Vector<Vertex*> vex_vec; //it is in dense storage.
-    sortInTopologOrder(vex_vec);
+    bool succ = sortInTopologOrder(vex_vec);
+    ASSERT0_DUMMYUSE(succ);
     TMap<UINT, UINT> vid2pos_in_bitset_map;
     //Mapping vertex id to its position in 'vex_vec'.
     VecIdx i;

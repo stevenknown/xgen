@@ -68,17 +68,17 @@ void ARMRegSetImpl::initDebugRegSet()
 void ARMRegSetImpl::initRegSet()
 {
     //Do more initializations for ARM targinfo.
-    if (getTIMgr().getCallee() != nullptr) {
-        m_avail_allocable.bunion(*getTIMgr().getCallee());
+    if (getTIMgr().getCalleeScalarRegSet() != nullptr) {
+        m_avail_allocable.bunion(*getTIMgr().getCalleeScalarRegSet());
     }
-    if (getTIMgr().getVectorCallee() != nullptr) {
-        m_avail_allocable.bunion(*getTIMgr().getVectorCallee());
+    if (getTIMgr().getCalleeVectorRegSet() != nullptr) {
+        m_avail_allocable.bunion(*getTIMgr().getCalleeVectorRegSet());
     }
-    if (getTIMgr().getCaller() != nullptr) {
-        m_avail_allocable.bunion(*getTIMgr().getCaller());
+    if (getTIMgr().getCallerScalarRegSet() != nullptr) {
+        m_avail_allocable.bunion(*getTIMgr().getCallerScalarRegSet());
     }
-    if (getTIMgr().getVectorCaller() != nullptr) {
-        m_avail_allocable.bunion(*getTIMgr().getVectorCaller());
+    if (getTIMgr().getCallerVectorRegSet() != nullptr) {
+        m_avail_allocable.bunion(*getTIMgr().getCallerVectorRegSet());
     }
 }
 

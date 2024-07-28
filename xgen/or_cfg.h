@@ -52,7 +52,7 @@ protected:
 
     virtual void recomputeDomInfo(MOD OptCtx & oc) { DUMMYUSE(oc); }
 public:
-    ORCFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg);
+    ORCFG(List<ORBB*> * bbl, CG * cg);
     virtual ~ORCFG() {}
     virtual void addBB(ORBB * bb);
 

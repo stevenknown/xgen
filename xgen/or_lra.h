@@ -751,7 +751,7 @@ public:
     void choose_regfile(IN LifeTime * lt, MOD ClustRegInfo cri[CLUST_NUM],
                         IN LifeTimeMgr & mgr, IN DataDepGraph & ddg,
                         IN RegFileAffinityGraph & rdg);
-    //Return ture if changed.
+    //Return true if changed.
     //'handled': add OR to table if it has been handled.
     bool cse(MOD DataDepGraph & ddg, MOD ORIdTab & handled);
     void coalesceCopy(OR * o, DataDepGraph & ddg, bool * is_resch);

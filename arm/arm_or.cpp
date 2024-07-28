@@ -33,10 +33,12 @@ author: Su Zhenyu
 //
 //START ARMORMgr
 //
-OR * ARMORMgr::allocOR()
+OR * ARMORMgr::allocOR(xgen::CG * cg)
 {
-    return new ARMOR();
+    ASSERT0(cg);
+    return new ARMOR(cg->getDbxMgr());
 }
+
 
 void ARMOR::set_pred(SR * v, CG * cg)
 {

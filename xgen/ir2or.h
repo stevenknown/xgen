@@ -168,6 +168,7 @@ protected:
     TypeMgr * m_tm; //Data manager.
     IRMgr * m_irmgr;
     CG * m_cg; //Code generator.
+    xoc::DbxMgr * m_dbx_mgr;
     CGMgr * m_cgmgr; //Code generator mananger.
     RecycORListMgr m_recyc_orlist_mgr;
 protected:
@@ -482,16 +483,17 @@ public:
     { ASSERTN(0, ("Target Dependent Code")); }
     virtual void convertExtStmt(IR const*, OUT RecycORList &, MOD IOC *)
     { ASSERTN(0, ("Target Dependent Code")); }
-    void copyDbx(OR * o, IR const* ir)
+    void copyDbx(OR * o, IR const* ir, DbxMgr * dbx_mgr)
     {
         Dbx * d = ::getDbx(ir);
-        if (d != nullptr) { OR_dbx(o).copy(*d); }
+        if (d != nullptr) { OR_dbx(o).copy(*d, dbx_mgr); }
     }
     void convertToORList(OUT RecycORList & or_list);
     virtual void convert(IR const* ir, OUT RecycORList & ors, MOD IOC * cont);
 
     RecycORListMgr * getRecycORListMgr() { return &m_recyc_orlist_mgr; }
     CG * getCG() const { return m_cg; }
+    DbxMgr * getDbxMgr() { ASSERT0(m_dbx_mgr); return m_dbx_mgr; }
     Var const* getBuiltinVar(BUILTIN_TYPE bt) const
     { return m_cgmgr->getBuiltinVar(bt); }
 

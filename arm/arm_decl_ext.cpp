@@ -28,27 +28,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-//Defined the entry for extended ir code.
-//In order to conform the compatibility of origin IR code, user can undef
-//original SWITCH_CASE_<NAME>, then redefine the same MACRO with new IR code
-//and followed by origin IR code.
-#define SWITCH_CASE_ML_CODE \
-    SWITCH_CASE_ML_EXT_UNA: \
-    case IR_CONV: \
-    case IR_CONV_OPND_GRAD
 
-//Defined the entry for extended expression ir code.
-#undef SWITCH_CASE_EXT_EXP
-#define SWITCH_CASE_EXT_EXP \
-    case IR_BROADCAST: \
-    SWITCH_CASE_ML_CODE
+#include "../xgen/xgeninc.h"
 
-#undef SWITCH_CASE_EXT_UNA
-#define SWITCH_CASE_EXT_UNA SWITCH_CASE_ML_EXT_UNA
+//Dump function.
+void CConv::accDump(IR const* ir, Region const* rg, IRDumpCtx & ctx)
+{
+    return dumpConv(ir, rg, ctx);
+}
 
-//Defined the entry for extended expression unary code.
-#define SWITCH_CASE_ML_EXT_UNA \
-    case IR_RELU: \
-    case IR_SOFTMAX: \
-    case IR_SIGMOID: \
-    case IR_TANH
+
+//Dump function.
+void CConvOpndGrad::accDump(IR const* ir, Region const* rg, IRDumpCtx & ctx)
+{
+    return dumpConvOpndGrad(ir, rg, ctx);
+}

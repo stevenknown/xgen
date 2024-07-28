@@ -35,11 +35,13 @@ class ARMPassMgr : public PassMgr {
 public:
     ARMPassMgr(Region * rg) : PassMgr(rg) {}
     virtual ~ARMPassMgr() {}
-    virtual Pass * allocDUMgr();
-    virtual Pass * allocScalarOpt();
-    virtual Pass * allocRefine();
-    virtual Pass * allocLinearScanRA();
-    virtual Pass * allocIRSimp();
+    virtual Pass * allocDUMgr() override;
+    virtual Pass * allocScalarOpt() override;
+    virtual Pass * allocRefine() override;
+    virtual Pass * allocLinearScanRA() override;
+    virtual Pass * allocCalcDerivative() override;
+    virtual Pass * allocIRSimp() override;
+    virtual Pass * allocIRMgr() override;
 };
 
 #endif

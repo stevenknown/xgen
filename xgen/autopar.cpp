@@ -440,7 +440,8 @@ static void modifyBB(MOD ORBB * bb,
         LOOPINFO_trip_count_sr(orig_loop_info) =
             m_cg->gen_imm(new_trip_count_val, SR_size(trip_count_sr));
         //Generate new IR to describe actually trip count.
-        IR * new_trip_count = m_rg->buildConst(opc_intconst, new_trip_count_val);
+        IR * new_trip_count =
+            m_rg->buildConst(opc_intconst, new_trip_count_val);
         orig_loopinfo->setLoopTrip(new_trip_count);
     } else {
         LOOPINFO_trip_count_sr(orig_loop_info) = nullptr;
@@ -679,7 +680,7 @@ static SR * genTripCount(IN SR * lb_sr, IN SR * ub_sr, MOD ORBB * bb)
 //        ***BB3**
 //        L1:
 //        cmp j < 9 //9 is trip_count
-//        B_if_fasle L2
+//        B_if_false L2
 //        ***orig ORBB**
 //        do {
 //            ...

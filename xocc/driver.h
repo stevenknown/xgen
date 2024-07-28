@@ -94,11 +94,9 @@ protected:
 
     CLRegionMgr * initRegionMgr();
     void initCompile(CHAR const* fn, OUT CLRegionMgr ** rm,
-                     OUT FileObj & asmfo, OUT CGMgr ** cgmgr,
-                     OUT TargInfo ** ti);
+                     OUT FileObj & asmfo, OUT CGMgr ** cgmgr);
 
-    void finiCompile(CLRegionMgr * rm, FileObj & asmfo, CGMgr * cgmgr,
-                     TargInfo * ti);
+    void finiCompile(CLRegionMgr * rm, FileObj & asmfo, CGMgr * cgmgr);
 
     UINT runFrontEnd(RegionMgr * rm, CParser & parser);
 public:

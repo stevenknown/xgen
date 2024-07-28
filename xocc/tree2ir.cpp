@@ -2494,7 +2494,8 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
         }
         t = TREE_nsib(t);
         if (ir != nullptr) {
-            if (getLineNum(ir) == 0) {
+            if (xoc::getLineNum(ir, LangInfo::LANG_CPP,
+                                m_rg->getDbxMgr()) == 0) {
                 xoc::setLineNum(ir, lineno, m_rg);
             }
             xcom::add_next(&ir_list, ir);
@@ -2679,11 +2680,12 @@ bool CScope2IR::convertTreeStmtList(xfe::Tree * stmts, Region * rg,
     RC_maintain_du(rc) = false; //DU still not ready.
 
     rg->initPassMgr(); //Optimizations needs PassMgr.
+    rg->initDbxMgr();
     rg->initIRMgr();
     rg->initIRBBMgr();
     xoc::Refine * rf = (Refine*)rg->getPassMgr()->registerPass(PASS_REFINE);
     bool change_refine = false;
-    irs = rf->refineIRlist(irs, change_refine, rc);
+    irs = rf->refineIRList(irs, change_refine, rc);
     ASSERT0(xoc::verifyIRList(irs, nullptr, rg));
     ASSERT0(irs);
     rg->addToIRList(irs);
@@ -2722,6 +2724,7 @@ bool CScope2IR::generateFuncRegion(Decl * dcl, OUT CLRegionMgr * rm)
     r->setRegionVar(rvar);
     r->initAttachInfoMgr();
     r->initPassMgr();
+    r->initDbxMgr();
     r->initIRMgr();
     r->initIRBBMgr();
     REGION_is_expect_inline(r) = dcl->is_inline();
@@ -2806,6 +2809,7 @@ bool CScope2IR::generateScope(Scope const* s)
     program->registerGlobalVAR();
     program->initAttachInfoMgr();
     program->initPassMgr();
+    program->initDbxMgr();
     program->initIRMgr();
     program->initIRBBMgr();
     m_rm->addToRegionTab(program);

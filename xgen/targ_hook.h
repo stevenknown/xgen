@@ -52,6 +52,9 @@ author: Su Zhenyu
 #elif defined(FOR_JS)
 #include "../js/js.h"
 
+#elif defined(FOR_TECO)
+#include "../teco/teco.h"
+
 #else
 #error "No target hook info"
 #endif

@@ -2864,7 +2864,7 @@ void ARMCG::expandFakeStore(IN OR * o, OUT IssuePackageList * ipl)
     ORList ors;
     IOC cont;
     buildAdd(base, ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
-    ors.copyDbx(&OR_dbx(o));
+    ors.copyDbx(&OR_dbx(o), getDbxMgr());
 
     ASSERT0(ors.get_elem_count() == 1);
     OR * last = ors.get_tail();
@@ -2915,7 +2915,7 @@ void ARMCG::expandFakeSpadjust(IN OR * o, OUT IssuePackageList * ipl)
     } else {
         UNREACHABLE();
     }
-    ors.copyDbx(&OR_dbx(o));
+    ors.copyDbx(&OR_dbx(o), getDbxMgr());
 
     if (ors.get_elem_count() == 1) {
         // add sr66 <--tp, sp, #Imm10
@@ -3037,7 +3037,7 @@ void ARMCG::expandFakeLoad(IN OR * o, OUT IssuePackageList * ipl)
     ORList ors;
     IOC cont;
     buildAdd(sr3, ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
-    ors.copyDbx(&OR_dbx(o));
+    ors.copyDbx(&OR_dbx(o), getDbxMgr());
 
     ASSERT0(ors.get_elem_count() == 1);
     OR * last = ors.remove_tail();
@@ -3087,7 +3087,7 @@ void ARMCG::expandFakeMultiLoad(IN OR * o, OUT IssuePackageList * ipl)
     ORList ors;
     IOC cont;
     buildAdd(sr3, ofst, GENERAL_REGISTER_SIZE, true, ors, &cont);
-    ors.copyDbx(&OR_dbx(o));
+    ors.copyDbx(&OR_dbx(o), getDbxMgr());
     ASSERT0(ors.get_elem_count() == 1);
 
     OR * last = ors.remove_tail();
@@ -3106,7 +3106,7 @@ void ARMCG::expandFakeMultiLoad(IN OR * o, OUT IssuePackageList * ipl)
     OR * ldrd = buildOR(OR_ldrd_i8, 2, 3, sr1, sr2,
                         o->get_pred(), sr1, genIntImm(0, false));
     ldrd->set_pred(o->get_pred(), this);
-    OR_dbx(ldrd).copy(OR_dbx(o));
+    OR_dbx(ldrd).copy(OR_dbx(o), getDbxMgr());
 
     IssuePackage * ip = m_ip_mgr.allocIssuePackage();
     ip->set(SLOT_G, ldrd, this);
@@ -3159,8 +3159,8 @@ void ARMCG::expandFakeMov32(IN OR * o, OUT IssuePackageList * ipl)
     }
 
     ASSERT0(low && high);
-    OR_dbx(low).copy(OR_dbx(o));
-    OR_dbx(high).copy(OR_dbx(o));
+    OR_dbx(low).copy(OR_dbx(o), getDbxMgr());
+    OR_dbx(high).copy(OR_dbx(o), getDbxMgr());
     IssuePackage * ip = m_ip_mgr.allocIssuePackage();
     ip->set(SLOT_G, low, this);
     ipl->append_tail(ip, getIssuePackageMgr());
@@ -3203,7 +3203,7 @@ void ARMCG::expandFakeShift(IN OR * o, OUT IssuePackageList * ipl)
         OR * mv = ors.get_tail();
         ASSERT0(mv && ors.get_elem_count() == 1);
         mv->set_pred(o->get_pred(), this);
-        OR_dbx(mv).copy(OR_dbx(o));
+        OR_dbx(mv).copy(OR_dbx(o), getDbxMgr());
 
         if (OR_is_fake(mv)) {
             expandFakeOR(mv, ipl);
@@ -3279,7 +3279,7 @@ void ARMCG::expandFakeOR(IN OR * o, OUT IssuePackageList * ipl)
             OR * mv = ors.get_tail();
             ASSERT0(mv && ors.get_elem_count() == 1);
             mv->set_pred(o->get_pred(), this);
-            OR_dbx(mv).copy(OR_dbx(o));
+            OR_dbx(mv).copy(OR_dbx(o), getDbxMgr());
 
             if (OR_is_fake(mv)) {
                 expandFakeOR(mv, ipl);

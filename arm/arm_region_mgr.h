@@ -47,6 +47,8 @@ public:
     virtual VarMgr * allocVarMgr();
     virtual TargInfo * allocTargInfo();
 
+    virtual bool checkIRSwitchCaseInterface(IR_CODE c) const override;
+
     void initAsmFileHandler(FILE * asmh) { m_asmfile = asmh; }
 
     FILE * getAsmFileHandler() const { return m_asmfile; }

@@ -54,7 +54,6 @@ public:
         //possible which may be illegal, it need rescheduling to fixup.
         SCH_ALLOW_RESCHED = 0x20,
     };
-
 protected:
     UINT m_sch_mode:31;
     UINT m_or_changed:1;
@@ -135,11 +134,8 @@ public:
     //Verficiation of instruction hazard, and change slot of o if possible.
     //Return true if 'o' can be issued at 'to_slot'.
     //The verification includes hardware resource, instrcution hazard, etc.
-    bool makeIssued(OR * o,
-                    OR * issue_ors[SLOT_NUM],
-                    SLOT to_slot,
-                    bool is_change_slot,
-                    OR * conflict_ors[SLOT_NUM]);
+    bool makeIssued(OR * o, OR * issue_ors[SLOT_NUM], SLOT to_slot,
+                    bool is_change_slot, OR * conflict_ors[SLOT_NUM]);
 
     void destroy();
     virtual INT dcache_miss_rate(OR const* o) const;
@@ -163,6 +159,7 @@ public:
     //Return the Branch Operation.
     OR * get_br() const { return m_bb->getBranchOR(); }
     ORBB * getBB() const { return m_bb; }
+
     //Get simulated machine
     BBSimulator const* get_simm() const { return m_sim; }
 
@@ -172,9 +169,9 @@ public:
     virtual UINT getAddendOfMaxTryTime() const { return 0; }
 
     void init(ORBB * bb, DataDepGraph & ddg, BBSimulator * sim, UINT sch_mode);
+
     //Return true if OR can be issued at given slot.
-    virtual bool isValidResourceUsage(OR const*,
-                                      SLOT slot,
+    virtual bool isValidResourceUsage(OR const*, SLOT slot,
                                       OR * issue_ors[SLOT_NUM],
                                       OR * conflict_ors[SLOT_NUM]) const
     {
@@ -186,8 +183,7 @@ public:
     }
 
     bool isIssueCand(OR const* o) const;
-    bool isFuncUnitOccupied(UnitSet const& us,
-                            CLUST clst,
+    bool isFuncUnitOccupied(UnitSet const& us, CLUST clst,
                             OR const* const issue_ors [SLOT_NUM]) const;
 
     virtual SLOT rollBackORs(bool be_changed[SLOT_NUM],
@@ -199,22 +195,23 @@ public:
 
     //Find valid OR that can be issued at slot.
     //Return true if avaiable issue ors found.
-    //'cand_list': list of candidate operations which
-    //             can be issue at this cycle. Element in list may be changed.
-    //'slot': slot need to fill
-    //'issue_or': record issued ors selected.
-    //'change_slot': set to true indicate the routine allows modification
-    //  of operations in other slot. Note that the modification may
-    //  change the function unit of operation.
+    //cand_list: list of candidate operations which can be issue at this cycle.
+    //    Element in list may be changed.
+    //slot: slot need to fill
+    //issue_or: record issued ors selected.
+    //change_slot: set to true indicate the routine allows modification
+    //    of operations in other slot. Note that the modification may
+    //    change the function unit of operation.
     //Note this functio will attempt to change OR's slot if possible.
-    virtual bool selectIssueOR(OUT PreemptiveORList & cand_list,
-                               SLOT slot,
-                               OUT OR * issue_ors[SLOT_NUM],
-                               bool change_slot);
+    virtual bool selectIssueOR(OUT PreemptiveORList & cand_list, SLOT slot,
+                               OUT OR * issue_ors[SLOT_NUM], bool change_slot);
+
     //Set simulator.
     void set_simm(BBSimulator * sim) { m_sim = sim; }
+
     //Set scheduling mode.
     void set_sch_mode(UINT sch_mode) { m_sch_mode = sch_mode; }
+
     //Set unique register file information.
     void set_unique_regfile(RegFileSet const* is_regfile_unique)
     { m_is_regfile_unique = is_regfile_unique; }

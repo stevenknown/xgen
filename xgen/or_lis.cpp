@@ -229,16 +229,15 @@ OR * LIS::selectBestOR(ORTab & cand_tab, SLOT slot)
 
 //Find valid OR that can be issued at slot.
 //Return true if avaiable issue ors found.
-//'cand_list': list of candidate operations which can be issue at this cycle.
-//'slot': slot need to fill
-//'issue_or': record issued ors selected.
-//'change_slot': set to true indicate the routine allows modification
+//cand_list: list of candidate operations which can be issue at this cycle.
+//slot: slot need to fill
+//issue_or: record issued ors selected.
+//change_slot: set to true indicate the routine allows modification
 //  of operations in other slot. Note that the modification may
 //  change the function unit of operation.
 //Note this functio will attempt to change OR's slot if possible.
 bool LIS::selectIssueOR(IN PreemptiveORList & cand_list, //OR may be changed
-                        SLOT slot,
-                        OUT OR * issue_ors[SLOT_NUM],
+                        SLOT slot, OUT OR * issue_ors[SLOT_NUM],
                         bool change_slot)
 {
     ASSERTN(m_pool, ("uninitialized"));
@@ -287,8 +286,7 @@ void LIS::updateIssueORs(MOD PreemptiveORList & cand_list,
 //        {Load  | nop}
 //    after roll back:
 //        {Load  | Mul}
-SLOT LIS::rollBackORs(bool be_changed[SLOT_NUM],
-                      OR * issue_ors[SLOT_NUM],
+SLOT LIS::rollBackORs(bool be_changed[SLOT_NUM], OR * issue_ors[SLOT_NUM],
                       SLOT to_slot)
 {
     ASSERT0(issue_ors[to_slot] == nullptr);

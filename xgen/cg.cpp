@@ -86,6 +86,8 @@ CG::CG(xoc::Region * rg, CGMgr * cgmgr): m_ip_mgr(self())
     ASSERTN(rg, ("Code generation requires region info."));
     ASSERT0(cgmgr);
     m_rg = rg;
+    m_dbx_mgr = m_rg->getDbxMgr();
+    ASSERT0(m_dbx_mgr);
     m_cgmgr = cgmgr;
     m_tm = rg->getTypeMgr();
     m_vm = rg->getVarMgr();
@@ -637,7 +639,7 @@ void CG::buildTypeCvt(SR * src, UINT tgt_size, UINT src_size, bool is_signed,
             tgt_high = genReg();
             buildMove(tgt_high, genZero(), tors, &tc);
         }
-        tors.copyDbx(dbx);
+        tors.copyDbx(dbx, getDbxMgr());
         ors.move_tail(tors);
         cont->set_reg(0, tgt_low);
         getSRVecMgr()->genSRVec(2, tgt_low, tgt_high);
@@ -680,7 +682,7 @@ static void buildLdaViaReg(Dbx const* dbx, SR * base, SR * ofst, CG * cg,
     OR * addu = tors.get_head();
     OR_is_need_compute_var_ofst(addu) = true;
     if (dbx != nullptr) {
-        OR_dbx(addu).copy(*dbx);
+        OR_dbx(addu).copy(*dbx, cg->getDbxMgr());
     }
     ors.append_tail(addu);
     SR * res = tmp.get_reg(0);
@@ -760,7 +762,7 @@ static void buildLdaForGlobalVar(Dbx const* dbx, xoc::Var const* var,
     #endif
 
     //Transfer the debug information.
-    tors.copyDbx(dbx);
+    tors.copyDbx(dbx, cg->getDbxMgr());
     ors.move_tail(tors);
     ASSERT0(cont);
     ASSERT0(cont->get_reg(0) && cont->get_reg(0)->is_reg());
@@ -787,7 +789,7 @@ static void buildLdaForLocalVar(Dbx const* dbx, SR * base, SR * ofst, CG * cg,
     }
 
     //Transfer the debug information.
-    tors.copyDbx(dbx);
+    tors.copyDbx(dbx, cg->getDbxMgr());
     ors.move_tail(tors);
     ASSERT0(cont);
 
@@ -919,7 +921,7 @@ bool CG::isGRAEnable() const
 
 ORCFG * CG::allocORCFG()
 {
-    return new ORCFG(C_SEME, getORBBList(), this);
+    return new ORCFG(getORBBList(), this);
 }
 
 
@@ -2466,7 +2468,7 @@ void CG::passArgVariant(ArgDescMgr * argdescmgr, OUT ORList & ors, UINT num,
         tmp.clean();
         tors.clean();
         passArg(argval, argaddr, argsz, argdescmgr, tors, &tmp);
-        tors.copyDbx(dbx);
+        tors.copyDbx(dbx, getDbxMgr());
         ors.move_tail(tors);
     }
     va_end(ptr);
@@ -2593,7 +2595,7 @@ void CG::storeArgToStack(ArgDescMgr * argdescmgr, OUT ORList & ors, IN IOC *)
                        genIntImm((HOST_INT)desc->tgt_ofst, false),
                        false, tors, &tc);
         }
-        tors.copyDbx(desc->arg_dbx);
+        tors.copyDbx(desc->arg_dbx, getDbxMgr());
         ors.move_tail(tors);
     }
 }
@@ -3395,7 +3397,7 @@ void CG::generateFuncUnitDedicatedCodeForEntryBB(List<ORBB*> const& entry_lst,
             IOC tc1;
             IOC_mem_byte_size(&tc1) = GENERAL_REGISTER_SIZE;
             buildStore(sr, loc, 0, false, ors, &tc1);
-            ors.copyDbx(dbx);
+            ors.copyDbx(dbx, getDbxMgr());
             ORBB_orlist(bb)->append_head(ors);
         }
 
@@ -3405,7 +3407,7 @@ void CG::generateFuncUnitDedicatedCodeForEntryBB(List<ORBB*> const& entry_lst,
         IOC_int_imm(&tc2) = 0;
         buildSpadjust(ors, &tc2);
         ASSERTN(ors.get_elem_count() == 1, ("at most one spadjust operation."));
-        ors.copyDbx(dbx);
+        ors.copyDbx(dbx, getDbxMgr());
         ORBB_orlist(bb)->append_head(ors);
         ORBB_entry_spadjust(bb) = ors.get_head();
     }
@@ -3435,7 +3437,7 @@ void CG::generateFuncUnitDedicatedCodeForExitBB(List<ORBB*> const& exit_lst,
             IOC tc2;
             IOC_mem_byte_size(&tc2) = GENERAL_REGISTER_SIZE;
             buildLoad(sr, loc, 0, false, ors, &tc2);
-            ors.copyDbx(dbx);
+            ors.copyDbx(dbx, getDbxMgr());
             if (last_or != nullptr &&
                 (OR_is_call(last_or) ||
                  OR_is_cond_br(last_or) ||
@@ -3452,7 +3454,7 @@ void CG::generateFuncUnitDedicatedCodeForExitBB(List<ORBB*> const& exit_lst,
         IOC tc2;
         IOC_int_imm(&tc2) = 0;
         buildSpadjust(ors, &tc2);
-        ors.copyDbx(dbx);
+        ors.copyDbx(dbx, getDbxMgr());
         ASSERTN(ors.get_elem_count() == 1, ("at most one spadjust operation."));
         if (last_or != nullptr &&
             (OR_is_call(last_or) ||

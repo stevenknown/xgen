@@ -33,15 +33,14 @@ author: Su Zhenyu
 namespace xgen {
 
 //ORCFG
-ORCFG::ORCFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
+ORCFG::ORCFG(List<ORBB*> * bbl, CG * cg)
     : xoc::OptimizedCFG<ORBB, OR>(bbl)
 {
     m_cg = cg;
     setBitSetMgr(cg->getBitSetMgr());
-
-    if (m_bb_list->get_elem_count() == 0) {
-        return;
-    }
+    m_entry = nullptr;
+    m_exit_list.clean();
+    if (m_bb_list->get_elem_count() == 0) { return; }
 
     //Append bb list to vector and base graph
     ASSERT0(m_bb_vec.get_last_idx() == VEC_UNDEF);
@@ -57,38 +56,18 @@ ORCFG::ORCFG(CFG_SHAPE cs, List<ORBB*> * bbl, CG * cg)
         }
     }
 
-    switch (cs) {
-    case C_SESE: {  //single entry, single exit
-        //The first bb in list is the entry node
-        m_entry = m_bb_list->get_head();
-        ASSERT0(m_entry->getVex()->getInDegree() == 0);
-        ORBB_is_entry(m_entry) = true;
+    //CFG is always single entry, multiple exits.
+    //The first BB in list is the entry node.
+    m_entry = m_bb_list->get_head();
+    ASSERT0(m_entry->getVex()->getInDegree() == 0);
+    ORBB_is_entry(m_entry) = true;
 
-        //create exit bb
-        ORBB * exitbb = m_cg->allocBB();
-        ASSERT0(exitbb->getVex()->getOutDegree() == 0);
-        ORBB_is_exit(exitbb) = true;
-        addBB(exitbb);
-        m_bb_list->append_tail(exitbb);
-        m_exit_list.append_head(exitbb);
-        break;
-    }
-    case C_SEME: { //single entry, multi exit
-        //The first bb in list is the entry node
-        m_entry = m_bb_list->get_head();
-        ASSERT0(m_entry->getVex()->getInDegree() == 0);
-        ORBB_is_entry(m_entry) = 1;
-
-        //Collect exit BB.
-        for (ORBB * bb = m_bb_list->get_head();
-             bb != nullptr; bb = m_bb_list->get_next()) {
-            if (ORBB_is_exit(bb)) {
-                m_exit_list.append_tail(bb);
-            }
+    //Collect exit BBs.
+    for (ORBB * bb = m_bb_list->get_head();
+         bb != nullptr; bb = m_bb_list->get_next()) {
+        if (ORBB_is_exit(bb)) {
+            m_exit_list.append_tail(bb);
         }
-        break;
-    }
-    default: ASSERTN(0, ("strang shape of CFG"));
     }
 }
 

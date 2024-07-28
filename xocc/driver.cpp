@@ -277,6 +277,7 @@ CLRegionMgr * Compiler::initRegionMgr()
 {
     CLRegionMgr * rm = allocCLRegionMgr();
     rm->initVarMgr();
+    rm->initIRDescFlagSet();
     rm->initTargInfo();
     return rm;
 }
@@ -284,28 +285,24 @@ CLRegionMgr * Compiler::initRegionMgr()
 
 void Compiler::initCompile(
     CHAR const* fn, OUT CLRegionMgr ** rm, OUT FileObj & asmfo,
-    OUT CGMgr ** cgmgr, OUT TargInfo ** ti)
+    OUT CGMgr ** cgmgr)
 {
     *rm = initRegionMgr();
     *cgmgr = xgen::allocCGMgr(*rm);
     createAsmFileHandler(asmfo, fn);
-    *ti = (*rm)->getTargInfo();
     (*cgmgr)->setAsmFileHandler(asmfo.getFileHandler());
     (*rm)->setCGMgr(*cgmgr);
 }
 
 
 void Compiler::finiCompile(
-    CLRegionMgr * rm, FileObj & asmfo, CGMgr * cgmgr, TargInfo * ti)
+    CLRegionMgr * rm, FileObj & asmfo, CGMgr * cgmgr)
 {
     if (cgmgr != nullptr) {
         delete cgmgr;
     }
     if (rm != nullptr) {
         delete rm;
-    }
-    if (ti != nullptr) {
-        delete ti;
     }
     asmfo.destroy();
 }
@@ -348,11 +345,10 @@ bool Compiler::compileGRFile(CHAR const* fn)
     START_TIMER_FMT(t, ("Compile GR File '%s'", fn));
     ASSERT0(fn);
     bool res = true;
-    xoc::TargInfo * ti = nullptr;
     xocc::CLRegionMgr * rm = nullptr;
     FileObj asmfo;
     xgen::CGMgr * cgmgr = nullptr;
-    initCompile(fn, &rm, asmfo, &cgmgr, &ti);
+    initCompile(fn, &rm, asmfo, &cgmgr);
     if (g_dump_file_name != nullptr) {
         rm->getLogMgr()->init(g_dump_file_name, true);
     }
@@ -380,7 +376,7 @@ bool Compiler::compileGRFile(CHAR const* fn)
 FIN:
     destructPRSSAForAllRegion(rm);
     END_TIMER_FMT(t, ("Total Time To Compile '%s'", fn));
-    finiCompile(rm, asmfo, cgmgr, ti);
+    finiCompile(rm, asmfo, cgmgr);
     show_err();
     show_warn();
     xoc::prt2C("\n%s - (%d) error(s), (%d) warnging(s)\n",
@@ -396,11 +392,10 @@ bool Compiler::compileCFile(CHAR const* fn)
 {
     START_TIMER_FMT(t, ("Compile C File '%s'", fn));
     bool succ = true;
-    xoc::TargInfo * ti = nullptr;
     xocc::CLRegionMgr * rm = nullptr;
     FileObj asmfo;
     xgen::CGMgr * cgmgr = nullptr;
-    initCompile(fn, &rm, asmfo, &cgmgr, &ti);
+    initCompile(fn, &rm, asmfo, &cgmgr);
     if (g_dump_file_name != nullptr) {
         rm->getLogMgr()->init(g_dump_file_name, true);
     }
@@ -420,7 +415,6 @@ bool Compiler::compileCFile(CHAR const* fn)
         ASSERT0(g_unique_dumpfile_name);
     }
     g_fe_sym_tab = rm->getSymTab();
-    g_dbx_mgr = new CLDbxMgr();
     if (runFrontEnd(rm, parser) != ST_SUCC) {
         succ = false;
         ASSERTN(g_err_msg_list.has_msg(), ("miss error msg"));
@@ -447,13 +441,9 @@ bool Compiler::compileCFile(CHAR const* fn)
         rm->dumpProgramRegionGR(fn);
     }
 FIN:
-    if (g_dbx_mgr != nullptr) {
-        delete g_dbx_mgr;
-        g_dbx_mgr = nullptr;
-    }
     //Timer use prt2C.
     END_TIMER_FMT(t, ("Total Time To Compile '%s'", fn));
-    finiCompile(rm, asmfo, cgmgr, ti);
+    finiCompile(rm, asmfo, cgmgr);
     show_err();
     show_warn();
     xoc::prt2C("\n%s - (%d) error(s), (%d) warnging(s)\n",
