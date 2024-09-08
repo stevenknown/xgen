@@ -85,3 +85,16 @@ Pass * ARMPassMgr::allocIRMgr()
     return nullptr;
     #endif
 }
+
+
+Pass * ARMPassMgr::allocExtPass(PASS_TYPE passty)
+{
+    Pass * pass = nullptr;
+    switch (passty) {
+    case PASS_CALC_DERIVATIVE:
+        pass = allocCalcDerivative();
+        break;
+    default: ASSERTN(0, ("unknown pass type"));
+    }
+    return pass;
+}

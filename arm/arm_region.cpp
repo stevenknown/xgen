@@ -257,16 +257,14 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
 void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
 {
     if (g_opt_level == OPT_LEVEL0 || !isParticipateInOpt()) { return; }
-
     START_TIMER(t, "Middle Process Aggressive Analysis");
     //Costly code, to force recomputing AA and DUChain.
     //AA and DU Chain are dispensible to recompute, because
     //simplification maintained them.
     bool org_compute_pr_du_chain = g_compute_pr_du_chain;
     bool org_compute_nonpr_du_chain = g_compute_nonpr_du_chain;
-    OC_is_ref_valid(oc) = false;
-    OC_is_pr_du_chain_valid(oc) = false;
-    OC_is_nonpr_du_chain_valid(oc) = false;
+    oc.setInvalidPass(PASS_DU_REF);
+    oc.setInvalidPass(PASS_CLASSIC_DU_CHAIN);
     AliasAnalysis * aa = getAA();
     if (g_do_aa && aa != nullptr) {
         //Recompute and set MD reference to avoid AA's complaint.
@@ -297,19 +295,17 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
             //Do not check options, because user may ask neither PRSSA nor
             //ClassicPRDU. Apply ClassicPRDU analysis in silent mode.
             //ASSERT0(g_compute_pr_du_chain);
-            getDUMgr()->perform(oc,
-                                DUOptFlag(DUOPT_COMPUTE_PR_REF|
-                                          DUOPT_COMPUTE_NONPR_REF|
-                                          DUOPT_SOL_REACH_DEF|
-                                          DUOPT_COMPUTE_PR_DU));
-            getDUMgr()->computeMDDUChain(oc, false,
-                                         DUOptFlag(DUOPT_COMPUTE_PR_DU));
+            getDUMgr()->perform(
+                oc, DUOptFlag(DUOPT_COMPUTE_PR_REF| DUOPT_COMPUTE_NONPR_REF|
+                              DUOPT_SOL_REACH_DEF| DUOPT_COMPUTE_PR_DU));
+            getDUMgr()->computeMDDUChain(
+                oc, false, DUOptFlag(DUOPT_COMPUTE_PR_DU));
         }
         //checkValidAndRecompute(&oc, PASS_LOOP_INFO, PASS_UNDEF);
         //Recompute and set MD reference to avoid AA's complaint.
         getMDMgr()->assignMD(true, true);
 
-        //Compute the threshold to perform AA.
+        //Estimate the threshold to perform AA.
         UINT numir = 0;
         for (IRBB * bb = getBBList()->get_head();
              bb != nullptr; bb = getBBList()->get_next()) {
@@ -318,7 +314,6 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
         aa->set_flow_sensitive(numir < xoc::g_thres_opt_ir_num);
         aa->perform(oc);
     }
-
     DUMgr * dumgr = getDUMgr();
     if (g_do_md_du_analysis && dumgr != nullptr) {
         DUOptFlag flag(DUOPT_COMPUTE_PR_REF|DUOPT_COMPUTE_NONPR_REF);
@@ -329,7 +324,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
             flag.set(DUOPT_SOL_REACH_DEF|DUOPT_COMPUTE_NONPR_DU);
         }
         dumgr->perform(oc, flag);
-        if (oc.is_ref_valid() && OC_is_reach_def_valid(oc)) {
+        if (oc.is_ref_valid() && oc.is_reach_def_valid()) {
             dumgr->computeMDDUChain(oc, false, flag);
         }
         bool rmprdu = false;
@@ -439,8 +434,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         //avoid subsequent verification complaining is set the prdu invalid.
         //WORKAROUND: use better way to update classic DU chain rather
         //than invalid them.
-        OC_is_pr_du_chain_valid(oc) = false;
-        OC_is_nonpr_du_chain_valid(oc) = false;
+        oc.setInvalidPass(PASS_CLASSIC_DU_CHAIN);
     }
     ASSERT0(verifyMDDUChain(this, oc));
 

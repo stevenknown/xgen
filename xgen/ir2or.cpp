@@ -549,7 +549,7 @@ void IR2OR::convertGeneralLoadPR(IR const* ir, OUT RecycORList & ors,
          m_cg->isGRAEnable())) {
         m_cg->setMapPR2SR(PR_no(ir), m_cg->genReg());
     } else {
-        Var * v = m_rg->mapPR2Var(PR_no(ir));
+        Var * v = m_rg->getVarByPRNO(PR_no(ir));
         ASSERT0(v != nullptr);
         //TO BE DETERMINED: Does ir size have to equal to variable's size?
         //ASSERT0(ir->getTypeSize(m_tm) == v->getByteSize(m_tm));
@@ -599,7 +599,7 @@ void IR2OR::convertCopyPR(IR const* tgt, IN SR * src,
         //must be transferd through memory.
 
         //Store to local-variable(memory) instead of register.
-        Var * loc = m_rg->mapPR2Var(tgtprno);
+        Var * loc = m_rg->getVarByPRNO(tgtprno);
         if (loc == nullptr) {
             loc = registerLocalVar(tgt);
         } else {
@@ -657,7 +657,7 @@ void IR2OR::convertStorePR(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
         m_cg->setMapPR2SR(STPR_no(ir), m_cg->genReg());
     } else {
         //Store to local-variable(memory) instead of register.
-        Var * v = m_rg->mapPR2Var(STPR_no(ir));
+        Var * v = m_rg->getVarByPRNO(STPR_no(ir));
         if (v == nullptr) {
             v = registerLocalVar(ir);
         } else {

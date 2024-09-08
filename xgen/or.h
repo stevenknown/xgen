@@ -600,7 +600,7 @@ public:
     bool is_equ(OR * t1, OR * t2) const { return t1->id() == t2->id(); }
 };
 
-//Use customized comparing function to guarrantee the access order keeping
+//Use customized comparing function to guarantee the access order keeping
 //unchanged.
 typedef xcom::TTab<OR*, CompareORTab> ORTab;
 typedef xcom::TTabIter<OR*> ORTabIter;

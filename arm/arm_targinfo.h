@@ -68,6 +68,12 @@ public:
 
     //Return byte size of instruction cache.
     virtual UINT getICacheLineSize() const { return 32; }
+
+    //Return the alignment parameter for matrix.
+    virtual UINT getMemAlignOfMatrix() const { return 64; }
+
+    //Returns the minimum alignment for instructions in the debug section.
+    virtual UINT getMinDebugInstAlign() const { return 1; }
 };
 
 #endif

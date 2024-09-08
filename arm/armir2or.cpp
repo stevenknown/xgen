@@ -465,9 +465,11 @@ void ARMIR2OR::convertMulofInt(
     IOC tmp;
     convertGeneralLoad(BIN_opnd0(ir), ors, &tmp);
     SR * sr1 = tmp.get_reg(0);
+    ASSERT0(sr1);
     tmp.clean();
     convertGeneralLoad(BIN_opnd1(ir), ors, &tmp);
     SR * sr2 = tmp.get_reg(0);
+    ASSERT0(sr2);
     Dbx * dbx = ::getDbx(ir);
     ASSERT0(sr1->getByteSize() == GENERAL_REGISTER_SIZE);
     ASSERT0(sr2->getByteSize() == GENERAL_REGISTER_SIZE);
@@ -609,18 +611,26 @@ void ARMIR2OR::convertMul(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     if (op0->getTypeSize(m_tm) <= BYTESIZE_OF_WORD) {
         if (op0->is_int()) {
             convertMulofInt(ir, ors, cont);
-        } else if (op0->is_fp()) {
-            convertMulofFloat(ir, ors, cont);
+            return;
         }
-    } else if (op0->getTypeSize(m_tm) <= BYTESIZE_OF_DWORD) {
+        if (op0->is_fp()) {
+            convertMulofFloat(ir, ors, cont);
+            return;
+        }
+        return;
+    }
+    if (op0->getTypeSize(m_tm) <= BYTESIZE_OF_DWORD) {
         if (op0->is_int()) {
             convertMulofLongLong(ir, ors, cont);
-        } else if (op0->is_fp()) {
-            convertMulofFloat(ir, ors, cont);
+            return;
         }
-    } else {
-        ASSERTN(0, ("unsupport"));
+        if (op0->is_fp()) {
+            convertMulofFloat(ir, ors, cont);
+            return;
+        }
+        return;
     }
+    ASSERTN(0, ("unsupport data type"));
 }
 
 

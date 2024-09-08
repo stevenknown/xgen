@@ -1,7 +1,5 @@
 /*@
-Copyright (c) 2013-2021, Su Zhenyu steven.known@gmail.com
-
-All rights reserved.
+Copyright (c) 2022-2024, Tecorigin Co., Ltd. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -11,9 +9,6 @@ modification, are permitted provided that the following conditions are met:
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
-    * Neither the name of the Su Zhenyu nor the names of its contributors
-      may be used to endorse or promote products derived from this software
-      without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED "AS IS" AND ANY
 EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,24 +20,10 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-author: Su Zhenyu
 @*/
-#ifndef _ARM_PASSMGR_H_
-#define _ARM_PASSMGR_H_
 
-class ARMPassMgr : public PassMgr {
-public:
-    ARMPassMgr(Region * rg) : PassMgr(rg) {}
-    virtual ~ARMPassMgr() {}
-    virtual Pass * allocDUMgr() override;
-    virtual Pass * allocScalarOpt() override;
-    virtual Pass * allocRefine() override;
-    virtual Pass * allocLinearScanRA() override;
-    virtual Pass * allocCalcDerivative() override;
-    virtual Pass * allocIRSimp() override;
-    virtual Pass * allocIRMgr() override;
-    virtual Pass * allocExtPass(PASS_TYPE passty) override;
-};
-
-#endif
+SH_TYPE_SPM,
+SH_TYPE_TEXT1,
+SH_TYPE_AITEXT,
+SH_TYPE_COMPILER_VERSION,
+//SH_TYPE CODE END

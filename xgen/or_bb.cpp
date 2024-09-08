@@ -598,7 +598,7 @@ bool ORBB::isLowerBoundary(OR * o)
 
 void dumpORBBList(List<ORBB*> & bbl, CG * cg)
 {
-    if (!cg->getRegion()->getLogMgr()->is_init()) { return; }
+    if (!cg->getRegion()->isLogMgrInit()) { return; }
     note(cg->getRegion(), "\n==---- DUMP ORBB List ----==");
     if (cg->getRegion()->getDbxMgr() != nullptr) {
         cg->getRegion()->getDbxMgr()->doPrepareWorkBeforePrint();
