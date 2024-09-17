@@ -86,12 +86,12 @@ LOOP1 HEAD:BB2, BODY:2,3,
        intconst:u32 4|0x4 attachinfo:Dbx
 -- INVARIANT STMT (NUM=4) -- :
 
-   [11]    pf = gd;
+   [11]    pf = gd;
    
    stpr $15:*<4> attachinfo:Dbx       
        lda:*<800> 'gd' decl:double volatile gd [100] attachinfo:Dbx
 
-   [12]    f = *(pf++);
+   [12]    f = *(pf++);
    
    stpr $13:f32 attachinfo:Dbx       
        $17:f32 attachinfo:Dbx

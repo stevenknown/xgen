@@ -56,7 +56,7 @@ int main()
     if (res) {
         return 7;
     }
- 
+
     a = 0x0000000200000001LL;
     b = 0x0000000300000001LL;
     res = a<b;
@@ -72,7 +72,7 @@ int main()
     if (res) {
         return 9;
     }
- 
+
     a = 0x0000000200000001LL;
     b = 0x0000000200000002LL;
     if (a < b) {
@@ -89,14 +89,14 @@ int main()
     } else {
         return 11;
     }
- 
+
     a = 0x0000000200000001LL;
     b = 0x0000000300000001LL;
     res = a>b;
     if (res) {
         return 12;
     }
- 
+
     a = 0x0000000300000001LL;
     b = 0x0000000300000002LL;
     res = a>b;
@@ -113,5 +113,5 @@ int main()
         return 14;
     }
 
-    return 0; 
+    return 0;
 }

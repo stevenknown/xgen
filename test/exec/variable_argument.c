@@ -17,12 +17,12 @@ int main() {
   printf("\n%d,%d,%d,%d,%d,%d,%d,%d\n",
     Char, Else, Enum, If, Int, Return, Sizeof, While);
 
-  while (i <= (int)Brak) { 
+  while (i <= (int)Brak) {
     printf("\ni=%d\n",i);
     i++;
   } // add keywords to symbol table
 
-  while (i <= Brak) { 
+  while (i <= Brak) {
     printf("\ni=%d\n",i);
     i++;
   } // add keywords to symbol table

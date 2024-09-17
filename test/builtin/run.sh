@@ -1,5 +1,4 @@
-@rem SET XOCC.EXE PATH HERE.
-set xocc_path=../xocc/xocc.exe
+xocc_path="../../src/xocc/xocc.exe"
 
 ### ONLY COMPILE ALL CASE ###
 perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoRun XoccFlag = "-no-vect -no-lsra"

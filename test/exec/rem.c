@@ -6,7 +6,7 @@ int x;
 void printf(char const*,...);
 //Find a lot of REM instruciton that should be replaced by AND with literal.
 //a % 16 => a & 0xFFFF
-int main() 
+int main()
 {
     g = 23;
     g = g % 16;
@@ -25,12 +25,12 @@ int main()
     if (g3 != 7) {
       printf("\nfail\n");
     }
- 
+
     g4 = 23;
     g4 = g4 % 16;
     if (g4 != 7) {
       printf("\nfail\n");
     }
- 
+
     return 0;
 }

@@ -20,13 +20,13 @@ int main()
 {
   struct S s = { 1, {2, 3}, {4, 5} };
 
-  if (s.a !=  1) { return 1; }   
-  if (s.m[0] != 2) { return 1; }   
-  if (s.m[1] != 3) { return 1; }   
-  if (s.f.b != 4) { return 1; }   
-  if (s.f.c != 5) { return 1; }   
-  
-  struct U u = { 
+  if (s.a !=  1) { return 1; }
+  if (s.m[0] != 2) { return 1; }
+  if (s.m[1] != 3) { return 1; }
+  if (s.f.b != 4) { return 1; }
+  if (s.f.c != 5) { return 1; }
+
+  struct U u = {
     { //u.g
       7, // u.g.a
       { //u.g.m

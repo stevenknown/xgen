@@ -1,5 +1,6 @@
-@rem SET XOCC.EXE PATH HERE.
-set xocc_path=../xocc/xocc.exe
+@rem ### GENERATE BUILTIN OBJECT ##################################################
+@rem @set xocc_path=d:\X\src\xocc.arm.prj\x64\Debug\XOCC.ARM.2.exe
+@set xocc_path=d:\X\src\xocc.for.arm\x64\Release\xocc.for.arm.2.exe
 
 @rem ### COMBINED COMPILATION ##################################################
  perl run.pl Targ = arm XoccPath = %xocc_path% NoAsm NoRun XoccFlag = "-no-vect -no-lsra" NoAsm NoLink NoRun

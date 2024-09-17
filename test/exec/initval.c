@@ -3,7 +3,7 @@ int main (int argc, char **argv)
 {
   char * local[] = {"a", "b", "c", "d", "e"};
   char local2[10][20] = { {1,2}, {3,4,5} };
-  char local3[10][20][30] = { 
+  char local3[10][20][30] = {
                               { //dim0
                                 { //dim1
                                   1, //dim2

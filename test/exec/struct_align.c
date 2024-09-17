@@ -3,21 +3,21 @@ typedef struct _taga
    char        c;
    short int   s;
 } A;
- 
+
 typedef struct _tagb
 {
    short int   s;
    char        c;
    int         i;
 } B;
- 
+
 typedef struct _tagc
 {
    char        c;
    double      d;
    int         s;
 } C;
- 
+
 typedef struct _tagd
 {
    double      d;
@@ -31,21 +31,21 @@ typedef struct _tage
    int         s;
    char        c[37];
 } E;
- 
+
 typedef struct _tagf
 {
    char        c;
    char        d[7];
    int         s;
 } F;
- 
+
 typedef struct _tagg
 {
    double      c;
    char        d[7];
    int         s;
 } G;
- 
+
 int main()
 {
    if (sizeof(A) != 4) { return 1; }
@@ -57,4 +57,4 @@ int main()
    if (sizeof(G) != 24) { return 7; }
    return 0;
 }
- 
+

@@ -9,7 +9,7 @@ int foo(atype * a)
 {
     w = &(a);
     n = &((*w)->ant);
-    float * p1 = (*w)->bg; 
+    float * p1 = (*w)->bg;
     if (*p1 != 0.01f) { return 1; }
     return 0;
 }

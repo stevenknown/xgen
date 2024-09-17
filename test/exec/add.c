@@ -41,7 +41,7 @@ void moo()
     printf("\n%llu\n", (unsigned long long)g5);
 }
 
-int main() 
+int main()
 {
     g = 0x13451304957llu;
     g2 = 0x13957lu;

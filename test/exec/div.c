@@ -5,7 +5,7 @@ int main ()
   int i;
   x = 2;
   i = -2;
-  x = x / i; //i will be hoisted to unsigned long long according to C spec. 
+  x = x / i; //i will be hoisted to unsigned long long according to C spec.
   printf("\n%lld\n",x);
   return 0;
 }

@@ -6,4 +6,4 @@ int main()
     hi = a >> 32;
     if (hi != 0x24f) { return -1; }
     return 0;
-} 
+}

@@ -558,7 +558,6 @@ void GRA::solveConflict(OUT List<G_LIFE_TIME*> &,
 void GRA::perform()
 {
     START_TIMER(t, "Perform Global Register Allocation");
-    //dumpBBList(*m_cg->getORBBList());
     OR_DF_MGR live_mgr(m_cg);
     live_mgr.computeLiveness();
     GLT_MGR gltmgr(GRA_ra_mgr(this), m_cg);
@@ -571,10 +570,10 @@ void GRA::perform()
     ig.build();
     ig.dump();
 
-    List<G_LIFE_TIME*> prio_list;
+    xcom::List<G_LIFE_TIME*> prio_list;
     buildPriorityList(prio_list, ig);
 
-    List<G_LIFE_TIME*> uncolored_list; //Record uncolored life times.
+    xcom::List<G_LIFE_TIME*> uncolored_list; //Record uncolored life times.
 
     //FIXME: Hoist action's declaration from if-clause to avoid gcc bug
     //which gcc can not recognize the control-flow-structure scope at gcc 6.3.

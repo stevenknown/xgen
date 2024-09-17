@@ -6,7 +6,7 @@ void foo(long long x)
     g = g + x;
     printf("\n%llu\n", g);
 }
-int main() 
+int main()
 {
     g = 0x13423562456;
     foo((long long)37); //FIX: There is a bug of FE, have to insert type-convert.

@@ -12,37 +12,37 @@
   ATTR:fall_through 
   STMT NUM:7
 
-     [4]    a=1;
+     [4]    a=1;
      
      st:i32 'a' attachinfo:Dbx,MDSSA         
          intconst:i32 1|0x1 attachinfo:Dbx
 
-     [5]    b=2;
+     [5]    b=2;
      
      st:i32 'b' attachinfo:Dbx,MDSSA         
          intconst:i32 2|0x2 attachinfo:Dbx
 
-     [6]    c=3;
+     [6]    c=3;
      
      st:i32 'c' attachinfo:Dbx,MDSSA         
          intconst:i32 3|0x3 attachinfo:Dbx
 
-     [7]    d=4;
+     [7]    d=4;
      
      st:i32 'd' attachinfo:Dbx,MDSSA         
          intconst:i32 4|0x4 attachinfo:Dbx
 
-     [8]    e=7;
+     [8]    e=7;
      
      st:i32 'e' attachinfo:Dbx,MDSSA         
          intconst:i32 7|0x7 attachinfo:Dbx
 
-     [9]    g=5;
+     [9]    g=5;
      
      st:i32 'g' attachinfo:Dbx,MDSSA         
          intconst:i32 5|0x5 attachinfo:Dbx
 
-     [10]    if (a==1 && --b==1 && c++==3) {
+     [10]    if (a==1 && --b==1 && c++==3) {
      
      falsebr label _$L4 attachinfo:Dbx         
          eq:bool attachinfo:Dbx             
@@ -113,7 +113,7 @@
   ATTR:fall_through 
   STMT NUM:1
 
-     [11]        g=3;
+     [11]        g=3;
      
      st:i32 'g' attachinfo:Dbx,MDSSA         
          intconst:i32 3|0x3 attachinfo:Dbx
@@ -123,7 +123,7 @@
   ATTR:fall_through branch_target 
   STMT NUM:1
 
-     [13]    if (c!=4) {
+     [13]    if (c!=4) {
      
      truebr label _$L10 attachinfo:Dbx         
          eq:bool attachinfo:Dbx             
@@ -134,7 +134,7 @@
   ATTR:fall_through 
   STMT NUM:1
 
-     [14]        return 2;
+     [14]        return 2;
      
      return attachinfo:Dbx         
          intconst:i32 2|0x2 attachinfo:Dbx
@@ -144,7 +144,7 @@
   ATTR:fall_through branch_target 
   STMT NUM:1
 
-     [16]    return 0;
+     [16]    return 0;
      
      return attachinfo:Dbx         
          intconst:i32 0|0x0 attachinfo:Dbx
@@ -234,7 +234,7 @@
     --- BB1 ---
     
 
-    [4]    a=1;
+    [4]    a=1;
     
     st:i32 'a' decl:int  a  attachinfo:Dbx,MDSSA        
         intconst:i32 1|0x1 attachinfo:Dbx
@@ -244,7 +244,7 @@
       --DEF:VMD9:MD2V1,-,NextDEF:MD2V2|USESET:
     
 
-    [5]    b=2;
+    [5]    b=2;
     
     st:i32 'b' decl:int  b  attachinfo:Dbx,MDSSA        
         intconst:i32 2|0x2 attachinfo:Dbx
@@ -254,7 +254,7 @@
       --DEF:VMD11:MD8V1,-,NextDEF:MD8V2|USESET:ld
     
 
-    [6]    c=3;
+    [6]    c=3;
     
     st:i32 'c' decl:int  c  attachinfo:Dbx,MDSSA        
         intconst:i32 3|0x3 attachinfo:Dbx
@@ -264,7 +264,7 @@
       --DEF:VMD13:MD9V1,-,NextDEF:MD9V2|USESET:ld,id,ld
     
 
-    [7]    d=4;
+    [7]    d=4;
     
     st:i32 'd' decl:int  d  attachinfo:Dbx,MDSSA        
         intconst:i32 4|0x4 attachinfo:Dbx
@@ -274,7 +274,7 @@
       --DEF:VMD15:MD10V1,-|USESET:
     
 
-    [8]    e=7;
+    [8]    e=7;
     
     st:i32 'e' decl:int  e  attachinfo:Dbx,MDSSA        
         intconst:i32 7|0x7 attachinfo:Dbx
@@ -284,7 +284,7 @@
       --DEF:VMD17:MD11V1,-|USESET:
     
 
-    [9]    g=5;
+    [9]    g=5;
     
     st:i32 'g' decl:int  g  attachinfo:Dbx,MDSSA        
         intconst:i32 5|0x5 attachinfo:Dbx
@@ -294,7 +294,7 @@
       --DEF:VMD19:MD12V1,-,NextDEF:MD12V2|USESET:
     
 
-    [10]    if (a==1 && --b==1 && c++==3) {
+    [10]    if (a==1 && --b==1 && c++==3) {
     
     falsebr label _$L4 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -376,7 +376,7 @@
     --- BB18 ---
     
 
-    [11]        g=3;
+    [11]        g=3;
     
     st:i32 'g' decl:int  g  attachinfo:Dbx,MDSSA        
         intconst:i32 3|0x3 attachinfo:Dbx
@@ -388,7 +388,7 @@
     MDPhi3: MD2V12 <- (ID id:108 MD2V10 BB17), (ID id:107 MD2V11 BB18)    |USESET:(ld) 
     
 
-    [13]    if (c!=4) {
+    [13]    if (c!=4) {
     
     truebr label _$L10 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -400,14 +400,14 @@
     --- BB20 ---
     
 
-    [14]        return 2;
+    [14]        return 2;
     
     return attachinfo:Dbx        
         intconst:i32 2|0x2 attachinfo:Dbx
     --- BB22 ---
     
 
-    [16]    return 0;
+    [16]    return 0;
     
     return attachinfo:Dbx        
         intconst:i32 0|0x0 attachinfo:Dbx
@@ -418,7 +418,7 @@
     ----- BB1 --- rpo:10 -----
     ATTR:fall_through 
 
-    [4]    a=1;
+    [4]    a=1;
     
     st:i32 'a' decl:int  a  attachinfo:Dbx,MDSSA        
         intconst:i32 1|0x1 attachinfo:Dbx
@@ -430,7 +430,7 @@
       ----------------
       
 
-    [5]    b=2;
+    [5]    b=2;
     
     st:i32 'b' decl:int  b  attachinfo:Dbx,MDSSA        
         intconst:i32 2|0x2 attachinfo:Dbx
@@ -442,7 +442,7 @@
       ----------------
       
 
-    [6]    c=3;
+    [6]    c=3;
     
     st:i32 'c' decl:int  c  attachinfo:Dbx,MDSSA        
         intconst:i32 3|0x3 attachinfo:Dbx
@@ -454,7 +454,7 @@
       ----------------
       
 
-    [7]    d=4;
+    [7]    d=4;
     
     st:i32 'd' decl:int  d  attachinfo:Dbx,MDSSA        
         intconst:i32 4|0x4 attachinfo:Dbx
@@ -466,7 +466,7 @@
       ----------------
       
 
-    [8]    e=7;
+    [8]    e=7;
     
     st:i32 'e' decl:int  e  attachinfo:Dbx,MDSSA        
         intconst:i32 7|0x7 attachinfo:Dbx
@@ -478,7 +478,7 @@
       ----------------
       
 
-    [9]    g=5;
+    [9]    g=5;
     
     st:i32 'g' decl:int  g  attachinfo:Dbx,MDSSA        
         intconst:i32 5|0x5 attachinfo:Dbx
@@ -490,7 +490,7 @@
       ----------------
       
 
-    [10]    if (a==1 && --b==1 && c++==3) {
+    [10]    if (a==1 && --b==1 && c++==3) {
     
     falsebr label _$L4 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -593,7 +593,7 @@
     ----- BB18 --- rpo:80 -----
     ATTR:fall_through 
 
-    [11]        g=3;
+    [11]        g=3;
     
     st:i32 'g' decl:int  g  attachinfo:Dbx,MDSSA        
         intconst:i32 3|0x3 attachinfo:Dbx
@@ -609,7 +609,7 @@
     ATTR:fall_through branch_target 
     MDPhi3: MD2V12 <- (ID id:108 MD2V10 BB17), (ID id:107 MD2V11 BB18)    |USESET:(ld) 
 
-    [13]    if (c!=4) {
+    [13]    if (c!=4) {
     
     truebr label _$L10 attachinfo:Dbx        
         eq:bool attachinfo:Dbx            
@@ -625,7 +625,7 @@
     ----- BB20 --- rpo:110 -----
     ATTR:fall_through 
 
-    [14]        return 2;
+    [14]        return 2;
     
     return attachinfo:Dbx        
         intconst:i32 2|0x2 attachinfo:Dbx
@@ -633,7 +633,7 @@
     LABEL:    _$L10 
     ATTR:fall_through branch_target 
 
-    [16]    return 0;
+    [16]    return 0;
     
     return attachinfo:Dbx        
         intconst:i32 0|0x0 attachinfo:Dbx

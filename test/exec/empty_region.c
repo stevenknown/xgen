@@ -2,5 +2,5 @@ int blah(){}
 void main()
 {
     blah();
-    return 0; 
+    return 0;
 }

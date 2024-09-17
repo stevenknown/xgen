@@ -45,7 +45,7 @@ LOOP1 HEAD:BB2, BODY:2,3,
        $14:*<4> attachinfo:Dbx
 -- INVARIANT STMT (NUM=5) -- :
 
-   [9]        sum += x[i] + x[i+1] + y[k][j];
+   [9]        sum += x[i] + x[i+1] + y[k][j];
    
    stpr $11:u32 attachinfo:Dbx       
        mul:u32 attachinfo:Dbx           

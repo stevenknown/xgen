@@ -9,8 +9,8 @@ int main()
     atype a;
     a.bg[0] = 0.01f;
 
-    float * p1 = a.bg; 
-    float (*p2)[1] = &a.bg; 
+    float * p1 = a.bg;
+    float (*p2)[1] = &a.bg;
     float * p3 = &a.bg[0];
 
     if (*p1 != (*p2)[0]) { return 1; }

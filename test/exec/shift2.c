@@ -17,7 +17,7 @@ void bar()
 
 
 
-int main() 
+int main()
 {
     g = 0x13451304957llu;
     g2 = 0x13957lu;

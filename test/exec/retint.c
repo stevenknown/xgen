@@ -16,13 +16,13 @@ long long g()
 int main(void)
 {
     gv = 5;
-    if (f() != -15) { 
+    if (f() != -15) {
         abort();
     }
-    if (g() != -25) { 
+    if (g() != -25) {
         abort();
     }
-    if (h() != -5) { 
+    if (h() != -5) {
         abort();
     }
     return 0;

@@ -6,7 +6,7 @@ int main(int argc, char* argv[])
     double y;
     long long i,j;
     x = 1.25;
-    printf("\n%lld, %d, %d, %d, %f\n", 
+    printf("\n%lld, %d, %d, %d, %f\n",
            (long long)1234567890,
            //(long long)987654321,
            (int)88888888,

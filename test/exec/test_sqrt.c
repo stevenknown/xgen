@@ -10,7 +10,7 @@ int main()
   float y = sqrtf((double)4.0);
   printf("\nx:%f\n", (double)y);
   printf("\nsqrtf:%f\n", (double)(sqrtf(0.000086)));
- 
+
   return 0;
 }
- 
+

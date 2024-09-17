@@ -5,7 +5,7 @@ int dce1()
     if (i > 0)
        a[i] = 10;
     else
-       a[i] = 20; 
+       a[i] = 20;
     a[i] = 30;
 }
 

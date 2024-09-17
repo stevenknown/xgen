@@ -30,12 +30,12 @@ int main()
 
     float p = b.b3->a3;
     if (p != 0.01f) { return 4; }
-  
-    struct B * q = &b; 
-    struct A * u = &*(q->b3); 
-    struct A * v = *&(q->b3); 
+
+    struct B * q = &b;
+    struct A * u = &*(q->b3);
+    struct A * v = *&(q->b3);
     if (u->a3 != 0.01f) { return 5; }
     if (v->a3 != 0.01f) { return 6; }
 
-    return 0; 
+    return 0;
 }

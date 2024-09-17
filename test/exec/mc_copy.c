@@ -21,5 +21,5 @@ int main(struct S * p, struct S * q)
     for (int i = 0; i < 100; i++) {
         printf("<%d,%d>", s1.buf[i], s2.buf[i]);
     }
-    return 0; 
+    return 0;
 }

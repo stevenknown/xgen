@@ -5,7 +5,7 @@
   -- BB1 
   
 
-  [7]  check = 0;
+  [7]  check = 0;
   
   st:i32 'check' decl:int  check  attachinfo:Dbx,MDSSA      
       intconst:i32 0|0x0 attachinfo:Dbx
@@ -22,7 +22,7 @@
   	const id:15 vn2
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   ist:*<1> attachinfo:Dbx,MDSSA      
       add:*<4> attachinfo:Dbx          
@@ -45,7 +45,7 @@
   	const id:57 vn2
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   ist:*<1> attachinfo:Dbx,MDSSA      
       add:*<4> attachinfo:Dbx          
@@ -68,7 +68,7 @@
   	const id:63 vn2
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   ist:*<1> attachinfo:Dbx,MDSSA      
       add:*<4> attachinfo:Dbx          
@@ -91,7 +91,7 @@
   	const id:69 vn2
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   ist:*<1> attachinfo:Dbx,MDSSA      
       add:*<4> attachinfo:Dbx          
@@ -114,7 +114,7 @@
   	const id:75 vn2
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   ist:*<1> attachinfo:Dbx,MDSSA      
       add:*<4> attachinfo:Dbx          
@@ -128,7 +128,7 @@
   	$16 id:78 vn24
    }
 
-  [12]  if (x (5, args) != 0 || check != 2)
+  [12]  if (x (5, args) != 0 || check != 2)
   
   $17:i32 = call 'x' decl:extern int  x (int ,unsigned char  *  * ,)  attachinfo:Dbx,MDSSA
       intconst:i32 5|0x5 param0 attachinfo:Dbx
@@ -166,7 +166,7 @@
   -- BB3   _$L2 
   
 
-  [13]    abort ();
+  [13]    abort ();
   
   $18:i32 = call 'abort' decl:extern void  abort ()  attachinfo:Dbx,MDSSA
       ild:any dummy0 attachinfo:MDSSA          
@@ -178,7 +178,7 @@
   -- BB5   _$L1 
   
 
-  [14]  exit (0);
+  [14]  exit (0);
   
   $19:i32 = call 'exit' decl:extern void  exit (int ,)  attachinfo:Dbx,MDSSA
       intconst:i32 0|0x0 param0 attachinfo:Dbx
@@ -199,7 +199,7 @@
   -- BB1 
   
 
-  [7]  check = 0;
+  [7]  check = 0;
   
   st:i32 'check' decl:int  check  attachinfo:Dbx,MDSSA      
       intconst:i32 0|0x0 attachinfo:Dbx
@@ -216,7 +216,7 @@
   	const id:15 vn2
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   ist:*<1> attachinfo:Dbx,MDSSA      
       add:*<4> attachinfo:Dbx          
@@ -239,7 +239,7 @@
   	const id:57 vn2
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   ist:*<1> attachinfo:Dbx,MDSSA      
       add:*<4> attachinfo:Dbx          
@@ -262,7 +262,7 @@
   	const id:63 vn2
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   ist:*<1> attachinfo:Dbx,MDSSA      
       add:*<4> attachinfo:Dbx          
@@ -285,7 +285,7 @@
   	const id:69 vn2
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   ist:*<1> attachinfo:Dbx,MDSSA      
       add:*<4> attachinfo:Dbx          
@@ -308,7 +308,7 @@
   	const id:75 vn2
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   ist:*<1> attachinfo:Dbx,MDSSA      
       add:*<4> attachinfo:Dbx          
@@ -322,7 +322,7 @@
   	$16 id:78 vn24
    }
 
-  [12]  if (x (5, args) != 0 || check != 2)
+  [12]  if (x (5, args) != 0 || check != 2)
   
   $17:i32 = call 'x' decl:extern int  x (int ,unsigned char  *  * ,)  attachinfo:Dbx,MDSSA
       intconst:i32 5|0x5 param0 attachinfo:Dbx
@@ -360,7 +360,7 @@
   -- BB3   _$L2 
   
 
-  [13]    abort ();
+  [13]    abort ();
   
   $18:i32 = call 'abort' decl:extern void  abort ()  attachinfo:Dbx,MDSSA
       ild:any dummy0 attachinfo:MDSSA          
@@ -372,7 +372,7 @@
   -- BB5   _$L1 
   
 
-  [14]  exit (0);
+  [14]  exit (0);
   
   $19:i32 = call 'exit' decl:extern void  exit (int ,)  attachinfo:Dbx,MDSSA
       intconst:i32 0|0x0 param0 attachinfo:Dbx
@@ -393,7 +393,7 @@
   -- BB1 
   
 
-  [7]  check = 0;
+  [7]  check = 0;
   
   st:i32 'check' decl:int  check  attachinfo:Dbx,MDSSA      
       intconst:i32 0|0x0 attachinfo:Dbx
@@ -415,7 +415,7 @@
   	$12 id:54 vn1
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   ist:*<1> attachinfo:Dbx,MDSSA      
       $20:*<4> attachinfo:Dbx      
@@ -439,7 +439,7 @@
   	$13 id:60 vn7
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   ist:*<1> attachinfo:Dbx,MDSSA      
       $21:*<4> attachinfo:Dbx      
@@ -463,7 +463,7 @@
   	$14 id:66 vn11
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   ist:*<1> attachinfo:Dbx,MDSSA      
       $22:*<4> attachinfo:Dbx      
@@ -487,7 +487,7 @@
   	$15 id:72 vn15
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   ist:*<1> attachinfo:Dbx,MDSSA      
       $23:*<4> attachinfo:Dbx      
@@ -511,7 +511,7 @@
   	$16 id:78 vn19
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   ist:*<1> attachinfo:Dbx,MDSSA      
       $24:*<4> attachinfo:Dbx      
@@ -521,7 +521,7 @@
   	lda id:28 vn22
    }
 
-  [12]  if (x (5, args) != 0 || check != 2)
+  [12]  if (x (5, args) != 0 || check != 2)
   
   $17:i32 = call 'x' decl:extern int  x (int ,unsigned char  *  * ,)  attachinfo:Dbx,MDSSA
       intconst:i32 5|0x5 param0 attachinfo:Dbx
@@ -559,7 +559,7 @@
   -- BB3   _$L2 
   
 
-  [13]    abort ();
+  [13]    abort ();
   
   $18:i32 = call 'abort' decl:extern void  abort ()  attachinfo:Dbx,MDSSA
       ild:any dummy0 attachinfo:MDSSA          
@@ -571,7 +571,7 @@
   -- BB5   _$L1 
   
 
-  [14]  exit (0);
+  [14]  exit (0);
   
   $19:i32 = call 'exit' decl:extern void  exit (int ,)  attachinfo:Dbx,MDSSA
       intconst:i32 0|0x0 param0 attachinfo:Dbx
@@ -677,7 +677,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   -- BB1 
   
 
-  [7]  check = 0;
+  [7]  check = 0;
   
   st:i32 'check' decl:int  check  attachinfo:Dbx,MDSSA      
       intconst:i32 0|0x0 attachinfo:Dbx
@@ -695,7 +695,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:5 vn3
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   st:*<1> 'args' decl:unsigned char  *  args [5] attachinfo:Dbx,MDSSA      
       lda:*<4> '_const_string_1' attachinfo:Dbx
@@ -713,7 +713,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:11 vn8
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   st:*<1>:offset(4) 'args' decl:unsigned char  *  args [5] attachinfo:MDSSA,Dbx      
       lda:*<4> '_const_string_2' attachinfo:Dbx
@@ -731,7 +731,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:16 vn13
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   st:*<1>:offset(8) 'args' decl:unsigned char  *  args [5] attachinfo:MDSSA,Dbx      
       lda:*<4> '_const_string_3' attachinfo:Dbx
@@ -749,7 +749,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:21 vn18
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   st:*<1>:offset(12) 'args' decl:unsigned char  *  args [5] attachinfo:MDSSA,Dbx      
       lda:*<4> '_const_string_4' attachinfo:Dbx
@@ -767,7 +767,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:26 vn23
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   st:*<1>:offset(16) 'args' decl:unsigned char  *  args [5] attachinfo:MDSSA,Dbx      
       lda:*<4> '_const_string_5' attachinfo:Dbx
@@ -775,7 +775,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:28 vn25
    }
 
-  [12]  if (x (5, args) != 0 || check != 2)
+  [12]  if (x (5, args) != 0 || check != 2)
   
   $17:i32 = call 'x' decl:extern int  x (int ,unsigned char  *  * ,)  attachinfo:Dbx,MDSSA
       intconst:i32 5|0x5 param0 attachinfo:Dbx
@@ -813,7 +813,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   -- BB3   _$L2 
   
 
-  [13]    abort ();
+  [13]    abort ();
   
   $18:i32 = call 'abort' decl:extern void  abort ()  attachinfo:Dbx,MDSSA
       ild:any dummy0 attachinfo:MDSSA          
@@ -825,7 +825,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   -- BB5   _$L1 
   
 
-  [14]  exit (0);
+  [14]  exit (0);
   
   $19:i32 = call 'exit' decl:extern void  exit (int ,)  attachinfo:Dbx,MDSSA
       intconst:i32 0|0x0 param0 attachinfo:Dbx
@@ -846,7 +846,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   -- BB1 
   
 
-  [7]  check = 0;
+  [7]  check = 0;
   
   st:i32 'check' decl:int  check  attachinfo:Dbx,MDSSA      
       intconst:i32 0|0x0 attachinfo:Dbx
@@ -864,7 +864,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:5 vn3
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   st:*<1> 'args' decl:unsigned char  *  args [5] attachinfo:Dbx,MDSSA      
       lda:*<4> '_const_string_1' attachinfo:Dbx
@@ -882,7 +882,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:11 vn8
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   st:*<1>:offset(4) 'args' decl:unsigned char  *  args [5] attachinfo:MDSSA,Dbx      
       lda:*<4> '_const_string_2' attachinfo:Dbx
@@ -900,7 +900,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:16 vn13
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   st:*<1>:offset(8) 'args' decl:unsigned char  *  args [5] attachinfo:MDSSA,Dbx      
       lda:*<4> '_const_string_3' attachinfo:Dbx
@@ -918,7 +918,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:21 vn18
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   st:*<1>:offset(12) 'args' decl:unsigned char  *  args [5] attachinfo:MDSSA,Dbx      
       lda:*<4> '_const_string_4' attachinfo:Dbx
@@ -936,7 +936,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:26 vn23
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   st:*<1>:offset(16) 'args' decl:unsigned char  *  args [5] attachinfo:MDSSA,Dbx      
       lda:*<4> '_const_string_5' attachinfo:Dbx
@@ -944,7 +944,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:28 vn25
    }
 
-  [12]  if (x (5, args) != 0 || check != 2)
+  [12]  if (x (5, args) != 0 || check != 2)
   
   $17:i32 = call 'x' decl:extern int  x (int ,unsigned char  *  * ,)  attachinfo:Dbx,MDSSA
       intconst:i32 5|0x5 param0 attachinfo:Dbx
@@ -982,7 +982,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   -- BB3   _$L2 
   
 
-  [13]    abort ();
+  [13]    abort ();
   
   $18:i32 = call 'abort' decl:extern void  abort ()  attachinfo:Dbx,MDSSA
       ild:any dummy0 attachinfo:MDSSA          
@@ -994,7 +994,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   -- BB5   _$L1 
   
 
-  [14]  exit (0);
+  [14]  exit (0);
   
   $19:i32 = call 'exit' decl:extern void  exit (int ,)  attachinfo:Dbx,MDSSA
       intconst:i32 0|0x0 param0 attachinfo:Dbx
@@ -1015,7 +1015,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   -- BB1 
   
 
-  [7]  check = 0;
+  [7]  check = 0;
   
   st:i32 'check' decl:int  check  attachinfo:Dbx,MDSSA      
       intconst:i32 0|0x0 attachinfo:Dbx
@@ -1033,7 +1033,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:5 vn3
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   st:*<1> 'args' decl:unsigned char  *  args [5] attachinfo:Dbx,MDSSA      
       lda:*<4> '_const_string_1' attachinfo:Dbx
@@ -1051,7 +1051,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:11 vn8
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   st:*<1>:offset(4) 'args' decl:unsigned char  *  args [5] attachinfo:MDSSA,Dbx      
       lda:*<4> '_const_string_2' attachinfo:Dbx
@@ -1069,7 +1069,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:16 vn13
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   st:*<1>:offset(8) 'args' decl:unsigned char  *  args [5] attachinfo:MDSSA,Dbx      
       lda:*<4> '_const_string_3' attachinfo:Dbx
@@ -1087,7 +1087,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:21 vn18
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   st:*<1>:offset(12) 'args' decl:unsigned char  *  args [5] attachinfo:MDSSA,Dbx      
       lda:*<4> '_const_string_4' attachinfo:Dbx
@@ -1105,7 +1105,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:26 vn23
    }
 
-  [8]  char *args[] = {"a", "b", "c", "d", "e"};
+  [8]  char *args[] = {"a", "b", "c", "d", "e"};
   
   st:*<1>:offset(16) 'args' decl:unsigned char  *  args [5] attachinfo:MDSSA,Dbx      
       lda:*<4> '_const_string_5' attachinfo:Dbx
@@ -1113,7 +1113,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   	lda id:28 vn25
    }
 
-  [12]  if (x (5, args) != 0 || check != 2)
+  [12]  if (x (5, args) != 0 || check != 2)
   
   $17:i32 = call 'x' decl:extern int  x (int ,unsigned char  *  * ,)  attachinfo:Dbx,MDSSA
       intconst:i32 5|0x5 param0 attachinfo:Dbx
@@ -1151,7 +1151,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   -- BB3   _$L2 
   
 
-  [13]    abort ();
+  [13]    abort ();
   
   $18:i32 = call 'abort' decl:extern void  abort ()  attachinfo:Dbx,MDSSA
       ild:any dummy0 attachinfo:MDSSA          
@@ -1163,7 +1163,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   -- BB5   _$L1 
   
 
-  [14]  exit (0);
+  [14]  exit (0);
   
   $19:i32 = call 'exit' decl:extern void  exit (int ,)  attachinfo:Dbx,MDSSA
       intconst:i32 0|0x0 param0 attachinfo:Dbx
@@ -1188,7 +1188,7 @@ WILL REPLACE pr THAT LOCATED IN STMT:
   -- BB2 
   
 
-  [4]int check = 0;
+  [4]int check = 0;
   
   st:i32 'check' decl:int  check  attachinfo:Dbx,MDSSA      
       intconst:i32 0|0x0 attachinfo:Dbx

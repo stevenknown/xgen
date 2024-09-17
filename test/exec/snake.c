@@ -146,7 +146,7 @@ void algorithm()
     {
         score += 10;
         fruitX = rand() % width;
-        fruitY = rand() % height; 
+        fruitY = rand() % height;
         nTail++;
     }
 }
@@ -167,7 +167,7 @@ int main()
         Draw();
         Input();
         algorithm();
-        //Sleep(10); 
+        //Sleep(10);
         n--;
     }
     return 0;

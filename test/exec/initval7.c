@@ -21,5 +21,5 @@ int main()
     float * n = &b.b3->a3; //n can not be initialized before S2
     if (*n != 0.01f) { return 2; }
 
-    return 0; 
+    return 0;
 }

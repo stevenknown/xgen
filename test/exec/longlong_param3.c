@@ -8,7 +8,7 @@ gcd_ll (unsigned long long aa, unsigned long long bb)
 }
 int main()
 {
-    unsigned int xx = 100;    
-    unsigned int yy = 200;    
+    unsigned int xx = 100;
+    unsigned int yy = 200;
     return gcd_ll(xx, yy);
 }

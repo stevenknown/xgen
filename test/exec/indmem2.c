@@ -6,8 +6,8 @@ typedef struct _atype {
 
 int foo(atype * a)
 {
-    float * p1 = a->bg; 
-    float (*p2)[1] = &a->bg; 
+    float * p1 = a->bg;
+    float (*p2)[1] = &a->bg;
     float * p3 = &a->bg[0];
 
     if (*p1 != (*p2)[0]) { return 1; }

@@ -9,10 +9,10 @@ double g()
 }
 int main(void)
 {
-    if (f() != -1.5f) { 
+    if (f() != -1.5f) {
         abort();
     }
-    if (g() != -2.5f) { 
+    if (g() != -2.5f) {
         abort();
     }
     return 0;

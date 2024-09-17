@@ -8,7 +8,7 @@ int main()
    count2[0]=11;
    count2[1]=12;
    count2[2]=13;
- 
+
    count[0]=-2;
    count[1]=1;
    count[2]=2;

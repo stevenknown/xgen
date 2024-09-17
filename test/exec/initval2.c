@@ -28,11 +28,11 @@ int main()
   if (t.e != 3) { return 1; }
 
   struct S s = { 4, {5, 6} };
-  if (s.a != 4) { return 2; }   
-  if (s.f.b != 5) { return 2; }   
-  if (s.f.c != 6) { return 2; }   
+  if (s.a != 4) { return 2; }
+  if (s.f.b != 5) { return 2; }
+  if (s.f.c != 6) { return 2; }
 
-  struct U u = { 
+  struct U u = {
     {7, {8, 9} },
     {10, {11,12,(char*)13,14} }
   };
