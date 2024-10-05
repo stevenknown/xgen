@@ -34,46 +34,47 @@ author: Su Zhenyu
 class ARMTargInfo : public TargInfo {
 public:
     // Return the alignment parameter in memory.
-    virtual UINT getAlignMem() const { return STACK_ALIGNMENT; }
+    virtual UINT getAlignMem() const override { return STACK_ALIGNMENT; }
 
     //Return the alignment parameter for matrix.
-    virtual UINT getMemAlginOfMatrix() const
+    virtual UINT getMemAlignOfMatrix() const
     {
         ASSERTN(0, ("ARM does not support matrix operations"));
         return 0;
     }
-    virtual UINT getNumOfReturnValueRegister() const;
-    virtual UINT getNumOfAllocableIntegerRegister() const;
-    virtual UINT getNumOfAllocableFloatRegister() const;
-    virtual UINT getNumOfGroup() const { return 1; }
-    virtual UINT getNumOfThread() const { return 1; }
+    virtual UINT getNumOfReturnValueRegister() const override;
+    virtual UINT getNumOfAllocableIntegerRegister() const override;
+    virtual UINT getNumOfAllocableFloatRegister() const override;
+    virtual UINT getNumOfGroup() const override { return 1; }
+    virtual UINT getNumOfThread() const override { return 1; }
 
     //Return byte size of data cache.
-    virtual UINT getDCacheSize() const { return 32 * 1024; }
+    virtual UINT getDCacheSize() const override { return 32 * 1024; }
 
     //Return byte size of instruction cache.
-    virtual UINT getICacheSize() const { return 32 * 1024; }
-
-    //Return byte size of cache line.
-    virtual UINT getCacheLineSize() const { return 32; }
+    virtual UINT getICacheSize() const override { return 32 * 1024; }
 
     //Return byte size of TLB if any.
-    virtual UINT getTLBSize() const { return 4096; }
+    virtual UINT getTLBSize() const override { return 4096; }
 
     //Approximate the cycles to execute ir operation.
-    virtual UINT estimateNumOfCycles(IR const*) const { return 2; }
+    virtual UINT estimateNumOfCycles(IR const*) const override { return 2; }
 
     //Return byte size of data cache.
-    virtual UINT getDCacheLineSize() const { return 32; }
+    virtual UINT getDCacheLineSize() const override { return 32; }
 
     //Return byte size of instruction cache.
-    virtual UINT getICacheLineSize() const { return 32; }
-
-    //Return the alignment parameter for matrix.
-    virtual UINT getMemAlignOfMatrix() const { return 64; }
+    virtual UINT getICacheLineSize() const override { return 32; }
 
     //Returns the minimum alignment for instructions in the debug section.
-    virtual UINT getMinDebugInstAlign() const { return 1; }
+    virtual UINT getMinDebugInstAlign() const override { return 1; }
+
+    //Get the callee-saved register stack slot size in bytes.
+    virtual UINT getCalleeSaveStackSlotSize() const override
+    { return CALLEE_SAVE_STACK_SLOT_SIZE; }
+
+    //Return true if the stack grows upward, false if it grows downward,
+    virtual bool isStackGrowthDownward() const override { return false; }
 };
 
 #endif

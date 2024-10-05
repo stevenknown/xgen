@@ -47,6 +47,7 @@ public:
 
     virtual Region * allocRegion(REGION_TYPE rt);
     virtual VarMgr * allocVarMgr();
+    virtual TargInfoMgr * allocTargInfoMgr();
 
     bool compileFuncRegion(xoc::Region * func, xoc::OptCtx * oc);
     void compileFuncRegion(Region * rg);

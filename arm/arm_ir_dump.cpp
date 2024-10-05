@@ -43,7 +43,7 @@ static void dumpConvStride(IR const* ir, Region const* rg)
 }
 
 
-void dumpConv(IR const* ir, Region const* rg, IRDumpCtx & ctx)
+void dumpConv(IR const* ir, Region const* rg, IRDumpCtx<> & ctx)
 {
     ASSERT0(ir->getCode() == IR_CONV);
     bool dump_addr = ctx.dumpflag.have(IR_DUMP_ADDR);
@@ -72,7 +72,7 @@ void dumpConv(IR const* ir, Region const* rg, IRDumpCtx & ctx)
 }
 
 
-void dumpConvOpndGrad(IR const* ir, Region const* rg, IRDumpCtx & ctx)
+void dumpConvOpndGrad(IR const* ir, Region const* rg, IRDumpCtx<> & ctx)
 {
     ASSERT0(ir->getCode() == IR_CONV_OPND_GRAD);
     bool dump_addr = ctx.dumpflag.have(IR_DUMP_ADDR);

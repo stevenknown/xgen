@@ -279,6 +279,9 @@ CLRegionMgr * Compiler::initRegionMgr()
     rm->initVarMgr();
     rm->initIRDescFlagSet();
     rm->initTargInfo();
+    #ifdef REF_TARGMACH_INFO
+    rm->initTargInfoMgr();
+    #endif
     return rm;
 }
 

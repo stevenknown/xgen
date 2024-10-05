@@ -76,17 +76,6 @@ Pass * ARMPassMgr::allocCalcDerivative()
 }
 
 
-Pass * ARMPassMgr::allocIRMgr()
-{
-    #if defined REF_TARGMACH_INFO || defined FOR_IP
-    return new ARMIRMgr(m_rg);
-    #else
-    ASSERTN(0, ("Target Dependent Code"));
-    return nullptr;
-    #endif
-}
-
-
 Pass * ARMPassMgr::allocExtPass(PASS_TYPE passty)
 {
     Pass * pass = nullptr;
@@ -97,4 +86,11 @@ Pass * ARMPassMgr::allocExtPass(PASS_TYPE passty)
     default: ASSERTN(0, ("unknown pass type"));
     }
     return pass;
+}
+
+
+Pass * ARMPassMgr::allocPrologueEpilogue()
+{
+    ASSERTN(0, ("Target Dependent Code"));
+    return nullptr;
 }

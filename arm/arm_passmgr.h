@@ -41,8 +41,8 @@ public:
     virtual Pass * allocLinearScanRA() override;
     virtual Pass * allocCalcDerivative() override;
     virtual Pass * allocIRSimp() override;
-    virtual Pass * allocIRMgr() override;
     virtual Pass * allocExtPass(PASS_TYPE passty) override;
+    virtual Pass * allocPrologueEpilogue() override;
 };
 
 #endif

@@ -44,6 +44,16 @@ Region * CLRegionMgr::allocRegion(REGION_TYPE rt)
 }
 
 
+TargInfoMgr * CLRegionMgr::allocTargInfoMgr()
+{
+    #ifdef REF_TARGMACH_INFO
+    return new ARMTargInfoMgr();
+    #else
+    return nullptr;
+    #endif
+}
+
+
 bool CLRegionMgr::compileFuncRegion(xoc::Region * func, xoc::OptCtx * oc)
 {
     ASSERT0(func && oc);

@@ -37,7 +37,7 @@ protected:
     void initRegSet();
     virtual void initDebugRegSet();
 public:
-    ARMRegSetImpl(LinearScanRA & ra): RegSetImpl(ra) { initRegSet(); }
+    ARMRegSetImpl(LinearScanRA & ra) : RegSetImpl(ra) { initRegSet(); }
 };
 
 class ARMLinearScanRA : public LinearScanRA {

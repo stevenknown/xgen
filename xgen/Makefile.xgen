@@ -13,15 +13,23 @@ ifeq ($(THREAD_NUM),)
 endif
 
 CFLAGS+=-Wall
-ROOT_DIR=..
+ROOT_DIR=$(CURDIR)/..
 XGEN_DIR=.
 COM_DIR=../com
 OPT_DIR=../opt
 READER_DIR=../reader
+CURFILE=$(CURDIR)/Makefile.xgen
 
+$(info "INCLUDE: IN $(CURFILE), INCLUDE $(XGEN_DIR)/Makefile.inc")
 include $(XGEN_DIR)/Makefile.inc
+
+$(info "INCLUDE: IN $(CURFILE), INCLUDE $(TARG_DIR)/Makefile.inc")
 include $(TARG_DIR)/Makefile.inc
+
+$(info "INCLUDE: IN $(CURFILE), INCLUDE $(ROOT_DIR)/Makefile.xoc.inc")
 include $(ROOT_DIR)/Makefile.xoc.inc
+
+$(info "INCLUDE: IN $(CURFILE), INCLUDE $(ROOT_DIR)/Makefile.option")
 include $(ROOT_DIR)/Makefile.option
 
 #SET DEFAULT CFLAGS.
@@ -82,8 +90,13 @@ $(XGEN_OUTPUT): targmach_gen $(XOC_OUTPUT) xgen_objs targ_objs
 $(XOC_OUTPUT):
 	@echo "START BUILD $(XOC_OUTPUT)"
 	@echo "EXEC:"
-	cd $(ROOT_DIR) && make -j$(THREAD_NUM) -f Makefile.xoc TARG=$(TARG) \
-	  DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)" THREAD_NUM=$(THREAD_NUM)
+	make -C $(ROOT_DIR) -j$(THREAD_NUM) -f Makefile.xoc \
+      TARG=$(TARG) \
+      TARG_DIR=$(TARG_DIR) \
+      ROOT_DIR=$(ROOT_DIR) \
+      DEBUG=$(DEBUG) \
+      CFLAGS="$(CFLAGS)" \
+      THREAD_NUM=$(THREAD_NUM)
 	@echo "END BUILD $(XOC_OUTPUT)"
 
 xgen_objs: $(XGEN_OBJS)
@@ -95,8 +108,14 @@ targ_objs: $(TARG_OBJS)
 targmach_gen:
 	@echo "==-- START GENERATE TARGET MACHINE INFO AND RELATED FILES  --=="
 	@echo "EXEC:"
-	make -j$(THREAD_NUM) -C $(TARG_DIR)/precompile TARGET=$(TARG) CC=$(CC) \
-	  DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)" THREAD_NUM=$(THREAD_NUM)
+	make -j$(THREAD_NUM) -C $(TARG_DIR)/precompile \
+      TARGET=$(TARG) \
+      TARG_DIR=$(TARG_DIR) \
+      CC=$(CC) \
+      ROOT_DIR=$(ROOT_DIR) \
+      DEBUG=$(DEBUG) \
+      CFLAGS="$(CFLAGS)" \
+      THREAD_NUM=$(THREAD_NUM)
 	cd $(TARG_DIR)/precompile; ./gentminfo.exe
 	@echo "==-- END GENERATE TARGET MACHINE INFO AND RELATED FILES  --=="
 

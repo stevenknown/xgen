@@ -31,51 +31,20 @@ author: Su Zhenyu
 #ifndef _ARM_REFINE_H_
 #define _ARM_REFINE_H_
 
+namespace xoc {
+class CalcDerivative;
+};
 class ARMDerivative;
 
 class ARMRefine : public Refine {
 protected:
-    xoc::CalcDerivative * m_cd;
-protected:
-    IR * foldConstRelu(IR * ir, bool & change, RefineCtx const& rc);
-    IR * foldConstConv(IR * ir, bool & change, RefineCtx const& rc);
-    IR * foldConstConvOpndGrad(IR * ir, bool & change, RefineCtx & rc);
-    IR * foldConstBinaryTensorByTensor(
-        IR * ir, bool & change, RefineCtx const& rc);
-    IR * foldConstBinaryTensorByScalar(
-        IR * ir, bool & change, RefineCtx const& rc);
-    IR * foldConstBinaryScalarByTensor(
-        IR * ir, bool & change, RefineCtx const& rc);
-    IR * foldConstTrigonometricScalar(
-        IR * ir, bool & change, RefineCtx & rc);
-    IR * foldConstTrigonometricTensor(
-        IR * ir, bool & change, RefineCtx const& rc);
     virtual IR * foldConstExtExp(
         IR * ir, bool & change, RefineCtx & rc) override;
-    virtual IR * foldConstUnary(
-        IR * ir, bool & change, RefineCtx &) override;
-    virtual IR * foldConstBinary(
-        IR * ir, bool & change, RefineCtx & rc) override;
-    IR * foldConstTrigonometric(IR * ir, bool & change, RefineCtx & rc);
-    IR * foldConstBinaryTensor(IR * ir, bool & change, RefineCtx const& rc);
-    IR * foldConstUnaryTensor(IR * ir, bool & change, RefineCtx const& rc);
 
-    xoc::CalcDerivative * getCalcDer() const { return m_cd; }
-
-    IR * refineBroadCast(IR * ir, bool & change, RefineCtx & rc);
-    IR * refineConvOpndGrad(IR * ir, bool & change, RefineCtx & rc);
-    IR * refineConv(IR * ir, bool & change, RefineCtx & rc);
-    IR * refineRelu(IR * ir, bool & change, RefineCtx & rc);
     virtual IR * refineExtOp(IR * ir, bool & change, RefineCtx & rc) override;
-    IR * refineTrigonometricTensor(IR * ir, bool & change, RefineCtx & rc);
-    virtual IR * refineTrigonometric(
-        IR * ir, bool & change, RefineCtx & rc) override;
 public:
-    ARMRefine(Region * rg) : Refine(rg), m_cd(nullptr) {}
+    ARMRefine(Region * rg) : Refine(rg) {}
     virtual ~ARMRefine() {}
-
-    void initCalcDer(MOD OptCtx & oc);
-
     virtual bool perform(OptCtx & oc) override;
 };
 

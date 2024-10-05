@@ -28,5 +28,5 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-void dumpConv(IR const* ir, Region const* rg, IRDumpCtx & ctx);
-void dumpConvOpndGrad(IR const* ir, Region const* rg, IRDumpCtx & ctx);
+void dumpConv(IR const* ir, Region const* rg, IRDumpCtx<> & ctx);
+void dumpConvOpndGrad(IR const* ir, Region const* rg, IRDumpCtx<> & ctx);

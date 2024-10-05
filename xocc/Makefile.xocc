@@ -13,20 +13,30 @@ ifeq ($(THREAD_NUM),)
 endif
 
 CFLAGS+=-Wall
+ROOT_DIR=$(CURDIR)/..
 XGEN_DIR=../xgen
-ELF_DIR=../elf
 COM_DIR=../com
-XOC_DIR=..
+READER_DIR=../reader
+OPT_DIR=../opt
+ELF_DIR=../elf
+MACH_DIR=../mach
 CFE_DIR=../cfe
+XOCC_DIR=$(CURDIR)
 XOCC_OUTPUT=xocc.exe
 
 include Makefile.inc
 include $(CFE_DIR)/Makefile.inc
 include $(COM_DIR)/Makefile.inc
-include $(XOC_DIR)/Makefile.xoc.inc
+include $(ROOT_DIR)/Makefile.xoc.inc
 include $(XGEN_DIR)/Makefile.inc
+include $(ROOT_DIR)/Makefile.option
 include $(ELF_DIR)/Makefile.inc
-include $(XOC_DIR)/Makefile.option
+include $(MACH_DIR)/Makefile.inc
+
+ifeq ($(OPEN_COVERAGE),true)
+  CFLAGS+=--coverage
+endif
+
 
 CFLAGS+=\
   -D$(TARG) \
@@ -55,6 +65,7 @@ endif
 #Use tmp-objs-name to compose multiple level path.
 TMP_CFE_OBJS=$(foreach n,$(CFE_OBJS),$(CFE_DIR)/$(n))
 TMP_ELF_OBJS=$(foreach n,$(ELF_OBJS),$(ELF_DIR)/$(n))
+TMP_MACH_OBJS=$(foreach n,$(MACH_OBJS),$(MACH_DIR)/$(n))
 
 #Display internal variables.
 $(info "COMBINED CFE OBJS:$(TMP_CFE_OBJS)")
@@ -67,6 +78,8 @@ $(info "INC:$(INC)")
 $(info "CFLAGS:$(CFLAGS)")
 $(info "DEBUG:$(DEBUG)")
 $(info "THREAD_NUM:$(THREAD_NUM)")
+$(info "TMP_ELF_OBJS:$(TMP_ELF_OBJS)")
+$(info "TMP_MACH_OBJS:$(TMP_MACH_OBJS)")
 
 #Define dependencies and link-rules of xocc.exe.
 $(XOCC_OUTPUT): xocc_objs tmp_cfe_objs tmp_elf_objs $(XGEN_OUTPUT)
@@ -77,7 +90,7 @@ $(XOCC_OUTPUT): xocc_objs tmp_cfe_objs tmp_elf_objs $(XGEN_OUTPUT)
       -Xlinker "-(" \
       $(XGEN_DIR)/$(XGEN_OUTPUT) \
       $(COM_DIR)/$(COM_OUTPUT) \
-      $(XOC_DIR)/$(XOC_OUTPUT) \
+      $(ROOT_DIR)/$(XOC_OUTPUT) \
       -Xlinker "-)" \
       $(CFLAGS) \
       -o $@ -lstdc++ -lm  #-lgcov -lgcc
@@ -102,8 +115,8 @@ $(XGEN_OUTPUT):
 
 clean:
 	@find ./ -name "*.o" | xargs rm -f
-	@find ./ -name "*.d" | xargs rm -f
 	@find ./ -name "*.a" | xargs rm -f
+	@find ./ -name "*.d" | xargs rm -f
 	@find ./ -name "*.exe" | xargs rm -f
 	@find ./ -name "*.elf" | xargs rm -f
 	@find ./ -name "*.out" | xargs rm -f
@@ -115,4 +128,13 @@ clean:
 	@find ./ -name "*.LOGLOG" | xargs rm -f
 	@find ./ -name "LOGLOG" | xargs rm -f
 
+-include $(COM_DIR)/*.d
+-include $(READER_DIR)/*.d
+-include $(OPT_DIR)/*.d
+-include $(XGEN_DIR)/*.d
+-include $(ELF_DIR)/*.d
+-include $(MACH_DIR)/*.d
+-include $(TARG_DIR)/*.d
+-include $(CFE_DIR)/*.d
+-include $(XOCC_DIR)/*.d
 $(info "====---- END Makefile.xocc ----====")

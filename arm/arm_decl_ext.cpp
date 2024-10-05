@@ -32,14 +32,14 @@ author: Su Zhenyu
 #include "../xgen/xgeninc.h"
 
 //Dump function.
-void CConv::accDump(IR const* ir, Region const* rg, IRDumpCtx & ctx)
+void CConv::accDump(IR const* ir, Region const* rg, IRDumpCtx<> & ctx)
 {
     return dumpConv(ir, rg, ctx);
 }
 
 
 //Dump function.
-void CConvOpndGrad::accDump(IR const* ir, Region const* rg, IRDumpCtx & ctx)
+void CConvOpndGrad::accDump(IR const* ir, Region const* rg, IRDumpCtx<> & ctx)
 {
     return dumpConvOpndGrad(ir, rg, ctx);
 }
