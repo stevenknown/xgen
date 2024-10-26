@@ -477,9 +477,9 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
 };
 
 BoolOption::Desc const BoolOption::elf_option_desc[] = {
-    { "device", &elf::g_elf_opt.is_device_elf,
+    { "device", &elf::g_elf_opt.m_is_device_elf,
       "generate device elf", },
-    { "fatbin", &elf::g_elf_opt.is_fatbin_elf,
+    { "fatbin", &elf::g_elf_opt.m_is_fatbin_elf,
       "generate fatbin elf", },
 };
 

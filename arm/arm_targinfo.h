@@ -73,8 +73,8 @@ public:
     virtual UINT getCalleeSaveStackSlotSize() const override
     { return CALLEE_SAVE_STACK_SLOT_SIZE; }
 
-    //Return true if the stack grows upward, false if it grows downward,
-    virtual bool isStackGrowthDownward() const override { return false; }
+    //Return true if the stack grows downward, false means growing upward.
+    virtual bool isStackGrowthDownward() const override { return true; }
 };
 
 #endif

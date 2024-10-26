@@ -128,17 +128,16 @@ void IR2OR::convertLoadConstFP(IR const* ir, OUT RecycORList & ors,
         ASSERTN(sizeof(ULONGLONG) == 8,
                 ("use suitably macro to take low part"));
 
-        UINT64 const val_0 = (UINT64)*pb;
-        UINT const bitnum = 32;
+        UINT64 const ival = (UINT64)*pb;
+        UINT bitnum = sizeof(UINT32) * BITS_PER_BYTE;
+        UINT32 ival0 = (UINT32)xcom::get64BitValueLowNBit(ival, bitnum);
+        UINT32 ival1 = (UINT32)xcom::get64BitValueHighNBit(ival, bitnum);
         m_cg->buildMove(load_val, m_cg->genIntImm(
-            (HOST_INT)(xcom::get64BitValueLowNBit(val_0, bitnum)), false),
-            tors.getList(), cont);
+            (HOST_INT)ival0, false), tors.getList(), cont);
 
-        UINT64 const val_1 = (UINT64)*pb;
         load_val2 = m_cg->genReg();
         m_cg->buildMove(load_val2, m_cg->genIntImm(
-            (HOST_INT)(xcom::get64BitValueHighNBit(val_1, bitnum)), false),
-            tors.getList(), cont);
+            (HOST_INT)ival1, false), tors.getList(), cont);
 
         m_cg->getSRVecMgr()->genSRVec(2, load_val, load_val2);
     }
