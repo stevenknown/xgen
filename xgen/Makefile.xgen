@@ -63,8 +63,6 @@ ifeq ($(TARG), FOR_ARM)
   TARG_OBJS:=$(foreach n,$(ARM_OBJS),$(TARG_DIR)/$(n))
 else ifeq ($(TARG), FOR_X86)
   TARG_OBJS:=$(foreach n,$(X86_OBJS),$(TARG_DIR)/$(n))
-else ifeq ($(TARG), FOR_TECO)
-  TARG_OBJS:=$(foreach n,$(TECO_OBJS),$(TARG_DIR)/$(n))
 else
   $(error "UNKNOWN TARG:$(TARG)")
 endif
