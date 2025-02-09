@@ -1,9 +1,13 @@
-$(info "====---- START Target Machine Info Generation Makefile ----====")
+$(info "==---- START PRECOMPILE TARGET MACHINE INFO GENERATION ----==")
 
 GEN_OBJS+=arm_gen_targ_mach_resource.o
 
 include ../../com/Makefile.inc
 include ../../Makefile.option
+
+ifeq ($(ROOT_DIR),)
+  $(error "NEED ROOT_DIR:e.g:make ROOT_DIR=~/xoc")
+endif
 
 ifeq ($(THREAD_NUM),)
   THREAD_NUM=1
@@ -22,10 +26,13 @@ ifeq ($(CFLAGS),)
   $(error "MISS CFLAGS")
 endif
 
+COM_DIR=$(ROOT_DIR)/com
+
 #Display internal variables.
 $(info "WIN=$(WIN),WSL=$(WSL)")
 $(info "TARG:$(TARG)")
 $(info "TARG_DIR:$(TARG_DIR)")
+$(info "ROOT_DIR:$(ROOT_DIR)")
 $(info "CC:$(CC)")
 $(info "INC:$(INC)")
 $(info "CFLAGS:$(CFLAGS)")
@@ -46,8 +53,15 @@ gen_objs: $(GEN_OBJS)
 $(COM_OUTPUT):
 	@echo "START BUILD $(COM_OUTPUT)"
 	@echo "EXEC:"
-	cd ../../com && make -j$(THREAD_NUM) -f Makefile TARG=$(TARG) \
-      DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)" THREAD_NUM=$(THREAD_NUM)
+	make -C $(COM_DIR) \
+      -j$(THREAD_NUM) \
+      -f Makefile \
+      TARG=$(TARG) \
+      TARG_DIR=$(TARG_DIR) \
+      ROOT_DIR=$(ROOT_DIR) \
+      DEBUG=$(DEBUG) \
+      CFLAGS="$(CFLAGS)" \
+      THREAD_NUM=$(THREAD_NUM)
 	@echo "END BUILD $(COM_OUTPUT)"
 
 %.o:%.cpp
@@ -73,4 +87,4 @@ clean:
 	@find ./ -name "*.cxx" | xargs rm -f
 	@find ./ -name "*.asm" | xargs rm -f
 
-$(info "====---- END Target Machine Info Generation Makefile ----====")
+$(info "==---- END PRECOMPILE TARGET MACHINE INFO GENERATION ----==")

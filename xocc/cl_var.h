@@ -36,7 +36,8 @@ class CLRegionMgr;
 
 class CLVar : public ARMVar {
 public:
-    virtual CHAR const* dumpVARDecl(OUT StrBuf & buf, VarMgr const* vm) const;
+    virtual CHAR const* dumpVARDecl(
+        OUT xcom::StrBuf & buf, VarMgr const* vm) const override;
 };
 
 

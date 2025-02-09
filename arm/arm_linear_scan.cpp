@@ -82,3 +82,15 @@ void ARMRegSetImpl::initRegSet()
     }
 }
 
+
+//
+//Start ARMLTConstraintsMgr.
+//
+LTConstraints * ARMLTConstraintsMgr::allocLTConstraints()
+{
+    LTConstraints * lt_constraints = new ARMLTConstraints();
+    ASSERT0(lt_constraints);
+    m_ltc_list.append_tail(lt_constraints);
+    return lt_constraints;
+}
+//End ARMLTConstraintsMgr.

@@ -24,6 +24,7 @@ our @EXPORT_OK = qw(
     computeAbsolutePathToXocRootDir
     compareDumpFile
     clean
+    extractPostfixName
     getCurDir
     getDumpFilePath
     getBaseResultDumpFilePath
@@ -40,6 +41,7 @@ our @EXPORT_OK = qw(
     is_exist
     isExistInEnvPath
     isInEnv
+    isCPPPostfixName
     moveToPassed
     invokeSimulator
     peelPostfixName
@@ -98,8 +100,12 @@ our $g_false = 0;
 my $g_override_simulator = "";
 my $g_override_cpp_path = "";
 my $g_override_xocc_path = "";
+my $g_override_as_path = "";
+my $g_override_ld_path = "";
 my $g_override_basecc_path = "";
 my $g_override_xocc_flag = "";
+my $g_override_as_flag = "";
+my $g_override_ld_flag = "";
 my $g_override_basecc_flag = "";
 
 # These functions are imported.
@@ -453,9 +459,16 @@ sub runXOCC
     my $src_fullpath = $_[0];
     my $is_invoke_assembler = $_[1];
     my $is_invoke_linker = $_[2];
-    my $asmname = $src_fullpath.".asm";
-    my $exename = computeExeName($src_fullpath);
-    my $objname = $src_fullpath.".o";
+    my $postname = extractPostfixName($src_fullpath);
+
+    #Record normalized src file path. e.g: remove the postfix 'i'.
+    my $src_fullpath_normed = $src_fullpath;
+    if (isCPPPostfixName($postname)) {
+        $src_fullpath_normed = peelPostfixName($src_fullpath);
+    }
+    my $asmname = $src_fullpath_normed.".asm";
+    my $exename = computeExeName($src_fullpath_normed);
+    my $objname = $src_fullpath_normed.".o";
     my $cmdline;
     if (!is_exist($g_xocc)) {
         abortex("\n$g_xocc DOES NOT EXIST\n");
@@ -470,7 +483,7 @@ sub runXOCC
     unlink($asmname);
     $cmdline = "$g_xocc $g_cflags -o $asmname $g_override_xocc_flag";
     $cmdline = "$cmdline $src_fullpath";
-    print("\nCMD>>$cmdline");
+    print("\nCMD>>$cmdline\n");
     my $retval = systemx($cmdline);
     if ($retval != 0) {
         print("\nCMD>>", $cmdline, "\n");
@@ -580,6 +593,27 @@ sub getFileNameFromPath
     return $prev_seg;
 }
 
+sub isCPPPostfixName
+{
+    my $postname = $_[0];
+    if ($postname eq "i") {
+        return $g_true;
+    }
+    return $g_false;
+}
+
+#Given file path, extract the last postfix name.
+#e.g: given a/b.out, return "out"
+sub extractPostfixName
+{
+    my $filepath = $_[0];
+    my @segs = split(/\./, $filepath);
+    my $seg;
+    my $n = 0; #the number of seg
+    while (defined($seg = $segs[$n])) { $n++; }
+    if ($n <= 0) { return ""; }
+    return $segs[$n-1];
+}
 
 #Given file path, drop the last postfix name.
 #e.g: given a/b.out, return a/b
@@ -665,6 +699,12 @@ sub overrideOptions
     if ($g_override_xocc_path ne "") {
         $g_xocc = $g_override_xocc_path;
     }
+    if ($g_override_as_path ne "") {
+        $g_as = $g_override_as_path;
+    }
+    if ($g_override_ld_path ne "") {
+        $g_ld = $g_override_ld_path;
+    }
     if ($g_override_basecc_path ne "") {
         $g_basecc = $g_override_basecc_path;
     }
@@ -746,6 +786,7 @@ sub parseCmdLine
 {
     #Skip ARGV[0], it should describe target machine.
     for (my $i = 0; $ARGV[$i]; $i++) {
+        my $curarg = $ARGV[$i];
         if ($ARGV[$i] eq "CreateBaseResult") {
             $g_is_create_base_result = 1;
             next;
@@ -764,11 +805,13 @@ sub parseCmdLine
         } elsif ($ARGV[$i] eq "Targ") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                print "\nUNKNOWN ARG: $ARGV[$i]\n";
                 usage();
                 abort();
             }
             $i++;
             if (!$ARGV[$i]) {
+                print "\nMISS ARG: $curarg\n";
                 usage();
                 abort();
             }
@@ -776,11 +819,13 @@ sub parseCmdLine
         } elsif ($ARGV[$i] eq "Case") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                print "\nUNKNOWN ARG: $ARGV[$i]\n";
                 usage();
                 abort();
             }
             $i++;
             if (!$ARGV[$i]) {
+                print "\nMISS ARG: $curarg\n";
                 usage();
                 abort();
             }
@@ -788,11 +833,13 @@ sub parseCmdLine
         } elsif ($ARGV[$i] eq "Dir") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                print "\nUNKNOWN ARG: $ARGV[$i]\n";
                 usage();
                 abort();
             }
             $i++;
             if (!$ARGV[$i]) {
+                print "\nMISS ARG: $curarg\n";
                 usage();
                 abort();
             }
@@ -823,23 +870,55 @@ sub parseCmdLine
         } elsif ($ARGV[$i] eq "XoccPath") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                print "\nUNKNOWN ARG: $ARGV[$i]\n";
                 usage();
                 abort();
             }
             $i++;
             if (!$ARGV[$i]) {
+                print "\nMISS ARG: $curarg\n";
                 usage();
                 abort();
             }
             $g_override_xocc_path = $ARGV[$i];
-        } elsif ($ARGV[$i] eq "CppPath") {
+        } elsif ($ARGV[$i] eq "AsPath") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                print "\nUNKNOWN ARG: $ARGV[$i]\n";
                 usage();
                 abort();
             }
             $i++;
             if (!$ARGV[$i]) {
+                print "\nMISS ARG: $curarg\n";
+                usage();
+                abort();
+            }
+            $g_override_as_path = $ARGV[$i];
+        } elsif ($ARGV[$i] eq "LinkerPath") {
+            $i++;
+            if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                print "\nUNKNOWN ARG: $ARGV[$i]\n";
+                usage();
+                abort();
+            }
+            $i++;
+            if (!$ARGV[$i]) {
+                print "\nMISS ARG: $curarg\n";
+                usage();
+                abort();
+            }
+            $g_override_ld_path = $ARGV[$i];
+        } elsif ($ARGV[$i] eq "CppPath") {
+            $i++;
+            if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                print "\nUNKNOWN ARG: $ARGV[$i]\n";
+                usage();
+                abort();
+            }
+            $i++;
+            if (!$ARGV[$i]) {
+                print "\nMISS ARG: $curarg\n";
                 usage();
                 abort();
             }
@@ -847,11 +926,13 @@ sub parseCmdLine
         } elsif ($ARGV[$i] eq "BaseccPath") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                print "\nUNKNOWN ARG: $ARGV[$i]\n";
                 usage();
                 abort();
             }
             $i++;
             if (!$ARGV[$i]) {
+                print "\nMISS ARG: $curarg\n";
                 usage();
                 abort();
             }
@@ -859,11 +940,13 @@ sub parseCmdLine
         } elsif ($ARGV[$i] eq "ConfigFilePath") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                print "\nUNKNOWN ARG: $ARGV[$i]\n";
                 usage();
                 abort();
             }
             $i++;
             if (!$ARGV[$i]) {
+                print "\nMISS ARG: $curarg\n";
                 usage();
                 abort();
             }
@@ -871,11 +954,13 @@ sub parseCmdLine
         } elsif ($ARGV[$i] eq "Simulator") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                print "\nUNKNOWN ARG: $ARGV[$i]\n";
                 usage();
                 abort();
             }
             $i++;
             if (!$ARGV[$i]) {
+                print "\nMISS ARG: $curarg\n";
                 #Note ""(empty string) and undef are both in the case.
                 usage();
                 abortex();
@@ -884,11 +969,13 @@ sub parseCmdLine
         } elsif ($ARGV[$i] eq "BaseccFlag") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                print "\nUNKNOWN ARG: $ARGV[$i]\n";
                 usage();
                 abort();
             }
             $i++;
             if (!$ARGV[$i]) {
+                print "\nMISS ARG: $curarg\n";
                 #Note ""(empty string) and undef are both in the case.
                 usage();
                 abortex();
@@ -897,13 +984,16 @@ sub parseCmdLine
         } elsif ($ARGV[$i] eq "XoccFlag") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                print "\nUNKNOWN ARG: $ARGV[$i]\n";
                 usage();
                 abort();
             }
             $i++;
             if ($ARGV[$i] eq "") {
+                print "\nMISS ARG: $curarg\n";
                 #Nothing to do.
             } elsif (!$ARGV[$i]) {
+                print "\nMISS ARG: $curarg\n";
                 #Note ""(empty string) and UNDEF are both in the case.
                 usage();
                 abortex();
@@ -914,11 +1004,13 @@ sub parseCmdLine
         } elsif ($ARGV[$i] eq "LinkerFlag") {
             $i++;
             if (!$ARGV[$i] or ($ARGV[$i] ne "=")) {
+                print "\nUNKNOWN ARG: $ARGV[$i]\n";
                 usage();
                 abort();
             }
             $i++;
             if (!$ARGV[$i]) {
+                print "\nMISS ARG: $curarg\n";
                 #Note ""(empty string) and undef are both in the case.
                 usage();
                 abortex();
@@ -963,6 +1055,18 @@ sub printEnvVar
     if ($g_override_xocc_flag ne "") {
         print "\ng_override_xocc_flag = $g_override_xocc_flag";
     }
+    if ($g_override_as_path ne "") {
+        print "\ng_override_as_path = $g_override_as_path";
+    }
+    if ($g_override_as_flag ne "") {
+        print "\ng_override_as_flag = $g_override_as_flag";
+    }
+    if ($g_override_ld_path ne "") {
+        print "\ng_override_ld_path = $g_override_ld_path";
+    }
+    if ($g_override_ld_flag ne "") {
+        print "\ng_override_ld_flag = $g_override_ld_flag";
+    }
     if ($g_override_basecc_flag ne "") {
         print "\ng_override_basecc_flag = $g_override_basecc_flag";
     }
@@ -973,11 +1077,11 @@ sub printEnvVar
 sub selectTarget
 {
     if (!$g_target) {
+        print "\nMISS TARG\n";
         usage();
         print "\nNOT SPECIFY A TARGET!\n";
         abort();
     }
-
     if ($g_osname eq 'MSWin32') {
         if ($g_target eq "arm") {
             $g_xocc = "$g_xoc_root_path/src/arm/xocc.exe";
@@ -1182,11 +1286,12 @@ sub generateGRandCompile
     my $fullpath = $_;
     my $grname = $fullpath.".gr";
     my $asmname = $grname.".asm";
+    my $objname = $asmname.".o";
 
     generateGR($fullpath);
     compileGR($fullpath);
     if ($g_is_invoke_assembler) {
-        runAssembler($g_as, $asmname);
+        runAssembler($asmname, $objname);
     }
     if ($g_is_invoke_linker) {
         my $exefile = computeExeName($fullpath);
@@ -1400,7 +1505,7 @@ sub findDirRecursively {
         chomp;
         if (isDir($_)) {
             push(@g_filelist, $_);
-        } 
+        }
     }
     return @g_filelist;
 }

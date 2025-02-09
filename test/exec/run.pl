@@ -86,7 +86,7 @@ sub createBaseResultOutputFile
     }
 }
 
-sub run
+sub runSimAndCompareResult
 {
     my $curdir = $_[0];
     my $fullpath = $_[1];
@@ -160,8 +160,8 @@ sub compileFile
     my $fullpathaftercpp = runCPP($fullpath);
 
     #Running XOCC.
-    runXOCC($fullpathaftercpp, $g_is_invoke_assembler, $g_is_invoke_linker,
-            $g_is_input_gr);
+    runXOCC($fullpathaftercpp, $g_is_invoke_assembler,
+            $g_is_invoke_linker, $g_is_input_gr);
 
     #Restore original flags.
     $g_cflags = $org_cflags;
@@ -175,12 +175,12 @@ sub compileAssembleLinkRunFile
     my $fullpath = $_[0];
     my $curdir = $_[1];
     my $base_output_path = getBaseOutputFilePath($fullpath);
-    $fullpath = compileFile($fullpath);
+    my $fullpathaftercpp = compileFile($fullpath);
     if ($g_is_test_gr == 1) {
-        generateGRandCompile($fullpath);
+        generateGRandCompile($fullpathaftercpp);
     }
     if ($g_is_invoke_simulator) {
-        run($curdir, $fullpath, $base_output_path);
+        runSimAndCompareResult($curdir, $fullpathaftercpp, $base_output_path);
     }
 }
 

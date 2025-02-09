@@ -34,16 +34,86 @@ author: Su Zhenyu
 class ARMRegSetImpl : public RegSetImpl {
     COPY_CONSTRUCTOR(ARMRegSetImpl);
 protected:
+    //Get the type of callee-save register.
+    virtual Type const* getCalleeRegisterType(
+        Reg r, TypeMgr * tm) const override
+    {
+        ASSERT0(isCallee(r) && tm != nullptr);
+        return isCalleeScalar(r) ? tm->getTargMachRegisterType() :
+            tm->getVectorType(ELEM_NUM_OF_16_ELEM_VECTOR_TYPE, D_U32);
+    }
+
     void initRegSet();
     virtual void initDebugRegSet();
 public:
     ARMRegSetImpl(LinearScanRA & ra) : RegSetImpl(ra) { initRegSet(); }
 };
 
+
+//
+//Start ARMLTConstraintsStrategy.
+//
+//This class is a concrete implementation of the lifetime constraint set
+//strategy for the ARM architecture.
+class ARMLTConstraintsStrategy : public LTConstraintsStrategy {
+    COPY_CONSTRUCTOR(ARMLTConstraintsStrategy);
+public:
+    ARMLTConstraintsStrategy(LinearScanRA & ra) :
+        LTConstraintsStrategy(ra) {}
+    ~ARMLTConstraintsStrategy() {}
+
+    //Set a constraint set for the lifetime of each PR
+    //in each IR on the ARM architecture.
+    virtual void applyConstraints(IR * ir) override {}
+};
+//End ARMLTConstraintsStrategy.
+
+
+//
+//Start ARMLTConstraints.
+//
+//The ARMLTConstraints class represents the lifetime constraint set
+//specific to the ARM architecture. It works in conjunction with
+//ARMLTConstraintsStrategy, which serves as the strategy for generating
+//ARM-specific lifetime constraints. ARMLTConstraints acts as the
+//representation of the constraint set, while ARMLTConstraintsStrategy
+//defines how these constraints are produced.
+//Some common constraint sets in the base class LTConstraints can be
+//used directly. for details, please refer to LTConstraints.
+class ARMLTConstraints : public LTConstraints {
+    COPY_CONSTRUCTOR(ARMLTConstraints);
+public:
+    ARMLTConstraints() : LTConstraints() {}
+    virtual ~ARMLTConstraints() {}
+};
+//End ARMLTConstraints.
+
+
+//
+//Start ARMLTConstraintsMgr.
+//
+class ARMLTConstraintsMgr : public LTConstraintsMgr {
+    COPY_CONSTRUCTOR(ARMLTConstraintsMgr);
+public:
+    ARMLTConstraintsMgr() : LTConstraintsMgr() {}
+    virtual ~ARMLTConstraintsMgr() {}
+    virtual LTConstraints * allocLTConstraints() override;
+};
+//End ARMLTConstraintsMgr.
+
+
 class ARMLinearScanRA : public LinearScanRA {
     COPY_CONSTRUCTOR(ARMLinearScanRA);
 protected:
     virtual RegSetImpl * allocRegSetImpl() { return new ARMRegSetImpl(*this); }
+
+    //Allocate memory for the lifetime constraint set strategy
+    //for ARM architecture.
+    virtual LTConstraintsStrategy * allocLTConstraintsStrategy() override
+    { return new ARMLTConstraintsStrategy(*this); }
+
+    virtual LTConstraintsMgr * allocLTConstraintsMgr() override
+    { return new ARMLTConstraintsMgr(); }
 public:
     ARMLinearScanRA(Region * rg) : LinearScanRA(rg) {}
     virtual ~ARMLinearScanRA() {}

@@ -44,6 +44,8 @@ public:
     void dump(FILE * h) const;
     void dump(OUT StrBuf & buf) const;
 
+    void dump(OUT xcom::FixedStrBuf<32> & buf) const;
+
     //Convert from BSIdx to Reg.
     static Reg toReg(BSIdx x) { return IS_BSUNDEF(x) ? REG_UNDEF : (Reg)x; }
 };
@@ -67,6 +69,20 @@ public:
         return rs;
     }
 };
+
+
+//A wrapper class that manages a pointer to a RegSet object.
+//The class ensures proper memory allocation and
+//deallocation for the RegSet object.
+class RegSetWrap {
+    RegSet * m_rs;
+public:
+    RegSetWrap() { m_rs = nullptr; }
+    ~RegSetWrap() { if (m_rs != nullptr) { delete m_rs; m_rs = nullptr; } }
+    void alloc() { if (m_rs == nullptr) { m_rs = new RegSet(); } }
+    RegSet * getRegSet() const { return m_rs; }
+};
+
 
 //Return true if reg is legal to target machine.
 inline bool isLegalReg(Reg reg)

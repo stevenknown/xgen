@@ -2137,7 +2137,7 @@ void LifeTimeMgr::computeLifeTimeUsableRegs(LifeTime * lt, RegSet * usable_rs)
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
     ASSERT0(usable_rs);
     if (LT_has_allocated(lt)) {
-        ASSERT0(SR_phy_reg(LT_sr(lt)) <= REG_LAST);
+        ASSERT0(SR_phy_reg(LT_sr(lt)) <= REG_LAsT);
         usable_rs->bunion(SR_phy_reg(LT_sr(lt)));
         return;
     }

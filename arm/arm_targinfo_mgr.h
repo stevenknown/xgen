@@ -91,14 +91,17 @@ public:
     virtual xgen::Reg getCallerScalarStart() const { return REG_R1; }
 
     //Get vector caller saved register set of T1 architecture.
-    xgen::RegSet const* getCallerVectorRegSet() const
+    xgen::RegSet const* getCallerVectorRegSet() const override
     { return &m_caller_vector; }
 
+    //Get the last physical register of the architecture.
+    virtual xgen::Reg getRegLast() const override { return REG_LAST; }
+
     //Get frame pointer register of T1 architecture.
-    virtual xgen::Reg getFP() const { return REG_R15; }
+    virtual xgen::Reg getFP() const override { return REG_R15; }
 
     //Get global pointer register of T1 architecture.
-    virtual xgen::Reg getGP() const { return REG_UNDEF; }
+    virtual xgen::Reg getGP() const override { return REG_UNDEF; }
 
     //Get number of registers of T1 architecture.
     virtual UINT const getNumOfRegister() const { return 65; }

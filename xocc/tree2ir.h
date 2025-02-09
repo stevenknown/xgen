@@ -48,23 +48,14 @@ public:
 
 #define CONT_toplirlist(s) ((s)->top_level_irlist)
 #define CONT_epilogirlist(s) ((s)->epilog_ir_list)
+#define CONT_toplirlist_last(s) ((s)->m_last_of_topirlist)
+#define CONT_epilogirlist_last(s) ((s)->m_last_of_epilogirlist)
 #define CONT_is_lvalue(s) ((s)->is_lvalue)
 #define CONT_is_parse_callee(s) ((s)->is_parse_callee)
 #define CONT_is_record_epilog(s) ((s)->is_record_epilog)
 #define CONT_is_compute_addr(s) ((s)->is_compute_addr)
 class T2IRCtx {
 public:
-    //Progagate information top down and collect information bottom up.
-    //Top level of current ir list.
-    //Note the top level of ir list must be stmt.
-    IR ** top_level_irlist;
-
-    //Collect information bottom up.
-    //Both of Post Dec/Inc will take side effects for base-region,
-    //thus we must append the side-effect stmt followed, and
-    //record the side-effect ir as epilog of current statement.
-    IR ** epilog_ir_list;
-
     //Progagate information top down.
     //Inform the AST convertor that the current Tree is callee.
     //Generate ID for callee rather than LD if it is direct call.
@@ -102,9 +93,33 @@ public:
     //    t = ld(q)
     //    x = ild(t, ofst(b))
     bool is_compute_addr;
+
+    //Progagate information top down and collect information bottom up.
+    //Top level of current ir list.
+    //Note the top level of ir list must be stmt.
+    IR ** top_level_irlist;
+
+    //Collect information bottom up.
+    //Both of Post Dec/Inc will take side effects for base-region,
+    //thus we must append the side-effect stmt followed, and
+    //record the side-effect ir as epilog of current statement.
+    IR ** epilog_ir_list;
+
+    //Always record the last IR in top_level_irlist. The field is used to
+    //speedup compilation.
+    IR ** m_last_of_topirlist;
+
+    //Always record the last IR in top_level_irlist. The field is used to
+    //speedup compilation.
+    IR ** m_last_of_epilogirlist;
 public:
     T2IRCtx() { ::memset((void*)this, 0, sizeof(T2IRCtx)); }
     T2IRCtx(T2IRCtx const& src) { *this = src; }
+
+    void appendTailOfTopLevelIRList(IR * irlst)
+    { xcom::add_next(CONT_toplirlist(this), m_last_of_topirlist, irlst); }
+    void appendTailOfEpilogLevelIRList(IR * irlst)
+    { xcom::add_next(CONT_epilogirlist(this), m_last_of_epilogirlist, irlst); }
 
     IR * getTopIRList() const { return *CONT_toplirlist(this); }
     IR * getEpilogIRList() const { return *CONT_epilogirlist(this); }

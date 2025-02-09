@@ -212,6 +212,8 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         if (g_do_prssa) {
             ((PRSSAMgr*)getPassMgr()->registerPass(PASS_PRSSA_MGR))->
                 construction(oc);
+            oc.setInvalidIfPRSSAReconstructed();
+
             //If SSA is enabled, disable classic DU Chain.
             //Since we do not maintain both them as some passes.
             //e.g:In RCE, remove PHI's operand will not update the
@@ -223,6 +225,8 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         if (g_do_mdssa) {
             ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MDSSA_MGR))->
                 construction(oc);
+            oc.setInvalidIfMDSSAReconstructed();
+
             //If SSA is enabled, disable classic DU Chain.
             //Since we do not maintain both them as some passes.
             //e.g:In RCE, remove PHI's operand will not update the
@@ -284,6 +288,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
             ASSERT0(prssamgr);
             if (!prssamgr->is_valid()) {
                 prssamgr->construction(oc);
+                oc.setInvalidIfPRSSAReconstructed();
             }
             //If SSA is enabled, disable classic DU Chain.
             //Since we do not maintain both them as some passes.
@@ -336,6 +341,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
             ASSERT0(prssamgr);
             if (!prssamgr->is_valid()) {
                 prssamgr->construction(oc);
+                oc.setInvalidIfPRSSAReconstructed();
             }
             //If SSA is enabled, disable classic DU Chain.
             //Since we do not maintain both them as some passes.
@@ -350,6 +356,8 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
             //are available.
             ((MDSSAMgr*)getPassMgr()->registerPass(PASS_MDSSA_MGR))->
                 construction(oc);
+            oc.setInvalidIfMDSSAReconstructed();
+
             //If SSA is enabled, disable classic DU Chain.
             //Since we do not maintain both them as some passes.
             //e.g:In RCE, remove PHI's operand will not update the
@@ -427,11 +435,11 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         //NOTE: ssa destruction might violate classic DU chain.
         ssamgr->destruction(oc);
 
-        //Note PRSSA will change PR no during PRSSA destruction.
+        //Note PRSSA will change PRNO during PRSSA destruction.
         //If classic DU chain is valid meanwhile, it might be disrupted
-        //as well. A better way is user
-        //maintain the classic DU chain, alternatively a conservative way to
-        //avoid subsequent verification complaining is set the prdu invalid.
+        //as well. A better way is user maintain the classic DU chain,
+        //alternatively a conservative way to avoid subsequent verification
+        //complaining is set the PRDU invalid.
         //WORKAROUND: use better way to update classic DU chain rather
         //than invalid them.
         oc.setInvalidPass(PASS_CLASSIC_DU_CHAIN);

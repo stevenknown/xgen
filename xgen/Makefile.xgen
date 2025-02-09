@@ -8,22 +8,28 @@ ifeq ($(TARG_DIR),)
   $(error "NEED TARG_DIR INFO:e.g:make TARG=FOR_ARM TARG_DIR=../arm")
 endif
 
+ifeq ($(ROOT_DIR),)
+  $(error "NEED ROOT_DIR:e.g:make ROOT_DIR=~/xoc")
+endif
+
 ifeq ($(THREAD_NUM),)
   THREAD_NUM=1
 endif
 
 CFLAGS+=-Wall
 ROOT_DIR=$(CURDIR)/..
-XGEN_DIR=.
-COM_DIR=../com
-OPT_DIR=../opt
-READER_DIR=../reader
-CURFILE=$(CURDIR)/Makefile.xgen
+XGEN_DIR=$(ROOT_DIR)/xgen
+COM_DIR=$(ROOT_DIR)/com
+OPT_DIR=$(ROOT_DIR)/opt
+READER_DIR=$(ROOT_DIR)/reader
+CURFILE=$(XGEN_DIR)/Makefile.xgen
+TARG_DIR_NAME=$(notdir $(TARG_DIR))
 
 $(info "INCLUDE: IN $(CURFILE), INCLUDE $(XGEN_DIR)/Makefile.inc")
 include $(XGEN_DIR)/Makefile.inc
 
-$(info "INCLUDE: IN $(CURFILE), INCLUDE $(TARG_DIR)/Makefile.inc")
+$(info "INCLUDE: IN $(CURFILE), INCLUDE \
+        $(ROOT_DIR)/$(TARG_DIR_NAME)/Makefile.inc")
 include $(TARG_DIR)/Makefile.inc
 
 $(info "INCLUDE: IN $(CURFILE), INCLUDE $(ROOT_DIR)/Makefile.xoc.inc")
@@ -66,14 +72,18 @@ endif
 INC=-I . -I com -I opt -I reader
 
 #Display internal variables.
+$(info "CURDIR:$(CURDIR)")
 $(info "WIN=$(WIN),WSL=$(WSL)")
 $(info "TARG:$(TARG)")
 $(info "TARG_DIR:$(TARG_DIR)")
+$(info "ROOT_DIR:$(ROOT_DIR)")
 $(info "CC:$(CC)")
 $(info "INC:$(INC)")
 $(info "CFLAGS:$(CFLAGS)")
 $(info "DEBUG:$(DEBUG)")
 $(info "THREAD_NUM:$(THREAD_NUM)")
+
+.PHONY: $(XGEN_OUTPUT) $(XOC_OUTPUT)
 
 $(XGEN_OUTPUT): targmach_gen $(XOC_OUTPUT) xgen_objs targ_objs
 	@echo "START BUILD $(XGEN_OUTPUT)"
@@ -109,7 +119,7 @@ targmach_gen:
 	@echo "==-- START GENERATE TARGET MACHINE INFO AND RELATED FILES  --=="
 	@echo "EXEC:"
 	make -j$(THREAD_NUM) -C $(TARG_DIR)/precompile \
-      TARGET=$(TARG) \
+      TARG=$(TARG) \
       TARG_DIR=$(TARG_DIR) \
       CC=$(CC) \
       ROOT_DIR=$(ROOT_DIR) \

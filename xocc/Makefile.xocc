@@ -12,16 +12,20 @@ ifeq ($(THREAD_NUM),)
   THREAD_NUM=1
 endif
 
+ifneq ($(ROOT_DIR),)
+  $(error "DO NOT SET ROOT_DIR IN CMD-LINE, IT WILL BE SET IN MAKEFILE")
+endif
+
 CFLAGS+=-Wall
 ROOT_DIR=$(CURDIR)/..
-XGEN_DIR=../xgen
-COM_DIR=../com
-READER_DIR=../reader
-OPT_DIR=../opt
-ELF_DIR=../elf
-MACH_DIR=../mach
-CFE_DIR=../cfe
-XOCC_DIR=$(CURDIR)
+XGEN_DIR=$(ROOT_DIR)/xgen
+COM_DIR=$(ROOT_DIR)/com
+READER_DIR=$(ROOT_DIR)/reader
+OPT_DIR=$(ROOT_DIR)/opt
+ELF_DIR=$(ROOT_DIR)/elf
+MACH_DIR=$(ROOT_DIR)/mach
+CFE_DIR=$(ROOT_DIR)/cfe
+XOCC_DIR=$(ROOT_DIR)/xocc
 XOCC_OUTPUT=xocc.exe
 
 include Makefile.inc
@@ -68,6 +72,8 @@ TMP_ELF_OBJS=$(foreach n,$(ELF_OBJS),$(ELF_DIR)/$(n))
 TMP_MACH_OBJS=$(foreach n,$(MACH_OBJS),$(MACH_DIR)/$(n))
 
 #Display internal variables.
+$(info "CURDIR:$(CURDIR)")
+$(info "ROOT_DIR:$(ROOT_DIR)")
 $(info "COMBINED CFE OBJS:$(TMP_CFE_OBJS)")
 $(info "COMBINED ELF OBJS:$(TMP_ELF_OBJS)")
 $(info "WIN=$(WIN),WSL=$(WSL)")
@@ -107,9 +113,15 @@ xocc_objs: $(XOCC_OBJS)
 
 $(XGEN_OUTPUT):
 	@echo "START BUILD $(XGEN_OUTPUT)"
-	cd $(XGEN_DIR) && make TARG=$(TARG) TARG_DIR="$(TARG_DIR)" \
-      -j$(THREAD_NUM) $(XGEN_OUTPUT) -f Makefile.xgen \
-      DEBUG=$(DEBUG) CFLAGS="$(CFLAGS)" \
+	make -C $(XGEN_DIR) \
+      TARG=$(TARG) \
+      TARG_DIR=$(TARG_DIR) \
+      ROOT_DIR=$(ROOT_DIR) \
+      -j$(THREAD_NUM) \
+      $(XGEN_OUTPUT) \
+      -f Makefile.xgen \
+      DEBUG=$(DEBUG) \
+      CFLAGS="$(CFLAGS)" \
       THREAD_NUM=$(THREAD_NUM)
 	@echo "END BUILD $(XGEN_OUTPUT)"
 

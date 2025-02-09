@@ -194,7 +194,7 @@ sub compileFileList
         chomp;
         my $filename = getFileNameFromPath($_);
         my $fullpath = $curdir."/".$filename;
-        print "\n-------------------------------------------";
+        print "\n-- FILE: $fullpath ------------------------------------------";
         compileAssembleLinkRunFile($fullpath, $curdir);
         if ($g_single_testcase eq "" && $g_is_move_passed_case == 1) {
             #Do NOT move to passed if there is just a singlecase.

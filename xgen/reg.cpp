@@ -56,6 +56,18 @@ void RegSet::dump(OUT StrBuf & buf) const
         }
     }
 }
+
+
+void RegSet::dump(OUT xcom::FixedStrBuf<32> & buf) const
+{
+    for (BSIdx i = get_first(); i != BS_UNDEF;) {
+        buf.strcat("%s", tmGetRegName((Reg)i));
+        i = get_next(i);
+        if (i != BS_UNDEF) {
+            buf.strcat(",");
+        }
+    }
+}
 ///END RegSet
 
 } //namespace xgen

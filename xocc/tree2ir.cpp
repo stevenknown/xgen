@@ -158,7 +158,7 @@ static IR * computeArrayAddr(xfe::Tree * t, IR * ir, Region * rg,
     }
 
     if (SIMP_stmtlist(&tc) != nullptr) {
-        xcom::add_next(CONT_toplirlist(cont), SIMP_stmtlist(&tc));
+        cont->appendTailOfTopLevelIRList(SIMP_stmtlist(&tc));
     }
     return ir;
 }
@@ -216,7 +216,7 @@ IR * CTree2IR::convertFieldAccessForReturnValAggr(
     tmp.sprint("$local_copy_of_$%d", retval->getPrno());
     xoc::Var * var = genLocalVar(tmp.buf, retvaltype);
     var->setToFormalParam();
-    xcom::add_next(CONT_toplirlist(cont), m_irmgr->buildStore(var, retval));
+    cont->appendTailOfTopLevelIRList(m_irmgr->buildStore(var, retval));
     return m_irmgr->buildLoad(var, retvaltype);
 }
 
@@ -286,7 +286,7 @@ static IR * convertAssignImpl(
                     ("I think tmpir should already be set to"
                      "pointer in buildStore()"));
             xoc::setLineNum(tmpir, lineno, rg);
-            xcom::add_next(CONT_toplirlist(cont), tmpir);
+            cont->appendTailOfTopLevelIRList(tmpir);
             ir = rg->getIRMgr()->buildIStore(
                 rg->getIRMgr()->buildPRdedicated(
                 STPR_no(tmpir), tmpir->getType()), r, restype);
@@ -361,7 +361,7 @@ IR * CTree2IR::convertTakenAddrOfCallRetVal(IR * retvalexp, T2IRCtx * cont)
         xoc::Var * var = genReturnValBufVar(retvaltype, &retvalsize);
         ASSERT0(var);
         IR * stretvaltobuf = m_irmgr->buildStore(var, retvaltype, retvalexp);
-        xcom::add_next(CONT_toplirlist(cont), stretvaltobuf);
+        cont->appendTailOfTopLevelIRList(stretvaltobuf);
         retvalexp = m_rg->dupIsomoExpTree(stretvaltobuf);
         ASSERT0(retvalexp->is_exp() && retvalexp->hasIdinfo());
     }
@@ -389,6 +389,7 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont)
     //       '-='  '<<='  '>>='  '&='  '^='  '|='
     IR * ist_mem_addr = nullptr; //record mem_addr if 't' is an ISTORE
     IR * epilog_ir_list = nullptr;
+    IR * epilog_ir_list_last = nullptr;
 
     //Note the outermost TR_ARRAY means the lowest dimension element of array
     //will be accessed.
@@ -400,6 +401,7 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont)
     CONT_is_lvalue(&tc) = true;
     CONT_is_record_epilog(&tc) = true;
     CONT_epilogirlist(&tc) = &epilog_ir_list;
+    CONT_epilogirlist_last(&tc) = &epilog_ir_list_last;
     IR * l = convert(TREE_lchild(t), &tc);
     bool is_ild_array_case = false;
     ASSERTN(l != nullptr && l->is_single(),
@@ -521,9 +523,10 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont)
 
     CONT_is_record_epilog(&tc) = false;
     xoc::setLineNum(ir, lineno, m_rg);
-    xcom::add_next(CONT_toplirlist(&tc), ir);
+    tc.appendTailOfTopLevelIRList(ir);
+
     //Record the post-side-effect operations, such as:x++.
-    xcom::add_next(CONT_toplirlist(&tc), epilog_ir_list);
+    tc.appendTailOfTopLevelIRList(epilog_ir_list);
 
     if (CONT_is_compute_addr(cont)) {
         //CASE: given x = &(p=q);
@@ -550,7 +553,6 @@ IR * CTree2IR::convertIncDec(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont)
 {
     //Generate base region IR node used into ST
     T2IRCtx ct(*cont);
-    CONT_toplirlist(&ct) = CONT_toplirlist(cont);
 
     //In C spec, pre-increment-op has sideeffect, it has WRITE-property.
     //e.g: ++p, p is inc_exp.
@@ -620,7 +622,7 @@ IR * CTree2IR::convertIncDec(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont)
     //ST is statement, and only can be appended on top level
     //statement list.
     xoc::setLineNum(ir, lineno, m_rg);
-    xcom::add_next(CONT_toplirlist(cont), ir);
+    cont->appendTailOfTopLevelIRList(ir);
     return m_rg->dupIRTree(inc_exp);
 }
 
@@ -1075,7 +1077,7 @@ IR * CTree2IR::convertCallItself(xfe::Tree * t, IR * arglist, IR * callee,
     }
     call->verify(m_rg);
     xoc::setLineNum(call, lineno, m_rg);
-    xcom::add_next(CONT_toplirlist(cont), call);
+    cont->appendTailOfTopLevelIRList(call);
     return call;
 }
 
@@ -1147,7 +1149,11 @@ IR * CTree2IR::convertLogicalAND(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont)
     ASSERT0(cont);
     T2IRCtx tcont(*cont);
     IR * stmt_in_rchild = nullptr;
+    IR * stmt_in_rchild_last = nullptr;
+
+    //Override topirlist and corresponding last.
     CONT_toplirlist(&tcont) = &stmt_in_rchild;
+    CONT_toplirlist_last(&tcont) = &stmt_in_rchild_last;
     IR * op0 = convert(TREE_lchild(t), cont);
     IR * op1 = convert(TREE_rchild(t), &tcont);
     if (tcont.getTopIRList() == nullptr) {
@@ -1196,7 +1202,7 @@ IR * CTree2IR::convertLogicalAND(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont)
 
     xoc::setLineNum(ifir1, lineno, m_rg);
 
-    xcom::add_next(CONT_toplirlist(cont), ifir1);
+    cont->appendTailOfTopLevelIRList(ifir1);
     return m_irmgr->buildPRdedicated(res_prno, m_tm->getBool());
 }
 
@@ -1208,7 +1214,11 @@ IR * CTree2IR::convertLogicalOR(IN xfe::Tree * t, UINT lineno,
     ASSERT0(cont);
     T2IRCtx tcont(*cont);
     IR * stmt_in_rchild = nullptr;
+    IR * stmt_in_rchild_last = nullptr;
+
+    //Override topirlist and corresponding last.
     CONT_toplirlist(&tcont) = &stmt_in_rchild;
+    CONT_toplirlist_last(&tcont) = &stmt_in_rchild_last;
     IR * op0 = convert(TREE_lchild(t), cont);
     IR * op1 = convert(TREE_rchild(t), &tcont);
     if (tcont.getTopIRList() == nullptr) {
@@ -1245,14 +1255,10 @@ IR * CTree2IR::convertLogicalOR(IN xfe::Tree * t, UINT lineno,
     IF_falsebody(ifir2) = m_irmgr->buildStorePR(res_prno, m_tm->getBool(),
         m_irmgr->buildImmInt(false, m_tm->getBool()));
     xoc::setLineNum(ifir2, lineno, m_rg);
-
     xcom::add_next(&IF_falsebody(ifir1), ifir2);
-
     ifir1->setParentPointer(true);
-
     xoc::setLineNum(ifir1, lineno, m_rg);
-
-    xcom::add_next(CONT_toplirlist(cont), ifir1);
+    cont->appendTailOfTopLevelIRList(ifir1);
     return m_irmgr->buildPRdedicated(res_prno, m_tm->getBool());
 }
 
@@ -1298,8 +1304,6 @@ IR * CTree2IR::convertPostIncDec(IN xfe::Tree * t, UINT lineno,
 
     //Get result IR, it must be pseduo register.
     T2IRCtx ct(*cont);
-    CONT_toplirlist(&ct) = CONT_toplirlist(cont);
-    CONT_epilogirlist(&ct) = CONT_epilogirlist(cont);
 
     //Post-increment-op has sideeffect, it has both WRITE and READ property.
     //Begin processing READ-property.
@@ -1385,13 +1389,13 @@ IR * CTree2IR::convertPostIncDec(IN xfe::Tree * t, UINT lineno,
     //Record source code info.
     xoc::setLineNum(xstpr, lineno, m_rg);
     xoc::setLineNum(xincst, lineno, m_rg);
-    xcom::add_next(CONT_toplirlist(cont), xstpr);
+    cont->appendTailOfTopLevelIRList(xstpr);
 
     //Record extra generated stmt.
     if (CONT_is_record_epilog(cont)) {
-        xcom::add_next(CONT_epilogirlist(cont), xincst);
+        cont->appendTailOfEpilogLevelIRList(xincst);
     } else {
-        xcom::add_next(CONT_toplirlist(cont), xincst);
+        cont->appendTailOfTopLevelIRList(xincst);
     }
     return m_irmgr->buildPRdedicated(STPR_no(xstpr), xstpr->getType());
 }
@@ -2013,11 +2017,14 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
 {
     IR * ir = nullptr;
     IR * ir_list = nullptr; //record ir list generated.
-    IR * l = nullptr, * r = nullptr;
+    IR * ir_list_last = nullptr;
+    IR * l = nullptr;
+    IR * r = nullptr;
     T2IRCtx ct;
     if (cont == nullptr) {
         cont = &ct;
         CONT_toplirlist(cont) = &ir_list;
+        CONT_toplirlist_last(cont) = &ir_list_last;
     }
     while (t != nullptr) {
         UINT lineno = TREE_lineno(t);
@@ -2277,9 +2284,17 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
         case TR_DO: {
             IR * prolog = nullptr;
             IR * epilog = nullptr;
+            IR * prolog_last = nullptr;
+            IR * epilog_last = nullptr;
             T2IRCtx ct2;
+
+            //Override topirlist and corresponding last.
             CONT_toplirlist(&ct2) = &prolog;
+            CONT_toplirlist_last(&ct2) = &prolog_last;
+
+            //Override epilogirlist and corresponding last.
             CONT_epilogirlist(&ct2) = &epilog;
+            CONT_epilogirlist_last(&ct2) = &epilog_last;
             CONT_is_record_epilog(&ct2) = true;
 
             IR * det = convert(TREE_dowhile_det(t), &ct2);
@@ -2292,7 +2307,7 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
             if (prolog != nullptr) {
                 //Do NOT add prolog before DO_WHILE stmt.
                 //dup_prolog = m_rg->dupIRTreeList(prolog);
-                //xcom::add_next(&ir_list, prolog);
+                //xcom::add_next(&ir_list, &ir_list_last, prolog);
             }
 
             IR * body = convert(TREE_dowhile_body(t), nullptr);
@@ -2316,9 +2331,17 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
         case TR_WHILE: {
             IR * prolog = nullptr;
             IR * epilog = nullptr;
+            IR * prolog_last = nullptr;
+            IR * epilog_last = nullptr;
             T2IRCtx ct2;
+
+            //Override topirlist and corresponding last.
             CONT_toplirlist(&ct2) = &prolog;
+            CONT_toplirlist_last(&ct2) = &prolog_last;
+
+            //Override epilogirlist and corresponding last.
             CONT_epilogirlist(&ct2) = &epilog;
+            CONT_epilogirlist_last(&ct2) = &epilog_last;
             CONT_is_record_epilog(&ct2) = false;
 
             IR * det = convert(TREE_whiledo_det(t), &ct2);
@@ -2331,7 +2354,7 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
             IR * dup_prolog = nullptr;
             if (prolog != nullptr) {
                 dup_prolog = m_rg->dupIRTreeList(prolog);
-                xcom::add_next(&ir_list, prolog);
+                xcom::add_next(&ir_list, &ir_list_last, prolog);
             }
             ASSERT0(epilog == nullptr);
 
@@ -2351,6 +2374,7 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
             break;
         }
         case TR_FOR: {
+            ASSERT0(ir == nullptr);
             IR * last = nullptr;
             IR * init = convert(TREE_for_init(t), nullptr);
             xcom::add_next(&ir, &last, init);
@@ -2358,7 +2382,11 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
             T2IRCtx ct2;
             ASSERT0(cont);
             IR * stmt_in_det = nullptr;
+            IR * stmt_in_det_last = nullptr;
+
+            //Override topirlist and corresponding last.
             CONT_toplirlist(&ct2) = &stmt_in_det;
+            CONT_toplirlist_last(&ct2) = &stmt_in_det_last;
             IR * det = convert(TREE_for_det(t), &ct2);
             if (stmt_in_det != nullptr) {
                 xcom::add_next(&ir, &last, stmt_in_det);
@@ -2498,7 +2526,7 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
                                 m_rg->getDbxMgr()) == 0) {
                 xoc::setLineNum(ir, lineno, m_rg);
             }
-            xcom::add_next(&ir_list, ir);
+            xcom::add_next(&ir_list, &ir_list_last, ir);
         }
         ir = nullptr;
     }

@@ -365,8 +365,9 @@ bool Compiler::compileGRFile(CHAR const* fn)
         goto FIN;
     }
     if (rm->getProgramRegion() == nullptr) {
-        xoc::prt2C("\nerror: miss program region '%s'", fn);
-        res = false;
+        //CASE:GR file might be empty.
+        //xoc::prt2C("\nerror: miss program region '%s'", fn);
+        //res = false;
         goto FIN;
     }
     if (g_is_dumpgr) {

@@ -35,7 +35,8 @@ namespace xocc {
 //
 //START CLVar
 //
-CHAR const* CLVar::dumpVARDecl(OUT StrBuf & buf, VarMgr const* vm) const
+CHAR const* CLVar::dumpVARDecl(
+    OUT xcom::StrBuf & buf, VarMgr const* vm) const
 {
     xocc::DeclAndVarMap const* dvmap = ((CLVarMgr*)vm)->getDVMap();
     if (dvmap == nullptr) { return nullptr; }
