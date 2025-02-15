@@ -206,7 +206,7 @@ protected:
     void localizeBB(SR * sr, ORBB * bb);
     void localizeBBTab(SR * sr, xcom::TTab<ORBB*> * orbbtab);
 
-    //Destroy useless resource.
+    //Destroy resource that is not in use.
     void postLS(LIS * lis, DataDepGraph * ddg);
     void preLS(IN ORBB * bb, IN RaMgr * ra_mgr,
                OUT DataDepGraph ** ddg, OUT BBSimulator ** sim,

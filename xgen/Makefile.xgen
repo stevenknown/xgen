@@ -8,29 +8,36 @@ ifeq ($(TARG_DIR),)
   $(error "NEED TARG_DIR INFO:e.g:make TARG=FOR_ARM TARG_DIR=../arm")
 endif
 
-ifeq ($(ROOT_DIR),)
-  $(error "NEED ROOT_DIR:e.g:make ROOT_DIR=~/xoc")
-endif
-
 ifeq ($(THREAD_NUM),)
-  THREAD_NUM=1
+  THREAD_NUM:=1
 endif
 
-CFLAGS+=-Wall
-ROOT_DIR=$(CURDIR)/..
-XGEN_DIR=$(ROOT_DIR)/xgen
-COM_DIR=$(ROOT_DIR)/com
-OPT_DIR=$(ROOT_DIR)/opt
-READER_DIR=$(ROOT_DIR)/reader
-CURFILE=$(XGEN_DIR)/Makefile.xgen
-TARG_DIR_NAME=$(notdir $(TARG_DIR))
+override ROOT_DIR:=$(CURDIR)/..
+
+XGEN_DIR:=$(ROOT_DIR)/xgen
+COM_DIR:=$(ROOT_DIR)/com
+OPT_DIR:=$(ROOT_DIR)/opt
+READER_DIR:=$(ROOT_DIR)/reader
+CURFILE:=$(XGEN_DIR)/Makefile.xgen
+TARG_DIR_NAME:=$(notdir $(TARG_DIR))
+
+#Check wether each directory is valid.
+ifeq ($(wildcard $(ROOT_DIR)),)
+  $(error "$(ROOT_DIR) SEEMS NOT VALID DIR.")
+else ifeq ($(wildcard $(XGEN_DIR)),)
+  $(error "$(XGEN_DIR) SEEMS NOT VALID DIR.")
+else ifeq ($(wildcard $(COM_DIR)),)
+  $(error "$(COM_DIR) SEEMS NOT VALID DIR.")
+else ifeq ($(wildcard $(OPT_DIR)),)
+  $(error "$(OPT_DIR) SEEMS NOT VALID DIR.")
+endif
 
 $(info "INCLUDE: IN $(CURFILE), INCLUDE $(XGEN_DIR)/Makefile.inc")
 include $(XGEN_DIR)/Makefile.inc
 
 $(info "INCLUDE: IN $(CURFILE), INCLUDE \
         $(ROOT_DIR)/$(TARG_DIR_NAME)/Makefile.inc")
-include $(TARG_DIR)/Makefile.inc
+include $(ROOT_DIR)/$(TARG_DIR_NAME)/Makefile.inc
 
 $(info "INCLUDE: IN $(CURFILE), INCLUDE $(ROOT_DIR)/Makefile.xoc.inc")
 include $(ROOT_DIR)/Makefile.xoc.inc
@@ -38,7 +45,12 @@ include $(ROOT_DIR)/Makefile.xoc.inc
 $(info "INCLUDE: IN $(CURFILE), INCLUDE $(ROOT_DIR)/Makefile.option")
 include $(ROOT_DIR)/Makefile.option
 
+$(info "INCLUDE: IN $(CURFILE), INCLUDE \
+        $(ROOT_DIR)/$(TARG_DIR_NAME)/precompile/Makefile.precompile.inc")
+include $(ROOT_DIR)/$(TARG_DIR_NAME)/precompile/Makefile.precompile.inc
+
 #SET DEFAULT CFLAGS.
+CFLAGS+=-Wall
 CFLAGS+=\
   -D$(TARG) \
   -Wno-unknown-pragmas \
@@ -59,15 +71,9 @@ ifneq (,$(filter $(CC),g++ gcc))
   CFLAGS+=-Wno-strict-aliasing -finline-limit=10000000
 endif
 
-ifeq ($(TARG), FOR_ARM)
-  TARG_OBJS:=$(foreach n,$(ARM_OBJS),$(TARG_DIR)/$(n))
-else ifeq ($(TARG), FOR_X86)
-  TARG_OBJS:=$(foreach n,$(X86_OBJS),$(TARG_DIR)/$(n))
-else
-  $(error "UNKNOWN TARG:$(TARG)")
-endif
+TMP_TARG_OBJS:=$(foreach n,$(TARG_OBJS),$(ROOT_DIR)/$(TARG_DIR_NAME)/$(n))
 
-INC=-I . -I com -I opt -I reader
+INC:=-I . -I com -I opt -I reader
 
 #Display internal variables.
 $(info "CURDIR:$(CURDIR)")
@@ -79,55 +85,113 @@ $(info "CC:$(CC)")
 $(info "INC:$(INC)")
 $(info "CFLAGS:$(CFLAGS)")
 $(info "DEBUG:$(DEBUG)")
+$(info "REF_TARGMACH_INFO:$(REF_TARGMACH_INFO)")
 $(info "THREAD_NUM:$(THREAD_NUM)")
 
-.PHONY: $(XGEN_OUTPUT) $(XOC_OUTPUT)
+#Declare build_xgen_objs and build_targ_objs are fake objects, not a real
+#files.
+.PHONY: build_xgen_objs build_targ_objs
 
-$(XGEN_OUTPUT): targmach_gen $(XOC_OUTPUT) xgen_objs targ_objs
-	@echo "START BUILD $(XGEN_OUTPUT)"
-	@echo "EXEC:"
-	ar rcs $(XGEN_OUTPUT) $(ROOT_DIR)/$(XOC_OUTPUT) $(XGEN_OBJS) $(TARG_OBJS)
-	@echo "END BUILD $(XGEN_OUTPUT)"
-	@echo "SUCCESS TO GENERATE $(XGEN_OUTPUT)!!"
+#NOTE: PRECOMPILE_OUTPUT should be genreated first.
 
-%.o:%.cpp
-	@echo "BUILD $<"
-	@echo "EXEC:"
-	$(CC) $(CFLAGS) $(INC) -c $< -o $@
+$(XGEN_OUTPUT): $(XOC_OUTPUT)
+	@echo "==-- IN Makefile.xgen: START BUILD $(XGEN_OUTPUT) --=="
+	@if [ ! -f "$@" ] || [ "$<" -nt "$@" ]; then \
+       echo "EXEC:"; \
+       ar -rcvsT $(XGEN_OUTPUT) \
+         $(ROOT_DIR)/$(XOC_OUTPUT) \
+         $(XGEN_OBJS) \
+         $(TMP_TARG_OBJS); \
+       echo "SUCCESS TO GENERATE $(XGEN_OUTPUT)!!"; \
+     else \
+       echo "$(XGEN_OUTPUT) ALREADY EXISTS!!"; \
+     fi
 
-$(XOC_OUTPUT):
-	@echo "START BUILD $(XOC_OUTPUT)"
+$(XOC_OUTPUT): build_xgen_objs
+	@echo "==-- IN Makefile.xgen: START BUILD $(XOC_OUTPUT) --=="
 	@echo "EXEC:"
-	make -C $(ROOT_DIR) -j$(THREAD_NUM) -f Makefile.xoc \
+	make -C $(ROOT_DIR) \
+      -j$(THREAD_NUM) \
+      -f Makefile.xoc \
       TARG=$(TARG) \
       TARG_DIR=$(TARG_DIR) \
       ROOT_DIR=$(ROOT_DIR) \
       DEBUG=$(DEBUG) \
       CFLAGS="$(CFLAGS)" \
-      THREAD_NUM=$(THREAD_NUM)
-	@echo "END BUILD $(XOC_OUTPUT)"
+      THREAD_NUM=$(THREAD_NUM) \
+      REF_TARGMACH_INFO=$(REF_TARGMACH_INFO)
+	@echo "==-- END BUILD $(XOC_OUTPUT) --=="
 
-xgen_objs: $(XGEN_OBJS)
-	@echo "EXEC:xgen_objs:$(XGEN_OBJS)"
+build_xgen_objs: pre_build_xgen_objs $(XGEN_OBJS)
+	@echo "SUCCESS TO GENERATE: $(XGEN_OBJS)"
 
-targ_objs: $(TARG_OBJS)
-	@echo "EXEC:targ_objs:$(TARG_OBJS)"
+pre_build_xgen_objs:
+	@echo "==-- IN Makefile.xgen: START BUILD $(XGEN_OBJS)"
 
-targmach_gen:
-	@echo "==-- START GENERATE TARGET MACHINE INFO AND RELATED FILES  --=="
+$(XGEN_OBJS): %.o:%.cpp build_targ_objs
+	@echo "BUILD $<"
 	@echo "EXEC:"
-	make -j$(THREAD_NUM) -C $(TARG_DIR)/precompile \
+	$(CC) $(CFLAGS) $(INC) -c $< -o $@
+
+build_targ_objs: pre_build_targ_objs $(TMP_TARG_OBJS)
+	@echo "SUCCESS TO GENERATE: $(TMP_TARG_OBJS)"
+
+pre_build_targ_objs:
+	@echo "==-- IN Makefile.xgen: START BUILD $(TMP_TARG_OBJS)"
+
+$(TMP_TARG_OBJS): %.o:%.cpp $(PRECOMPILE_OUTPUT)
+	@echo "BUILD $<"
+	@echo "EXEC:"
+	$(CC) $(CFLAGS) $(INC) -c $< -o $@
+
+.PHONY: wait_for_file
+
+wait_for_file:
+	@while ! test -e somefile.txt; do \
+       echo "Waiting for somefile.txt to be created..."; \
+       sleep 1; \
+     done
+	@echo "somefile.txt has been created."
+
+$(PRECOMPILE_OUTPUT):
+	@echo "==-- IN Makefile.xgen: START BUILD $(PRECOMPILE_OUTPUT)" \
+          " AND RELATED FILES  --=="
+	@echo "EXEC:"
+	make -j$(THREAD_NUM) \
+      -C $(TARG_DIR)/precompile \
+      -f Makefile \
       TARG=$(TARG) \
       TARG_DIR=$(TARG_DIR) \
       CC=$(CC) \
       ROOT_DIR=$(ROOT_DIR) \
       DEBUG=$(DEBUG) \
       CFLAGS="$(CFLAGS)" \
-      THREAD_NUM=$(THREAD_NUM)
-	cd $(TARG_DIR)/precompile; ./gentminfo.exe
-	@echo "==-- END GENERATE TARGET MACHINE INFO AND RELATED FILES  --=="
+      THREAD_NUM=$(THREAD_NUM) \
+      REF_TARGMACH_INFO=$(REF_TARGMACH_INFO)
+	@echo "==-- END BUILD $(PRECOMPILE_OUTPUT)" \
+          " AND RELATED FILES  --=="
 
 clean:
+	make clean \
+      -C $(ROOT_DIR)/$(TARG_DIR_NAME)/precompile \
+      -f Makefile \
+      TARG=$(TARG) \
+      TARG_DIR=$(TARG_DIR) \
+      CC=$(CC) \
+      ROOT_DIR=$(ROOT_DIR) \
+      DEBUG=$(DEBUG) \
+      CFLAGS="$(CFLAGS)" \
+      THREAD_NUM=$(THREAD_NUM) \
+      REF_TARGMACH_INFO=$(REF_TARGMACH_INFO)
+	make clean -C $(ROOT_DIR) \
+      -f Makefile.xoc \
+      TARG=$(TARG) \
+      TARG_DIR=$(TARG_DIR) \
+      ROOT_DIR=$(ROOT_DIR) \
+      DEBUG=$(DEBUG) \
+      CFLAGS="$(CFLAGS)" \
+      THREAD_NUM=$(THREAD_NUM) \
+      REF_TARGMACH_INFO=$(REF_TARGMACH_INFO)
 	@find ./ -name "*.gcda" | xargs rm -f
 	@find ./ -name "*.gcno" | xargs rm -f
 	@find ./ -name "*.o" | xargs rm -f
@@ -151,6 +215,6 @@ clean:
 -include $(COM_DIR)/*.d
 -include $(OPT_DIR)/*.d
 -include $(XGEN_DIR)/*.d
--include $(TARG_DIR)/*.d
+-include $(ROOT_DIR)/$(TARG_DIR_NAME)/*.d
 
 $(info "====---- END Makefile.xgen ----====")

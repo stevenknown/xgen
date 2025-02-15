@@ -38,7 +38,7 @@ namespace xocc {
 //structure return value in C/C++.
 UINT const g_formal_parameter_start = 1;
 CHAR const* g_output_file_name = nullptr; //record the ASM file name.
-CHAR const* g_xocc_version = "1.2.3"; //recod the xocc.exe version.
+CHAR const* g_xocc_version = "1.6.0"; //recod the xocc.exe version.
 CHAR const* g_dump_file_name = nullptr;
 bool g_is_dumpgr = false;
 bool g_is_dump_option = false;
@@ -410,7 +410,7 @@ bool Compiler::compileCFile(CHAR const* fn)
     CParser parser(rm->getLogMgr(), fn);
     if (g_err_msg_list.get_elem_count() > 0) {
         succ = false;
-        goto FIN;
+        goto FAIL_DUMP;
     }
     if (g_redirect_stdout_to_dump_file) {
         g_unique_dumpfile = rm->getLogMgr()->getFileHandler();
@@ -418,11 +418,11 @@ bool Compiler::compileCFile(CHAR const* fn)
         g_unique_dumpfile_name = g_dump_file_name;
         ASSERT0(g_unique_dumpfile_name);
     }
-    g_fe_sym_tab = rm->getSymTab();
+    g_fe_sym_tab = (CLSymTab*)rm->getSymTab();
     if (runFrontEnd(rm, parser) != ST_SUCC) {
         succ = false;
         ASSERTN(g_err_msg_list.has_msg(), ("miss error msg"));
-        goto FIN;
+        goto FAIL_DUMP;
     }
 
     //In the file scope, generate function region.
@@ -455,7 +455,16 @@ FIN:
                g_warn_msg_list.get_elem_count());
     g_err_msg_list.clean();
     g_warn_msg_list.clean();
+    clean_global_scope();
     return succ;
+
+FAIL_DUMP:
+    //In the file scope, generate function region.
+    if (g_dump_opt.isDumpAll() && xfe::get_global_scope() != nullptr) {
+        xfe::get_global_scope()->dump();
+    }
+    clean_global_scope();
+    goto FIN;
 }
 
 

@@ -43,8 +43,11 @@ CHAR const* CLVar::dumpVARDecl(
     xfe::Decl const* decl = dvmap->mapVar2Decl(const_cast<CLVar*>(this));
     if (decl != nullptr) {
         ASSERT0(DECL_dt(decl) == xfe::DCL_DECLARATION);
-        xfe::format_declaration(buf, decl, true);
-        return buf.buf;
+        xcom::DefFixedStrBuf tb;
+        tb.bind(&buf);
+        xfe::format_declaration(tb, decl, true);
+        tb.unbind();
+        return buf.getBuf();
     }
     return nullptr;
 }

@@ -43,6 +43,13 @@ static bool g_ask_for_help = false;
 static CHAR const* g_include_string = nullptr;
 static CHAR const* g_exclude_string = nullptr;
 
+static bool dispatchByPrefix(
+    CHAR const* cmdstr, INT argc, CHAR const* argv[],
+    INT & i, bool ** boption);
+static void inferOption();
+static void inferDumpOption();
+static void inferStringOption();
+
 static bool is_c_source_file(CHAR const* fn)
 {
     UINT len = (UINT)::strlen(fn) + 1;
@@ -127,62 +134,32 @@ static bool process_opt(INT argc, CHAR const* argv[], INT & i)
     switch (cmdstr[1]) {
     case '0':
         xoc::g_opt_level = OPT_LEVEL0;
-        xoc::g_infer_type = true;
+        xoc::g_pass_opt.disableAllPass();
         //Note the essential options will be set at the end.
         break;
     case '1':
         xoc::g_opt_level = OPT_LEVEL1;
-        xoc::g_do_prssa = true;
-        xoc::g_do_mdssa = true;
-        xoc::g_infer_type = true;
-        //Only do refinement.
+        xoc::g_pass_opt.enablePassInLevel1();
         break;
     case '2':
         xoc::g_opt_level = OPT_LEVEL2;
-        xoc::g_do_cp = true;
-        xoc::g_do_dce = true;
-        xoc::g_do_licm = true;
-        xoc::g_do_gcse = true;
-        xoc::g_do_rce = true;
-        xoc::g_do_rp = true;
-        xoc::g_do_prssa = true;
-        xoc::g_do_mdssa = true;
-        xoc::g_infer_type = true;
+        xoc::g_pass_opt.enablePassInLevel2();
         g_cfg_opt = true;
         break;
     case '3':
         xoc::g_opt_level = OPT_LEVEL3;
-        xoc::g_do_cp = true;
-        xoc::g_do_cp_aggressive = true;
-        xoc::g_do_dce = true;
-        xoc::g_do_dce_aggressive = true;
-        xoc::g_do_licm = true;
-        xoc::g_do_gcse = true;
-        xoc::g_do_rce = true;
-        xoc::g_do_rp = true;
-        xoc::g_do_lftr = true;
-        xoc::g_do_prssa = true;
-        xoc::g_do_mdssa = true;
-        xoc::g_infer_type = true;
-        xoc::g_do_vect = true;
+        xoc::g_pass_opt.enablePassInLevel3();
         g_cfg_opt = true;
         break;
     case 's':
     case 'S':
         xoc::g_opt_level = SIZE_OPT;
-        xoc::g_do_dce = true;
-        xoc::g_do_licm = true;
-        xoc::g_do_gcse = true;
-        xoc::g_do_rce = true;
-        xoc::g_do_rp = true;
-        xoc::g_do_prssa = true;
-        xoc::g_do_mdssa = true;
+        xoc::g_pass_opt.enablePassInLevelSize();
         g_cfg_opt = true;
         break;
     default:
         xoc::g_opt_level = OPT_LEVEL1;
-        xoc::g_do_prssa = true;
-        xoc::g_do_mdssa = true;
+        xoc::g_pass_opt.enablePassInLevel1();
     }
     i++;
     return true;
@@ -392,7 +369,9 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "enable refine-duchain optimization", },
     { "lsra", &xoc::g_do_lsra,
       "enable linear-scan-register-allocation", },
-    { "opt_float", &xoc::g_is_opt_float,
+    { "reass", &xoc::g_do_alge_reasscociate,
+      "enable algebraic-reasscociation", },
+    { "opt_float", &xoc::g_do_opt_float,
       "enable float optimization", },
     #ifdef REF_TARGMACH_INFO
     { "migen", &mach::g_do_migen,
@@ -470,6 +449,8 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump IR's id", },
     { "lsra", &xoc::g_dump_opt.is_dump_lsra,
       "dump linear-scan-register-allocation", },
+    { "reass", &xoc::g_dump_opt.is_dump_alge_reasscociate,
+      "dump algebraic-reasscociation", },
     { "option", &xocc::g_is_dump_option,
       "dump all compiling options", },
     { "to_buffer", &xoc::g_dump_opt.is_dump_to_buffer,
@@ -634,29 +615,28 @@ UINT StringOption::getNumOfOption()
 }
 
 
-static bool dispatchByPrefixDump(CHAR const* cmdstr, INT argc,
-                                 CHAR const* argv[],
-                                 INT & i)
+static bool dispatchByPrefixDump(
+    CHAR const* cmdstr, INT argc, CHAR const* argv[],
+    INT & i, bool ** boption)
 {
-    bool * boption = nullptr;
-    if (BoolOption::is_dump_option(cmdstr, &boption)) {
+    if (BoolOption::is_dump_option(cmdstr, boption)) {
         ASSERT0(boption);
-        *boption = true;
+        **boption = true;
         i++;
+        inferDumpOption();
         return true;
     }
     return false;
 }
 
 
-static bool dispatchByPrefixELF(CHAR const* cmdstr, INT argc,
-                                CHAR const* argv[],
-                                INT & i)
+static bool dispatchByPrefixELF(
+    CHAR const* cmdstr, INT argc, CHAR const* argv[],
+    INT & i, bool ** boption)
 {
-    bool * boption = nullptr;
-    if (BoolOption::is_elf_option(cmdstr, &boption)) {
+    if (BoolOption::is_elf_option(cmdstr, boption)) {
         ASSERT0(boption);
-        *boption = true;
+        **boption = true;
         i++;
         return true;
     }
@@ -665,9 +645,9 @@ static bool dispatchByPrefixELF(CHAR const* cmdstr, INT argc,
 
 
 //Note ONLY will not disable analysis passes, such as AA, DU.
-static bool dispatchByPrefixOnly(CHAR const* cmdstr, INT argc,
-                                 CHAR const* argv[],
-                                 INT & i, bool ** boption)
+static bool dispatchByPrefixOnly(
+    CHAR const* cmdstr, INT argc, CHAR const* argv[],
+    INT & i, bool ** boption)
 {
     if (BoolOption::is_option(cmdstr, boption)) {
         disable_opt(xoc::g_opt_level);
@@ -680,8 +660,8 @@ static bool dispatchByPrefixOnly(CHAR const* cmdstr, INT argc,
 }
 
 
-static bool recog_option(CHAR const* cmdstr, INT argc, CHAR const* argv[],
-                         INT & i, bool ** boption)
+static bool recogOption(CHAR const* cmdstr, INT argc, CHAR const* argv[],
+                        INT & i, bool ** boption)
 {
     if (BoolOption::is_option(cmdstr, boption)) {
         ASSERT0(*boption);
@@ -723,15 +703,104 @@ static bool recog_option(CHAR const* cmdstr, INT argc, CHAR const* argv[],
         if (n == nullptr) { return false; }
         *(CHAR const**)str_option = n;
         i += 3;
+        inferStringOption();
         return true;
     }
-
     return false;
 }
 
 
-static bool tryDispatchO_o(CHAR const* cmdstr, INT argc, CHAR const* argv[],
-                           INT & i)
+static bool tryDispatchCreateDump(
+    CHAR const* cmdstr, INT argc, CHAR const* argv[], INT & i)
+{
+    if (::strcmp(cmdstr, "dump") == 0) {
+        CHAR const* n = process_dump(argc, argv, i);
+        if (n == nullptr) {
+            return false;
+        }
+        g_dump_file_name = n;
+        return true;
+    }
+    return false;
+}
+
+
+static bool tryDispatchHelp(
+    CHAR const* cmdstr, INT argc, CHAR const* argv[], INT & i)
+{
+    if (::strcmp(cmdstr, "help") == 0 || ::strcmp(cmdstr, "h") == 0) {
+        g_ask_for_help = true;
+        return true;
+    }
+    return false;
+}
+
+
+//No prefix.
+static bool tryDispatchNonPrefixOption(
+    CHAR const* cmdstr, INT argc, CHAR const* argv[], INT & i, bool ** boption)
+{
+    ASSERT0(boption);
+    return recogOption(cmdstr, argc, argv, i, boption);
+}
+
+
+static bool tryDispatchELFOption(
+    CHAR const* cmdstr, INT argc, CHAR const* argv[], INT & i, bool ** boption)
+{
+    CHAR const* prefix = BoolOption::elf_option_prefix;
+    if (xcom::xstrcmp(cmdstr, prefix, (INT)strlen(prefix))) {
+        return dispatchByPrefixELF(
+            cmdstr + strlen(prefix), argc, argv, i, boption);
+    }
+    return false;
+}
+
+
+static bool tryDispatchOnlyOption(
+    CHAR const* cmdstr, INT argc, CHAR const* argv[], INT & i, bool ** boption)
+{
+    CHAR const* prefix = BoolOption::only_option_prefix;
+    if (xcom::xstrcmp(cmdstr, prefix, (INT)::strlen(prefix))) {
+        ASSERT0(boption);
+        return dispatchByPrefixOnly(
+            cmdstr + ::strlen(prefix), argc, argv, i, boption);
+    }
+    return false;
+}
+
+
+static bool tryDispatchDumpOption(
+    CHAR const* cmdstr, INT argc, CHAR const* argv[], INT & i, bool ** boption)
+{
+    CHAR const* prefix = BoolOption::dump_option_prefix;
+    if (xcom::xstrcmp(cmdstr, prefix, (INT)::strlen(prefix))) {
+        return dispatchByPrefixDump(
+            cmdstr + ::strlen(prefix), argc, argv, i, boption);
+    }
+    return false;
+}
+
+
+static bool tryDispatchDisable(
+    CHAR const* cmdstr, INT argc, CHAR const* argv[], INT & i, bool ** boption)
+{
+    CHAR const* prefix = BoolOption::disable_option_prefix;
+    if (xcom::xstrcmp(cmdstr, prefix, (INT)::strlen(prefix))) {
+        ASSERT0(boption);
+        bool res = dispatchByPrefix(cmdstr + ::strlen(prefix), argc, argv,
+                                    i, boption);
+        if (!res) { return res; }
+        ASSERT0(*boption);
+        **boption = !(**boption);
+        return res;
+    }
+    return false;
+}
+
+
+static bool tryDispatchOptAndOutput(
+    CHAR const* cmdstr, INT argc, CHAR const* argv[], INT & i)
 {
     switch (cmdstr[0]) {
     case 'O':
@@ -746,62 +815,40 @@ static bool tryDispatchO_o(CHAR const* cmdstr, INT argc, CHAR const* argv[],
         break;
     default:;
     }
-
     return false;
 }
 
 
-static bool dispatchByPrefix(CHAR const* cmdstr, INT argc, CHAR const* argv[],
-                             INT & i, bool ** boption)
+//The function dispatchs the processing of cmdline recursively by
+//prefix string.
+static bool dispatchByPrefix(
+    CHAR const* cmdstr, INT argc, CHAR const* argv[], INT & i, bool ** boption)
 {
-    if (::strcmp(cmdstr, "help") == 0 || ::strcmp(cmdstr, "h") == 0) {
-        g_ask_for_help = true;
+    if (tryDispatchHelp(cmdstr, argc, argv, i)) {
         return true;
     }
-
-    if (tryDispatchO_o(cmdstr, argc, argv, i)) {
+    if (tryDispatchOptAndOutput(cmdstr, argc, argv, i)) {
         return true;
     }
-
-    if (::strcmp(cmdstr, "dump") == 0) {
-        CHAR const* n = process_dump(argc, argv, i);
-        if (n == nullptr) {
-            return false;
-        }
-        g_dump_file_name = n;
+    if (tryDispatchCreateDump(cmdstr, argc, argv, i)) {
         return true;
     }
-
-    ASSERT0(boption);
-
-    CHAR const* prefix = BoolOption::disable_option_prefix;
-    if (xcom::xstrcmp(cmdstr, prefix, (INT)::strlen(prefix))) {
-        bool res = dispatchByPrefix(cmdstr + ::strlen(prefix), argc, argv,
-                                    i, boption);
-        if (!res) { return res; }
-        ASSERT0(*boption);
-        **boption = !(**boption);
-        return res;
+    if (tryDispatchDisable(cmdstr, argc, argv, i, boption)) {
+        return true;
     }
-
-    prefix = BoolOption::dump_option_prefix;
-    if (xcom::xstrcmp(cmdstr, prefix, (INT)::strlen(prefix))) {
-        return dispatchByPrefixDump(cmdstr + ::strlen(prefix), argc, argv, i);
+    if (tryDispatchDumpOption(cmdstr, argc, argv, i, boption)) {
+        return true;
     }
-
-    prefix = BoolOption::only_option_prefix;
-    if (xcom::xstrcmp(cmdstr, prefix, (INT)::strlen(prefix))) {
-        return dispatchByPrefixOnly(cmdstr + ::strlen(prefix), argc, argv, i,
-                                    boption);
+    if (tryDispatchOnlyOption(cmdstr, argc, argv, i, boption)) {
+        return true;
     }
-
-    prefix = BoolOption::elf_option_prefix;
-    if (xcom::xstrcmp(cmdstr, prefix, (INT)strlen(prefix))) {
-        return dispatchByPrefixELF(cmdstr + strlen(prefix), argc, argv, i);
+    if (tryDispatchELFOption(cmdstr, argc, argv, i, boption)) {
+        return true;
     }
-
-    //No prefix.
-    return recog_option(cmdstr, argc, argv, i, boption);
+    if (tryDispatchNonPrefixOption(cmdstr, argc, argv, i, boption)) {
+        return true;
+    }
+    return false;
 }
 
 
@@ -842,65 +889,42 @@ static void usage()
 }
 
 
-static void inferOption()
+static void forceOption()
 {
-    if (xoc::g_opt_level == OPT_LEVEL0) {
-        disable_opt(OPT_LEVEL3);
-        xoc::g_do_cfg_dom = false;
-        xoc::g_do_cfg_pdom = false;
-        xoc::g_do_loop_ana = false;
-        xoc::g_do_cdg = false;
-        xoc::g_do_cfg_remove_redundant_branch = false;
-        xoc::g_invert_branch_target = false;
-        xoc::g_do_aa = false;
-        xoc::g_do_md_du_analysis = false;
-        xoc::g_is_support_dynamic_type = false;
-        xoc::g_do_mdssa = false;
-        xoc::g_do_prssa = false;
-        xoc::g_compute_pr_du_chain = false;
-        xoc::g_compute_nonpr_du_chain = false;
-        xoc::g_do_refine = false;
-        xoc::g_insert_cvt = true;
-        xoc::g_do_call_graph = false;
-        xoc::g_do_ipa = false;
-        xgen::g_do_lis = false;
-        g_cfg_opt = false;
-    }
-    if (xoc::g_opt_level == OPT_LEVEL1) {
-        g_cfg_opt = false;
-    }
-    if (!g_cfg_opt) {
-        xoc::g_do_cfg_remove_empty_bb = false;
-        xoc::g_do_cfg_remove_unreach_bb = false;
-        xoc::g_do_cfg_remove_trampolin_bb = false;
-        xoc::g_invert_branch_target = false;
-        xoc::g_do_cfg_remove_redundant_branch = false;
-        xoc::g_do_cfg_remove_trampolin_branch = false;
-        xoc::g_do_cfg_remove_redundant_label = false;
-    }
+    //Enable infer-type even if it is disabled by cmdline when CG is enabled.
+    xoc::g_infer_type = true;
+}
 
+
+static void inferDumpOption()
+{
+    if (xoc::g_dump_opt.isDumpAll()) {
+        xocc::g_is_dump_option = true;
+        xoc::g_dump_opt.setDumpAll();
+    }
+    if (xoc::g_dump_opt.isDumpNothing()) {
+        xocc::g_is_dump_option = false;
+        xoc::g_dump_opt.setDumpNothing();
+    }
+}
+
+
+static void inferStringOption()
+{
     if (g_include_string != nullptr) {
         xoc::g_include_region.addString(g_include_string);
     }
-
     if (g_exclude_string != nullptr) {
         xoc::g_exclude_region.addString(g_exclude_string);
     }
+}
 
-    //Enable infer-type even if it is disabled by cmdline when CG is enabled.
-    xoc::g_infer_type = true;
 
-    //CG option is conform to XOCC's option.
+static void inferOption()
+{
+    //Set XGEN option according to XOC option.
     xgen::g_xgen_dump_opt.is_dump_all = xoc::g_dump_opt.isDumpAll();
     xgen::g_xgen_dump_opt.is_dump_nothing = xoc::g_dump_opt.isDumpNothing();
-
-    if (xoc::g_dump_opt.isDumpAll()) {
-        xocc::g_is_dump_option = true;
-        xoc::g_dump_opt.is_dump_before_pass = true;
-
-        //IR's id may changed in different compilation.
-        xoc::g_dump_opt.is_dump_ir_id = true;
-    }
 }
 
 
@@ -933,7 +957,7 @@ bool processCmdLine(INT argc, CHAR const* argv[])
     //g_do_call_graph = true;
     //g_do_ipa = true;
     xoc::g_is_support_dynamic_type = true;
-    xoc::g_is_opt_float = false;
+    xoc::g_do_opt_float = false;
     for (INT i = 1; i < argc;) {
         if (argv[i][0] == '-') {
             bool * boption = nullptr;
@@ -976,6 +1000,7 @@ bool processCmdLine(INT argc, CHAR const* argv[])
         return false;
     }
     inferOption();
+    forceOption();
     return true;
 }
 

@@ -1303,7 +1303,7 @@ void ARMIR2OR::recordRelationOpResult(
 
         cont->set_reg(RESULT_REGISTER_INDEX, res); //used by non-conditional op
 
-        //truepd, falsepd and result_pred are useless from now on.
+        //truepd, falsepd and result_pred are not in use from now on.
         return;
     }
 

@@ -1,0 +1,1 @@
+PRECOMPILE_OUTPUT=arm_targ_mach_resource.cpp

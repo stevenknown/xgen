@@ -216,17 +216,17 @@ void Canon::handle_call(IN IR * ir, OUT bool & change, CanonCtx * cc)
 {
     ASSERT0(ir->isCallStmt());
 
-    if (CALL_param_list(ir) != nullptr) {
-        IR * param = xcom::removehead(&CALL_param_list(ir));
+    if (CALL_arg_list(ir) != nullptr) {
+        IR * param = xcom::removehead(&CALL_arg_list(ir));
         IR * newparamlst = nullptr;
         IR * last = nullptr;
         while (param != nullptr) {
             IR * newp = handle_exp(param, change, cc);
             xcom::add_next(&newparamlst, &last, newp);
             last = newp;
-            param = xcom::removehead(&CALL_param_list(ir));
+            param = xcom::removehead(&CALL_arg_list(ir));
         }
-        CALL_param_list(ir) = newparamlst;
+        CALL_arg_list(ir) = newparamlst;
     }
 }
 

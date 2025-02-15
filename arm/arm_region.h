@@ -36,9 +36,6 @@ class ARMRegion : public Region {
 protected:
     bool addReturnIfNeed();
 
-    //Allocate dbgMgr
-    virtual DbxMgr * allocDbxMgr() override;
-
     //ARM related higher level optimizations.
     bool ARMHighProcess(OptCtx & oc);
 

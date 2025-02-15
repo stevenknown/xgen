@@ -31,6 +31,7 @@ author: Su Zhenyu
 #ifndef __ARM_H__
 #define __ARM_H__
 
+#include "../arm/arm_opt.h"
 #include "../arm/arm_targinfo.h"
 #include "../arm/arm_sr.h"
 #include "../arm/arm_or.h"

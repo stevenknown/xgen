@@ -46,7 +46,7 @@ class ArgDescMgr;
 #define IOC_pred(cont) ((cont)->pred)
 #define IOC_orcode(cont) ((cont)->orcode)
 #define IOC_sr_vec(cont) ((cont)->reg_vec)
-#define IOC_param_size(cont) ((cont)->u1.param_size)
+#define IOC_arg_size(cont) ((cont)->u1.arg_size)
 #define IOC_mem_byte_size(cont) ((cont)->u1.mem_byte_size)
 #define IOC_int_imm(cont) ((cont)->u1.int_imm)
 class IOC {
@@ -58,7 +58,7 @@ public:
         //Propagate info top down.
         //Used as input parameter, record total size of real
         //parameters before a function call.
-        UINT param_size;
+        UINT arg_size;
 
         //Propagate info top down.
         //used as input parameter, record memory byte-size for operation.

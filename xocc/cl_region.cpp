@@ -31,4 +31,10 @@ author: Su Zhenyu
 #include "xoccinc.h"
 
 namespace xocc {
+
+DbxMgr * CLRegion::allocDbxMgr()
+{
+    return new xocc::CLDbxMgr();
+}
+
 } //namespace xocc

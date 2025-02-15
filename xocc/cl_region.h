@@ -37,6 +37,9 @@ namespace xocc {
 //A computing languare always consist of concepts of function and program.
 class CLRegion : public ARMRegion {
     COPY_CONSTRUCTOR(CLRegion);
+protected:
+    //Allocate DbxMgr.
+    virtual DbxMgr * allocDbxMgr() override;
 public:
     CLRegion(REGION_TYPE rt, RegionMgr * rm) : ARMRegion(rt, rm) {}
     virtual ~CLRegion() { destroy(); }

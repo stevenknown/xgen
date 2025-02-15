@@ -52,7 +52,7 @@ CHAR const* VarSR::get_name(StrBuf & buf, CG const* cg) const
 {
     ASSERT0(SR_var(this));
     ASSERT0(SR_var(this)->get_name());
-    CHAR * name = SYM_name(SR_var(this)->get_name());
+    CHAR const* name = SR_var(this)->get_name()->getStr();
     ASSERT0(SR_var_ir(this) == nullptr || SR_var_ir(this)->is_id());
     buf.strcat("'%s'", name);
     if (SR_var_ir(this) != nullptr) {
@@ -119,7 +119,7 @@ CHAR const* RegSR::get_name(StrBuf & buf, CG const* cg) const
 
 CHAR const* StrSR::get_name(StrBuf & buf, CG const* cg) const
 {
-    CHAR * s = SYM_name(SR_str(this));
+    CHAR const* s = SR_str(this)->getStr();
     buf.nstrcat(MAX_SR_NAME_BUF_LEN, "\"%s\"", s);
     return buf.buf;
 }

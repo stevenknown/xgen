@@ -1275,9 +1275,9 @@ IR * CTree2IR::convertFP(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont)
     Sym const* fp = TREE_fp_str_val(t);
 
     //Default float point type is 64bit.
-    IR * ir = m_irmgr->buildImmFP(::atof(SYM_name(fp)),
+    IR * ir = m_irmgr->buildImmFP(::atof(fp->getStr()),
         m_tm->getSimplexTypeEx(t->getCode() == TR_FPF ? D_F32 : D_F64));
-    BYTE mantissa_num = getMantissaNum(SYM_name(fp));
+    BYTE mantissa_num = getMantissaNum(fp->getStr());
     if (mantissa_num > DEFAULT_MANTISSA_NUM) {
         CONST_fp_mant(ir) = mantissa_num;
     }
@@ -1473,9 +1473,9 @@ IR * CTree2IR::convertDirectMemAccess(
 
     TypeAttr const* ty = base_decl->getTypeAttr();
     ASSERTN(ty->isAggrExpanded(), ("base of dmem must be aggregate"));
-    ASSERTN(TREE_field(t)->getCode() == TR_ID, ("field must be ID"));
-
-    Decl const* field_decl = TREE_result_type(TREE_field(t));
+    xfe::Tree const* field = TREE_field(t);
+    ASSERTN(field->getCode() == TR_ID, ("field must be ID"));
+    Decl const* field_decl = TREE_result_type(field);
 
     //Indicates whether if current convertion should return address.
     bool is_parent_require_addr = CONT_is_compute_addr(cont);
@@ -1484,9 +1484,9 @@ IR * CTree2IR::convertDirectMemAccess(
 
     //Compute 'byte-ofst' of 'ir' according to field in structure type.
     UINT field_ofst = 0; //All field of union start at offset 0.
-    ASSERTN(TREE_field(t)->getCode() == TR_ID, ("illegal struct/union exp"));
+    ASSERTN(field->getCode() == TR_ID, ("illegal struct/union exp"));
     if (ty->isStructExpanded()) {
-        if (!get_aggr_field(ty, TREE_id_name(TREE_field(t))->getStr(),
+        if (!get_aggr_field(ty, TREE_id_name(field)->getStr(),
                             nullptr, &field_ofst)) {
             UNREACHABLE();
         }
@@ -2038,8 +2038,9 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
         case TR_IMM:
         case TR_IMMU: {
             UINT s = 0;
-            xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(), &s,
-                                                    m_tm);
+            xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
+                t->getResultType(), &s, m_tm);
+
             //The maximum integer supported is 64bit.
             ir = m_irmgr->buildImmInt(TREE_imm_val(t),
                 m_tm->getSimplexTypeEx(dt));
@@ -2049,9 +2050,10 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
         case TR_IMML:
         case TR_IMMUL: {
             UINT s = 0;
-            xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(), &s,
-                                                    m_tm);
+            xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
+                t->getResultType(), &s, m_tm);
             ASSERT0(dt == D_I64 || dt == D_U64);
+
             //The maximum integer supported is 64bit.
             ir = m_irmgr->buildImmInt(TREE_imm_val(t),
                 m_tm->getSimplexTypeEx(dt));
@@ -2096,8 +2098,8 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
                     getPointerBaseSize());
             } else {
                 UINT s = 0;
-                xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(),
-                                                             &s, m_tm);
+                xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
+                    t->getResultType(), &s, m_tm);
                 if (dt == D_MC) {
                     type = m_tm->getMCType(s);
                 } else {
@@ -2466,13 +2468,13 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
         case TR_CVT: //type convertion
             ir = convertCVT(t, lineno, cont);
             break;
-        case TR_LDA:   // &a, get address of 'a'
+        case TR_LDA: // &a, get address of 'a'
             ir = convertLDA(t, lineno, cont);
             break;
         case TR_DEREF: //*p dereferencing the pointer 'p'
             ir = convertDeref(t, lineno, cont);
             break;
-        case TR_PLUS:  // +123
+        case TR_PLUS: // +123
             ir = convert(TREE_lchild(t), cont);
             break;
         case TR_MINUS: { // -123
@@ -2488,12 +2490,12 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
             xoc::setLineNum(ir, lineno, m_rg);
             break;
         }
-        case TR_NOT:  // get non-value
+        case TR_NOT: // get non-value
             ir = m_irmgr->buildLogicalNot(convert(TREE_lchild(t), cont));
             xoc::setLineNum(ir, lineno, m_rg);
             break;
-        case TR_INC:   //++a
-        case TR_DEC:   //--a
+        case TR_INC: //++a
+        case TR_DEC: //--a
             ir = convertIncDec(t, lineno, cont);
             break;
         case TR_POST_INC: //a++  / (*a)++

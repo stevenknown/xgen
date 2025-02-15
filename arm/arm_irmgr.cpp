@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 author: Su Zhenyu
 @*/
-
 #include "../xgen/xgeninc.h"
 
 bool ARMIRMgr::isIRIsomorphicExtOp(
@@ -62,6 +61,7 @@ IR * ARMIRMgr::buildConvOpndGrad(
 }
 
 
+#ifdef FOR_IP
 static bool isConvResTypeValid(IR const* input, IR const* weight,
                                Type const* resty, UINT stride_h, UINT stride_w)
 {
@@ -88,6 +88,7 @@ static bool isConvResTypeValid(IR const* input, IR const* weight,
     ASSERT0(dimw == res_tty->getDegreeOfDim(1));
     return true;
 }
+#endif
 
 
 IR * ARMIRMgr::buildConv(IR * input, IR * weight, Type const* type,
@@ -95,7 +96,9 @@ IR * ARMIRMgr::buildConv(IR * input, IR * weight, Type const* type,
 {
     ASSERT0(input && input->is_tensor());
     ASSERT0(weight && weight->is_tensor());
+    #ifdef FOR_IP
     ASSERT0(isConvResTypeValid(input, weight, type, stride_h, stride_w));
+    #endif
     IR * ir = allocIR(IR_CONV);
     CONV_input(ir) = input;
     CONV_weight(ir) = weight;

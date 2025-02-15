@@ -58,7 +58,7 @@ protected:
     virtual void initRetvalScalar();
     virtual void initRetvalVector();
 public:
-    ARMTargInfoMgr() { init(); }
+    ARMTargInfoMgr() {}
     virtual ~ARMTargInfoMgr() {}
 
     //Get scalar allocable register set of T1 architecture.

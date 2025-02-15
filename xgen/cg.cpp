@@ -904,7 +904,7 @@ void CG::freeORBBList()
     for (ORBB * bb = m_or_bb_list.get_head();
          bb != nullptr; bb = m_or_bb_list.get_next()) {
         for (OR * o = ORBB_first_or(bb); o != nullptr; o = ORBB_next_or(bb)) {
-            //Only recycle SR, OR will be destroied during pool destruction.
+            //Only recycle SR, OR will be destroyed during pool destruction.
             ASSERT0(m_or_mgr);
             m_or_mgr->freeSR(o);
         }
@@ -944,13 +944,13 @@ void CG::assembleSRVec(SRVec * srvec, SR * sr1, SR * sr2)
 }
 
 
-//Calc total memory space for parameters,
+//Calc total memory space for arguments,
 //with considering the memory alignment.
 UINT CG::computeTotalParameterStackSize(IR const* ir) const
 {
     ASSERT0(ir->isCallStmt());
     UINT size = 0;
-    for (IR * p = CALL_param_list(ir); p != nullptr; p = p->get_next()) {
+    for (IR * p = CALL_arg_list(ir); p != nullptr; p = p->get_next()) {
         size = (UINT)ceil_align(size, STACK_ALIGNMENT);
         if (p->is_id()) {
             //IR_ID always used to be placeholder of a name.
@@ -4153,7 +4153,7 @@ BBSimulator * CG::allocBBSimulator(ORBB * bb)
 }
 
 
-//Destroy useless resource.
+//Destroy resource that is not in use.
 void CG::postLS(LIS * lis, DataDepGraph * ddg)
 {
     delete lis;

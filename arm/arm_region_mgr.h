@@ -52,6 +52,7 @@ public:
     void initAsmFileHandler(FILE * asmh) { m_asmfile = asmh; }
 
     FILE * getAsmFileHandler() const { return m_asmfile; }
+    ARMELFMgr * getELFMgr() const { return m_em; }
 
     bool CodeGen(Region * rg);
 };

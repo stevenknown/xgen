@@ -25,51 +25,10 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+author: Su Zhenyu
 @*/
-#include "xoccinc.h"
-#include "../reader/grreader.h"
+#ifndef __ARM_OPT_H__
+#define __ARM_OPT_H__
 
-namespace xocc {
-
-//#define MEMLEAKTEST
-#ifdef MEMLEAKTEST
-void testMemLeak(RegionMgr * rm, CGMgr * cgmgr)
-{
-    Region * func = nullptr;
-    for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
-        Region * rg = rm->getRegion(i);
-        if (rg == nullptr || rg->is_program()) {
-            continue;
-        }
-        func = rg;
-        break;
-    }
-
-    ASSERT0(func);
-
-    INT i = 0;
-    Var * v = func->getRegionVar();
-    Region * x = rm->newRegion(REGION_FUNC);
-    x->initAttachInfoMgr();
-    //Note Local Vars and MDs will be freed and collected by Mgr.
-    //The test region should not have global var.
-    while (i < 10000) {
-        OptCtx oc;
-        x->init(REGION_FUNC, rm);
-        x->setRegionVar(v);
-        IR * irs = func->getIRList();
-        x->setIRList(x->dupIRTreeList(irs));
-        bool succ = x->process(&oc);
-        ASSERT0(succ);
-        //VarMgr * vm = x->getVarMgr();
-        //vm->dump();
-        //MDSystem * ms = x->getMDSystem();
-        //ms->dump();
-        x->destroy();
-        i++;
-    }
-    return;
-}
 #endif
-
-} //namespace xocc

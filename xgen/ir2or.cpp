@@ -942,18 +942,18 @@ void IR2OR::processRealParamsThroughRegister(IR const* ir,
 }
 
 
-//'ir': the first parameter of CALL.
+//'ir': the first argument of CALL.
 void IR2OR::processRealParams(IR const* ir, OUT RecycORList & ors,
                               MOD IOC * cont)
 {
     if (ir == nullptr) {
         ASSERT0(cont);
-        IOC_param_size(cont) = 0;
+        IOC_arg_size(cont) = 0;
         return;
     }
 
     ASSERTN(PUSH_PARAM_FROM_RIGHT_TO_LEFT, ("Not yet support"));
-    //Find the most rightside parameter in order to coincide with
+    //Find the most rightside argument in order to coincide with
     //accessing order of the calling convention of stack varaible.
     //e.g:f(a, b, c)
     //    {
@@ -1009,7 +1009,7 @@ void IR2OR::processRealParams(IR const* ir, OUT RecycORList & ors,
     processRealParamsThroughRegister(ir, &argdescmgr, ors, cont);
 
     //Record the size as return-value.
-    IOC_param_size(cont) = argdescmgr.getArgSectionSize();
+    IOC_arg_size(cont) = argdescmgr.getArgSectionSize();
 }
 
 
@@ -1316,7 +1316,7 @@ void IR2OR::convertIntrinsic(IR const* ir, OUT RecycORList & ors,
     IOC tmp;
     switch (code) {
     case INTRIN_ALLOCA: {
-        IR const* addend_ir = CALL_param_list(ir);
+        IR const* addend_ir = CALL_arg_list(ir);
         ASSERT0(addend_ir);
         convert(addend_ir, tors, &tmp);
         SR * opnd0 = tmp.get_reg(0);
@@ -1348,14 +1348,14 @@ void IR2OR::convertCall(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
         return;
     }
 
-    processRealParams(CALL_param_list(ir), ors, cont);
+    processRealParams(CALL_arg_list(ir), ors, cont);
 
-    //Collect the maximum parameters size during code generation.
+    //Collect the maximum arguments size during code generation.
     //And revise spadjust operation afterwards.
-    m_cg->updateMaxCalleeArgSize(IOC_param_size(cont));
+    m_cg->updateMaxCalleeArgSize(IOC_arg_size(cont));
 
-    if (IOC_param_size(cont) > 0) {
-        //DO not adjust SP here for parameters, callee will
+    if (IOC_arg_size(cont) > 0) {
+        //DO not adjust SP here for arguments, callee will
         //do this job.
     }
 

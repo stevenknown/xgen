@@ -89,7 +89,7 @@ $(info "TMP_MACH_OBJS:$(TMP_MACH_OBJS)")
 
 #Define dependencies and link-rules of xocc.exe.
 $(XOCC_OUTPUT): xocc_objs tmp_cfe_objs tmp_elf_objs $(XGEN_OUTPUT)
-	@echo "START BUILD $(XOCC_OUTPUT)"
+	@echo "In Makefile.xocc: START BUILD $(XOCC_OUTPUT)"
 	$(CC) $(XOCC_OBJS) \
       $(TMP_CFE_OBJS) \
       $(TMP_ELF_OBJS) \
@@ -112,13 +112,12 @@ tmp_elf_objs: $(TMP_ELF_OBJS)
 xocc_objs: $(XOCC_OBJS)
 
 $(XGEN_OUTPUT):
-	@echo "START BUILD $(XGEN_OUTPUT)"
+	@echo "In Makefile.xocc: START BUILD $(XGEN_OUTPUT)"
 	make -C $(XGEN_DIR) \
       TARG=$(TARG) \
       TARG_DIR=$(TARG_DIR) \
       ROOT_DIR=$(ROOT_DIR) \
       -j$(THREAD_NUM) \
-      $(XGEN_OUTPUT) \
       -f Makefile.xgen \
       DEBUG=$(DEBUG) \
       CFLAGS="$(CFLAGS)" \
