@@ -32,54 +32,51 @@ namespace xocc {
 
 IR * Canon::handle_det_list(IN IR * ir_list, OUT bool & change, CanonCtx * cc)
 {
-    IR * x = only_left_last(ir_list);
+    IR * x = only_left_last(ir_list, change);
     return handle_exp(x, change, cc);
 }
 
 
-IR * Canon::only_left_last(IR * head)
+IR * Canon::only_left_last(IR * head, OUT bool & change)
 {
-    IR * last = removetail(&head);
-    while (head != nullptr) {
-        IR * t = xcom::removehead(&head);
-        m_rg->freeIRTree(t);
-    }
-    return last;
+    return xoc::onlyLeftLast(head, m_rg, change);
 }
 
 
 IR * Canon::handle_select(IN IR * ir, OUT bool & change, CanonCtx * cc)
 {
     ASSERT0(ir->is_select());
+
     //e.g:
     //     a>0,x<0 ? b/3,c*2,d:0,1,2
     // normalize to:
     //     x>0 ? d:2
     bool lchange = false;
-    SELECT_det(ir) = only_left_last(SELECT_det(ir));
+    SELECT_det(ir) = only_left_last(SELECT_det(ir), lchange);
     SELECT_det(ir) = handle_exp(SELECT_det(ir), lchange, cc);
-
     if (!SELECT_det(ir)->is_judge()) {
         SELECT_det(ir) = m_rg->getIRMgr()->buildJudge(SELECT_det(ir));
-        ir->setParent(SELECT_det(ir));
+        lchange = true;
     }
-
-    SELECT_trueexp(ir) = only_left_last(SELECT_trueexp(ir));
-    SELECT_trueexp(ir) = handle_exp(SELECT_trueexp(ir), lchange, cc);
-
-    SELECT_falseexp(ir) = only_left_last(SELECT_falseexp(ir));
-    SELECT_falseexp(ir) = handle_exp(SELECT_falseexp(ir), lchange, cc);
-
     if (lchange) {
         ir->setParentPointer(false);
     }
+    bool lchange2 = false;
+    SELECT_trueexp(ir) = only_left_last(SELECT_trueexp(ir), lchange2);
+    SELECT_trueexp(ir) = handle_exp(SELECT_trueexp(ir), lchange2, cc);
+    SELECT_falseexp(ir) = only_left_last(SELECT_falseexp(ir), lchange2);
+    SELECT_falseexp(ir) = handle_exp(SELECT_falseexp(ir), lchange2, cc);
+    if (lchange2) {
+        ir->setParentPointer(false);
+    }
     change |= lchange;
+    change |= lchange2;
     return ir;
 }
 
 
 //Handle the case that get address of array element.
-//e.g: =&a[i]
+//e.g: ...=&a[i]
 IR * Canon::handle_lda(IR * ir, bool & change, CanonCtx * cc)
 {
     DUMMYUSE(ir);
@@ -176,32 +173,60 @@ IR * Canon::handle_exp(IN IR * ir, OUT bool & change, CanonCtx * cc)
 {
     ASSERT0(ir->is_exp());
     switch (ir->getCode()) {
+    SWITCH_CASE_INDIRECT_MEM_EXP: {
+        bool lchange = false;
+        IR * newbase = only_left_last(ir->getBase(), lchange);
+        newbase = handle_exp(newbase, lchange, cc);
+        ir->setBase(newbase);
+        if (lchange) { ir->setParentPointer(false); }
+        change |= lchange;
+        return ir;
+    }
     SWITCH_CASE_DIRECT_MEM_EXP:
-    SWITCH_CASE_INDIRECT_MEM_EXP:
     case IR_CONST:
     case IR_ID:
         return ir;
     case IR_LDA: // &a get address of 'a'
         return handle_lda(ir, change, cc);
-    SWITCH_CASE_BIN:
-        BIN_opnd0(ir) = only_left_last(BIN_opnd0(ir));
-        BIN_opnd1(ir) = only_left_last(BIN_opnd1(ir));
-        BIN_opnd0(ir) = handle_exp(BIN_opnd0(ir), change, cc);
-        BIN_opnd1(ir) = handle_exp(BIN_opnd1(ir), change, cc);
+    SWITCH_CASE_BIN: {
+        bool lchange = false;
+        BIN_opnd0(ir) = only_left_last(BIN_opnd0(ir), lchange);
+        BIN_opnd1(ir) = only_left_last(BIN_opnd1(ir), lchange);
+        BIN_opnd0(ir) = handle_exp(BIN_opnd0(ir), lchange, cc);
+        BIN_opnd1(ir) = handle_exp(BIN_opnd1(ir), lchange, cc);
+        if (lchange) { ir->setParentPointer(false); }
+        change |= lchange;
         return ir;
-    SWITCH_CASE_UNA:
-        UNA_opnd(ir) = only_left_last(UNA_opnd(ir));
-        UNA_opnd(ir) = handle_exp(UNA_opnd(ir), change, cc);
+    }
+    SWITCH_CASE_UNA: {
+        bool lchange = false;
+        UNA_opnd(ir) = only_left_last(UNA_opnd(ir), lchange);
+        UNA_opnd(ir) = handle_exp(UNA_opnd(ir), lchange, cc);
+        if (lchange) { ir->setParentPointer(false); }
+        change |= lchange;
         return ir;
+    }
     case IR_LABEL:
         return ir;
-    SWITCH_CASE_READ_ARRAY:
-        for (IR * k = ARR_sub_list(ir); k != NULL; k = k->get_next()) {
-            IR * tmp = handle_exp(k, change, cc);
-            ASSERTN_DUMMYUSE(tmp == k, ("need to be replaced from sublist"));
+    SWITCH_CASE_READ_ARRAY: {
+        bool lchange = false;
+        IR * newsublist = nullptr;
+        IR * last = nullptr;
+        for (IR * k = xcom::removehead(&ARR_sub_list(ir));
+             k != NULL; k = xcom::removehead(&ARR_sub_list(ir))) {
+            IR * newk = handle_exp(k, lchange, cc);
+            xcom::add_next(&newsublist, &last, newk);
+            if (newk != k) {
+                lchange = true;
+            }
         }
-        ARR_base(ir) = handle_exp(ARR_base(ir), change, cc);
+        ARR_sub_list(ir) = newsublist;
+        IR * newbase = only_left_last(ARR_base(ir), lchange);
+        ARR_base(ir) = handle_exp(newbase, lchange, cc);
+        if (lchange) { ir->setParentPointer(false); }
+        change |= lchange;
         return ir;
+    }
     SWITCH_CASE_READ_PR:
         return ir;
     case IR_SELECT:
@@ -238,9 +263,12 @@ IR * Canon::handle_stmt(IN IR * ir, OUT bool & change, CanonCtx * cc)
     SWITCH_CASE_DIRECT_MEM_STMT:
     SWITCH_CASE_INDIRECT_MEM_STMT:
     SWITCH_CASE_WRITE_ARRAY:
-    case IR_STPR:
-        ir->setRHS(handle_exp(ir->getRHS(), tmpc, cc));
+    case IR_STPR: {
+        IR * newrhs = handle_det_list(ir->getRHS(), tmpc, cc);
+        ir->setRHS(handle_exp(newrhs, tmpc, cc));
+        if (tmpc) { ir->setParentPointer(false); }
         break;
+    }
     SWITCH_CASE_CALL:
         handle_call(ir, tmpc, cc);
         break;

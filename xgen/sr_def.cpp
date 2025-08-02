@@ -120,7 +120,7 @@ CHAR const* RegSR::get_name(StrBuf & buf, CG const* cg) const
 CHAR const* StrSR::get_name(StrBuf & buf, CG const* cg) const
 {
     CHAR const* s = SR_str(this)->getStr();
-    buf.nstrcat(MAX_SR_NAME_BUF_LEN, "\"%s\"", s);
+    buf.strcat(MAX_SR_NAME_BUF_LEN, "\"%s\"", s);
     return buf.buf;
 }
 

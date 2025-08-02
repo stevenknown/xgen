@@ -48,6 +48,12 @@ Pass * ARMPassMgr::allocRefine()
 }
 
 
+Pass * ARMPassMgr::allocInsertCvt()
+{
+    return (IRSimp*)new ARMInsertCvt(m_rg);
+}
+
+
 Pass * ARMPassMgr::allocIRSimp()
 {
     return (IRSimp*)new ARMIRSimp(m_rg);
@@ -102,6 +108,32 @@ Pass * ARMPassMgr::allocExtPass(PASS_TYPE passty)
 
 Pass * ARMPassMgr::allocPrologueEpilogue()
 {
+    #if defined REF_TARGMACH_INFO || defined FOR_IP
+    return new ARMPrologueEpilogueInserter(m_rg);
+    #else
     ASSERTN(0, ("Target Dependent Code"));
     return nullptr;
+    #endif
+}
+
+
+Pass * ARMPassMgr::allocDynamicStack()
+{
+    #if defined REF_TARGMACH_INFO || defined FOR_IP
+    return new ARMDynamicStack(m_rg);
+    #else
+    ASSERTN(0, ("Target Dependent Code"));
+    return nullptr;
+    #endif
+}
+
+
+Pass * ARMPassMgr::allocArgPasser()
+{
+    #if defined REF_TARGMACH_INFO || defined FOR_IP
+    return new ARMArgPasser(m_rg);
+    #else
+    ASSERTN(0, ("Target Dependent Code"));
+    return nullptr;
+    #endif
 }

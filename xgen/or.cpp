@@ -183,7 +183,7 @@ void OR::dump(CG const* cg) const
 CHAR const* OR::dump(xcom::StrBuf & buf, CG const* cg) const
 {
     if (cg->getRegion()->getDbxMgr() != nullptr && g_cg_dump_src_line) {
-        DbxMgr::PrtCtx prtctx(LangInfo::LANG_CPP);
+        DbxMgr::PrtCtx prtctx(LANG_CPP);
         cg->getRegion()->getDbxMgr()->printSrcLine(
             buf, &OR_dbx(this), &prtctx);
     }

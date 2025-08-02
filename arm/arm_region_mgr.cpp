@@ -36,6 +36,14 @@ Region * ARMRegionMgr::allocRegion(REGION_TYPE rt)
 }
 
 
+void ARMRegionMgr::setELFMgr(elf::ELFMgr * em)
+{
+    ASSERT0(em);
+    m_em = (ARMELFMgr*)em;
+    m_em->setRegionMgr(this);
+}
+
+
 VarMgr * ARMRegionMgr::allocVarMgr()
 {
     return new ARMVarMgr(this);

@@ -1021,7 +1021,7 @@ void DataDepGraph::buildMemVolatileDep(OR const* from, OR const* to)
 void * DataDepGraph::cloneEdgeInfo(xcom::Edge * e)
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
-    if(!EDGE_info(e)) return nullptr;
+    if (!EDGE_info(e)) { return nullptr; }
     DDGEdgeInfo * dei =(DDGEdgeInfo*)xmalloc(sizeof(DDGEdgeInfo));
     ::memcpy(dei, EDGE_info(e), sizeof(DDGEdgeInfo));
     return (void*)dei;

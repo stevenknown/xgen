@@ -31,30 +31,34 @@ author: Su Zhenyu
 #ifndef _ARM_REGION_MGR_H_
 #define _ARM_REGION_MGR_H_
 
+namespace elf {
+class ELFMgr;
+};
 class ARMELFMgr;
 
 class ARMRegionMgr : public RegionMgr {
     COPY_CONSTRUCTOR(ARMRegionMgr);
 protected:
-    AsmPrinterMgr m_asmprtmgr;
     FILE * m_asmfile; //assembly file handler.
     ARMELFMgr * m_em;
+    AsmPrinterMgr m_asmprtmgr;
 public:
-    ARMRegionMgr() { m_asmfile = nullptr; }
-    virtual ~ARMRegionMgr() {}
+    ARMRegionMgr() { m_asmfile = nullptr; m_em = nullptr; }
+    virtual ~ARMRegionMgr() { m_asmfile = nullptr; m_em = nullptr; }
 
     virtual Region * allocRegion(REGION_TYPE rt);
     virtual VarMgr * allocVarMgr();
     virtual TargInfo * allocTargInfo();
 
     virtual bool checkIRSwitchCaseInterface(IR_CODE c) const override;
+    bool CodeGen(Region * rg);
 
     void initAsmFileHandler(FILE * asmh) { m_asmfile = asmh; }
 
     FILE * getAsmFileHandler() const { return m_asmfile; }
     ARMELFMgr * getELFMgr() const { return m_em; }
 
-    bool CodeGen(Region * rg);
+    void setELFMgr(elf::ELFMgr * em);
 };
 
 ARMRegionMgr * allocARMRegionMgr();

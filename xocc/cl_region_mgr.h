@@ -31,6 +31,10 @@ author: Su Zhenyu
 #ifndef _CL_REGION_MGR_H_
 #define _CL_REGION_MGR_H_
 
+namespace xoc {
+class GRReader;
+}
+
 namespace xocc {
 
 //This class represents Computing Language specified region manager.
@@ -39,12 +43,14 @@ class CLRegionMgr : public ARMRegionMgr {
     COPY_CONSTRUCTOR(CLRegionMgr);
 protected:
     xgen::CGMgr * m_cgmgr;
+    xoc::GRReader * m_grreader;
 protected:
     void compileProgramRegion(CHAR const* fn, Region * rg);
 public:
-    CLRegionMgr() {}
-    virtual ~CLRegionMgr() {}
+    CLRegionMgr();
+    virtual ~CLRegionMgr();
 
+    GRReader * allocGRReader();
     virtual Region * allocRegion(REGION_TYPE rt);
     virtual VarMgr * allocVarMgr();
     virtual TargInfoMgr * allocTargInfoMgr();
@@ -56,6 +62,9 @@ public:
     void dumpProgramRegionGR(CHAR const* srcname);
 
     xgen::CGMgr * getCGMgr() const { return m_cgmgr; }
+    GRReader * getGRReader() const { return m_grreader; }
+
+    void initGRReader();
 
     void setCGMgr(CGMgr * cgmgr) { m_cgmgr = cgmgr; }
 };

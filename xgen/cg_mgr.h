@@ -31,6 +31,10 @@ author: Su Zhenyu
 #ifndef _CG_MGR_H_
 #define _CG_MGR_H_
 
+namespace xoc {
+class RegionMgr;
+}
+
 namespace xgen {
 
 class ORMgr;
@@ -55,7 +59,7 @@ protected:
     Section * m_bss_sect;
     ParamSection * m_param_sect;
     StackSection * m_stack_sect;
-    RegionMgr * m_rm;
+    xoc::RegionMgr * m_rm;
     FILE * m_asm_file_handler;
     IntrinsicMgr * m_intrin_mgr;
     SRVecMgr m_sr_vec_mgr;
@@ -78,7 +82,7 @@ protected:
                                               m_rm->getTypeMgr()->getAny(),
                                               MEMORY_ALIGNMENT,
                                               VAR_FAKE|VAR_LOCAL|
-                                              VAR_IS_UNALLOCABLE);
+                                              VAR_IS_UNALLOCABLE, SS_UNDEF);
     }
 
     AsmPrinterMgr * getAsmPrtMgr() { return &m_asmprtmgr; }
@@ -124,7 +128,7 @@ protected:
     void destroyVAR();
 
 public:
-    CGMgr(RegionMgr * rm);
+    CGMgr(xoc::RegionMgr * rm);
     virtual ~CGMgr()
     {
         destroySRAndORMgr();
@@ -172,7 +176,7 @@ public:
     ORMgr * getORMgr() const { return m_or_mgr; }
     SectionMgr * getSectionMgr() const { return m_sect_mgr; }
     SRVecMgr * getSRVecMgr() { return &m_sr_vec_mgr; }
-    RegionMgr * getRegionMgr() const { return m_rm; }
+    xoc::RegionMgr * getRegionMgr() const { return m_rm; }
     Section * getRodataSection() { return m_rodata_sect; }
     Section * getCodeSection() { return m_code_sect; }
     Section * getDataSection() { return m_data_sect; }

@@ -1222,7 +1222,7 @@ bool LifeTimeMgr::clone(LifeTimeMgr & mgr)
         //clone
         if (rs) {
             RegSet * new_rs = m_cg->allocRegSet();
-            *new_rs = *rs;
+            new_rs->copy(*rs);
             m_lt2usable_reg_set_map.set(newLT, new_rs);
         }
 
@@ -2776,13 +2776,15 @@ bool LRA::assignRegister(LifeTime * lt, InterfGraph & ig, LifeTimeMgr & mgr,
 
     if (antici->is_intersect(*usable)) {
         //Try to allocate register 'lt' anticipated primarily.
-        RegSet tmp(*antici);
+        RegSet tmp;
+        tmp.copy(*antici);
         tmp.intersect(*usable);
         reg = RegSet::toReg(tmp.get_first());
         ASSERT0(reg != REG_UNDEF);
     } else {
         //Try to allocate caller-saved registers
-        RegSet try_caller_regs(*usable);
+        RegSet try_caller_regs;
+        try_caller_regs.copy(*usable);
         try_caller_regs.intersect(*tmGetRegSetOfCallerSaved());
         reg = chooseByRegFileGroup(try_caller_regs, lt, mgr, rfg);
         if (reg != REG_UNDEF) {

@@ -29,8 +29,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 author: Su Zhenyu
 @*/
 #include "xoccinc.h"
+#include "../xgen/xgeninc.h"
+#include "../reader/reader.h"
+#include "../arm/arm_ir_parser.h"
+#include "../arm/arm_grreader.h"
 
 namespace xocc {
+
+CLRegionMgr::CLRegionMgr()
+{
+    m_grreader = nullptr;
+}
+
+
+CLRegionMgr::~CLRegionMgr()
+{
+    if (m_grreader != nullptr) {
+        delete m_grreader;
+    }
+}
+
 
 VarMgr * CLRegionMgr::allocVarMgr()
 {
@@ -44,10 +62,23 @@ Region * CLRegionMgr::allocRegion(REGION_TYPE rt)
 }
 
 
+GRReader * CLRegionMgr::allocGRReader()
+{
+    return new ARMGRReader(this);
+}
+
+
+void CLRegionMgr::initGRReader()
+{
+    ASSERT0(m_grreader == nullptr);
+    m_grreader = allocGRReader();
+}
+
+
 TargInfoMgr * CLRegionMgr::allocTargInfoMgr()
 {
     #ifdef REF_TARGMACH_INFO
-    return new ARMTargInfoMgr();
+    return new ARMTargInfoMgr(this);
     #else
     return nullptr;
     #endif

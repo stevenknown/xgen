@@ -76,15 +76,13 @@ ELFMgr * ARMLinkerMgr::allocELFMgr()
 }
 
 
-void ARMLinkerMgr::doRelocate(MOD ELFMgr * elf_mgr)
+void ARMLinkerMgr::doRelocate(MOD ELFMgr * elf_mgr, LinkerCtx & linkerctx)
 {
     ASSERT0(elf_mgr);
     ARMELFMgr * em = (ARMELFMgr*)elf_mgr;
     ASSERT0(em);
 
-    if (g_elf_opt.isDumpLink()) {
-        m_dump->prt("\n\n==== Do Relocate ==== \n\n");
-    }
+    linkerctx.dumpLinkerInfo("\n\n==--- DUMP Do Relocate ---==");
 
     for (UINT i = 0; i < m_reloc_symbol_vec.get_elem_count(); i++) {
         RelocInfo * reloc_info = m_reloc_symbol_vec[i];
@@ -97,7 +95,7 @@ void ARMLinkerMgr::doRelocate(MOD ELFMgr * elf_mgr)
             break;
         }
         //Dump info.
-        if (g_elf_opt.isDumpLink()) { dumpLinkRelocate(reloc_info, i); }
+        linkerctx.dumpLinkRelocate(reloc_info, i);
     }
 }
 
@@ -212,14 +210,15 @@ void ARMLinkerMgr::updateRelaOfst(MOD RelocInfo * reloc_info)
 }
 
 
-void ARMLinkerMgr::mergeELFMgrImpl(MOD ELFMgr * elf_mgr,
-    ELFSHdr const* shdr, CHAR const* shdr_name, UINT shdr_idx)
+void ARMLinkerMgr::mergeELFMgrImpl(MOD ELFMgr * elf_mgr, ELFSHdr const* shdr,
+    CHAR const* shdr_name, UINT shdr_idx, LinkerCtx & linkerctx)
 {
     ASSERT0(elf_mgr && shdr && shdr_name);
     switch (shdr->s_type) {
     case SH_TYPE_TEXT: //Use TEXT as an example.
     default:
-        LinkerMgr::mergeELFMgrImpl(elf_mgr, shdr, shdr_name, shdr_idx);
+        LinkerMgr::mergeELFMgrImpl(elf_mgr, shdr, shdr_name,
+                                   shdr_idx, linkerctx);
         break;
     }
 }

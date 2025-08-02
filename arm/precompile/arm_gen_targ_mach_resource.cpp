@@ -218,6 +218,7 @@ static xgen::RegFileProp g_regfile_prop [] = {
     {"RF_CPSR",  1, 0, 0,},
     {"RF_SPSR",  1, 0, 0,},
     {"RF_P",     0, 0, 1,},
+    {"RF_F",     0, 1, 0,},
 };
 
 
@@ -492,6 +493,12 @@ static void initAndPrtRegFile2RegSet(OUT xcom::BitSet regfile2regset[])
         regfile2regset[RF_S].bunion(reg);
     }
 
+    //Register index begin at 1, because 0 is REG_UNDEF.
+    //All float-pointer registgers.
+    for (UINT reg = RF_F_REG_START; reg <= RF_F_REG_END; reg++) {
+        regfile2regset[RF_F].bunion(reg);
+    }
+
     //CPSR(rflag)
     regfile2regset[RF_CPSR].bunion(REG_RFLAG_REGISTER); //
 
@@ -542,6 +549,7 @@ static void initCluster2RegSet(xcom::BitSet const regfile2regset[],
 {
     cluster2regset[CLUST_SCALAR].bunion(regfile2regset[RF_P]);
     cluster2regset[CLUST_SCALAR].bunion(regfile2regset[RF_R]);
+    cluster2regset[CLUST_SCALAR].bunion(regfile2regset[RF_F]);
     cluster2regset[CLUST_SCALAR].bunion(regfile2regset[RF_D]);
     cluster2regset[CLUST_SCALAR].bunion(regfile2regset[RF_S]);
     cluster2regset[CLUST_SCALAR].bunion(regfile2regset[RF_Q]);

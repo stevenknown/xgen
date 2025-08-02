@@ -100,16 +100,14 @@ COMP_REDO:
         } else {
             ck_lst = v->getOutList();
         }
-        if (ck_lst == nullptr && !visited.is_contain(v->id())) {
-            OR * o = ddg.getOR(VERTEX_id(v));
-            if (OR_is_nop(o)) { //Do not schedul NOP.
-                nop_list->append_tail(o);
-                continue;
-            }
-            m_ready_list.append(o);
-            visited.bunion(v->id());
+        if (ck_lst != nullptr || visited.is_contain(v->id())) { continue; }
+        OR * o = ddg.getOR(VERTEX_id(v));
+        if (OR_is_nop(o)) { //Do not schedule NOP.
+            nop_list->append_tail(o);
             continue;
         }
+        m_ready_list.append(o);
+        visited.bunion(v->id());
     }
 
     if (nop_list->get_elem_count() > 0) {

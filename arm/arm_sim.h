@@ -35,14 +35,15 @@ class ARMSim : public BBSimulator {
 public:
     ARMSim(ORBB * bb);
     virtual UINT numOfMemResult(OR const* o) const;
-    virtual bool isRegResourceConflict(DEP_TYPE deptype,
+    virtual bool isRegResourceConflict(xgen::DEP_TYPE deptype,
                                        ORDesc const* ck_ord,
-                                       OR const* cand_or) const;
-    virtual bool isMemResourceConflict(DEP_TYPE deptype,
+                                       OR const* cand_or) const override;
+    virtual bool isMemResourceConflict(xgen::DEP_TYPE deptype,
                                        ORDesc const* ck_ord,
-                                       OR const* cand_or) const;
+                                       OR const* cand_or) const override;
 
-    virtual void getOccupiedSlot(OR const* o, OUT bool occ_slot[SLOT_NUM]);
+    virtual void getOccupiedSlot(OR const* o,
+                                 OUT bool occ_slot[SLOT_NUM]) override;
 };
 
 #endif

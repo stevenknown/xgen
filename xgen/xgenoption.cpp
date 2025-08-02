@@ -144,7 +144,7 @@ bool g_enable_schedule_delay_slot = false;
 
 //Enable generate OR for inner region.
 //The option is false in default, because user intends to generate code by
-//iterating RegionTab, instead of generating code for inner region recursively.
+//iterating RegionVec, instead of generating code for inner region recursively.
 bool g_is_generate_code_for_inner_region = false;
 
 //Record dump options for each Pass in XGen.

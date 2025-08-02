@@ -41,7 +41,7 @@ protected:
     //Allocate DbxMgr.
     virtual DbxMgr * allocDbxMgr() override;
 public:
-    CLRegion(REGION_TYPE rt, RegionMgr * rm) : ARMRegion(rt, rm) {}
+    CLRegion(REGION_TYPE rt, xoc::RegionMgr * rm) : ARMRegion(rt, rm) {}
     virtual ~CLRegion() { destroy(); }
 };
 

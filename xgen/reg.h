@@ -37,13 +37,14 @@ typedef UINT Reg;
 
 //Register set
 class RegSet : public xcom::BitSet {
+    //Disable the copy-constructor to avoid inefficient code by abusing it.
+    //e.g: RegSet t = foo();
+    COPY_CONSTRUCTOR(RegSet);
 public:
     RegSet(UINT init_pool_size = 32) : xcom::BitSet(init_pool_size) {}
-    RegSet(RegSet const& rs) { xcom::BitSet::copy(rs); }
 
     void dump(FILE * h) const;
     void dump(OUT StrBuf & buf) const;
-
     void dump(OUT xcom::FixedStrBuf<32> & buf) const;
 
     //Convert from BSIdx to Reg.

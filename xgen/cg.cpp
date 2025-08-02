@@ -1319,11 +1319,11 @@ void CG::initFuncUnit()
 
     //Initializing formal parameter section.
     ASSERT0(m_rg->getRegionVar());
-    List<xoc::Var const*> param_list;
-    m_rg->findFormalParam(param_list, true);
+    ConstVarList const* param_list = m_rg->findAndRecordFormalParamList(true);
     UINT i = 0;
-    for (xoc::Var const* v = param_list.get_head();
-         v != nullptr; v = param_list.get_next()) {
+    for (xoc::Var const* v = const_cast<ConstVarList*>(param_list)->get_head();
+         v != nullptr;
+         v = const_cast<ConstVarList*>(param_list)->get_next()) {
          //Append parameter into PARAM-Section in turn.
          computeParamLayout(v, nullptr, nullptr);
          m_params.set(i, v);
@@ -3507,7 +3507,7 @@ xoc::Var * CG::addBBLevelVar(xoc::Type const* type, UINT align)
 {
     xcom::StrBuf name(64);
     xoc::Var * v = m_rg->getFuncRegion()->getVarMgr()->registerVar(
-        genBBLevelNewVarName(name), type, align, VAR_LOCAL);
+        genBBLevelNewVarName(name), type, align, VAR_LOCAL, SS_UNDEF);
     m_bb_level_internal_var_list.append_tail(v);
     return v;
 }
@@ -3517,7 +3517,7 @@ xoc::Var * CG::addFuncLevelVar(xoc::Type const* type, UINT align)
 {
     xcom::StrBuf name(64);
     xoc::Var * v = m_rg->getFuncRegion()->getVarMgr()->registerVar(
-        genFuncLevelNewVarName(name), type, align, VAR_LOCAL);
+        genFuncLevelNewVarName(name), type, align, VAR_LOCAL, SS_UNDEF);
     m_func_level_internal_var_list.append_tail(v);
     return v;
 }
@@ -3650,7 +3650,7 @@ static bool verifySRHasAssignReg(ORList const& ors)
 //                    The offset is related to SP register.
 //regset: a physical register set.
 void CG::storeRegSetToStack(UINT stack_offset_start, RegSet const& regset,
-                            xcom::List<Var const*> const& varlst,
+                            ConstVarList const* varlst,
                             OUT ORList & ors, MOD IOC & tc)
 {
     //Record the byte size that has been stored in stack.
@@ -3659,7 +3659,7 @@ void CG::storeRegSetToStack(UINT stack_offset_start, RegSet const& regset,
     //Record bytesize of total parameters that has been passed.
     UINT passed_total_byte_size = 0;
     xcom::List<Var const*>::Iter varit;
-    Var const* var = varlst.get_head(&varit);
+    Var const* var = varlst->get_head(&varit);
     ASSERT0(var);
     for (BSIdx phyreg = regset.get_first();
          phyreg != BS_UNDEF && var != nullptr;
@@ -3681,7 +3681,7 @@ void CG::storeRegSetToStack(UINT stack_offset_start, RegSet const& regset,
         passed_total_byte_size += GENERAL_REGISTER_SIZE;
         stored_byte_size += GENERAL_REGISTER_SIZE;
         if (stored_byte_size == var->getByteSize(m_tm)) {
-            var = varlst.get_next(&varit);
+            var = varlst->get_next(&varit);
             stored_byte_size = 0;
         }
     }
@@ -3697,8 +3697,7 @@ void CG::storeRegisterParameterBackToStack(List<ORBB*> * entry_lst,
     ASSERT0(entry_lst);
     ASSERT0(tmGetRegSetOfArgument());
     //param_lst: parameter variable which sorted in declaration order.
-    List<Var const*> param_lst;
-    m_rg->findFormalParam(param_lst, true);
+    ConstVarList const* param_lst = m_rg->findAndRecordFormalParamList(true);
     RegSet const* phyregset = tmGetRegSetOfArgument();
     ASSERT0(phyregset);
     ORList ors;
@@ -3806,10 +3805,10 @@ void CG::reviseFormalParameterAndSpadjust(List<ORBB*> & entry_lst,
 
     if (isPassArgumentThroughRegister()) {
         ASSERT0(tmGetRegSetOfArgument()); //phy regset should exist.
-        xcom::List<xoc::Var const*> param_list;
-        m_rg->findFormalParam(param_list, true);
+        ConstVarList const* param_list =
+            m_rg->findAndRecordFormalParamList(true);
         UINT bytesize_of_arg_passed_via_reg =
-            calcSizeOfParameterPassedViaRegister(&param_list);
+            calcSizeOfParameterPassedViaRegister(param_list);
         if (bytesize_of_arg_passed_via_reg % SPADJUST_ALIGNMENT != 0) {
             UINT alignsize = (UINT)xcom::ceil_align(
                 bytesize_of_arg_passed_via_reg, SPADJUST_ALIGNMENT);
@@ -4483,7 +4482,7 @@ void CG::createORCFG(OptCtx & oc)
 
     //Build CFG.
     START_TIMER(t0, "OR Control Flow Optimizations");
-    xoc::CfgOptCtx ctx(oc);
+    xoc::CfgOptCtx ctx(&oc);
     RemoveEmptyBBCtx rmctx(ctx);
     m_or_cfg->removeEmptyBB(rmctx);
     m_or_cfg->build(oc);
@@ -4503,7 +4502,7 @@ static void performCFGOptimization(CG * cg, OptCtx & oc)
     START_TIMER(t1, "OR Control Flow Optimizations");
     bool change;
     ORCFG * cfg = cg->getORCFG();
-    xoc::CfgOptCtx ctx(oc);
+    xoc::CfgOptCtx ctx(&oc);
     RemoveEmptyBBCtx rmctx(ctx);
     do {
         change = false;
@@ -4553,7 +4552,7 @@ bool CG::perform()
                   m_rg->getRegionName(), m_rg->id());
         m_rg->dump(false);
     }
-    if (m_rg->getBBList()->get_elem_count() == 0) {
+    if (m_rg->getBBList()->is_empty()) {
         addReturnForEmptyRegion();
     }
     START_TIMER_FMT(tcg, ("Code Generation Perform '%s'",

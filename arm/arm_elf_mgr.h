@@ -65,7 +65,6 @@ public:
 protected:
     virtual void allocTargInfo() override;
 
-    //Allocate TECOSectionInfoMgr object.
     virtual SectionInfoMgr * allocSectionInfoMgr() override
     { return new ARMSectionInfoMgr(); }
 
@@ -106,7 +105,8 @@ public:
     //      Different formula will be chosen according to the different
     //      RELOCINFO_type(RelocInfo).
     //'elf_mgr': the output ELFMgr.
-    virtual void doRelocate(MOD elf::ELFMgr * elf_mgr) override;
+    virtual void doRelocate(MOD elf::ELFMgr * elf_mgr,
+                            LinkerCtx & linkerctx) override;
 
     //Merge ELFSHdr with no-bits type to the
     //corresponded section of output ELFMgr.
@@ -146,7 +146,7 @@ public:
     //'shdr_idx': the index of 'shdr' in ELF.
     virtual void mergeELFMgrImpl(
         MOD elf::ELFMgr * elf_mgr, elf::ELFSHdr const* shdr,
-        CHAR const* shdr_name, UINT shdr_idx) override;
+        CHAR const* shdr_name, UINT shdr_idx, LinkerCtx & linkerctx) override;
 
     //There is the meaning of reloc_type of specific 'reloc_info'
     //that depended on the reloc_type of other related RelocInfo

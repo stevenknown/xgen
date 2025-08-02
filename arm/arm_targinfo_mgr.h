@@ -32,8 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //Start ARMTargInfoMgr
 //
-//
-class ARMTargInfoMgr : public TargInfoMgr {
+class ARMTargInfoMgr : public xoc::TargInfoMgr {
     COPY_CONSTRUCTOR(ARMTargInfoMgr);
 protected:
     xgen::RegSet m_allocable_scalar;
@@ -42,103 +41,125 @@ protected:
     xgen::RegSet m_callee_vector;
     xgen::RegSet m_caller_scalar;
     xgen::RegSet m_caller_vector;
+    xgen::RegSet m_caller;
     xgen::RegSet m_param_scalar;
     xgen::RegSet m_param_vector;
     xgen::RegSet m_retval_scalar;
     xgen::RegSet m_retval_vector;
 protected:
-    virtual void initAllocableScalar();
-    virtual void initAllocableVector();
-    virtual void initCalleeScalar();
-    virtual void initCalleeVector();
-    virtual void initCallerScalar();
-    virtual void initCallerVector();
-    virtual void initParamScalar();
-    virtual void initParamVector();
-    virtual void initRetvalScalar();
-    virtual void initRetvalVector();
+    virtual RegDSystem * allocRegDSystem() override;
+
+    virtual void destroy() override;
+
+    virtual UINT getBitSize(Reg r) const override;
+
+    virtual void initAllocableScalar() override;
+    virtual void initAllocableVector() override;
+    virtual void initCalleeScalar() override;
+    virtual void initCalleeVector() override;
+    virtual void initCallerScalar() override;
+    virtual void initCallerVector() override;
+    virtual void initParamScalar() override;
+    virtual void initParamVector() override;
+    virtual void initRetvalScalar() override;
+    virtual void initRetvalVector() override;
+    virtual void initCaller() override;
+    virtual void initCallee() override;
 public:
-    ARMTargInfoMgr() {}
+    ARMTargInfoMgr(RegionMgr const* rm) : TargInfoMgr(rm) {}
     virtual ~ARMTargInfoMgr() {}
 
-    //Get scalar allocable register set of T1 architecture.
+    //Get scalar allocable register set.
     xgen::RegSet const* getAllocableScalarRegSet() const
     { return &m_allocable_scalar; }
 
-    //Get vector allocable register set of T1 architecture.
+    //Get vector allocable register set.
     xgen::RegSet const* getAllocableVectorRegSet() const
     { return &m_allocable_vector; }
 
-    //Get base pointer register of T1 architecture.
-    virtual xgen::Reg getBP() const { return REG_R9; }
-
-    //Get scalar callee saved register set of T1 architecture.
+    //Get scalar callee saved register set.
     xgen::RegSet const* getCalleeScalarRegSet() const
     { return &m_callee_scalar; }
 
-    //Get vector callee saved register set of T1 architecture.
+    //Get vector callee saved register set.
     xgen::RegSet const* getCalleeVectorRegSet() const
     { return &m_callee_vector; }
 
-    //Get end scalar caller saved register of T1 architecture.
-    virtual xgen::Reg getCallerScalarEnd() const { return REG_R8; }
+    //Get end scalar caller saved register.
+    virtual xgen::Reg getCallerScalarEnd() const override { return REG_R8; }
 
-    //Get scalar caller saved register set of T1 architecture.
-    xgen::RegSet const* getCallerScalarRegSet() const
+    //Get scalar caller saved register set.
+    xgen::RegSet const* getCallerScalarRegSet() const override
     { return &m_caller_scalar; }
 
-    //Get start scalar caller saved register of T1 architecture.
-    virtual xgen::Reg getCallerScalarStart() const { return REG_R1; }
+    //Get start scalar caller saved register.
+    virtual xgen::Reg getCallerScalarStart() const override { return REG_R1; }
 
-    //Get vector caller saved register set of T1 architecture.
+    //Get vector caller saved register set.
     xgen::RegSet const* getCallerVectorRegSet() const override
     { return &m_caller_vector; }
+
+    virtual xgen::RegSet const* getCallerRegSet() const override
+    { return &m_caller; }
 
     //Get the last physical register of the architecture.
     virtual xgen::Reg getRegLast() const override { return REG_LAST; }
 
-    //Get frame pointer register of T1 architecture.
+    //Get frame pointer register.
     virtual xgen::Reg getFP() const override { return REG_R15; }
 
-    //Get global pointer register of T1 architecture.
+    //Get global pointer register.
     virtual xgen::Reg getGP() const override { return REG_UNDEF; }
 
-    //Get number of registers of T1 architecture.
-    virtual UINT const getNumOfRegister() const { return 65; }
+    //Get number of registers.
+    virtual UINT const getNumOfRegister() const override { return REG_NUM; }
 
-    //Get scalar parame register set of T1 architecture.
-    xgen::RegSet const* getParamScalarRegSet() const
+    //Get scalar parame register set.
+    xgen::RegSet const* getParamScalarRegSet() const override
     { return &m_param_scalar; }
 
     //Get start scalar parameter register of ARM architecture.
-    virtual xgen::Reg getParamScalarStart() const { return REG_R0; }
+    virtual xgen::Reg getParamScalarStart() const override { return REG_R0; }
 
-    //Get vector parameter register set of T1 architecture.
+    //Get vector parameter register set.
     xgen::RegSet const* getParamVectorRegSet() const
     { return &m_param_vector; }
 
-    //Get program counter register of T1 architecture.
-    virtual xgen::Reg getPC() const { return REG_PC; }
+    //Get program counter register.
+    virtual xgen::Reg getPC() const override { return REG_PC; }
 
     //Get return address of ARM architecture.
-    virtual xgen::Reg getRA() const { return REG_RA; }
+    virtual xgen::Reg getRA() const override { return REG_RA; }
 
-    //Get scalar allocable register set of T1 architecture.
+    //Get scalar allocable register set.
     xgen::RegSet const* getRetvalScalarRegSet() const
     { return &m_retval_scalar; }
 
-    //Get vector returned value register set of T1 architecture.
+    //Get vector returned value register set.
     xgen::RegSet const* getRetvalVectorRegSet() const
     { return &m_retval_vector; }
 
-    //Get stack pointer register of T1 architecture.
-    virtual xgen::Reg getSP() const { return REG_SP; }
+    //Get stack pointer register.
+    virtual xgen::Reg getSP() const override { return REG_SP; }
 
-    //Get temporary register of T1 architecture.
-    virtual xgen::Reg getTemp() const { return REG_TMP; }
+    //Get temporary register.
+    virtual xgen::Reg getTempScalar(Type const* ty) const override
+    {  ASSERT0(!ty->is_vector()); return REG_TMP; }
 
-    //Get zero register of T1 architecture.
-    virtual xgen::Reg getZero() const { return REG_ZERO; }
+    virtual xgen::Reg getTempVector() const override
+    { return REG_UNDEF; }
+
+    //Get temporary register.
+    virtual Reg getZeroScalar() const override { return REG_ZERO; }
+    virtual Reg getZeroScalarFP() const override { return REG_UNDEF; }
+    virtual Reg getZeroVector() const override { return REG_UNDEF; }
+
+    //Get the cycle count of load operation on chip memory.
+    virtual UINT getLoadOnChipMemCycle() const override
+    { return ARM_LOAD_ONCHIP_CYC; }
+
+    //Get the cycle count of write operation on chip memory.
+    virtual UINT getStoreOnChipMemCycle() const override { return 1; }
 };
 //End ARMTargInfoMgr.
 

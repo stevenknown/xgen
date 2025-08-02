@@ -50,7 +50,7 @@ public:
     COPY_CONSTRUCTOR(Canon);
     ~Canon() {}
 
-    IR * only_left_last(IR * head);
+    IR * only_left_last(IR * head, OUT bool & change);
 
     void handle_call(IN IR * ir, OUT bool & change, CanonCtx * cc);
     IR * handle_lda(IR * ir, bool & change, CanonCtx * cc);

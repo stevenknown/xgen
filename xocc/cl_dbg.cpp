@@ -35,7 +35,7 @@ void CLDbxMgr::printSrcLine(xoc::Dbx const* dbx, PrtCtx * ctx)
     ASSERT0(ctx && dbx);
     if (ctx->logmgr == nullptr) { return; }
 
-    UINT lineno = xoc::getLineNum(dbx, LangInfo::LANG_CPP, this);
+    UINT lineno = xoc::getLineNum(dbx, xoc::LANG_CPP, this);
     if (lineno == m_cur_lineno) {
         //It is dispensable that print the same souce file multiple times.
         return;
@@ -74,7 +74,7 @@ void CLDbxMgr::printSrcLine(xoc::Dbx const* dbx, PrtCtx * ctx)
 void CLDbxMgr::printSrcLine(xcom::StrBuf & output, Dbx const* dbx, PrtCtx * ctx)
 {
     ASSERT0(ctx && dbx);
-    UINT lineno = xoc::getLineNum(dbx, LangInfo::LANG_CPP, this);
+    UINT lineno = xoc::getLineNum(dbx, xoc::LANG_CPP, this);
     if (lineno == m_cur_lineno) {
         //It is dispensable that print the same souce file multiple times.
         return;

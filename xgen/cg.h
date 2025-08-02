@@ -1072,7 +1072,7 @@ public:
     //                    The offset is related to SP register.
     //regset: a physical register set.
     void storeRegSetToStack(UINT stack_offset_start, RegSet const& regset,
-                            xcom::List<Var const*> const& varlst,
+                            ConstVarList const* varlst,
                             OUT ORList & ors, MOD IOC & tc);
 
     //Insert register store operation to save value of parameters.

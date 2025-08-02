@@ -49,10 +49,8 @@ void ARMRegion::simplify(OptCtx & oc)
 {
     ASSERTN(getPassMgr(), ("need PassMgr and IRMgr"));
     //Note PRSSA and MDSSA are unavailable.
-    if (getBBList() == nullptr || getBBList()->get_elem_count() == 0) {
-        return;
-    }
-
+    ASSERT0(getBBList());
+    if (getBBList()->is_empty()) { return; }
     SimpCtx simp(&oc);
     simp.setSimpCFS();
     simp.setSimpArray();
@@ -73,7 +71,7 @@ void ARMRegion::simplify(OptCtx & oc)
         ASSERT0(getDUMgr() && getDUMgr()->verifyMDRef());
 
         //Before CFG building.
-        CfgOptCtx ctx(oc);
+        IRCfgOptCtx ctx(&oc);
         RemoveEmptyBBCtx rmctx(ctx);
         getCFG()->removeEmptyBB(rmctx);
 
@@ -141,7 +139,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
         //Remove empty bb when cfg rebuilted because
         //rebuilding cfg may generate redundant empty bb.
         //It disturbs the computation of entry and exit.
-        CfgOptCtx ctx(oc);
+        IRCfgOptCtx ctx(&oc);
         RemoveEmptyBBCtx rmctx(ctx);
         getCFG()->removeEmptyBB(rmctx);
 
@@ -178,74 +176,18 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
     }
     doAA(oc);
     doDUAna(oc);
+    if (g_do_rce) {
+        //Do RCE and REFINE on higher level IR.
+        getPassMgr()->registerPass(PASS_RCE)->perform(oc);
+        if (g_do_refine) {
+            getPassMgr()->registerPass(PASS_REFINE)->perform(oc);
+        }
+    }
 }
 
 
-//The function performs AA aggressively.
-static bool doAggressiveAA(OptCtx & oc)
-{
-    bool changed = false;
-    Region * rg = oc.getRegion();
-    AliasAnalysis * aa = rg->getAA();
-    if (!g_do_aa || aa == nullptr) { return changed; }
-
-    //Recompute and set MD reference to avoid AA's complaint.
-    //Compute AA to build coarse-grained DU chain.
-    rg->getMDMgr()->assignMD();
-    if (!aa->is_init()) {
-        aa->initAliasAnalysis();
-    }
-    aa->set_flow_sensitive(false);
-    aa->perform(oc);
-
-    //Compute PR's definition to improve AA precison.
-    if (rg->doPRSSA(oc)) {
-        ;
-    } else if (rg->getDUMgr() != nullptr) {
-        //Do not ask checkAndRecompute options, because user may only require
-        //NonPR DU chain rather than PR DU chain.
-        //Apply ClassicPRDU analysis if needed.
-        //ASSERT0(g_compute_pr_du_chain);
-        DUOptFlag flag(DUOPT_COMPUTE_PR_REF | DUOPT_COMPUTE_NONPR_REF);
-        if (g_compute_pr_du_chain_by_prssa) {
-            //No Need to compute REACH_DEF here because user ask computing PRDU
-            //chain through PRSSA. And the computation of REACH_DEF is costly.
-            //Thus call computePRDUChainByPRSSA() to computes PRDU chain in
-            //checkAndComputeClassicDUChain() after the function returning.
-            //CASE:Some target expect to compute PRDU by REACH_DEF and
-            //PRSSA both.
-            ;
-        } else {
-            flag.set(DUOPT_SOL_REACH_DEF | DUOPT_COMPUTE_PR_DU);
-        }
-        rg->getDUMgr()->perform(oc, flag);
-        if (flag.have(DUOPT_COMPUTE_PR_DU)) {
-            ASSERT0(oc.is_reach_def_valid());
-            rg->getDUMgr()->computeMDDUChain(
-                oc, false, DUOptFlag(DUOPT_COMPUTE_PR_DU));
-        } else {
-            //At least compute PRDU by one way.
-            ASSERT0(g_compute_pr_du_chain_by_prssa);
-            rg->getDUMgr()->computePRDUChainByPRSSA(oc);
-        }
-    }
-    //Recompute and set MD reference to avoid AA's complaint.
-    rg->getMDMgr()->assignMD();
-
-    //Estimate the threshold to perform AA.
-    UINT numir = 0;
-    for (IRBB * bb = rg->getBBList()->get_head();
-         bb != nullptr; bb = rg->getBBList()->get_next()) {
-        numir += bb->getNumOfIR();
-    }
-    aa->set_flow_sensitive(numir < xoc::g_thres_opt_ir_num);
-    aa->perform(oc);
-    changed = true;
-    return changed;
-}
-
-
-//This function perform aggressive AA and DU analysis.
+//This function uses classic DU to perform aggressive AA and costly
+//DU analysis.
 //1. Perform flow-insensitive AA.
 //2. Perform PR DU chain.
 //3. Perform flow-sensitive AA.
@@ -261,6 +203,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
     bool org_compute_pr_du_chain = g_compute_pr_du_chain;
     bool org_compute_nonpr_du_chain = g_compute_nonpr_du_chain;
     oc.setInvalidPass(PASS_MD_REF);
+    oc.setInvalidPass(PASS_AA);
     oc.setInvalidPass(PASS_CLASSIC_DU_CHAIN);
     oc.setInvalidPass(PASS_PRSSA_MGR);
     oc.setInvalidPass(PASS_MDSSA_MGR);
@@ -270,12 +213,11 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
         DUOptFlag flag(DUOPT_COMPUTE_PR_REF|DUOPT_COMPUTE_NONPR_REF);
         dumgr->perform(oc, flag);
         ASSERT0(oc.is_ref_valid());
-
+        bool orgval = g_compute_pr_du_chain_by_prssa;
         //Force computing PRDU by REACH_DEF.
-        bool org_compute_pr_du_chain_by_prssa = g_compute_pr_du_chain_by_prssa;
         g_compute_pr_du_chain_by_prssa = false;
         dumgr->checkAndComputeClassicDUChain(oc);
-        g_compute_pr_du_chain_by_prssa = org_compute_pr_du_chain_by_prssa;
+        g_compute_pr_du_chain_by_prssa = orgval;
         bool changed_prssa = doPRSSA(oc);
         bool changed_mdssa = doMDSSA(oc);
         bool remove_prdu = changed_prssa ? true : false;
@@ -293,7 +235,7 @@ void ARMRegion::MiddleProcessAggressiveAnalysis(OptCtx & oc)
 bool ARMRegion::addReturnIfNeed()
 {
     if (getIRList() != nullptr) {
-        ASSERT0(getBBList()->get_elem_count() == 0);
+        ASSERT0(getBBList()->is_empty());
         return true;
     }
     BBList * bblst = getBBList();
@@ -335,11 +277,11 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     ASSERT0((!g_do_md_du_analysis && !g_do_mdssa) ||
             getDUMgr()->verifyMDRef());
     ASSERT0(verifyIRandBB(getBBList(), this));
-    ASSERT0(verifyMDDUChain(this, oc));
+    ASSERT0(verifyClassicDUChain(this, oc));
     //Destruct SSA mode and resource.
     PRSSAMgr * ssamgr = (PRSSAMgr*)getPRSSAMgr();
     if (ssamgr != nullptr && ssamgr->is_valid()) {
-        //NOTE: ssa destruction might violate classic DU chain.
+        //NOTE: SSA destruction might violate classic DU chain.
         ssamgr->destruction(oc);
 
         //Note PRSSA will change PRNO during PRSSA destruction.
@@ -351,7 +293,8 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
         //than invalid them.
         oc.setInvalidPass(PASS_CLASSIC_DU_CHAIN);
     }
-    ASSERT0(verifyMDDUChain(this, oc));
+    ASSERT0(verifyClassicDUChain(this, oc));
+    doSimplyCPByClassicDU(oc);
 
     ///////////////////////////////////////////////////////////////////////////
     //DO NOT DO OPTIMIZATION ANY MORE AFTER THIS LINE                        //
@@ -361,6 +304,7 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     if (g_do_lsra) {
         LinearScanRA * lsra = (LinearScanRA*)getPassMgr()->registerPass(
             PASS_LINEAR_SCAN_RA);
+        lsra->setApplyToRegion(true);
         lsra->perform(oc);
     }
     #endif
@@ -370,11 +314,6 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
 
 bool ARMRegion::HighProcess(OptCtx & oc)
 {
-    bool own = true;
-    if (own) {
-        ARMHighProcess(oc);
-    } else {
-        Region::HighProcess(oc);
-    }
+    ARMHighProcess(oc);
     return true;
 }

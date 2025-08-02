@@ -170,21 +170,9 @@ protected:
     xoc::Var * genLocalVar(CHAR const* name, xoc::Type const* ty);
     xoc::Var * genReturnValBufVar(
         xoc::Type const* rettype, OUT UINT * return_val_size);
-
-    IR * only_left_last(IR * head);
-
-    void * xmalloc(INT size)
-    {
-        ASSERTN(size > 0, ("xmalloc: size less zero!"));
-        ASSERTN(m_pool != nullptr, ("need pool!!"));
-        void * p = smpoolMalloc(size, m_pool);
-        ASSERT0(p);
-        ::memset((void*)p, 0, size);
-        return p;
-    }
 public:
-    CTree2IR(Region * rg, xfe::Decl const* retty, DeclAndVarMap const& dvmap) :
-        m_dvmap(dvmap)
+    CTree2IR(Region * rg, xfe::Decl const* retty, DeclAndVarMap const& dvmap)
+        : m_dvmap(dvmap)
     {
         ASSERT0(rg);
         //retty may be NULL.
@@ -217,6 +205,9 @@ public:
 
     //Return the number of mantissa.
     BYTE getMantissaNum(CHAR const* fpval);
+    Region * getRegion() const { return m_rg; }
+    TypeMgr * getTypeMgr() const { return m_tm; }
+    IRMgr * getIRMgr() const { return m_irmgr; }
 
     //Return XOC data type according to given CFE declaration.
     //If 'decl' presents a simply type, convert type-spec to xoc::DATA_TYPE
@@ -276,6 +267,12 @@ public:
     IR * convertDeref(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convertPragma(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont);
     IR * convert(IN xfe::Tree * t, T2IRCtx * cont);
+
+    List<CaseValue*> * getCaseList() const { return m_case_list; }
+
+    IR * only_left_last(IR * head);
+
+    void * xmalloc(UINT size);
 };
 
 class CScope2IR {

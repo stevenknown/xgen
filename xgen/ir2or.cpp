@@ -182,7 +182,10 @@ void IR2OR::convertLoadConstInt(HOST_INT constval, UINT constbytesize,
         ASSERTN(sizeof(HOST_INT) >= 2 * GENERAL_REGISTER_SIZE,
                 ("host machine integer can not represent target machine"
                  "integer type"));
-        //Compiler may give a complaint warning about the shift size.
+
+        //The above code ensure that WORD_LENGTH_OF_TARGET_MACHINE <
+        //sizeof(HOST_UINT) * HOST_BIT_PER_BYTE
+        //NOTE:Compiler may give a complaint warning about the shift size.
         HOST_UINT v2 = (HOST_UINT)(((ULONGLONG)constval) <<
                                    WORD_LENGTH_OF_TARGET_MACHINE);
         low = v2 >> WORD_LENGTH_OF_TARGET_MACHINE;
@@ -197,9 +200,15 @@ void IR2OR::convertLoadConstInt(HOST_INT constval, UINT constbytesize,
         load_val2 = m_cg->genReg();
         HOST_INT high = 0;
         if (is_signed) {
+            //The above code ensure that WORD_LENGTH_OF_TARGET_MACHINE <
+            //sizeof(HOST_UINT) * HOST_BIT_PER_BYTE
+            //NOTE:Compiler may give a complaint warning about the shift size.
             high = (HOST_INT)(((LONGLONG)constval) >>
                               WORD_LENGTH_OF_TARGET_MACHINE);
         } else {
+            //The above code ensure that WORD_LENGTH_OF_TARGET_MACHINE <
+            //sizeof(HOST_UINT) * HOST_BIT_PER_BYTE
+            //NOTE:Compiler may give a complaint warning about the shift size.
             high = (HOST_INT)(((ULONGLONG)(HOST_UINT)constval) >>
                               WORD_LENGTH_OF_TARGET_MACHINE);
         }
@@ -1641,7 +1650,7 @@ void IR2OR::convertToORList(OUT RecycORList & or_list)
     IR * ir_list = m_rg->getIRList();
     if (ir_list != nullptr) {
         ASSERT0(m_rg->getBBList() == nullptr ||
-                m_rg->getBBList()->get_elem_count() == 0);
+                m_rg->getBBList()->is_empty());
         convertIRListToORList(or_list);
         return;
     }

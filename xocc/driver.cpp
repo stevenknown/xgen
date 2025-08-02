@@ -186,7 +186,7 @@ xoc::Var * DeclAndVarMap::addDecl(Decl const* decl)
     CHAR const* var_name = decl->getDeclSym()->getStr();
     UINT var_align = (UINT)xcom::ceil_align(
         MAX(DECL_align(decl), STACK_ALIGNMENT), STACK_ALIGNMENT);
-    Var * v = m_vm->registerVar(var_name, type, var_align, flag);
+    Var * v = m_vm->registerVar(var_name, type, var_align, flag, SS_UNDEF);
     if (v->is_global()) {
         //For conservative purpose.
         v->setFlag(VAR_ADDR_TAKEN);
@@ -279,6 +279,7 @@ CLRegionMgr * Compiler::initRegionMgr()
     rm->initVarMgr();
     rm->initIRDescFlagSet();
     rm->initTargInfo();
+    rm->initGRReader();
     #ifdef REF_TARGMACH_INFO
     rm->initTargInfoMgr();
     #endif
@@ -358,7 +359,7 @@ bool Compiler::compileGRFile(CHAR const* fn)
     if (g_is_dump_option) {
         xoc::Option::dump(rm);
     }
-    bool succ = xoc::readGRAndConstructRegion(rm, fn);
+    bool succ = xoc::readGRAndConstructRegion(rm->getGRReader(), fn);
     if (!succ) {
         xoc::prt2C("\nerror: fail read and parse '%s'", fn);
         res = false;

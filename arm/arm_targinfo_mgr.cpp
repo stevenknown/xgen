@@ -28,6 +28,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @*/
 #include "../xgen/xgeninc.h"
 
+void ARMTargInfoMgr::destroy()
+{
+    m_allocable_scalar.clean();
+    m_allocable_vector.clean();
+    m_callee_scalar.clean();
+    m_callee_vector.clean();
+    m_caller_scalar.clean();
+    m_caller_vector.clean();
+    m_caller.clean();
+    m_param_scalar.clean();
+    m_param_vector.clean();
+    m_retval_scalar.clean();
+    m_retval_vector.clean();
+    TargInfoMgr::destroy();
+}
+
+
 void ARMTargInfoMgr::initAllocableScalar()
 {
     for (Reg i = ALLOCABLE_REG_START; i <= ALLOCABLE_REG_END; i++) {
@@ -35,6 +52,31 @@ void ARMTargInfoMgr::initAllocableScalar()
     }
     //R14(LR), note R14 should be saved at prolog of current function.
     m_allocable_scalar.bunion(REG_RETURN_ADDRESS_REGISTER);
+}
+
+
+UINT ARMTargInfoMgr::getBitSize(Reg r) const
+{
+    if (r >= RF_R_REG_START && r <= RF_R_REG_END) {
+        return WORD_LENGTH_OF_TARGET_MACHINE;
+    }
+    if (r >= RF_S_REG_START && r <= RF_S_REG_END) {
+        return WORD_LENGTH_OF_TARGET_MACHINE;
+    }
+    if (r >= RF_D_REG_START && r <= RF_D_REG_END) {
+        return WORD_LENGTH_OF_TARGET_MACHINE * 2;
+    }
+    if (r >= RF_Q_REG_START && r <= RF_Q_REG_END) {
+        return WORD_LENGTH_OF_TARGET_MACHINE * 4;
+    }
+    if (r >= RF_P_REG_START && r <= RF_P_REG_END) {
+        return 1;
+    }
+    if (r >= RF_ST_REG_START && r <= RF_ST_REG_END) {
+        return WORD_LENGTH_OF_TARGET_MACHINE;
+    }
+    UNREACHABLE();
+    return 0;
 }
 
 
@@ -75,6 +117,19 @@ void ARMTargInfoMgr::initCallerScalar()
     for (Reg reg = CALLER_SAVED_REG_START; reg <= CALLER_SAVED_REG_END; reg++) {
         m_caller_scalar.bunion(reg);
     }
+}
+
+
+void ARMTargInfoMgr::initCallee()
+{
+}
+
+
+void ARMTargInfoMgr::initCaller()
+{
+    m_caller.clean();
+    m_caller.bunion(m_caller_scalar);
+    m_caller.bunion(m_caller_vector);
 }
 
 
@@ -124,3 +179,8 @@ void ARMTargInfoMgr::initRetvalVector()
     m_retval_vector.bunion(REG_D1);
 }
 
+
+RegDSystem * ARMTargInfoMgr::allocRegDSystem()
+{
+    return new ARMRegDSystem(getRegionMgr(), this);
+}

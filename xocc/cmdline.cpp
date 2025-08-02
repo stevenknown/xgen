@@ -110,6 +110,7 @@ static void disable_opt(INT opt_level)
     case SIZE_OPT:
         xoc::g_do_cp = false;
         xoc::g_do_cp_aggressive = false;
+        xoc::g_do_bcp = false;
         xoc::g_do_dce = false;
         xoc::g_do_dce_aggressive = false;
         xoc::g_do_licm = false;
@@ -311,12 +312,16 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "without inserting loop guard", },
     { "gcse", &xoc::g_do_gcse,
       "enable global-common-subexpression-elimination optimization", },
+    { "exprtab", &xoc::g_do_expr_tab,
+      "compute expression table", },
     { "rp", &xoc::g_do_rp,
       "enable register-promotion optimization", },
     { "cp", &xoc::g_do_cp,
       "enable copy-propagation optimization", },
     { "cp_aggr", &xoc::g_do_cp_aggressive,
       "enable aggressive copy-propagation optimization", },
+    { "bcp", &xoc::g_do_bcp,
+      "enable branch-condition-propagation optimization", },
     { "rce", &xoc::g_do_rce,
       "enable redundant-code-elimination optimization", },
     { "vect", &xoc::g_do_vect,
@@ -347,6 +352,8 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "enable classic PR def-use analysis", },
     { "nonprdu", &xoc::g_compute_nonpr_du_chain,
       "enable classic NON-PR def-use analysis", },
+    { "fast_prdu", &xoc::g_compute_pr_du_chain_by_prssa,
+      "enable classic fast PR def-use analysis", },
     { "redirect_stdout_to_dump_file", &xoc::g_redirect_stdout_to_dump_file,
       "redirect internal compiler output information to given dump file", },
     { "ipa", &xoc::g_do_ipa,
@@ -409,6 +416,8 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump loop-invariant-code-motion", },
     { "gcse", &xoc::g_dump_opt.is_dump_gcse,
       "dump global-common-subexpression-elimination", },
+    { "exprtab", &xoc::g_dump_opt.is_dump_exprtab,
+      "dump expression table", },
     { "dumgr", &xoc::g_dump_opt.is_dump_dumgr,
       "dump classic def-use information", },
     { "prssa", &xoc::g_dump_opt.is_dump_prssamgr,
@@ -416,6 +425,8 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
     { "mdssa", &xoc::g_dump_opt.is_dump_mdssamgr,
       "dump md-ssa information", },
     { "rce", &xoc::g_dump_opt.is_dump_rce,
+      "dump redundant-code-elimination", },
+    { "bcp", &xoc::g_dump_opt.is_dump_bcp,
       "dump redundant-code-elimination", },
     { "cp", &xoc::g_dump_opt.is_dump_cp,
       "dump copy-propagation", },
@@ -441,6 +452,8 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump IR parser", },
     { "all", &xoc::g_dump_opt.is_dump_all,
       "dump all compiler information", },
+    { "for_test", &xoc::g_dump_opt.is_dump_for_test,
+      "dump compiler information only for test environment usage", },
     { "nothing", &xoc::g_dump_opt.is_dump_nothing,
       "disable dump", },
     { "gr", &xocc::g_is_dumpgr,
@@ -458,10 +471,7 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
 };
 
 BoolOption::Desc const BoolOption::elf_option_desc[] = {
-    { "device", &elf::g_elf_opt.m_is_device_elf,
-      "generate device elf", },
-    { "fatbin", &elf::g_elf_opt.m_is_fatbin_elf,
-      "generate fatbin elf", },
+    { "", nullptr, "", },
 };
 
 

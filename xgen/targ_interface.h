@@ -31,6 +31,10 @@ author: Su Zhenyu
 #ifndef __TARG_INTERFACE_H__
 #define __TARG_INTERFACE_H__
 
+namespace xoc {
+class RegionMgr;
+}
+
 namespace xgen {
 
 class RegSet;
@@ -39,6 +43,7 @@ class SRDesc;
 struct EquORCodes;
 class TargMach;
 class CGMgr;
+
 typedef struct tagORScheInfo ORScheInfo;
 
 //Return name of cluster.
@@ -150,7 +155,8 @@ RegSet const* tmGetVectorRegSetOfCalleeSaved();
 ORScheInfo const* tmGetORScheInfo(OR_CODE ot);
 
 //Allocate CGMgr for target machine.
-CGMgr * allocCGMgr(RegionMgr * rm);
+CGMgr * allocCGMgr(xoc::RegionMgr * rm);
 
-} //namespace
+} //namespace xgen
+
 #endif

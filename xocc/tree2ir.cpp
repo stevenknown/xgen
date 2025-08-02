@@ -221,6 +221,17 @@ IR * CTree2IR::convertFieldAccessForReturnValAggr(
 }
 
 
+void * CTree2IR::xmalloc(UINT size)
+{
+    ASSERTN(size > 0, ("xmalloc: size less zero!"));
+    ASSERTN(m_pool != nullptr, ("need pool!!"));
+    void * p = smpoolMalloc(size, m_pool);
+    ASSERT0(p);
+    ::memset((void*)p, 0, size);
+    return p;
+}
+
+
 //Generate IR for xfe::Tree identifier.
 //And calculate the byte-size of identifier.
 IR * CTree2IR::buildId(Decl const* id)
@@ -544,11 +555,11 @@ IR * CTree2IR::convertAssign(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont)
 
 
 //Convert prefix ++/--:
-// ++a => a=a+1; return a;
-// --a => a=a-1; return a;
-// *++a=0 => a=a+1; *a=0;
-// b=*++a => a=a+1; b=*a;
-// b=++*a => *a=*a+1; b=*a;
+// ++x => x=x+1; return x;
+// --x => x=x-1; return x;
+// *++x=0 => x=x+1; *x=0;
+// b=*++x => x=x+1; b=*x;
+// b=++*x => *x=*x+1; b=*x;
 IR * CTree2IR::convertIncDec(IN xfe::Tree * t, UINT lineno, T2IRCtx * cont)
 {
     //Generate base region IR node used into ST
@@ -1449,8 +1460,8 @@ IR * CTree2IR::convertSwitch(IN xfe::Tree * t, UINT lineno, T2IRCtx *)
 
 xoc::Var * CTree2IR::genLocalVar(xoc::Sym const* sym, xoc::Type const* ty)
 {
-    xoc::Var * v = m_rg->getVarMgr()->registerVar(sym, ty, STACK_ALIGNMENT,
-                                                  VAR_LOCAL);
+    xoc::Var * v = m_rg->getVarMgr()->registerVar(
+        sym, ty, STACK_ALIGNMENT, VAR_LOCAL, SS_UNDEF);
     m_rg->addToVarTab(v);
     return v;
 }
@@ -2012,14 +2023,592 @@ BYTE CTree2IR::getMantissaNum(CHAR const* fpval)
 }
 
 
+class VFToBody {
+public:
+    xcom::TTab<IR*> ir_tab;
+public:
+    VFToBody() {}
+    bool visitIR(IR * ir, OUT bool & is_terminate)
+    {
+        if (ir->isCFSThatControlledBySCO()) {
+            //Do NOT access these structure's kid.
+            return false;
+        }
+        if (ir->is_continue()) {
+            ir_tab.append(ir);
+        }
+        return true;
+    }
+};
+
+
+static void prependStepBeforeContinue(IR const* step, IR * body, Region * rg)
+{
+    class IterTree : public VisitIRTree<VFToBody> {
+    public:
+        IterTree(VFToBody & vf) : VisitIRTree(vf) {}
+    };
+    if (step == nullptr) { return; }
+    VFToBody vf;
+    IterTree it(vf);
+    it.visitWithSibling(body);
+    xcom::TTabIter<IR*> irit;
+    for (IR * t = vf.ir_tab.get_first(irit);
+         t != nullptr; t = vf.ir_tab.get_next(irit)) {
+        ASSERT0(t->is_continue());
+        IR * dup_step = rg->dupIRTreeList(step);
+        IR * prev = t->get_prev();
+        IR * parent = t->getParent();
+        ASSERTN(parent, ("dangled IR"));
+        if (prev != nullptr) {
+            xcom::insertafter(&prev, dup_step);
+            parent->setParent(dup_step);
+        } else {
+            IR * dup_cnt = rg->dupIRTree(t);
+            xcom::add_next(&dup_step, dup_cnt);
+            parent->replaceKidWithIRList(t, dup_step, true);
+        }
+    }
+}
+
+
+static IR * convertRev(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * opnd = t2ir->convert(TREE_lchild(t), cont);
+    IR * ir = irmgr->buildUnaryOp(IR_BNOT, opnd->getType(), opnd);
+    xoc::setLineNum(ir, lineno, rg);
+    return ir;
+}
+
+
+static IR * convertMinus(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * opnd = t2ir->convert(TREE_lchild(t), cont);
+    IR * ir = irmgr->buildUnaryOp(IR_NEG, opnd->getType(), opnd);
+    xoc::setLineNum(ir, lineno, rg);
+    ir->setParentPointer(false);
+    return ir;
+}
+
+
+static IR * convertDefault(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * ir = irmgr->buildIlabel();
+    CaseValue * casev = (CaseValue*)t2ir->xmalloc(sizeof(CaseValue));
+    CASEV_lab(casev) = LAB_lab(ir);
+    CASEV_constv(casev) = 0;
+    CASEV_is_default(casev) = true;
+    ASSERT0(t2ir->getCaseList());
+    t2ir->getCaseList()->append_head(casev);
+    xoc::setLineNum(ir, lineno, rg);
+    return ir;
+}
+
+
+static IR * convertCase(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * ir = irmgr->buildIlabel();
+    CaseValue * casev = (CaseValue*)t2ir->xmalloc(sizeof(CaseValue));
+    CASEV_lab(casev) = LAB_lab(ir);
+    CASEV_constv(casev) = TREE_case_value(t);
+    CASEV_is_default(casev) = false;
+    ASSERT0(t2ir->getCaseList());
+    t2ir->getCaseList()->append_tail(casev);
+    xoc::setLineNum(ir, lineno, rg);
+    return ir;
+}
+
+
+static IR * convertFor(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    TypeMgr * tm = t2ir->getTypeMgr();
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * last = nullptr;
+    IR * init = t2ir->convert(TREE_for_init(t), nullptr);
+    IR * ir = nullptr;
+    xcom::add_next(&ir, &last, init);
+
+    T2IRCtx ct2;
+    ASSERT0(cont);
+    IR * stmt_in_det = nullptr;
+    IR * stmt_in_det_last = nullptr;
+
+    //Override topirlist and corresponding last.
+    CONT_toplirlist(&ct2) = &stmt_in_det;
+    CONT_toplirlist_last(&ct2) = &stmt_in_det_last;
+    IR * det = t2ir->convert(TREE_for_det(t), &ct2);
+    if (stmt_in_det != nullptr) {
+        xcom::add_next(&ir, &last, stmt_in_det);
+    }
+
+    det = t2ir->only_left_last(det);
+    if (det == nullptr) {
+        det = irmgr->buildJudge(irmgr->buildImmInt(1, tm->getI32()));
+    }
+
+    IR * body = t2ir->convert(TREE_for_body(t), nullptr);
+
+    //The step ir-list is only used for reference.
+    //Duplicate it if needed.
+    IR * step_readonly = t2ir->convert(TREE_for_step(t), nullptr);
+    xcom::add_next(&body, rg->dupIRTreeList(step_readonly));
+    if (stmt_in_det != nullptr) {
+        xcom::add_next(&body, rg->dupIRTreeList(stmt_in_det));
+    }
+    if (!det->is_judge()) {
+        IR * old = det;
+        det = irmgr->buildJudge(det);
+        copyDbx(det, old, rg);
+    }
+
+    IR * whiledo = irmgr->buildWhileDo(det, body);
+    xoc::setLineNum(whiledo, lineno, rg);
+    xcom::add_next(&ir, &last, whiledo);
+    prependStepBeforeContinue(step_readonly, body, rg);
+    rg->freeIRTreeList(step_readonly);
+    return ir;
+}
+
+
+static IR * convertWhileDo(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont,
+    MOD IR ** ir_list, MOD IR ** ir_list_last)
+{
+    TypeMgr * tm = t2ir->getTypeMgr();
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * prolog = nullptr;
+    IR * epilog = nullptr;
+    IR * prolog_last = nullptr;
+    IR * epilog_last = nullptr;
+    T2IRCtx ct2;
+
+    //Override topirlist and corresponding last.
+    CONT_toplirlist(&ct2) = &prolog;
+    CONT_toplirlist_last(&ct2) = &prolog_last;
+
+    //Override epilogirlist and corresponding last.
+    CONT_epilogirlist(&ct2) = &epilog;
+    CONT_epilogirlist_last(&ct2) = &epilog_last;
+    CONT_is_record_epilog(&ct2) = false;
+
+    IR * det = t2ir->convert(TREE_whiledo_det(t), &ct2);
+    det = t2ir->only_left_last(det);
+    if (det == nullptr) {
+        det = irmgr->buildJudge(irmgr->buildImmInt(1, tm->getI32()));
+    }
+
+    IR * dup_prolog = nullptr;
+    if (prolog != nullptr) {
+        dup_prolog = rg->dupIRTreeList(prolog);
+        xcom::add_next(ir_list, ir_list_last, prolog);
+    }
+    ASSERT0(epilog == nullptr);
+
+    IR * body = t2ir->convert(TREE_whiledo_body(t), nullptr);
+    if (dup_prolog != nullptr) {
+        xcom::add_next(&body, dup_prolog);
+    }
+
+    if (!det->is_judge()) {
+        IR * old = det;
+        det = irmgr->buildJudge(det);
+        copyDbx(det, old, rg);
+    }
+
+    IR * ir = irmgr->buildWhileDo(det, body);
+    xoc::setLineNum(ir, lineno, rg);
+    return ir;
+}
+
+
+static IR * convertDoWhile(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    TypeMgr * tm = t2ir->getTypeMgr();
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * prolog = nullptr;
+    IR * epilog = nullptr;
+    IR * prolog_last = nullptr;
+    IR * epilog_last = nullptr;
+    T2IRCtx ct2;
+
+    //Override topirlist and corresponding last.
+    CONT_toplirlist(&ct2) = &prolog;
+    CONT_toplirlist_last(&ct2) = &prolog_last;
+
+    //Override epilogirlist and corresponding last.
+    CONT_epilogirlist(&ct2) = &epilog;
+    CONT_epilogirlist_last(&ct2) = &epilog_last;
+    CONT_is_record_epilog(&ct2) = true;
+
+    IR * det = t2ir->convert(TREE_dowhile_det(t), &ct2);
+    det = t2ir->only_left_last(det);
+    if (det == nullptr) {
+        det = irmgr->buildJudge(
+            irmgr->buildImmInt(1, tm->getI32()));
+    }
+
+    if (prolog != nullptr) {
+        //Do NOT add prolog before DO_WHILE stmt.
+        //dup_prolog = rg->dupIRTreeList(prolog);
+        //xcom::add_next(&ir_list, &ir_list_last, prolog);
+    }
+
+    IR * body = t2ir->convert(TREE_dowhile_body(t), nullptr);
+    if (prolog != nullptr) {
+        //Put prolog at end of body.
+        xcom::add_next(&body, prolog);
+    }
+    if (epilog != nullptr) {
+        xcom::add_next(&body, epilog);
+    }
+
+    if (!det->is_judge()) {
+        IR * old = det;
+        det = irmgr->buildJudge(det);
+        xoc::copyDbx(det, old, rg);
+    }
+    IR * ir = irmgr->buildDoWhile(det, body);
+    xoc::setLineNum(ir, lineno, rg);
+    return ir;
+}
+
+
+static IR * convertIF(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    TypeMgr * tm = t2ir->getTypeMgr();
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * det = t2ir->convert(TREE_if_det(t), cont);
+    det = t2ir->only_left_last(det);
+    if (det == nullptr) {
+        det = irmgr->buildJudge(
+            irmgr->buildImmInt(1, tm->getI32()));
+    }
+
+    IR * truebody = t2ir->convert(TREE_if_true_stmt(t), nullptr);
+    IR * falsebody = t2ir->convert(TREE_if_false_stmt(t), nullptr);
+    if (!det->is_judge()) {
+        IR * old = det;
+        det = irmgr->buildJudge(det);
+        copyDbx(det, old, rg);
+    }
+    IR * ir = irmgr->buildIf(det, truebody, falsebody);
+    xoc::setLineNum(ir, lineno, rg);
+    return ir;
+}
+
+
+static IR * convertMulti(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    TypeMgr * tm = t2ir->getTypeMgr();
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * l = t2ir->convert(TREE_lchild(t), cont);
+    IR * r = t2ir->convert(TREE_rchild(t), cont);
+    xoc::Type const* type = nullptr;
+    if (t->getResultType()->regardAsPointer()) {
+        type = tm->getPointerType(t->getResultType()->
+            getPointerBaseSize());
+    } else {
+        UINT s = 0;
+        xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
+            t->getResultType(), &s, tm);
+        if (dt == D_MC) {
+            type = tm->getMCType(s);
+        } else {
+            type = tm->getSimplexTypeEx(dt);
+        }
+    }
+    IR * ir;
+    if (TREE_token(t) == T_ASTERISK) {
+        ir = irmgr->buildBinaryOp(IR_MUL, type, l, r);
+    } else if (TREE_token(t) == T_DIV) {
+        ir = irmgr->buildBinaryOp(IR_DIV, type, l, r);
+    } else {
+        ir = irmgr->buildBinaryOp(IR_REM, type, l, r);
+    }
+    xoc::setLineNum(ir, lineno, rg);
+    return ir;
+}
+
+
+static IR * convertAdditive(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    TypeMgr * tm = t2ir->getTypeMgr();
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * l = t2ir->convert(TREE_lchild(t), cont);
+    IR * r = t2ir->convert(TREE_rchild(t), cont);
+    xoc::Type const* type = nullptr;
+    if (t->getResultType()->regardAsPointer()) {
+        type = tm->getPointerType(t->getResultType()->
+            getPointerBaseSize());
+    } else {
+        UINT s = 0;
+        xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
+            t->getResultType(), &s, tm);
+        if (dt == D_MC) {
+            type = tm->getMCType(s);
+        } else {
+            type = tm->getSimplexTypeEx(dt);
+        }
+    }
+    IR * ir;
+    if (TREE_token(t) == T_ADD) {
+        IR_dt(l) = type;
+        ir = irmgr->buildBinaryOp(IR_ADD, type, l, r);
+    } else {
+        ir = irmgr->buildBinaryOp(IR_SUB, type, l, r);
+    }
+    xoc::setLineNum(ir, lineno, rg);
+    return ir;
+}
+
+
+static IR * convertShift(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    TypeMgr * tm = t2ir->getTypeMgr();
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * l = t2ir->convert(TREE_lchild(t), cont);
+    IR * r = t2ir->convert(TREE_rchild(t), cont);
+    xoc::Type const* type = nullptr;
+    if (t->getResultType()->regardAsPointer()) {
+        type = tm->getPointerType(t->getResultType()->
+            getPointerBaseSize());
+    } else {
+        UINT s = 0;
+        xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
+            t->getResultType(), &s, tm);
+        if (dt == D_MC) {
+            type = tm->getMCType(s);
+        } else {
+            type = tm->getSimplexTypeEx(dt);
+        }
+    }
+    IR * ir;
+    if (TREE_token(t) == T_RSHIFT) {
+        ir = irmgr->buildBinaryOp(l->is_signed() ?
+            IR_ASR : IR_LSR, type, l, r);
+    } else {
+        ir = irmgr->buildBinaryOp(IR_LSL, type, l, r);
+    }
+    xoc::setLineNum(ir, lineno, rg);
+    return ir;
+}
+
+
+static IR * convertRelation(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * l = t2ir->convert(TREE_lchild(t), cont);
+    IR * r = t2ir->convert(TREE_rchild(t), cont);
+    IR * ir;
+    switch (TREE_token(t)) {
+    case T_LESSTHAN:     // <
+        ir = irmgr->buildCmp(IR_LT, l, r);
+        break;
+    case T_MORETHAN:     // >
+        ir = irmgr->buildCmp(IR_GT, l, r);
+        break;
+    case T_NOLESSTHAN:   // >=
+        ir = irmgr->buildCmp(IR_GE, l, r);
+        break;
+    case T_NOMORETHAN:   // <=
+        ir = irmgr->buildCmp(IR_LE, l, r);
+        break;
+    default: UNREACHABLE();
+    }
+    xoc::setLineNum(ir, lineno, rg);
+    return ir;
+}
+
+
+static IR * convertEQ(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * l = t2ir->convert(TREE_lchild(t), cont);
+    IR * r = t2ir->convert(TREE_rchild(t), cont);
+    IR * ir;
+    if (TREE_token(t) == T_EQU) {
+        ir = irmgr->buildCmp(IR_EQ, l, r);
+    } else {
+        ir = irmgr->buildCmp(IR_NE, l, r);
+    }
+    xoc::setLineNum(ir, lineno, rg);
+    return ir;
+}
+
+
+static IR * convertExclusiveOR(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    TypeMgr * tm = t2ir->getTypeMgr();
+    IRMgr * irmgr = t2ir->getIRMgr();
+    IR * l = t2ir->convert(TREE_lchild(t), cont);
+    IR * r = t2ir->convert(TREE_rchild(t), cont);
+    xoc::Type const* type = nullptr;
+    if (t->getResultType()->regardAsPointer()) {
+        type = tm->getPointerType(t->getResultType()->
+            getPointerBaseSize());
+    } else {
+        UINT s = 0;
+        xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
+            t->getResultType(), &s, tm);
+        if (dt == D_MC) {
+            type = tm->getMCType(s);
+        } else {
+            type = tm->getSimplexTypeEx(dt);
+        }
+    }
+    return irmgr->buildBinaryOp(IR_XOR, type, l, r);
+}
+
+
+static IR * convertInclusiveAND(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    TypeMgr * tm = t2ir->getTypeMgr();
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * l = t2ir->convert(TREE_lchild(t), cont);
+    IR * r = t2ir->convert(TREE_rchild(t), cont);
+    xoc::Type const* type = nullptr;
+    if (t->getResultType()->regardAsPointer()) {
+        type = tm->getPointerType(t->getResultType()->
+            getPointerBaseSize());
+    } else {
+        UINT s = 0;
+        xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
+            t->getResultType(), &s, tm);
+        if (dt == D_MC) {
+            type = tm->getMCType(s);
+        } else {
+            type = tm->getSimplexTypeEx(dt);
+        }
+    }
+    IR * ir = irmgr->buildBinaryOp(IR_BAND, type, l, r);
+    xoc::setLineNum(ir, lineno, rg);
+    return ir;
+}
+
+
+static IR * convertInclusiveOR(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    TypeMgr * tm = t2ir->getTypeMgr();
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * l = t2ir->convert(TREE_lchild(t), cont);
+    IR * r = t2ir->convert(TREE_rchild(t), cont);
+    xoc::Type const* type = nullptr;
+    if (t->getResultType()->regardAsPointer()) {
+        type = tm->getPointerType(t->getResultType()->
+            getPointerBaseSize());
+    } else {
+        UINT s = 0;
+        xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
+            t->getResultType(), &s, tm);
+        if (dt == D_MC) {
+            type = tm->getMCType(s);
+        } else {
+            type = tm->getSimplexTypeEx(dt);
+        }
+    }
+    IR * ir = irmgr->buildBinaryOp(IR_BOR, type, l, r);
+    xoc::setLineNum(ir, lineno, rg);
+    return ir;
+}
+
+
+static IR * convertString(xfe::Tree * t, UINT lineno, CTree2IR * t2ir)
+{
+    Region * rg = t2ir->getRegion();
+    IR * ir = t2ir->getIRMgr()->buildLdaString(nullptr, TREE_string_val(t));
+    ASSERT0(ir->is_lda() &&
+            LDA_idinfo(ir)->is_global() &&
+            rg->getTopRegion() != nullptr &&
+            rg->getTopRegion()->is_program());
+    rg->getTopRegion()->addToVarTab(LDA_idinfo(ir));
+    xoc::setLineNum(ir, lineno, rg);
+    return ir;
+}
+
+
+static IR * convertEnum(xfe::Tree * t, UINT lineno, CTree2IR * t2ir)
+{
+    INT v = get_enum_const_val(TREE_enum(t),TREE_enum_val_idx(t));
+    //Default const type of enumerator is 'unsigned int'
+    //of target machine
+    IR * ir = t2ir->getIRMgr()->buildImmInt(
+        v, t2ir->getTypeMgr()->getSimplexTypeEx(
+        t2ir->getTypeMgr()->getAlignedDType(
+            WORD_LENGTH_OF_TARGET_MACHINE, true)));
+    xoc::setLineNum(ir, lineno, t2ir->getRegion());
+    return ir;
+}
+
+
+static IR * convertImmL(xfe::Tree * t, UINT lineno, CTree2IR * t2ir)
+{
+    UINT s = 0;
+    xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
+        t->getResultType(), &s, t2ir->getTypeMgr());
+    ASSERT0(dt == D_I64 || dt == D_U64);
+
+    //The maximum integer supported is 64bit.
+    IR * ir = t2ir->getIRMgr()->buildImmInt(TREE_imm_val(t),
+        t2ir->getTypeMgr()->getSimplexTypeEx(dt));
+    xoc::setLineNum(ir, lineno, t2ir->getRegion());
+    return ir;
+}
+
+
+static IR * convertImm(xfe::Tree * t, UINT lineno, CTree2IR * t2ir)
+{
+    UINT s = 0;
+    xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
+        t->getResultType(), &s, t2ir->getTypeMgr());
+
+    //The maximum integer supported is 64bit.
+    IR * ir = t2ir->getIRMgr()->buildImmInt(TREE_imm_val(t),
+        t2ir->getTypeMgr()->getSimplexTypeEx(dt));
+    xoc::setLineNum(ir, lineno, t2ir->getRegion());
+    return ir;
+}
+
+
 //Convert TREE AST to IR.
 IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
 {
     IR * ir = nullptr;
     IR * ir_list = nullptr; //record ir list generated.
     IR * ir_list_last = nullptr;
-    IR * l = nullptr;
-    IR * r = nullptr;
     T2IRCtx ct;
     if (cont == nullptr) {
         cont = &ct;
@@ -2036,388 +2625,70 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
             ir = convertId(t, lineno, cont);
             break;
         case TR_IMM:
-        case TR_IMMU: {
-            UINT s = 0;
-            xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
-                t->getResultType(), &s, m_tm);
-
-            //The maximum integer supported is 64bit.
-            ir = m_irmgr->buildImmInt(TREE_imm_val(t),
-                m_tm->getSimplexTypeEx(dt));
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_IMMU:
+            ir = convertImm(t, lineno, this);
             break;
-        }
         case TR_IMML:
-        case TR_IMMUL: {
-            UINT s = 0;
-            xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
-                t->getResultType(), &s, m_tm);
-            ASSERT0(dt == D_I64 || dt == D_U64);
-
-            //The maximum integer supported is 64bit.
-            ir = m_irmgr->buildImmInt(TREE_imm_val(t),
-                m_tm->getSimplexTypeEx(dt));
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_IMMUL:
+            ir = convertImmL(t, lineno, this);
             break;
-        }
         case TR_FP:
         case TR_FPF:
         case TR_FPLD:
             ir = convertFP(t, lineno, cont);
             break;
-        case TR_ENUM_CONST: {
-            INT v = get_enum_const_val(TREE_enum(t),TREE_enum_val_idx(t));
-            //Default const type of enumerator is 'unsigned int'
-            //of target machine
-            ir = m_irmgr->buildImmInt(v, m_tm->getSimplexTypeEx(
-                m_tm->getAlignedDType(WORD_LENGTH_OF_TARGET_MACHINE, true)));
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_ENUM_CONST:
+            ir = convertEnum(t, lineno, this);
             break;
-        }
         case TR_STRING:
-            ir = m_irmgr->buildLdaString(nullptr, TREE_string_val(t));
-            ASSERT0(ir->is_lda() &&
-                    LDA_idinfo(ir)->is_global() &&
-                    m_rg->getTopRegion() != nullptr &&
-                    m_rg->getTopRegion()->is_program());
-            m_rg->getTopRegion()->addToVarTab(LDA_idinfo(ir));
-            xoc::setLineNum(ir, lineno, m_rg);
-            break;
+            ir = convertString(t, lineno, this);
+           break;
         case TR_LOGIC_OR: //logical OR ||
             ir = convertLogicalOR(t, lineno, cont);
             break;
         case TR_LOGIC_AND: //logical AND &&
             ir = convertLogicalAND(t, lineno, cont);
             break;
-        case TR_INCLUSIVE_OR: { //inclusive OR |
-            l = convert(TREE_lchild(t), cont);
-            r = convert(TREE_rchild(t), cont);
-            xoc::Type const* type = nullptr;
-            if (t->getResultType()->regardAsPointer()) {
-                type = m_tm->getPointerType(t->getResultType()->
-                    getPointerBaseSize());
-            } else {
-                UINT s = 0;
-                xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
-                    t->getResultType(), &s, m_tm);
-                if (dt == D_MC) {
-                    type = m_tm->getMCType(s);
-                } else {
-                    type = m_tm->getSimplexTypeEx(dt);
-                }
-            }
-            ir = m_irmgr->buildBinaryOp(IR_BOR, type, l, r);
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_INCLUSIVE_OR: //inclusive OR |
+            ir = convertInclusiveOR(t, lineno, this, cont);
             break;
-        }
-        case TR_INCLUSIVE_AND: { //inclusive AND &
-            l = convert(TREE_lchild(t), cont);
-            r = convert(TREE_rchild(t), cont);
-            xoc::Type const* type = nullptr;
-            if (t->getResultType()->regardAsPointer()) {
-                type = m_tm->getPointerType(t->getResultType()->
-                    getPointerBaseSize());
-            } else {
-                UINT s = 0;
-                xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(),
-                                                             &s, m_tm);
-                if (dt == D_MC) {
-                    type = m_tm->getMCType(s);
-                } else {
-                    type = m_tm->getSimplexTypeEx(dt);
-                }
-            }
-            ir = m_irmgr->buildBinaryOp(IR_BAND, type, l, r);
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_INCLUSIVE_AND: //inclusive AND &
+            ir = convertInclusiveAND(t, lineno, this, cont);
             break;
-        }
-        case TR_XOR: { //exclusive or
-            l = convert(TREE_lchild(t), cont);
-            r = convert(TREE_rchild(t), cont);
-            xoc::Type const* type = nullptr;
-            if (t->getResultType()->regardAsPointer()) {
-                type = m_tm->getPointerType(t->getResultType()->
-                    getPointerBaseSize());
-            } else {
-                UINT s = 0;
-                xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(t->getResultType(),
-                                                             &s, m_tm);
-                if (dt == D_MC) {
-                    type = m_tm->getMCType(s);
-                } else {
-                    type = m_tm->getSimplexTypeEx(dt);
-                }
-            }
-            ir = m_irmgr->buildBinaryOp(IR_XOR, type, l, r);
+        case TR_XOR: //exclusive or
+            ir = convertExclusiveOR(t, lineno, this, cont);
             break;
-        }
         case TR_EQUALITY: // == !=
-            l = convert(TREE_lchild(t), cont);
-            r = convert(TREE_rchild(t), cont);
-            if (TREE_token(t) == T_EQU) {
-                ir = m_irmgr->buildCmp(IR_EQ, l, r);
-            } else {
-                ir = m_irmgr->buildCmp(IR_NE, l, r);
-            }
-            xoc::setLineNum(ir, lineno, m_rg);
+            ir = convertEQ(t, lineno, this, cont);
             break;
         case TR_RELATION: // < > >= <=
-            l = convert(TREE_lchild(t), cont);
-            r = convert(TREE_rchild(t), cont);
-            switch (TREE_token(t)) {
-            case T_LESSTHAN:     // <
-                ir = m_irmgr->buildCmp(IR_LT, l, r);
-                break;
-            case T_MORETHAN:     // >
-                ir = m_irmgr->buildCmp(IR_GT, l, r);
-                break;
-            case T_NOLESSTHAN:   // >=
-                ir = m_irmgr->buildCmp(IR_GE, l, r);
-                break;
-            case T_NOMORETHAN:   // <=
-                ir = m_irmgr->buildCmp(IR_LE, l, r);
-                break;
-            default: UNREACHABLE();
-            }
-            xoc::setLineNum(ir, lineno, m_rg);
+            ir = convertRelation(t, lineno, this, cont);
             break;
-        case TR_SHIFT: {  // >> <<
-            l = convert(TREE_lchild(t), cont);
-            r = convert(TREE_rchild(t), cont);
-            xoc::Type const* type = nullptr;
-            if (t->getResultType()->regardAsPointer()) {
-                type = m_tm->getPointerType(t->getResultType()->
-                    getPointerBaseSize());
-            } else {
-                UINT s = 0;
-                xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
-                    t->getResultType(), &s, m_tm);
-                if (dt == D_MC) {
-                    type = m_tm->getMCType(s);
-                } else {
-                    type = m_tm->getSimplexTypeEx(dt);
-                }
-            }
-            if (TREE_token(t) == T_RSHIFT) {
-                ir = m_irmgr->buildBinaryOp(l->is_signed() ?
-                    IR_ASR : IR_LSR, type, l, r);
-            } else {
-                ir = m_irmgr->buildBinaryOp(IR_LSL, type, l, r);
-            }
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_SHIFT: // >> <<
+            ir = convertShift(t, lineno, this, cont);
             break;
-        }
-        case TR_ADDITIVE: { // '+' '-'
-            l = convert(TREE_lchild(t), cont);
-            r = convert(TREE_rchild(t), cont);
-            xoc::Type const* type = nullptr;
-            if (t->getResultType()->regardAsPointer()) {
-                type = m_tm->getPointerType(t->getResultType()->
-                    getPointerBaseSize());
-            } else {
-                UINT s = 0;
-                xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
-                    t->getResultType(), &s, m_tm);
-                if (dt == D_MC) {
-                    type = m_tm->getMCType(s);
-                } else {
-                    type = m_tm->getSimplexTypeEx(dt);
-                }
-            }
-            if (TREE_token(t) == T_ADD) {
-                IR_dt(l) = type;
-                ir = m_irmgr->buildBinaryOp(IR_ADD, type, l, r);
-            } else {
-                ir = m_irmgr->buildBinaryOp(IR_SUB, type, l, r);
-            }
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_ADDITIVE: // '+' '-'
+            ir = convertAdditive(t, lineno, this, cont);
             break;
-        }
-        case TR_MULTI: {   // '*' '/' '%'
-            l = convert(TREE_lchild(t), cont);
-            r = convert(TREE_rchild(t), cont);
-            xoc::Type const* type = nullptr;
-            if (t->getResultType()->regardAsPointer()) {
-                type = m_tm->getPointerType(t->getResultType()->
-                    getPointerBaseSize());
-            } else {
-                UINT s = 0;
-                xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
-                    t->getResultType(), &s, m_tm);
-                if (dt == D_MC) {
-                    type = m_tm->getMCType(s);
-                } else {
-                    type = m_tm->getSimplexTypeEx(dt);
-                }
-            }
-            if (TREE_token(t) == T_ASTERISK) {
-                ir = m_irmgr->buildBinaryOp(IR_MUL, type, l, r);
-            } else if (TREE_token(t) == T_DIV) {
-                ir = m_irmgr->buildBinaryOp(IR_DIV, type, l, r);
-            } else {
-                ir = m_irmgr->buildBinaryOp(IR_REM, type, l, r);
-            }
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_MULTI: // '*' '/' '%'
+            ir = convertMulti(t, lineno, this, cont);
             break;
-        }
         case TR_SCOPE:
             ASSERT0(TREE_scope(t));
             ir = convert(TREE_scope(t)->getStmtList(), nullptr);
             break;
-        case TR_IF: {
-            IR * det = convert(TREE_if_det(t), cont);
-            det = only_left_last(det);
-            if (det == nullptr) {
-                det = m_irmgr->buildJudge(
-                    m_irmgr->buildImmInt(1, m_tm->getI32()));
-            }
-
-            IR * truebody = convert(TREE_if_true_stmt(t), nullptr);
-            IR * falsebody = convert(TREE_if_false_stmt(t), nullptr);
-            if (!det->is_judge()) {
-                IR * old = det;
-                det = m_irmgr->buildJudge(det);
-                copyDbx(det, old, m_rg);
-            }
-            ir = m_irmgr->buildIf(det, truebody, falsebody);
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_IF:
+            ir = convertIF(t, lineno, this, cont);
             break;
-        }
-        case TR_DO: {
-            IR * prolog = nullptr;
-            IR * epilog = nullptr;
-            IR * prolog_last = nullptr;
-            IR * epilog_last = nullptr;
-            T2IRCtx ct2;
-
-            //Override topirlist and corresponding last.
-            CONT_toplirlist(&ct2) = &prolog;
-            CONT_toplirlist_last(&ct2) = &prolog_last;
-
-            //Override epilogirlist and corresponding last.
-            CONT_epilogirlist(&ct2) = &epilog;
-            CONT_epilogirlist_last(&ct2) = &epilog_last;
-            CONT_is_record_epilog(&ct2) = true;
-
-            IR * det = convert(TREE_dowhile_det(t), &ct2);
-            det = only_left_last(det);
-            if (det == nullptr) {
-                det = m_irmgr->buildJudge(
-                    m_irmgr->buildImmInt(1, m_tm->getI32()));
-            }
-
-            if (prolog != nullptr) {
-                //Do NOT add prolog before DO_WHILE stmt.
-                //dup_prolog = m_rg->dupIRTreeList(prolog);
-                //xcom::add_next(&ir_list, &ir_list_last, prolog);
-            }
-
-            IR * body = convert(TREE_dowhile_body(t), nullptr);
-            if (prolog != nullptr) {
-                //Put prolog at end of body.
-                xcom::add_next(&body, prolog);
-            }
-            if (epilog != nullptr) {
-                xcom::add_next(&body, epilog);
-            }
-
-            if (!det->is_judge()) {
-                IR * old = det;
-                det = m_irmgr->buildJudge(det);
-                copyDbx(det, old, m_rg);
-            }
-            ir = m_irmgr->buildDoWhile(det, body);
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_DO:
+            ir = convertDoWhile(t, lineno, this, cont);
             break;
-        }
-        case TR_WHILE: {
-            IR * prolog = nullptr;
-            IR * epilog = nullptr;
-            IR * prolog_last = nullptr;
-            IR * epilog_last = nullptr;
-            T2IRCtx ct2;
-
-            //Override topirlist and corresponding last.
-            CONT_toplirlist(&ct2) = &prolog;
-            CONT_toplirlist_last(&ct2) = &prolog_last;
-
-            //Override epilogirlist and corresponding last.
-            CONT_epilogirlist(&ct2) = &epilog;
-            CONT_epilogirlist_last(&ct2) = &epilog_last;
-            CONT_is_record_epilog(&ct2) = false;
-
-            IR * det = convert(TREE_whiledo_det(t), &ct2);
-            det = only_left_last(det);
-            if (det == nullptr) {
-                det = m_irmgr->buildJudge(
-                    m_irmgr->buildImmInt(1, m_tm->getI32()));
-            }
-
-            IR * dup_prolog = nullptr;
-            if (prolog != nullptr) {
-                dup_prolog = m_rg->dupIRTreeList(prolog);
-                xcom::add_next(&ir_list, &ir_list_last, prolog);
-            }
-            ASSERT0(epilog == nullptr);
-
-            IR * body = convert(TREE_whiledo_body(t), nullptr);
-            if (dup_prolog != nullptr) {
-                xcom::add_next(&body, dup_prolog);
-            }
-
-            if (!det->is_judge()) {
-                IR * old = det;
-                det = m_irmgr->buildJudge(det);
-                copyDbx(det, old, m_rg);
-            }
-
-            ir = m_irmgr->buildWhileDo(det, body);
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_WHILE:
+            ir = convertWhileDo(t, lineno, this, cont, &ir_list, &ir_list_last);
             break;
-        }
-        case TR_FOR: {
-            ASSERT0(ir == nullptr);
-            IR * last = nullptr;
-            IR * init = convert(TREE_for_init(t), nullptr);
-            xcom::add_next(&ir, &last, init);
-
-            T2IRCtx ct2;
-            ASSERT0(cont);
-            IR * stmt_in_det = nullptr;
-            IR * stmt_in_det_last = nullptr;
-
-            //Override topirlist and corresponding last.
-            CONT_toplirlist(&ct2) = &stmt_in_det;
-            CONT_toplirlist_last(&ct2) = &stmt_in_det_last;
-            IR * det = convert(TREE_for_det(t), &ct2);
-            if (stmt_in_det != nullptr) {
-                xcom::add_next(&ir, &last, stmt_in_det);
-            }
-
-            det = only_left_last(det);
-            if (det == nullptr) {
-                det = m_irmgr->buildJudge(
-                    m_irmgr->buildImmInt(1, m_tm->getI32()));
-            }
-
-            IR * body = convert(TREE_for_body(t), nullptr);
-            IR * step = convert(TREE_for_step(t), nullptr);
-            xcom::add_next(&body, step);
-            if (stmt_in_det != nullptr) {
-                xcom::add_next(&body, m_rg->dupIRTreeList(stmt_in_det));
-            }
-
-            if (!det->is_judge()) {
-                IR * old = det;
-                det = m_irmgr->buildJudge(det);
-                copyDbx(det, old, m_rg);
-            }
-
-            IR * whiledo = m_irmgr->buildWhileDo(det, body);
-            xoc::setLineNum(whiledo, lineno, m_rg);
-            xcom::add_next(&ir, &last, whiledo);
+        case TR_FOR:
+            ir = convertFor(t, lineno, this, cont);
             break;
-        }
         case TR_SWITCH:
             ir = convertSwitch(t, lineno, cont);
             break;
@@ -2442,26 +2713,12 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
                 const_cast<LabelInfo*>(TREE_lab_info(t))));
             xoc::setLineNum(ir, lineno, m_rg);
             break;
-        case TR_CASE: {
-            ir = m_irmgr->buildIlabel();
-            CaseValue * casev = (CaseValue*)xmalloc(sizeof(CaseValue));
-            CASEV_lab(casev) = LAB_lab(ir);
-            CASEV_constv(casev) = TREE_case_value(t);
-            CASEV_is_default(casev) = false;
-            m_case_list->append_tail(casev);
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_CASE:
+            ir = convertCase(t, lineno, this, cont);
             break;
-        }
-        case TR_DEFAULT: {
-            ir = m_irmgr->buildIlabel();
-            CaseValue * casev = (CaseValue*)xmalloc(sizeof(CaseValue));
-            CASEV_lab(casev) = LAB_lab(ir);
-            CASEV_constv(casev) = 0;
-            CASEV_is_default(casev) = true;
-            m_case_list->append_head(casev);
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_DEFAULT:
+            ir = convertDefault(t, lineno, this, cont);
             break;
-        }
         case TR_COND: //formulized log_OR_exp ? exp : cond_exp
             ir = convertSelect(t, lineno, cont);
             break;
@@ -2477,19 +2734,12 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
         case TR_PLUS: // +123
             ir = convert(TREE_lchild(t), cont);
             break;
-        case TR_MINUS: { // -123
-            IR * opnd = convert(TREE_lchild(t), cont);
-            ir = m_irmgr->buildUnaryOp(IR_NEG, opnd->getType(), opnd);
-            xoc::setLineNum(ir, lineno, m_rg);
-            ir->setParentPointer(false);
+        case TR_MINUS: // -123
+            ir = convertMinus(t, lineno, this, cont);
             break;
-        }
-        case TR_REV: { // Reverse
-            IR * opnd = convert(TREE_lchild(t), cont);
-            ir = m_irmgr->buildUnaryOp(IR_BNOT, opnd->getType(), opnd);
-            xoc::setLineNum(ir, lineno, m_rg);
+        case TR_REV: // Reverse
+            ir = convertRev(t, lineno, this, cont);
             break;
-        }
         case TR_NOT: // get non-value
             ir = m_irmgr->buildLogicalNot(convert(TREE_lchild(t), cont));
             xoc::setLineNum(ir, lineno, m_rg);
@@ -2524,8 +2774,7 @@ IR * CTree2IR::convert(IN xfe::Tree * t, T2IRCtx * cont)
         }
         t = TREE_nsib(t);
         if (ir != nullptr) {
-            if (xoc::getLineNum(ir, LangInfo::LANG_CPP,
-                                m_rg->getDbxMgr()) == 0) {
+            if (xoc::getLineNum(ir, xoc::LANG_CPP, m_rg->getDbxMgr()) == 0) {
                 xoc::setLineNum(ir, lineno, m_rg);
             }
             xcom::add_next(&ir_list, &ir_list_last, ir);
@@ -2596,8 +2845,8 @@ xoc::DATA_TYPE CTree2IR::get_decl_dtype(
 //START CScopeIR
 //
 //Count up the number of local-variables.
-void CScope2IR::scanDeclList(Scope const* s, OUT xoc::Region * rg,
-                             bool scan_sib)
+void CScope2IR::scanDeclList(
+    Scope const* s, OUT xoc::Region * rg, bool scan_sib)
 {
     if (s == nullptr) { return; }
 
@@ -2716,6 +2965,7 @@ bool CScope2IR::convertTreeStmtList(xfe::Tree * stmts, Region * rg,
     xoc::Refine * rf = (Refine*)rg->getPassMgr()->registerPass(PASS_REFINE);
     bool change_refine = false;
     irs = rf->refineIRList(irs, change_refine, rc);
+    ASSERT0(xoc::IRMgr::verify(rg));
     ASSERT0(xoc::verifyIRList(irs, nullptr, rg));
     ASSERT0(irs);
     rg->addToIRList(irs);
@@ -2834,9 +3084,9 @@ bool CScope2IR::scanProgramDeclList(Scope const* s, OUT xoc::Region * rg)
 bool CScope2IR::generateScope(Scope const* s)
 {
     START_TIMER(t, "Scope2IR");
+
     //Generate Program region.
     Region * program = m_rm->newRegion(REGION_PROGRAM);
-    program->registerGlobalVAR();
     program->initAttachInfoMgr();
     program->initPassMgr();
     program->initDbxMgr();
@@ -2844,9 +3094,9 @@ bool CScope2IR::generateScope(Scope const* s)
     program->initIRBBMgr();
     m_rm->addToRegionTab(program);
     m_rm->setProgramRegion(program);
-    program->setRegionVar(program->getVarMgr()->registerVar(".program",
-                          m_rm->getTypeMgr()->getMCType(0),
-                          1, VAR_GLOBAL|VAR_FAKE));
+    program->setRegionVar(
+        program->getVarMgr()->registerVar(".program",
+        m_rm->getTypeMgr()->getMCType(0), 1, VAR_GLOBAL|VAR_FAKE, SS_UNDEF));
     scanProgramDeclList(s, program);
     if (!convertTreeStmtList(s->getStmtList(), program, nullptr)) {
         return false;

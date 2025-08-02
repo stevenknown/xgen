@@ -47,7 +47,7 @@ void ARMSim::getOccupiedSlot(OR const* o, OUT bool occ_slot[SLOT_NUM])
 }
 
 
-bool ARMSim::isMemResourceConflict(DEP_TYPE deptype,
+bool ARMSim::isMemResourceConflict(xgen::DEP_TYPE deptype,
                                    ORDesc const* ck_ord,
                                    OR const* cand_or) const
 {
@@ -55,7 +55,7 @@ bool ARMSim::isMemResourceConflict(DEP_TYPE deptype,
     UINT start_cyc = ck_ord->getStartCycle();
     OR const* ck_or = ck_ord->getOR();
     ORScheInfo const* or_info = ck_ord->getScheInfo();
-    if (HAVE_FLAG(deptype, DEP_MEM_FLOW)) {
+    if (HAVE_FLAG(deptype, xgen::DEP_MEM_FLOW)) {
         for (UINT i = 0; i < numOfMemResult(ck_or); i++) {
             if (m_cyc_counter <
                 (INT)(start_cyc + ORSI_mem_result_avail_cyc(or_info, i))) {
@@ -64,7 +64,8 @@ bool ARMSim::isMemResourceConflict(DEP_TYPE deptype,
         }
     }
 
-    if (HAVE_FLAG(deptype, DEP_MEM_OUT) || HAVE_FLAG(deptype, DEP_MEM_FLOW)) {
+    if (HAVE_FLAG(deptype, xgen::DEP_MEM_OUT) ||
+        HAVE_FLAG(deptype, xgen::DEP_MEM_FLOW)) {
         if (ORSI_mem_result_cyc_buf(or_info) == nullptr) {
             //Dependency carried by special memory operation.
             //e.g:spadjust -> asm, etc.
@@ -76,7 +77,7 @@ bool ARMSim::isMemResourceConflict(DEP_TYPE deptype,
         }
     }
 
-    if (HAVE_FLAG(deptype, DEP_MEM_VOL)) {
+    if (HAVE_FLAG(deptype, xgen::DEP_MEM_VOL)) {
         UINT last_mem_cyc = 0;
         for (UINT i = 0; i < numOfMemResult(ck_or); i++) {
             last_mem_cyc = MAX(last_mem_cyc,
@@ -96,7 +97,7 @@ bool ARMSim::isMemResourceConflict(DEP_TYPE deptype,
 //  1. t2 = t1 || t1 = 10
 //  2. t2 = t1 || nop
 //     nop     || t1 = 10
-bool ARMSim::isRegResourceConflict(DEP_TYPE deptype,
+bool ARMSim::isRegResourceConflict(xgen::DEP_TYPE deptype,
                                    ORDesc const* ck_ord,
                                    OR const* cand_or) const
 {
@@ -104,7 +105,7 @@ bool ARMSim::isRegResourceConflict(DEP_TYPE deptype,
     OR const* ck_or = ck_ord->getOR();
     ORScheInfo const* or_info = ck_ord->getScheInfo();
 
-    if (HAVE_FLAG(deptype, DEP_REG_FLOW)) {
+    if (HAVE_FLAG(deptype, xgen::DEP_REG_FLOW)) {
         for (UINT i = 0; i < ck_or->result_num(); i++) {
             if (m_cg->mustUse(cand_or, ck_or->get_result(i)) &&
                 m_cyc_counter < (INT)(start_cyc +
@@ -114,7 +115,7 @@ bool ARMSim::isRegResourceConflict(DEP_TYPE deptype,
         }
     }
 
-    if (HAVE_FLAG(deptype, DEP_REG_OUT)) {
+    if (HAVE_FLAG(deptype, xgen::DEP_REG_OUT)) {
         for (UINT i = 0; i < ck_or->result_num(); i++) {
             SR * res = ck_or->get_result(i);
             if (res != m_cg->getRflag() &&

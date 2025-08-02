@@ -43,6 +43,13 @@ protected:
             tm->getVectorType(ELEM_NUM_OF_16_ELEM_VECTOR_TYPE, D_U32);
     }
 
+    //Return true if Type matches the register type.
+    virtual bool isRegTypeMatch(Type const* ty, Reg r) const override
+    {
+        ASSERT0(ty->is_vector() || ty->is_int() || ty->is_fp() || ty->is_any());
+        return (ty->is_vector() && isVector(r)) ||
+            (!ty->is_vector() && (isCalleeScalar(r) || isCallerScalar(r)));
+    }
     void initRegSet();
     virtual void initDebugRegSet();
 public:
@@ -117,6 +124,14 @@ protected:
 public:
     ARMLinearScanRA(Region * rg) : LinearScanRA(rg) {}
     virtual ~ARMLinearScanRA() {}
+
+    virtual bool isTmpRegAvailable(Type const* ty) const override
+    {
+        ASSERT0(ty);
+        return getTempScalar(ty) != REG_UNDEF &&
+            (ty->is_scalar() || ty->is_pointer() || ty->is_any());
+    }
+
 };
 
 #endif

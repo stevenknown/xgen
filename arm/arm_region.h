@@ -31,6 +31,12 @@ author: Su Zhenyu
 #ifndef _ARM_REGION_H_
 #define _ARM_REGION_H_
 
+namespace xoc {
+class Region;
+class RegionMgr;
+class OptCtx;
+}
+
 typedef TMap<xoc::Var*, MD*> Var2XX;
 class ARMRegion : public Region {
 protected:
