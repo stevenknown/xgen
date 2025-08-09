@@ -23,7 +23,7 @@
       THERE ARE 1 RECOGNIZED VECTOR OPERATION
       ----
 
-      [7]    g[j][i]=0;
+      [7]    g[j][i]=0;
       
       ist:i32 attachinfo:Dbx,MDSSA          
           add:*<4> attachinfo:Dbx              

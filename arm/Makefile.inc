@@ -25,8 +25,7 @@ arm_decl_ext.o\
 arm_ir_dump.o\
 arm_ir_parser.o\
 arm_grreader.o\
-arm_elf_targinfo.o\
-arm_elf_mgr.o
+arm_elf_targinfo.o
 
 ifeq ($(FOR_IP), true)
   $(info "CONDBR:arm/Makefile.inc:FOR_IP=$(FOR_IP)")
