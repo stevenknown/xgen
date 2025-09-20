@@ -162,7 +162,6 @@ author: Su Zhenyu
 //This is an expirical value.
 #define THRESHOLD_HIGH_DOMINATOR_FRONTIER_DENSITY 70000
 
-
 //Defined macros to skip some special argument registers when passing
 //arguments.
 #define TO_BE_COMPATIBLE_WITH_ARM_LINUX_GNUEABI
@@ -170,6 +169,7 @@ author: Su Zhenyu
 
 //Defined the maximum number of operand of OR.
 #define MAX_OR_OPERAND_NUM 8
+
 //Defined the maximum number of result of OR.
 #define MAX_OR_RESULT_NUM 4
 
@@ -184,6 +184,7 @@ typedef enum _SLOT {
     LAST_SLOT = SLOT_G,
     SLOT_NUM = 1,
 } SLOT;
+
 #define SLOT_NAME_MAX_LEN 10
 
 //Machine function units for all clusters.
@@ -448,13 +449,15 @@ typedef enum _REGFILE {
 //Define the cycle to load data from onchip L1 cache.
 #define ARM_LOAD_ONCHIP_CYC  3
 
+//Define the max byte size of vector register.
+#define MAX_VECTOR_REGISTER_BYTE_SIZE WORD_LENGTH_OF_TARGET_MACHINE * 8
+
 //Target.
 typedef enum _TARG {
     TARG_UNDEF = 0,
     TARG_ARM,
     TARG_THUMB,
 } TARG;
-
 
 typedef enum _BUILTIN_TYPE {
     BUILTIN_UNDEF = 0,
@@ -675,10 +678,9 @@ typedef enum _OR_CODE {
     OR_pop,
     OR_LAST,
 } OR_CODE;
+
 #define OR_NUM OR_LAST
 
 #include "arm_mach_def.h"
-
-
 
 #endif

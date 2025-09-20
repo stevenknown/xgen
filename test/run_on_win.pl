@@ -41,7 +41,7 @@ sub main
 {
     my $debug = $ARGV[0];
     $g_is_debug = $g_true;
-    if ($debug eq "release") {
+    if ($debug and ($debug eq "release")) {
         $g_is_debug = $g_false;
     }
     $g_is_quit_early = 0;

@@ -276,6 +276,7 @@ CLRegionMgr * Compiler::allocCLRegionMgr()
 CLRegionMgr * Compiler::initRegionMgr()
 {
     CLRegionMgr * rm = allocCLRegionMgr();
+    rm->initTypeMgr();
     rm->initVarMgr();
     rm->initIRDescFlagSet();
     rm->initTargInfo();

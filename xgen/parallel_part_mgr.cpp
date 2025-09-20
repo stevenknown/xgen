@@ -94,7 +94,7 @@ void ParallelPartMgr::init(ORBB * bb)
 
 void ParallelPartMgr::destroy()
 {
-    if (m_pool == nullptr) return;
+    if (m_pool == nullptr) { return; }
 
     ///
     if (m_para_part_orlst.get_elem_count() != 0) {

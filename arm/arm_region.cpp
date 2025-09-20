@@ -162,8 +162,8 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
 
         if (g_do_loop_ana) {
             //Infer pointer arith requires loopinfo.
-            getPassMgr()->checkValidAndRecompute(&oc, PASS_LOOP_INFO,
-                                                 PASS_UNDEF);
+            getPassMgr()->checkValidAndRecompute(
+                &oc, PASS_LOOP_INFO, PASS_UNDEF);
         }
     }
     if (g_infer_type) {
@@ -176,6 +176,7 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
     }
     doAA(oc);
     doDUAna(oc);
+    ASSERT0(xoc::verifyIRAttr(this));
     if (g_do_rce) {
         //Do RCE and REFINE on higher level IR.
         getPassMgr()->registerPass(PASS_RCE)->perform(oc);

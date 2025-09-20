@@ -30,16 +30,16 @@ void process_ild_ist()
     long long * q;
     char a[100];
     p = &a;
-    q = ((char*)&a) + 13;
+    q = ((char*)&a) + 12;
     int i = 0;
     while (i<100) {
       a[i] = 0;
       i++;
     }
     a[0] = 27;
-    a[13] = 27;
+    a[12] = 27;
     while (i) {
-      *p = (int)*q;
+      *p = (int)*q; //q's address should be aligned according to target machine.
       i--;
     }
     if (*p != *q || *q != 27) {

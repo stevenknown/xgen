@@ -8,5 +8,6 @@ int isalnum(int c);
 int isdigit(int c);
 int isprint(int c);
 int isalpha(int c);
+int isgraph(int c);
 
 #endif

@@ -3,6 +3,8 @@
 #ifndef _STDIO_H_
 #define _STDIO_H_
 
+#include "stdarg.h"
+
 /* Seek method constants */
 #define SEEK_CUR    1
 #define SEEK_END    2
@@ -16,9 +18,11 @@ extern int stderr;
 extern int stdin;
 extern int stdout;
 
+
 void printf(char const*,...);
 void fprintf(FILE *, char const*, ...);
 int vfprintf(FILE *stream, const char *format, va_list args);
+int vprintf(const char *format, va_list arg);
 int sprintf(char *str, const char *format, ...);
 int vsnprintf(char *str, size_t size, const char *format, va_list args);
 FILE * fopen(char const*, char const*);

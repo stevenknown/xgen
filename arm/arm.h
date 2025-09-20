@@ -47,6 +47,7 @@ author: Su Zhenyu
 #include "../arm/arm_cg.h"
 #include "../arm/arm_cgmgr.h"
 #include "../arm/arm_var.h"
+#include "../arm/arm_data_type.h"
 #include "../arm/arm_dumgr.h"
 #include "../arm/arm_scalar_opt.h"
 #include "../arm/arm_simp.h"
@@ -63,6 +64,9 @@ author: Su Zhenyu
   #include "../arm/arm_linear_scan.h"
   #include "../arm/arm_targinfo_mgr.h"
   #include "../arm/arm_regd.h"
+  #include "../arm/arm_dynamic_stack.h"
+  #include "../arm/arm_prologue_epilogue_inserter.h"
+  #include "../arm/arm_arg_passer.h"
 #endif
 
 #if defined FOR_IP

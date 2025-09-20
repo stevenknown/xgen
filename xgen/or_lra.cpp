@@ -2458,7 +2458,7 @@ void GroupMgr::init(ORBB * bb, CG * cg)
 
 void GroupMgr::destroy()
 {
-    if (!m_is_init) return;
+    if (!m_is_init) { return; }
     for (VecIdx i = 0; i <= m_groupidx2ors_map.get_last_idx(); i++) {
         List<OR*> * orlist = m_groupidx2ors_map.get(i);
         if (orlist == nullptr) {
@@ -2534,10 +2534,10 @@ void GroupMgr::union_group(INT tgt, INT src)
 {
     ASSERTN(m_is_init, ("not yet initialized."));
     ASSERTN(src >= 1 && tgt >= 1, ("Illegal info"));
-    if (src == tgt) return;
+    if (src == tgt) { return; }
     List<OR*> * src_oplist = m_groupidx2ors_map.get(src);
     List<OR*> * tgt_oplist = m_groupidx2ors_map.get(tgt);
-    if (src_oplist == nullptr) return;
+    if (src_oplist == nullptr) { return; }
     if (tgt_oplist == nullptr) {
         m_groupidx2ors_map.set(tgt, src_oplist);
         for (OR * o = src_oplist->get_head();

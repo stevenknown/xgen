@@ -177,7 +177,7 @@ void ORCFG::get_preds(MOD List<ORBB*> & preds, ORBB const* bb)
 
 
 //Control flow optimization
-void ORCFG::cf_opt()
+void ORCFG::doCFSOpt()
 {
     ASSERTN(0, ("TODO"));
     bool change = true;

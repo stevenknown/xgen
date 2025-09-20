@@ -19,7 +19,7 @@ region program ".program" () {
             stpr $4 = ild $sp;
             st i = add ld i, 1
         }
-        stpr $5 = ild $sp;
+        stpr $5 = ild:u32 $sp;
         return $5;
     };
 }

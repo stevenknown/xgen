@@ -56,8 +56,7 @@ public:
     virtual ~ORCFG() {}
     virtual void addBB(ORBB * bb);
 
-    virtual void cf_opt();
-
+    virtual void doCFSOpt();
     void dumpVCG(CHAR const* name = nullptr, bool detail = true);
 
     virtual ORBB * findBBbyLabel(LabelInfo const* lab) const;

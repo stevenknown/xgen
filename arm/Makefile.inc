@@ -19,6 +19,7 @@ arm_simp.o\
 arm_refine.o\
 arm_sr.o\
 arm_var.o\
+arm_data_type.o\
 arm_ddg.o\
 arm_targinfo.o\
 arm_decl_ext.o\

@@ -1284,9 +1284,9 @@ void DataDepGraph::get_succs(MOD ORList & succs, OR const* o)
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
     succs.clean();
     xcom::Vertex * v = getVertex(o->id());
-    if (v == nullptr) return;
+    if (v == nullptr) { return; }
     xcom::EdgeC * el = v->getOutList();
-    if (el == nullptr) return;
+    if (el == nullptr) { return; }
 
     while (el != nullptr) {
         OR * succ = getOR(el->getToId());

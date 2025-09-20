@@ -89,14 +89,14 @@ sub createBaseResultOutputFile
 sub runSimAndCompareResult
 {
     my $curdir = $_[0];
-    my $fullpath = $_[1];
+    my $fullexepath = $_[1];
     my $base_output_path = $_[2];
 
     #The new result output file.
-    my $xocc_output = getOutputFilePath($fullpath);
-    my $rundir = computeDirFromFilePath($fullpath);
+    my $xocc_output = getOutputFilePath($fullexepath);
+    my $rundir = computeDirFromFilePath($fullexepath);
     if ($g_succ !=
-        invokeSimulator($fullpath, $curdir, $xocc_output, $rundir)) {
+        invokeSimulator($fullexepath, $curdir, $xocc_output, $rundir)) {
         abortex("EXECUTE:invokeSimulator FAILED!!");
     }
     if (!$g_is_compare_result) { return; }
@@ -113,7 +113,7 @@ sub runSimAndCompareResult
         #Baseline output file does not exist.
         if ($g_is_baseresultfile_must_exist) {
             #Baseline output file is necessary.
-            print "\nBASE OUTPUT OF $fullpath NOT EXIST!\n";
+            print "\nBASE OUTPUT OF $fullexepath NOT EXIST!\n";
             abortex();
         }
         return;
@@ -128,7 +128,7 @@ sub runSimAndCompareResult
     } else {
         #Not equal
         #New result is incorrect!
-        print "\nCOMPARE RESULT OF $fullpath FAILED! NOT EQUAL TO BASE RESULT!\n";
+        print "\nCOMPARE RESULT OF $fullexepath FAILED! NOT EQUAL TO BASE RESULT!\n";
         abortex();
     }
 }
@@ -160,13 +160,16 @@ sub compileFile
     my $fullpathaftercpp = runCPP($fullpath);
 
     #Running XOCC.
+    my $ret_exename = "";
     runXOCC($fullpathaftercpp, $g_is_invoke_assembler,
-            $g_is_invoke_linker, $g_is_input_gr);
+            $g_is_invoke_linker, $g_is_input_gr, \$ret_exename);
+    print "\nRETURNED_EXENAME:'$ret_exename'\n";
 
     #Restore original flags.
     $g_cflags = $org_cflags;
     $g_ldflags = $org_ldflags;
-    return $fullpathaftercpp;
+    return $ret_exename;
+    #return $fullpathaftercpp;
 }
 
 

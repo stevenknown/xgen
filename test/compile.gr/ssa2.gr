@@ -17,7 +17,7 @@ region program "program" () {
             label TEST2;
     	    stpr $103 = $y;
         }
-        stpr $105 = sub $10:i32, add 0xffab0, $z;
-        return $105:u128;
+        stpr $zzz:u128 = sub $w:i32, add 0xffab0, $z;
+        return $zzz:u128;
     };
 }

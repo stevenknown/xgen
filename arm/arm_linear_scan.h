@@ -40,7 +40,7 @@ protected:
     {
         ASSERT0(isCallee(r) && tm != nullptr);
         return isCalleeScalar(r) ? tm->getTargMachRegisterType() :
-            tm->getVectorType(ELEM_NUM_OF_16_ELEM_VECTOR_TYPE, D_U32);
+            tm->getTargMachMaxVectorRegisterType();
     }
 
     //Return true if Type matches the register type.

@@ -46,7 +46,7 @@ void * RegFileGroup::xmalloc(INT size)
 
 void RegFileGroup::init()
 {
-    if (m_is_init) return;
+    if (m_is_init) { return; }
     m_bb = nullptr;
     m_group2orlist_map.init();
     m_oridx2group_map.init();

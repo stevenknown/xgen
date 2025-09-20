@@ -768,7 +768,6 @@ IR * ARMRefine::foldConstExtExp(IR * ir, bool & change, RefineCtx & rc)
 }
 
 
-
 IR * ARMRefine::refineExtOp(IR * ir, bool & change, RefineCtx & rc)
 {
     ir = refineAllKids(ir, change, rc);
@@ -780,6 +779,8 @@ IR * ARMRefine::refineExtOp(IR * ir, bool & change, RefineCtx & rc)
     case IR_TANH: return foldConstTrigonometric(ir, change, rc);
     case IR_CONV_OPND_GRAD: return refineConvOpndGrad(ir, change, rc);
     case IR_BROADCAST: return refineBroadCast(ir, change, rc);
+    case IR_MASK_SELECT_TO_RES: return ir;
+    case IR_MASK_OP: return ir;
     default: UNREACHABLE(); return nullptr;
     }
     return nullptr;

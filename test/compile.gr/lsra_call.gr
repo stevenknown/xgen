@@ -16,7 +16,7 @@ region program program() {
         stpr $r3:i8 = lda c;
         st a     = $r1:i8;
         //call:(readonly) $r4 = foo($r1, $r2);
-        call:(readonly) $r4 = foo($r1:i8);
+        call:(readonly) $r4:i8 = foo($r1:i8);
         st b     = neg:i64 $r1:i8;
         st c     = neg:u32 $r2:i8;
         st d     = $r4:i8;

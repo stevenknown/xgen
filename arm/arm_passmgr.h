@@ -44,9 +44,6 @@ public:
     virtual Pass * allocInsertCvt() override;
     virtual Pass * allocIRMgr() override;
     virtual Pass * allocExtPass(PASS_TYPE passty) override;
-    virtual Pass * allocPrologueEpilogue() override;
-    virtual Pass * allocDynamicStack() override;
-    virtual Pass * allocArgPasser() override;
 };
 
 #endif
