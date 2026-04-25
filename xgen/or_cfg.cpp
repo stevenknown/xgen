@@ -192,18 +192,18 @@ void ORCFG::doCFSOpt()
 
 
 //Return the last operation of 'bb'.
-OR * ORCFG::get_last_xr(ORBB * bb)
+OR * ORCFG::get_last_xr(ORBB const* bb)
 {
     ASSERT0(bb && m_bb_vec.get(bb->id()));
-    return ORBB_last_or(bb);
+    return ORBB_last_or(const_cast<ORBB*>(bb));
 }
 
 
 //Return the first operation of 'bb'.
-OR * ORCFG::get_first_xr(ORBB * bb)
+OR * ORCFG::get_first_xr(ORBB const* bb)
 {
     ASSERT0(bb && m_bb_vec.get(bb->id()));
-    return ORBB_first_or(bb);
+    return ORBB_first_or(const_cast<ORBB*>(bb));
 }
 
 

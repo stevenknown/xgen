@@ -34,7 +34,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../reader/grreader.h"
 #include "../opt/comopt.h"
 #include "../mach/machinc.h"
-#include "../elf/elfinc.h"
 
 namespace xocc {
 
@@ -113,8 +112,12 @@ static void disable_opt(INT opt_level)
         xoc::g_do_bcp = false;
         xoc::g_do_dce = false;
         xoc::g_do_dce_aggressive = false;
+        xoc::g_do_alge_reassociate = false;
+        xoc::g_do_alge_reassociate_aggressive = false;
         xoc::g_do_licm = false;
         xoc::g_do_gcse = false;
+        xoc::g_do_lcse = false;
+        xoc::g_do_if_conversion = false;
         xoc::g_do_rp = false;
         xoc::g_do_lftr = false;
         xoc::g_infer_type = false;
@@ -310,8 +313,12 @@ BoolOption::Desc const BoolOption::option_desc[] = {
     { "licm_no_guard", &xoc::g_do_licm_no_guard,
       "enable loop-invariant-code-motion optimization "
       "without inserting loop guard", },
+    { "if_cvs", &xoc::g_do_if_conversion,
+      "enable if-conversion optimization", },
     { "gcse", &xoc::g_do_gcse,
       "enable global-common-subexpression-elimination optimization", },
+    { "lcse", &xoc::g_do_lcse,
+      "enable local-common-subexpression-elimination optimization", },
     { "exprtab", &xoc::g_do_expr_tab,
       "compute expression table", },
     { "rp", &xoc::g_do_rp,
@@ -376,8 +383,10 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "enable refine-duchain optimization", },
     { "lsra", &xoc::g_do_lsra,
       "enable linear-scan-register-allocation", },
-    { "reass", &xoc::g_do_alge_reasscociate,
+    { "reass", &xoc::g_do_alge_reassociate,
       "enable algebraic-reasscociation", },
+    { "reass_aggr", &xoc::g_do_alge_reassociate_aggressive,
+      "enable aggressive-algebraic-reasscociation", },
     { "opt_float", &xoc::g_do_opt_float,
       "enable float optimization", },
     #ifdef REF_TARGMACH_INFO
@@ -414,8 +423,12 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump register-promotion", },
     { "licm", &xoc::g_dump_opt.is_dump_licm,
       "dump loop-invariant-code-motion", },
+    { "if_cvs", &xoc::g_dump_opt.is_dump_if_conversion,
+      "dump if-conversion", },
     { "gcse", &xoc::g_dump_opt.is_dump_gcse,
       "dump global-common-subexpression-elimination", },
+    { "lcse", &xoc::g_dump_opt.is_dump_lcse,
+      "dump local-common-subexpression-elimination", },
     { "exprtab", &xoc::g_dump_opt.is_dump_exprtab,
       "dump expression table", },
     { "dumgr", &xoc::g_dump_opt.is_dump_dumgr,
@@ -462,7 +475,7 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump IR's id", },
     { "lsra", &xoc::g_dump_opt.is_dump_lsra,
       "dump linear-scan-register-allocation", },
-    { "reass", &xoc::g_dump_opt.is_dump_alge_reasscociate,
+    { "reass", &xoc::g_dump_opt.is_dump_alge_reassociate,
       "dump algebraic-reasscociation", },
     { "option", &xocc::g_is_dump_option,
       "dump all compiling options", },

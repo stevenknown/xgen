@@ -185,8 +185,8 @@ void ARMIR2OR::convertRem(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
     m_cg->passArgVariant(&argdescmgr, ors.getList(), 2,
-        opnd0, nullptr, opnd0->getByteSize(), xoc::getDbx(op0),
-        opnd1, nullptr, opnd1->getByteSize(), xoc::getDbx(op1));
+        opnd0, nullptr, opnd0->getTotalByteSize(), xoc::getDbx(op0),
+        opnd1, nullptr, opnd1->getTotalByteSize(), xoc::getDbx(op1));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-djust operation afterwards.
@@ -244,7 +244,7 @@ void ARMIR2OR::convertAddSubInt(
     convert(BIN_opnd1(ir), ors, &tmp);
     SR * opnd1 = tmp.get_reg(0);
     ASSERT0(opnd1 != nullptr && opnd1->is_reg());
-    ASSERT0(opnd0->getByteSize() == opnd1->getByteSize());
+    ASSERT0(opnd0->getTotalByteSize() == opnd1->getTotalByteSize());
     RecycORList tors(this);
     switch (ir->getCode()) {
     case IR_ADD:
@@ -347,14 +347,14 @@ void ARMIR2OR::convertAddSubFP(
     convert(op0, ors, &tmp);
     SR * opnd0 = tmp.get_reg(0);
     ASSERT0(opnd0 != nullptr && opnd0->is_reg());
-    ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
+    ASSERT0(opnd0->getTotalByteSize() == op0->getTypeSize(m_tm));
 
     //Convert Operand1
     tmp.clean();
     convert(op1, ors, &tmp);
     SR * opnd1 = tmp.get_reg(0);
     ASSERT0(opnd1 != nullptr && opnd1->is_reg());
-    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
+    ASSERT0(opnd1->getTotalByteSize() == op1->getTypeSize(m_tm));
     tmp.clean();
     opnd0 = saveToNewRegIfAssignedPhyReg(opnd0, op0, ors, &tmp);
     opnd1 = saveToNewRegIfAssignedPhyReg(opnd1, op1, ors, &tmp);
@@ -362,8 +362,8 @@ void ARMIR2OR::convertAddSubFP(
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
     m_cg->passArgVariant(&argdescmgr, ors.getList(), 2,
-                         opnd0, nullptr, opnd0->getByteSize(), ::getDbx(op0),
-                         opnd1, nullptr, opnd1->getByteSize(), ::getDbx(op1));
+        opnd0, nullptr, opnd0->getTotalByteSize(), ::getDbx(op0),
+        opnd1, nullptr, opnd1->getTotalByteSize(), ::getDbx(op1));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-adjust operation afterwards.
@@ -421,8 +421,8 @@ void ARMIR2OR::convertDiv(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
     m_cg->passArgVariant(&argdescmgr, ors.getList(), 2,
-        opnd0, nullptr, opnd0->getByteSize(), ::getDbx(op0),
-        opnd1, nullptr, opnd1->getByteSize(), ::getDbx(op1));
+        opnd0, nullptr, opnd0->getTotalByteSize(), ::getDbx(op0),
+        opnd1, nullptr, opnd1->getTotalByteSize(), ::getDbx(op1));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-adjust operation afterwards.
@@ -432,19 +432,19 @@ void ARMIR2OR::convertDiv(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     UINT retv_sz = ir->getTypeSize(m_tm);
     Var const* builtin = nullptr;
     if (retv_sz <= BYTESIZE_OF_WORD) {
-        if (op0->is_uint()) {
+        if (ir->is_uint()) {
             builtin = getBuiltinVar(BUILTIN_UDIVSI3);
-        } else if (op0->is_sint()) {
+        } else if (ir->is_sint()) {
             builtin = getBuiltinVar(BUILTIN_DIVSI3);
-        } else if (op0->is_fp()) {
+        } else if (ir->is_fp()) {
             builtin = getBuiltinVar(BUILTIN_DIVSF3);
         } else { UNREACHABLE(); }
     } else if (retv_sz <= BYTESIZE_OF_DWORD) {
-        if (op0->is_uint()) {
+        if (ir->is_uint()) {
             builtin = getBuiltinVar(BUILTIN_UDIVDI3);
-        } else if (op0->is_sint()) {
+        } else if (ir->is_sint()) {
             builtin = getBuiltinVar(BUILTIN_DIVDI3);
-        } else if (op0->is_fp()) {
+        } else if (ir->is_fp()) {
             builtin = getBuiltinVar(BUILTIN_DIVDF3);
         } else { UNREACHABLE(); }
     } else { UNREACHABLE(); }
@@ -471,8 +471,8 @@ void ARMIR2OR::convertMulofInt(
     SR * sr2 = tmp.get_reg(0);
     ASSERT0(sr2);
     Dbx * dbx = ::getDbx(ir);
-    ASSERT0(sr1->getByteSize() == GENERAL_REGISTER_SIZE);
-    ASSERT0(sr2->getByteSize() == GENERAL_REGISTER_SIZE);
+    ASSERT0(sr1->getTotalByteSize() == GENERAL_REGISTER_SIZE);
+    ASSERT0(sr2->getTotalByteSize() == GENERAL_REGISTER_SIZE);
     RecycORList tors(this);
     getCG()->buildMul(sr1, sr2, GENERAL_REGISTER_SIZE, true,
                       tors.getList(), cont);
@@ -510,7 +510,7 @@ void ARMIR2OR::convertMulofLongLong(
     opnd0 = saveToNewRegIfAssignedPhyReg(opnd0, op0, ors, &tmp);
     opnd1 = saveToNewRegIfAssignedPhyReg(opnd1, op1, ors, &tmp);
 
-    ASSERT0(opnd0->getByteSize() == opnd1->getByteSize());
+    ASSERT0(opnd0->getTotalByteSize() == opnd1->getTotalByteSize());
     //TO BE DETERMINED:Inequal byte size loading should be handled.
     //ASSERT0(BIN_opnd0(ir)->getTypeSize(m_tm) ==
     //        BIN_opnd1(ir)->getTypeSize(m_tm));
@@ -518,8 +518,8 @@ void ARMIR2OR::convertMulofLongLong(
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
     m_cg->passArgVariant(&argdescmgr, ors.getList(), 2,
-                         opnd0, nullptr, opnd0->getByteSize(), ::getDbx(op0),
-                         opnd1, nullptr, opnd1->getByteSize(), ::getDbx(op1));
+        opnd0, nullptr, opnd0->getTotalByteSize(), ::getDbx(op0),
+        opnd1, nullptr, opnd1->getTotalByteSize(), ::getDbx(op1));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-djust operation afterwards.
@@ -578,8 +578,8 @@ void ARMIR2OR::convertMulofFloat(
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
     m_cg->passArgVariant(&argdescmgr, ors.getList(), 2,
-                         opnd0, nullptr, opnd0->getByteSize(), ::getDbx(op0),
-                         opnd1, nullptr, opnd1->getByteSize(), ::getDbx(op1));
+        opnd0, nullptr, opnd0->getTotalByteSize(), ::getDbx(op0),
+        opnd1, nullptr, opnd1->getTotalByteSize(), ::getDbx(op1));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-djust operation afterwards.
@@ -684,7 +684,8 @@ void ARMIR2OR::convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
                           tors.getList(), &tc);
         tors.copyDbx(ir, getDbxMgr());
         ors.move_tail(tors);
-        ASSERT0(cont && tc.get_reg(0)->getByteSize() == BYTESIZE_OF_DWORD);
+        ASSERT0(cont &&
+                tc.get_reg(0)->getTotalByteSize() == BYTESIZE_OF_DWORD);
         res = tc.get_reg(0);
         cont->set_reg(RESULT_REGISTER_INDEX, res);
         return;
@@ -1008,8 +1009,8 @@ void ARMIR2OR::convertRelationOpDWORD(
     convertGeneralLoad(loc1, tors, &tmp);
     SR * sr1 = tmp.get_reg(0);
     ASSERT0(sr1->is_vec());
-    ASSERT0(sr0->getByteSize() == maxopndsize);
-    ASSERT0(sr0->getByteSize() == sr1->getByteSize());
+    ASSERT0(sr0->getTotalByteSize() == maxopndsize);
+    ASSERT0(sr0->getTotalByteSize() == sr1->getTotalByteSize());
 
     //ARM Conditions Flag.
     // Name Condition                    State of Flags
@@ -1067,6 +1068,10 @@ void ARMIR2OR::convertRelationOp(
     IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     ASSERT0(ir->is_relation());
+    if (BIN_opnd0(ir)->is_fp()) {
+        convertRelationOpFP(ir, ors, cont);
+        return;
+    }
     IR * opnd0 = BIN_opnd0(ir);
     IR * opnd1 = BIN_opnd1(ir);
     ASSERT0(opnd0 && opnd1);
@@ -1076,12 +1081,6 @@ void ARMIR2OR::convertRelationOp(
     if (opnd1->getType()->is_pointer()) {
         ASSERT0(opnd1->getTypeSize(m_tm) >= opnd0->getTypeSize(m_tm));
     }
-
-    if (opnd0->is_fp()) {
-        convertRelationOpFP(ir, ors, cont);
-        return;
-    }
-
     ASSERTN(!opnd0->is_any() && !opnd1->is_any(),
             ("operand of '%s' can not be ANY", IRNAME(ir)));
     UINT maxopndsize = MAX(opnd0->getTypeSize(m_tm), opnd1->getTypeSize(m_tm));
@@ -1110,46 +1109,9 @@ void ARMIR2OR::convertRelationOp(
     cont->set_reg(RESULT_REGISTER_INDEX, nullptr);
     SR * truepd = nullptr;
     SR * falsepd = nullptr;
-    getResultPredByIRCode(ir->getCode(), &truepd, &falsepd,
-                          opnd0->is_signed());
-
+    getResultPredByIRCode(
+        ir->getCode(), &truepd, &falsepd, opnd0->is_signed());
     recordRelationOpResult(ir, truepd, falsepd, truepd, ors, cont);
-
-    //if (!ir->getParent()->isConditionalBr()) {
-    //    SR * res = getCG()->genReg();
-    //    RecycORList tors(this);
-    //    getCG()->buildMove(res, getCG()->gen_one(), tors.getList(), cont);
-    //    tors.set_pred(truepd, m_cg));
-    //    tors.copyDbx(ir);
-    //    ors.move_tail(tors);
-
-    //    tors.clean();
-    //    getCG()->buildMove(res, getCG()->genZero(), tors.getList(), cont);
-    //    tors.set_pred(falsepd, m_cg);
-    //    tors.copyDbx(ir);
-    //    ors.move_tail(tors);
-
-    //    //used by non-conditional op
-    //    cont->set_reg(RESULT_REGISTER_INDEX, res);
-    //    return;
-    //}
-
-    ////record result
-    ////used by convertSelect
-    //cont->set_reg(RESULT_REGISTER_INDEX, getCG()->genPredReg());
-    //
-    ////record true-result predicator
-    ////used by convertSelect
-    //cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, truepd);
-
-    ////record false-result predicator
-    ////used by convertSelect
-    //cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, falsepd);
-
-    ////record true-result
-    //cont->set_pred(truepd, m_cg);
-
-    //IOC_is_inverted(cont) = false;
 }
 
 
@@ -1287,6 +1249,7 @@ void ARMIR2OR::recordRelationOpResult(
     IR const* ir, SR * truepd, SR * falsepd, SR * result_pred,
     OUT RecycORList & ors, MOD IOC * cont)
 {
+    ASSERT0(truepd && falsepd);
     if (!ir->getParent()->isConditionalBr()) {
         SR * res = getCG()->genReg();
         RecycORList tors(this);
@@ -1302,6 +1265,12 @@ void ARMIR2OR::recordRelationOpResult(
         ors.move_tail(tors);
 
         cont->set_reg(RESULT_REGISTER_INDEX, res); //used by non-conditional op
+
+        //Record true-result predicated register.
+        cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, truepd);
+
+        //Record false-result predicated register
+        cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, falsepd);
 
         //truepd, falsepd and result_pred are not in use from now on.
         return;
@@ -1346,25 +1315,32 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors, IOC * cont)
     ASSERT0(ir->is_select());
     IOC tmp;
     RecycORList tors(this);
+    IR * det = SELECT_det(ir);
+    if (!det->is_judge()) {
+        //Reuse original kid to avoid changing DU chain.
+        SELECT_det(ir) = getIRMgr()->buildJudge(det);
+        const_cast<IR*>(ir)->setParent(SELECT_det(ir));
+        det = SELECT_det(ir);
+    }
 
     //Generate Compare operation
-    convertRelationOp(SELECT_det(ir), tors, &tmp);
-    tors.copyDbx(SELECT_det(ir), getDbxMgr());
+    convertRelationOp(det, tors, &tmp);
+    tors.copyDbx(det, getDbxMgr());
     ors.move_tail(tors);
     SR * cres = tmp.get_reg(0);
     ASSERT0_DUMMYUSE(cres);
 
-    SR * true_pr = tmp.get_reg(1);
-    SR * false_pr = tmp.get_reg(2);
+    SR * true_pr = tmp.get_reg(TRUE_PREDICATE_REGISTER_INDEX);
+    SR * false_pr = tmp.get_reg(FALSE_PREDICATE_REGISTER_INDEX);
     ASSERT0(true_pr && false_pr);
 
+    //Generate new result SR.
     SR * res = getCG()->genReg();
-    ASSERT0(IR_dt(BIN_opnd0(SELECT_det(ir))) ==
-            IR_dt(BIN_opnd1(SELECT_det(ir))));
+    ASSERT0(BIN_opnd0(det)->getType() == BIN_opnd1(det)->getType());
     UINT res_size = ir->getTypeSize(m_tm);
 
-    //True exp value
-    {
+    //Convert true-exp value.
+    if (SELECT_trueexp(ir) != nullptr) {
         tmp.clean();
         tors.clean();
         convertGeneralLoad(SELECT_trueexp(ir), tors, &tmp);
@@ -1393,8 +1369,8 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors, IOC * cont)
         ors.move_tail(tors);
     }
 
-    //False exp value
-    {
+    //Convert false-exp value.
+    if (SELECT_falseexp(ir) != nullptr) {
         tmp.clean();
         tors.clean();
         convertGeneralLoad(SELECT_falseexp(ir), tors, &tmp);
@@ -1425,7 +1401,11 @@ void ARMIR2OR::convertSelect(IR const* ir, OUT RecycORList & ors, IOC * cont)
         tors.copyDbx(SELECT_falseexp(ir), getDbxMgr());
         ors.move_tail(tors);
     }
+
+    //Return the result SR and predicate register SR.
     cont->set_reg(RESULT_REGISTER_INDEX, res);
+    cont->set_reg(TRUE_PREDICATE_REGISTER_INDEX, true_pr);
+    cont->set_reg(FALSE_PREDICATE_REGISTER_INDEX, false_pr);
 }
 
 
@@ -1450,14 +1430,14 @@ void ARMIR2OR::convertRelationOpFP(
     convert(op0, tors, &tmp);
     SR * opnd0 = tmp.get_reg(0);
     ASSERT0(opnd0 != nullptr && opnd0->is_reg());
-    ASSERT0(opnd0->getByteSize() == op0->getTypeSize(m_tm));
+    ASSERT0(opnd0->getTotalByteSize() == op0->getTypeSize(m_tm));
 
     //Convert Operand1.
     tmp.clean();
     convert(op1, tors, &tmp);
     SR * opnd1 = tmp.get_reg(0);
     ASSERT0(opnd1 != nullptr && opnd1->is_reg());
-    ASSERT0(opnd1->getByteSize() == op1->getTypeSize(m_tm));
+    ASSERT0(opnd1->getTotalByteSize() == op1->getTypeSize(m_tm));
     tmp.clean();
     opnd0 = saveToNewRegIfAssignedPhyReg(opnd0, op0, ors, &tmp);
     opnd1 = saveToNewRegIfAssignedPhyReg(opnd1, op1, ors, &tmp);
@@ -1465,15 +1445,15 @@ void ARMIR2OR::convertRelationOpFP(
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
     m_cg->passArgVariant(&argdescmgr, tors.getList(), 2,
-                         opnd0, nullptr, opnd0->getByteSize(), ::getDbx(op0),
-                         opnd1, nullptr, opnd1->getByteSize(), ::getDbx(op1));
+        opnd0, nullptr, opnd0->getTotalByteSize(), ::getDbx(op0),
+        opnd1, nullptr, opnd1->getTotalByteSize(), ::getDbx(op1));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-adjust operation afterwards.
     m_cg->updateMaxCalleeArgSize(argdescmgr.getArgSectionSize());
 
     Var const* builtin = nullptr;
-    if (opnd0->getByteSize() == GENERAL_REGISTER_SIZE) {
+    if (opnd0->getTotalByteSize() == GENERAL_REGISTER_SIZE) {
         switch (ir->getCode()) {
         case IR_LT: builtin = getBuiltinVar(BUILTIN_LTSF2); break;
         case IR_GT: builtin = getBuiltinVar(BUILTIN_GTSF2); break;
@@ -1484,7 +1464,7 @@ void ARMIR2OR::convertRelationOpFP(
         default: UNREACHABLE();
         }
     } else {
-        ASSERT0(opnd0->getByteSize() == BYTESIZE_OF_DWORD);
+        ASSERT0(opnd0->getTotalByteSize() == BYTESIZE_OF_DWORD);
         switch (ir->getCode()) {
         case IR_LT: builtin = getBuiltinVar(BUILTIN_LTDF2); break;
         case IR_GT: builtin = getBuiltinVar(BUILTIN_GTDF2); break;
@@ -1915,7 +1895,7 @@ void ARMIR2OR::convertCvtByBuiltIn(
     //Prepare argdesc.
     ArgDescMgr argdescmgr;
     m_cg->passArgVariant(&argdescmgr, tors.getList(), 1, opnd_of_cvt_exp,
-        nullptr, opnd_of_cvt_exp->getByteSize(), ::getDbx(CVT_exp(newir)));
+        nullptr, opnd_of_cvt_exp->getTotalByteSize(), ::getDbx(CVT_exp(newir)));
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-adjust operation afterwards.
@@ -1968,7 +1948,7 @@ void ARMIR2OR::convertCvt(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
     tors.copyDbx(CVT_exp(ir), getDbxMgr()); //copy dbx from origin ir.
     ors.move_tail(tors);
     SR * opnd = tmp.get_reg(0);
-    ASSERT0(CVT_exp(newir)->getTypeSize(m_tm) <= opnd->getByteSize());
+    ASSERT0(CVT_exp(newir)->getTypeSize(m_tm) <= opnd->getTotalByteSize());
     if (m_cg->regardAsIntType(newir->getType()) && CVT_exp(newir)->is_str()) {
         convertCvtIntAndStr(newir, opnd, ors, cont);
         if (newir != ir) {

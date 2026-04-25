@@ -69,6 +69,7 @@ author: Su Zhenyu
 #include "equorcode.h"
 #include "parallel_part_mgr.h"
 #include "instruction_partition.h"
+#include "regpressure.h"
 
 using namespace xgen;
 

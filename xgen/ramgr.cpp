@@ -98,6 +98,12 @@ void * RaMgr::xmalloc(INT size)
 }
 
 
+TargInterface * RaMgr::getTargInterface() const
+{
+    return m_cg->getTargInterface();
+}
+
+
 void RaMgr::preProcess()
 {
     for (UINT i = RF_UNDEF; i < RF_NUM; i++) {
@@ -166,7 +172,7 @@ void RaMgr::updateAsmClobberCallee(REGFILE regfile, Reg reg)
 {
     ASSERTN(regfile != RF_UNDEF && reg != REG_UNDEF,
             ("Illegal regfile and reg"));
-    if (tmGetRegSetOfCalleeSaved()->is_contain(reg)) {
+    if (getTargInterface()->tmGetRegSetOfCalleeSaved()->is_contain(reg)) {
         m_need_save_asm_effect = true;
         m_lra_asmclobber_callee_saved_reg[regfile].bunion(reg);
     }
@@ -177,7 +183,7 @@ void RaMgr::updateCallee(REGFILE regfile, Reg reg)
 {
     ASSERTN(regfile != RF_UNDEF && reg != REG_UNDEF,
             ("Illegal regfile and reg"));
-    if (tmGetRegSetOfCalleeSaved()->is_contain(reg)) {
+    if (getTargInterface()->tmGetRegSetOfCalleeSaved()->is_contain(reg)) {
         ASSERTN(canAllocCallee(), ("Callee register is forbidden."));
         m_lra_used_callee_saved_reg[regfile].bunion(reg);
     }
@@ -331,7 +337,7 @@ void RaMgr::spillFPRegisterAtEntry(REGFILE regfile, ORBB * entry,
         reg2var.set(reg, loc);
 
         IOC tc;
-        IOC_mem_byte_size(&tc) = sr->getByteSize();
+        IOC_mem_byte_size(&tc) = sr->getTotalByteSize();
         m_cg->buildStore(sr, loc, 0, false, ors, &tc);
         m_cg->setCluster(ors, clust);
         m_cg->fixCluster(ors, clust);
@@ -403,7 +409,7 @@ void RaMgr::reloadFPRegisterAtExit(REGFILE regfile, ORBB * exit,
         ASSERT0(v);
 
         IOC tc;
-        IOC_mem_byte_size(&tc) = sr->getByteSize();
+        IOC_mem_byte_size(&tc) = sr->getTotalByteSize();
         m_cg->buildLoad(sr, v, 0, false, ors, &tc);
         SR_spill_var(sr) = v;
         m_cg->setCluster(ors, clust);
@@ -479,7 +485,7 @@ void RaMgr::spillIntRegisterAtEntry(REGFILE regfile, ORBB * entry,
         reg2var.set(reg, v);
 
         IOC tc;
-        IOC_mem_byte_size(&tc) = sr->getByteSize();
+        IOC_mem_byte_size(&tc) = sr->getTotalByteSize();
         m_cg->buildStore(sr, v, 0, false, ors, &tc);
         m_cg->setCluster(ors, clust);
         m_cg->fixCluster(ors, clust);
@@ -598,7 +604,7 @@ void RaMgr::reloadIntRegisterAtExit(REGFILE regfile, ORBB * exit,
         ASSERT0(v);
 
         IOC tc;
-        IOC_mem_byte_size(&tc) = sr->getByteSize();
+        IOC_mem_byte_size(&tc) = sr->getTotalByteSize();
         m_cg->buildLoad(sr, v, 0, false, ors, &tc);
 
         SR_spill_var(sr) = v;

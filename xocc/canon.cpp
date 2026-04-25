@@ -171,6 +171,7 @@ IR * Canon::handle_lda(IR * ir, bool & change, CanonCtx * cc)
 
 IR * Canon::handle_exp(IN IR * ir, OUT bool & change, CanonCtx * cc)
 {
+    if (ir == nullptr) { return nullptr; }
     ASSERT0(ir->is_exp());
     switch (ir->getCode()) {
     SWITCH_CASE_INDIRECT_MEM_EXP: {

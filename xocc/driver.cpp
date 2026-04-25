@@ -27,7 +27,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @*/
 #include "xoccinc.h"
-#include "../reader/grreader.h"
+#include "../reader/reader.h"
 
 namespace xocc {
 
@@ -42,6 +42,9 @@ CHAR const* g_xocc_version = "1.6.0"; //recod the xocc.exe version.
 CHAR const* g_dump_file_name = nullptr;
 bool g_is_dumpgr = false;
 bool g_is_dump_option = false;
+
+//Set true to keep source file info to make compiler dump info more readable.
+static bool g_keep_src_info = true;
 
 xcom::List<CHAR const*> g_cfile_list;
 xcom::List<CHAR const*> g_grfile_list;
@@ -301,7 +304,7 @@ void Compiler::initCompile(
 
 
 void Compiler::finiCompile(
-    CLRegionMgr * rm, FileObj & asmfo, CGMgr * cgmgr)
+    CLRegionMgr *& rm, FileObj & asmfo, CGMgr *& cgmgr)
 {
     if (cgmgr != nullptr) {
         delete cgmgr;
@@ -323,6 +326,19 @@ void Compiler::destructPRSSAForAllRegion(RegionMgr * rm)
         if (ssamgr != nullptr && ssamgr->is_valid()) {
             ssamgr->destruction(*rm->getAndGenOptCtx(r));
         }
+    }
+}
+
+
+static void initLexerOfDbxMgrForAllRegion(CLRegionMgr * rm)
+{
+    for (UINT i = 0; i < rm->getNumOfRegion(); i++) {
+        Region * rg = rm->getRegion(i);
+        if (rg == nullptr) { continue; }
+        if (!rg->hasAnaInstrument()) { continue; }
+        CLDbxMgr * dbx_mgr = (CLDbxMgr*)rg->getDbxMgr();
+        if (dbx_mgr == nullptr) { continue; }
+        dbx_mgr->setLexer(rm->getGRReader()->getLexer());
     }
 }
 
@@ -360,11 +376,25 @@ bool Compiler::compileGRFile(CHAR const* fn)
     if (g_is_dump_option) {
         xoc::Option::dump(rm);
     }
-    bool succ = xoc::readGRAndConstructRegion(rm->getGRReader(), fn);
+    //Init GR file object.
+    xcom::FO_STATUS st;
+    xcom::FileObj fo(fn, false, true, &st);
+    if (st != xcom::FO_SUCC) {
+        xoc::prt2C("\nerror: fail read and parse '%s'", fn);
+        return false;
+    }
+    bool succ = xoc::readGRAndConstructRegion(rm->getGRReader(), fo);
     if (!succ) {
         xoc::prt2C("\nerror: fail read and parse '%s'", fn);
         res = false;
         goto FIN;
+    }
+    if (!g_keep_src_info) {
+        fo.destroy();
+        rm->getGRReader()->setSrcFile(nullptr);
+    } else {
+        //Init the lexer info to dump the source file info during IR dump.
+        initLexerOfDbxMgrForAllRegion(rm);
     }
     if (rm->getProgramRegion() == nullptr) {
         //CASE:GR file might be empty.
@@ -382,14 +412,10 @@ bool Compiler::compileGRFile(CHAR const* fn)
 FIN:
     destructPRSSAForAllRegion(rm);
     END_TIMER_FMT(t, ("Total Time To Compile '%s'", fn));
+    rm->getGRReader()->showError();
+    xoc::prt2C("\n%s - (%d) error(s)\n",
+        fn, rm->getGRReader()->getParser()->getErrorMsgList().get_elem_count());
     finiCompile(rm, asmfo, cgmgr);
-    show_err();
-    show_warn();
-    xoc::prt2C("\n%s - (%d) error(s), (%d) warnging(s)\n",
-               fn, g_err_msg_list.get_elem_count(),
-               g_warn_msg_list.get_elem_count());
-    g_err_msg_list.clean();
-    g_warn_msg_list.clean();
     return res;
 }
 

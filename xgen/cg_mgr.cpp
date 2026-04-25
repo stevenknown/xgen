@@ -183,6 +183,7 @@ bool CGMgr::genAndPrtGlobalVariable(Region * rg)
 static void generateORAndOutput(Region * rg, CGMgr * cgmgr)
 {
     CG * cg = cgmgr->allocCG(rg);
+    cg->initTargInterface();
     cg->initFuncUnit();
     cg->initDedicatedSR();
     cg->perform();

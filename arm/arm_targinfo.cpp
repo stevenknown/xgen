@@ -32,15 +32,13 @@ author: Su Zhenyu
 
 UINT ARMTargInfo::getNumOfAllocableIntegerRegister() const
 {
-    RegSet const* rs = xgen::tmGetRegSetAllocable();
-    return rs == nullptr ? 0 : rs->get_elem_count();
+    return 8;
 }
 
 
 UINT ARMTargInfo::getNumOfReturnValueRegister() const
 {
-    RegSet const* rs = xgen::tmGetRegSetOfReturnValue();
-    return rs == nullptr ? 0 : rs->get_elem_count();
+    return 2;
 }
 
 

@@ -49,6 +49,9 @@ protected:
 protected:
     virtual RegDSystem * allocRegDSystem() override;
 
+    virtual TargInterface * allocTargInterface() override
+    { return new ARMTargInterface(); }
+
     virtual void destroy() override;
 
     virtual UINT getBitSize(Reg r) const override;
@@ -141,6 +144,11 @@ public:
 
     //Get stack pointer register.
     virtual xgen::Reg getSP() const override { return REG_SP; }
+
+    //Get target machine stack pointer adjustment operation's alignment.
+    //The alignment should not less than STACK_ALIGNMENT.
+    virtual UINT getSPAdjustAlignment() const override
+    { return SPADJUST_ALIGNMENT; }
 
     //Get temporary register.
     virtual xgen::Reg getTempScalar(Type const* ty) const override

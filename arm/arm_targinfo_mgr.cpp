@@ -47,11 +47,7 @@ void ARMTargInfoMgr::destroy()
 
 void ARMTargInfoMgr::initAllocableScalar()
 {
-    for (Reg i = ALLOCABLE_REG_START; i <= ALLOCABLE_REG_END; i++) {
-        m_allocable_scalar.bunion(i);
-    }
-    //R14(LR), note R14 should be saved at prolog of current function.
-    m_allocable_scalar.bunion(REG_RETURN_ADDRESS_REGISTER);
+    m_allocable_scalar.bunion(*m_targ_interface->tmGetRegSetAllocable());
 }
 
 
@@ -82,28 +78,13 @@ UINT ARMTargInfoMgr::getBitSize(Reg r) const
 
 void ARMTargInfoMgr::initAllocableVector()
 {
-    for (Reg i = ALLOCABLE_VEC_REG_D_START;
-         i <= ALLOCABLE_VEC_REG_D_END; i++) {
-        m_allocable_vector.bunion(i);
-    }
-    for (Reg i = ALLOCABLE_VEC_REG_Q_START;
-         i <= ALLOCABLE_VEC_REG_Q_END; i++) {
-        m_allocable_vector.bunion(i);
-    }
-    for (Reg i = ALLOCABLE_VEC_REG_S_START;
-         i <= ALLOCABLE_VEC_REG_S_END; i++) {
-        m_allocable_vector.bunion(i);
-    }
+    m_allocable_vector.bunion(*m_targ_interface->tmGetVectorRegSetAllocable());
 }
 
 
 void ARMTargInfoMgr::initCalleeScalar()
 {
-    for (Reg reg = CALLEE_SAVED_REG_START; reg <= CALLEE_SAVED_REG_END; reg++) {
-        m_callee_scalar.bunion(reg);
-    }
-    //R14(LR)
-    m_callee_scalar.bunion(REG_RETURN_ADDRESS_REGISTER);
+    m_callee_scalar.bunion(*m_targ_interface->tmGetRegSetOfCalleeSaved());
 }
 
 
@@ -114,9 +95,7 @@ void ARMTargInfoMgr::initCalleeVector()
 
 void ARMTargInfoMgr::initCallerScalar()
 {
-    for (Reg reg = CALLER_SAVED_REG_START; reg <= CALLER_SAVED_REG_END; reg++) {
-        m_caller_scalar.bunion(reg);
-    }
+    m_caller_scalar.bunion(*m_targ_interface->tmGetRegSetOfCallerSaved());
 }
 
 
@@ -135,48 +114,31 @@ void ARMTargInfoMgr::initCaller()
 
 void ARMTargInfoMgr::initCallerVector()
 {
-    for (Reg i = ALLOCABLE_VEC_REG_D_START;
-         i <= ALLOCABLE_VEC_REG_D_END; i++) {
-        m_caller_vector.bunion(i);
-    }
-    for (Reg i = ALLOCABLE_VEC_REG_Q_START;
-         i <= ALLOCABLE_VEC_REG_Q_END; i++) {
-        m_caller_vector.bunion(i);
-    }
-    for (Reg i = ALLOCABLE_VEC_REG_S_START;
-         i <= ALLOCABLE_VEC_REG_S_END; i++) {
-        m_caller_vector.bunion(i);
-    }
+    m_caller_vector.bunion(*m_targ_interface->tmGetVectorRegSetOfCallerSaved());
 }
 
 
 void ARMTargInfoMgr::initParamScalar()
 {
-    for (Reg reg = ARG_REG_START; reg <= ARG_REG_END; reg++) {
-        m_param_scalar.bunion(reg);
-    }
+    m_param_scalar.bunion(*m_targ_interface->tmGetRegSetOfParameter());
 }
 
 
 void ARMTargInfoMgr::initParamVector()
 {
-    m_param_vector.bunion(REG_D0);
-    m_param_vector.bunion(REG_D1);
+    m_param_vector.bunion(*m_targ_interface->tmGetVectorRegSetOfParameter());
 }
 
 
 void ARMTargInfoMgr::initRetvalScalar()
 {
-    for (Reg reg = RETVAL_REG_START; reg <= RETVAL_REG_END; reg++) {
-        m_retval_scalar.bunion(reg);
-    }
+    m_retval_scalar.bunion(*m_targ_interface->tmGetRegSetOfReturnValue());
 }
 
 
 void ARMTargInfoMgr::initRetvalVector()
 {
-    m_retval_vector.bunion(REG_D0);
-    m_retval_vector.bunion(REG_D1);
+    m_retval_vector.bunion(*m_targ_interface->tmGetVectorRegSetOfReturnValue());
 }
 
 

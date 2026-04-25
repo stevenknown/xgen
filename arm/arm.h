@@ -32,6 +32,7 @@ author: Su Zhenyu
 #define __ARM_H__
 
 #include "../arm/arm_opt.h"
+#include "../arm/arm_targ_interface.h"
 #include "../arm/arm_targinfo.h"
 #include "../arm/arm_sr.h"
 #include "../arm/arm_or.h"
@@ -61,8 +62,10 @@ author: Su Zhenyu
   #include "../arm/arm_elf_mgr.h"
   #include "../arm/arm_irmgr.h"
   #include "../arm/arm_insert_cvt.h"
+  #include "../arm/arm_regset_impl.h"
   #include "../arm/arm_linear_scan.h"
   #include "../arm/arm_targinfo_mgr.h"
+  #include "../arm/arm_regalloc_mgr.h"
   #include "../arm/arm_regd.h"
   #include "../arm/arm_dynamic_stack.h"
   #include "../arm/arm_prologue_epilogue_inserter.h"

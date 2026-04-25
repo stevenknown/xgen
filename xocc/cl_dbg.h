@@ -31,20 +31,35 @@ author: Su Zhenyu
 #ifndef _CLDBX_MGR_H_
 #define _CLDBX_MGR_H_
 
+namespace xoc {
+class Lexer;
+}
+
 namespace xocc {
 
 class CLDbxMgr : public xoc::DbxMgr {
+protected:
     //Append src file line into dump file.
     //Only print statement line.
     UINT m_cur_lineno;
+    xoc::Lexer * m_lexer;
+protected:
+    void dumpSrcLineOfGRToBuf(xcom::StrBuf & output, PrtCtx * ctx);
+    void dumpSrcLineOfCToBuf(xcom::StrBuf & output, PrtCtx * ctx);
+    void dumpSrcLineOfGR(PrtCtx * ctx);
+    void dumpSrcLineOfC(PrtCtx * ctx);
 public:
-    CLDbxMgr() { m_cur_lineno = 0; }
+    CLDbxMgr() { m_cur_lineno = 0; m_lexer = nullptr; }
 
     //Do some prepare work before print source file.
     virtual void doPrepareWorkBeforePrint() { m_cur_lineno = 0; }
 
+    xoc::Lexer * getLexer() const { return m_lexer; }
+
     virtual void printSrcLine(xoc::Dbx const* dbx, PrtCtx * ctx);
     virtual void printSrcLine(StrBuf & output, Dbx const* dbx, PrtCtx * ctx);
+
+    void setLexer(Lexer * l) { m_lexer = l; }
 };
 
 } //namespace xocc

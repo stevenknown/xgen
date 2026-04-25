@@ -183,7 +183,7 @@ void OR::dump(CG const* cg) const
 CHAR const* OR::dump(xcom::StrBuf & buf, CG const* cg) const
 {
     if (cg->getRegion()->getDbxMgr() != nullptr && g_cg_dump_src_line) {
-        DbxMgr::PrtCtx prtctx(LANG_CPP);
+        DbxMgr::PrtCtx prtctx;
         cg->getRegion()->getDbxMgr()->printSrcLine(
             buf, &OR_dbx(this), &prtctx);
     }
@@ -367,21 +367,21 @@ INT OR::get_result_idx(SR * sr) const
 }
 
 
-void OR::set_opnd(INT i, SR * sr, CG * cg)
+void OR::set_opnd(INT i, SR * sr, CG const* cg)
 {
     ASSERT0(sr && (UINT)i < opnd_num());
     m_opnd.set(i, sr, cg->getORMgr()->get_pool());
 }
 
 
-void OR::set_result(INT i, SR * sr, CG * cg)
+void OR::set_result(INT i, SR * sr, CG const* cg)
 {
     ASSERT0(sr && (UINT)i < result_num());
     m_result.set(i, sr, cg->getORMgr()->get_pool());
 }
 
 
-void OR::setLabel(SR * v, CG * cg)
+void OR::setLabel(SR * v, CG const* cg)
 {
     ASSERT0(v && v->is_label());
     ASSERT0_DUMMYUSE(canOpndBeLabel(this, HAS_PREDICATE_REGISTER + 0));
@@ -389,7 +389,7 @@ void OR::setLabel(SR * v, CG * cg)
 }
 
 
-void OR::setLabelList(SR * v, CG * cg)
+void OR::setLabelList(SR * v, CG const* cg)
 {
     ASSERT0(v && v->is_label_list());
     ASSERT0_DUMMYUSE(canOpndBeLabelList(this, HAS_PREDICATE_REGISTER + 0));
@@ -425,7 +425,7 @@ void ORMgr::destroy()
 }
 
 
-OR * ORMgr::allocOR(CG * cg)
+OR * ORMgr::allocOR(CG const* cg)
 {
     ASSERT0(cg);
     return new OR(cg->getDbxMgr());
@@ -438,7 +438,7 @@ OR * ORMgr::getOR(UINT id)
 }
 
 
-OR * ORMgr::genOR(OR_CODE ort, CG * cg)
+OR * ORMgr::genOR(OR_CODE ort, CG const* cg)
 {
     OR * o = m_free_or_list.remove_head();
     if (o == nullptr) {

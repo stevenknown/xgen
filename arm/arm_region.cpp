@@ -180,6 +180,9 @@ void ARMRegion::HighProcessImpl(OptCtx & oc)
     if (g_do_rce) {
         //Do RCE and REFINE on higher level IR.
         getPassMgr()->registerPass(PASS_RCE)->perform(oc);
+        if (g_do_global_refine) {
+            getPassMgr()->registerPass(PASS_GLOBAL_REFINE)->perform(oc);
+        }
         if (g_do_refine) {
             getPassMgr()->registerPass(PASS_REFINE)->perform(oc);
         }
@@ -303,10 +306,10 @@ bool ARMRegion::MiddleProcess(OptCtx & oc)
     addReturnIfNeed();
     #ifdef REF_TARGMACH_INFO
     if (g_do_lsra) {
-        LinearScanRA * lsra = (LinearScanRA*)getPassMgr()->registerPass(
-            PASS_LINEAR_SCAN_RA);
-        lsra->setApplyToRegion(true);
-        lsra->perform(oc);
+        RegAllocMgr * ramgr = (RegAllocMgr*)getPassMgr()->registerPass(
+            PASS_REGALLOC_MGR);
+        ramgr->config(RA_ALGO_LINEAR_SCAN, RA_STRATEGY_FULL, true);
+        ramgr->perform(oc);
     }
     #endif
     return true;

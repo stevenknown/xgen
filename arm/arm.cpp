@@ -196,68 +196,9 @@ UINT xgen::tmGetNumOfEqualORCode(OR_CODE ot)
 }
 
 
-xgen::RegSet const* xgen::tmGetRegSetAllocable()
+xgen::RegSet const* xgen::tmGetRegSetOfParameter()
 {
-    return (xgen::RegSet const*)&g_allocable_regset;
-}
-
-
-xgen::RegSet const* xgen::tmGetRegSetOfArgument()
-{
-    return (xgen::RegSet const*)&g_argument_regset;
-}
-
-
-xgen::RegSet const* xgen::tmGetRegSetOfReturnValue()
-{
-    return (xgen::RegSet const*)&g_return_value_regset;
-}
-
-
-xgen::RegSet const* xgen::tmGetRegSetOfCallerSaved()
-{
-    return (xgen::RegSet const*)&g_caller_saved_regset;
-}
-
-
-xgen::RegSet const* xgen::tmGetRegSetOfCalleeSaved()
-{
-    return (xgen::RegSet const*)&g_callee_saved_regset;
-}
-
-
-xgen::RegSet const* xgen::tmGetVectorRegSetAllocable()
-{
-    //TODO
-    return nullptr;
-}
-
-
-xgen::RegSet const* xgen::tmGetVectorRegSetOfArgument()
-{
-    //TODO
-    return nullptr;
-}
-
-
-xgen::RegSet const* xgen::tmGetVectorRegSetOfReturnValue()
-{
-    //TODO
-    return nullptr;
-}
-
-
-xgen::RegSet const* xgen::tmGetVectorRegSetOfCallerSaved()
-{
-    //TODO
-    return nullptr;
-}
-
-
-xgen::RegSet const* xgen::tmGetVectorRegSetOfCalleeSaved()
-{
-    //TODO
-    return nullptr;
+    return (xgen::RegSet const*)&g_param_regset_scalar;
 }
 
 

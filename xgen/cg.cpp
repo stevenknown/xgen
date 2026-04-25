@@ -107,6 +107,7 @@ CG::CG(xoc::Region * rg, CGMgr * cgmgr): m_ip_mgr(self())
     m_is_use_fp = false;
     m_is_compute_sect_offset = false;
     m_is_dump_or_id = true;
+    m_targ_interface = nullptr;
 }
 
 
@@ -132,6 +133,10 @@ CG::~CG()
     smpoolDelete(m_pool);
     finiFuncUnit();
     destroyVAR();
+    if (m_targ_interface != nullptr) {
+        delete m_targ_interface;
+        m_targ_interface = nullptr;
+    }
 }
 
 
@@ -291,9 +296,9 @@ void CG::buildMemcpy(SR * tgt, SR * src, UINT bytesize, OUT ORList & ors,
     buildMove(immreg, genIntImm((HOST_INT)bytesize, false), ors, cont);
     ArgDescMgr argdescmgr;
     passArgVariant(&argdescmgr, ors, 3,
-                   tgt, nullptr, tgt->getByteSize(), nullptr,
-                   src, nullptr, src->getByteSize(), nullptr,
-                   immreg, nullptr, immreg->getByteSize(), nullptr);
+                   tgt, nullptr, tgt->getTotalByteSize(), nullptr,
+                   src, nullptr, src->getTotalByteSize(), nullptr,
+                   immreg, nullptr, immreg->getTotalByteSize(), nullptr);
 
     //Collect the maximum parameters size during code generation.
     //And revise SP-djust operation afterwards.
@@ -325,8 +330,10 @@ void CG::buildSpill(IN SR * store_val, IN xoc::Var * spill_var,
     ASSERT0(store_val->is_reg() && spill_var->is_spill());
     SR * mem_base_addr = genVAR(spill_var);
     IOC tc;
-    IOC_mem_byte_size(&tc) = store_val->getByteSize();
+    IOC_mem_byte_size(&tc) = store_val->getRegByteSize();
+
     //Spill location should be the same size as 'store_val'.
+    ASSERT0(IOC_mem_byte_size(&tc) <= m_tm->getByteSize(spill_var->getType()));
     buildStore(store_val, mem_base_addr, genZero(), false, ors, &tc);
     for (OR * o = ors.get_head(); o != nullptr; o = ors.get_next()) {
         if (o->is_store()) {
@@ -343,7 +350,10 @@ void CG::buildReload(IN SR * result_val, IN xoc::Var * reload_var,
 {
     ASSERT0(result_val->is_reg() && reload_var->is_spill());
     IOC tc;
-    IOC_mem_byte_size(&tc) = result_val->getByteSize();
+    IOC_mem_byte_size(&tc) = result_val->getRegByteSize();
+
+    //Spill location should be the same size as 'reload_val'.
+    ASSERT0(IOC_mem_byte_size(&tc) <= m_tm->getByteSize(reload_var->getType()));
     bool is_signed = false; //Spill location is the same length as register.
     buildLoad(result_val, reload_var, 0, is_signed, ors, &tc);
     for (OR * o = ors.get_head(); o; o = ors.get_next()) {
@@ -369,8 +379,8 @@ void CG::buildLabel(LabelInfo const* li, OUT ORList & ors, IN IOC *)
 void CG::buildMultiBinaryORByRegSize(OR_CODE code, SR * opnd0, SR * opnd1,
                                      OUT ORList & ors, MOD IOC * cont)
 {
-    UINT bytesize = opnd0->getByteSize();
-    ASSERTN(bytesize == opnd1->getByteSize(),
+    UINT bytesize = opnd0->getTotalByteSize();
+    ASSERTN(bytesize == opnd1->getTotalByteSize(),
             ("opnd0 and opnd1 are different size"));
     ASSERTN(bytesize % GENERAL_REGISTER_SIZE == 0, ("Target Dependent Code"));
 
@@ -407,7 +417,7 @@ void CG::buildBinaryOR(IR_CODE code, xoc::Type const* type,
 {
     //Result's type-size might be not same as opnd. e,g: a < b,
     //result type is bool, opnd type is INT.
-    OR_CODE orty = mapIRCode2ORCode(code, opnd0->getByteSize(), type,
+    OR_CODE orty = mapIRCode2ORCode(code, opnd0->getTotalByteSize(), type,
                                     opnd0, opnd1, is_signed);
     ASSERTN(orty != OR_UNDEF, ("mapIRCode2ORCode() should be overloaded"));
     SR * res = genReg();
@@ -423,7 +433,7 @@ void CG::buildBinaryOR(IR_CODE code, xoc::Type const* type,
         opnd0 = cont->getResult();
         ASSERT0(opnd0);
 
-        orty = mapIRCode2ORCode(code, opnd0->getByteSize(), type,
+        orty = mapIRCode2ORCode(code, opnd0->getTotalByteSize(), type,
                                 opnd0, opnd1, is_signed);
         ASSERTN(orty != OR_UNDEF, ("mapIRCode2ORCode() should be overloaded"));
     }
@@ -434,7 +444,7 @@ void CG::buildBinaryOR(IR_CODE code, xoc::Type const* type,
         buildGeneralLoad(opnd1, 0, is_signed, ors, cont);
         opnd1 = cont->getResult();
         ASSERT0(opnd1);
-        orty = mapIRCode2ORCode(code, opnd0->getByteSize(), type,
+        orty = mapIRCode2ORCode(code, opnd0->getTotalByteSize(), type,
                                 opnd0, opnd1, is_signed);
         ASSERTN(orty != OR_UNDEF, ("mapIRCode2ORCode() should be overloaded"));
     }
@@ -650,7 +660,7 @@ void CG::buildTypeCvt(SR * src, UINT tgt_size, UINT src_size, bool is_signed,
     ASSERT0_DUMMYUSE(src_low);
     ASSERT0(src_low->getVec() != nullptr && SR_vec_idx(src_low) == 0);
     ASSERT0(src_low->getVec()->get(1) != nullptr);
-    ASSERT0(src_low->getByteSize() == 2 * GENERAL_REGISTER_SIZE);
+    ASSERT0(src_low->getTotalByteSize() == 2 * GENERAL_REGISTER_SIZE);
 }
 
 
@@ -916,6 +926,12 @@ void CG::freeORBBList()
 bool CG::isGRAEnable() const
 {
     return g_opt_level >= OPT_LEVEL2 && g_do_gra;
+}
+
+
+TargInterface * CG::allocTargInterface()
+{
+    return new TargInterface();
 }
 
 
@@ -1308,6 +1324,12 @@ void CG::initDedicatedSR()
     genTruePred();
     genRflag();
     genParamPointer();
+}
+
+
+void CG::initTargInterface()
+{
+    m_targ_interface = allocTargInterface();
 }
 
 
@@ -2395,7 +2417,8 @@ bool CG::passArgInRegister(SR * argval, UINT * sz, ArgDescMgr * argdescmgr,
             break;
         }
         SR * arg_val = vec.get(i);
-        //ASSERT0(arg_val && arg_val->getByteSize() == GENERAL_REGISTER_SIZE);
+        //ASSERT0(arg_val &&
+        //        arg_val->getTotalByteSize() == GENERAL_REGISTER_SIZE);
         //Only move data with register-size each time.
         ASSERT0(arg_val);
         tc.clean();
@@ -2490,8 +2513,9 @@ void CG::passArg(SR * argval, SR * argaddr, UINT argsz,
                  MOD IOC * cont)
 {
     ASSERT0((argval != nullptr) ^ (argaddr != nullptr));
-    if (tmGetRegSetOfArgument() != nullptr &&
-        tmGetRegSetOfArgument()->get_elem_count() != 0 &&
+    ASSERT0(getTargInterface());
+    if (getTargInterface()->tmGetRegSetOfParameter() != nullptr &&
+        getTargInterface()->tmGetRegSetOfParameter()->get_elem_count() != 0 &&
         argdescmgr->getNumOfAvailArgReg() > 0) {
         //Try to pass argval or data in argaddr through register.
         if (!tryPassArgThroughRegister(argval, argaddr, &argsz,
@@ -3592,7 +3616,8 @@ void CG::reviseFormalParamAccess(UINT lv_size)
 UINT CG::calcSizeOfParameterPassedViaRegister(
     List<Var const*> const* param_lst) const
 {
-    RegSet const* phyregset = tmGetRegSetOfArgument();
+    ASSERT0(getTargInterface());
+    RegSet const* phyregset = getTargInterface()->tmGetRegSetOfParameter();
     ASSERT0(phyregset);
     C<Var const*> * ct = nullptr;
     param_lst->get_head(&ct);
@@ -3695,10 +3720,11 @@ void CG::storeRegisterParameterBackToStack(List<ORBB*> * entry_lst,
         return;
     }
     ASSERT0(entry_lst);
-    ASSERT0(tmGetRegSetOfArgument());
+    ASSERT0(getTargInterface());
+    ASSERT0(getTargInterface()->tmGetRegSetOfParameter());
     //param_lst: parameter variable which sorted in declaration order.
     ConstVarList const* param_lst = m_rg->findAndRecordFormalParamList(true);
-    RegSet const* phyregset = tmGetRegSetOfArgument();
+    RegSet const* phyregset = getTargInterface()->tmGetRegSetOfParameter();
     ASSERT0(phyregset);
     ORList ors;
     IOC tc;
@@ -3785,15 +3811,22 @@ void CG::reviseFormalParameterAndSpadjust(List<ORBB*> & entry_lst,
     //             temporary variable + callee parameter size).
     INT framesize = (INT)(m_cgmgr->getStackSection()->getSize() +
                           getMaxArgSectionSize());
+    #ifdef REF_TARGMACH_INFO
+    //Target machine stack pointer adjustment operation's alignment.
+    UINT spadjust_alignment =
+        m_rg->getRegionMgr()->getTargInfoMgr()->getSPAdjustAlignment();
+    #else
+    UINT spadjust_alignment = SPADJUST_ALIGNMENT;
+    #endif
 
     //Adjust size by stack alignment.
     ASSERTN(xcom::isPowerOf2(STACK_ALIGNMENT),
             ("For the convenience of generating double load/store"));
-    ASSERTN(xcom::isPowerOf2(SPADJUST_ALIGNMENT),
+    ASSERTN(xcom::isPowerOf2(spadjust_alignment),
             ("For the convenience of generating double load/store"));
-    ASSERTN(SPADJUST_ALIGNMENT - 1 <= 0xFFFF, ("Stack alignment is too big"));
+    ASSERTN(spadjust_alignment - 1 <= 0xFFFF, ("Stack alignment is too big"));
 
-    framesize = (INT)xcom::ceil_align(framesize, SPADJUST_ALIGNMENT);
+    framesize = (INT)xcom::ceil_align(framesize, spadjust_alignment);
     if (!isUseFP() &&
         (getMaxArgSectionSize() > 0 &&
          SECT_size(m_cgmgr->getParamSection()) > 0)) {
@@ -3804,14 +3837,16 @@ void CG::reviseFormalParameterAndSpadjust(List<ORBB*> & entry_lst,
     TMWORD param_sect_start_offset = framesize;
 
     if (isPassArgumentThroughRegister()) {
-        ASSERT0(tmGetRegSetOfArgument()); //phy regset should exist.
+        //phy regset should exist.
+        ASSERT0(getTargInterface());
+        ASSERT0(getTargInterface()->tmGetRegSetOfParameter());
         ConstVarList const* param_list =
             m_rg->findAndRecordFormalParamList(true);
         UINT bytesize_of_arg_passed_via_reg =
             calcSizeOfParameterPassedViaRegister(param_list);
-        if (bytesize_of_arg_passed_via_reg % SPADJUST_ALIGNMENT != 0) {
+        if (bytesize_of_arg_passed_via_reg % spadjust_alignment != 0) {
             UINT alignsize = (UINT)xcom::ceil_align(
-                bytesize_of_arg_passed_via_reg, SPADJUST_ALIGNMENT);
+                bytesize_of_arg_passed_via_reg, spadjust_alignment);
             ASSERT0(alignsize > bytesize_of_arg_passed_via_reg);
             framesize += alignsize - bytesize_of_arg_passed_via_reg;
         }
@@ -3826,7 +3861,7 @@ void CG::reviseFormalParameterAndSpadjust(List<ORBB*> & entry_lst,
     PARAMSECT_offset(m_cgmgr->getParamSection()) = param_sect_start_offset;
 
     //size must align in SPADJUST_ALIGNMENT.
-    ASSERT0(framesize == xcom::ceil_align(framesize, SPADJUST_ALIGNMENT));
+    ASSERT0(framesize == xcom::ceil_align(framesize, spadjust_alignment));
     for (ORBB * bb = entry_lst.get_head();
          bb != nullptr; bb = entry_lst.get_next()) {
         OR * spadj = ORBB_entry_spadjust(bb);
@@ -4020,7 +4055,8 @@ RaMgr * CG::performRA()
     RaMgr * rm = allocRaMgr(getORBBList(), m_rg->is_function());
     rm->setParallelPartMgrVec(getParallelPartMgrVec());
     #ifdef _DEBUG_
-    if (tmGetRegSetOfCallerSaved()->is_empty()) {
+    ASSERT0(getTargInterface());
+    if (getTargInterface()->tmGetRegSetOfCallerSaved()->is_empty()) {
         xoc::interwarn("Caller Register Set is empty!"
                        "There might lack of allocable registers "
                        "if RAMGR_can_alloc_callee is disabled");
@@ -4250,7 +4286,7 @@ void CG::localizeBB(SR * sr, ORBB * bb)
     }
     IOC tc;
     ASSERT0(SR_spill_var(sr));
-    IOC_mem_byte_size(&tc) = GENERAL_REGISTER_SIZE; // sr->getByteSize();
+    IOC_mem_byte_size(&tc) = sr->getRegByteSize();
     ORList ors;
     if (first_usestmt_ct != nullptr) {
         //Handle upward exposed use.

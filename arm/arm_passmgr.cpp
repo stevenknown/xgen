@@ -50,13 +50,29 @@ Pass * ARMPassMgr::allocRefine()
 
 Pass * ARMPassMgr::allocInsertCvt()
 {
+    #if defined REF_TARGMACH_INFO || defined FOR_IP
     return (IRSimp*)new ARMInsertCvt(m_rg);
+    #else
+    ASSERTN(0, ("Target Dependent Code"));
+    return nullptr;
+    #endif
 }
 
 
 Pass * ARMPassMgr::allocIRSimp()
 {
     return (IRSimp*)new ARMIRSimp(m_rg);
+}
+
+
+Pass * ARMPassMgr::allocRegAllocMgr()
+{
+    #if defined REF_TARGMACH_INFO || defined FOR_IP
+    return new ARMRegAllocMgr(m_rg);
+    #else
+    ASSERTN(0, ("Target Dependent Code"));
+    return nullptr;
+    #endif
 }
 
 
@@ -103,4 +119,37 @@ Pass * ARMPassMgr::allocExtPass(PASS_TYPE passty)
     default: ASSERTN(0, ("unknown pass type"));
     }
     return pass;
+}
+
+
+Pass * ARMPassMgr::allocPrologueEpilogue()
+{
+    #if defined REF_TARGMACH_INFO || defined FOR_IP
+    return new ARMPrologueEpilogueInserter(m_rg);
+    #else
+    ASSERTN(0, ("Target Dependent Code"));
+    return nullptr;
+    #endif
+}
+
+
+Pass * ARMPassMgr::allocDynamicStack()
+{
+    #if defined REF_TARGMACH_INFO || defined FOR_IP
+    return new ARMDynamicStack(m_rg);
+    #else
+    ASSERTN(0, ("Target Dependent Code"));
+    return nullptr;
+    #endif
+}
+
+
+Pass * ARMPassMgr::allocArgPasser()
+{
+    #if defined REF_TARGMACH_INFO || defined FOR_IP
+    return new ARMArgPasser(m_rg);
+    #else
+    ASSERTN(0, ("Target Dependent Code"));
+    return nullptr;
+    #endif
 }

@@ -96,7 +96,7 @@ public:
 public:
     ArgDescMgr()
     {
-        RegSet const* regs = tmGetRegSetOfArgument();
+        RegSet const* regs = tmGetRegSetOfParameter();
         if (regs != nullptr && regs->get_elem_count() != 0) {
             m_argregs.copy(*regs);
         }

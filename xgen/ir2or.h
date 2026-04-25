@@ -77,8 +77,10 @@ public:
         } s1;
         UINT u2val;
     } u2;
-    //Propagate info top down.
-    //Used as input parameter, record predicate register if required.
+
+    //Propagate info top down to OR-building API.
+    //Used as input parameter of building API, pass predicate register
+    //if required.
     SR * pred;
 
     //Propagate info top down.
@@ -205,6 +207,13 @@ protected:
 
     void flattenSRVec(IOC const* cont, Vector<SR*> * vec);
 
+    void genIStoreByRegValue(
+        IR const* ir, SR * store_val, SR * target_addr,
+        OUT RecycORList & ors, MOD IOC * cont);
+    void genMemcpyByAddr(
+        IR const* ir, SR * source_addr, SR * target_addr,
+        OUT RecycORList & ors, MOD IOC * cont);
+
     //The function generates a register copy if given 'src' has been assigned
     //a physical register.
     //CASE:If the result reg of opnd0 and opnd1 have been assigned physical
@@ -250,6 +259,9 @@ public:
         IRBB const* bb, OUT RecycORList & ors, MOD IOC * cont);
     virtual void convertILoad(
         IR const* ir, OUT RecycORList & ors, MOD IOC * cont);
+
+    void convertIStoreWithIncompleteSelect(
+        IR const* ir, SR * target_addr, OUT RecycORList & ors, MOD IOC * cont);
     virtual void convertIStore(
         IR const* ir, OUT RecycORList & ors, MOD IOC * cont);
     virtual void convertLoadVar(
@@ -493,7 +505,9 @@ public:
 
     RecycORListMgr * getRecycORListMgr() { return &m_recyc_orlist_mgr; }
     CG * getCG() const { return m_cg; }
-    DbxMgr * getDbxMgr() { ASSERT0(m_dbx_mgr); return m_dbx_mgr; }
+    DbxMgr * getDbxMgr() const { ASSERT0(m_dbx_mgr); return m_dbx_mgr; }
+    IRMgr * getIRMgr() const { return m_irmgr; }
+    Region * getRegion() const { return m_rg; }
     Var const* getBuiltinVar(BUILTIN_TYPE bt) const
     { return m_cgmgr->getBuiltinVar(bt); }
 

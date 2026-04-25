@@ -183,8 +183,8 @@ public:
     }
 
     bool isIssueCand(OR const* o) const;
-    bool isFuncUnitOccupied(UnitSet const& us, CLUST clst,
-                            OR const* const issue_ors [SLOT_NUM]) const;
+    bool isSlotOccupied(UnitSet const& us, CLUST clst,
+                        OR const* const issue_ors [SLOT_NUM]) const;
 
     virtual SLOT rollBackORs(bool be_changed[SLOT_NUM],
                              OR * issue_ors[SLOT_NUM],

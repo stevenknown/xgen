@@ -327,7 +327,7 @@ FIN:
 static void initAndPrtCallingConventionRegSet(OUT xcom::BitSet & allocable)
 {
     fprintf(g_output, "\n//Map regfile to allocable register set.\n");
-    xcom::BitSet argument;
+    xcom::BitSet parameter;
     xcom::BitSet return_value;
     xcom::BitSet caller_saved;
     xcom::BitSet callee_saved;
@@ -342,14 +342,14 @@ static void initAndPrtCallingConventionRegSet(OUT xcom::BitSet & allocable)
     //  operating mode use this register only).
     //  r12 is the Intra-Procedure-call scratch register.
     //  r4 to r11: used to hold local variables.
-    //  r0 to r3: used to hold argument values passed to a subroutine,
+    //  r0 to r3: used to hold parameter values passed to a subroutine,
     //  and also hold results returned from a subroutine.
     ////////////////////////////////////////////////////////////////////////////
     //Initialize dedicated regset.                                            //
-    //Initializing argument registers.                                        //
+    //Initializing parameter registers.                                       //
     ////////////////////////////////////////////////////////////////////////////
     for (Reg reg = ARG_REG_START; reg <= ARG_REG_END; reg++) {
-        argument.bunion(reg);
+        parameter.bunion(reg);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -388,28 +388,115 @@ static void initAndPrtCallingConventionRegSet(OUT xcom::BitSet & allocable)
     //R14(LR), note R14 should be saved at prolog of current function.
     allocable.bunion(REG_RETURN_ADDRESS_REGISTER);
 
-    CHAR const* set1 = "return_value_regset";
+    CHAR const* set1 = "return_value_regset_scalar";
     prtBitSet(return_value, set1, true);
     fprintf(g_output, "static ROBitSet g_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
             set1, set1, set1, set1);
 
-    CHAR const* set2 = "caller_saved_regset";
+    CHAR const* set2 = "caller_saved_regset_scalar";
     prtBitSet(caller_saved, set2, true);
     fprintf(g_output, "static ROBitSet g_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
             set2, set2, set2, set2);
 
-    CHAR const* set3 = "callee_saved_regset";
+    CHAR const* set3 = "callee_saved_regset_scalar";
     prtBitSet(callee_saved, set3, true);
     fprintf(g_output, "static ROBitSet g_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
             set3, set3, set3, set3);
 
-    CHAR const* set4 = "allocable_regset";
+    CHAR const* set4 = "allocable_regset_scalar";
     prtBitSet(allocable, set4, true);
     fprintf(g_output, "static ROBitSet g_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
             set4, set4, set4, set4);
 
-    CHAR const* set5 = "argument_regset";
-    prtBitSet(argument, set5, true);
+    CHAR const* set5 = "param_regset_scalar";
+    prtBitSet(parameter, set5, true);
+    fprintf(g_output, "static ROBitSet g_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
+            set5, set5, set5, set5);
+}
+
+
+static void initAndPrtVectorCallingConventionRegSet(
+    OUT xcom::BitSet & allocable)
+{
+    fprintf(g_output, "\n//Map regfile to allocable vector register set.\n");
+    xcom::BitSet parameter;
+    xcom::BitSet return_value;
+    xcom::BitSet caller_saved;
+    xcom::BitSet callee_saved;
+
+    ////////////////////////////////////////////////////////////////////////////
+    //Initialize dedicated regset.                                            //
+    //Initializing parameter registers.                                       //
+    ////////////////////////////////////////////////////////////////////////////
+    parameter.bunion(REG_D0);
+    parameter.bunion(REG_D1);
+
+    ////////////////////////////////////////////////////////////////////////////
+    //Initializing function unit return value registers.                      //
+    ////////////////////////////////////////////////////////////////////////////
+    return_value.bunion(REG_D0);
+    return_value.bunion(REG_D1);
+
+    ////////////////////////////////////////////////////////////////////////////
+    //Initialize regset caller-saved.                                         //
+    ////////////////////////////////////////////////////////////////////////////
+    for (Reg i = ALLOCABLE_VEC_REG_D_START;
+         i <= ALLOCABLE_VEC_REG_D_END; i++) {
+        caller_saved.bunion(i);
+    }
+    for (Reg i = ALLOCABLE_VEC_REG_Q_START;
+         i <= ALLOCABLE_VEC_REG_Q_END; i++) {
+        caller_saved.bunion(i);
+    }
+    for (Reg i = ALLOCABLE_VEC_REG_S_START;
+         i <= ALLOCABLE_VEC_REG_S_END; i++) {
+        caller_saved.bunion(i);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    //Initialize regset callee-saved.                                         //
+    ////////////////////////////////////////////////////////////////////////////
+    //No callee registers.
+
+    ////////////////////////////////////////////////////////////////////////////
+    //Initialize regset allocable.                                            //
+    ////////////////////////////////////////////////////////////////////////////
+    //R0~R11
+    for (Reg i = ALLOCABLE_VEC_REG_D_START;
+         i <= ALLOCABLE_VEC_REG_D_END; i++) {
+        allocable.bunion(i);
+    }
+    for (Reg i = ALLOCABLE_VEC_REG_Q_START;
+         i <= ALLOCABLE_VEC_REG_Q_END; i++) {
+        allocable.bunion(i);
+    }
+    for (Reg i = ALLOCABLE_VEC_REG_S_START;
+         i <= ALLOCABLE_VEC_REG_S_END; i++) {
+        allocable.bunion(i);
+    }
+
+    CHAR const* set1 = "return_value_regset_vector";
+    prtBitSet(return_value, set1, true);
+    fprintf(g_output, "static ROBitSet g_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
+            set1, set1, set1, set1);
+
+    CHAR const* set2 = "caller_saved_regset_vector";
+    prtBitSet(caller_saved, set2, true);
+    fprintf(g_output, "static ROBitSet g_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
+            set2, set2, set2, set2);
+
+    CHAR const* set3 = "callee_saved_regset_vector";
+    prtBitSet(callee_saved, set3, true);
+    fprintf(g_output, "static ROBitSet g_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
+            set3, set3, set3, set3);
+
+    CHAR const* set4 = "allocable_regset_vector";
+    prtBitSet(allocable, set4, true);
+    fprintf(g_output, "static ROBitSet g_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
+            set4, set4, set4, set4);
+
+    CHAR const* set5 = "param_regset_vector";
+    prtBitSet(parameter, set5, true);
     fprintf(g_output, "static ROBitSet g_%s(%s, sizeof(%s) / sizeof(%s[0]));\n",
             set5, set5, set5, set5);
 }
@@ -1257,7 +1344,7 @@ static void initFuncUnit()
 static void initAndPrtRegisterName()
 {
     fprintf(g_output, "\n//Register Name.\n");
-    fprintf(g_output, "CHAR const* g_register_name [] = {");
+    fprintf(g_output, "static CHAR const* g_register_name [] = {");
 
     xcom::StrBuf buf(32);
     for (UINT i = REG_UNDEF; i < REG_NUM; i++) {
@@ -1714,6 +1801,9 @@ static void prtORScheInfoContent(ORScheInfo const& si)
     //4th field.
     fprintf(g_output, "%d,", ORSI_first_result_avail_cyc(&si));
 
+    //5th field.
+    fprintf(g_output, "%d,", ORSI_occ_excl_latency(&si));
+
     fprintf(g_output, "},");
 }
 
@@ -1979,6 +2069,7 @@ static void initAndPrtScheInfoImpl(OR_CODE ot)
         }
         ORSI_last_result_avail_cyc(si) = 1;
         ORSI_first_result_avail_cyc(si) = 1;
+        ORSI_occ_excl_latency(si) = 0;
         break;
     }
     case OR_adds:
@@ -2008,6 +2099,7 @@ static void initAndPrtScheInfoImpl(OR_CODE ot)
         }
         ORSI_last_result_avail_cyc(si) = CYCLE_OF_EX3;
         ORSI_first_result_avail_cyc(si) = 1;
+        ORSI_occ_excl_latency(si) = 0;
         break;
     }
     case OR_ldm:
@@ -2029,6 +2121,7 @@ static void initAndPrtScheInfoImpl(OR_CODE ot)
         }
         ORSI_last_result_avail_cyc(si) = 3;
         ORSI_first_result_avail_cyc(si) = 3;
+        ORSI_occ_excl_latency(si) = 0;
         break;
     }
     case OR_stm:
@@ -2050,6 +2143,7 @@ static void initAndPrtScheInfoImpl(OR_CODE ot)
         ORSI_mem_result_avail_cyc(si, 0) = 1;
         ORSI_last_result_avail_cyc(si) = 1;
         ORSI_first_result_avail_cyc(si) = 1;
+        ORSI_occ_excl_latency(si) = 0;
         break;
     }
     case OR_spadjust_i:
@@ -2059,6 +2153,7 @@ static void initAndPrtScheInfoImpl(OR_CODE ot)
         }
         ORSI_last_result_avail_cyc(si) = 2;
         ORSI_first_result_avail_cyc(si) = 2;
+        ORSI_occ_excl_latency(si) = 0;
         break;
     }
     case OR_asm:
@@ -2070,6 +2165,7 @@ static void initAndPrtScheInfoImpl(OR_CODE ot)
         }
         ORSI_last_result_avail_cyc(si) = 1;
         ORSI_first_result_avail_cyc(si) = 1;
+        ORSI_occ_excl_latency(si) = 0;
         break;
     }
     case OR_label: break;
@@ -2178,6 +2274,9 @@ int main()
 
     xcom::BitSet allocable;
     initAndPrtCallingConventionRegSet(allocable);
+
+    xcom::BitSet vector_allocable;
+    initAndPrtVectorCallingConventionRegSet(vector_allocable);
 
     xcom::BitSet regfile2regset[RF_NUM];
     initAndPrtRegFile2RegSet(regfile2regset);

@@ -393,6 +393,7 @@ public:
     virtual IR2OR * allocIR2OR();
     virtual BBSimulator * allocBBSimulator(ORBB * bb);
     RaMgr * allocRaMgr(List<ORBB*> * bblist, bool is_func);
+    TargInterface * allocTargInterface();
 
     virtual void setSpadjustOffset(OR * spadj, INT size);
 

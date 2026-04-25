@@ -31,6 +31,8 @@ author: Su Zhenyu
 
 #include "../xgen/xgeninc.h"
 
+namespace xoc {
+
 //Dump function.
 void CConv::accDump(IR const* ir, Region const* rg, IRDumpCtx<> & ctx)
 {
@@ -43,3 +45,37 @@ void CConvOpndGrad::accDump(IR const* ir, Region const* rg, IRDumpCtx<> & ctx)
 {
     return dumpConvOpndGrad(ir, rg, ctx);
 }
+
+IRFieldAccTab::AccInfo CConv::accinfo[CConv::accinfo_num] = {
+    IRFieldAccTab::AccInfo(IR_ACC_KID, (void*)CConv::accKid),
+    IRFieldAccTab::AccInfo(IR_ACC_SS, (void*)CConv::accSS),
+    IRFieldAccTab::AccInfo(IR_ACC_STRIDEW, (void*)CConv::accStrideW),
+    IRFieldAccTab::AccInfo(IR_ACC_STRIDEH, (void*)CConv::accStrideH),
+};
+
+
+IRFieldAccTab::AccInfo CConvOpndGrad::accinfo[CConvOpndGrad::accinfo_num] = {
+    IRFieldAccTab::AccInfo(IR_ACC_KID, (void*)CConvOpndGrad::accKid),
+    IRFieldAccTab::AccInfo(IR_ACC_STRIDEW, (void*)CConvOpndGrad::accStrideW),
+    IRFieldAccTab::AccInfo(IR_ACC_STRIDEH, (void*)CConvOpndGrad::accStrideH),
+};
+
+
+UINT getStrideW(IR const* ir)
+{
+    IRAccStrideFuncType func =
+        (IRAccStrideFuncType)IRDES_accstridewfunc(ir->getCode());
+    ASSERT0(func);
+    return (*func)(const_cast<IR*>(ir));
+}
+
+
+UINT getStrideH(IR const* ir)
+{
+    IRAccStrideFuncType func =
+        (IRAccStrideFuncType)IRDES_accstridehfunc(ir->getCode());
+    ASSERT0(func);
+    return (*func)(const_cast<IR*>(ir));
+}
+
+} //namespace xoc

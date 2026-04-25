@@ -193,7 +193,8 @@ public:
         ASSERTN(0, ("Target Dependent Code"));
         return nullptr;
     }
-    virtual UINT getByteSize() const;
+    virtual UINT getTotalByteSize() const;
+    UINT getRegByteSize() const { return GENERAL_REGISTER_SIZE; }
     inline REGFILE getRegFile() const;
     inline Reg getPhyReg() const;
     inline UINT getSymReg() const;

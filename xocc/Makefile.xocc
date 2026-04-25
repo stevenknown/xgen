@@ -88,11 +88,10 @@ $(info "TMP_ELF_OBJS:$(TMP_ELF_OBJS)")
 $(info "TMP_MACH_OBJS:$(TMP_MACH_OBJS)")
 
 #Define dependencies and link-rules of xocc.exe.
-$(XOCC_OUTPUT): xocc_objs tmp_cfe_objs tmp_elf_objs $(XGEN_OUTPUT)
+$(XOCC_OUTPUT): xocc_objs tmp_cfe_objs $(XGEN_OUTPUT)
 	@echo "In Makefile.xocc: START BUILD $(XOCC_OUTPUT)"
 	$(CC) $(XOCC_OBJS) \
       $(TMP_CFE_OBJS) \
-      $(TMP_ELF_OBJS) \
       -Xlinker "-(" \
       $(XGEN_DIR)/$(XGEN_OUTPUT) \
       $(COM_DIR)/$(COM_OUTPUT) \
@@ -126,6 +125,7 @@ $(XGEN_OUTPUT):
 
 clean:
 	@find ./ -name "*.o" | xargs rm -f
+	@find ./ -name "*.i" | xargs rm -f
 	@find ./ -name "*.a" | xargs rm -f
 	@find ./ -name "*.d" | xargs rm -f
 	@find ./ -name "*.exe" | xargs rm -f

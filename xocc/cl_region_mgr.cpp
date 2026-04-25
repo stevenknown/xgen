@@ -46,6 +46,7 @@ CLRegionMgr::~CLRegionMgr()
 {
     if (m_grreader != nullptr) {
         delete m_grreader;
+        m_grreader = nullptr;
     }
 }
 

@@ -2338,6 +2338,7 @@ static IR * convertMulti(
             type = tm->getSimplexTypeEx(dt);
         }
     }
+    type = tm->hoistDTypeForBinOp(l, r);
     IR * ir;
     if (TREE_token(t) == T_ASTERISK) {
         ir = irmgr->buildBinaryOp(IR_MUL, type, l, r);
@@ -2351,18 +2352,28 @@ static IR * convertMulti(
 }
 
 
-static IR * convertAdditive(
-    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+static xoc::Type const* tryRevisePointerTypeForAdditive(
+    xfe::Tree * t, IR * l, IR * r, MOD xoc::TypeMgr * tm)
 {
-    TypeMgr * tm = t2ir->getTypeMgr();
-    IRMgr * irmgr = t2ir->getIRMgr();
-    Region * rg = t2ir->getRegion();
-    IR * l = t2ir->convert(TREE_lchild(t), cont);
-    IR * r = t2ir->convert(TREE_rchild(t), cont);
+    ASSERT0(t && l && r);
+    ASSERT0(t->getCode() == TR_ADDITIVE);
     xoc::Type const* type = nullptr;
     if (t->getResultType()->regardAsPointer()) {
+        //Revise pointer type of 'l' with the base size of 't', rather than
+        //the base size of LDA.
+        //e.g:exec/memset.c
+        //  char buf[31];
+        //  ... = buf + off;
+        //where l is LDA buf with type *<31> which base size is 31.
+        //However, the pointer base size of + is 1.
+        //After dump t:
+        //  OP(id:145):+ TY<char*>
+        //    LDA(id:169) TY<char*[31]>
+        //        buf(id:144) base-type:char [31]
+        //    ID(id:146):'off'        
         type = tm->getPointerType(t->getResultType()->
             getPointerBaseSize());
+        IR_dt(l) = type;
     } else {
         UINT s = 0;
         xoc::DATA_TYPE dt = CTree2IR::get_decl_dtype(
@@ -2373,9 +2384,21 @@ static IR * convertAdditive(
             type = tm->getSimplexTypeEx(dt);
         }
     }
+    return type;
+}
+
+
+static IR * convertAdditive(
+    xfe::Tree * t, UINT lineno, CTree2IR * t2ir, T2IRCtx * cont)
+{
+    TypeMgr * tm = t2ir->getTypeMgr();
+    IRMgr * irmgr = t2ir->getIRMgr();
+    Region * rg = t2ir->getRegion();
+    IR * l = t2ir->convert(TREE_lchild(t), cont);
+    IR * r = t2ir->convert(TREE_rchild(t), cont);
+    xoc::Type const* type = tryRevisePointerTypeForAdditive(t, l, r, tm);
     IR * ir;
     if (TREE_token(t) == T_ADD) {
-        IR_dt(l) = type;
         ir = irmgr->buildBinaryOp(IR_ADD, type, l, r);
     } else {
         ir = irmgr->buildBinaryOp(IR_SUB, type, l, r);
@@ -2440,7 +2463,7 @@ static IR * convertRelation(
     case T_NOMORETHAN:   // <=
         ir = irmgr->buildCmp(IR_LE, l, r);
         break;
-    default: UNREACHABLE();
+    default: UNREACHABLE(); return nullptr;
     }
     xoc::setLineNum(ir, lineno, rg);
     return ir;

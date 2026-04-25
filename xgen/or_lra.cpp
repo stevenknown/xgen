@@ -921,6 +921,12 @@ LifeTimeMgr::LifeTimeMgr(CG * cg)
 }
 
 
+TargInterface * LifeTimeMgr::getTargInterface() const
+{
+    return m_cg->getTargInterface();
+}
+
+
 OR * LifeTimeMgr::getOR(BSIdx pos)
 {
     ASSERTN(pos != BS_UNDEF &&
@@ -1592,7 +1598,7 @@ void LifeTimeMgr::pickOutUnusableRegs(LifeTime const*, RegSet & rs)
 void LifeTimeMgr::processFuncExitBB(MOD List<LifeTime*> & liveout_exitbb_lts,
                                     MOD LifeTimeTab & live_lt_list, BSIdx pos)
 {
-    RegSet const* regs = tmGetRegSetOfReturnValue();
+    RegSet const* regs = getTargInterface()->tmGetRegSetOfReturnValue();
     for (BSIdx reg = regs->get_first(); reg != BS_UNDEF;
          reg = regs->get_next(reg)) {
         SR * ret = m_cg->genDedicatedReg(reg);
@@ -2609,6 +2615,12 @@ LRA::LRA(ORBB * bb, RaMgr * ra_mgr)
 }
 
 
+TargInterface * LRA::getTargInterface() const
+{
+    return m_cg->getTargInterface();
+}
+
+
 //Display phase name
 void LRA::show_phase(CHAR const* phase_name)
 {
@@ -2714,7 +2726,7 @@ bool LRA::assignRegister(LifeTime * lt, InterfGraph & ig, LifeTimeMgr & mgr,
     RegSet const* regfile_usable_reg_set = tmMapRegFile2RegSet(regfile);
     usable->intersect(*regfile_usable_reg_set);
     if (m_ramgr != nullptr && !m_ramgr->canAllocCallee()) {
-        usable->diff(*tmGetRegSetOfCalleeSaved());
+        usable->diff(*getTargInterface()->tmGetRegSetOfCalleeSaved());
     }
     if (usable->get_elem_count() == 0) {
         return false;
@@ -2785,7 +2797,8 @@ bool LRA::assignRegister(LifeTime * lt, InterfGraph & ig, LifeTimeMgr & mgr,
         //Try to allocate caller-saved registers
         RegSet try_caller_regs;
         try_caller_regs.copy(*usable);
-        try_caller_regs.intersect(*tmGetRegSetOfCallerSaved());
+        try_caller_regs.intersect(
+            *getTargInterface()->tmGetRegSetOfCallerSaved());
         reg = chooseByRegFileGroup(try_caller_regs, lt, mgr, rfg);
         if (reg != REG_UNDEF) {
             goto FIN;

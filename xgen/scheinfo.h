@@ -40,6 +40,39 @@ namespace xgen {
 #define ORSI_mem_result_avail_cyc(oi, i) ((oi)->mem_result_cyc_buf[(i)])
 #define ORSI_reg_result_cyc_buf(oi) ((oi)->reg_result_cyc_buf)
 #define ORSI_mem_result_cyc_buf(oi) ((oi)->mem_result_cyc_buf)
+#define ORSI_occ_excl_latency(oi) ((oi)->occupy_exclusive_latency)
+
+//The diagram illustrates the timeline of instructions according to
+//schedul-info.
+//e.g: given an instruction IDIV(integer division), the sched-info is
+//first_result_avail_cyc is 8 cycles, last_result_avail_cyc is 14 cycles,
+//occupy_exclusive_latency is 3 cycles, then the execution timeline is:
+//TIMELINE: 0cyc      3cyc         8cyc           14cyc
+//          |---------|------------|---------------|--->
+//          |                      |< shadow time >|
+//          |---------|------------|---------------|--->
+//          ^         ^            ^               ^
+//          |         |            |____           |____
+//          inst      occupy            first           last
+//          issued    exclusive         result          result
+//                    latency           available       available
+//
+//e.g2: given an instruction FDIV(float division), the sched-info is
+//first_result_avail_cyc is 8 cycles, last_result_avail_cyc is 14 cycles,
+//occupy_exclusive_latency is 14 cycles, then the execution timeline is:
+//TIMELINE: 0cyc                   8cyc           14cyc
+//          |----------------------|---------------|--->
+//          |                      |               |
+//          |----------------------|---------------|--->
+//          ^                      ^               ^
+//          |                      |____           |____
+//          inst                        first           last
+//          issued                      result          result
+//                                      available       available
+//                                                      && occupy_excl_lat
+//NOTE: there is no shadow-time because entire 14 cycles is occupied exclusively
+//by the float-division function unit.
+
 typedef struct tagORScheInfo {
 public:
     UINT * reg_result_cyc_buf; //record each of register result available cycle
@@ -47,12 +80,18 @@ public:
     UINT last_result_avail_cyc; //record last result available cycle
     UINT first_result_avail_cyc; //record first result available cycle
 
+    //Record occupy-exclusive latency.
+    //e.g: For some target machine, float-division function unit occupies the
+    //execution pipeline exclusively for more than 10 cycles.
+    UINT occupy_exclusive_latency;
+public:
     void init()
     {
         reg_result_cyc_buf = nullptr;
         mem_result_cyc_buf = nullptr;
         last_result_avail_cyc = 0;
         first_result_avail_cyc = 0;
+        occupy_exclusive_latency = 0;
     }
 } ORScheInfo;
 

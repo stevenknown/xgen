@@ -33,14 +33,14 @@ author: Su Zhenyu
 //
 //START ARMORMgr
 //
-OR * ARMORMgr::allocOR(xgen::CG * cg)
+OR * ARMORMgr::allocOR(xgen::CG const* cg)
 {
     ASSERT0(cg);
     return new ARMOR(cg->getDbxMgr());
 }
 
 
-void ARMOR::set_pred(SR * v, CG * cg)
+void ARMOR::set_pred(SR * v, CG const* cg)
 {
     ASSERTN(HAS_PREDICATE_REGISTER, ("target not support"));
     set_opnd(0, v, cg);

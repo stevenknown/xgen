@@ -23,6 +23,7 @@ regfilegroup.o\
 issue_package.o\
 intrinsic_mgr.o\
 targ_interface.o\
-sr_def.o
+sr_def.o\
+regpressure.o
 
 XGEN_OUTPUT=libxgen.a

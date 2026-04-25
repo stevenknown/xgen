@@ -96,7 +96,8 @@ protected:
     void initCompile(CHAR const* fn, OUT CLRegionMgr ** rm,
                      OUT FileObj & asmfo, OUT CGMgr ** cgmgr);
 
-    void finiCompile(CLRegionMgr * rm, FileObj & asmfo, CGMgr * cgmgr);
+    void finiCompile(
+        MOD CLRegionMgr *& rm, FileObj & asmfo, MOD CGMgr *& cgmgr);
 
     UINT runFrontEnd(RegionMgr * rm, CParser & parser);
 public:

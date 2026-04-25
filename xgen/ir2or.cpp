@@ -47,9 +47,9 @@ IR2OR::IR2OR(CG * cg)
 
 //Store value that given by address 'src_addr' to 'tgtvar'.
 //ofst: offset from base of tgtvar.
-void IR2OR::convertStoreViaAddress(IN SR * src_addr, IN SR * tgtvar,
-                                   HOST_INT ofst, OUT RecycORList & ors,
-                                   MOD IOC * cont)
+void IR2OR::convertStoreViaAddress(
+    IN SR * src_addr, IN SR * tgtvar, HOST_INT ofst, OUT RecycORList & ors,
+    MOD IOC * cont)
 {
     ASSERT0(src_addr && tgtvar && tgtvar->is_var() && SR_var(tgtvar));
 
@@ -65,21 +65,22 @@ void IR2OR::convertStoreViaAddress(IN SR * src_addr, IN SR * tgtvar,
 
     //Generate ::memcpy.
     cont->clean_bottomup(); //clean outdated info included addr.
-    m_cg->buildLda(SR_var(tgtvar), SR_var_ofst(tgtvar) + ofst, nullptr,
-                   ors.getList(), cont);
+    m_cg->buildLda(
+        SR_var(tgtvar), SR_var_ofst(tgtvar) + ofst, nullptr, ors.getList(),
+        cont);
     SR * tgt_addr = cont->get_reg(0); //get target memory address.
     ASSERT0(tgt_addr);
     cont->clean_bottomup(); //clean outdated info included addr.
-    m_cg->buildMemcpy(tgt_addr, src_addr, cont->getMemByteSize(),
-                      ors.getList(), cont);
+    m_cg->buildMemcpy(
+        tgt_addr, src_addr, cont->getMemByteSize(), ors.getList(), cont);
 }
 
 
 //Decompose 'mem_addr_sr' into the form 'base+offset'.
 //'tgtvar': symbol describes memory location
-void IR2OR::convertStoreDecompose(IN SR * src, IN SR * tgtvar,
-                                  HOST_INT ofst, OUT RecycORList & ors,
-                                  MOD IOC * cont)
+void IR2OR::convertStoreDecompose(
+    IN SR * src, IN SR * tgtvar, HOST_INT ofst, OUT RecycORList & ors,
+    MOD IOC * cont)
 {
     ASSERT0(src && tgtvar && tgtvar->is_var() && SR_var(tgtvar));
 
@@ -319,10 +320,9 @@ void IR2OR::tryExtendLoadValByMemSize(bool is_signed, Dbx const* dbx,
     }
     SR * loadval = cont->get_reg(0);
     ASSERT0(loadval && loadval->is_reg());
-    if (cont->getMemByteSize() <= loadval->getByteSize()) { return; }
+    if (cont->getMemByteSize() <= loadval->getTotalByteSize()) { return; }
     m_cg->buildTypeCvt(cont->get_reg(0), cont->getMemByteSize(),
-                       loadval->getByteSize(), is_signed, dbx, ors.getList(),
-                       cont);
+        loadval->getTotalByteSize(), is_signed, dbx, ors.getList(), cont);
 
 }
 
@@ -331,6 +331,7 @@ void IR2OR::tryExtendLoadValByMemSize(bool is_signed, Dbx const* dbx,
 void IR2OR::convertGeneralLoad(IR const* ir, OUT RecycORList & ors,
                                MOD IOC * cont)
 {
+    ASSERT0(ir);
     ASSERT0(cont != nullptr);
     switch (ir->getCode()) {
     case IR_CONST:
@@ -358,7 +359,7 @@ void IR2OR::convertGeneralLoad(IR const* ir, OUT RecycORList & ors,
 
     SR * res = cont->get_reg(0);
     ASSERTN(!ir->is_any(), ("data type of '%s' can not be ANY", IRNAME(ir)));
-    ASSERT0(res && res->getByteSize() >= ir->getTypeSize(m_tm));
+    ASSERT0(res && res->getTotalByteSize() >= ir->getTypeSize(m_tm));
     if (res->is_reg()) { return; }
 
     //The return-result is NOT register.
@@ -388,6 +389,135 @@ void IR2OR::convertGeneralLoad(IR const* ir, OUT RecycORList & ors,
 }
 
 
+void IR2OR::convertIStoreWithIncompleteSelect(
+    IR const* ir, SR * target_addr, OUT RecycORList & ors, MOD IOC * cont)
+{
+    //Generate code to conditionally store value to memory.
+    //e.g: given IR:
+    //  ist:i32
+    //    $26:*<4>
+    //    select:i32
+    //      $38:bool det
+    //      $33:i32 true_exp
+    //Generate OR:
+    //  mov sr44 <-- #0
+    //  cmp $38, sr44
+    //  str [$26] <-- gsr39(ne) $33
+    ASSERT0(ir->is_ist());
+    IR const* rhs = ir->getRHS();
+    ASSERT0(rhs->is_select() && !CSelect::bothTFExpAvail(rhs));
+
+    //Load RHS into registers or get the address of memory block.
+    RecycORList tors(this);
+    cont->clean_bottomup();
+    tors.clean();
+    convertGeneralLoad(rhs, tors, cont);
+    ASSERT0(cont->get_reg(0) || cont->get_addr());
+    tors.copyDbx(rhs, getDbxMgr());
+    ors.move_tail(tors);
+
+    //Generate STORE.
+    tors.clean();
+    ASSERT0(cont->get_reg(0) != nullptr);
+    genIStoreByRegValue(
+        ir, cont->get_reg(0), target_addr, tors, cont);
+
+    //Set predicate register.
+    SR * true_pr = cont->get_reg(TRUE_PREDICATE_REGISTER_INDEX);
+    SR * false_pr = cont->get_reg(FALSE_PREDICATE_REGISTER_INDEX);
+    ASSERT0(true_pr && false_pr);
+    CSelect const* selop = (CSelect const*)rhs;
+    SR * pred = nullptr;
+    if (selop->getTrueExp() != nullptr) {
+        pred = true_pr;
+    } else {
+        ASSERT0(selop->getFalseExp());
+        pred = false_pr;
+    }
+    tors.set_pred(pred, m_cg);
+    tors.copyDbx(rhs, getDbxMgr());
+    ors.move_tail(tors);
+}
+
+
+void IR2OR::genMemcpyByAddr(
+    IR const* ir, SR * source_addr, SR * target_addr,
+    OUT RecycORList & ors, MOD IOC * cont)
+{
+    ASSERT0(ir && ir->is_ist());
+    RecycORList tors(this);
+
+    //Generate ::memcpy.
+    ASSERT0(ir->getRHS()->getTypeSize(m_tm) > 8);
+    ASSERT0(source_addr);
+    HOST_INT offset = ir->getOffset();
+    if (offset != 0) {
+        m_cg->buildAdd(
+            target_addr, m_cg->genIntImm(offset, true),
+            GENERAL_REGISTER_SIZE, false, tors.getList(), cont);
+        target_addr = cont->get_reg(0);
+        ASSERTN(target_addr && target_addr->is_reg(),
+                ("address should be recorded in a register"));
+        cont->clean_bottomup();
+    }
+    m_cg->buildMemcpy(
+        target_addr, source_addr, ir->getTypeSize(m_tm), tors.getList(), cont);
+    tors.copyDbx(ir, getDbxMgr());
+    ors.move_tail(tors);
+}
+
+
+void IR2OR::genIStoreByRegValue(
+    IR const* ir, SR * store_val, SR * target_addr,
+    OUT RecycORList & ors, MOD IOC * cont)
+{
+    ASSERT0(ir && ir->is_ist());
+    ASSERT0(store_val && target_addr);
+    RecycORList tors(this);
+
+    //Generate target machine STORE.
+    //Note that you should use builtStore to generate STORE with offset
+    //instead of generating code that adding offset to base if
+    //cont->get_reg(0) is not nullptr.
+    ASSERT0(ir->getTypeSize(m_tm) > 0);
+    IOC tc;
+    IOC_mem_byte_size(&tc) = ir->getTypeSize(m_tm);
+    m_cg->buildStore(
+        store_val, target_addr,
+        m_cg->genIntImm((HOST_INT)IST_ofst(ir), true),
+        ir->is_signed(), tors.getList(), &tc);
+    tors.copyDbx(ir, getDbxMgr());
+    ors.move_tail(tors);
+}
+
+
+//Return true if predicate register changed.
+static bool trySetPredRegWhenRHSIsIncompleteSelect(
+    IR const* rhs, CG const* cg, MOD RecycORList & ors, IOC const* cont)
+{
+    ASSERT0(rhs);
+    if (!rhs->is_select()) { return false; }
+    if (CSelect::bothTFExpAvail(rhs)) { return false; }
+
+    //Change predicate register.
+    SR * true_pr = cont->get_reg(TRUE_PREDICATE_REGISTER_INDEX);
+    SR * false_pr = cont->get_reg(FALSE_PREDICATE_REGISTER_INDEX);
+    ASSERTN(true_pr && false_pr,
+        ("should generate compare-operation firstly "
+         "to prepare pred-reg"));
+    CSelect const* selop = (CSelect const*)rhs;
+    SR * pred = nullptr;
+    if (selop->getTrueExp() != nullptr) {
+        pred = true_pr;
+    } else {
+        ASSERT0(selop->getFalseExp());
+        pred = false_pr;
+    }
+    ors.set_pred(pred, cg);
+    return true;
+}
+
+
 void IR2OR::convertIStore(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
 {
     ASSERT0(ir && ir->is_ist());
@@ -397,57 +527,39 @@ void IR2OR::convertIStore(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     ASSERT0(IST_base(ir)->getTypeSize(m_tm) == GENERAL_REGISTER_SIZE);
     cont->clean_bottomup();
     convertGeneralLoad(IST_base(ir), tors, cont);
-    SR * addr = cont->get_reg(0);
-    ASSERTN(addr && addr->is_reg(),
+    SR * target_addr = cont->get_reg(0);
+    ASSERTN(target_addr && target_addr->is_reg(),
             ("address should be recorded in a register"));
     tors.copyDbx(IST_base(ir), getDbxMgr());
     ors.move_tail(tors);
 
+    IR const* rhs = ir->getRHS();
+    ASSERT0(rhs);
+    //if (rhs->is_select() && !CSelect::bothTFExpAvail(rhs)) {
+    //    return convertIStoreWithIncompleteSelect(ir, target_addr, ors, cont);
+    //}
+
     //Load RHS into registers or get the address of memory block.
     cont->clean_bottomup();
     tors.clean();
-    convertGeneralLoad(IST_rhs(ir), tors, cont);
+    convertGeneralLoad(rhs, tors, cont);
     ASSERT0(cont->get_reg(0) || cont->get_addr());
-    tors.copyDbx(IST_rhs(ir), getDbxMgr());
+    tors.copyDbx(rhs, getDbxMgr());
     ors.move_tail(tors);
-
-    tors.clean();
     if (cont->get_reg(0) != nullptr) {
-        //Generate store.
-        //Note that one should use builtStore to generate STORE with offset
-        //instead of generating code that adding offset to base if
-        //cont->get_reg(0) is not nullptr.
-        ASSERT0(cont->get_addr() == nullptr);
-        ASSERT0(ir->getTypeSize(m_tm) > 0);
-
-        IOC tc;
-        IOC_mem_byte_size(&tc) = ir->getTypeSize(m_tm);
-        m_cg->buildStore(cont->get_reg(0), addr,
-                         m_cg->genIntImm((HOST_INT)IST_ofst(ir), true),
-                         ir->is_signed(), tors.getList(), &tc);
-    } else {
-        //Generate ::memcpy.
-        ASSERT0(IST_rhs(ir)->getTypeSize(m_tm) > 8);
-
-        ASSERT0(cont->get_addr());
-        SR * srcaddr = cont->get_addr(); //save srouce addr
-        cont->clean_bottomup(); //clean outdated info included addr.
-
-        if (IST_ofst(ir) != 0) {
-            m_cg->buildAdd(addr,
-                           m_cg->genIntImm((HOST_INT)IST_ofst(ir), true),
-                           GENERAL_REGISTER_SIZE, false, tors.getList(), cont);
-            addr = cont->get_reg(0);
-            ASSERTN(addr && addr->is_reg(),
-                    ("address should be recorded in a register"));
-            cont->clean_bottomup();
-        }
-
-        m_cg->buildMemcpy(addr, srcaddr, ir->getTypeSize(m_tm),
-                          tors.getList(), cont);
+        //Generate STORE.
+        tors.clean();
+        genIStoreByRegValue(
+            ir, cont->get_reg(0), target_addr, tors, cont);
+        trySetPredRegWhenRHSIsIncompleteSelect(rhs, m_cg, tors, cont);
+        tors.copyDbx(rhs, getDbxMgr());
+        ors.move_tail(tors);
+        return;
     }
-    tors.copyDbx(ir, getDbxMgr());
-    ors.move_tail(tors);
+    //Generate function call to ::memcpy().
+    ASSERT0(rhs->getTypeSize(m_tm) > 8);
+    ASSERT0(cont->get_addr());
+    genMemcpyByAddr(ir, cont->get_addr(), target_addr, ors, cont);
 }
 
 
@@ -583,7 +695,7 @@ void IR2OR::convertCopyPR(IR const* tgt, IN SR * src,
         RecycORList tors(this);
         IOC tc;
         if (tgtx->is_reg()) {
-            ASSERT0(tgtx->getByteSize() == src->getByteSize());
+            ASSERT0(tgtx->getTotalByteSize() == src->getTotalByteSize());
             m_cg->buildMove(tgtx, src, tors.getList(), &tc);
         } else if (tgtx->is_var()) {
             IOC_mem_byte_size(&tc) = tgt->getTypeSize(m_tm);
@@ -698,6 +810,7 @@ void IR2OR::convertStoreVar(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
 {
     ASSERT0(ir != nullptr && ir->is_st());
     RecycORList tors(this);
+
     //Analyze memory-address expression.
     convertGeneralLoad(ST_rhs(ir), ors, cont);
     SR * store_val = cont->get_reg(0);
@@ -705,8 +818,9 @@ void IR2OR::convertStoreVar(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     IOC tc;
     IOC_mem_byte_size(&tc) = ir->getTypeSize(m_tm);
     ASSERT0(tc.getMemByteSize() > 0);
-    convertStoreDecompose(store_val, m_cg->genVAR(ST_idinfo(ir)),
-                          ST_ofst(ir), tors, &tc);
+    convertStoreDecompose(
+        store_val, m_cg->genVAR(ir->getIdinfo()), ir->getOffset(), tors, &tc);
+    trySetPredRegWhenRHSIsIncompleteSelect(ir->getRHS(), m_cg, tors, cont);
     tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
 }
@@ -789,7 +903,7 @@ void IR2OR::convertBitAnd(IR const* ir, OUT RecycORList & ors,
     convert(BIN_opnd0(ir), ors, &tmp);
     SR * opnd0 = tmp.get_reg(0);
     ASSERT0(opnd0 != nullptr && opnd0->is_reg() &&
-            opnd0->getByteSize() == bytesize);
+            opnd0->getTotalByteSize() == bytesize);
     ASSERT0(opnd0->getVec());
 
     //Operand1
@@ -797,7 +911,7 @@ void IR2OR::convertBitAnd(IR const* ir, OUT RecycORList & ors,
     convert(BIN_opnd1(ir), ors, &tmp);
     SR * opnd1 = tmp.get_reg(0);
     ASSERT0(opnd1 != nullptr && opnd1->is_reg() &&
-            opnd1->getByteSize() == bytesize);
+            opnd1->getTotalByteSize() == bytesize);
     ASSERT0(opnd1->getVec());
 
     //Choose an OR-type.
@@ -925,8 +1039,8 @@ void IR2OR::processRealParamsThroughRegister(IR const* ir,
                                              MOD IOC *)
 {
     RecycORList tors(this);
-    //ASSERT0(tmGetRegSetOfArgument() &&
-    //        tmGetRegSetOfArgument()->get_elem_count() != 0);
+    //ASSERT0(tmGetRegSetOfParameter() &&
+    //        tmGetRegSetOfParameter()->get_elem_count() != 0);
     for (; ir != nullptr; ir = ir->get_next()) {
         UINT irsize = ir->getTypeSize(m_tm);
         //Generate load operations.
@@ -939,7 +1053,7 @@ void IR2OR::processRealParamsThroughRegister(IR const* ir,
             argaddr = tc.get_addr();
         } else {
             argval = tc.get_reg(0);
-            ASSERT0(argval->getByteSize() >= irsize);
+            ASSERT0(argval->getTotalByteSize() >= irsize);
         }
         tc.clean();
         tors.clean();
@@ -1415,8 +1529,9 @@ void IR2OR::convertRegion(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     rg->initIRMgr();
     rg->initIRBBMgr();
     rg->getIRSimp()->simplifyIRList(&simp);
+
     //Assign Var for PR that generated by simplification.
-    rg->getMDMgr()->assignMD(true, false);
+    rg->getMDMgr()->assignMD(true, false, false);
     newcgmgr->generate(rg);
     delete newcgmgr;
 }

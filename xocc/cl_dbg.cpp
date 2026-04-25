@@ -27,6 +27,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @*/
 #include "xoccinc.h"
+#include "../com/xcominc.h"
+#include "../opt/cominc.h"
+#include "../opt/comopt.h"
+#include "../reader/reader.h"
 
 namespace xocc {
 
@@ -51,23 +55,81 @@ void CLDbxMgr::printSrcLine(xoc::Dbx const* dbx, PrtCtx * ctx)
         }
         return;
     }
-
-    if (g_hsrc != nullptr) {
-        UINT srcline = CParser::mapRealLineToSrcLine(m_cur_lineno);
-        if (srcline == DBX_UNDEF) {
-            srcline = m_cur_lineno;
-        }
-        ASSERTN(srcline < OFST_TAB_LINE_SIZE, ("unexpected src line"));
-        ::fseek(g_hsrc, g_ofst_tab[srcline], SEEK_SET);
-        if (::fgets(g_cur_line, g_cur_line_len, g_hsrc) != nullptr) {
-            if (ctx != nullptr && ctx->prefix != nullptr) {
-                note(ctx->logmgr, "\n\n%s[%u]%s",
-                     ctx->prefix, m_cur_lineno, g_cur_line);
-            } else {
-                note(ctx->logmgr, "\n\n[%u]%s", m_cur_lineno, g_cur_line);
-            }
-        }
+    if (xfe::g_hsrc != nullptr) {
+        dumpSrcLineOfC(ctx);
     }
+    if (getLexer() != nullptr) {
+        dumpSrcLineOfGR(ctx);
+    }
+}
+
+
+void CLDbxMgr::dumpSrcLineOfC(PrtCtx * ctx)
+{
+    UINT srcline = CParser::mapRealLineToSrcLine(m_cur_lineno);
+    if (srcline == DBX_UNDEF) {
+        srcline = m_cur_lineno;
+    }
+    ASSERTN(srcline < OFST_TAB_LINE_SIZE, ("unexpected src line"));
+    ::fseek(xfe::g_hsrc, g_ofst_tab[srcline], SEEK_SET);
+    if (::fgets(g_cur_line, g_cur_line_len, xfe::g_hsrc) == nullptr) {
+        return;
+    }
+    if (ctx != nullptr && ctx->prefix != nullptr) {
+        note(ctx->logmgr, "\n\n%s[%u]%s",
+             ctx->prefix, m_cur_lineno, g_cur_line);
+        return;
+    }
+    note(ctx->logmgr, "\n\n[%u]%s", m_cur_lineno, g_cur_line);
+}
+
+
+void CLDbxMgr::dumpSrcLineOfGR(PrtCtx * ctx)
+{
+    xoc::Lexer * lexer = getLexer();
+    if (lexer == nullptr) { return; }
+    if (!lexer->readMaxSrcLineByLineno(m_cur_lineno)) { return; }
+    CHAR const* linebuf = lexer->getSrcLine();
+    ASSERT0(linebuf);
+    if (ctx != nullptr && ctx->prefix != nullptr) {
+        note(ctx->logmgr, "\n\n%s[%u]%s", ctx->prefix, m_cur_lineno, linebuf);
+        return;
+    }
+    note(ctx->logmgr, "\n\n[%u]%s", m_cur_lineno, linebuf);
+}
+
+
+void CLDbxMgr::dumpSrcLineOfCToBuf(xcom::StrBuf & output, PrtCtx * ctx)
+{
+    UINT srcline = CParser::mapRealLineToSrcLine(m_cur_lineno);
+    if (srcline == DBX_UNDEF) {
+        srcline = m_cur_lineno;
+    }
+    ASSERTN(srcline < OFST_TAB_LINE_SIZE, ("unexpected src line"));
+    ::fseek(xfe::g_hsrc, g_ofst_tab[srcline], SEEK_SET);
+    if (::fgets(g_cur_line, g_cur_line_len, xfe::g_hsrc) == nullptr) {
+        return;
+    }
+    if (ctx != nullptr && ctx->prefix != nullptr) {
+        output.strcat("\n\n%s[%u]%s", ctx->prefix, m_cur_lineno, g_cur_line);
+        return;
+    }
+    output.strcat("\n\n[%u]%s", m_cur_lineno, g_cur_line);
+}
+
+
+void CLDbxMgr::dumpSrcLineOfGRToBuf(xcom::StrBuf & output, PrtCtx * ctx)
+{
+    xoc::Lexer * lexer = getLexer();
+    if (lexer == nullptr) { return; }
+    if (!lexer->readMaxSrcLineByLineno(m_cur_lineno)) { return; }
+    CHAR const* linebuf = lexer->getSrcLine();
+    ASSERT0(linebuf);
+    if (ctx != nullptr && ctx->prefix != nullptr) {
+        output.strcat("\n\n%s[%u]%s", ctx->prefix, m_cur_lineno, linebuf);
+        return;
+    }
+    output.strcat("\n\n[%u]%s", m_cur_lineno, linebuf);
 }
 
 
@@ -89,22 +151,11 @@ void CLDbxMgr::printSrcLine(xcom::StrBuf & output, Dbx const* dbx, PrtCtx * ctx)
         }
         return;
     }
-
-    if (g_hsrc != nullptr) {
-        UINT srcline = CParser::mapRealLineToSrcLine(m_cur_lineno);
-        if (srcline == DBX_UNDEF) {
-            srcline = m_cur_lineno;
-        }
-        ASSERTN(srcline < OFST_TAB_LINE_SIZE, ("unexpected src line"));
-        ::fseek(g_hsrc, g_ofst_tab[srcline], SEEK_SET);
-        if (::fgets(g_cur_line, g_cur_line_len, g_hsrc) != nullptr) {
-            if (ctx != nullptr && ctx->prefix != nullptr) {
-                output.strcat("\n\n%s[%u]%s", ctx->prefix,
-                              m_cur_lineno, g_cur_line);
-            } else {
-                output.strcat("\n\n[%u]%s", m_cur_lineno, g_cur_line);
-            }
-        }
+    if (xfe::g_hsrc != nullptr) {
+        dumpSrcLineOfCToBuf(output, ctx);
+    }
+    if (getLexer() != nullptr) {
+        dumpSrcLineOfGRToBuf(output, ctx);
     }
 }
 

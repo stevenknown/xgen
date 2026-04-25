@@ -374,7 +374,7 @@ void ARMAsmPrinter::printCodeSequentially(
     ASSERT0(ipl);
     CHAR const* format = "%s%-20s";
     CHAR const* code_indent = "";
-    DbxMgr::PrtCtx prtctx(LANG_CPP);
+    DbxMgr::PrtCtx prtctx;
     LogMgr asm_lm;
     asm_lm.push(asmh, "");
     prtctx.prefix = "#";

@@ -378,6 +378,7 @@ public:
     UINT id() const { return OR_id(this); }
     void init(DbxMgr * dbx_mgr)
     {
+        u1.s1byte = 0;
         code = OR_UNDEF;
         container = nullptr;
         clust = CLUST_UNDEF;
@@ -434,6 +435,7 @@ public:
     bool isSpadjustImm() const { return OR_code(this) == OR_spadjust_i; }
     bool isSpadjustReg() const { return OR_code(this) == OR_spadjust_r; }
     bool isSpadjust() const { return isSpadjustImm() || isSpadjustReg(); }
+
     //Return true if ir terminates the control flow.
     bool is_terminate() const { return OR_is_terminate(this); }
 
@@ -450,64 +452,66 @@ public:
     // register  |      |        |            |            |     |
     //-----------------------------------------------------------
     //'idx': index of store-values.
-    void set_store_val(SR * val, CG * cg, UINT idx)
+    void set_store_val(SR * val, CG const* cg, UINT idx)
     {
         ASSERT0(OR_is_store(this));
         set_opnd(HAS_PREDICATE_REGISTER + OFST_STORE_VAL + idx, val, cg);
     }
-    void set_first_store_val(SR * val, CG * cg) { set_store_val(val, cg, 0); }
+    void set_first_store_val(SR * val, CG const* cg)
+    { set_store_val(val, cg, 0); }
 
     //Set BASE of STORE MEMORY ADDRESS.
-    void set_store_base(SR * base, CG * cg)
+    void set_store_base(SR * base, CG const* cg)
     {
         ASSERT0(OR_is_store(this));
         set_opnd(HAS_PREDICATE_REGISTER + OFST_STORE_BASE, base, cg);
     }
 
     //Set OFFSET of BASE of STORE MEMORY ADDRESS.
-    void set_store_ofst(SR * ofst, CG * cg)
+    void set_store_ofst(SR * ofst, CG const* cg)
     {
         ASSERT0(OR_is_store(this));
         set_opnd(HAS_PREDICATE_REGISTER + OFST_STORE_OFST, ofst, cg);
     }
 
     //Set result register, default load-operation has one result.
-    void set_load_val(SR * val, CG * cg, UINT idx)
+    void set_load_val(SR * val, CG const* cg, UINT idx)
     {
         ASSERT0(OR_is_load(this));
         set_result(idx, val, cg);
     }
-    void set_first_load_val(SR * val, CG * cg) { set_load_val(val, cg, 0); }
+    void set_first_load_val(SR * val, CG const* cg)
+    { set_load_val(val, cg, 0); }
 
     //OR format is : result <- base, ofst
-    void set_load_base(SR * base, CG * cg)
+    void set_load_base(SR * base, CG const* cg)
     {
         ASSERT0(OR_is_load(this));
         set_opnd(HAS_PREDICATE_REGISTER + OFST_LOAD_BASE, base, cg);
     }
 
     //OR format is : result <- base, ofst
-    void set_load_ofst(SR * ofst, CG * cg)
+    void set_load_ofst(SR * ofst, CG const* cg)
     {
         ASSERT0(OR_is_load(this));
         set_opnd(HAS_PREDICATE_REGISTER + OFST_LOAD_OFST, ofst, cg);
     }
 
-    void set_opnd(INT i, SR * sr, CG * cg);
-    void set_result(INT i, SR * sr, CG * cg);
-    virtual void set_pred(SR * v, CG * cg) //set predicate register
+    void set_opnd(INT i, SR * sr, CG const* cg);
+    void set_result(INT i, SR * sr, CG const* cg);
+    virtual void set_pred(SR * v, CG const* cg) //set predicate register
     {
         ASSERTN(HAS_PREDICATE_REGISTER, ("target not support"));
         set_opnd(0, v, cg);
     }
 
-    virtual void set_mov_from(SR * v, CG * cg)
+    virtual void set_mov_from(SR * v, CG const* cg)
     { set_opnd(HAS_PREDICATE_REGISTER + 0, v, cg); }
 
-    virtual void set_copy_from(SR * v, CG * cg)
+    virtual void set_copy_from(SR * v, CG const* cg)
     { set_opnd(HAS_PREDICATE_REGISTER + 0, v, cg); }
 
-    virtual void set_lda_base(SR * v, CG * cg)
+    virtual void set_lda_base(SR * v, CG const* cg)
     { set_opnd(HAS_PREDICATE_REGISTER + 0, v, cg); }
 
     //Set Label operand, it should be a label SR, the default operand index
@@ -518,7 +522,7 @@ public:
     // predicate | label | ... |
     // register  |       |     |
     //-------------------------------------------------------------------------
-    virtual void setLabel(SR * v, CG * cg);
+    virtual void setLabel(SR * v, CG const* cg);
 
     //Get Label List, it should be a label-list SR, the default operand index
     //is HAS_PREDICATE_REGISTER + 0.
@@ -528,10 +532,10 @@ public:
     // predicate | label | ... |
     // register  | list  |     |
     //-------------------------------------------------------------------------
-    virtual void setLabelList(SR * v, CG * cg);
-    virtual void set_lda_result(SR * v, CG * cg) { set_result(0, v, cg); }
-    virtual void set_mov_to(SR * v, CG * cg) { set_result(0, v, cg); }
-    virtual void set_copy_to(SR * v, CG * cg) { set_result(0, v, cg); }
+    virtual void setLabelList(SR * v, CG const* cg);
+    virtual void set_lda_result(SR * v, CG const* cg) { set_result(0, v, cg); }
+    virtual void set_mov_to(SR * v, CG const* cg) { set_result(0, v, cg); }
+    virtual void set_copy_to(SR * v, CG const* cg) { set_result(0, v, cg); }
 };
 
 typedef List<OR const*> ConstORList;
@@ -567,7 +571,7 @@ public:
 
     void dump(CG const* cg) const;
 
-    void set_pred(IN SR * pred, CG * cg)
+    void set_pred(IN SR * pred, CG const* cg)
     {
         ASSERT0(pred);
         for (OR * o = get_head(); o != nullptr; o = get_next()) {
@@ -619,7 +623,7 @@ protected:
     xcom::List<OR*> m_free_or_list;
 protected:
     //Alllocate memory of OR.
-    virtual OR * allocOR(CG * cg);
+    virtual OR * allocOR(CG const* cg);
 public:
     ORMgr(SRMgr * srmgr) { m_pool = nullptr; init(srmgr); }
     virtual ~ORMgr() { destroy(); }
@@ -638,7 +642,7 @@ public:
     void freeSR(OR * o);
 
     //Generate OR object.
-    OR * genOR(OR_CODE ort, CG * cg);
+    OR * genOR(OR_CODE ort, CG const* cg);
     SMemPool * get_pool() const { return m_pool; }
     OR * getOR(UINT id);
 
@@ -682,7 +686,7 @@ public:
     ORList & getList() const { return *m_entity; }
     UINT get_elem_count() const { return m_entity->get_elem_count(); }
 
-    void set_pred(IN SR * pred, CG * cg) { m_entity->set_pred(pred, cg); }
+    void set_pred(IN SR * pred, CG const* cg) { m_entity->set_pred(pred, cg); }
 };
 
 

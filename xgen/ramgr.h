@@ -54,12 +54,10 @@ protected:
     //Supply callee-saved regs usage information for Asm effect.
     RegSet m_lra_asmclobber_callee_saved_reg[RF_NUM];
     Var2OR m_var2or_map;
-
 protected:
     void postProcessFunc();
     void * xmalloc(INT size);
     void cleanVar2OR();
-
 public:
     RaMgr(List<ORBB*> * bbs, bool is_func, CG * cg);
     virtual ~RaMgr() { destroy(); }
@@ -85,6 +83,7 @@ public:
         ASSERT0(rf < RF_NUM);
         return &m_lra_used_callee_saved_reg[rf];
     }
+    TargInterface * getTargInterface() const;
 
     virtual void init(List<ORBB*> * bbs, bool is_func, CG * cg);
 

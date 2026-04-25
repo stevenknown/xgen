@@ -31,32 +31,6 @@ author: Su Zhenyu
 #ifndef _ARM_LINEAR_SCAN_H_
 #define _ARM_LINEAR_SCAN_H_
 
-class ARMRegSetImpl : public RegSetImpl {
-    COPY_CONSTRUCTOR(ARMRegSetImpl);
-protected:
-    //Get the type of callee-save register.
-    virtual Type const* getCalleeRegisterType(
-        Reg r, TypeMgr * tm) const override
-    {
-        ASSERT0(isCallee(r) && tm != nullptr);
-        return isCalleeScalar(r) ? tm->getTargMachRegisterType() :
-            tm->getTargMachMaxVectorRegisterType();
-    }
-
-    //Return true if Type matches the register type.
-    virtual bool isRegTypeMatch(Type const* ty, Reg r) const override
-    {
-        ASSERT0(ty->is_vector() || ty->is_int() || ty->is_fp() || ty->is_any());
-        return (ty->is_vector() && isVector(r)) ||
-            (!ty->is_vector() && (isCalleeScalar(r) || isCallerScalar(r)));
-    }
-    void initRegSet();
-    virtual void initDebugRegSet();
-public:
-    ARMRegSetImpl(LinearScanRA & ra) : RegSetImpl(ra) { initRegSet(); }
-};
-
-
 //
 //Start ARMLTConstraintsStrategy.
 //
@@ -112,7 +86,7 @@ public:
 class ARMLinearScanRA : public LinearScanRA {
     COPY_CONSTRUCTOR(ARMLinearScanRA);
 protected:
-    virtual RegSetImpl * allocRegSetImpl() { return new ARMRegSetImpl(*this); }
+    virtual RegSetImpl * allocRegSetImpl() { return new ARMRegSetImpl(m_rg); }
 
     //Allocate memory for the lifetime constraint set strategy
     //for ARM architecture.
@@ -124,14 +98,6 @@ protected:
 public:
     ARMLinearScanRA(Region * rg) : LinearScanRA(rg) {}
     virtual ~ARMLinearScanRA() {}
-
-    virtual bool isTmpRegAvailable(Type const* ty) const override
-    {
-        ASSERT0(ty);
-        return getTempScalar(ty) != REG_UNDEF &&
-            (ty->is_scalar() || ty->is_pointer() || ty->is_any());
-    }
-
 };
 
 #endif

@@ -71,6 +71,12 @@ IR2OR * ARMCG::allocIR2OR()
 {
     return new ARMIR2OR(this);
 }
+
+
+TargInterface * ARMCG::allocTargInterface()
+{
+    return new ARMTargInterface();
+}
 //END ARMCG
 
 
@@ -469,7 +475,7 @@ void ARMCG::buildLoad(IN SR * load_val, IN SR * base, IN SR * ofst,
     }
     if (cont->getMemByteSize() <= BYTESIZE_OF_DWORD) {
         OR * o = genOR(OR_ldrd);
-        ASSERT0(load_val->getByteSize() == BYTESIZE_OF_DWORD);
+        ASSERT0(load_val->getTotalByteSize() == BYTESIZE_OF_DWORD);
         ASSERT0(load_val->is_vec());
         ASSERT0(load_val->getVec()->get(0) && load_val->getVec()->get(1));
         o->set_load_val(load_val->getVec()->get(0), this, 0);
@@ -691,7 +697,7 @@ void ARMCG::buildStoreFor8Byte(
 
     //Generate memory-store operation.
     OR * o = genOR(code);
-    ASSERT0(store_val->getByteSize() == BYTESIZE_OF_DWORD);
+    ASSERT0(store_val->getTotalByteSize() == BYTESIZE_OF_DWORD);
     ASSERT0(store_val->is_vec());
     ASSERT0(store_val->getVec()->get(0) &&
             store_val->getVec()->get(1));
@@ -888,7 +894,7 @@ void ARMCG::buildStore(IN SR * store_val, IN SR * base, IN SR * ofst,
         return;
     }
     if (cont->getMemByteSize() <= BYTESIZE_OF_DWORD) {
-        ASSERT0(store_val->getByteSize() == BYTESIZE_OF_DWORD);
+        ASSERT0(store_val->getTotalByteSize() == BYTESIZE_OF_DWORD);
         ASSERT0(store_val->is_vec());
         ASSERT0(store_val->getVec()->get(0) && store_val->getVec()->get(1));
         if (!CG::isValidRegInSRVec(store_val->getVec(), true)) {
@@ -942,7 +948,7 @@ void ARMCG::buildCopyPred(
 void ARMCG::buildMemAssignBySize(
     SR * tgt, SR * src, UINT bytesize, OUT ORList & ors, MOD IOC * cont)
 {
-    ASSERT0(bytesize <= src->getByteSize());
+    ASSERT0(bytesize <= src->getTotalByteSize());
     SR * loadval = nullptr;
     if (bytesize == 3) {
         IOC tc;
@@ -984,8 +990,8 @@ void ARMCG::buildMemAssignBySize(
 void ARMCG::buildMemAssign(
     SR * tgt, SR * src, OUT ORList & ors, MOD IOC * cont)
 {
-    ASSERT0(tgt->getByteSize() == src->getByteSize());
-    buildMemAssignBySize(tgt, src, src->getByteSize(), ors, cont);
+    ASSERT0(tgt->getTotalByteSize() == src->getTotalByteSize());
+    buildMemAssignBySize(tgt, src, src->getTotalByteSize(), ors, cont);
 }
 
 
@@ -1059,7 +1065,7 @@ void ARMCG::buildMemAssignLoop(
     buildLabel(SR_label(loop_start_lab), ors, &tc);
 
     //3. x = [src]
-    IOC_mem_byte_size(&tc) = src->getByteSize();
+    IOC_mem_byte_size(&tc) = src->getTotalByteSize();
     tc.clean_bottomup();
     //Regard memory assignment as unsigned operation.
     buildGeneralLoad(src, 0, false, ors, &tc);
@@ -1068,11 +1074,11 @@ void ARMCG::buildMemAssignLoop(
     ASSERT0(srt1 && srt1->is_reg());
 
     //4. [tgt] = x
-    IOC_mem_byte_size(&tc) = src->getByteSize();
+    IOC_mem_byte_size(&tc) = src->getTotalByteSize();
     buildStore(srt1, tgt, genZero(), false, ors, &tc);
 
-    ASSERT0(GENERAL_REGISTER_SIZE == src->getByteSize());
-    ASSERT0(GENERAL_REGISTER_SIZE == tgt->getByteSize());
+    ASSERT0(GENERAL_REGISTER_SIZE == src->getTotalByteSize());
+    ASSERT0(GENERAL_REGISTER_SIZE == tgt->getTotalByteSize());
 
     //5. src = src + GENERAL_REGISTER_SIZE
     tc.clean_bottomup();

@@ -140,6 +140,7 @@ protected:
     xcom::Vector<ParallelPartMgr*> * m_ppm_vec; //Record parallel part for CG.
     SR * m_param_pointer;
     xcom::SMemPool * m_pool;
+    TargInterface * m_targ_interface;
 
     //Mapping from STORE/LOAD operation to the target address.
     List<ORBB*> m_or_bb_list; //descripting all basic blocks of the region.
@@ -246,6 +247,7 @@ public:
     void assembleSRVec(SRVec * srvec, SR * sr1, SR * sr2);
     virtual IR2OR * allocIR2OR() = 0;
     virtual ORCFG * allocORCFG();
+    virtual TargInterface * allocTargInterface();
     virtual IssuePackageMgr * allocIssuePackageMgr();
     virtual RaMgr * allocRaMgr(List<ORBB*> * bblist, bool is_func);
 
@@ -699,7 +701,7 @@ public:
                                                 OUT ORList & ors);
     void generateFuncUnitDedicatedCode();
 
-    DbxMgr * getDbxMgr() { ASSERT0(m_dbx_mgr); return m_dbx_mgr; }
+    DbxMgr * getDbxMgr() const { ASSERT0(m_dbx_mgr); return m_dbx_mgr; }
     ORCFG * getORCFG() const { return m_or_cfg; }
     xoc::TypeMgr * getTypeMgr() const { return m_tm; }
     xoc::VarMgr * getVarMgr() const { return m_vm; }
@@ -727,12 +729,12 @@ public:
         return nullptr;
     }
 
-    virtual RegFileSet const* getValidRegfileSet(OR_CODE orcode, UINT idx,
-                                                 bool is_result) const;
-    virtual RegSet const* getValidRegSet(OR_CODE orcode, UINT idx,
-                                         bool is_result) const;
-    SRMgr * getSRMgr() { return m_cgmgr->getSRMgr(); }
-    ORMgr * getORMgr() { return m_cgmgr->getORMgr(); }
+    virtual RegFileSet const* getValidRegfileSet(
+        OR_CODE orcode, UINT idx, bool is_result) const;
+    virtual RegSet const* getValidRegSet(
+        OR_CODE orcode, UINT idx, bool is_result) const;
+    SRMgr * getSRMgr() const { return m_cgmgr->getSRMgr(); }
+    ORMgr * getORMgr() const { return m_cgmgr->getORMgr(); }
     SRVecMgr * getSRVecMgr() { return m_cgmgr->getSRVecMgr(); }
     IssuePackageListVector * getIssuePackageListVec() { return &m_ipl_vec; }
     IssuePackageMgr * getIssuePackageMgr() { return &m_ip_mgr; }
@@ -743,9 +745,11 @@ public:
     //Generate and return the mask code that used to reserved the lower
     //'bytesize' bytes.
     static HOST_UINT getMaskByByte(UINT bytesize);
+    TargInterface * getTargInterface() const { return m_targ_interface; }
 
     void flattenInVec(SR * argval, Vector<SR*> * vec);
 
+    void initTargInterface();
     virtual void initFuncUnit();
     //Generate dedicated SR for subsequent use.
     virtual void initDedicatedSR();
@@ -806,12 +810,14 @@ public:
     bool isReturnValueSR(SR const* sr) const
     {
         return sr->getPhyReg() != REG_UNDEF &&
-               tmGetRegSetOfReturnValue()->is_contain(sr->getPhyReg());
+            getTargInterface()->tmGetRegSetOfReturnValue()->is_contain(
+            sr->getPhyReg());
     }
     bool isArgumentSR(SR const* sr) const
     {
         return sr->getPhyReg() != REG_UNDEF &&
-               tmGetRegSetOfArgument()->is_contain(sr->getPhyReg());
+            getTargInterface()->tmGetRegSetOfParameter()->is_contain(
+            sr->getPhyReg());
     }
     bool isDedicatedSR(SR const* sr) const
     { return SR_is_dedicated(sr) || isReturnValueSR(sr); }

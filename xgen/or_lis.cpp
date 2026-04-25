@@ -151,8 +151,8 @@ bool LIS::isIssueCand(OR const* o) const
 
 
 //Check the usage of function unit.
-bool LIS::isFuncUnitOccupied(UnitSet const& us, CLUST clst,
-                             OR const* const issue_ors [SLOT_NUM]) const
+bool LIS::isSlotOccupied(UnitSet const& us, CLUST clst,
+                         OR const* const issue_ors [SLOT_NUM]) const
 {
     for (BSIdx i = us.get_first(); i != BS_UNDEF; i = us.get_next(i)) {
         SLOT s = m_cg->mapUnit2Slot((UNIT)i, clst);
@@ -181,7 +181,7 @@ bool LIS::makeIssued(OR * o,
     bool need_change_slot = false;
     if (m_cg->computeORSlot(o) != to_slot ||
         !us->is_contain(to_slot_unit) ||
-        isFuncUnitOccupied(*us, or_clst, issue_ors)) {
+        isSlotOccupied(*us, or_clst, issue_ors)) {
         //'o' required function unit has been occupied.
         need_change_slot = true;
     }

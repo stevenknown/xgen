@@ -486,6 +486,7 @@ public:
     virtual ORId2SR * getGSRLiveinSpill();
     virtual ORId2SR * getGSRLiveoutReload();
     virtual RegSet * getGRAUsedReg();
+    TargInterface * getTargInterface() const;
 
     //Record the preference register information at neighbour life time.
     virtual void handlePreferredReg(OR const*)
@@ -695,6 +696,8 @@ protected:
                                      IN ORList & followed_lds,
                                      IN LifeTimeMgr & mgr,
                                      IN InterfGraph & ig);
+
+    TargInterface * getTargInterface() const;
 
     bool hoistSpillLocForStore(IN OR * o, IN InterfGraph & ig,
                                IN LifeTimeMgr & mgr, MOD DataDepGraph & ddg,

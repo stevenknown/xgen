@@ -69,8 +69,8 @@ public:
     virtual List<ORBB*> * getBBList();
     virtual void get_preds(MOD List<ORBB*> & preds, ORBB const* bb);
     virtual void get_succs(MOD List<ORBB*> & succs, ORBB const* bb);
-    OR * get_first_xr(ORBB * bb);
-    OR * get_last_xr(ORBB * bb);
+    OR * get_first_xr(ORBB const* bb);
+    OR * get_last_xr(ORBB const* bb);
     CG * getCG() const { return m_cg; }
 
     virtual bool isRegionEntry(ORBB * bb) const { return ORBB_is_entry(bb); }

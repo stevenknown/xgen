@@ -137,12 +137,12 @@ bool SR::is_equal(SR const* sr)
 
 //Present the bytesize that is equal to the accumulation of the
 //bytesize of each register-element in 'm_sr_vec'.
-UINT SR::getByteSize() const
+UINT SR::getTotalByteSize() const
 {
     if (is_vec()) {
         return SR_vec(this)->get_elem_count() * GENERAL_REGISTER_SIZE;
     }
-    return GENERAL_REGISTER_SIZE;
+    return getRegByteSize();
 }
 //END SR
 

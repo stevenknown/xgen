@@ -45,7 +45,6 @@ public:
     OR * o;
     INT start_cyc; //cycles which start executing.
     ORScheInfo const* or_info;
-
 public:
     INT getStartCycle() const { return ORDESC_start_cyc(this); }
     ORScheInfo const* getScheInfo() const { return ORDESC_sche_info(this); }
