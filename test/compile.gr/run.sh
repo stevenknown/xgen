@@ -53,167 +53,64 @@ xocc_path="../../src/xocc/xocc.exe"
 
 #### FOLLOW TEST IS DISABLE BOTH VECT AND LSRA ##########################################
 perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -no-migen -no-lsra -no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
 fi
 perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
 fi
 perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
 fi
 perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -lowest_height -no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
 fi
 perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -lowest_height -no-vect -prmode -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
 fi
 perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -nonprdu -prdu -mdssa -prssa -no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
 fi
 perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -lowest_height -nonprdu -prdu -mdssa -prssa -no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
 fi
 perl run.pl Targ = arm XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -lowest_height -nonprdu -prdu -mdssa -prssa -no-vect -prmode -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
 fi
-
-#### FOLLOW TEST IS DISABLE BOTH VECT AND LSRA ##########################################
-perl run.pl Targ = arm Dir = no_classic_prdu XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -no-migen -no-lsra -no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
-fi
-perl run.pl Targ = arm Dir = no_classic_prdu XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
-fi
-perl run.pl Targ = arm Dir = no_classic_prdu XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
-fi
-perl run.pl Targ = arm Dir = no_classic_prdu XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -lowest_height -no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
-fi
-perl run.pl Targ = arm Dir = no_classic_prdu XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -lowest_height -no-vect -prmode -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
-fi
-perl run.pl Targ = arm Dir = no_classic_prdu XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -nonprdu -prdu -mdssa -prssa -no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
-fi
-perl run.pl Targ = arm Dir = no_classic_prdu XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -lowest_height -nonprdu -prdu -mdssa -prssa -no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
-fi
-perl run.pl Targ = arm Dir = no_classic_prdu XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -lowest_height -nonprdu -prdu -mdssa -prssa -no-vect -prmode -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
-fi
-
-#### FOLLOW TEST IS DISABLE BOTH VECT AND LSRA ##########################################
 perl run.pl Targ = arm Dir = nocg XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-no-cg -no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
 fi
 perl run.pl Targ = arm Dir = nocg XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -no-cg -no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
 fi
 perl run.pl Targ = arm Dir = nocg XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -lowest_height -no-cg -no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
 fi
 perl run.pl Targ = arm Dir = nocg XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -lowest_height -no-cg -no-vect -prmode -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
 fi
 perl run.pl Targ = arm Dir = nocg XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -nonprdu -prdu -mdssa -prssa -no-cg -no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
 fi
 perl run.pl Targ = arm Dir = nocg XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -lowest_height -nonprdu -prdu -mdssa -prssa -no-cg -no-vect -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
 fi
 perl run.pl Targ = arm Dir = nocg XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -lowest_height -nonprdu -prdu -mdssa -prssa -no-cg -no-vect -prmode -no-lsra"
-res=$?
-if [ $res -ne 0 ];
-then
-  echo "EXECUTE PERL FAILED, ERROR CODE = $res"
-  exit 1
+if [ $? -ne 0 ]; then  echo "EXECUTE PERL FAILED, ERROR CODE = $?"  exit 1
+fi
+
+##### THE FOLLOWED CASE DO NOT PERFORM CLASSIC_DU #####
+perl run.pl Targ = arm Dir = no_classic_prdu XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -no-migen -no-lsra -no-vect -no-lsra -no-cg"
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
+fi
+perl run.pl Targ = arm Dir = no_classic_prdu XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-no-vect -no-lsra -no-cg"
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
+fi
+perl run.pl Targ = arm Dir = no_classic_prdu XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -no-vect -no-lsra -no-cg"
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
+fi
+perl run.pl Targ = arm Dir = no_classic_prdu XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -lowest_height -no-vect -no-lsra -no-cg"
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
+fi
+perl run.pl Targ = arm Dir = no_classic_prdu XoccPath = $xocc_path NoAsm NoLink NoRun XoccFlag = "-O3 -lowest_height -no-vect -prmode -no-lsra -no-cg"
+if [ $? -ne 0 ]; then echo "EXECUTE PERL FAILED, ERROR CODE = $?" exit 1
 fi

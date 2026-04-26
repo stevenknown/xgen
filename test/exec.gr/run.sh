@@ -1,5 +1,6 @@
 xocc_path="../xocc/xocc.exe"
 
+### ONLY COMPILE ALL CASES ###
 perl run.pl Targ = arm XoccPath = $xocc_path CompareDumpIfExist NotQuitEarly NoAsm XoccFlag = "-no-vect -no-lsra"
 if [ $? -ne 0 ]; then
   echo "EXECUTE PERL FAILED, ERROR CODE = $?"

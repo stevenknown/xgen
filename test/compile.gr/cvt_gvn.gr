@@ -19,7 +19,7 @@ region program ".program" () {
         stpr $j:i32 = add $j:i32, $i:i64;
         goto "_$L1";
         label "_$L2";
-        stpr $s3:u32 = cvt:u32 $y:i64;
+        stpr $s3:u32 = cvt:u32 $y:i32;
         return $s3:i32 ;
     };
 }

@@ -45,11 +45,19 @@ sub main
     }
     $g_is_quit_early = 0;
     my @subdirlist = (
-        'builtin',
-        'compile',
-        'compile.gr',
+        '8cc-master',
+        '9cc',
         'exec',
         'exec.gr',
+        'compile.gr',
+        'compile',
+        'chibicc-main',
+        'builtin',
+        #'compile.gr.pcx',
+        #'api',
+        #'xcom',
+        #'tutorial_input',
+        #'llm.c-master',
     );
     foreach my $subdir (@subdirlist) {
         print "\nENTER DIRECTORY>>$subdir\n";
@@ -66,7 +74,8 @@ sub main
 sub execPerl
 {
     my $curdir = getCurDir();
-    my $cmdline = "sh run.sh";
+    #my $cmdline = "sh run.sh";
+    my $cmdline = "sh run_no_cg.sh";
     if (!$g_is_debug) {
         $cmdline = "sh run_release.sh";
     }

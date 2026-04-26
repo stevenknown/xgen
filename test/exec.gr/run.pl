@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-
 use Cwd;
 use File::Find;
 use File::Copy;
@@ -12,6 +11,7 @@ our $g_is_create_base_result;
 our $g_is_move_passed_case;
 our $g_is_test_gr;
 our $g_is_input_gr;
+our $g_is_invoke_cpp;
 our $g_is_invoke_assembler;
 our $g_is_invoke_linker;
 our $g_is_invoke_simulator;
@@ -30,19 +30,24 @@ our $g_ld;
 our $g_ld_flag;
 our $g_simulator;
 our $g_cflags;
+our $g_ldflags;
 our $g_error_count;
 our $g_single_directory; #record the single directory
 our $g_succ;
 our $g_fail;
+our $g_is_compare_dump;
+our $g_is_basedumpfile_must_exist;
 require "../util.pl";
 prolog();
 main();
 #############################################################
 sub main
 {
-    # mkpath(["log"]);
-    # clean();
-    tryCompileAsmLinkRunCompare($g_is_test_gr);
+    $g_is_invoke_cpp = 0;
+    $g_is_input_gr = 1;
+    #Set $g_is_test_gr to true to generate GR and compile GR to asm, then
+    #compare the latest output with the base result.
+    tryCompile();
     if ($g_error_count != 0) {
         print "\nThere are $g_error_count error occurred!\n";
         abort(); #always quit immediately.
@@ -51,11 +56,9 @@ sub main
     return $g_succ;
 }
 
-sub tryCompileAsmLinkRunCompare
+
+sub tryCompile
 {
-    #Set $is_test_gr to true to generate GR and compile GR to asm, then compare
-    #the latest output with the base result.
-    my $is_test_gr = $_[0];
     my $curdir = getcwd;
     if ($g_single_directory ne "") {
         $curdir .= "/".$g_single_directory;
@@ -73,120 +76,127 @@ sub tryCompileAsmLinkRunCompare
     } else {
         @f = findCurrent($curdir, 'gr');
     }
-    if ($g_is_create_base_result == 1) {
-        createBaseResultOutputFile($curdir, \@f);
-    }
-    compileLinkRunForFileList($curdir, $is_test_gr, \@f);
+    compileFileList($curdir, \@f);
 }
 
-sub createBaseResultOutputFile
+
+sub compileFileList
 {
     my $curdir = $_[0];
     my @filelist = @{$_[1]};
-
-    #Generate base-output log.
     foreach (@filelist) {
-        chomp;
-        my $fullpath = $_;
-        #The baseline result file.
-        my $base_output = getBaseOutputFilePath($fullpath);
-        if (!-e $base_output) {
-            #Generate baseline output result if it does not exist.
-            if ($g_target eq "arm" || $g_target eq "armhf") {
-                runBaseccToolChainToComputeBaseResult($fullpath,
-                                                      $base_output, $curdir);
-            } else {
-                print "\nUNKNOWN TARGET: $g_target!\n";
-                abortex();
-            }
-         }
-    }
-}
-
-sub compileLinkRunForFileList
-{
-    my $curdir = $_[0];
-    my $is_test_gr = $_[1];
-    
-    #Method1 to ref array argument:
-    #my $filelist = $_[2];
-    #my $firstfile = $filelist->[0];
-    #foreach (@$filelist) {
-    
-    #Method2 to ref array argument:
-    my @filelist = @{$_[2]};
-    my $firstfile = $filelist[0];
-    foreach (@filelist) {
+        $g_error_count = 0; #initialize error counter.
         chomp;
         my $filename = getFileNameFromPath($_);
-        my $fullpath = $curdir."/".$filename; 
+        my $fullpath = $curdir."/".$filename;
         print "\n-------------------------------------------";
-        my $org_cflags = $g_cflags;
-        extractAndSetCflag($fullpath);
-        runXOCC($fullpath, $g_is_invoke_assembler, $g_is_invoke_linker,
-                $g_is_input_gr);
-        $g_cflags = $org_cflags;
-
-        if ($is_test_gr == 1) {
-            generateGRandCompile($fullpath);
-        }
-
-        if ($g_is_invoke_simulator) {
-            run($curdir, $fullpath);
-        }
-
-        if ($g_is_move_passed_case == 1) {
+        compileAssembleLinkRunFile($fullpath, $curdir);
+        if ($g_single_testcase eq "" && $g_is_move_passed_case == 1) {
+            #Do NOT move to passed if there is just a singlecase.
             moveToPassed($fullpath);
         }
     }
 }
 
-sub run
+
+sub compileAssembleLinkRunFile
 {
-    my $curdir = $_[0];
-    my $fullpath = $_[1];
+    my $fullpath = $_[0];
+    my $curdir = $_[1];
+    my $base_output_path = getBaseOutputFilePath($fullpath);
+    my $fullexepath = compileFile($fullpath);
+    if ($g_is_test_gr == 1) {
+        generateGRandCompile($fullexepath);
+    }
+    if ($g_is_invoke_simulator) {
+        runSimAndCompareResult($curdir, $fullexepath, $base_output_path);
+    }
+}
 
-    #The new result file.
-    my $xocc_output = getOutputFilePath($fullpath);
-    my $rundir = computeDirFromFilePath($fullpath);
 
-    invokeSimulator($fullpath, $curdir, $xocc_output, $rundir);
+sub compileFile
+{
+    my $fullpath = $_[0];
 
-    if (!$g_is_compare_result) {
-        return;
+    #Save original flags.
+    my $org_cflags = $g_cflags;
+    my $org_ldflags = $g_ldflags;
+    
+    #Extract customized CFLAG from configure file.
+    extractAndSetCflag($fullpath);
+
+    #Extract customized LDFLAG from configure file.
+    extractAndSetLDflag($fullpath);
+
+    #Try add dump file path to g_cflags.
+    if ($g_is_create_base_result == 1 or $g_is_compare_dump == 1) {
+        #Add the dump file path to flags of xocc.exe.
+        my $dump_file = getDumpFilePath($fullpath);
+        $g_cflags = $g_cflags." -dump $dump_file ";
+        unlink($dump_file);
     }
 
-    #The baseline result file.
-    my $base_output = getBaseOutputFilePath($fullpath);
+    #Running CPP.
+    my $fullpathaftercpp = tryRunCpp($fullpath);
 
+    #Running XOCC.
+    my $ret_exename = "";
+    runXOCC($fullpathaftercpp, $g_is_invoke_assembler,
+            $g_is_invoke_linker, $g_is_input_gr, \$ret_exename);
+    print "\nRETURNED_EXENAME:'$ret_exename'\n";
+
+    #Restore original flags.
+    $g_cflags = $org_cflags;
+    $g_ldflags = $org_ldflags;
+    return $ret_exename;
+    #return $fullpathaftercpp;
+}
+
+
+sub runSimAndCompareResult
+{
+    my $curdir = $_[0];
+    my $fullexepath = $_[1];
+    my $base_output_path = $_[2];
+
+    #The new result output file.
+    my $xocc_output = getOutputFilePath($fullexepath);
+    my $rundir = computeDirFromFilePath($fullexepath);
+    my $res = invokeSimulator($fullexepath, $curdir, $xocc_output, $rundir);
+    tryShowOutput($xocc_output);
+    if ($res != $g_succ) {
+        abortex("EXECUTE:invokeSimulator FAILED!!");
+    }
+    if (!$g_is_compare_result) { return; }
+
+    #The baseline result output file.
     if ($g_target eq "apc") {
         #Remove the first 2 redundant lines dumped by apc simulator.
         removeLine($g_xoc_root_path, $xocc_output, 2);
     }
-
     if ($rundir ne $curdir) {
         chdir $curdir;
     }
-
-    if (!-e $base_output) {
+    if (!-e $base_output_path) {
+        #Baseline output file does not exist.
         if ($g_is_baseresultfile_must_exist) {
-            #Baseline output result does not exist.
-            print "\nBASE OUTPUT OF $fullpath NOT EXIST!\n";
+            #Baseline output file is necessary.
+            print "\nBASE OUTPUT OF $fullexepath NOT EXIST!\n";
             abortex();
         }
         return;
     }
 
-    #Compare baseline output and xocc.exe's output.
-    print("\nCMD>>compare $base_output $xocc_output\n");
-    if (compare($base_output, $xocc_output) == 0) {
+    #Compare baseline output file and testcase binary's output file.
+    print("\nCMD>>compare $base_output_path $xocc_output\n");
+    if (compare($base_output_path, $xocc_output) == 0) {
         #New result is euqal to baseline result.
         #New result is correct.
         print "\nPASS!\n";
     } else {
         #Not equal
         #New result is incorrect!
-        print "\nCOMPARE RESULT OF $fullpath FAILED! NOT EQUAL TO BASE RESULT!\n";
+        print "\nCOMPARE RESULT OF $fullexepath FAILED! NOT EQUAL TO BASE RESULT!\n";
         abortex();
     }
 }

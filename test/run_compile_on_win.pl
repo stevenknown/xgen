@@ -46,11 +46,19 @@ sub main
     }
     $g_is_quit_early = 0;
     my @subdirlist = (
-        'builtin',
         'compile',
         'compile.gr',
+        'compile.gr.pcx',
         'exec',
         'exec.gr',
+        'builtin',
+        'chibicc-main',
+        '9cc',
+        '8cc-master',
+        'tutorial_input',
+        #'xcom',
+        #'api',
+        #'llm.c-master',
     );
     foreach my $subdir (@subdirlist) {
         print "\nENTER DIRECTORY>>$subdir\n";

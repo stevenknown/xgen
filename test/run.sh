@@ -1,1 +1,1 @@
-perl run_on_linux.pl debug
+perl run_compile_on_linux.pl debug

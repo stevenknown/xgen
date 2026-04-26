@@ -8,7 +8,7 @@
 void abort();
 void exit(int);
 void * memset(void * s, int c, unsigned long n);
-
+int printf(char const*,...);
 static union {
   char buf[sizeof(long long) + 15 + sizeof(long long)];
   long long align_int;
@@ -49,7 +49,6 @@ int main ()
   int off;
   char *p;
   A = 'A';
-
   /* len == 1 */
   for (off = 0; off < sizeof(long long); off++)
     {

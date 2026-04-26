@@ -11,7 +11,9 @@ use strict;
 our $g_is_create_base_result;
 our $g_is_move_passed_case;
 our $g_is_test_gr;
+our $g_is_show_output;
 our $g_is_input_gr;
+our $g_is_invoke_cpp;
 our $g_is_invoke_assembler;
 our $g_is_invoke_linker;
 our $g_is_invoke_simulator;
@@ -41,8 +43,8 @@ main();
 #############################################################
 sub main
 {
-    # mkpath(["log"]);
-    # clean();
+    $g_is_invoke_cpp = 1;
+    $g_is_input_gr = 0;
     #Set $g_is_test_gr to true to generate GR and compile GR to asm, then
     #compare the latest output with the base result.
     tryCompile();
@@ -50,41 +52,112 @@ sub main
         print "\nThere are $g_error_count error occurred!\n";
         abort(); #always quit immediately.
     }
-    #tryCompileAsmLinkRunCompare();
-    #if ($g_error_count != 0) {
-    #    print "\nThere are $g_error_count error occurred!\n";
-    #    abort(); #always quit immediately.
-    #}
     print "\nTEST FINISH!\n";
     return $g_succ;
 }
 
-sub createBaseResultOutputFile
+
+sub tryCompile
 {
-    my $curdir = $_[0];
-    my @filelist = @{$_[1]};
+    my $curdir = getcwd;
     if ($g_single_directory ne "") {
         $curdir .= "/".$g_single_directory;
     }
+    #Collect files that need to test.
+    my @f;
+    if ($g_single_testcase ne "") {
+        if ($g_is_recur) {
+            @f = findFileRecursively($curdir, $g_single_testcase);
+        } else {
+            @f = findFileCurrent($curdir, $g_single_testcase);
+        }
+    } elsif ($g_single_directory ne "") {
+    	if ($g_is_recur) {
+        	@f = findRecursively($g_single_directory, 'c');
+        } else {
+        	@f = findCurrent($g_single_directory, 'c');
+        }
+    } elsif ($g_is_recur) {
+        @f = findRecursively($curdir, 'c');
+    } else {
+        @f = findCurrent($curdir, 'c');
+    }
+    compileFileList($curdir, \@f);
+}
 
-    #Generate base-output log.
+
+sub compileFileList
+{
+    my $curdir = $_[0];
+    my @filelist = @{$_[1]};
     foreach (@filelist) {
+        $g_error_count = 0; #initialize error counter.
         chomp;
-        my $fullpath = $_;
-        #The baseline result file.
-        my $base_output = getBaseOutputFilePath($fullpath);
-        if (!-e $base_output) {
-            #Generate baseline output result if it does not exist.
-            if ($g_target eq "arm" || $g_target eq "armhf") {
-                runBaseccToolChainToComputeBaseResult($fullpath,
-                                                      $base_output, $curdir);
-            } else {
-                print "\nUNKNOWN TARGET: $g_target!\n";
-                abortex();
-            }
-         }
+        my $filename = getFileNameFromPath($_);
+        my $fullpath = $curdir."/".$filename;
+        print "\n-------------------------------------------";
+        compileAssembleLinkRunFile($fullpath, $curdir);
+        if ($g_single_testcase eq "" && $g_is_move_passed_case == 1) {
+            #Do NOT move to passed if there is just a singlecase.
+            moveToPassed($fullpath);
+        }
     }
 }
+
+
+sub compileAssembleLinkRunFile
+{
+    my $fullpath = $_[0];
+    my $curdir = $_[1];
+    my $base_output_path = getBaseOutputFilePath($fullpath);
+    my $fullexepath = compileFile($fullpath);
+    if ($g_is_test_gr == 1) {
+        generateGRandCompile($fullexepath);
+    }
+    if ($g_is_invoke_simulator) {
+        runSimAndCompareResult($curdir, $fullexepath, $base_output_path);
+    }
+}
+
+
+sub compileFile
+{
+    my $fullpath = $_[0];
+
+    #Save original flags.
+    my $org_cflags = $g_cflags;
+    my $org_ldflags = $g_ldflags;
+    
+    #Extract customized CFLAG from configure file.
+    extractAndSetCflag($fullpath);
+
+    #Extract customized LDFLAG from configure file.
+    extractAndSetLDflag($fullpath);
+
+    #Try add dump file path to g_cflags.
+    if ($g_is_create_base_result == 1 or $g_is_compare_dump == 1) {
+        #Add the dump file path to flags of xocc.exe.
+        my $dump_file = getDumpFilePath($fullpath);
+        $g_cflags = $g_cflags." -dump $dump_file ";
+        unlink($dump_file);
+    }
+
+    #Running CPP.
+    my $fullpathaftercpp = tryRunCpp($fullpath);
+
+    #Running XOCC.
+    my $ret_exename = "";
+    runXOCC($fullpathaftercpp, $g_is_invoke_assembler,
+            $g_is_invoke_linker, $g_is_input_gr, \$ret_exename);
+    print "\nRETURNED_EXENAME:'$ret_exename'\n";
+
+    #Restore original flags.
+    $g_cflags = $org_cflags;
+    $g_ldflags = $org_ldflags;
+    return $ret_exename;
+    #return $fullpathaftercpp;
+}
+
 
 sub runSimAndCompareResult
 {
@@ -95,8 +168,9 @@ sub runSimAndCompareResult
     #The new result output file.
     my $xocc_output = getOutputFilePath($fullexepath);
     my $rundir = computeDirFromFilePath($fullexepath);
-    if ($g_succ !=
-        invokeSimulator($fullexepath, $curdir, $xocc_output, $rundir)) {
+    my $res = invokeSimulator($fullexepath, $curdir, $xocc_output, $rundir);
+    tryShowOutput($xocc_output);
+    if ($res != $g_succ) {
         abortex("EXECUTE:invokeSimulator FAILED!!");
     }
     if (!$g_is_compare_result) { return; }
@@ -131,106 +205,4 @@ sub runSimAndCompareResult
         print "\nCOMPARE RESULT OF $fullexepath FAILED! NOT EQUAL TO BASE RESULT!\n";
         abortex();
     }
-}
-
-
-sub compileFile
-{
-    my $fullpath = $_[0];
-
-    #Save original flags.
-    my $org_cflags = $g_cflags;
-    my $org_ldflags = $g_ldflags;
-    
-    #Extract customized CFLAG from configure file.
-    extractAndSetCflag($fullpath);
-
-    #Extract customized LDFLAG from configure file.
-    extractAndSetLDflag($fullpath);
-
-    #Try add dump file path to g_cflags.
-    if ($g_is_create_base_result == 1 or $g_is_compare_dump == 1) {
-        #Add the dump file path to flags of xocc.exe.
-        my $dump_file = getDumpFilePath($fullpath);
-        $g_cflags = $g_cflags." -dump $dump_file ";
-        unlink($dump_file);
-    }
-
-    #Running CPP.
-    my $fullpathaftercpp = runCPP($fullpath);
-
-    #Running XOCC.
-    my $ret_exename = "";
-    runXOCC($fullpathaftercpp, $g_is_invoke_assembler,
-            $g_is_invoke_linker, $g_is_input_gr, \$ret_exename);
-    print "\nRETURNED_EXENAME:'$ret_exename'\n";
-
-    #Restore original flags.
-    $g_cflags = $org_cflags;
-    $g_ldflags = $org_ldflags;
-    return $ret_exename;
-    #return $fullpathaftercpp;
-}
-
-
-sub compileAssembleLinkRunFile
-{
-    my $fullpath = $_[0];
-    my $curdir = $_[1];
-    my $base_output_path = getBaseOutputFilePath($fullpath);
-    my $fullpathaftercpp = compileFile($fullpath);
-    if ($g_is_test_gr == 1) {
-        generateGRandCompile($fullpathaftercpp);
-    }
-    if ($g_is_invoke_simulator) {
-        runSimAndCompareResult($curdir, $fullpathaftercpp, $base_output_path);
-    }
-}
-
-
-sub compileFileList
-{
-    my $curdir = $_[0];
-    my @filelist = @{$_[1]};
-    foreach (@filelist) {
-        $g_error_count = 0; #initialize error counter.
-        chomp;
-        my $filename = getFileNameFromPath($_);
-        my $fullpath = $curdir."/".$filename;
-        print "\n-------------------------------------------";
-        compileAssembleLinkRunFile($fullpath, $curdir);
-        if ($g_single_testcase eq "" && $g_is_move_passed_case == 1) {
-            #Do NOT move to passed if there is just a singlecase.
-            moveToPassed($fullpath);
-        }
-    }
-}
-
-
-sub tryCompile
-{
-    my $curdir = getcwd;
-    if ($g_single_directory ne "") {
-        $curdir .= "/".$g_single_directory;
-    }
-    #Collect files that need to test.
-    my @f;
-    if ($g_single_testcase ne "") {
-        if ($g_is_recur) {
-            @f = findFileRecursively($curdir, $g_single_testcase);
-        } else {
-            @f = findFileCurrent($curdir, $g_single_testcase);
-        }
-    } elsif ($g_single_directory ne "") {
-    	if ($g_is_recur) {
-        	@f = findRecursively($g_single_directory, 'c');
-        } else {
-        	@f = findCurrent($g_single_directory, 'c');
-        }
-    } elsif ($g_is_recur) {
-        @f = findRecursively($curdir, 'c');
-    } else {
-        @f = findCurrent($curdir, 'c');
-    }
-    compileFileList($curdir, \@f);
 }

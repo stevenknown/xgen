@@ -19,6 +19,7 @@ region program program() {
         st y = $3;
         stpr $4 = ld a;
         st w = $4;
+        stpr $5:f64 = 3.14;
         call bar($4);
 
         label L1;
@@ -26,6 +27,7 @@ region program program() {
 
         label L2;
         st z = $2;
+        st d = $5;
         return $2;
     };
 }

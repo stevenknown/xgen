@@ -12,7 +12,7 @@ region program program() {
     var foo:any:(func, align(4));
     var bar:any:(func, align(4));
     region func main() {
-        stpr $2 = lda c;
+        stpr $2:u64 = lda c;
         stpr $3 = lda d;
         st x = $2;
         st y = $3;
@@ -20,12 +20,12 @@ region program program() {
 
         call $5 = foo(); 
 
-        stpr $2 = ld a;
-        st w = $2;
-        call bar($2);
+        stpr $2:u64 = ld a;
+        st w = $2:u64;
+        call bar($2:u64);
 
         label L1;
-        st u = $2;
-        return $2;
+        st u = $2:u64;
+        return $2:u64;
     };
 }

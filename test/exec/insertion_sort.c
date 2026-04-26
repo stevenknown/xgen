@@ -1,7 +1,4 @@
-/* INSERTIONSORTREC */
-
 int n;
-
 void printf(char const*,...);
 int A[9+1] =
 {

@@ -6,21 +6,21 @@ region program ".program" () {
         stpr $2:u64 = 1:u64;
         stpr $3:u64 = 2:u64;
         stpr $4:u64 = 3:u64;
-        stpr $5:u64 = 4:u64;
+        stpr $5:*<1> = 4:u64;
         st:u64 stackvar = //The stmt should be removed by DCE.
-            $5:u64;
+            $5:*<1>;
         st:u64 stackvar = //can not remove
             $2:u64;
         st:u32 stackvar = //can not remove
-            $3:u32;
+            $3:u64;
         st:u8 stackvar = //can not remove
-            $4:u8;
+            $4:u64;
         stpr $1:u64 =
             ld:u64 stackvar;
-        stpr $5:u64 =
+        stpr $5:*<1> =
             lda globalval;
         ist:u64 =
-            $5:any,
+            $5:*<1>,
             $1:u64;
         return ;
     };

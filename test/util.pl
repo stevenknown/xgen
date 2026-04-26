@@ -56,6 +56,8 @@ our @EXPORT_OK = qw(
     runCPP
     runXOCC
     tryCreateDir
+    tryShowOutput
+    tryRunCpp
     systemx);
 
 # These variables are exported.
@@ -74,6 +76,8 @@ our $g_target; #indicate target machine.
 our $g_is_create_base_result = 0;
 our $g_is_move_passed_case = 0;
 our $g_is_test_gr = 0;
+our $g_is_show_output = 0;
+our $g_is_invoke_cpp = 1;
 our $g_is_invoke_assembler = 1;
 our $g_is_invoke_linker = 1;
 our $g_is_invoke_simulator = 1;
@@ -98,8 +102,8 @@ our $g_false = 0;
 
 #Local variables that are used in current file scope.
 my $g_override_simulator = "";
-my $g_override_cpp_path = "";
 my $g_override_xocc_path = "";
+my $g_override_cpp_path = "";
 my $g_override_as_path = "";
 my $g_override_ld_path = "";
 my $g_override_basecc_path = "";
@@ -299,12 +303,13 @@ sub runSimulator
     if (!-e $exefile) {
         #Not equal
         print "\n$exefile DOES NOT EXIST!\n";
-        abortex();
+        #abortex();
         return $g_fail;
     }
 
     $cmdline = "$g_simulator $g_simulator_flags $exefile";
-    print("\nCMD>>", $cmdline, "\n");
+    print("\nCMD>>", $cmdline,"\n");
+    print("\n>>OUTPUT FILE:$outputfile", "\n");
 
     open(my $OLDVALUE, '>&', STDOUT); #save stdout to oldvalue
     open(STDOUT, '>>', $outputfile); #redirect stdout to file
@@ -313,7 +318,8 @@ sub runSimulator
     if ($retval != 0) {
         #Base compiler might also failed, thus we just compare
         #the result of base compiler even if it is failed.
-        abortex("\nEXECUTE $cmdline FAILED!! RES:$retval\n"); #die($retval);
+        #abortex("\nEXECUTE $cmdline FAILED!! RES:$retval\n");
+        print("\nEXECUTE $cmdline FAILED!! RES:$retval\n");
         return $g_fail;
     }
 
@@ -456,9 +462,11 @@ sub runCPP
 #Use xocc to compile, assembly and link.
 sub runXOCC
 {
-    my $src_fullpath = $_[0];
-    my $is_invoke_assembler = $_[1];
-    my $is_invoke_linker = $_[2];
+    my ($src_fullpath,
+        $is_invoke_assembler,
+        $is_invoke_linker,
+        $is_input_gr,
+        $ret_exename) = @_;
     my $postname = extractPostfixName($src_fullpath);
 
     #Record normalized src file path. e.g: remove the postfix 'i'.
@@ -470,6 +478,7 @@ sub runXOCC
     my $exename = computeExeName($src_fullpath_normed);
     my $objname = $src_fullpath_normed.".o";
     my $cmdline;
+    ${$ret_exename} = $exename;
     if (!is_exist($g_xocc)) {
         abortex("\n$g_xocc DOES NOT EXIST\n");
         return $g_fail; #No need execute the following code.
@@ -729,6 +738,9 @@ sub checkEnvValid
     push(@filelist, $g_xocc);
 
     #NOTE: tools may be in environment path.
+    if ($g_is_invoke_cpp) {
+        push(@filelist, $g_cpp);
+    }
     if ($g_is_invoke_assembler) {
         push(@filelist, $g_as);
     }
@@ -796,6 +808,8 @@ sub parseCmdLine
             $g_is_move_passed_case = 1;
         } elsif ($ARGV[$i] eq "TestGr") {
             $g_is_test_gr = 1;
+        } elsif ($ARGV[$i] eq "ShowOutput") {
+            $g_is_show_output = 1;
         } elsif ($ARGV[$i] eq "ShowTime") {
             $g_cflags .= " -time";
         } elsif ($ARGV[$i] eq "Recur") {
@@ -859,12 +873,17 @@ sub parseCmdLine
         } elsif ($ARGV[$i] eq "NoRun") {
             $g_is_invoke_simulator = 0;
         } elsif ($ARGV[$i] eq "CompareDump") {
+            #Compare dump file always.
             $g_is_compare_dump = 1;
             $g_is_basedumpfile_must_exist = 1;
         } elsif ($ARGV[$i] eq "CompareDumpIfExist") {
             $g_is_compare_dump = 1;
             $g_is_basedumpfile_must_exist = 0;
-        } elsif ($ARGV[$i] eq "CompareResultIfExist") {
+        } elsif ($ARGV[$i] eq "CompareResult") {
+            #Compare result file always.
+            $g_is_compare_result = 1;
+            $g_is_baseresultfile_must_exist = 1;
+         } elsif ($ARGV[$i] eq "CompareResultIfExist") {
             $g_is_compare_result = 1;
             $g_is_baseresultfile_must_exist = 0;
         } elsif ($ARGV[$i] eq "XoccPath") {
@@ -1032,11 +1051,14 @@ sub printEnvVar
     print "\ng_basecc = $g_basecc";
     print "\ng_xocc = $g_xocc";
     print "\ng_cflags = $g_cflags";
+    print "\ng_cpp = $g_cpp";
     print "\ng_as = $g_as";
     print "\ng_ld = $g_ld";
     print "\ng_ldflags = $g_ldflags";
     print "\ng_is_test_gr = $g_is_test_gr";
+    print "\ng_is_show_output = $g_is_show_output";
     print "\ng_xoc_root_path = $g_xoc_root_path";
+    print "\ng_is_invoke_cpp = $g_is_invoke_cpp";
     print "\ng_is_invoke_assembler = $g_is_invoke_assembler";
     print "\ng_is_invoke_linker = $g_is_invoke_linker";
     print "\ng_is_invoke_simulator = $g_is_invoke_simulator";
@@ -1170,6 +1192,7 @@ sub usage
           "\n                   NOTE: deleting the exist one will regenerate base result",
           "\nTestGr             generate GR for related C file and test GR file",
           "\nShowTime           show compiling time for each compiler pass",
+          "\nShowOutput         show output file content",
           "\nRecur              find testcases and perform testing recursively",
           "\nNotQuitEarly       perform test always even if there is failure",
           "\nCase = ...         run single case, e.g: Case = your_test_file_name",
@@ -1271,7 +1294,8 @@ sub invokeSimulator
     print("\nCMD>>unlink $redirected_output\n");
     unlink($redirected_output);
 
-    my $exefile = computeExeName($fullpath);
+    #my $exefile = computeExeName($fullpath);
+    my $exefile = $fullpath;
     
     #Some testcase need input file to run, the default location of
     #input file is same with testcase.
@@ -1418,6 +1442,38 @@ sub compareDumpFile
         return $g_fail; #No need execute the following code.
     }
     return $g_succ;
+}
+
+
+sub tryRunCpp
+{
+    my $fullpath = $_[0];
+    my $fullpathaftercpp;
+    if ($g_is_invoke_cpp == 1)  {
+        $fullpathaftercpp = runCPP($fullpath);
+    } else {
+        $fullpathaftercpp = $fullpath;
+    }
+    return $fullpathaftercpp;
+}
+
+
+sub tryShowOutput
+{
+    my $output_path = $_[0]; #path to output files.
+    if ($g_is_show_output != 1) { return; }
+    open(my $fh, '<', $output_path) or do {
+        warn "Error: Cannot open file '$output_path': $!\n";
+        return 0;
+    };
+    # Read and Print file content.
+    print("\n>>OUTPUT START:\n");
+    while (my $line = <$fh>) {
+        print $line;
+    }
+    print("\n>>OUTPUT END:\n");
+    # Close file.
+    close($fh) or warn "Warning: Could not close file '$output_path': $!\n";
 }
 
 sub tryCreateDir

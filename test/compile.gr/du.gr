@@ -8,19 +8,19 @@ region program ".program" () {
 
         var func_level_var_1:u64:(align(8));
         var func_level_var_2:u64:(align(8));
-        stpr $5:u32 =
+        stpr $5:*<1> =
             lda globalvala;
         stpr $1:i32 =
             ild:i32
-                $5:any;
+                $5:*<1>;
         stpr $1:u32 =
             add:u32
                 $1:u32, 15:u32;
-        stpr $6:u32 =
+        stpr $6:*<1> =
             lda globalvalb;
         stpr $2:i32 =
             ild:i32
-                $6:any;
+                $6:*<1>;
         stpr $2:u32 =
             add:u32
                 $2:u32, 15:u32;
@@ -94,10 +94,10 @@ region program ".program" () {
             add:u32
                 $13:u32,
                 $12:u32;
-        stpr $9:u32 =
+        stpr $9:*<1> =
             lda globalval0;
         ist:u32 =
-            $9:any,
+            $9:*<1>,
             $12:u32;
         return ;
     };

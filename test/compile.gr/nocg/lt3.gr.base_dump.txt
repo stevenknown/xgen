@@ -1,126 +1,42 @@
-==---- DUMP Linear Scan Register Allocation 'main' ----==
-==-- DUMP TargInfoMgr --==
-ALLOCABLE:r4
-==-- DUMP ALL LifeTime --==
-==-- DUMP PR OverView --==
------ BB7 --- rpo:0 -----
-ATTR:entry_bb fall_through 
-[2] ExposedDef <= [1] --
-[4] -- <= [3] ExposedUse
 
------ BB1 --- rpo:10 -----
-ATTR:fall_through 
-[6] ExposedDef <= [5] --
-[8] $1 <= [7] --
-    stpr $1:*<4> id:2 attachinfo:Dbx        
-        lda:*<4> 'c' id:1
-[10] -- <= [9] --
-    truebr label _$L1 id:6 attachinfo:Dbx        
-        gt:bool id:5            
-            ld:i32 'c' id:3 attachinfo:MDSSA            
-            ld:i32 'd' id:4 attachinfo:MDSSA
-[12] -- <= [11] ExposedUse
-
------ BB2 --- rpo:20 -----
-ATTR:fall_through 
-[14] ExposedDef <= [13] --
-[16] -- <= [15] $1
-    st:*<4> 'func_level_var_1' id:35        
-        $1:*<4> id:34
-[18] $2 <= [17] --
-    stpr $2:*<4> id:8 attachinfo:Dbx        
-        lda:*<4> 'd' id:7
-[20] -- <= [19] $2
-    st:i32 'y' id:10 attachinfo:Dbx,MDSSA        
-        $2:*<4> id:9
-[22] $3 <= [21] --
-    stpr $3:*<1> id:12 attachinfo:Dbx        
-        ld:*<1> 'a' id:11 attachinfo:MDSSA
-[24] -- <= [23] $3
-    st:i32 'w' id:14 attachinfo:Dbx,MDSSA        
-        $3:*<1> id:13
-[26] -- <= [25] $3
-    call 'bar'  id:16 attachinfo:Dbx,MDSSA
-        $3:*<1> param0 id:15
-        ild:any dummy0 id:26 attachinfo:MDSSA            
-            intconst:any 0|0x0 id:25
-[28] -- <= [27] ExposedUse
-
------ BB4 --- rpo:30 -----
-ATTR:fall_through branch_target 
-[30] ExposedDef <= [29] --
-[32] $4 <= [31] --
-    stpr $4:*<4> id:37        
-        ld:*<4> 'func_level_var_1' id:36
-[34] -- <= [33] $4
-    st:i32 'u' id:19 attachinfo:Dbx,MDSSA        
-        $4:*<4> id:18
-[36] -- <= [35] ExposedUse
-
------ BB9 --- rpo:35 -----
-ATTR:
-[38] ExposedDef <= [37] --
-[40] -- <= [39] --
-    goto label _$L2 id:31
-[42] -- <= [41] ExposedUse
-
------ BB8 --- rpo:37 -----
-LABEL:_$L1 
-ATTR:fall_through 
-[44] ExposedDef <= [43] --
-[46] $4 <= [45] $1
-    stpr $4:*<4> id:33        
-        $1:*<4> id:32
-[48] -- <= [47] ExposedUse
-
------ BB5 --- rpo:40 -----
-LABEL:L2 _$L2 
-ATTR:fall_through branch_target 
-[50] ExposedDef <= [49] --
-[52] -- <= [51] $4
-    st:i32 'z' id:22 attachinfo:Dbx,MDSSA        
-        $4:*<4> id:21
-[54] -- <= [53] $4
-    return id:24 attachinfo:Dbx
-        $4:*<4> id:23
-[56] -- <= [55] ExposedUse
-
-==-- DUMP LTList --==
-LT:$1:<8-14>
- |       -------
- |       d
-LT:$2:<16-17>
- |               --
- |               du
-LT:$3:<20-23>
- |                   ----
- |                   du u
-LT:$4:<29-37>
- |                            ---------
- |                            u     u u
-==-- DUMP PR2Reg --==
-LT:$1:r4(RF_R)
-LT:$2:r4(RF_R)
-LT:$3:r4(RF_R)
-LT:$4:r4(RF_R)
-==-- DUMP 4LIST --==
-UNHANDLED:
-HANDLED:
- LT:$1:r4(RF_R)
- LT:$1:<8-14>
-  |       -------
-  |       d
- LT:$2:r4(RF_R)
- LT:$2:<16-17>
-  |               --
-  |               du
- LT:$3:r4(RF_R)
- LT:$3:<20-23>
-  |                   ----
-  |                   du u
- LT:$4:r4(RF_R)
- LT:$4:<29-37>
-  |                            ---------
-  |                            u     u u
-ACTIVE:
-INACTIVE:
+==-- DUMP InConsistPairList --==
+NEED insert bb between BB1 and BB4, and copy:$func_level_var_1->$22
+NEED insert bb between BB1 and BB4, and copy:$func_level_var_2->$23
+NEED insert bb between BB1 and BB4, and copy:$func_level_var_3->$24
+==-- DUMP ALL ACT --==
+  ACT1:GID1:ASSIGN:$11 with r0
+  ACT2:GID2:ASSIGN:$4 with r1
+  ACT3:GID3:ASSIGN:$12 with r1
+  ACT4:GID4:ASSIGN:$20 with r1
+  ACT5:GID5:ASSIGN:$8 with r2
+  ACT6:GID6:ASSIGN:$21 with r2
+  ACT7:GID7:ASSIGN:$13 with r3
+  ACT8:GID8:ASSIGN:$14 with r3
+  ACT9:GID9:ASSIGN:$15 with r4
+  ACT10:GID10:SELECT_SPLIT_CAND:$11 is split-candidate at pos:34
+  ACT11:GID11:SELECT_SPLIT_CAND:$11 is split-candidate at pos:34, reason:split $11 that assigned r0
+  ACT12:GID12:SPLIT:$11 into $11 and $22, $11 end at pos:34, $22 start from pos:39
+  ACT13:GID13:SPILL:insert spill ir id:103 after ir id:55 while splitting $11
+  ACT14:GID14:RELOAD:insert reload ir id:105 before ir id:82 while splitting $11, $11 rename to $22
+  ACT15:GID15:SELECT_SPLIT_CAND:$20 is split-candidate at pos:34
+  ACT16:GID16:SELECT_SPLIT_CAND:$20 is split-candidate at pos:34, reason:split $20 that assigned r1
+  ACT17:GID17:SPLIT:$20 into $20 and $23, $20 end at pos:34, $23 start from pos:44
+  ACT18:GID18:SPILL:insert spill ir id:107 after ir id:59 while splitting $20
+  ACT19:GID19:SELECT_SPLIT_CAND:$21 is split-candidate at pos:34
+  ACT20:GID20:SELECT_SPLIT_CAND:$21 is split-candidate at pos:34, reason:split $21 that assigned r2
+  ACT21:GID21:SPLIT:$21 into $21 and $24, $21 end at pos:34, $24 start from pos:46
+  ACT22:GID22:SPILL:insert spill ir id:109 after ir id:61 while splitting $21
+  ACT23:GID23:ASSIGN:$22 with r0
+  ACT24:GID24:ASSIGN:$16 with r1
+  ACT25:GID25:ASSIGN:$23 with r1
+  ACT26:GID26:ASSIGN:$24 with r2
+  ACT27:GID27:ASSIGN:$17 with r1
+  ACT28:GID28:ASSIGN:$18 with r2
+  ACT29:GID29:ASSIGN:$19 with r1
+  ACT30:GID30:INSERT_BB:insert BB7 between BB1 and BB4, reason:fix lifetime consistency
+  ACT31:GID31:RELOAD:insert reload ir id:112 at BB7 to remat r0, reason:fix lifetime consistency memory to pr func_level_var_1->$22
+  ACT32:GID32:RELOAD:insert reload ir id:114 at BB7 to remat r1, reason:fix lifetime consistency memory to pr func_level_var_2->$23
+  ACT33:GID33:RELOAD:insert reload ir id:116 at BB7 to remat r2, reason:fix lifetime consistency memory to pr func_level_var_3->$24
+  ACT34:GID34:SPILL:insert spill ir id:118 at BB6 to spill r4, reason:spill callee-saved at entry
+  ACT35:GID35:RELOAD:insert reload ir id:120 at BB4 to remat r4, reason:reload callee-saved at exit
+==-- DUMP InConsistPairList --==

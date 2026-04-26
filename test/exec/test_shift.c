@@ -629,7 +629,6 @@ int test_32bit_lsl()
 }
 
 
-
 int test_32bit_lsr ()
 {
     int errors = 0;
