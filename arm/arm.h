@@ -55,13 +55,13 @@ author: Su Zhenyu
 #include "../arm/arm_refine.h"
 #include "../arm/arm_ddg.h"
 #include "../arm/arm_ir_dump.h"
+#include "../arm/arm_irmgr.h"
+#include "../arm/arm_insert_cvt.h"
 
 #if defined REF_TARGMACH_INFO || defined FOR_IP
   #include "../elf/elfinc.h"
   #include "../arm/arm_elf_targinfo.h"
   #include "../arm/arm_elf_mgr.h"
-  #include "../arm/arm_irmgr.h"
-  #include "../arm/arm_insert_cvt.h"
   #include "../arm/arm_regset_impl.h"
   #include "../arm/arm_linear_scan.h"
   #include "../arm/arm_targinfo_mgr.h"

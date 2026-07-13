@@ -43,7 +43,7 @@ usage:
 ```cmd
     xocc.exe hello.c -o hello.s
     arm-linux-gnueabihf-as hello.s -o hello.o
-    arm-linux-gnueabihf-gcc hello.o -o hello.out
+    arm-linux-gnueabihf-gcc hello.o -o hello.out -static
     qemu-arm -L /usr/arm-linux-gnueabihf hello.out
 ```
  9. cd xgen/test and there are a lot of testfiles wrote in C or GR language.      

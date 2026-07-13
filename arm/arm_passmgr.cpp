@@ -50,18 +50,13 @@ Pass * ARMPassMgr::allocRefine()
 
 Pass * ARMPassMgr::allocInsertCvt()
 {
-    #if defined REF_TARGMACH_INFO || defined FOR_IP
-    return (IRSimp*)new ARMInsertCvt(m_rg);
-    #else
-    ASSERTN(0, ("Target Dependent Code"));
-    return nullptr;
-    #endif
+    return new ARMInsertCvt(m_rg);
 }
 
 
 Pass * ARMPassMgr::allocIRSimp()
 {
-    return (IRSimp*)new ARMIRSimp(m_rg);
+    return new ARMIRSimp(m_rg);
 }
 
 
@@ -100,12 +95,7 @@ Pass * ARMPassMgr::allocCalcDerivative()
 
 Pass * ARMPassMgr::allocIRMgr()
 {
-    #if defined REF_TARGMACH_INFO || defined FOR_IP
     return new ARMIRMgr(m_rg);
-    #else
-    ASSERTN(0, ("Target Dependent Code"));
-    return nullptr;
-    #endif
 }
 
 
