@@ -1,1 +1,0 @@
-bool isnan(double);

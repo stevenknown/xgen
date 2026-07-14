@@ -1,1 +1,0 @@
-void printf(char const*,...);

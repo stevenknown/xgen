@@ -1,1 +1,0 @@
-void * alloca(int);

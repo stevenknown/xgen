@@ -1,3 +1,0 @@
-max value: 12
-item value: 
-5 7 

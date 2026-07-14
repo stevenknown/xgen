@@ -389,6 +389,9 @@ bool Compiler::compileGRFile(CHAR const* fn)
         res = false;
         goto FIN;
     }
+    if (g_is_dump_option) {
+        xoc::g_dump_opt.dump(rm);
+    }
     if (!g_keep_src_info) {
         fo.destroy();
         rm->getGRReader()->setSrcFile(nullptr);
