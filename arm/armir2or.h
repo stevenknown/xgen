@@ -44,10 +44,10 @@ protected:
         IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     void convertMulofInt(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertReturnValue(
-        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont) override;
     void convertTruebrFP(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
     virtual void convertStoreVar(
-        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont) override;
 
     //CASE: integer and pointer convertion.
     void convertCvtBetweenIntType(
@@ -122,18 +122,23 @@ public:
 
     //Interface function.
     virtual void convertBinaryOp(
-        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont) override;
     virtual void convertLda(
         Var const* var, HOST_INT lda_ofst, Dbx const* dbx,
-        OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertLda(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+        OUT RecycORList & ors, IN IOC * cont) override;
+    virtual void convertLda(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont) override;
     virtual void convertICall(
-        IR const* ir, OUT RecycORList & ors, IN IOC * cont)
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont) override
     { convertCall(ir, ors, cont); }
-    virtual void convertDiv(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertRem(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertMul(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertNeg(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+    virtual void convertDiv(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont) override;
+    virtual void convertRem(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont) override;
+    virtual void convertMul(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont) override;
+    virtual void convertNeg(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont) override;
     void convertRelationOpFP(
         IR const* ir, OUT RecycORList & ors, IN IOC * cont);
 
@@ -161,25 +166,29 @@ public:
     //     res, truepd, falsepd <- cmp sr0, sr1
     //     return res, truepd, falsepd
     virtual void convertRelationOp(
-        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont) override;
 
     //Bitwise NOT.
     //e.g BNOT(0x0001) = 0xFFFE
     //Note ONLY thumb supports ORN logical OR NOT operation.
     virtual void convertBitNot(
-        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
-    virtual void convertIgoto(IR const* ir, OUT RecycORList & ors, IN IOC *);
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont) override;
+    virtual void convertIgoto(
+        IR const* ir, OUT RecycORList & ors, IN IOC *) override;
     virtual void convertSelect(
-        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont) override;
     virtual void convertReturn(
-        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont) override;
     virtual void convertTruebr(
-        IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont) override;
     virtual void convertSetElem(
-        IR const* ir, OUT RecycORList & ors, MOD IOC * cont);
+        IR const* ir, OUT RecycORList & ors, MOD IOC * cont) override;
     virtual void convertGetElem(
-        IR const* ir, OUT RecycORList & ors, MOD IOC * cont);
-    virtual void convert(IR const* ir, OUT RecycORList & ors, IN IOC * cont);
+        IR const* ir, OUT RecycORList & ors, MOD IOC * cont) override;
+    virtual void convertExtStmt(
+        IR const*, OUT RecycORList &, MOD IOC *) override;
+    virtual void convert(
+        IR const* ir, OUT RecycORList & ors, IN IOC * cont) override;
 
     void recordRelationOpResult(
         IR const* ir, SR * truepd, SR * falsepd, SR * result_pred,

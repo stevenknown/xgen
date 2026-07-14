@@ -2075,6 +2075,21 @@ void ARMIR2OR::convertGetElem(
 }
 
 
+void ARMIR2OR::convertExtStmt(
+    IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
+{
+    switch (ir->getCode()) {
+    case IR_SELECT_TO_RES: {
+        IR const* op = SELECTTORES_op(ir);
+        ASSERTN(op->is_select(), ("TODO"));
+        convert(op, ors, cont);
+        return;
+    }
+    default: ASSERT0(0); //TODO:support
+    }
+}
+
+
 void ARMIR2OR::convert(IR const* ir, OUT RecycORList & ors, IN IOC * cont)
 {
     IR * newir = insertCvt(ir);
