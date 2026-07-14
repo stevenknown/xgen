@@ -94,18 +94,30 @@ $(info "THREAD_NUM:$(THREAD_NUM)")
 
 #NOTE: PRECOMPILE_OUTPUT should be genreated first.
 
+##NOTE:The compilation of libxgen.a may failed sometime if we don't
+##always regenerate it.
+#$(XGEN_OUTPUT): $(XOC_OUTPUT)
+#	@echo "==-- IN Makefile.xgen: START BUILD $(XGEN_OUTPUT) --=="
+#	@if [ ! -f "$@" ] || [ "$<" -nt "$@" ]; then \
+#       echo "EXEC:"; \
+#       ar -rcvsT $(XGEN_OUTPUT) \
+#         $(ROOT_DIR)/$(XOC_OUTPUT) \
+#         $(XGEN_OBJS) \
+#         $(TMP_TARG_OBJS); \
+#       echo "SUCCESS TO GENERATE $(XGEN_OUTPUT)!!"; \
+#     else \
+#       echo "$(XGEN_OUTPUT) ALREADY EXISTS!!"; \
+#     fi
+
+#Here, we always regenerate libxgen.a even if it exist.
 $(XGEN_OUTPUT): $(XOC_OUTPUT)
 	@echo "==-- IN Makefile.xgen: START BUILD $(XGEN_OUTPUT) --=="
-	@if [ ! -f "$@" ] || [ "$<" -nt "$@" ]; then \
-       echo "EXEC:"; \
-       ar -rcvsT $(XGEN_OUTPUT) \
+	@echo "EXEC:"; \
+       ar -rcsvT $(XGEN_OUTPUT) \
          $(ROOT_DIR)/$(XOC_OUTPUT) \
          $(XGEN_OBJS) \
          $(TMP_TARG_OBJS); \
-       echo "SUCCESS TO GENERATE $(XGEN_OUTPUT)!!"; \
-     else \
-       echo "$(XGEN_OUTPUT) ALREADY EXISTS!!"; \
-     fi
+       echo "SUCCESS TO GENERATE $(XGEN_OUTPUT)!!";
 
 $(XOC_OUTPUT): build_xgen_objs
 	@echo "==-- IN Makefile.xgen: START BUILD $(XOC_OUTPUT) --=="

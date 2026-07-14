@@ -1952,7 +1952,6 @@ RegSet * LifeTimeMgr::getUsableRegSet(LifeTime * lt) const
     ASSERTN(m_is_init, ("Life time manager should initialized first."));
     RegSet * rs = const_cast<LifeTimeMgr*>(this)->
         m_lt2usable_reg_set_map.get(lt);
-    ASSERT0(rs);
     return rs;
 }
 

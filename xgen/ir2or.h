@@ -132,7 +132,7 @@ public:
         set_addr(nullptr);
         set_orcode(OR_UNDEF);
     }
-
+    void dump(CG const* cg) const;
     virtual SR * get_pred() const { return pred; }
     virtual SR * get_addr() const { return addr; }
     virtual SR * get_reg(INT i) const

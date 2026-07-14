@@ -30,6 +30,48 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace xgen {
 
+//
+//START IOC
+//
+void IOC::dump(CG const* cg) const
+{
+    Region const* rg = cg->getRegion();
+    if (!rg->isLogMgrInit()) { return; }
+    note(rg, "\n-- DUMP IOC --");
+    note(rg, "\narg_size:%u", IOC_arg_size(this));
+    note(rg, "\nmem_byte_size:%u", IOC_mem_byte_size(this));
+    note(rg, "\nint_imm:%lld", IOC_int_imm(this));
+    note(rg, "\nis_inverted:%s", IOC_is_inverted(this) ? "true" : "false");
+    if (pred != nullptr) {
+        note(rg, "\npred:");
+        pred->dump(cg);
+    }
+    if (addr != nullptr) {
+        note(rg, "\naddr:");
+        addr->dump(cg);
+    }
+    SR const* sr = reg_vec.get(RESULT_REGISTER_INDEX);
+    if (sr != nullptr) {
+        note(rg, "\nresult_register:");
+        sr->dump(cg);
+    }
+    sr = reg_vec.get(TRUE_PREDICATE_REGISTER_INDEX);
+    if (sr != nullptr) {
+        note(rg, "\ntrue_predidate_register:");
+        sr->dump(cg);
+    }
+    sr = reg_vec.get(FALSE_PREDICATE_REGISTER_INDEX);
+    if (sr != nullptr) {
+        note(rg, "\nfalse_predidate_register:");
+        sr->dump(cg);
+    }
+}
+//END IOC
+
+
+//
+//START IR2OR
+//
 IR2OR::IR2OR(CG * cg)
 {
     ASSERT0(cg);
@@ -84,18 +126,25 @@ void IR2OR::convertStoreDecompose(
 {
     ASSERT0(src && tgtvar && tgtvar->is_var() && SR_var(tgtvar));
 
-    //ONLY support process register operand.
+    RecycORList tors(this);
+
+    //ONLY support process register and imediate operand.
     if (!src->is_reg()) {
         if (src->is_int_imm()) {
+            //The STORE is actually a MOVE of immedate.
             SR * t = m_cg->genReg();
-            m_cg->buildMove(t, src, ors.getList(), cont);
+            m_cg->buildMove(t, src, tors.getList(), cont);
             src = t;
         } else {
-            ASSERTN(0, ("need to support more kind of operand to store"));
+            ASSERTN(0, ("need to support more kinds of operand to store"));
         }
     }
-    m_cg->buildStore(src, tgtvar, m_cg->genIntImm(ofst, true), false,
-                     ors.getList(), cont);
+    m_cg->buildStore(
+        src, tgtvar, m_cg->genIntImm(ofst, true), false, tors.getList(), cont);
+    if (cont->get_pred() != nullptr) {
+        tors.set_pred(cont->get_pred(), m_cg);
+    }
+    ors.move_tail(tors);
 }
 
 
@@ -404,8 +453,8 @@ void IR2OR::convertIStoreWithIncompleteSelect(
     //  cmp $38, sr44
     //  str [$26] <-- gsr39(ne) $33
     ASSERT0(ir->is_ist());
-    IR const* rhs = ir->getRHS();
-    ASSERT0(rhs->is_select() && !CSelect::bothTFExpAvail(rhs));
+    IR const* rhs = ir->getPureRHS();
+    ASSERT0(rhs->is_select() && CSelect::isPartialSelect(rhs));
 
     //Load RHS into registers or get the address of memory block.
     RecycORList tors(this);
@@ -493,11 +542,14 @@ void IR2OR::genIStoreByRegValue(
 
 //Return true if predicate register changed.
 static bool trySetPredRegWhenRHSIsIncompleteSelect(
-    IR const* rhs, CG const* cg, MOD RecycORList & ors, IOC const* cont)
+    IR const* rhs, CG const* cg, MOD RecycORList & ors, MOD IOC * cont)
 {
     ASSERT0(rhs);
+    if (rhs->is_select_to_res()) {
+        rhs = SELECTTORES_op(rhs);
+    }
     if (!rhs->is_select()) { return false; }
-    if (CSelect::bothTFExpAvail(rhs)) { return false; }
+    if (!CSelect::isPartialSelect(rhs)) { return false; }
 
     //Change predicate register.
     SR * true_pr = cont->get_reg(TRUE_PREDICATE_REGISTER_INDEX);
@@ -514,6 +566,7 @@ static bool trySetPredRegWhenRHSIsIncompleteSelect(
         pred = false_pr;
     }
     ors.set_pred(pred, cg);
+    cont->set_pred(pred);
     return true;
 }
 
@@ -533,7 +586,7 @@ void IR2OR::convertIStore(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     tors.copyDbx(IST_base(ir), getDbxMgr());
     ors.move_tail(tors);
 
-    IR const* rhs = ir->getRHS();
+    IR const* rhs = ir->getPureRHS();
     ASSERT0(rhs);
     //if (rhs->is_select() && !CSelect::bothTFExpAvail(rhs)) {
     //    return convertIStoreWithIncompleteSelect(ir, target_addr, ors, cont);
@@ -812,15 +865,17 @@ void IR2OR::convertStoreVar(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     RecycORList tors(this);
 
     //Analyze memory-address expression.
-    convertGeneralLoad(ST_rhs(ir), ors, cont);
-    SR * store_val = cont->get_reg(0);
+    IOC tc(*cont);
+    convertGeneralLoad(ST_rhs(ir), ors, &tc);
+    SR * store_val = tc.get_reg(0);
     ASSERT0(store_val != nullptr);
-    IOC tc;
-    IOC_mem_byte_size(&tc) = ir->getTypeSize(m_tm);
-    ASSERT0(tc.getMemByteSize() > 0);
+    trySetPredRegWhenRHSIsIncompleteSelect(ir->getRHS(), m_cg, tors, &tc);
+
+    IOC tc2(tc);
+    IOC_mem_byte_size(&tc2) = ir->getTypeSize(m_tm);
+    ASSERT0(tc2.getMemByteSize() > 0);
     convertStoreDecompose(
-        store_val, m_cg->genVAR(ir->getIdinfo()), ir->getOffset(), tors, &tc);
-    trySetPredRegWhenRHSIsIncompleteSelect(ir->getRHS(), m_cg, tors, cont);
+        store_val, m_cg->genVAR(ir->getIdinfo()), ir->getOffset(), tors, &tc2);
     tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
 }
@@ -1772,5 +1827,6 @@ void IR2OR::convertToORList(OUT RecycORList & or_list)
     convertIRBBListToORList(or_list);
     END_TIMER(t, "Convert IR to OR");
 }
+//END IR2OR
 
 } //namespace xgen
