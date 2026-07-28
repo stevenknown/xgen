@@ -620,18 +620,22 @@ void CG::buildAlloca(OUT ORList & ors, SR * bytesize, MOD IOC * cont)
 }
 
 
-void CG::buildTypeCvt(SR * src, UINT tgt_size, UINT src_size, bool is_signed,
-                      Dbx const* dbx, OUT ORList & ors, MOD IOC * cont)
+void CG::buildIntTypeCvtByExtend(
+    SR * src, UINT tgt_size, UINT src_size, bool is_signed,
+    Dbx const* dbx, OUT ORList & ors, MOD IOC * cont)
 {
-    if (tgt_size <= src_size || tgt_size <= GENERAL_REGISTER_SIZE) {
-        return;
-    }
-    ORList tors;
+    ASSERT0(tgt_size > src_size);
     if (tgt_size > 2 * GENERAL_REGISTER_SIZE) {
         ASSERTN(0, ("Target Dependent Code"));
         return;
     }
-    if (src_size <= GENERAL_REGISTER_SIZE) {
+    if (tgt_size == 2 * GENERAL_REGISTER_SIZE) {
+        ORList tors;
+
+        //src_size can be holded by a general register.
+        ASSERT0(src_size <= GENERAL_REGISTER_SIZE);
+
+        //tgt_size is 2x the size of src_size.
         SR * tgt_low = src;
         ASSERT0(tgt_low != nullptr);
         SR * tgt_high = nullptr;
@@ -640,9 +644,9 @@ void CG::buildTypeCvt(SR * src, UINT tgt_size, UINT src_size, bool is_signed,
             UINT shiftbit = GENERAL_REGISTER_SIZE * BIT_PER_BYTE - 1;
             //Regard src >> 31(arithmatic shift right)
             //as the sign extension.
-            buildShiftRight(tgt_low, GENERAL_REGISTER_SIZE,
-                            genIntImm((HOST_INT)shiftbit, false),
-                            true, tors, &tc);
+            buildShiftRight(
+                tgt_low, GENERAL_REGISTER_SIZE,
+                genIntImm((HOST_INT)shiftbit, false), true, tors, &tc);
             tgt_high = tc.get_reg(0);
             ASSERT0(tgt_high != nullptr);
         } else {
@@ -655,33 +659,76 @@ void CG::buildTypeCvt(SR * src, UINT tgt_size, UINT src_size, bool is_signed,
         getSRVecMgr()->genSRVec(2, tgt_low, tgt_high);
         return;
     }
-    //Just do some check.
-    SR * src_low = src;
-    ASSERT0_DUMMYUSE(src_low);
-    ASSERT0(src_low->getVec() != nullptr && SR_vec_idx(src_low) == 0);
-    ASSERT0(src_low->getVec()->get(1) != nullptr);
-    ASSERT0(src_low->getTotalByteSize() == 2 * GENERAL_REGISTER_SIZE);
+    ASSERT0(tgt_size <= GENERAL_REGISTER_SIZE);
+}
+
+
+void CG::buildIntTypeCvtByShrink(
+    SR * src, UINT tgt_size, UINT src_size, bool is_signed,
+    Dbx const* dbx, OUT ORList & ors, MOD IOC * cont)
+{
+    ASSERT0(tgt_size < src_size);
+    if (src_size == 2 * GENERAL_REGISTER_SIZE) {
+        ASSERT0(src->getTotalByteSize() == 2 * GENERAL_REGISTER_SIZE);
+        ASSERTN(src->getVec() != nullptr && src->getVecIdx() == 0,
+                ("src must be the lowest position in group."));
+
+        //tgt_size can be holded by a general register.
+        ASSERT0(tgt_size <= GENERAL_REGISTER_SIZE);
+
+        //Make a new SR with general-register-size, because 'src' is
+        //larger than general-register-size, and 'src' is likely a
+        //vector register or a pair scalar registers. Here we only need
+        //the first scalar register.
+        IOC tc;
+        SR * newtgt = genReg();
+        ORList tors;
+        buildMove(newtgt, src, tors, &tc);
+        tors.copyDbx(dbx, getDbxMgr());
+        ors.move_tail(tors);
+        cont->set_reg(0, newtgt);
+        return;
+    }
+    ASSERT0(src_size <= GENERAL_REGISTER_SIZE);
+}
+
+
+void CG::buildIntTypeCvtByEqual(
+    SR * src, UINT tgt_size, UINT src_size, bool is_signed,
+    Dbx const* dbx, OUT ORList & ors, MOD IOC * cont)
+{
+    ASSERT0(tgt_size == src_size);
+    if (src_size > 2 * GENERAL_REGISTER_SIZE) {
+        ASSERTN(0, ("Target Dependent Code"));
+    }
+    //No convert-op is needed.
+    ASSERT0(cont->get_reg(0) == src);
 }
 
 
 //Convert data type from 'src' to 'tgt'.
-void CG::buildTypeCvt(xoc::IR const* tgt, xoc::IR const* src,
-                      OUT ORList & ors, MOD IOC * cont)
+void CG::buildIntTypeCvt(
+    SR * src, UINT tgt_size, UINT src_size, bool is_signed,
+    Dbx const* dbx, OUT ORList & ors, MOD IOC * cont)
 {
-    ASSERTN(!tgt->is_vec() && !src->is_vec(), ("Target Dependent Code"));
-    UINT tgt_size = tgt->getTypeSize(m_tm);
-    UINT src_size = src->getTypeSize(m_tm);
-    if (regardAsIntType(tgt->getType()) && regardAsIntType(src->getType())) {
-        buildTypeCvt(cont->get_reg(0), tgt_size, src_size, src->is_signed(),
-                     xoc::getDbx(tgt), ors, cont);
+    if (tgt_size > src_size) {
+        buildIntTypeCvtByExtend(
+            src, tgt_size, src_size, is_signed, dbx, ors, cont);
         return;
     }
-    ASSERTN(0, ("Target Dependent Code"));
+    if (tgt_size < src_size) {
+        buildIntTypeCvtByShrink(
+            src, tgt_size, src_size, is_signed, dbx, ors, cont);
+        return;
+    }
+    buildIntTypeCvtByEqual(
+        src, tgt_size, src_size, is_signed, dbx, ors, cont);
 }
 
 
-static void buildLdaViaReg(Dbx const* dbx, SR * base, SR * ofst, CG * cg,
-                           OUT ORList & ors, MOD IOC * cont)
+static void buildLdaViaReg(
+    Dbx const* dbx, SR * base, SR * ofst, CG * cg,
+    OUT ORList & ors, MOD IOC * cont)
 {
     //Base address of variable is recorded in register.
     //Get variable's address by: reg = base-reg + offset.

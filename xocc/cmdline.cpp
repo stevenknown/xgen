@@ -111,6 +111,7 @@ static void disable_opt(INT opt_level)
         xoc::g_do_cp_aggressive = false;
         xoc::g_do_bcp = false;
         xoc::g_do_dce = false;
+        xoc::g_do_dse = false;
         xoc::g_do_dce_aggressive = false;
         xoc::g_do_alge_reassociate = false;
         xoc::g_do_alge_reassociate_aggressive = false;
@@ -335,6 +336,8 @@ BoolOption::Desc const BoolOption::option_desc[] = {
       "enable auto vectorization", },
     { "dce", &xoc::g_do_dce,
       "enable dead-code-elimination optimization", },
+    { "dse", &xoc::g_do_dse,
+      "enable dead-store-elimination optimization", },
     { "infer_type", &xoc::g_infer_type,
       "enable type inference", },
     { "vrp", &xoc::g_do_vrp,
@@ -417,6 +420,8 @@ BoolOption::Desc const BoolOption::dump_option_desc[] = {
       "dump alias-analysis", },
     { "dce", &xoc::DumpOption::getOptionDesc(PASS_DCE)->is_dump,
       "dump dead-code-elimination", },
+    { "dse", &xoc::DumpOption::getOptionDesc(PASS_DSE)->is_dump,
+      "dump dead-store-elimination", },
     { "infer_type", &xoc::DumpOption::getOptionDesc(PASS_INFER_TYPE)->is_dump,
       "dump infer-type", },
     { "vrp", &xoc::DumpOption::getOptionDesc(PASS_VRP)->is_dump,

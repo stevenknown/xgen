@@ -37,7 +37,6 @@ ORCFG::ORCFG(List<ORBB*> * bbl, CG * cg)
     : xoc::OptimizedCFG<ORBB, OR>(bbl)
 {
     m_cg = cg;
-    setBitSetMgr(cg->getBitSetMgr());
     m_entry = nullptr;
     m_exit_list.clean();
     if (m_bb_list->get_elem_count() == 0) { return; }

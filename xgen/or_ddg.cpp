@@ -254,7 +254,7 @@ UINT DataDepGraph::computeCriticalPathLen(BBSimulator const& sim) const
 bool DataDepGraph::is_dependent(OR const* o1, OR const* o2) const
 {
     ASSERTN(m_is_init, ("xcom::Graph still not yet initialize."));
-    if (getEdge(o1->id(), o2->id())) {
+    if (getEdge(o1->id(), o2->id()) != nullptr) {
         return true;
     }
     return false;

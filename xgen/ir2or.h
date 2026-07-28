@@ -288,6 +288,8 @@ public:
         IR const* ir, OUT RecycORList & ors, MOD IOC * cont);
     virtual void convertLSL(
         IR const* ir, OUT RecycORList & ors, MOD IOC * cont);
+    void convertIntCvt(
+        IR const* tgt, IR const* src, OUT RecycORList & ors, MOD IOC * cont);
     virtual void convertCvt(
         IR const* ir, OUT RecycORList & ors, MOD IOC * cont);
     virtual void convertGoto(

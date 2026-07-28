@@ -370,7 +370,7 @@ void IR2OR::tryExtendLoadValByMemSize(bool is_signed, Dbx const* dbx,
     SR * loadval = cont->get_reg(0);
     ASSERT0(loadval && loadval->is_reg());
     if (cont->getMemByteSize() <= loadval->getTotalByteSize()) { return; }
-    m_cg->buildTypeCvt(cont->get_reg(0), cont->getMemByteSize(),
+    m_cg->buildIntTypeCvt(cont->get_reg(0), cont->getMemByteSize(),
         loadval->getTotalByteSize(), is_signed, dbx, ors.getList(), cont);
 
 }
@@ -1249,7 +1249,11 @@ void IR2OR::convertASR(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     ASSERT0(!BIN_opnd0(ir)->is_vec() && !BIN_opnd1(ir)->is_vec());
     IR * opnd0 = BIN_opnd0(ir);
     IR * opnd1 = BIN_opnd1(ir);
-    ASSERTN(opnd0->is_signed(), ("shift should be arithmetical"));
+
+    //CASE:Here we allow that opnd0 could be unsigned interger, because the
+    //signature of opnd0 doesn't impact on the ASR operation.
+    //ASSERTN(opnd0->is_signed(), ("shift should be arithmetical"));
+
     cont->clean_bottomup();
     convertGeneralLoad(opnd0, ors, cont);
     SR * sr1 = cont->get_reg(0);
@@ -1270,10 +1274,12 @@ void IR2OR::convertASR(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
         sh_ofst = cont->get_reg(0);
     }
 
+    bool is_arith_shift = true;
     RecycORList tors(this);
     cont->clean_bottomup();
-    m_cg->buildShiftRight(sr1, opnd0->getTypeSize(m_tm),
-                          sh_ofst, opnd0->is_signed(), tors.getList(), cont);
+    m_cg->buildShiftRight(
+        sr1, opnd0->getTypeSize(m_tm), sh_ofst, is_arith_shift,
+        tors.getList(), cont);
     ASSERT0(cont->get_reg(0));
     tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
@@ -1305,9 +1311,11 @@ void IR2OR::convertLSR(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
         sh_ofst = tc.get_reg(0);
     }
 
+    bool is_arith_shift = false;
     RecycORList tors(this);
-    m_cg->buildShiftRight(sr1, opnd0->getTypeSize(m_tm),
-                          sh_ofst, opnd0->is_signed(), tors.getList(), cont);
+    m_cg->buildShiftRight(
+        sr1, opnd0->getTypeSize(m_tm), sh_ofst, is_arith_shift,
+        tors.getList(), cont);
     ASSERT0(cont->get_reg(0));
     tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
@@ -1349,15 +1357,34 @@ void IR2OR::convertLSL(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
 }
 
 
+void IR2OR::convertIntCvt(
+    IR const* tgt, IR const* src, OUT RecycORList & ors, MOD IOC * cont)
+{
+    ASSERT0(m_cg->regardAsIntType(tgt->getType()));
+    ASSERT0(m_cg->regardAsIntType(src->getType()));
+    ASSERTN(!tgt->is_vec() && !src->is_vec(), ("Target Dependent Code"));
+    UINT tgt_size = tgt->getTypeSize(m_tm);
+    UINT src_size = src->getTypeSize(m_tm);
+    m_cg->buildIntTypeCvt(
+        cont->get_reg(0), tgt_size, src_size, src->is_signed(),
+        xoc::getDbx(tgt), ors.getList(), cont);
+}
+
+
 void IR2OR::convertCvt(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
 {
     ASSERT0(ir->is_cvt() && CVT_exp(ir));
     ASSERTN(!ir->is_any() && !CVT_exp(ir)->is_any(), ("TODO"));
     RecycORList tors(this);
     convertGeneralLoad(CVT_exp(ir), tors, cont);
-    m_cg->buildTypeCvt(ir, CVT_exp(ir), tors.getList(), cont);
     tors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tors);
+    if (m_cg->regardAsIntType(ir->getType()) &&
+        m_cg->regardAsIntType(CVT_exp(ir)->getType())) {
+        convertIntCvt(ir, CVT_exp(ir), ors, cont);
+        return;
+    }
+    ASSERTN(0, ("Target Dependent Code"));
 }
 
 
