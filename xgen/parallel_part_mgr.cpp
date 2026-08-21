@@ -179,7 +179,7 @@ void ParallelPartMgr::renameSR(MOD OR * o, IN SR2SR_DMAP & dmap)
 }
 
 
-List<OR*> * ParallelPartMgr::getClusterReductionOR(UINT n)
+ORList * ParallelPartMgr::getClusterReductionOR(UINT n)
 {
     if (n >= m_para_part_redor_lst.get_elem_count()) {
         return nullptr;
@@ -189,8 +189,8 @@ List<OR*> * ParallelPartMgr::getClusterReductionOR(UINT n)
 
 
 //Note n should be a small number.
-List<OR*> * ParallelPartMgr::getClusterParallelPart(UINT n,
-                                                    OUT BitSet ** oridx_lst)
+ORList * ParallelPartMgr::getClusterParallelPart(
+    UINT n, OUT BitSet ** oridx_lst)
 {
     ASSERTN(m_pool, ("not yet initialize."));
     if (n >= m_para_part_oridx_lst.get_elem_count()) {
@@ -388,11 +388,9 @@ void ParallelPartMgr::dupORForParallelPart()
     ASSERTN(m_pool, ("not yet initialize."));
     ASSERT0(m_main_red_or && m_cmp_or);
     for (UINT i = 0; i < numOfParallelPart(); i++) {
-        List<OR*> * dist_or_list =
-            (List<OR*>*)xmalloc(sizeof(ORList));
+        ORList * dist_or_list = (ORList*)xmalloc(sizeof(ORList));
         dist_or_list->init();
-        List<OR*> * red_or_list =
-            (List<OR*>*)xmalloc(sizeof(ORList));
+        ORList * red_or_list = (ORList*)xmalloc(sizeof(ORList));
         red_or_list->init();
         xcom::BitSet * op_idxset = (xcom::BitSet*)xmalloc(sizeof(xcom::BitSet));
         op_idxset->init();
@@ -453,7 +451,7 @@ bool ParallelPartMgr::distributeToCluster(UINT n)
     ASSERTN(m_pool, ("not yet initialize."));
     ASSERT0(n < m_num_cluster);
     xcom::BitSet * oridx_lst = nullptr;
-    List<OR*> * or_lst = getClusterParallelPart(n, &oridx_lst);
+    ORList * or_lst = getClusterParallelPart(n, &oridx_lst);
     ASSERT0(or_lst && oridx_lst);
     //SR2SR_DMAP * dmap = getClusterDMap(n);
     //Add new GSR into ORBB live-in, live-out, live-defreachin,
@@ -669,7 +667,7 @@ bool ParallelPartMgr::modifyReductionOR()
     ASSERTN(m_pool, ("not yet initialize."));
     ASSERTN(m_num_cluster > 0, ("Not any para part"));
     for (UINT i = 0; i < m_num_cluster; i++) {
-        List<OR*> * red_or_lst = getClusterReductionOR(i);
+        ORList * red_or_lst = getClusterReductionOR(i);
         ASSERT0(red_or_lst);
         for (OR * o = red_or_lst->get_head(); o;
              o = red_or_lst->get_next()) {

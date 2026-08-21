@@ -49,9 +49,9 @@ public:
 
 class ParallelPartMgr {
 protected:
-    List<List<OR*>*> m_para_part_orlst;
+    List<ORList*> m_para_part_orlst;
     List<xcom::BitSet*> m_para_part_oridx_lst;
-    List<List<OR*>*> m_para_part_redor_lst;
+    List<ORList*> m_para_part_redor_lst;
     //Map original sr to sr in each of parallel part.
     List<SR2SR_DMAP*> m_sr2sr_dmap_lst;
     RegFileSet m_regfile_unique;
@@ -92,10 +92,9 @@ public:
     bool distribute();
 
     void genReductionRestore(SR * red_var);
-    List<OR*> * getClusterParallelPart(
-            UINT n,
-            OUT xcom::BitSet ** oridx_lst = nullptr);
-    List<OR*> * getClusterReductionOR(UINT n);
+    ORList * getClusterParallelPart(
+        UINT n, OUT xcom::BitSet ** oridx_lst = nullptr);
+    ORList * getClusterReductionOR(UINT n);
     SR2SR_DMAP * getClusterDMap(UINT n);
     CLUST getCluster(UINT n) const;
     virtual void genBusCopy(ORBB * bb, CLUST from_clust,
@@ -107,11 +106,8 @@ public:
     bool isReductionOR(OR const* o) const;
 
     SR * findIV(OR * o);
-    virtual bool findMainIV(ORBB * bb,
-                            DataDepGraph & ddg,
-                            OR ** red_or,
-                            OR ** cmp_or,
-                            SR ** iv);
+    virtual bool findMainIV(
+        ORBB * bb, DataDepGraph & ddg, OR ** red_or, OR ** cmp_or, SR ** iv);
 
     bool hasPDomOcc(ORBB * bb, SR * gsr);
     bool hasParallelPart(CLUST clust) const;

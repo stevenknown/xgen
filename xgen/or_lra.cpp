@@ -2949,7 +2949,6 @@ void LRA::genSpill(LifeTime * lt, SR * oldsr, BSIdx pos,
                 //if there are two store.
             }
         }
-
         m_cg->prependSpill(m_bb, *sors); //Generate opidx
 
         //There is not any generated memory operations for spill sometime.
@@ -2979,7 +2978,7 @@ void LRA::genSpill(LifeTime * lt, SR * oldsr, BSIdx pos,
             m_cg->renameResult(o, oldsr, newsr, false);
         }
         m_cg->buildSpill(newsr, spill_var, m_bb, *sors);
-        ORBB_orlist(m_bb)->insert_after(*sors, o);
+        ORBB_orlist(m_bb)->insert_after(*sors, o, m_cg);
     } else {
         OR * o = mgr.getOR(pos);
         ASSERTN(o, ("OR is nullptr"));
@@ -2991,7 +2990,7 @@ void LRA::genSpill(LifeTime * lt, SR * oldsr, BSIdx pos,
         }
         SR_spill_var(oldsr) = spill_var; //Record new spilling memory.
         m_cg->buildSpill(oldsr, spill_var, m_bb, *sors);
-        ORBB_orlist(m_bb)->insert_after(*sors, o);
+        ORBB_orlist(m_bb)->insert_after(*sors, o, m_cg);
     }
     m_cg->setCluster(*sors, LT_cluster(lt));
     m_cg->fixCluster(*sors, LT_cluster(lt));
@@ -3062,7 +3061,7 @@ SR * LRA::genReload(IN LifeTime * lt, IN SR * oldsr,
 
     if (pos == LT_LAST_POS) {
         //Append a reload to bottom of bb.
-        m_cg->buildReload(oldsr, spill_var, m_bb,    *ors);
+        m_cg->buildReload(oldsr, spill_var, m_bb, *ors);
         OR * ld_op = nullptr;
         for (OR * tmp = ors->get_head();
              tmp != nullptr; tmp = ors->get_next()) {
@@ -3091,7 +3090,7 @@ SR * LRA::genReload(IN LifeTime * lt, IN SR * oldsr,
         }
         m_cg->renameOpnd(o, oldsr, newsr, false);
         m_cg->buildReload(newsr, spill_var, m_bb, *ors);
-        ORBB_orlist(m_bb)->insert_before(*ors, o);
+        ORBB_orlist(m_bb)->insert_before(*ors, o, m_cg);
     }
 
     //Do we really have to differentiate the predicate register.
@@ -3348,7 +3347,7 @@ bool LRA::processORSpill(OR * sw, LifeTimeMgr & mgr,
         if (HAVE_FLAG(m_cur_phase, PHASE_CA_DONE)) {
             m_cg->setCluster(ors, m_cg->computeORCluster(calc_base_or));
         }
-        ORBB_orlist(m_bb)->insert_after(ors, sw);
+        ORBB_orlist(m_bb)->insert_after(ors, sw, m_cg);
 
         //Remove life-time from 'uncolored_list'.
         LifeTime * base_lt = mgr.getLifeTime(base);
@@ -4238,7 +4237,7 @@ bool LRA::mergeRedundantStoreLoad(OR * o, OR * succ, ORList & remainder_succs,
     if (HAVE_FLAG(m_cur_phase, PHASE_CA_DONE)) {
         m_cg->setCluster(ors, m_cg->computeORCluster(o));
     }
-    ORBB_orlist(m_bb)->insert_after(ors, succ);
+    ORBB_orlist(m_bb)->insert_after(ors, succ, m_cg);
 
     //Union edges of 'o' and 'succ' to 'new_cp'.
     ddg.appendOR(new_cp);
@@ -5956,7 +5955,7 @@ void LRA::coalesceMovi(OR * o, DataDepGraph & ddg, bool * is_resch,
                     ddg.get_preds(succ_preds, succ);
 
                     //Insert Movi operation following the point.
-                    ORBB_orlist(m_bb)->insert_after(ors, succ);
+                    ORBB_orlist(m_bb)->insert_after(ors, succ, m_cg);
 
                     //Remove the redundant copy operation.
                     //Does not need holder.
@@ -6165,7 +6164,7 @@ bool LRA::cse(MOD DataDepGraph & ddg, MOD ORIdTab & handled)
                     ddg.removeOR(o);
 
                     ORBB_orlist(m_bb)->insert_before(o,
-                        first_use_point_of_opsrc);
+                        first_use_point_of_opsrc, m_cg);
                     ddg.appendOR(o);
                     ddg.appendEdge(DEP_HYB, cand, o);
                     ddg.unifyEdge(orig_op_succs, o);
@@ -7054,7 +7053,7 @@ bool LRA::partitionGroup(DataDepGraph & ddg,
                           m_cg->getTruePred(), ors2);
 
                 m_cg->setCluster(ors2, cp_clust);
-                ORBB_orlist(m_bb)->insert_after(ors2, splor);
+                ORBB_orlist(m_bb)->insert_after(ors2, splor, m_cg);
 
                 //Replacing followed reload.
                 for (OR * succ = cls[i].get_head();
@@ -7684,7 +7683,7 @@ bool LRA::hoistSpillLocForStore(IN OR * o, IN InterfGraph & ig,
     OR * newcp = ors.get_head();
     BBORList * bb_or_lst = ORBB_orlist(m_bb);
     ASSERT0(bb_or_lst != nullptr);
-    bb_or_lst->insert_after(newcp, o);
+    bb_or_lst->insert_after(newcp, o, m_cg);
     ddg.appendOR(newcp);
 
     //Union edges between 'o' and all its 'succ' to new copy-or.
@@ -7731,7 +7730,7 @@ bool LRA::hoistSpillLocForStore(IN OR * o, IN InterfGraph & ig,
         ddg.appendOR(new_cp);
         concern_ors.append_tail(new_cp);
         newcp_lst.append_tail(new_cp);
-        bb_or_lst->insert_after(ors, f);
+        bb_or_lst->insert_after(ors, f, m_cg);
 
         //Chain up edges of pred and succ of 'f'.
         ddg.get_succs(ors, f);

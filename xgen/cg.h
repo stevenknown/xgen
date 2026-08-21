@@ -53,17 +53,21 @@ typedef xcom::C<xoc::Var*> * BBVarListIter;
 class BBVarList : public xcom::List<xoc::Var*> {
     xcom::List<xoc::Var*> m_free_list;
 public:
-    xoc::Var * getFreeVar() { return m_free_list.remove_tail(); }
-
     void freeAll()
     {
         UINT i = 0;
         for (xoc::Var * v = get_head(); i < get_elem_count();
              i++, v = get_next()) {
+            if (m_free_list.find(v)) { continue; }
             m_free_list.append_tail(v);
         }
         //clean();
     }
+    xoc::Var * pickFreeVar() { return m_free_list.remove_tail(); }
+};
+
+
+class BBLevelVarMgr {
 };
 
 typedef xcom::List<xoc::Var*> FuncVarList;

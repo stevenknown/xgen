@@ -3114,6 +3114,10 @@ void CG::setSpadjustOffset(OR * spadj, INT size)
 //Prepend spilling operation at the tail of OR list.
 void CG::prependSpill(ORBB * bb, ORList & ors)
 {
+    OR const* o = bb->getFirstOR();
+    if (o != nullptr) {
+        ors.copyDbx(&o->getDbx(), getDbxMgr());
+    }
     //postProcess() may insert spill code at Entry-BB.
     //ASSERT0(!ORBB_is_entry(bb));
     ORBB_orlist(bb)->append_head(ors);
@@ -3123,6 +3127,10 @@ void CG::prependSpill(ORBB * bb, ORList & ors)
 //Append reload operation at the tail of OR list.
 void CG::appendReload(ORBB * bb, ORList & ors)
 {
+    OR const* o = bb->getLastOR();
+    if (o != nullptr) {
+        ors.copyDbx(&o->getDbx(), getDbxMgr());
+    }
     //postProcess() may insert reload code at Exit-BB.
     //ASSERT0(!ORBB_is_exit(bb));
     ORBB_orlist(bb)->append_tail(ors);
@@ -4000,7 +4008,7 @@ xoc::Var * CG::genTempVar(xoc::Type const* type, UINT align, bool func_level)
     if (func_level) {
         return addFuncLevelVar(type, align);
     }
-    xoc::Var * v = getBBLevelVarList()->getFreeVar();
+    xoc::Var * v = getBBLevelVarList()->pickFreeVar();
     if (v == nullptr) {
         v = addBBLevelVar(type, align);
     }

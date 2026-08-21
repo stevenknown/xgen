@@ -236,6 +236,7 @@ public:
     OR_CODE getCode() const { return code; }
     CHAR const* getCodeName() const { return OR_code_name(this); }
     ORBB * getBB() const { return OR_bb(this); }
+    Dbx const& getDbx() const { return OR_dbx(this); }
     SR * get_opnd(UINT i) const
     {
         ASSERT0(i <= m_opnd.getElemNum());
@@ -554,8 +555,16 @@ public:
     void copyDbx(IR const* ir, DbxMgr * dbx_mgr)
     {
         ASSERT0(ir);
-        if (IR_ai(ir) == nullptr) { return; }
-        DbxAttachInfo * da = (DbxAttachInfo*)IR_ai(ir)->get(AI_DBX);
+        DbxAttachInfo * da = nullptr;
+        if (ir->getAI() != nullptr) {
+            da = (DbxAttachInfo*)ir->getAI()->get(AI_DBX);
+        } else if (ir->is_exp()) {
+            IR const* stmt = ir->getStmt();
+            if (stmt == nullptr || stmt->getAI() == nullptr) {
+                return;
+            }
+            da = (DbxAttachInfo*)stmt->getAI()->get(AI_DBX);
+        }
         if (da == nullptr) { return; }
         for (OR * o = get_head(); o != nullptr; o = get_next()) {
             OR_dbx(o).copy(da->dbx, dbx_mgr);

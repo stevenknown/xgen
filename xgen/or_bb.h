@@ -64,24 +64,28 @@ public:
     virtual ~BBORList() {}
 
     //Insert OR prior to cond_br, uncond_br, call, return.
-    void append_tail_ex(MOD List<OR*> & list);
+    void append_tail_ex(MOD ORList & list);
 
     //Insert OR prior to cond_br, uncond_br, call, return.
     xcom::C<OR*> * append_tail_ex(MOD OR * o);
     ORCt * append_tail(MOD OR * o);
     ORCt * append_head(MOD OR * o);
-    void append_tail(MOD List<OR*> & list);
-    void append_head(MOD List<OR*> & list);
+    void append_tail(MOD ORList & list);
+    void append_head(MOD ORList & list);
 
     ORCt * insert_before(IN OR * o, IN OR * marker);
+    ORCt * insert_before(IN OR * o, IN OR * marker, CG * cg);
     ORCt * insert_before(IN OR * o, IN ORCt * marker);
     void insert_before(IN ORCt * cor, IN ORCt * marker);
-    void insert_before(IN List<OR*> & list, IN OR * marker);
-    void insert_before(IN List<OR*> & list, IN ORCt * marker);
+    void insert_before(IN ORList & list, IN OR * marker);
+    void insert_before(IN ORList & list, IN OR * marker, CG * cg);
+    void insert_before(IN ORList & list, IN ORCt * marker);
     ORCt * insert_after(IN OR * o, IN OR * marker);
+    ORCt * insert_after(IN OR * o, IN OR * marker, CG * cg);
     ORCt * insert_after(IN OR * o, IN ORCt * marker);
-    void insert_after(IN List<OR*> & list, IN OR * marker);
-    void insert_after(IN List<OR*> & list, IN ORCt * marker);
+    void insert_after(IN ORList & list, IN OR * marker);
+    void insert_after(IN ORList & list, IN OR * marker, CG * cg);
+    void insert_after(IN ORList & list, IN ORCt * marker);
     void insert_after(IN ORCt * cor, IN ORCt * marker);
     virtual bool is_or_precedes(IN OR * or1, IN OR * or2);
 

@@ -197,21 +197,23 @@ void IR2OR::convertLoadConstFP(IR const* ir, OUT RecycORList & ors,
 }
 
 
-void IR2OR::convertLoadConstInt(IR const* ir, OUT RecycORList & ors,
-                                MOD IOC * cont)
+void IR2OR::convertLoadConstInt(
+    IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
 {
     //Immediate can be pointer, e.g: int * p = 0;
     ASSERT0(ir->is_const());
     ASSERT0(ir->is_int() || ir->is_ptr());
-    convertLoadConstInt(CONST_int_val(ir), ir->getTypeSize(m_tm),
-                        ir->is_signed(), xoc::getDbx(ir), ors, cont);
+    convertLoadConstInt(
+        CONST_int_val(ir), ir->getTypeSize(m_tm),
+        ir->is_signed(), xoc::getDbx(ir, true), ors, cont);
 }
 
 
 //Load constant integer value into register.
-void IR2OR::convertLoadConstInt(HOST_INT constval, UINT constbytesize,
-                                bool is_signed, Dbx const* dbx,
-                                OUT RecycORList & ors, MOD IOC * cont)
+void IR2OR::convertLoadConstInt(
+    HOST_INT constval, UINT constbytesize,
+    bool is_signed, Dbx const* dbx,
+    OUT RecycORList & ors, MOD IOC * cont)
 {
     //For convenient purpose, the function implemented 2x machine word
     //immediate load.
@@ -391,7 +393,8 @@ void IR2OR::convertGeneralLoad(IR const* ir, OUT RecycORList & ors,
         convertGeneralLoadPR(ir, ors, &tc);
         ASSERT0((tc.get_reg(0) && tc.get_reg(0)->is_reg()) ||
                 tc.get_addr());
-        tryExtendLoadValByMemSize(ir->is_signed(), xoc::getDbx(ir), ors, &tc);
+        tryExtendLoadValByMemSize(
+            ir->is_signed(), xoc::getDbx(ir, true), ors, &tc);
         cont->copy_bottomup(tc);
         return;
     }
@@ -681,7 +684,8 @@ void IR2OR::convertId(IR const* ir, OUT RecycORList & ors, MOD IOC * cont)
     RecycORList tmp_ors(this);
     IOC tc(*cont);
     IOC_mem_byte_size(&tc) = ir->is_any() ? 0 : ir->getTypeSize(m_tm);
-    m_cg->buildLda(ID_info(ir), 0, xoc::getDbx(ir), tmp_ors.getList(), &tc);
+    m_cg->buildLda(
+        ID_info(ir), 0, xoc::getDbx(ir, true), tmp_ors.getList(), &tc);
     SR * loaded_val = tc.get_reg(0); //get target memory address.
     tmp_ors.copyDbx(ir, getDbxMgr());
     ors.move_tail(tmp_ors);
@@ -1367,7 +1371,7 @@ void IR2OR::convertIntCvt(
     UINT src_size = src->getTypeSize(m_tm);
     m_cg->buildIntTypeCvt(
         cont->get_reg(0), tgt_size, src_size, src->is_signed(),
-        xoc::getDbx(tgt), ors.getList(), cont);
+        xoc::getDbx(tgt, true), ors.getList(), cont);
 }
 
 

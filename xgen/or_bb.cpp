@@ -72,7 +72,7 @@ ORCt * BBORList::append_tail(OR * o)
 }
 
 
-void BBORList::append_tail(List<OR*> & list)
+void BBORList::append_tail(ORList & list)
 {
     INT i = 0;
     if (get_elem_count() != 0) {
@@ -90,7 +90,7 @@ void BBORList::append_tail(List<OR*> & list)
 
 
 //Insert OR prior to cond_br, uncond_br, call, return.
-void BBORList::append_tail_ex(List<OR*> & list)
+void BBORList::append_tail_ex(ORList & list)
 {
     xcom::C<OR*> * ct;
     for (OR * tor = List<OR*>::get_tail(&ct);
@@ -150,7 +150,7 @@ ORCt * BBORList::append_head(OR * o)
 }
 
 
-void BBORList::append_head(List<OR*> & list)
+void BBORList::append_head(ORList & list)
 {
     INT i = 0;
     if (get_elem_count() != 0) {
@@ -164,6 +164,14 @@ void BBORList::append_head(List<OR*> & list)
     }
 
     xcom::EList<OR*, OR2Holder>::append_head(list);
+}
+
+
+ORCt * BBORList::insert_before(OR * o, OR * marker, CG * cg)
+{
+    ASSERT0(cg);
+    o->copyDbx(&marker->getDbx(), cg->getDbxMgr());
+    return BBORList::insert_before(o, marker);
 }
 
 
@@ -239,7 +247,7 @@ void BBORList::insert_before(ORCt * cor, ORCt * marker)
 }
 
 
-void BBORList::insert_after(IN List<OR*> & list, IN ORCt * marker)
+void BBORList::insert_after(IN ORList & list, IN ORCt * marker)
 {
     for (OR * o = list.get_head(); o != nullptr; o = list.get_next()) {
         OR_bb(o) = m_bb;
@@ -248,7 +256,15 @@ void BBORList::insert_after(IN List<OR*> & list, IN ORCt * marker)
 }
 
 
-void BBORList::insert_after(IN List<OR*> & list, IN OR * marker)
+void BBORList::insert_after(IN ORList & list, IN OR * marker, CG * cg)
+{
+    ASSERT0(cg);
+    ((ORList&)list).copyDbx(&marker->getDbx(), cg->getDbxMgr());
+    BBORList::insert_after(list, marker);
+}
+
+
+void BBORList::insert_after(IN ORList & list, IN OR * marker)
 {
     for (OR * o = list.get_head(); o != nullptr; o = list.get_next()) {
         OR_bb(o) = m_bb;
@@ -258,7 +274,15 @@ void BBORList::insert_after(IN List<OR*> & list, IN OR * marker)
 }
 
 
-void BBORList::insert_before(IN List<OR*> & list, IN OR * marker)
+void BBORList::insert_before(IN ORList & list, IN OR * marker, CG * cg)
+{
+    ASSERT0(cg);
+    ((ORList&)list).copyDbx(&marker->getDbx(), cg->getDbxMgr());
+    BBORList::insert_before(list, marker);
+}
+
+
+void BBORList::insert_before(IN ORList & list, IN OR * marker)
 {
     for (OR * o = list.get_tail(); o != nullptr; o = list.get_prev()) {
         OR_bb(o) = m_bb;
@@ -268,12 +292,20 @@ void BBORList::insert_before(IN List<OR*> & list, IN OR * marker)
 }
 
 
-void BBORList::insert_before(IN List<OR*> & list, IN ORCt * marker)
+void BBORList::insert_before(IN ORList & list, IN ORCt * marker)
 {
     for (OR * o = list.get_tail(); o != nullptr; o = list.get_prev()) {
         OR_bb(o) = m_bb;
         marker = insert_before(o, marker);
     }
+}
+
+
+ORCt * BBORList::insert_after(OR * o, OR * marker, CG * cg)
+{
+    ASSERT0(cg);
+    o->copyDbx(&marker->getDbx(), cg->getDbxMgr());
+    return BBORList::insert_after(o, marker);
 }
 
 
