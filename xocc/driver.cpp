@@ -37,19 +37,10 @@ namespace xocc {
 //The position 0 is reserved for hidden parameter which used for
 //structure return value in C/C++.
 UINT const g_formal_parameter_start = 1;
-CHAR const* g_output_file_name = nullptr; //record the ASM file name.
-CHAR const* g_xocc_version = "1.6.0"; //recod the xocc.exe version.
-CHAR const* g_dump_file_name = nullptr;
 bool g_is_dumpgr = false;
-bool g_is_dump_option = false;
 
 //Set true to keep source file info to make compiler dump info more readable.
 static bool g_keep_src_info = true;
-
-xcom::List<CHAR const*> g_cfile_list;
-xcom::List<CHAR const*> g_grfile_list;
-xcom::List<CHAR const*> g_objfile_list;
-xcom::List<CHAR const*> g_static_lib_list;
 
 //
 //START DeclAndVarMap
@@ -195,8 +186,8 @@ xoc::Var * DeclAndVarMap::addDecl(Decl const* decl)
         v->setFlag(VAR_ADDR_TAKEN);
     }
     if (decl->is_formal_param()) {
-        VAR_formal_param_pos(v) = g_formal_parameter_start +
-                                  DECL_formal_param_pos(decl);
+        VAR_formal_param_pos(v) =
+            g_formal_parameter_start + DECL_formal_param_pos(decl);
     }
     m_decl2var_map.setAlways(decl, v);
     m_var2decl_map.setAlways(v, decl);
@@ -373,7 +364,7 @@ bool Compiler::compileGRFile(CHAR const* fn)
     if (g_dump_file_name != nullptr) {
         rm->getLogMgr()->init(g_dump_file_name, true);
     }
-    if (g_is_dump_option) {
+    if (xoc::g_dump_opt.is_dump_all) {
         xoc::Option::dump(rm);
     }
     //Init GR file object.
@@ -389,7 +380,7 @@ bool Compiler::compileGRFile(CHAR const* fn)
         res = false;
         goto FIN;
     }
-    if (g_is_dump_option) {
+    if (xoc::g_dump_opt.is_dump_all) {
         xoc::g_dump_opt.dump(rm);
     }
     if (!g_keep_src_info) {
@@ -434,7 +425,7 @@ bool Compiler::compileCFile(CHAR const* fn)
     if (g_dump_file_name != nullptr) {
         rm->getLogMgr()->init(g_dump_file_name, true);
     }
-    if (g_is_dump_option) {
+    if (xoc::g_dump_opt.is_dump_all) {
         xoc::Option::dump(rm);
     }
     DeclAndVarMap dvmap(rm);
@@ -481,9 +472,9 @@ FIN:
     finiCompile(rm, asmfo, cgmgr);
     show_err();
     show_warn();
-    xoc::prt2C("\n%s - (%d) error(s), (%d) warnging(s)\n",
-               fn, g_err_msg_list.get_elem_count(),
-               g_warn_msg_list.get_elem_count());
+    xoc::prt2C(
+        "\n%s - (%d) error(s), (%d) warnging(s)\n",
+        fn, g_err_msg_list.get_elem_count(), g_warn_msg_list.get_elem_count());
     g_err_msg_list.clean();
     g_warn_msg_list.clean();
     clean_global_scope();

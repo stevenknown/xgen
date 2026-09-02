@@ -34,15 +34,10 @@ arm_option.o
 ifeq ($(FOR_IP), true)
   $(info "CONDBR:arm/Makefile.inc:FOR_IP=$(FOR_IP)")
   TARG_OBJS+=\
-  arm_derivative.o\
-  arm_targinfo_mgr.o\
-  arm_regd.o\
-  arm_regset_impl.o\
-  arm_linear_scan.o\
-  arm_arg_passer.o\
-  arm_elf_mgr.o\
-  arm_elf_targinfo.o
-else ifneq ($(findstring $(REF_TARGMACH_INFO), true),)
+  arm_derivative.o
+endif
+
+ifneq ($(findstring $(REF_TARGMACH_INFO), true),)
   $(info "CONDBR:arm/Makefile.inc:REF_TARGMACH_INFO=$(REF_TARGMACH_INFO)")
   TARG_OBJS+=\
   arm_targinfo_mgr.o\

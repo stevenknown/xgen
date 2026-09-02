@@ -62,7 +62,7 @@ Pass * ARMPassMgr::allocIRSimp()
 
 Pass * ARMPassMgr::allocRegAllocMgr()
 {
-    #if defined REF_TARGMACH_INFO || defined FOR_IP
+    #if defined REF_TARGMACH_INFO
     return new ARMRegAllocMgr(m_rg);
     #else
     ASSERTN(0, ("Target Dependent Code"));
@@ -73,7 +73,7 @@ Pass * ARMPassMgr::allocRegAllocMgr()
 
 Pass * ARMPassMgr::allocLinearScanRA()
 {
-    #if defined REF_TARGMACH_INFO || defined FOR_IP
+    #if defined REF_TARGMACH_INFO
     return new ARMLinearScanRA(m_rg);
     #else
     ASSERTN(0, ("Target Dependent Code"));
@@ -114,7 +114,7 @@ Pass * ARMPassMgr::allocExtPass(PASS_TYPE passty)
 
 Pass * ARMPassMgr::allocPrologueEpilogue()
 {
-    #if defined REF_TARGMACH_INFO || defined FOR_IP
+    #if defined REF_TARGMACH_INFO
     return new ARMPrologueEpilogueInserter(m_rg);
     #else
     ASSERTN(0, ("Target Dependent Code"));
@@ -125,7 +125,7 @@ Pass * ARMPassMgr::allocPrologueEpilogue()
 
 Pass * ARMPassMgr::allocDynamicStack()
 {
-    #if defined REF_TARGMACH_INFO || defined FOR_IP
+    #if defined REF_TARGMACH_INFO
     return new ARMDynamicStack(m_rg);
     #else
     ASSERTN(0, ("Target Dependent Code"));
@@ -136,7 +136,7 @@ Pass * ARMPassMgr::allocDynamicStack()
 
 Pass * ARMPassMgr::allocArgPasser()
 {
-    #if defined REF_TARGMACH_INFO || defined FOR_IP
+    #if defined REF_TARGMACH_INFO
     return new ARMArgPasser(m_rg);
     #else
     ASSERTN(0, ("Target Dependent Code"));

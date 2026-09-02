@@ -58,7 +58,7 @@ author: Su Zhenyu
 #include "../arm/arm_irmgr.h"
 #include "../arm/arm_insert_cvt.h"
 
-#if defined REF_TARGMACH_INFO || defined FOR_IP
+#if defined REF_TARGMACH_INFO
   #include "../elf/elfinc.h"
   #include "../arm/arm_elf_targinfo.h"
   #include "../arm/arm_elf_mgr.h"

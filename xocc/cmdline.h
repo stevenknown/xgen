@@ -32,6 +32,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace xocc {
 
+extern CHAR const* g_output_file_name; //record the output file name.
+extern CHAR const* g_version; //record the exe version.
+extern CHAR const* g_dump_file_name;
+extern xcom::List<CHAR const*> g_cfile_list;
+extern xcom::List<CHAR const*> g_grfile_list;
+extern xcom::List<CHAR const*> g_objfile_list;
+extern xcom::List<CHAR const*> g_static_lib_list;
+
 bool processCmdLine(INT argc, CHAR const* argv[]);
 
 } //namespace xocc

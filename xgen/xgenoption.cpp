@@ -39,7 +39,6 @@ namespace xgen {
 DumpOpt::DumpOpt()
 {
     is_dump_all = false;
-    is_dump_nothing = false;
     is_dump_cg = false;
     is_dump_ra = false;
     is_dump_lis = false;
@@ -49,67 +48,55 @@ DumpOpt::DumpOpt()
 
 bool DumpOpt::isDumpAll() const
 {
-    //is_dump_all and is_dump_nothing can not all be true.
-    ASSERT0(!(is_dump_nothing & is_dump_all));
     return is_dump_all;
-}
-
-
-bool DumpOpt::isDumpNothing() const
-{
-    //is_dump_all and is_dump_nothing can not all be true.
-    ASSERT0(!(is_dump_nothing & is_dump_all));
-    return is_dump_nothing;
 }
 
 
 bool DumpOpt::isDumpCG() const
 {
-    return is_dump_all || is_dump_cg || (!is_dump_nothing && is_dump_cg);
+    return is_dump_all || is_dump_cg || is_dump_cg;
 }
 
 
 bool DumpOpt::isDumpRA() const
 {
-    return is_dump_all || is_dump_cg || (!is_dump_nothing && is_dump_ra);
+    return is_dump_all || is_dump_cg || is_dump_ra;
 }
 
 
 bool DumpOpt::isDumpLIS() const
 {
-    return is_dump_all || is_dump_cg || (!is_dump_nothing && is_dump_lis);
+    return is_dump_all || is_dump_cg || is_dump_lis;
 }
 
 
 bool DumpOpt::isDumpIR2OR() const
 {
-    return is_dump_all || is_dump_cg || (!is_dump_nothing && is_dump_ir2or);
+    return is_dump_all || is_dump_cg || is_dump_ir2or;
 }
 
 
 bool DumpOpt::isDumpReviseSpadjust() const
 {
-    return is_dump_all || is_dump_cg ||
-           (!is_dump_nothing && is_dump_revise_spadjust);
+    return is_dump_all || is_dump_cg || is_dump_revise_spadjust;
 }
 
 
 bool DumpOpt::isDumpRelocateStack() const
 {
-    return is_dump_all || is_dump_cg ||
-           (!is_dump_nothing && is_dump_relocate_stack);
+    return is_dump_all || is_dump_cg || is_dump_relocate_stack;
 }
 
 
 bool DumpOpt::isDumpPackage() const
 {
-    return is_dump_all || is_dump_cg || (!is_dump_nothing && is_dump_package);
+    return is_dump_all || is_dump_cg || is_dump_package;
 }
 
 
 bool DumpOpt::isDumpLocalize() const
 {
-    return is_dump_all || is_dump_cg || (!is_dump_nothing && is_dump_localize);
+    return is_dump_all || is_dump_cg || is_dump_localize;
 }
 //END DumpOpt
 

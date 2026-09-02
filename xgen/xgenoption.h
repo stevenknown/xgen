@@ -36,11 +36,7 @@ namespace xgen {
 class DumpOpt {
 public:
     //Dump all information.
-    //Note is_dump_all and is_dump_nothing can not all be true.
     bool is_dump_all;
-    //Do not dump anything.
-    //Note is_dump_all and is_dump_nothing can not all be true.
-    bool is_dump_nothing;
     bool is_dump_cg; //Dump CodeGeneration.
     bool is_dump_ra; //Dump Register Allocation.
     bool is_dump_lis; //Dump LIS.
@@ -54,7 +50,6 @@ public:
     DumpOpt const& operator = (DumpOpt const&); //Disable operator =.
 
     bool isDumpAll() const;
-    bool isDumpNothing() const;
     bool isDumpCG() const;
     bool isDumpRA() const;
     bool isDumpLIS() const;
